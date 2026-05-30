@@ -52,13 +52,13 @@ def run_checks(result: dict[str, object]) -> None:
 
         text = path.read_text(encoding="utf-8-sig") if exists else ""
         forbidden_copy_terms = (
-            "Background agents",
-            "six-role crew",
+            "Runtime role assistance",
+            "runtime role-binding coverage",
             "\u540e\u53f0\u667a\u80fd\u4f53",
             "\u516d\u89d2\u8272\u56e2\u961f",
         )
         required_copy_terms = (
-            "Runtime role assistance",
+            "Runtime role collaboration",
             "\u8fd0\u884c\u65f6\u89d2\u8272\u534f\u4f5c",
         )
         forbidden_present = [term for term in forbidden_copy_terms if term in text]
@@ -170,7 +170,7 @@ def run_checks(result: dict[str, object]) -> None:
     router_path = ROOT / "skills/flowpilot/assets/flowpilot_router.py"
     runtime_mode_template = ROOT / "templates/flowpilot/mode.template.json"
     router_text = router_path.read_text(encoding="utf-8") if router_path.exists() else ""
-    run_modes_retired = (
+    run_modes_unsupported = (
         not runtime_mode_template.exists()
         and "DEFAULT_RUN_MODE" not in router_text
         and '"run_mode"' not in router_text
@@ -178,10 +178,10 @@ def run_checks(result: dict[str, object]) -> None:
     )
     result["checks"].append(
         {
-            "name": "flowpilot_run_modes_retired_from_runtime",
-            "ok": run_modes_retired,
+            "name": "flowpilot_run_modes_unsupported_from_runtime",
+            "ok": run_modes_unsupported,
             "mode_template_exists": runtime_mode_template.exists(),
         }
     )
-    if not run_modes_retired:
+    if not run_modes_unsupported:
         result["ok"] = False

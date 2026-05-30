@@ -14,7 +14,7 @@ _REQUIRED_MODEL_NAMES = (
     "Iterable",
     "MAX_ROUTE_REVISIONS",
     "State",
-    "_live_subagent_startup_resolved",
+    "_runtime_role_binding_startup_resolved",
     "_step",
     "_user_flow_display_gate_passed",
 )
@@ -44,7 +44,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="pm_initial_route_decision_recorded",
-            action="ask the project manager to choose the initial route-design direction from the contract, self-interrogation, dependencies, and crew reports",
+            action="ask the project manager to choose the initial route-design direction from the contract, self-interrogation, dependencies, and role binding reports",
             pm_initial_route_decision_recorded=True,
             active_node="select_child_skills",
         )
@@ -367,7 +367,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             user_flow_diagram_reviewer_display_checked=False,
             user_flow_diagram_reviewer_route_match_checked=False,
             user_flow_diagram_fresh_for_current_node=False,
-            active_node="resolve_live_subagent_startup",
+            active_node="resolve_runtime_role_binding_startup",
         )
         return
 
@@ -384,7 +384,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             user_flow_diagram_reviewer_display_checked=True,
             user_flow_diagram_reviewer_route_match_checked=True,
             user_flow_diagram_fresh_for_current_node=True,
-            active_node="resolve_live_subagent_startup",
+            active_node="resolve_runtime_role_binding_startup",
         )
         return
 
@@ -396,15 +396,15 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.codex_plan_synced
         and state.user_flow_diagram_refreshed
         and _user_flow_display_gate_passed(state)
-        and not state.live_subagent_decision_recorded
+        and not state.runtime_role_assistance_decision_recorded
         and state.issue == "none"
     ):
         yield _step(
             state,
-            label="live_subagent_start_authorized",
+            label="runtime_role_binding_start_authorized",
             action="ask for and record user authorization to request runtime FlowPilot role assistance from the host",
-            live_subagent_decision_recorded=True,
-            active_node="start_live_subagents",
+            runtime_role_assistance_decision_recorded=True,
+            active_node="start_runtime_role_bindings",
         )
         return
 
@@ -416,19 +416,19 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.codex_plan_synced
         and state.user_flow_diagram_refreshed
         and _user_flow_display_gate_passed(state)
-        and state.live_subagent_decision_recorded
-        and not state.live_subagents_started
+        and state.runtime_role_assistance_decision_recorded
+        and not state.runtime_role_bindings_opened
         and not state.single_agent_role_continuity_authorized
         and state.issue == "none"
     ):
         yield _step(
             state,
-            label="fresh_six_live_subagents_started",
+            label="fresh_six_runtime_role_bindings_opened",
             action="open runtime-requested FlowPilot role bindings as fresh current-task bindings and record nonreuse evidence",
-            live_subagents_started=True,
-            live_subagents_current_task_fresh=True,
-            fresh_agents_spawned_after_startup_answers=True,
-            fresh_agents_spawned_after_route_allocation=True,
+            runtime_role_bindings_opened=True,
+            runtime_role_bindings_current_task_ready=True,
+            role_bindings_opened_after_startup_answers=True,
+            role_bindings_opened_after_route_allocation=True,
             historical_agent_ids_compared=True,
             reused_historical_agent_ids=False,
             active_node="startup_preflight_review",
@@ -443,7 +443,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.codex_plan_synced
         and state.user_flow_diagram_refreshed
         and _user_flow_display_gate_passed(state)
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and not state.startup_preflight_review_report_written
         and not state.startup_worker_remediation_completed
         and state.issue == "none"
@@ -519,7 +519,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.codex_plan_synced
         and state.user_flow_diagram_refreshed
         and _user_flow_display_gate_passed(state)
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and not state.startup_preflight_review_report_written
         and state.startup_worker_remediation_completed
         and state.issue == "none"
@@ -527,7 +527,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_preflight_reviewer_fact_report_clean",
-            action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh crew evidence, and writes a clean fact report for PM",
+            action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh role binding evidence, and writes a clean fact report for PM",
             startup_preflight_review_report_written=True,
             startup_preflight_review_blocking_findings=False,
             startup_reviewer_fact_evidence_checked=True,

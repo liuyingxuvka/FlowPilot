@@ -29,7 +29,7 @@ REQUIRED_LABELS = (
     "prompt_ledger_loaded",
     "execution_frontier_loaded",
     "visible_plan_restored_from_current_run",
-    "crew_memory_loaded",
+    "role_binding_memory_loaded",
     "controller_relay_boundary_confirmed",
     "six_role_liveness_concurrent_probe_batch_started",
     "six_role_liveness_checked_all_active",
@@ -40,7 +40,7 @@ REQUIRED_LABELS = (
     "only_failed_resume_roles_replaced_from_current_run_memory",
     "all_uncertain_resume_roles_replaced_from_current_run_memory",
     "current_run_memory_injected_into_resume_roles",
-    "crew_rehydration_report_written_before_pm_resume",
+    "role_binding_recovery_report_written_before_pm_resume",
     "crew_capability_officer_lifecycle_flags_reconciled",
     "resume_state_clear_for_pm_decision",
     "ambiguous_resume_state_blocked_for_pm_recovery",
@@ -95,10 +95,10 @@ def _state_id(state: model.State) -> str:
         f"packet={state.packet_ledger_loaded}|"
         f"prompt={state.prompt_ledger_loaded}|frontier={state.frontier_loaded}|"
         f"visible_plan={state.visible_plan_restored_from_run}|"
-        f"crew={state.crew_memory_loaded},{state.host_role_rehydrate_requested},"
-        f"{state.crew_roles_ready},restored={state.crew_restored},"
+        f"crew={state.role_binding_memory_loaded},{state.host_role_rehydrate_requested},"
+        f"{state.runtime_responsibilitys_ready},restored={state.crew_restored},"
         f"replaced={state.crew_replaced},memory_injected={state.run_memory_injected_into_roles},"
-        f"report={state.crew_rehydration_report_written}|"
+        f"report={state.role_binding_recovery_report_written}|"
         f"resume_replay={state.resume_obligation_replay_scanned},"
         f"{state.resume_obligation_replay_completed},"
         f"{state.resume_obligation_replay_pm_escalation_required},"

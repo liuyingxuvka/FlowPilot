@@ -18,8 +18,8 @@ RESULTS_PATH = ROOT / "flowpilot_packet_lifecycle_results.json"
 
 HAZARD_EXPECTED_FAILURES = {
     "stale_hash_after_body_repair": "direct dispatch passed without current envelope fields and packet body hash identity",
-    "packet_retired_body_alias_accepted": "direct dispatch passed without current envelope fields and packet body hash identity",
-    "result_retired_body_alias_accepted": "direct dispatch passed without current envelope fields and packet body hash identity",
+    "packet_unsupported_body_alias_accepted": "direct dispatch passed without current envelope fields and packet body hash identity",
+    "result_unsupported_body_alias_accepted": "direct dispatch passed without current envelope fields and packet body hash identity",
     "packet_open_envelope_only": "result relay occurred before packet open receipts and result ledger absorption",
     "result_without_ledger_absorption": "result relay occurred before packet open receipts and result ledger absorption",
     "result_open_envelope_only": "reviewer pass occurred without complete packet/result receipts and agent role authority",

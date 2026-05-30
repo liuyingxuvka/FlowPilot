@@ -49,16 +49,16 @@ def _canonical_candidate(paths: list[Path]) -> Path:
 
 
 RETIRED_SEMANTIC_MARKERS = (
-    "compatibility alias",
-    "compatibility aliases",
-    "compatibility metadata",
-    "accepted as compatibility",
-    "retaining modelability names as compatibility aliases",
-    "retaining route process check names as compatibility aliases",
+    "unsupported_historical alias",
+    "unsupported_historical aliases",
+    "unsupported_historical metadata",
+    "accepted as unsupported_historical",
+    "retaining modelability names as unsupported_historical aliases",
+    "retaining route process check names as unsupported_historical aliases",
 )
 
 
-def _has_retired_semantics(path: Path) -> bool:
+def _has_unsupported_semantics(path: Path) -> bool:
     try:
         text = path.read_text(encoding="utf-8", errors="replace").lower()
     except OSError:
@@ -127,8 +127,8 @@ def _shadow_result_pairs(paths: list[Path]) -> list[dict[str, Any]]:
         checks_hash = _sha256(checks_path)
         result_hash = _sha256(result_path)
         exact_duplicate = checks_size == result_size and checks_hash == result_hash
-        checks_retired = _has_retired_semantics(checks_path)
-        result_retired = _has_retired_semantics(result_path)
+        checks_unsupported = _has_unsupported_semantics(checks_path)
+        result_unsupported = _has_unsupported_semantics(result_path)
         pairs.append(
             {
                 "checks_results": _repo_relative(checks_path),
@@ -136,9 +136,9 @@ def _shadow_result_pairs(paths: list[Path]) -> list[dict[str, Any]]:
                 "canonical_candidate": _repo_relative(result_path),
                 "exact_duplicate": exact_duplicate,
                 "semantic_drift": not exact_duplicate,
-                "checks_retired_semantics": checks_retired,
-                "results_retired_semantics": result_retired,
-                "stale_shadow_semantics": checks_retired and not result_retired,
+                "checks_unsupported_semantics": checks_unsupported,
+                "results_unsupported_semantics": result_unsupported,
+                "stale_shadow_semantics": checks_unsupported and not result_unsupported,
                 "checks_sha256": checks_hash,
                 "results_sha256": result_hash,
                 "checks_bytes": checks_size,

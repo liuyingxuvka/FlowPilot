@@ -1,18 +1,924 @@
 {
   "classification_counts": {
-    "boundary_expected_or_informational": 41
+    "boundary_expected_or_informational": 130,
+    "runner_unparsed_or_unavailable": 1
   },
   "coverage_tier_counts": {
     "abstract_strong_live_mapping_weaker": 5,
     "coverage_strong": 23,
     "specialized_assertion_or_local_hazard": 7,
-    "supporting_model_owned": 71,
-    "unclassified_model_tier": 2
+    "supporting_model_owned": 72,
+    "unclassified_model_tier": 25
   },
-  "existing_result_read_count": 79,
-  "finding_count": 41,
+  "existing_result_read_count": 101,
+  "finding_count": 130,
   "finding_ledger": [
     {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "responsibility_lease_runtime",
+      "message": "FunctionBlock responsibility_lease_runtime is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "leases",
+      "message": "state leases is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "host_runs",
+      "message": "state host_runs is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "role_memory",
+      "message": "state role_memory is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "start_fake_host",
+      "message": "side effect start_fake_host is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "record_live_host_boundary",
+      "message": "side effect record_live_host_boundary is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "quarantine_late_output",
+      "message": "side effect quarantine_late_output is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "lease_responsibility",
+      "message": "public entrypoint lease_responsibility is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "expire_lease",
+      "message": "public entrypoint expire_lease is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "submit_host_result",
+      "message": "public entrypoint submit_host_result is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_dynamic_host_owner",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_module_rationale",
+      "item_id": "",
+      "message": "target module run_shell has no grouping rationale",
+      "metadata": {
+        "layer": "child",
+        "module_id": "run_shell",
+        "owns_config": [],
+        "owns_function_blocks": [
+          "current_run_shell"
+        ],
+        "owns_side_effects": [],
+        "owns_state": [
+          "current_pointer"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
+        "public_entrypoints": [],
+        "rationale": "",
+        "validation_boundaries": [
+          "run_shell_persistence"
+        ]
+      },
+      "module_id": "run_shell",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "deterministic_router",
+      "message": "FunctionBlock deterministic_router is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "route_mutation_runtime",
+      "message": "FunctionBlock route_mutation_runtime is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "dynamic_host_driver",
+      "message": "FunctionBlock dynamic_host_driver is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "responsibility_lease_runtime",
+      "message": "FunctionBlock responsibility_lease_runtime is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "sealed_packet_runtime",
+      "message": "FunctionBlock sealed_packet_runtime is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "flowguard_work_order_runtime",
+      "message": "FunctionBlock flowguard_work_order_runtime is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "independent_review_runtime",
+      "message": "FunctionBlock independent_review_runtime is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "validation_evidence_runtime",
+      "message": "FunctionBlock validation_evidence_runtime is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "cockpit_status_projection",
+      "message": "FunctionBlock cockpit_status_projection is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "function_block_owner_not_registered",
+      "item_id": "migration_cutover_runtime",
+      "message": "FunctionBlock migration_cutover_runtime is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "active_route",
+      "message": "state active_route is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "router_next_action",
+      "message": "state router_next_action is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "route_mutations",
+      "message": "state route_mutations is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "leases",
+      "message": "state leases is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "host_runs",
+      "message": "state host_runs is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "role_memory",
+      "message": "state role_memory is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "packet_envelopes",
+      "message": "state packet_envelopes is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "packet_bodies",
+      "message": "state packet_bodies is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "result_envelopes",
+      "message": "state result_envelopes is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "result_bodies",
+      "message": "state result_bodies is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "work_orders",
+      "message": "state work_orders is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "flowguard_reports",
+      "message": "state flowguard_reports is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "reviews",
+      "message": "state reviews is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "validation_evidence",
+      "message": "state validation_evidence is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "final_closure",
+      "message": "state final_closure is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "status_projection",
+      "message": "state status_projection is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "user_events",
+      "message": "state user_events is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "imported_evidence",
+      "message": "state imported_evidence is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "state_owner_not_registered",
+      "item_id": "cutover_gate",
+      "message": "state cutover_gate is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "emit_next_action",
+      "message": "side effect emit_next_action is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "mark_evidence_stale",
+      "message": "side effect mark_evidence_stale is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "start_fake_host",
+      "message": "side effect start_fake_host is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "record_live_host_boundary",
+      "message": "side effect record_live_host_boundary is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "quarantine_late_output",
+      "message": "side effect quarantine_late_output is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "write_packet_body",
+      "message": "side effect write_packet_body is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "write_result_body",
+      "message": "side effect write_result_body is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "verify_body_hash",
+      "message": "side effect verify_body_hash is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "select_flowguard_skill",
+      "message": "side effect select_flowguard_skill is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "record_proof_artifact",
+      "message": "side effect record_proof_artifact is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "accept_result",
+      "message": "side effect accept_result is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "block_result",
+      "message": "side effect block_result is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "write_backward_chain",
+      "message": "side effect write_backward_chain is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "render_public_status",
+      "message": "side effect render_public_status is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "record_user_event",
+      "message": "side effect record_user_event is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "classify_old_artifact",
+      "message": "side effect classify_old_artifact is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "side_effect_owner_not_registered",
+      "item_id": "record_cutover_decision",
+      "message": "side effect record_cutover_decision is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "router_next_action",
+      "message": "public entrypoint router_next_action is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "apply_router_event",
+      "message": "public entrypoint apply_router_event is assigned to unregistered target module router",
+      "metadata": {},
+      "module_id": "router",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "lease_responsibility",
+      "message": "public entrypoint lease_responsibility is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "expire_lease",
+      "message": "public entrypoint expire_lease is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "submit_host_result",
+      "message": "public entrypoint submit_host_result is assigned to unregistered target module host",
+      "metadata": {},
+      "module_id": "host",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "issue_packet",
+      "message": "public entrypoint issue_packet is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "submit_result",
+      "message": "public entrypoint submit_result is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "open_sealed_body_for_role",
+      "message": "public entrypoint open_sealed_body_for_role is assigned to unregistered target module packets",
+      "metadata": {},
+      "module_id": "packets",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "create_flowguard_order",
+      "message": "public entrypoint create_flowguard_order is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "complete_flowguard_order",
+      "message": "public entrypoint complete_flowguard_order is assigned to unregistered target module flowguard_orders",
+      "metadata": {},
+      "module_id": "flowguard_orders",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "review_result",
+      "message": "public entrypoint review_result is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "record_validation_evidence",
+      "message": "public entrypoint record_validation_evidence is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "attempt_final_closure",
+      "message": "public entrypoint attempt_final_closure is assigned to unregistered target module review_closure",
+      "metadata": {},
+      "module_id": "review_closure",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "render_status",
+      "message": "public entrypoint render_status is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "submit_cockpit_event",
+      "message": "public entrypoint submit_cockpit_event is assigned to unregistered target module cockpit",
+      "metadata": {},
+      "module_id": "cockpit",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "import_old_artifact",
+      "message": "public entrypoint import_old_artifact is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "entrypoint_owner_not_registered",
+      "item_id": "evaluate_cutover_gate",
+      "message": "public entrypoint evaluate_cutover_gate is assigned to unregistered target module migration",
+      "metadata": {},
+      "module_id": "migration",
+      "runner": "flowpilot_complete_system_structure",
+      "section": "abstract",
+      "section_path": "known_bad.missing_module_rationale",
+      "severity": "blocker"
+    },
+    {
       "action": "refresh_evidence",
       "classification": "boundary_expected_or_informational",
       "code": "model_maturation_signal_stale",
@@ -207,6 +1113,94 @@
       "section_path": "current",
       "severity": "blocker",
       "signal_id": "startup_control_evidence_fresh"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+      "kind": "owner_module",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
+      "name": "flowpilot_new",
+      "path": "skills/flowpilot/assets/flowpilot_new.py",
+      "priority_score": 29,
+      "release_relevance": "runtime_contract",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "asset:flowpilot_new",
+      "surface_owner": "flowpilot_new"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "needs_structure_split",
+      "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
+      "kind": "script_entrypoint",
+      "maturation_actions": [
+        "split_child_model"
+      ],
+      "maturation_signal_type": "duplicate_primary_edge_path",
+      "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+      "name": "flowguard_project_topology",
+      "path": "scripts/flowguard_project_topology.py",
+      "priority_score": 31,
+      "release_relevance": "public_cli",
+      "repair_type": "defer_structure_split",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "medium",
+      "surface_id": "script:flowguard_project_topology",
+      "surface_owner": "script:flowguard_project_topology"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_evidence",
+      "dedupe_key": "test-tier:all|fix_failing_background_evidence|stale_evidence",
+      "kind": "test_tier_command",
+      "maturation_actions": [
+        "refresh_evidence"
+      ],
+      "maturation_signal_type": "stale_evidence",
+      "message": "smoke_flowpilot_fast has non-final background evidence status: failed",
+      "name": "smoke_flowpilot_fast",
+      "path": "scripts/run_test_tier.py",
+      "priority_score": 1,
+      "release_relevance": "release_gate",
+      "repair_type": "fix_failing_background_evidence",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "critical",
+      "surface_id": "tier-command:all:smoke_flowpilot_fast",
+      "surface_owner": "test-tier:all"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_evidence",
+      "dedupe_key": "test-tier:integration|fix_failing_background_evidence|stale_evidence",
+      "kind": "test_tier_command",
+      "maturation_actions": [
+        "refresh_evidence"
+      ],
+      "maturation_signal_type": "stale_evidence",
+      "message": "smoke_flowpilot_fast has non-final background evidence status: failed",
+      "name": "smoke_flowpilot_fast",
+      "path": "scripts/run_test_tier.py",
+      "priority_score": 1,
+      "release_relevance": "release_gate",
+      "repair_type": "fix_failing_background_evidence",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "full_model_test_code_diagnostic",
+      "severity": "critical",
+      "surface_id": "tier-command:integration:smoke_flowpilot_fast",
+      "surface_owner": "test-tier:integration"
     },
     {
       "classification": "boundary_expected_or_informational",
@@ -497,6 +1491,82 @@
     },
     {
       "classification": "boundary_expected_or_informational",
+      "code": "runtime_node_missing_observation",
+      "code_contract_id": "",
+      "evidence_id": "",
+      "message": "runtime node 'known_bad.runtime_path.node' has no current passing external observation",
+      "metadata": {
+        "runtime_path_finding": {
+          "code": "runtime_node_missing_observation",
+          "evidence_id": "",
+          "message": "runtime node 'known_bad.runtime_path.node' has no current passing external observation",
+          "metadata": {
+            "allowed_error_paths": [],
+            "allowed_next_states": [],
+            "allowed_outputs": [],
+            "allowed_side_effects": [],
+            "allowed_state_writes": [],
+            "boundary_id": "",
+            "child_model_id": "",
+            "code_contract_id": "",
+            "exact": true,
+            "input_case": "",
+            "leaf_model_id": "",
+            "metadata": {},
+            "model_id": "known_bad_runtime_path_missing",
+            "model_obligation_id": "known_bad.runtime_path_required",
+            "model_path": "",
+            "node_id": "known_bad.runtime_path.node",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [],
+            "requires_gateway_binding": false,
+            "sequence_index": null,
+            "state_case": ""
+          },
+          "node_id": "known_bad.runtime_path.node",
+          "observation_id": "",
+          "severity": "blocker"
+        },
+        "runtime_path_report_decision": "runtime_path_alignment_blocked"
+      },
+      "obligation_id": "known_bad.runtime_path_required",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "known_bad_sanity_checks.6.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "runtime_path_missing_ordered_node",
+      "code_contract_id": "",
+      "evidence_id": "",
+      "message": "runtime path does not contain every required ordered node",
+      "metadata": {
+        "runtime_path_finding": {
+          "code": "runtime_path_missing_ordered_node",
+          "evidence_id": "",
+          "message": "runtime path does not contain every required ordered node",
+          "metadata": {
+            "expected_order": [
+              "known_bad.runtime_path.node"
+            ],
+            "observed_order": []
+          },
+          "node_id": "",
+          "observation_id": "",
+          "severity": "blocker"
+        },
+        "runtime_path_report_decision": "runtime_path_alignment_blocked"
+      },
+      "obligation_id": "",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "known_bad_sanity_checks.6.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
       "code": "missing_family_member_mechanism_evidence",
       "evidence_id": "",
       "family_id": "flowpilot.packet_result_return_reconciliation",
@@ -601,6 +1671,84 @@
       "runner": "flowpilot_model_test_alignment",
       "section": "abstract",
       "section_path": "packet_result_family_parity.known_bad_cases.3.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "packet_result_family_shared_kernel_candidate",
+      "classification": "boundary_expected_or_informational",
+      "code": "risky_candidate_kept",
+      "item_id": "",
+      "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "similarity_convergence.architecture_reduction",
+      "severity": "warning"
+    },
+    {
+      "candidate_id": "router_reconciliation_result_case_candidate",
+      "classification": "boundary_expected_or_informational",
+      "code": "risky_candidate_kept",
+      "item_id": "",
+      "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "similarity_convergence.architecture_reduction",
+      "severity": "warning"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_maintenance_test_path",
+      "item_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+      "message": "model is in a similarity maintenance group but declares no test paths",
+      "metadata": {},
+      "model_id": "packet_result_pm_role_work",
+      "relation_id": "",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "similarity_convergence.known_bad_sanity_checks.0.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "stale_model_signature_evidence",
+      "item_id": "",
+      "message": "relation uses one or more model signatures with stale evidence",
+      "metadata": {
+        "left": "packet_result_research",
+        "right": "packet_result_current_node"
+      },
+      "model_id": "",
+      "relation_id": "packet_result_research:packet_result_current_node:same_family_variant",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "similarity_convergence.known_bad_sanity_checks.1.report",
+      "severity": "blocker"
+    },
+    {
+      "classification": "boundary_expected_or_informational",
+      "code": "missing_current_similarity_evidence",
+      "item_id": "",
+      "message": "relation recommends consolidation but has no current passing similarity evidence",
+      "metadata": {},
+      "model_id": "",
+      "relation_id": "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "similarity_convergence.known_bad_sanity_checks.2.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "unsafe_branch_fold_without_replay",
+      "classification": "boundary_expected_or_informational",
+      "code": "conformance_replay_required",
+      "item_id": "",
+      "message": "candidate needs conformance replay before it can support code contraction",
+      "metadata": {},
+      "runner": "flowpilot_model_test_alignment",
+      "section": "abstract",
+      "section_path": "similarity_convergence.known_bad_sanity_checks.3.report",
       "severity": "blocker"
     },
     {
@@ -989,46 +2137,90 @@
     },
     {
       "classification": "boundary_expected_or_informational",
-      "frontier_status": "stopped_by_user",
-      "id": "current_run_is_controlled_user_stop",
+      "id": "current_run_root_missing",
       "runner": "flowpilot_process_liveness",
       "section": "abstract",
       "section_path": "current_run_projection",
-      "severity": "info",
-      "status": "stopped_by_user",
-      "summary": "current run is a controlled user stop, not a normal FlowPilot completion",
-      "terminal_event": "user_requests_run_stop"
+      "severity": "blocking",
+      "summary": ".flowpilot/current.json has no current_run_root"
+    },
+    {
+      "candidate_id": "packet_result_family_shared_kernel_candidate",
+      "classification": "boundary_expected_or_informational",
+      "code": "risky_candidate_kept",
+      "item_id": "",
+      "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+      "metadata": {},
+      "runner": "flowpilot_similarity_convergence",
+      "section": "abstract",
+      "section_path": "architecture_reduction",
+      "severity": "warning"
+    },
+    {
+      "candidate_id": "router_reconciliation_result_case_candidate",
+      "classification": "boundary_expected_or_informational",
+      "code": "risky_candidate_kept",
+      "item_id": "",
+      "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+      "metadata": {},
+      "runner": "flowpilot_similarity_convergence",
+      "section": "abstract",
+      "section_path": "architecture_reduction",
+      "severity": "warning"
     },
     {
       "classification": "boundary_expected_or_informational",
-      "completed_node_count": 0,
-      "id": "route_nodes_never_activated",
-      "review_pass_count": 0,
-      "route_node_count": 0,
-      "runner": "flowpilot_process_liveness",
+      "code": "missing_maintenance_test_path",
+      "item_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+      "message": "model is in a similarity maintenance group but declares no test paths",
+      "metadata": {},
+      "model_id": "packet_result_pm_role_work",
+      "relation_id": "",
+      "runner": "flowpilot_similarity_convergence",
       "section": "abstract",
-      "section_path": "current_run_projection",
-      "severity": "info",
-      "summary": "no route nodes were activated, so per-node execution and reviewer coverage cannot be claimed"
+      "section_path": "known_bad_sanity_checks.0.report",
+      "severity": "blocker"
     },
     {
       "classification": "boundary_expected_or_informational",
-      "id": "normal_completion_not_claimed",
-      "runner": "flowpilot_process_liveness",
+      "code": "stale_model_signature_evidence",
+      "item_id": "",
+      "message": "relation uses one or more model signatures with stale evidence",
+      "metadata": {
+        "left": "packet_result_research",
+        "right": "packet_result_current_node"
+      },
+      "model_id": "",
+      "relation_id": "packet_result_research:packet_result_current_node:same_family_variant",
+      "runner": "flowpilot_similarity_convergence",
       "section": "abstract",
-      "section_path": "current_run_projection",
-      "severity": "info",
-      "summary": "normal route-wide completion was not claimed for the current run"
+      "section_path": "known_bad_sanity_checks.1.report",
+      "severity": "blocker"
     },
     {
       "classification": "boundary_expected_or_informational",
-      "id": "packet_loop_stopped_by_user",
-      "previous_active_packet_status": "router-next-action-ready-for-controller",
-      "runner": "flowpilot_process_liveness",
+      "code": "missing_current_similarity_evidence",
+      "item_id": "",
+      "message": "relation recommends consolidation but has no current passing similarity evidence",
+      "metadata": {},
+      "model_id": "",
+      "relation_id": "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+      "runner": "flowpilot_similarity_convergence",
       "section": "abstract",
-      "section_path": "current_run_projection",
-      "severity": "info",
-      "summary": "packet loop was reconciled into stopped_by_user terminal lifecycle"
+      "section_path": "known_bad_sanity_checks.2.report",
+      "severity": "blocker"
+    },
+    {
+      "candidate_id": "unsafe_branch_fold_without_replay",
+      "classification": "boundary_expected_or_informational",
+      "code": "conformance_replay_required",
+      "item_id": "",
+      "message": "candidate needs conformance replay before it can support code contraction",
+      "metadata": {},
+      "runner": "flowpilot_similarity_convergence",
+      "section": "abstract",
+      "section_path": "known_bad_sanity_checks.3.report",
+      "severity": "blocker"
     },
     {
       "claim_label": "work_complete:await_role_decision:pm-output-wait",
@@ -1083,11 +2275,191 @@
       "step_index": 1
     }
   ],
-  "ok": true,
+  "ok": false,
   "read_only": true,
-  "read_only_execution_count": 29,
-  "runner_count": 108,
+  "read_only_execution_count": 31,
+  "runner_count": 132,
   "runners": [
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_protocol_kernel_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_protocol_kernel",
+      "script": "simulations/run_flowpilot_protocol_kernel_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_protocol_kernel_stress_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_protocol_kernel_stress",
+      "script": "simulations/run_flowpilot_protocol_kernel_stress_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_core_runtime_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_core_runtime",
+      "script": "simulations/run_flowpilot_core_runtime_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_core_runtime_development_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_core_runtime_development",
+      "script": "simulations/run_flowpilot_core_runtime_development_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
     {
       "coverage_tier": "abstract_strong_live_mapping_weaker",
       "finding_count": 0,
@@ -1343,13 +2715,13 @@
         "mode": "read_existing_result",
         "parse_error": null,
         "reason": "runner writes result files by default",
-        "result_path": "simulations/flowpilot_compatibility_layer_pruning_results.json"
+        "result_path": "simulations/flowpilot_unsupported historical_layer_pruning_results.json"
       },
       "ok": true,
       "parsed": true,
       "read_only_mode": "read_existing_result",
-      "runner": "flowpilot_compatibility_layer_pruning",
-      "script": "simulations/run_flowpilot_compatibility_layer_pruning_checks.py",
+      "runner": "flowpilot_unsupported historical_layer_pruning",
+      "script": "simulations/run_flowpilot_unsupported historical_layer_pruning_checks.py",
       "sections": {
         "abstract": {
           "keys": [
@@ -1357,6 +2729,1272 @@
           ],
           "ok": null,
           "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_alignment_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_alignment",
+      "script": "simulations/run_flowpilot_complete_system_alignment_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_development_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_development",
+      "script": "simulations/run_flowpilot_complete_system_development_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_historical_replay_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_historical_replay",
+      "script": "simulations/run_flowpilot_complete_system_historical_replay_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_live_host_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_live_host_readiness",
+      "script": "simulations/run_flowpilot_complete_system_live_host_readiness_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_runtime_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_runtime",
+      "script": "simulations/run_flowpilot_complete_system_runtime_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 74,
+      "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "responsibility_lease_runtime",
+          "message": "FunctionBlock responsibility_lease_runtime is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "leases",
+          "message": "state leases is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "host_runs",
+          "message": "state host_runs is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "role_memory",
+          "message": "state role_memory is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "start_fake_host",
+          "message": "side effect start_fake_host is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_live_host_boundary",
+          "message": "side effect record_live_host_boundary is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "quarantine_late_output",
+          "message": "side effect quarantine_late_output is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "lease_responsibility",
+          "message": "public entrypoint lease_responsibility is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "expire_lease",
+          "message": "public entrypoint expire_lease is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_host_result",
+          "message": "public entrypoint submit_host_result is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_dynamic_host_owner",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_module_rationale",
+          "item_id": "",
+          "message": "target module run_shell has no grouping rationale",
+          "metadata": {
+            "layer": "child",
+            "module_id": "run_shell",
+            "owns_config": [],
+            "owns_function_blocks": [
+              "current_run_shell"
+            ],
+            "owns_side_effects": [],
+            "owns_state": [
+              "current_pointer"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
+            "public_entrypoints": [],
+            "rationale": "",
+            "validation_boundaries": [
+              "run_shell_persistence"
+            ]
+          },
+          "module_id": "run_shell",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "deterministic_router",
+          "message": "FunctionBlock deterministic_router is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "route_mutation_runtime",
+          "message": "FunctionBlock route_mutation_runtime is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "dynamic_host_driver",
+          "message": "FunctionBlock dynamic_host_driver is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "responsibility_lease_runtime",
+          "message": "FunctionBlock responsibility_lease_runtime is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "sealed_packet_runtime",
+          "message": "FunctionBlock sealed_packet_runtime is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "flowguard_work_order_runtime",
+          "message": "FunctionBlock flowguard_work_order_runtime is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "independent_review_runtime",
+          "message": "FunctionBlock independent_review_runtime is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "validation_evidence_runtime",
+          "message": "FunctionBlock validation_evidence_runtime is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "cockpit_status_projection",
+          "message": "FunctionBlock cockpit_status_projection is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "function_block_owner_not_registered",
+          "item_id": "migration_cutover_runtime",
+          "message": "FunctionBlock migration_cutover_runtime is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "active_route",
+          "message": "state active_route is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "router_next_action",
+          "message": "state router_next_action is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "route_mutations",
+          "message": "state route_mutations is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "leases",
+          "message": "state leases is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "host_runs",
+          "message": "state host_runs is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "role_memory",
+          "message": "state role_memory is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "packet_envelopes",
+          "message": "state packet_envelopes is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "packet_bodies",
+          "message": "state packet_bodies is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "result_envelopes",
+          "message": "state result_envelopes is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "result_bodies",
+          "message": "state result_bodies is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "work_orders",
+          "message": "state work_orders is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "flowguard_reports",
+          "message": "state flowguard_reports is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "reviews",
+          "message": "state reviews is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "validation_evidence",
+          "message": "state validation_evidence is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "final_closure",
+          "message": "state final_closure is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "status_projection",
+          "message": "state status_projection is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "user_events",
+          "message": "state user_events is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "imported_evidence",
+          "message": "state imported_evidence is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "state_owner_not_registered",
+          "item_id": "cutover_gate",
+          "message": "state cutover_gate is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "emit_next_action",
+          "message": "side effect emit_next_action is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "mark_evidence_stale",
+          "message": "side effect mark_evidence_stale is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "start_fake_host",
+          "message": "side effect start_fake_host is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_live_host_boundary",
+          "message": "side effect record_live_host_boundary is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "quarantine_late_output",
+          "message": "side effect quarantine_late_output is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "write_packet_body",
+          "message": "side effect write_packet_body is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "write_result_body",
+          "message": "side effect write_result_body is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "verify_body_hash",
+          "message": "side effect verify_body_hash is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "select_flowguard_skill",
+          "message": "side effect select_flowguard_skill is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_proof_artifact",
+          "message": "side effect record_proof_artifact is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "accept_result",
+          "message": "side effect accept_result is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "block_result",
+          "message": "side effect block_result is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "write_backward_chain",
+          "message": "side effect write_backward_chain is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "render_public_status",
+          "message": "side effect render_public_status is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_user_event",
+          "message": "side effect record_user_event is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "classify_old_artifact",
+          "message": "side effect classify_old_artifact is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "side_effect_owner_not_registered",
+          "item_id": "record_cutover_decision",
+          "message": "side effect record_cutover_decision is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "router_next_action",
+          "message": "public entrypoint router_next_action is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "apply_router_event",
+          "message": "public entrypoint apply_router_event is assigned to unregistered target module router",
+          "metadata": {},
+          "module_id": "router",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "lease_responsibility",
+          "message": "public entrypoint lease_responsibility is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "expire_lease",
+          "message": "public entrypoint expire_lease is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_host_result",
+          "message": "public entrypoint submit_host_result is assigned to unregistered target module host",
+          "metadata": {},
+          "module_id": "host",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "issue_packet",
+          "message": "public entrypoint issue_packet is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_result",
+          "message": "public entrypoint submit_result is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "open_sealed_body_for_role",
+          "message": "public entrypoint open_sealed_body_for_role is assigned to unregistered target module packets",
+          "metadata": {},
+          "module_id": "packets",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "create_flowguard_order",
+          "message": "public entrypoint create_flowguard_order is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "complete_flowguard_order",
+          "message": "public entrypoint complete_flowguard_order is assigned to unregistered target module flowguard_orders",
+          "metadata": {},
+          "module_id": "flowguard_orders",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "review_result",
+          "message": "public entrypoint review_result is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "record_validation_evidence",
+          "message": "public entrypoint record_validation_evidence is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "attempt_final_closure",
+          "message": "public entrypoint attempt_final_closure is assigned to unregistered target module review_closure",
+          "metadata": {},
+          "module_id": "review_closure",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "render_status",
+          "message": "public entrypoint render_status is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "submit_cockpit_event",
+          "message": "public entrypoint submit_cockpit_event is assigned to unregistered target module cockpit",
+          "metadata": {},
+          "module_id": "cockpit",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "import_old_artifact",
+          "message": "public entrypoint import_old_artifact is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "entrypoint_owner_not_registered",
+          "item_id": "evaluate_cutover_gate",
+          "message": "public entrypoint evaluate_cutover_gate is assigned to unregistered target module migration",
+          "metadata": {},
+          "module_id": "migration",
+          "runner": "flowpilot_complete_system_structure",
+          "section": "abstract",
+          "section_path": "known_bad.missing_module_rationale",
+          "severity": "blocker"
+        }
+      ],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_structure_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_structure",
+      "script": "simulations/run_flowpilot_complete_system_structure_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_testmesh_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_testmesh",
+      "script": "simulations/run_flowpilot_complete_system_testmesh_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_complete_system_ui_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_complete_system_ui",
+      "script": "simulations/run_flowpilot_complete_system_ui_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "hazards": {
           "keys": [],
@@ -1542,6 +4180,63 @@
         }
       },
       "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_control_surface_contract_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": "[flowguard] start phase=explore work_total=3 progress_steps=10\n[flowguard] progress 30% work=1/3 traces=8 violations=0\n[flowguard] progress 60% work=2/3 traces=24 violations=0\n[flowguard] progress 100% work=3/3 traces=48 violations=0\n"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "runner": "flowpilot_control_surface_contract",
+      "script": "simulations/run_flowpilot_control_surface_contract_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {
+        "default_results_file": "skipped_with_reason: no --json-out path was provided"
+      }
     },
     {
       "coverage_tier": "coverage_strong",
@@ -2182,7 +4877,9 @@
           "present": false
         }
       },
-      "skipped_checks": {}
+      "skipped_checks": {
+        "live_run_projection": "skipped_with_reason: .flowpilot/current.json has no current_run_root"
+      }
     },
     {
       "coverage_tier": "supporting_model_owned",
@@ -2819,6 +5516,51 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_fake_project_rehearsal_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_fake_project_rehearsal",
+      "script": "simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "coverage_strong",
       "finding_count": 0,
       "findings": [],
@@ -2827,12 +5569,12 @@
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "simulations\\run_flowpilot_final_confidence_gate_checks.py"
         ],
-        "exit_code": 0,
+        "exit_code": 1,
         "mode": "executed_read_only",
         "parse_error": null,
         "stderr_tail": ""
       },
-      "ok": true,
+      "ok": false,
       "parsed": true,
       "read_only_mode": "executed_read_only",
       "runner": "flowpilot_final_confidence_gate",
@@ -3128,6 +5870,51 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_lifecycle_guard_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_lifecycle_guard",
+      "script": "simulations/run_flowpilot_lifecycle_guard_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -3593,8 +6380,96 @@
     },
     {
       "coverage_tier": "coverage_strong",
-      "finding_count": 22,
+      "finding_count": 34,
       "findings": [
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+          "kind": "owner_module",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
+          "name": "flowpilot_new",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "priority_score": 29,
+          "release_relevance": "runtime_contract",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "asset:flowpilot_new",
+          "surface_owner": "flowpilot_new"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "needs_structure_split",
+          "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
+          "kind": "script_entrypoint",
+          "maturation_actions": [
+            "split_child_model"
+          ],
+          "maturation_signal_type": "duplicate_primary_edge_path",
+          "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+          "name": "flowguard_project_topology",
+          "path": "scripts/flowguard_project_topology.py",
+          "priority_score": 31,
+          "release_relevance": "public_cli",
+          "repair_type": "defer_structure_split",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "medium",
+          "surface_id": "script:flowguard_project_topology",
+          "surface_owner": "script:flowguard_project_topology"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_evidence",
+          "dedupe_key": "test-tier:all|fix_failing_background_evidence|stale_evidence",
+          "kind": "test_tier_command",
+          "maturation_actions": [
+            "refresh_evidence"
+          ],
+          "maturation_signal_type": "stale_evidence",
+          "message": "smoke_flowpilot_fast has non-final background evidence status: failed",
+          "name": "smoke_flowpilot_fast",
+          "path": "scripts/run_test_tier.py",
+          "priority_score": 1,
+          "release_relevance": "release_gate",
+          "repair_type": "fix_failing_background_evidence",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "critical",
+          "surface_id": "tier-command:all:smoke_flowpilot_fast",
+          "surface_owner": "test-tier:all"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_evidence",
+          "dedupe_key": "test-tier:integration|fix_failing_background_evidence|stale_evidence",
+          "kind": "test_tier_command",
+          "maturation_actions": [
+            "refresh_evidence"
+          ],
+          "maturation_signal_type": "stale_evidence",
+          "message": "smoke_flowpilot_fast has non-final background evidence status: failed",
+          "name": "smoke_flowpilot_fast",
+          "path": "scripts/run_test_tier.py",
+          "priority_score": 1,
+          "release_relevance": "release_gate",
+          "repair_type": "fix_failing_background_evidence",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "full_model_test_code_diagnostic",
+          "severity": "critical",
+          "surface_id": "tier-command:integration:smoke_flowpilot_fast",
+          "surface_owner": "test-tier:integration"
+        },
         {
           "classification": "boundary_expected_or_informational",
           "code": "missing_test_evidence",
@@ -3884,6 +6759,82 @@
         },
         {
           "classification": "boundary_expected_or_informational",
+          "code": "runtime_node_missing_observation",
+          "code_contract_id": "",
+          "evidence_id": "",
+          "message": "runtime node 'known_bad.runtime_path.node' has no current passing external observation",
+          "metadata": {
+            "runtime_path_finding": {
+              "code": "runtime_node_missing_observation",
+              "evidence_id": "",
+              "message": "runtime node 'known_bad.runtime_path.node' has no current passing external observation",
+              "metadata": {
+                "allowed_error_paths": [],
+                "allowed_next_states": [],
+                "allowed_outputs": [],
+                "allowed_side_effects": [],
+                "allowed_state_writes": [],
+                "boundary_id": "",
+                "child_model_id": "",
+                "code_contract_id": "",
+                "exact": true,
+                "input_case": "",
+                "leaf_model_id": "",
+                "metadata": {},
+                "model_id": "known_bad_runtime_path_missing",
+                "model_obligation_id": "known_bad.runtime_path_required",
+                "model_path": "",
+                "node_id": "known_bad.runtime_path.node",
+                "ordered": true,
+                "required": true,
+                "required_observation_ids": [],
+                "requires_gateway_binding": false,
+                "sequence_index": null,
+                "state_case": ""
+              },
+              "node_id": "known_bad.runtime_path.node",
+              "observation_id": "",
+              "severity": "blocker"
+            },
+            "runtime_path_report_decision": "runtime_path_alignment_blocked"
+          },
+          "obligation_id": "known_bad.runtime_path_required",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "known_bad_sanity_checks.6.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "runtime_path_missing_ordered_node",
+          "code_contract_id": "",
+          "evidence_id": "",
+          "message": "runtime path does not contain every required ordered node",
+          "metadata": {
+            "runtime_path_finding": {
+              "code": "runtime_path_missing_ordered_node",
+              "evidence_id": "",
+              "message": "runtime path does not contain every required ordered node",
+              "metadata": {
+                "expected_order": [
+                  "known_bad.runtime_path.node"
+                ],
+                "observed_order": []
+              },
+              "node_id": "",
+              "observation_id": "",
+              "severity": "blocker"
+            },
+            "runtime_path_report_decision": "runtime_path_alignment_blocked"
+          },
+          "obligation_id": "",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "known_bad_sanity_checks.6.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
           "code": "missing_family_member_mechanism_evidence",
           "evidence_id": "",
           "family_id": "flowpilot.packet_result_return_reconciliation",
@@ -3988,6 +6939,84 @@
           "runner": "flowpilot_model_test_alignment",
           "section": "abstract",
           "section_path": "packet_result_family_parity.known_bad_cases.3.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "packet_result_family_shared_kernel_candidate",
+          "classification": "boundary_expected_or_informational",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "similarity_convergence.architecture_reduction",
+          "severity": "warning"
+        },
+        {
+          "candidate_id": "router_reconciliation_result_case_candidate",
+          "classification": "boundary_expected_or_informational",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "similarity_convergence.architecture_reduction",
+          "severity": "warning"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_maintenance_test_path",
+          "item_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+          "message": "model is in a similarity maintenance group but declares no test paths",
+          "metadata": {},
+          "model_id": "packet_result_pm_role_work",
+          "relation_id": "",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "similarity_convergence.known_bad_sanity_checks.0.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_model_signature_evidence",
+          "item_id": "",
+          "message": "relation uses one or more model signatures with stale evidence",
+          "metadata": {
+            "left": "packet_result_research",
+            "right": "packet_result_current_node"
+          },
+          "model_id": "",
+          "relation_id": "packet_result_research:packet_result_current_node:same_family_variant",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "similarity_convergence.known_bad_sanity_checks.1.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_current_similarity_evidence",
+          "item_id": "",
+          "message": "relation recommends consolidation but has no current passing similarity evidence",
+          "metadata": {},
+          "model_id": "",
+          "relation_id": "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "similarity_convergence.known_bad_sanity_checks.2.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "unsafe_branch_fold_without_replay",
+          "classification": "boundary_expected_or_informational",
+          "code": "conformance_replay_required",
+          "item_id": "",
+          "message": "candidate needs conformance replay before it can support code contraction",
+          "metadata": {},
+          "runner": "flowpilot_model_test_alignment",
+          "section": "abstract",
+          "section_path": "similarity_convergence.known_bad_sanity_checks.3.report",
           "severity": "blocker"
         },
         {
@@ -4356,6 +7385,98 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_new_control_plane_duty_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_new_control_plane_duty",
+      "script": "simulations/run_flowpilot_new_control_plane_duty_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [
+            "source_contract"
+          ],
+          "ok": true,
+          "present": true
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_new_entrypoint_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_new_entrypoint",
+      "script": "simulations/run_flowpilot_new_entrypoint_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -5040,50 +8161,16 @@
     },
     {
       "coverage_tier": "supporting_model_owned",
-      "finding_count": 4,
+      "finding_count": 1,
       "findings": [
         {
           "classification": "boundary_expected_or_informational",
-          "frontier_status": "stopped_by_user",
-          "id": "current_run_is_controlled_user_stop",
+          "id": "current_run_root_missing",
           "runner": "flowpilot_process_liveness",
           "section": "abstract",
           "section_path": "current_run_projection",
-          "severity": "info",
-          "status": "stopped_by_user",
-          "summary": "current run is a controlled user stop, not a normal FlowPilot completion",
-          "terminal_event": "user_requests_run_stop"
-        },
-        {
-          "classification": "boundary_expected_or_informational",
-          "completed_node_count": 0,
-          "id": "route_nodes_never_activated",
-          "review_pass_count": 0,
-          "route_node_count": 0,
-          "runner": "flowpilot_process_liveness",
-          "section": "abstract",
-          "section_path": "current_run_projection",
-          "severity": "info",
-          "summary": "no route nodes were activated, so per-node execution and reviewer coverage cannot be claimed"
-        },
-        {
-          "classification": "boundary_expected_or_informational",
-          "id": "normal_completion_not_claimed",
-          "runner": "flowpilot_process_liveness",
-          "section": "abstract",
-          "section_path": "current_run_projection",
-          "severity": "info",
-          "summary": "normal route-wide completion was not claimed for the current run"
-        },
-        {
-          "classification": "boundary_expected_or_informational",
-          "id": "packet_loop_stopped_by_user",
-          "previous_active_packet_status": "router-next-action-ready-for-controller",
-          "runner": "flowpilot_process_liveness",
-          "section": "abstract",
-          "section_path": "current_run_projection",
-          "severity": "info",
-          "summary": "packet loop was reconciled into stopped_by_user terminal lifecycle"
+          "severity": "blocking",
+          "summary": ".flowpilot/current.json has no current_run_root"
         }
       ],
       "metadata": {
@@ -5093,12 +8180,12 @@
           "--json",
           "--no-write-results"
         ],
-        "exit_code": 0,
+        "exit_code": 1,
         "mode": "executed_read_only",
         "parse_error": null,
         "stderr_tail": "[flowguard] start phase=explore work_total=90 progress_steps=10\n[flowguard] progress 10% work=9/90 traces=45 violations=0\n[flowguard] progress 20% work=18/90 traces=237 violations=0\n[flowguard] progress 30% work=27/90 traces=813 violations=0\n[flowguard] progress 40% work=36/90 traces=2102 violations=0\n[flowguard] progress 50% work=45/90 traces=4716 violations=0\n[flowguard] progress 60% work=54/90 traces=9604 violations=0\n[flowguard] progress 70% work=63/90 traces=17782 violations=0\n[flowguard] progress 80% work=72/90 traces=29518 violations=0\n[flowguard] progress 90% work=81/90 traces=44818 violations=0\n[flowguard] progress 100% work=90/90 traces=63682 violations=0\n"
       },
-      "ok": true,
+      "ok": false,
       "parsed": true,
       "read_only_mode": "executed_read_only",
       "runner": "flowpilot_process_liveness",
@@ -5128,6 +8215,58 @@
           "keys": [
             "progress",
             "loop"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "supporting_model_owned",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_project_topology_orientation_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_project_topology_orientation",
+      "script": "simulations/run_flowpilot_project_topology_orientation_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [
+            "safe_graph",
+            "flowguard_explorer"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "hazards": {
+          "keys": [
+            "hazard_checks"
+          ],
+          "ok": true,
+          "present": true
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [
+            "progress"
           ],
           "ok": true,
           "present": true
@@ -5329,6 +8468,51 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_recursive_route_execution_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_recursive_route_execution",
+      "script": "simulations/run_flowpilot_recursive_route_execution_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -6340,6 +9524,51 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_semantic_gate_outcome_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_semantic_gate_outcome",
+      "script": "simulations/run_flowpilot_semantic_gate_outcome_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "supporting_model_owned",
       "finding_count": 0,
       "findings": [],
@@ -6382,6 +9611,133 @@
           ],
           "ok": true,
           "present": true
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 6,
+      "findings": [
+        {
+          "candidate_id": "packet_result_family_shared_kernel_candidate",
+          "classification": "boundary_expected_or_informational",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "runner": "flowpilot_similarity_convergence",
+          "section": "abstract",
+          "section_path": "architecture_reduction",
+          "severity": "warning"
+        },
+        {
+          "candidate_id": "router_reconciliation_result_case_candidate",
+          "classification": "boundary_expected_or_informational",
+          "code": "risky_candidate_kept",
+          "item_id": "",
+          "message": "candidate looks reducible but must be kept unless stronger evidence is added",
+          "metadata": {},
+          "runner": "flowpilot_similarity_convergence",
+          "section": "abstract",
+          "section_path": "architecture_reduction",
+          "severity": "warning"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_maintenance_test_path",
+          "item_id": "maintenance:packet_result_pm_role_work+packet_result_research",
+          "message": "model is in a similarity maintenance group but declares no test paths",
+          "metadata": {},
+          "model_id": "packet_result_pm_role_work",
+          "relation_id": "",
+          "runner": "flowpilot_similarity_convergence",
+          "section": "abstract",
+          "section_path": "known_bad_sanity_checks.0.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "stale_model_signature_evidence",
+          "item_id": "",
+          "message": "relation uses one or more model signatures with stale evidence",
+          "metadata": {
+            "left": "packet_result_research",
+            "right": "packet_result_current_node"
+          },
+          "model_id": "",
+          "relation_id": "packet_result_research:packet_result_current_node:same_family_variant",
+          "runner": "flowpilot_similarity_convergence",
+          "section": "abstract",
+          "section_path": "known_bad_sanity_checks.1.report",
+          "severity": "blocker"
+        },
+        {
+          "classification": "boundary_expected_or_informational",
+          "code": "missing_current_similarity_evidence",
+          "item_id": "",
+          "message": "relation recommends consolidation but has no current passing similarity evidence",
+          "metadata": {},
+          "model_id": "",
+          "relation_id": "ack_single_card_return:ack_bundle_card_return:same_family_variant",
+          "runner": "flowpilot_similarity_convergence",
+          "section": "abstract",
+          "section_path": "known_bad_sanity_checks.2.report",
+          "severity": "blocker"
+        },
+        {
+          "candidate_id": "unsafe_branch_fold_without_replay",
+          "classification": "boundary_expected_or_informational",
+          "code": "conformance_replay_required",
+          "item_id": "",
+          "message": "candidate needs conformance replay before it can support code contraction",
+          "metadata": {},
+          "runner": "flowpilot_similarity_convergence",
+          "section": "abstract",
+          "section_path": "known_bad_sanity_checks.3.report",
+          "severity": "blocker"
+        }
+      ],
+      "metadata": {
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations\\run_flowpilot_similarity_convergence_checks.py"
+        ],
+        "exit_code": 0,
+        "mode": "executed_read_only",
+        "parse_error": null,
+        "stderr_tail": ""
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "executed_read_only",
+      "runner": "flowpilot_similarity_convergence",
+      "script": "simulations/run_flowpilot_similarity_convergence_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "source": {
           "keys": [],
@@ -6654,6 +10010,51 @@
       "skipped_checks": {}
     },
     {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": "declared result file is missing: simulations/flowpilot_stop_host_orphan_recovery_results.json",
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_stop_host_orphan_recovery_results.json"
+      },
+      "ok": false,
+      "parsed": false,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_stop_host_orphan_recovery",
+      "script": "simulations/run_flowpilot_stop_host_orphan_recovery_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
       "coverage_tier": "supporting_model_owned",
       "finding_count": 0,
       "findings": [],
@@ -6721,6 +10122,51 @@
       "read_only_mode": "read_existing_result",
       "runner": "flowpilot_structure_maintenance",
       "script": "simulations/run_flowpilot_structure_maintenance_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_symmetric_work_packet_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_symmetric_work_packet",
+      "script": "simulations/run_flowpilot_symmetric_work_packet_checks.py",
       "sections": {
         "abstract": {
           "keys": [],
@@ -7041,6 +10487,51 @@
           ],
           "ok": null,
           "present": true
+        },
+        "hazards": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "live": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "progress": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        },
+        "source": {
+          "keys": [],
+          "ok": null,
+          "present": false
+        }
+      },
+      "skipped_checks": {}
+    },
+    {
+      "coverage_tier": "unclassified_model_tier",
+      "finding_count": 0,
+      "findings": [],
+      "metadata": {
+        "exit_code": null,
+        "mode": "read_existing_result",
+        "parse_error": null,
+        "reason": "runner writes result files by default",
+        "result_path": "simulations/flowpilot_validation_pm_gate_results.json"
+      },
+      "ok": true,
+      "parsed": true,
+      "read_only_mode": "read_existing_result",
+      "runner": "flowpilot_validation_pm_gate",
+      "script": "simulations/run_flowpilot_validation_pm_gate_checks.py",
+      "sections": {
+        "abstract": {
+          "keys": [],
+          "ok": null,
+          "present": false
         },
         "hazards": {
           "keys": [],

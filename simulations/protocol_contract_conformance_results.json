@@ -28,7 +28,7 @@
         "root_contract_reviewer_blocked"
       ],
       "display_status_available_before_startup_fact_review": true,
-      "legacy_recipient_normalization_limited_to_unmarked_packets": true,
+      "unsupported historical_recipient_normalization_limited_to_unmarked_packets": true,
       "material_dispatch_block_event_registered": true,
       "material_dispatch_block_report_writer": true,
       "material_dispatch_card_has_pre_route_material_exception": true,
@@ -160,7 +160,7 @@
         "prior_path_context_review.superseded_nodes_considered",
         "recovery_evidence",
         "recovery_evidence.chat_history_progress_inference_used",
-        "recovery_evidence.crew_rehydration_report_path",
+        "recovery_evidence.role_binding_recovery_report_path",
         "recovery_evidence.packet_ledger_path",
         "recovery_evidence.resume_reentry_path",
         "recovery_evidence.role_recovery_report_path",

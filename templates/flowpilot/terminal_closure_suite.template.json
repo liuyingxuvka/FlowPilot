@@ -20,7 +20,7 @@
     "verify_self_interrogation_index_clean",
     "run_lifecycle_reconciliation",
     "pause_or_delete_heartbeat",
-    "archive_crew_and_role_memory",
+    "archive_role_bindings_and_role_memory",
     "write_flowpilot_skill_improvement_report",
     "write_final_report"
   ],
@@ -105,7 +105,7 @@
       "clean": false
     },
     "role_memory": {
-      "path": ".flowpilot/runs/<run-id>/crew_memory",
+      "path": ".flowpilot/runs/<run-id>/role_binding_memory",
       "required_for_current_run": "<true|false>",
       "absence_is_pass_claim": false,
       "file_count": 0,

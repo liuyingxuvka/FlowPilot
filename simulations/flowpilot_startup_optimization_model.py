@@ -17,7 +17,7 @@ Risk intent brief:
   heartbeat, role-binding authority, role core receipts, reviewer external-fact
   review, common ledger ACK clearance, PM activation, and Controller
   envelope-only boundaries remain intact.
-- Blindspot: this is a control-plane model. Host-specific subagent spawn and
+- Blindspot: this is a control-plane model. Host-specific sidecar role open and
   Codex heartbeat behavior still require runtime tests and local install checks.
 """
 
@@ -274,7 +274,7 @@ class StartupOptimizationStep:
     """Model one optimized startup transition.
 
     Input x State -> Set(Output x State)
-    reads: startup answers, run pointers, crew ledger, role-core receipts,
+    reads: startup answers, run pointers, role-binding ledger, role-core receipts,
     continuation proof, controller boundary, audit/display evidence, reviewer
     report, PM prep completion, PM activation.
     writes: one startup control-plane action and its durable evidence flag.
@@ -286,7 +286,7 @@ class StartupOptimizationStep:
     reads = (
         "startup_answers",
         "run_state",
-        "crew_ledger",
+        "role_binding_ledger",
         "role_core_prompt_delivery",
         "continuation_binding",
         "startup_mechanical_audit",
@@ -298,7 +298,7 @@ class StartupOptimizationStep:
         "pm_activation",
     )
     writes = (
-        "crew_ledger",
+        "role_binding_ledger",
         "role_core_prompt_delivery",
         "continuation_binding",
         "startup_mechanical_audit",

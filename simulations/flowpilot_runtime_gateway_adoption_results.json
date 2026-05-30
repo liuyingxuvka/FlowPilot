@@ -713,7 +713,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -749,7 +749,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -785,7 +785,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -821,7 +821,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -857,7 +857,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -893,7 +893,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -929,7 +929,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -965,7 +965,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1001,7 +1001,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1037,7 +1037,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1073,7 +1073,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1109,7 +1109,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1145,7 +1145,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1181,7 +1181,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1217,7 +1217,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.router_json_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1246,7 +1246,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.packet_runtime_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1275,7 +1275,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.packet_runtime_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1304,7 +1304,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.packet_runtime_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1332,7 +1332,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.role_output_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1360,7 +1360,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.role_output_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1388,7 +1388,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.card_runtime_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1416,7 +1416,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.card_runtime_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1444,7 +1444,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.break_glass_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1472,7 +1472,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.break_glass_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1500,7 +1500,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.break_glass_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",
@@ -1528,7 +1528,7 @@
           ],
           "current": true,
           "gateway_id": "flowpilot.user_flow_gateway",
-          "legacy_bypass_reason": "",
+          "unsupported historical_bypass_reason": "",
           "metadata": [
             [
               "inventory",

@@ -81,7 +81,7 @@ Run checks in this order:
    - `python scripts/install_flowpilot.py --sync-repo-owned --json`
    - `python scripts/audit_local_install_sync.py --json`
    - `python scripts/install_flowpilot.py --check --json`
-7. Run `python scripts/smoke_autopilot.py`.
+7. Run `python scripts/smoke_flowpilot.py`.
 
 Long-running FlowGuard checks should be launched as background jobs where
 practical, with logs written under `tmp/`.

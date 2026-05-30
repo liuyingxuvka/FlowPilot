@@ -28,7 +28,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="heartbeat_loaded_state",
-            action="continuation turn loads local state, active route, capability evidence, latest heartbeat or manual-resume evidence, lifecycle evidence, and crew ledger",
+            action="continuation turn loads local state, active route, capability evidence, latest heartbeat or manual-resume evidence, lifecycle evidence, and role-binding ledger",
             heartbeat_loaded_state=True,
         )
         return
@@ -71,12 +71,12 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_loaded_crew_memory:
+    if _route_scaffold_ready(state) and not state.heartbeat_loaded_role_binding_memory:
         yield _step(
             state,
-            label="heartbeat_loaded_crew_memory",
-            action="continuation turn loads all six compact role memory packets before restoring or replacing crew roles",
-            heartbeat_loaded_crew_memory=True,
+            label="heartbeat_loaded_role_binding_memory",
+            action="continuation turn loads all six compact role memory packets before restoring or replacing runtime responsibilities",
+            heartbeat_loaded_role_binding_memory=True,
         )
         return
 
@@ -84,7 +84,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="heartbeat_host_spawn_or_rehydrate_six_roles",
-            action="router asks the host to restore or spawn all six live roles before PM resume",
+            action="router asks the host to restore or open all runtime-requested roles before PM resume",
             heartbeat_host_rehydrate_requested=True,
         )
         return
@@ -92,8 +92,8 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
     if _route_scaffold_ready(state) and not state.heartbeat_restored_crew:
         yield _step(
             state,
-            label="heartbeat_restored_six_agent_crew",
-            action="continuation turn restores live crew roles when available and prepares memory-seeded replacements otherwise",
+            label="heartbeat_restored_required_role_binding_coverage",
+            action="continuation turn restores live runtime responsibilities when available and prepares memory-seeded replacements otherwise",
             heartbeat_restored_crew=True,
             replacement_roles_seeded_from_memory=True,
         )
@@ -102,7 +102,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
     if _route_scaffold_ready(state) and not state.heartbeat_rehydrated_crew:
         yield _step(
             state,
-            label="heartbeat_rehydrated_six_agent_crew",
+            label="heartbeat_rehydrated_required_role_binding_coverage",
             action="rehydrate the six FlowPilot roles from role memory packets before asking the project manager for the next capability runway",
             heartbeat_rehydrated_crew=True,
         )
@@ -117,12 +117,12 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if _route_scaffold_ready(state) and not state.crew_rehydration_report_written:
+    if _route_scaffold_ready(state) and not state.role_binding_recovery_report_written:
         yield _step(
             state,
-            label="crew_rehydration_report_written",
+            label="role_binding_recovery_report_written",
             action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
-            crew_rehydration_report_written=True,
+            role_binding_recovery_report_written=True,
         )
         return
 

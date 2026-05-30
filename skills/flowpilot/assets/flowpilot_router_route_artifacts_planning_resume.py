@@ -63,13 +63,13 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
     if not resume_path.exists():
         raise RouterError("PM resume decision requires continuation/resume_reentry.json")
     resume_evidence = read_json(resume_path)
-    rehydration_path = run_root / "continuation" / "crew_rehydration_report.json"
+    rehydration_path = run_root / "continuation" / "role_binding_recovery_report.json"
     if not run_state["flags"].get("resume_roles_restored") or not rehydration_path.exists():
-        raise RouterError("PM resume decision requires crew_rehydration_report before PM runway")
+        raise RouterError("PM resume decision requires role_binding_recovery_report before PM runway")
     rehydration_report = read_json(rehydration_path)
-    if rehydration_report.get("all_six_roles_ready") is not True:
+    if rehydration_report.get("required_role_bindings_ready") is not True:
         raise RouterError("PM resume decision requires runtime-required role bindings ready")
-    if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("background_agents_mode") != "single-agent":
+    if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("runtime_role_assistance_mode") != "single-agent":
         raise RouterError("PM resume decision requires project_manager memory rehydration")
     decision = str(payload.get("decision") or "continue_current_packet_loop")
     if decision not in PM_RESUME_DECISION_ALLOWED_VALUES:
@@ -108,15 +108,15 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
                 "execution_frontier": project_relative(project_root, run_root / "execution_frontier.json"),
                 "packet_ledger": project_relative(project_root, run_root / "packet_ledger.json"),
                 "prompt_delivery_ledger": project_relative(project_root, run_root / "prompt_delivery_ledger.json"),
-                "crew_ledger": project_relative(project_root, run_root / "crew_ledger.json"),
-                "crew_memory": project_relative(project_root, run_root / "crew_memory"),
-                "crew_rehydration_report": project_relative(project_root, rehydration_path),
+                "role_binding_ledger": project_relative(project_root, run_root / "role_binding_ledger.json"),
+                "role_binding_memory": project_relative(project_root, run_root / "role_binding_memory"),
+                "role_binding_recovery_report": project_relative(project_root, rehydration_path),
                 "pm_prior_path_context": project_relative(project_root, _pm_prior_path_context_path(run_root)),
                 "route_history_index": project_relative(project_root, _route_history_index_path(run_root)),
             },
-            "crew_rehydration_report": {
+            "role_binding_recovery_report": {
                 "path": project_relative(project_root, rehydration_path),
-                "all_six_roles_ready": bool(rehydration_report.get("all_six_roles_ready")),
+                "required_role_bindings_ready": bool(rehydration_report.get("required_role_bindings_ready")),
                 "current_run_memory_complete": bool(rehydration_report.get("current_run_memory_complete")),
                 "pm_memory_rehydrated": bool(rehydration_report.get("pm_memory_rehydrated")),
                 "missing_memory_role_keys": rehydration_report.get("missing_memory_role_keys") or [],

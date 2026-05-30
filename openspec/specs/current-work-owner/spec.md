@@ -30,7 +30,7 @@ projection.
 #### Scenario: Wait detail remains null but current work is known
 - **WHEN** the wait-detail projection has no `waiting_for_role` and another runtime source identifies the active responsibility owner
 - **THEN** `current_work` names the active responsibility owner
-- **AND** FlowPilot does not backfill `waiting_for_role` as a separate legacy authority
+- **AND** FlowPilot does not backfill `waiting_for_role` as a separate unsupported historical authority
 
 #### Scenario: Ownership does not complete work
 - **WHEN** `current_work` names a role, Router, Controller, or user

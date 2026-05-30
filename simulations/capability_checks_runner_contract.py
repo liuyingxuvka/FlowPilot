@@ -12,7 +12,7 @@ REQUIRED_LABELS = (
     "startup_dialog_stopped_for_user_answers",
     "startup_display_surface_option_recorded",
     "startup_display_entry_action_done",
-    "startup_background_agent_option_recorded",
+    "startup_runtime_role_assistance_option_recorded",
     "startup_continuation_option_recorded",
     "run_directory_created",
     "current_pointer_written",
@@ -26,21 +26,21 @@ REQUIRED_LABELS = (
     "visible_self_interrogation_completed",
     "self_interrogation_record_written",
     "contract_frozen",
-    "six_agent_crew_policy_written",
-    "project_manager_spawned_fresh_for_task",
-    "human_like_reviewer_spawned_fresh_for_task",
-    "process_flowguard_officer_spawned_fresh_for_task",
-    "product_flowguard_officer_spawned_fresh_for_task",
-    "worker_a_spawned_fresh_for_task",
-    "worker_b_spawned_fresh_for_task",
-    "crew_ledger_written",
+    "required_role_binding_role_binding_policy_written",
+    "project_manager_opened_for_current_task",
+    "human_like_reviewer_opened_for_current_task",
+    "process_flowguard_officer_opened_for_current_task",
+    "product_flowguard_officer_opened_for_current_task",
+    "worker_a_opened_for_current_task",
+    "worker_b_opened_for_current_task",
+    "role_binding_ledger_written",
     "role_identity_protocol_recorded",
     "pm_flowguard_delegation_policy_recorded",
     "officer_owned_async_modeling_policy_recorded",
     "officer_model_report_provenance_policy_recorded",
     "controller_coordination_boundary_recorded",
     "independent_approval_protocol_recorded",
-    "crew_memory_packets_written",
+    "role_binding_memory_packets_written",
     "generated_resource_ledger_initialized",
     "activity_stream_initialized",
     "self_interrogation_pm_ratified",
@@ -135,8 +135,8 @@ REQUIRED_LABELS = (
     "codex_plan_synced",
     "capability_user_flow_diagram_refreshed",
     "capability_user_flow_diagram_emitted",
-    "live_subagent_start_authorized",
-    "fresh_six_live_subagents_started",
+    "runtime_role_binding_start_authorized",
+    "fresh_six_runtime_role_bindings_opened",
     "startup_preflight_reviewer_fact_report_blocked",
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
@@ -147,12 +147,12 @@ REQUIRED_LABELS = (
     "heartbeat_loaded_execution_frontier",
     "heartbeat_loaded_packet_ledger",
     "heartbeat_checked_or_restarted_persistent_router_daemon",
-    "heartbeat_loaded_crew_memory",
+    "heartbeat_loaded_role_binding_memory",
     "heartbeat_host_spawn_or_rehydrate_six_roles",
-    "heartbeat_restored_six_agent_crew",
-    "heartbeat_rehydrated_six_agent_crew",
+    "heartbeat_restored_required_role_binding_coverage",
+    "heartbeat_rehydrated_required_role_binding_coverage",
     "heartbeat_injected_current_run_memory_into_roles",
-    "crew_rehydration_report_written",
+    "role_binding_recovery_report_written",
     "heartbeat_asked_project_manager",
     "heartbeat_pm_controller_reminder_checked",
     "heartbeat_reviewer_dispatch_policy_checked",
@@ -167,8 +167,8 @@ REQUIRED_LABELS = (
     "child_node_sidecar_scan_need_found_no_pool",
     "child_node_sidecar_scan_need_found_existing_idle",
     "sidecar_scope_checked",
-    "idle_subagent_reused",
-    "subagent_spawned_on_demand",
+    "idle_sidecar_role_reused",
+    "sidecar_role_opened_on_demand",
     "sidecar_report_returned",
     "authorized_integration_review_packet_completed",
     "pm_review_hold_instruction_written",
@@ -313,8 +313,8 @@ REQUIRED_LABELS = (
     "lifecycle_reconciliation_completed",
     "terminal_router_daemon_stopped",
     "terminal_lifecycle_frontier_written",
-    "crew_memory_archived_at_terminal",
-    "crew_archived_at_terminal",
+    "role_binding_memory_archived_at_terminal",
+    "role_binding_ledger_archived_at_terminal",
     "flowpilot_skill_improvement_report_written",
     "pm_completion_decision_recorded",
     "completed",
@@ -380,16 +380,16 @@ def _state_id(state: model.State) -> str:
         f"{state.product_function_architecture_reviewer_challenged},"
         f"{state.product_architecture_self_interrogation_record_written},"
         f"{state.product_architecture_self_interrogation_findings_dispositioned}|"
-        f"crew={state.crew_policy_written},{state.crew_count},"
+        f"crew={state.role_binding_policy_written},{state.role_binding_count},"
         f"{state.project_manager_ready},{state.reviewer_ready},"
         f"{state.process_flowguard_officer_ready},"
         f"{state.product_flowguard_officer_ready},"
         f"{state.worker_a_ready},{state.worker_b_ready},"
-        f"{state.crew_ledger_written},"
-        f"{state.crew_memory_policy_written},"
-        f"{state.crew_memory_packets_written},"
+        f"{state.role_binding_ledger_written},"
+        f"{state.role_binding_memory_policy_written},"
+        f"{state.role_binding_memory_packets_written},"
         f"{state.pm_initial_capability_decision_recorded},"
-        f"{state.crew_memory_archived},{state.crew_archived}|"
+        f"{state.role_binding_memory_archived},{state.role_binding_ledger_archived}|"
         f"officer_async={state.pm_flowguard_delegation_policy_recorded},"
         f"{state.officer_owned_async_modeling_policy_recorded},"
         f"{state.officer_model_report_provenance_policy_recorded},"
@@ -461,12 +461,12 @@ def _state_id(state: model.State) -> str:
         f"{state.stable_heartbeat_launcher_recorded},"
         f"{state.heartbeat_loaded_state},"
         f"{state.heartbeat_loaded_frontier},"
-        f"{state.heartbeat_loaded_crew_memory},"
+        f"{state.heartbeat_loaded_role_binding_memory},"
         f"{state.heartbeat_host_rehydrate_requested},"
         f"{state.heartbeat_restored_crew},"
         f"{state.heartbeat_rehydrated_crew},"
         f"{state.heartbeat_injected_current_run_memory_into_roles},"
-        f"{state.crew_rehydration_report_written},"
+        f"{state.role_binding_recovery_report_written},"
         f"{state.replacement_roles_seeded_from_memory},"
         f"{state.heartbeat_pm_decision_requested},"
         f"{state.pm_resume_decision_recorded},"
@@ -502,9 +502,9 @@ def _state_id(state: model.State) -> str:
         f"{state.activity_stream_initialized},"
         f"{state.activity_stream_latest_event_written}|"
         f"user_flow={state.capability_user_flow_diagram_emitted}|"
-        f"live_subagents={state.live_subagent_decision_recorded},"
-        f"{state.live_subagents_started},"
-        f"{state.live_subagents_current_task_fresh},"
+        f"runtime_role_bindings={state.runtime_role_assistance_decision_recorded},"
+        f"{state.runtime_role_bindings_opened},"
+        f"{state.runtime_role_bindings_current_task_ready},"
         f"{state.historical_agent_ids_compared},"
         f"{state.reused_historical_agent_ids},"
         f"{state.single_agent_role_continuity_authorized}|"
@@ -513,9 +513,9 @@ def _state_id(state: model.State) -> str:
         f"{state.startup_pm_independent_gate_audit_done}|"
         f"work_beyond_startup={state.work_beyond_startup_allowed}|"
         f"sidecar={state.child_node_sidecar_scan_done},"
-        f"{state.sidecar_need},{state.subagent_pool_exists},"
-        f"{state.subagent_idle_available},{state.subagent_scope_checked}|"
-        f"sub={state.subagent_status}|"
+        f"{state.sidecar_need},{state.sidecar_role_pool_exists},"
+        f"{state.sidecar_role_idle_available},{state.sidecar_role_scope_checked}|"
+        f"sub={state.sidecar_role_status}|"
         f"pm_review={state.pm_review_hold_instruction_written},"
         f"{state.worker_output_ready_for_review},"
         f"{state.pm_review_release_order_written},"

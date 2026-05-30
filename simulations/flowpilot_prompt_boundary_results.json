@@ -17,17 +17,21 @@
         "router_startup_intake_no_direct_apply_wording": true,
         "router_startup_intake_returns_to_router_work_board": true,
         "router_table_prompt_forbids_router_commands_between_rows": true,
-        "skill_daemon_rows_distinguish_receipt_from_apply": true,
+        "skill_daemon_rows_distinguish_receipt_from_apply": false,
         "skill_has_only_current_start_entrypoint": true,
-        "skill_has_pre_daemon_split": true,
+        "skill_has_pre_daemon_split": false,
         "skill_heartbeat_no_return_to_router": true,
         "skill_no_broad_wait_boundary_prefer_run_until_wait": true,
         "skill_startup_intake_no_direct_apply_wording": true,
-        "skill_startup_intake_returns_to_router_work_board": true,
+        "skill_startup_intake_returns_to_router_work_board": false,
         "work_card_ack_continues_and_waits_for_router_output": true
       },
-      "failures": [],
-      "ok": true
+      "failures": [
+        "skill_has_pre_daemon_split",
+        "skill_daemon_rows_distinguish_receipt_from_apply",
+        "skill_startup_intake_returns_to_router_work_board"
+      ],
+      "ok": false
     },
     "expected_rejections": {
       "failures": [],
@@ -96,5 +100,5 @@
     }
   },
   "model": "flowpilot_prompt_boundary",
-  "ok": true
+  "ok": false
 }

@@ -237,7 +237,7 @@ class State:
     process_contract_bindings: frozenset[str] = field(default_factory=lambda: PROCESS_CONTRACT_BINDING_REQUIRED)
     pm_role_work_router_rejects_foreign_contracts: bool = True
     strict_role_work_results_reject_recipient_drift: bool = True
-    legacy_recipient_normalization_limited_to_unmarked_packets: bool = True
+    unsupported_historical_recipient_normalization_limited_to_unmarked_packets: bool = True
     wait_event_producer_bindings: frozenset[str] = field(default_factory=lambda: WAIT_EVENT_PRODUCER_REQUIRED)
     control_blocker_followup_routes_to_event_producer: bool = True
 
@@ -350,7 +350,7 @@ def _valid_state() -> State:
         process_contract_bindings=PROCESS_CONTRACT_BINDING_REQUIRED,
         pm_role_work_router_rejects_foreign_contracts=True,
         strict_role_work_results_reject_recipient_drift=True,
-        legacy_recipient_normalization_limited_to_unmarked_packets=True,
+        unsupported_historical_recipient_normalization_limited_to_unmarked_packets=True,
         wait_event_producer_bindings=WAIT_EVENT_PRODUCER_REQUIRED,
         control_blocker_followup_routes_to_event_producer=True,
     )
@@ -474,7 +474,7 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             state,
             strict_role_work_results_reject_recipient_drift=False,
-            legacy_recipient_normalization_limited_to_unmarked_packets=False,
+            unsupported_historical_recipient_normalization_limited_to_unmarked_packets=False,
         )
     if scenario == WAIT_EVENT_PRODUCER_MISMATCH:
         return replace(
@@ -705,8 +705,8 @@ def _process_contract_binding_failures(state: State) -> list[str]:
         failures.append("PM role-work process can select a foreign contract family such as worker.current_node")
     if not state.strict_role_work_results_reject_recipient_drift:
         failures.append("strict PM role-work result next_recipient drift is normalized instead of rejected")
-    if not state.legacy_recipient_normalization_limited_to_unmarked_packets:
-        failures.append("legacy PM role-work result recipient normalization is not limited to unmarked packets")
+    if not state.unsupported_historical_recipient_normalization_limited_to_unmarked_packets:
+        failures.append("unsupported_historical PM role-work result recipient normalization is not limited to unmarked packets")
     if not state.control_blocker_followup_routes_to_event_producer:
         failures.append("control-blocker follow-up wait can target a role that cannot produce the selected event")
     if state.process_contract_bindings != PROCESS_CONTRACT_BINDING_REQUIRED:
@@ -1044,7 +1044,7 @@ def _material_dispatch_direct_preflight_required(router_source: str) -> bool:
 def _declared_reviewer_block_flags(router: Any) -> frozenset[str]:
     flags: set[str] = set()
     for event_name, meta in router.EXTERNAL_EVENTS.items():
-        if bool(meta.get("legacy")):
+        if bool(meta.get("unsupported_historical")):
             continue
         if (
             event_name.startswith("reviewer_blocks_")
@@ -1381,7 +1381,7 @@ def _router_rejects_strict_role_work_recipient_drift(router_source: str) -> bool
     )
 
 
-def _router_limits_legacy_recipient_normalization(router_source: str) -> bool:
+def _router_limits_unsupported_historical_recipient_normalization(router_source: str) -> bool:
     segment = _function_segment(router_source, "_validate_role_work_result_process_binding")
     normalization_segment = _function_segment(router_source, "_normalize_pm_role_work_result_recipient")
     return (
@@ -1546,7 +1546,7 @@ def collect_source_state(project_root: Path) -> State:
         strict_role_work_results_reject_recipient_drift=_router_rejects_strict_role_work_recipient_drift(
             router_source
         ),
-        legacy_recipient_normalization_limited_to_unmarked_packets=_router_limits_legacy_recipient_normalization(
+        unsupported_historical_recipient_normalization_limited_to_unmarked_packets=_router_limits_unsupported_historical_recipient_normalization(
             router_source
         ),
         wait_event_producer_bindings=_router_wait_event_producer_bindings(router_source),

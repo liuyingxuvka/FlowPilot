@@ -1,4 +1,4 @@
-"""Compatibility facade for `run_flowpilot_role_output_runtime_checks.py`."""
+"""Unsupported_historical facade for `run_flowpilot_role_output_runtime_checks.py`."""
 
 from __future__ import annotations
 

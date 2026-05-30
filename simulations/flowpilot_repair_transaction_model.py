@@ -836,7 +836,7 @@ def active_node_and_repair_origin_are_known(state: State, trace) -> InvariantRes
     del trace
     if state.active_node_kind not in NODE_KINDS:
         return InvariantResult.fail(
-            "active node kind is outside repair transaction event compatibility table"
+            "active node kind is outside repair transaction event unsupported_historical table"
         )
     if state.control_repair_origin not in CONTROL_REPAIR_ORIGINS:
         return InvariantResult.fail(
@@ -1050,7 +1050,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="active_node_and_repair_origin_are_known",
-        description="Repair transactions classify active node kind and repair origin before event compatibility checks.",
+        description="Repair transactions classify active node kind and repair origin before event unsupported_historical checks.",
         predicate=active_node_and_repair_origin_are_known,
     ),
     Invariant(
@@ -1233,7 +1233,7 @@ def hazard_states() -> dict[str, State]:
             transaction_plan_kind="await_existing_event",
             existing_event_producer_found=False,
         ),
-        "retired_event_replay_plan_kind": _safe_base(
+        "unsupported_event_replay_plan_kind": _safe_base(
             transaction_plan_kind="event_replay",
             existing_event_producer_found=False,
         ),

@@ -57,7 +57,7 @@ Closure order:
 1. reconcile state, frontier, route, current pointer, and run index;
 2. reconcile pause, stopped, resumed, and terminal lifecycle records;
 3. stop heartbeat or record manual-resume no-automation evidence;
-4. archive crew and role memory without treating archived roles as live;
+4. archive role binding and role memory without treating archived roles as live;
 5. write nonblocking FlowPilot skill-improvement observations;
 6. record PM completion decision;
 7. emit final report.
@@ -113,7 +113,7 @@ paths from the router delivery envelope.
     "terminal_backward_replay_passed": true,
     "task_completion_projection_ready_for_pm_terminal_closure": true,
     "execution_frontier_current": true,
-    "crew_ledger_current": true,
+    "role_binding_ledger_current": true,
     "continuation_binding_current": true,
     "current_ledgers_clean": true,
     "pm_suggestion_ledger_clean": true,

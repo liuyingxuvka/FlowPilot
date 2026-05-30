@@ -18,11 +18,11 @@ RESULTS_PATH = ROOT / "flowpilot_card_envelope_results.json"
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "legacy_delivery_treated_as_read": "legacy prompt delivery record was treated as a v2 read receipt",
+    "unsupported_historical_delivery_treated_as_read": "unsupported_historical prompt delivery record was treated as a v2 read receipt",
     "preapply_pending_relayed_as_committed_artifact": "Controller relayed planned system-card action before committed envelope artifact existed",
     "preapply_planned_action_marked_relay_allowed": "pre-apply system-card planning action was marked relay-allowed",
     "public_apply_deliver_system_card_used": "public Controller apply attempted to deliver a relay-only system-card action",
-    "legacy_return_event_field_used": "legacy return_event JSON field was still emitted",
+    "unsupported_historical_return_event_field_used": "unsupported_historical return_event JSON field was still emitted",
     "missing_checkin_instruction": "card envelope omitted explicit runtime check-in instruction",
     "missing_checkin_tool_command": "card envelope omitted explicit runtime check-in instruction",
     "missing_card_ack_token": "card envelope omitted direct Router ACK token or instruction",
@@ -31,8 +31,8 @@ HAZARD_EXPECTED_FAILURES = {
     "startup_card_token_missing_frontier_optional_binding": "startup card ACK token did not allow missing route/frontier binding",
     "role_handwrites_ack_instead_of_runtime": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
     "card_ack_recorded_as_external_event": "card ack was accepted as a normal external event instead of direct Router ACK",
-    "card_ack_external_event_auto_rerouted": "legacy card ACK external-event entrypoint still auto-rerouted instead of hard failing",
-    "card_ack_external_event_not_rejected": "legacy card ACK external-event entrypoint was not rejected",
+    "card_ack_external_event_auto_rerouted": "unsupported_historical card ACK external-event entrypoint still auto-rerouted instead of hard failing",
+    "card_ack_external_event_not_rejected": "unsupported_historical card ACK external-event entrypoint was not rejected",
     "check_card_return_apply_optional": "check_card_return_event changed state but was marked apply_required false",
     "missing_read_receipt": "required system card coverage passed without valid read receipt and ack/report envelope",
     "missing_ack_report": "required system card coverage passed without valid read receipt and ack/report envelope",
@@ -88,7 +88,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|steps={state.steps}|"
-        f"legacy={state.legacy_prompt_delivery_recorded},{state.legacy_delivery_treated_as_read}|"
+        f"unsupported_historical={state.unsupported_historical_prompt_delivery_recorded},{state.unsupported_historical_delivery_treated_as_read}|"
         f"io={state.resume_tick_active},{state.role_io_protocol_injected},"
         f"{state.role_io_ack_current_tick},{state.role_io_ack_current_agent}|"
         f"lifecycle={state.internal_delivery_action_exposed},{state.planned_artifact_paths_exposed},"
@@ -103,7 +103,7 @@ def _state_id(state: model.State) -> str:
         f"{state.direct_ack_token_frontier_optional_when_missing},"
         f"{state.direct_ack_token_requires_frontier_before_available},"
         f"{state.pending_return_recorded}|"
-        f"legacy_field={state.legacy_return_event_field_used}|"
+        f"unsupported_historical_field={state.unsupported_historical_return_event_field_used}|"
         f"controller={state.controller_relayed_card_envelope},{state.controller_envelope_only},"
         f"delivery_fact={state.controller_delivery_fact_checked},"
         f"{state.controller_delivery_receipt_recorded},"
@@ -241,28 +241,28 @@ def _progress_report(graph: dict[str, object]) -> dict[str, object]:
 
 
 def _scenario_report() -> dict[str, object]:
-    legacy = model.legacy_prompt_delivery_state()
-    legacy_expected_bad = model.legacy_expected_bad_state()
+    unsupported_historical = model.unsupported_historical_prompt_delivery_state()
+    unsupported_historical_expected_bad = model.unsupported_historical_expected_bad_state()
     target = model.target_v2_state()
-    legacy_failures = model.invariant_failures(legacy)
-    legacy_bad_failures = model.invariant_failures(legacy_expected_bad)
+    unsupported_historical_failures = model.invariant_failures(unsupported_historical)
+    unsupported_historical_bad_failures = model.invariant_failures(unsupported_historical_expected_bad)
     target_failures = model.invariant_failures(target)
-    expected_legacy_bad = HAZARD_EXPECTED_FAILURES["legacy_delivery_treated_as_read"]
+    expected_unsupported_historical_bad = HAZARD_EXPECTED_FAILURES["unsupported_historical_delivery_treated_as_read"]
     return {
         "ok": (
-            not legacy_failures
-            and any(expected_legacy_bad in failure for failure in legacy_bad_failures)
+            not unsupported_historical_failures
+            and any(expected_unsupported_historical_bad in failure for failure in unsupported_historical_bad_failures)
             and not target_failures
         ),
-        "legacy_v1_old_rules": {
-            "ok": not legacy_failures,
-            "interpretation": "legacy delivery can exist as history, but it does not authorize v2 advancement",
-            "failures": legacy_failures,
+        "unsupported_historical_v1_old_rules": {
+            "ok": not unsupported_historical_failures,
+            "interpretation": "unsupported_historical delivery can exist as history, but it does not authorize v2 advancement",
+            "failures": unsupported_historical_failures,
         },
-        "legacy_v1_under_v2_rules": {
-            "ok": any(expected_legacy_bad in failure for failure in legacy_bad_failures),
-            "expected_failure": expected_legacy_bad,
-            "failures": legacy_bad_failures,
+        "unsupported_historical_v1_under_v2_rules": {
+            "ok": any(expected_unsupported_historical_bad in failure for failure in unsupported_historical_bad_failures),
+            "expected_failure": expected_unsupported_historical_bad,
+            "failures": unsupported_historical_bad_failures,
         },
         "target_v2_card_return_event_loop": {
             "ok": not target_failures,

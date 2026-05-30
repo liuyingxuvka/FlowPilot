@@ -78,5 +78,5 @@ The first production patch should avoid broad architecture churn:
 
 - Do not push to GitHub in this task.
 - Do not replace all existing material/research/current-node packet flows.
-- Do not allow Controller to spawn role work without PM request authority.
+- Do not allow Controller to open role work without PM request authority.
 - Do not auto-apply officer or worker results to the route without PM decision.

@@ -272,7 +272,7 @@ def _check_current_source() -> dict[str, object]:
             "process_contract_bindings": sorted(state.process_contract_bindings),
             "pm_role_work_router_rejects_foreign_contracts": state.pm_role_work_router_rejects_foreign_contracts,
             "strict_role_work_results_reject_recipient_drift": state.strict_role_work_results_reject_recipient_drift,
-            "legacy_recipient_normalization_limited_to_unmarked_packets": state.legacy_recipient_normalization_limited_to_unmarked_packets,
+            "unsupported_historical_recipient_normalization_limited_to_unmarked_packets": state.unsupported_historical_recipient_normalization_limited_to_unmarked_packets,
             "wait_event_producer_bindings": sorted(state.wait_event_producer_bindings),
             "control_blocker_followup_routes_to_event_producer": state.control_blocker_followup_routes_to_event_producer,
         },

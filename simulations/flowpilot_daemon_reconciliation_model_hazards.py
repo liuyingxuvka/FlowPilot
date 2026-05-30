@@ -12,7 +12,7 @@ def hazard_states() -> dict[str, State]:
     return {
         "completed_controller_action_repeated": replace(
             safe,
-            pending_action_kind="rehydrate_role_agents",
+            pending_action_kind="rehydrate_role_bindings",
             pending_action_status="done",
             controller_receipt_status="done",
             controller_receipt_payload_quality="complete",
@@ -232,7 +232,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "computed_from_pending_before_reconciliation": replace(
             safe,
-            pending_action_kind="rehydrate_role_agents",
+            pending_action_kind="rehydrate_role_bindings",
             pending_action_status="pending",
             role_output_ledger_submitted=True,
             canonical_artifact_exists=True,
@@ -623,7 +623,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "blocked_receipt_repeated_instead_of_blocker": replace(
             safe,
-            pending_action_kind="rehydrate_role_agents",
+            pending_action_kind="rehydrate_role_bindings",
             pending_action_status="blocked",
             controller_receipt_status="blocked",
             controller_receipt_reconciled=True,

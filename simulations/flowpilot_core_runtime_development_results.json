@@ -1,0 +1,131 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=14 initial_states=1 traces=105",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "checks_before_tests",
+      "code_before_openspec",
+      "console_leaks_sealed_body",
+      "fixed_role_topology_reintroduced",
+      "git_before_install",
+      "install_before_background",
+      "prior_runtime_state_authoritative",
+      "release_before_git",
+      "router_before_packets",
+      "runtime_before_flowguard_model"
+    ],
+    "hazards": {
+      "checks_before_tests": [
+        "routine checks passed before focused tests existed"
+      ],
+      "code_before_openspec": [
+        "FlowGuard development model ran before OpenSpec contract validation"
+      ],
+      "console_leaks_sealed_body": [
+        "console exposed sealed packet or result body"
+      ],
+      "fixed_role_topology_reintroduced": [
+        "fixed role topology was required as current authority"
+      ],
+      "git_before_install": [
+        "git commit happened before install sync/check"
+      ],
+      "install_before_background": [
+        "install sync/check ran before background evidence was inspected"
+      ],
+      "prior_runtime_state_authoritative": [
+        "prior runtime state was used as current authority"
+      ],
+      "release_before_git": [
+        "release completion was claimed before local git closure"
+      ],
+      "router_before_packets": [
+        "router runtime was implemented before lease/packet mechanics"
+      ],
+      "runtime_before_flowguard_model": [
+        "runtime assets were written before development-process modeling"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_core_runtime_development_process",
+  "ok": true,
+  "result_type": "flowpilot_core_runtime_development_checks",
+  "target_plan": {
+    "failures": [],
+    "labels": [
+      "start_runtime_development",
+      "validate_openspec_contract",
+      "run_flowguard_development_model",
+      "write_runtime_assets",
+      "implement_ledger_runtime",
+      "implement_lease_packet_runtime",
+      "implement_router_runtime",
+      "implement_flowguard_review_closure_console",
+      "write_focused_tests",
+      "run_routine_checks",
+      "inspect_background_regressions",
+      "sync_install_and_checks",
+      "commit_local_git",
+      "complete_runtime_development"
+    ],
+    "ok": true,
+    "state": {
+      "background_regressions_inspected": true,
+      "flowguard_dev_model_passed": true,
+      "flowguard_review_closure_console_done": true,
+      "git_committed": true,
+      "install_synced_and_checked": true,
+      "lease_packet_runtime_done": true,
+      "ledger_runtime_done": true,
+      "openspec_validated": true,
+      "release_claimed": true,
+      "router_runtime_done": true,
+      "routine_checks_passed": true,
+      "runtime_assets_written": true,
+      "status": "complete",
+      "tests_written": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_core_runtime_development_model.py"
+        ],
+        "freshness": "current",
+        "id": "development_process_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/build-black-box-flowpilot-runtime/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "target_development_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_core_runtime_development_model.py"
+        ],
+        "freshness": "current",
+        "id": "development_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

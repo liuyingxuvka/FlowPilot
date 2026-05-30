@@ -14,14 +14,14 @@ ASSETS = ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
-runtime = importlib.import_module("ai_project_runtime.runtime")
-run_shell = importlib.import_module("ai_project_runtime.run_shell")
-host = importlib.import_module("ai_project_runtime.host")
-packets = importlib.import_module("ai_project_runtime.packets")
-flowguard_orders = importlib.import_module("ai_project_runtime.flowguard_orders")
-review_closure = importlib.import_module("ai_project_runtime.review_closure")
-cockpit = importlib.import_module("ai_project_runtime.cockpit")
-migration = importlib.import_module("ai_project_runtime.migration")
+runtime = importlib.import_module("flowpilot_core_runtime.runtime")
+run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
+host = importlib.import_module("flowpilot_core_runtime.host")
+packets = importlib.import_module("flowpilot_core_runtime.packets")
+flowguard_orders = importlib.import_module("flowpilot_core_runtime.flowguard_orders")
+review_closure = importlib.import_module("flowpilot_core_runtime.review_closure")
+cockpit = importlib.import_module("flowpilot_core_runtime.cockpit")
+migration = importlib.import_module("flowpilot_core_runtime.migration")
 complete_development_runner = importlib.import_module("simulations.run_flowpilot_complete_system_development_checks")
 complete_structure_runner = importlib.import_module("simulations.run_flowpilot_complete_system_structure_checks")
 complete_ui_runner = importlib.import_module("simulations.run_flowpilot_complete_system_ui_checks")
@@ -62,7 +62,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
                     {
                         "status": "confirmed",
                         "source": "headless_startup_intake",
-                        "startup_answers": {"background_agents": "allow", "display_surface": "cockpit"},
+                        "startup_answers": {"runtime_role_assistances": "allow", "display_surface": "cockpit"},
                         "body_path": str(body.relative_to(root)),
                         "body_hash": body_hash,
                         "receipt_path": str(receipt.relative_to(root)),
@@ -192,7 +192,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         )
         runtime.record_validation_evidence(ledger, "unit-validation")
         runtime.record_completion_claim(ledger, source="chat", claim="done")
-        ledger["open_resources"].append("background-agent-slot")
+        ledger["open_resources"].append("runtime-role-slot")
         ledger["residual_risks"].append("live-host missing")
         ledger["old_ui_evidence"].append("old screenshot")
         closure = runtime.attempt_final_closure(ledger, "unit-validation")

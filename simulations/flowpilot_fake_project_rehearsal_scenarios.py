@@ -679,21 +679,21 @@ def scenario_orphan_runner_summary_recovery(work_root: Path) -> dict[str, Any]:
     }
 
 
-def scenario_retired_side_command(work_root: Path) -> dict[str, Any]:
+def scenario_unsupported_side_command(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
-    root = reset_scenario_root(work_root, "retired_side_command")
+    root = reset_scenario_root(work_root, "unsupported_side_command")
     help_result = run_raw_cli(root, command_log, "--help")
     ensure(help_result.returncode == 0, f"help failed: {help_result.stderr}")
     for expected in ("start", "run-fake-e2e", "run-until-wait", "status", "patrol", "submit-result"):
         ensure(expected in help_result.stdout, f"formal command missing from help: {expected}")
-    for retired in ("complete-flowguard", "record-validation", "close"):
-        ensure(retired not in help_result.stdout, f"retired command appears in help: {retired}")
+    for unsupported in ("complete-flowguard", "record-validation", "close"):
+        ensure(unsupported not in help_result.stdout, f"unsupported command appears in help: {unsupported}")
 
     rejected = run_raw_cli(root, command_log, "--json", "complete-flowguard")
-    ensure(rejected.returncode != 0, "retired complete-flowguard command was accepted")
-    ensure("invalid choice" in rejected.stderr, f"retired command did not fail as invalid choice: {rejected.stderr}")
+    ensure(rejected.returncode != 0, "unsupported complete-flowguard command was accepted")
+    ensure("invalid choice" in rejected.stderr, f"unsupported command did not fail as invalid choice: {rejected.stderr}")
     return {
-        "name": "retired_side_command",
+        "name": "unsupported_side_command",
         "ok": True,
         "root": str(root),
         "observations": {"complete_flowguard_invalid_choice": True},
@@ -714,7 +714,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("stop_terminal_fence", scenario_stop_terminal_fence),
     ("host_liveness_bridge_recovery", scenario_host_liveness_bridge_recovery),
     ("orphan_runner_summary_recovery", scenario_orphan_runner_summary_recovery),
-    ("retired_side_command", scenario_retired_side_command),
+    ("unsupported_side_command", scenario_unsupported_side_command),
 )
 
 

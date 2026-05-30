@@ -3,7 +3,7 @@
 ## Purpose
 TBD - created by archiving change simplify-python-structure. Update Purpose after archive.
 ## Requirements
-### Requirement: Preserve Baseline And Compatibility
+### Requirement: Preserve Baseline And Unsupported historical
 The maintenance pass SHALL record a rollback baseline before production-code
 edits and SHALL preserve existing public module names, CLI entrypoints, command
 arguments, import paths, event names, and persisted JSON payload shapes.
@@ -12,7 +12,7 @@ arguments, import paths, event names, and persisted JSON payload shapes.
 - **WHEN** the simplification pass begins
 - **THEN** the current local `main` commit and local backup location are recorded before changing source files
 
-#### Scenario: Compatibility facade remains
+#### Scenario: Unsupported historical facade remains
 - **WHEN** a large module is split into helper modules
 - **THEN** the original module remains importable and delegates or re-exports the compatible public surface
 

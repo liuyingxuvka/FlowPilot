@@ -2141,7 +2141,7 @@
           "transaction_plan_kind": "packet_reissue"
         }
       },
-      "retired_event_replay_plan_kind": {
+      "unsupported_event_replay_plan_kind": {
         "detected": true,
         "expected_failure": "repair transaction used unsupported executable plan kind",
         "failures": [

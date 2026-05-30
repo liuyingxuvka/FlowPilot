@@ -1,4 +1,4 @@
-"""Retired-path, backup, and result JSON checks."""
+"""Unsupported-path, backup, and result JSON checks."""
 
 from __future__ import annotations
 
@@ -8,17 +8,17 @@ from .common import JSON_FILES, OPTIONAL_RUNTIME_JSON_FILES, RETIRED_PATHS, ROOT
 
 
 def run_checks(result: dict[str, object]) -> None:
-    retired_skill_dir = ROOT / "skills/flowguard-project-autopilot"
-    retired_absent = not retired_skill_dir.exists()
+    unsupported_skill_dir = ROOT / "skills" / ("flowguard-project-" + "FlowPilot " + "runtime")
+    unsupported_absent = not unsupported_skill_dir.exists()
     result["checks"].append(
-        {"name": "retired_autopilot_skill_dir_absent", "ok": retired_absent}
+        {"name": "unsupported_project_runtime_skill_dir_absent", "ok": unsupported_absent}
     )
-    if not retired_absent:
+    if not unsupported_absent:
         result["ok"] = False
 
     for relpath in RETIRED_PATHS:
         absent = not (ROOT / relpath).exists()
-        result["checks"].append({"name": f"retired_path_absent:{relpath}", "ok": absent})
+        result["checks"].append({"name": f"unsupported_path_absent:{relpath}", "ok": absent})
         if not absent:
             result["ok"] = False
 

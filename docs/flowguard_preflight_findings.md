@@ -5,14 +5,14 @@ Date: 2026-05-04
 ## Current Finding Set
 
 The active FlowPilot continuation model is heartbeat-only continuation plus
-explicit manual resume. The retired external recovery layer is no longer part of
+explicit manual resume. The unsupported external recovery layer is no longer part of
 the supported controller, PM, reviewer, heartbeat, installation, or lifecycle
 surface.
 
 Current source and runtime checks must preserve these boundaries:
 
 - the project manager may ask for continuation capability evidence, but may not
-  require a retired recovery layer before route work can continue;
+  require a unsupported recovery layer before route work can continue;
 - the controller wakes only into the packet control plane and must ask PM for a
   `PM_DECISION` before dispatching work;
 - the controller may read packet/result envelopes only; packet/result bodies
@@ -81,13 +81,13 @@ python simulations\run_flowpilot_recursive_closure_reconciliation_checks.py
 python scripts\install_flowpilot.py --sync-repo-owned --json
 python scripts\audit_local_install_sync.py --json
 python scripts\install_flowpilot.py --check --json
-python scripts\smoke_autopilot.py
+python scripts\smoke_flowpilot.py
 ```
 
 Results:
 
 - FlowGuard schema version: `1.0`;
-- install self-check: passed, including retired-path absence checks;
+- install self-check: passed, including unsupported-path absence checks;
 - local install sync audit: passed, including source-fresh installed skill
   checks;
 - meta model: 564071 states, 584243 edges, zero invariant failures, zero stuck
@@ -98,7 +98,7 @@ Results:
   checks;
 - recursive closure reconciliation model: passed, including parent/module
   traversal and dirty terminal-closure hazard detection;
-- smoke autopilot: passed.
+- smoke FlowPilot: passed.
 
 ## 2026-05-16 Small Pre-Release Maintenance Note
 
@@ -122,5 +122,5 @@ passed, until a later release-level validation run.
 
 Earlier preflight notes explored a broader recovery architecture. Those notes
 are superseded by this file and by the current executable checks. New work must
-follow the current finding set above rather than reconstructing retired recovery
+follow the current finding set above rather than reconstructing unsupported recovery
 behavior from old logs.

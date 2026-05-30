@@ -65,7 +65,7 @@ Wakeup sequence:
    it does not authorize a manual Router loop. Any `work_chain_status` value
    is diagnostic only and must not skip resume re-entry.
 2. Resolve `.flowpilot/current.json`, then load the active run state,
-   execution frontier, active route, crew ledger, crew memory, latest
+   execution frontier, active route, role-binding ledger, role-binding memory, latest
    heartbeat/manual-resume evidence, packet/status ledger, and controller relay
    history. Do not open any `packet_body.md` or `result_body.md`.
 3. Check `runtime/router_daemon_status.json`, `runtime/router_daemon.lock`, and
@@ -73,7 +73,7 @@ Wakeup sequence:
    Controller to that ledger; if it is missing or stale, restart the daemon from
    current-run persisted state before route, packet, or role recovery continues.
 4. Restore the visible plan from current-run route/display state.
-5. Run the six-role liveness preflight for PM, reviewer, FlowGuard officers,
+5. Run the runtime-role liveness preflight for PM, reviewer, FlowGuard officers,
    worker A, worker B, and the currently awaited role from the packet ledger.
    `wait_agent` timeout is `timeout_unknown`, not active. Missing, cancelled,
    unknown, or timeout-unknown roles must be replaced or blocked before asking

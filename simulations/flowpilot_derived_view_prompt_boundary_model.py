@@ -3,7 +3,7 @@
 Risk intent:
 - remaining lifecycle scans must ask the shared closure kernel before clearing
   waits or blockers;
-- facade compatibility maps must be owned by registry modules or derived from
+- facade unsupported_historical maps must be owned by registry modules or derived from
   registry rows instead of drifting as hand-written copies;
 - role-output/process bindings must prefer contract-index runtime facts and
   make any Python fallback visible;
@@ -257,7 +257,7 @@ class DerivedViewPromptBoundaryStep:
     reads: closure classification, lifecycle records, registry rows, facade
     exports, contract-index bindings, prompt-policy assets, card manifest rows,
     and physical ledger authority boundaries
-    writes: derived compatibility views, progress/blocker decisions,
+    writes: derived unsupported_historical views, progress/blocker decisions,
     prompt-policy validation evidence, and bounded fallback visibility records
     idempotency: derived views are recomputed from authority rows and prompt
     validation is keyed by manifest card id plus prompt-policy asset hash
@@ -277,7 +277,7 @@ class DerivedViewPromptBoundaryStep:
         "physical_ledgers",
     )
     writes = (
-        "derived_compatibility_views",
+        "derived_unsupported_historical_views",
         "blocker_wait_decisions",
         "prompt_policy_validation",
         "fallback_visibility_records",

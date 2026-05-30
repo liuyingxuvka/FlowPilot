@@ -79,7 +79,7 @@ class FlowPilotHistoricalLiveRunReplayMatrixTests(unittest.TestCase):
         self.assertTrue(p0_rows["production_replay_adapter"]["production_replay_adapter_required"])
         self.assertFalse(p0_rows["production_replay_adapter"]["production_replay_adapter_present"])
         self.assertIn("adapter gap", p0_rows["production_replay_adapter"]["confidence_boundary"])
-        self.assertIn("rehydrate_role_agents", p0_rows["host_role_lifecycle"]["entrypoints"])
+        self.assertIn("rehydrate_role_bindings", p0_rows["host_role_lifecycle"]["entrypoints"])
         self.assertIn("packet_runtime", p0_rows["relay_receipt_mechanics"]["entrypoints"])
 
     def test_historical_live_run_known_bad_cases_are_rejected(self) -> None:

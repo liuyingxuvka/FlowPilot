@@ -50,7 +50,7 @@ long-form public explanation lives in `docs/protocol.md`.
    diagnostic-only `agent_id` for same-task continuation diagnostics. A role
    becomes active only when the runtime asks for that responsibility and the
    host returns an addressable current-run binding. IDs from prior routes, old
-   crew ledgers, or older role-memory packets are audit history only and must
+   role-binding ledgers, or older role-memory packets are audit history only and must
    not be resumed, relabeled, or counted as current role-binding evidence.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
@@ -327,7 +327,7 @@ Use FlowPilot. Ask the startup questions first.
 ```
 
 FlowPilot invocation only opens the three-question startup prompt. It is not
-authorization for role agents, fallback execution,
+authorization for role bindings, fallback execution,
 scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
@@ -744,8 +744,8 @@ Repeat until complete or blocked:
    `.flowpilot/current.json` only as the foreground UI/default target. Then load
    `.flowpilot/runs/<run-id>/state.json`,
    `.flowpilot/runs/<run-id>/execution_frontier.json`,
-   `.flowpilot/runs/<run-id>/crew_ledger.json`,
-   `.flowpilot/runs/<run-id>/crew_memory/`, active route,
+   `.flowpilot/runs/<run-id>/role_binding_ledger.json`,
+   `.flowpilot/runs/<run-id>/role_binding_memory/`, active route,
    active node, continuation mode, last heartbeat or manual-resume record,
    lifecycle evidence, and last checkpoint.
    `.flowpilot/current.json` is not daemon authority after a run binding exists;
@@ -1211,9 +1211,9 @@ Conditional:
   concrete reviewer reasons before divergence or loop closure. A screenshot
   existing is not proof that the UI looks good enough.
 - Sidecar opportunity checks happen at child-node entry. Parent/module review
-  may identify likely sidecar areas, but it does not open role agents or assign
+  may identify likely sidecar areas, but it does not open role bindings or assign
   node ownership.
-- Sidecar role agents may only receive bounded helper tasks inside the active
+- Sidecar role bindings may only receive bounded helper tasks inside the active
   child node. They cannot own the child node, route advancement, acceptance
   floor, checkpoint, or completion decision.
 - Reuse a suitable idle role binding before opening a new one. Open only on demand

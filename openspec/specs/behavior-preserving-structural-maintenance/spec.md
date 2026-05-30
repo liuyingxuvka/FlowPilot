@@ -49,7 +49,7 @@ bad refactor-process states before production code movement is trusted.
 
 #### Scenario: Known bad process paths fail
 
-- **GIVEN** a refactor skips baseline, deletes compatibility entrypoints,
+- **GIVEN** a refactor skips baseline, deletes unsupported historical entrypoints,
   changes protocol fields, validates after multiple slices, or pushes before
   install/public-boundary checks
 - **WHEN** the structural-refactor model evaluates the state

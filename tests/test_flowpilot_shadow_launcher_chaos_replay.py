@@ -53,7 +53,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertIsInstance(payload, dict)
         return payload
 
-    def stop_spawned_daemon(self, router_script: Path, root: Path, started: dict) -> dict:
+    def stop_opened_daemon(self, router_script: Path, root: Path, started: dict) -> dict:
         spawn_info = {}
         for item in started.get("folded_applied_actions", []):
             result = item.get("result") if isinstance(item, dict) else {}
@@ -90,7 +90,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
             self.assertTrue((run_root / "router_state.json").exists())
             self.assertTrue((run_root / "runtime" / "router_daemon.lock").exists())
         finally:
-            stopped = self.stop_spawned_daemon(router_script, root, started)
+            stopped = self.stop_opened_daemon(router_script, root, started)
 
         lock = read_json(run_root / "runtime" / "router_daemon.lock")
         self.assertTrue(stopped["ok"])

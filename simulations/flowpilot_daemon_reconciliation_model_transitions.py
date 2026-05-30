@@ -472,7 +472,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "heartbeat_opens_rehydrate_pending_action",
             _step(
                 state,
-                pending_action_kind="rehydrate_role_agents",
+                pending_action_kind="rehydrate_role_bindings",
                 pending_action_status="pending",
                 role_wait_cleared_after_event=False,
                 stale_daemon_snapshot_loaded=True,
@@ -511,7 +511,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "heartbeat_opens_rehydrate_pending_action_after_role_output",
             _step(
                 state,
-                pending_action_kind="rehydrate_role_agents",
+                pending_action_kind="rehydrate_role_bindings",
                 pending_action_status="pending",
                 stale_daemon_snapshot_loaded=True,
             ),
@@ -533,7 +533,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if (
-        state.pending_action_kind == "rehydrate_role_agents"
+        state.pending_action_kind == "rehydrate_role_bindings"
         and not state.role_output_ledger_submitted
         and state.controller_receipt_status == "none"
     ):
@@ -572,7 +572,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.pending_action_kind == "rehydrate_role_agents" and state.controller_receipt_status == "none":
+    if state.pending_action_kind == "rehydrate_role_bindings" and state.controller_receipt_status == "none":
         yield Transition(
             "controller_writes_complete_rehydrate_receipt",
             _step(
@@ -600,7 +600,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if (
-        state.pending_action_kind == "rehydrate_role_agents"
+        state.pending_action_kind == "rehydrate_role_bindings"
         and state.controller_receipt_status == "done"
         and not state.controller_receipt_reconciled
     ):
@@ -631,7 +631,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if (
-        state.pending_action_kind == "rehydrate_role_agents"
+        state.pending_action_kind == "rehydrate_role_bindings"
         and state.controller_receipt_status == "blocked"
         and not state.controller_receipt_reconciled
     ):

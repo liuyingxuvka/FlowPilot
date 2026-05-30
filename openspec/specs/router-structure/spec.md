@@ -41,7 +41,7 @@ and route/terminal behavior.
 - **THEN** startup/runtime state, controller scheduling, work-packet dispatch,
   event dispatch, repair, route/frontier, and terminal ledger phase controllers
   SHALL each have a child module owner
-- **AND** `flowpilot_router.py` SHALL keep only compatibility wrappers,
+- **AND** `flowpilot_router.py` SHALL keep only unsupported historical wrappers,
   CLI parsing, and root coordination glue for those phase controllers.
 
 ### Requirement: Prompt content is externalized through PromptStore

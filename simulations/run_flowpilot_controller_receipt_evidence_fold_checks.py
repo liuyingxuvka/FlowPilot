@@ -317,8 +317,8 @@ def _receipt_registered_actions() -> set[str]:
         in EVIDENCE_BACKED_RELAY_ACTIONS
         | {
             "load_role_recovery_state",
-            "recover_role_agents",
-            "rehydrate_role_agents",
+            "recover_role_bindings",
+            "rehydrate_role_bindings",
             "confirm_controller_core_boundary",
             "write_display_surface_status",
             "deliver_mail",

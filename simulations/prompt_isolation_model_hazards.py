@@ -33,7 +33,7 @@ def _ready(**changes: object) -> State:
         user_request_provenance="explicit_user_request",
         user_intake_ready=True,
         roles_started=True,
-        fresh_role_agents_started=True,
+        fresh_role_bindings_started=True,
         role_core_prompts_injected=True,
         controller_core_loaded=True,
         controller_boundary_confirmation_written=True,
@@ -214,7 +214,7 @@ def hazard_states() -> dict[str, State]:
             user_request_recorded=False,
             user_request_provenance="none",
         ),
-        "roles_started_without_fresh_live_agents": _ready(fresh_role_agents_started=False),
+        "roles_started_without_current_role_bindings": _ready(fresh_role_bindings_started=False),
         "roles_before_runtime_kit": State(
             router_loaded=True,
             run_scoped_bootstrap_created=True,

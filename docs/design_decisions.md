@@ -5,7 +5,7 @@
 `flowpilot` is a new orchestration skill, not a patch to the existing heartbeat
 skill.
 
-It uses heartbeat ideas, but its core identity is project autopilot:
+It uses heartbeat ideas, but its core identity is project FlowPilot runtime:
 
 - persistent state;
 - route versions;
@@ -34,9 +34,9 @@ assistant must stop immediately after asking and wait for the user's later
 reply before banner display, route writes, child skills, role bindings, heartbeat
 probes, image generation, or implementation.
 
-Run modes are retired entirely. A compact later reply may provide all three
+Run modes are unsupported entirely. A compact later reply may provide all three
 startup answers at once, but host limits, invocation text, existing state, and
-prior routes cannot authorize role agents, scheduled jobs, fallback
+prior routes cannot authorize role bindings, scheduled jobs, fallback
 execution, or display-surface choices.
 
 Removing modes does not change hard-gate behavior or the quality floor.
@@ -65,7 +65,7 @@ not resumed as current state.
 The skill is strongly bound to real FlowGuard and the `model-first-function-flow`
 skill.
 
-If real FlowGuard cannot be imported, model-backed autopilot setup is blocked.
+If real FlowGuard cannot be imported, model-backed project-control runtime setup is blocked.
 
 FlowGuard is both process designer and checker. New route structures,
 capability routing, recovery branches, heartbeat behavior, and stateful target
@@ -138,7 +138,7 @@ FlowGuard Mermaid graphs remain diagnostic exports and are off by default.
 
 ## Capability Router
 
-The autopilot should route to specialized skills through explicit gates. It is
+The FlowPilot runtime should route to specialized skills through explicit gates. It is
 a process controller, not a place to copy every downstream prompt.
 
 Child-skill fidelity is a hard gate. When a capability declares a
@@ -254,7 +254,7 @@ Role authority is persistent in the run ledger, while live bindings depend on
 current runtime requests and host/tool support. Heartbeat, sleep, manual
 resume, or host boundaries may make stored role ids unavailable. FlowPilot
 therefore stores compact role memory packets under
-`.flowpilot/runs/<run-id>/crew_memory/` and treats them as the authoritative recovery state.
+`.flowpilot/runs/<run-id>/role_binding_memory/` and treats them as the authoritative recovery state.
 A resume may reuse a live agent when the host supports it, but an unavailable
 role may be replaced from its latest memory packet only after explicit user
 fallback approval. Raw chat transcripts are not the memory source of truth.
@@ -281,7 +281,7 @@ project-manager node decision
 -> bounded/disjoint sidecar task
 -> report returned
 -> authorized integration/review packet
--> worker returns to idle crew slot
+-> worker returns to idle role binding slot
 ```
 
 Worker agents must not own child nodes, checkpoints, route advancement,
@@ -291,7 +291,7 @@ route movement.
 
 After meaningful PM decisions, reviewer judgements, FlowGuard officer reports,
 or worker sidecar reports, the role's report path and memory packet are both
-updated before checkpoint. Terminal closure archives both the crew ledger and
+updated before checkpoint. Terminal closure archives both the role-binding ledger and
 role memory status after lifecycle reconciliation.
 
 ## Skill Improvement Reports

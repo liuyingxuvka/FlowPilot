@@ -157,7 +157,7 @@ def _next_control_blocker_action(router: ModuleType, project_root: Path, run_sta
     active = run_state.get('active_control_blocker')
     if not isinstance(active, dict):
         return None
-    if router._resume_reentry_gate_pending(run_state) and active.get('originating_action_type') not in {'load_resume_state', 'rehydrate_role_agents'}:
+    if router._resume_reentry_gate_pending(run_state) and active.get('originating_action_type') not in {'load_resume_state', 'rehydrate_role_bindings'}:
         return None
     record = router._control_blocker_record(project_root, active)
     artifact_rel = str(record.get('blocker_artifact_path') or active.get('blocker_artifact_path') or '')

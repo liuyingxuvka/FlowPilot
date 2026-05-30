@@ -4,9 +4,9 @@ Risk intent brief:
 - Recovery is a hard control-plane priority. Any heartbeat/manual resume
   recovery or mid-run role liveness fault must enter the same recovery engine
   before normal route work, waits, gates, packets, or active blockers proceed.
-- The engine prefers targeted repair: restore the old role first, then spawn a
+- The engine prefers targeted repair: restore the old role first, then open a
   targeted replacement, then reconcile slots, then recycle the full role-binding
-  crew only when targeted repair cannot succeed.
+  role binding only when targeted repair cannot succeed.
 - Recovered agents are not usable until current-run memory and packet context
   have been injected. Router then settles or reissues the recovered role's
   outstanding obligations mechanically when metadata is unambiguous.
@@ -61,13 +61,13 @@ class State:
     targeted_replace_attempted: bool = False
     targeted_replace_result: str = "unknown"  # unknown | success | failed | capacity_full
     old_close_failed: bool = False
-    spawn_capacity_full: bool = False
+    binding_capacity_full: bool = False
     slot_reconciliation_attempted: bool = False
     slot_reconciliation_result: str = "unknown"  # unknown | success | failed
     full_recycle_attempted: bool = False
     full_recycle_result: str = "unknown"  # unknown | success | failed
 
-    crew_generation: int = 1
+    role_binding_generation: int = 1
     role_binding_epoch_advanced: bool = False
     crew_ready: bool = False
     memory_context_injected: bool = False
@@ -171,7 +171,7 @@ def _crew_ready(state: State, *, full_recycle: bool = False) -> State:
         state,
         crew_ready=True,
         role_binding_epoch_advanced=True,
-        crew_generation=state.crew_generation + (1 if full_recycle else 0),
+        role_binding_generation=state.role_binding_generation + (1 if full_recycle else 0),
         stale_generation_output_seen=not state.restore_result == "success",
     )
 
@@ -262,7 +262,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and state.recovery_scope == "targeted"
     ):
         yield Transition(
-            "targeted_replacement_spawned",
+            "targeted_replacement_opened",
             _crew_ready(
                 replace(
                     state,
@@ -278,7 +278,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 targeted_replace_attempted=True,
                 targeted_replace_result="capacity_full",
                 old_close_failed=True,
-                spawn_capacity_full=True,
+                binding_capacity_full=True,
             ),
         )
         return
@@ -289,7 +289,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and state.recovery_scope == "all_six"
     ):
         yield Transition(
-            "full_crew_recycle_attempted",
+            "full_role_binding_recovery_attempted",
             replace(
                 state,
                 recovery_scope="full_crew",
@@ -317,7 +317,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and not state.full_recycle_attempted
     ):
         yield Transition(
-            "full_crew_recycle_attempted",
+            "full_role_binding_recovery_attempted",
             replace(
                 state,
                 recovery_scope="full_crew",
@@ -328,11 +328,11 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.full_recycle_attempted and state.full_recycle_result == "unknown":
         yield Transition(
-            "full_crew_recycle_succeeded",
+            "full_role_binding_recovery_succeeded",
             _crew_ready(replace(state, full_recycle_result="success"), full_recycle=True),
         )
         yield Transition(
-            "full_crew_recycle_failure_blocks_environment",
+            "full_role_binding_recovery_failure_blocks_environment",
             replace(
                 state,
                 status="blocked",
@@ -543,7 +543,7 @@ def invariant_failures(state: State) -> list[str]:
         and state.restore_result != "failed"
         and state.recovery_scope != "full_crew"
     ):
-        failures.append("full crew recycle happened before targeted recovery failed")
+        failures.append("full role binding recycle happened before targeted recovery failed")
     if (
         state.full_recycle_attempted
         and state.trigger_source == "mid_run_fault"
@@ -556,13 +556,13 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("mid-run full recycle skipped targeted recovery escalation")
     if (
         state.old_close_failed
-        and state.spawn_capacity_full
+        and state.binding_capacity_full
         and not state.full_recycle_attempted
         and (state.recovery_report_written or state.pm_decision_requested)
     ):
         failures.append("capacity/full-slot conflict did not escalate to full recycle")
     if state.full_recycle_result == "failed" and state.crew_ready:
-        failures.append("failed full crew recycle was marked crew-ready")
+        failures.append("failed full role binding recycle was marked crew-ready")
     if state.crew_ready and not state.memory_context_injected and (
         state.recovery_report_written or state.pm_decision_requested
     ):
@@ -635,7 +635,7 @@ INVARIANTS = (
         description=(
             "Role recovery preempts normal work, uses one unified engine for "
             "heartbeat/manual and mid-run faults, escalates from restore to "
-            "targeted replacement to full crew recycle, injects current-run "
+            "targeted replacement to full role binding recycle, injects current-run "
             "memory/context before readiness, quarantines old-generation "
             "output, reconciles packet ownership, replays obligations "
             "mechanically when safe, and reserves PM decisions for ambiguity."
@@ -724,7 +724,7 @@ def hazard_states() -> dict[str, State]:
         "capacity_full_without_full_recycle": _ready_state(
             targeted_replace_result="capacity_full",
             old_close_failed=True,
-            spawn_capacity_full=True,
+            binding_capacity_full=True,
             slot_reconciliation_attempted=True,
             full_recycle_attempted=False,
             recovery_report_written=True,

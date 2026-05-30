@@ -25,10 +25,10 @@ REPAIR_ACTIONS = {
         "fixes": [
             "material_dispatch_output_contract_mismatch",
             "material_dispatch_write_target_missing",
-            "retired_material_packet_lineage_split",
+            "unsupported_material_packet_lineage_split",
         ],
         "scope": (
-            "Material-scan packet creation and legacy migration/quarantine only; "
+            "Material-scan packet creation and unsupported_historical migration/quarantine only; "
             "do not let Controller read sealed bodies."
         ),
         "proof_obligation": (

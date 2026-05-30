@@ -12,375 +12,49 @@
     "test tiering/slow-test contracts",
     "meta/capability parents"
   ],
-  "finding_counts": {
-    "source_contract_missing_side_effect": 4
-  },
-  "findings": [
-    {
-      "code": "source_contract_missing_side_effect",
-      "code_contract_id": "flowpilot_new.submit_result",
-      "evidence_id": "",
-      "layer": "python_source_contract_audit",
-      "message": "source for flowpilot_new.submit_result is missing declared side effects",
-      "metadata": {
-        "contract": {
-          "code_contract_id": "flowpilot_new.submit_result",
-          "error_paths": [],
-          "external_inputs": [
-            "root",
-            "lease_id",
-            "packet_id",
-            "body"
-          ],
-          "external_outputs": [
-            "return"
-          ],
-          "implements_obligations": [
-            "new_entrypoint.symmetric_role_packet_lifecycle",
-            "new_entrypoint.flowguard_run_local_evidence",
-            "new_entrypoint.lifecycle_guard_stale_result_quarantine"
-          ],
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "required": true,
-          "role": "owner",
-          "side_effects": [
-            "submit_host_result",
-            "save_run_ledger"
-          ],
-          "state_reads": [],
-          "state_writes": [],
-          "surface_type": "function",
-          "symbol": "submit_result"
-        },
-        "evidence": {
-          "calls": [
-            "_run_until_wait_and_save",
-            "_runtime_state",
-            "host.submit_host_result",
-            "run_shell.load_run_ledger",
-            "run_shell.load_run_shell"
-          ],
-          "code_contract_id": "flowpilot_new.submit_result",
-          "found": true,
-          "parameters": [
-            "body",
-            "lease_id",
-            "packet_id",
-            "root"
-          ],
-          "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "raised_errors": [],
-          "return_values": [],
-          "returns_value": true,
-          "side_effects": [
-            "submit_host_result"
-          ],
-          "state_reads": [
-            "Any",
-            "Path",
-            "_run_until_wait_and_save",
-            "_runtime_state",
-            "body",
-            "dict",
-            "folded",
-            "host",
-            "lease_id",
-            "ledger",
-            "load_run_ledger",
-            "load_run_shell",
-            "packet_id",
-            "result_id",
-            "root",
-            "run_shell",
-            "shell",
-            "str",
-            "submit_host_result"
-          ],
-          "state_writes": [
-            "folded",
-            "ledger",
-            "result_id",
-            "shell"
-          ],
-          "symbol": "submit_result"
-        },
-        "missing": [
-          "save_run_ledger"
-        ]
-      },
-      "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "severity": "blocker"
-    },
-    {
-      "code": "source_contract_missing_side_effect",
-      "code_contract_id": "flowpilot_new.status",
-      "evidence_id": "",
-      "layer": "python_source_contract_audit",
-      "message": "source for flowpilot_new.status is missing declared side effects",
-      "metadata": {
-        "contract": {
-          "code_contract_id": "flowpilot_new.status",
-          "error_paths": [],
-          "external_inputs": [
-            "root"
-          ],
-          "external_outputs": [
-            "return"
-          ],
-          "implements_obligations": [
-            "new_entrypoint.symmetric_role_packet_lifecycle",
-            "new_entrypoint.lifecycle_guard_stop_authority"
-          ],
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "required": true,
-          "role": "owner",
-          "side_effects": [
-            "save_run_ledger"
-          ],
-          "state_reads": [],
-          "state_writes": [],
-          "surface_type": "function",
-          "symbol": "status"
-        },
-        "evidence": {
-          "calls": [
-            "_runtime_state",
-            "cockpit.render_status",
-            "run_shell.load_run_ledger",
-            "run_shell.load_run_shell",
-            "shell.to_json"
-          ],
-          "code_contract_id": "flowpilot_new.status",
-          "found": true,
-          "parameters": [
-            "root"
-          ],
-          "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "raised_errors": [],
-          "return_values": [],
-          "returns_value": true,
-          "side_effects": [],
-          "state_reads": [
-            "Any",
-            "Path",
-            "_runtime_state",
-            "cockpit",
-            "dict",
-            "ledger",
-            "load_run_ledger",
-            "load_run_shell",
-            "render_status",
-            "root",
-            "run_shell",
-            "shell",
-            "str",
-            "to_json"
-          ],
-          "state_writes": [
-            "ledger",
-            "shell"
-          ],
-          "symbol": "status"
-        },
-        "missing": [
-          "save_run_ledger"
-        ]
-      },
-      "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "severity": "blocker"
-    },
-    {
-      "code": "source_contract_missing_side_effect",
-      "code_contract_id": "flowpilot_new.patrol",
-      "evidence_id": "",
-      "layer": "python_source_contract_audit",
-      "message": "source for flowpilot_new.patrol is missing declared side effects",
-      "metadata": {
-        "contract": {
-          "code_contract_id": "flowpilot_new.patrol",
-          "error_paths": [],
-          "external_inputs": [
-            "root"
-          ],
-          "external_outputs": [
-            "return"
-          ],
-          "implements_obligations": [
-            "new_entrypoint.lifecycle_guard_stop_authority",
-            "new_entrypoint.lifecycle_guard_resume_patrol"
-          ],
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "required": true,
-          "role": "owner",
-          "side_effects": [
-            "save_run_ledger"
-          ],
-          "state_reads": [],
-          "state_writes": [],
-          "surface_type": "function",
-          "symbol": "patrol"
-        },
-        "evidence": {
-          "calls": [
-            "_run_until_wait_and_save",
-            "_runtime_state",
-            "cockpit.render_status",
-            "run_shell.load_run_ledger",
-            "run_shell.load_run_shell",
-            "shell.to_json",
-            "time.sleep"
-          ],
-          "code_contract_id": "flowpilot_new.patrol",
-          "found": true,
-          "parameters": [
-            "root",
-            "sleep_seconds"
-          ],
-          "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "raised_errors": [],
-          "return_values": [],
-          "returns_value": true,
-          "side_effects": [],
-          "state_reads": [
-            "Any",
-            "Path",
-            "_run_until_wait_and_save",
-            "_runtime_state",
-            "cockpit",
-            "dict",
-            "folded",
-            "int",
-            "ledger",
-            "load_run_ledger",
-            "load_run_shell",
-            "render_status",
-            "root",
-            "run_shell",
-            "shell",
-            "sleep",
-            "sleep_seconds",
-            "str",
-            "time",
-            "to_json"
-          ],
-          "state_writes": [
-            "folded",
-            "ledger",
-            "shell"
-          ],
-          "symbol": "patrol"
-        },
-        "missing": [
-          "save_run_ledger"
-        ]
-      },
-      "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "severity": "blocker"
-    },
-    {
-      "code": "source_contract_missing_side_effect",
-      "code_contract_id": "flowpilot_new.resume",
-      "evidence_id": "",
-      "layer": "python_source_contract_audit",
-      "message": "source for flowpilot_new.resume is missing declared side effects",
-      "metadata": {
-        "contract": {
-          "code_contract_id": "flowpilot_new.resume",
-          "error_paths": [],
-          "external_inputs": [
-            "root",
-            "reason"
-          ],
-          "external_outputs": [
-            "return"
-          ],
-          "implements_obligations": [
-            "new_entrypoint.lifecycle_guard_resume_patrol"
-          ],
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "required": true,
-          "role": "owner",
-          "side_effects": [
-            "record_resume_request",
-            "reconcile_resume_request",
-            "save_run_ledger"
-          ],
-          "state_reads": [],
-          "state_writes": [],
-          "surface_type": "function",
-          "symbol": "resume"
-        },
-        "evidence": {
-          "calls": [
-            "_run_until_wait_and_save",
-            "_runtime_state",
-            "cockpit.render_status",
-            "run_shell.load_run_ledger",
-            "run_shell.load_run_shell",
-            "runtime.reconcile_resume_request",
-            "runtime.record_resume_request",
-            "shell.to_json"
-          ],
-          "code_contract_id": "flowpilot_new.resume",
-          "found": true,
-          "parameters": [
-            "reason",
-            "root"
-          ],
-          "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "raised_errors": [],
-          "return_values": [],
-          "returns_value": true,
-          "side_effects": [
-            "reconcile_resume_request",
-            "record_resume_request"
-          ],
-          "state_reads": [
-            "Any",
-            "Path",
-            "_run_until_wait_and_save",
-            "_runtime_state",
-            "cockpit",
-            "dict",
-            "folded",
-            "ledger",
-            "load_run_ledger",
-            "load_run_shell",
-            "reason",
-            "reconcile_resume_request",
-            "record_resume_request",
-            "render_status",
-            "root",
-            "run_shell",
-            "runtime",
-            "shell",
-            "str",
-            "to_json"
-          ],
-          "state_writes": [
-            "folded",
-            "ledger",
-            "shell"
-          ],
-          "symbol": "resume"
-        },
-        "missing": [
-          "save_run_ledger"
-        ]
-      },
-      "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "severity": "blocker"
-    }
-  ],
+  "finding_counts": {},
+  "findings": [],
   "full_coverage_ok": false,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
     "actionable_findings": [
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:all|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_flowpilot_fast has non-final background evidence status: running",
+        "name": "smoke_flowpilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:all:smoke_flowpilot_fast",
+        "surface_owner": "test-tier:all"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:integration|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_flowpilot_fast has non-final background evidence status: running",
+        "name": "smoke_flowpilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:integration:smoke_flowpilot_fast",
+        "surface_owner": "test-tier:integration"
+      },
       {
         "code": "needs_structure_split",
         "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
@@ -389,7 +63,7 @@
           "split_child_model"
         ],
         "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_new has 473 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_new",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "priority_score": 29,
@@ -398,16 +72,74 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_new",
         "surface_owner": "flowpilot_new"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
+        "kind": "script_entrypoint",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+        "name": "flowguard_project_topology",
+        "path": "scripts/flowguard_project_topology.py",
+        "priority_score": 31,
+        "release_relevance": "public_cli",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "script:flowguard_project_topology",
+        "surface_owner": "script:flowguard_project_topology"
       }
     ],
     "actionable_summary": [
+      {
+        "dedupe_key": "test-tier:all|complete_background_evidence|stale_evidence",
+        "finding_count": 1,
+        "gap_codes": [
+          "stale_evidence"
+        ],
+        "message": "smoke_flowpilot_fast has non-final background evidence status: running",
+        "paths": [
+          "scripts/run_test_tier.py"
+        ],
+        "primary_code": "stale_evidence",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_ids": [
+          "tier-command:all:smoke_flowpilot_fast"
+        ],
+        "surface_owner": "test-tier:all"
+      },
+      {
+        "dedupe_key": "test-tier:integration|complete_background_evidence|stale_evidence",
+        "finding_count": 1,
+        "gap_codes": [
+          "stale_evidence"
+        ],
+        "message": "smoke_flowpilot_fast has non-final background evidence status: running",
+        "paths": [
+          "scripts/run_test_tier.py"
+        ],
+        "primary_code": "stale_evidence",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_ids": [
+          "tier-command:integration:smoke_flowpilot_fast"
+        ],
+        "surface_owner": "test-tier:integration"
+      },
       {
         "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
         "finding_count": 1,
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_new has 473 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_new.py"
         ],
@@ -420,10 +152,30 @@
           "asset:flowpilot_new"
         ],
         "surface_owner": "flowpilot_new"
+      },
+      {
+        "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+        "paths": [
+          "scripts/flowguard_project_topology.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 31,
+        "release_relevance": "public_cli",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "script:flowguard_project_topology"
+        ],
+        "surface_owner": "script:flowguard_project_topology"
       }
     ],
-    "covered_surface_count": 909,
-    "deferred_structure_split_count": 1,
+    "covered_surface_count": 918,
+    "deferred_structure_split_count": 2,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
     "explicitly_skipped_structure_split_surfaces": [],
@@ -436,7 +188,7 @@
           "split_child_model"
         ],
         "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_new has 473 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_new",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "priority_score": 29,
@@ -445,22 +197,81 @@
         "severity": "medium",
         "surface_id": "asset:flowpilot_new",
         "surface_owner": "flowpilot_new"
+      },
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
+        "kind": "script_entrypoint",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+        "name": "flowguard_project_topology",
+        "path": "scripts/flowguard_project_topology.py",
+        "priority_score": 31,
+        "release_relevance": "public_cli",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "script:flowguard_project_topology",
+        "surface_owner": "script:flowguard_project_topology"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:all|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_flowpilot_fast has non-final background evidence status: running",
+        "name": "smoke_flowpilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:all:smoke_flowpilot_fast",
+        "surface_owner": "test-tier:all"
+      },
+      {
+        "code": "stale_evidence",
+        "dedupe_key": "test-tier:integration|complete_background_evidence|stale_evidence",
+        "kind": "test_tier_command",
+        "maturation_actions": [
+          "refresh_evidence"
+        ],
+        "maturation_signal_type": "stale_evidence",
+        "message": "smoke_flowpilot_fast has non-final background evidence status: running",
+        "name": "smoke_flowpilot_fast",
+        "path": "scripts/run_test_tier.py",
+        "priority_score": 1,
+        "release_relevance": "release_gate",
+        "repair_type": "complete_background_evidence",
+        "severity": "critical",
+        "surface_id": "tier-command:integration:smoke_flowpilot_fast",
+        "surface_owner": "test-tier:integration"
       }
     ],
     "full_coverage_ok": false,
     "gap_counts": {
-      "needs_structure_split": 1
+      "needs_structure_split": 2,
+      "stale_evidence": 2
     },
     "gap_counts_by_release_relevance": {
+      "public_cli": 1,
+      "release_gate": 2,
       "runtime_contract": 1
     },
     "gap_counts_by_repair_type": {
-      "defer_structure_split": 1
+      "complete_background_evidence": 2,
+      "defer_structure_split": 2
     },
     "gap_counts_by_severity": {
-      "medium": 1
+      "critical": 2,
+      "medium": 2
     },
-    "gap_surface_count": 1,
+    "gap_surface_count": 4,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -639,7 +450,7 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": true,
+    "release_convergence_ok": false,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
     "singleton_authority_coverage": {
       "authority_matrix_count": 8,
@@ -652,15 +463,15 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 910,
+    "surface_count": 922,
     "surface_counts": {
-      "model_check_runner": 129,
+      "model_check_runner": 132,
       "model_check_runner_helper": 19,
       "owner_module": 274,
       "public_facade": 112,
-      "script_entrypoint": 19,
+      "script_entrypoint": 20,
       "test_tier": 15,
-      "test_tier_command": 342
+      "test_tier_command": 350
     },
     "surfaces": [
       {
@@ -676,14 +487,14 @@
         "line_count": 129,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
-        "name": "run_ai_project_protocol_checks",
+        "name": "run_flowpilot_protocol_kernel_checks",
         "parse_error": "",
-        "path": "simulations/run_ai_project_protocol_checks.py",
+        "path": "simulations/run_flowpilot_protocol_kernel_checks.py",
         "release_relevance": "validation_gate",
         "repair_types": [],
         "split_threshold": 650,
-        "surface_id": "model-check:run_ai_project_protocol_checks",
-        "surface_owner": "model-check:run_ai_project_protocol_checks"
+        "surface_id": "model-check:run_flowpilot_protocol_kernel_checks",
+        "surface_owner": "model-check:run_flowpilot_protocol_kernel_checks"
       },
       {
         "covered": true,
@@ -698,14 +509,14 @@
         "line_count": 364,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
-        "name": "run_ai_project_protocol_stress_checks",
+        "name": "run_flowpilot_protocol_kernel_stress_checks",
         "parse_error": "",
-        "path": "simulations/run_ai_project_protocol_stress_checks.py",
+        "path": "simulations/run_flowpilot_protocol_kernel_stress_checks.py",
         "release_relevance": "validation_gate",
         "repair_types": [],
         "split_threshold": 650,
-        "surface_id": "model-check:run_ai_project_protocol_stress_checks",
-        "surface_owner": "model-check:run_ai_project_protocol_stress_checks"
+        "surface_id": "model-check:run_flowpilot_protocol_kernel_stress_checks",
+        "surface_owner": "model-check:run_flowpilot_protocol_kernel_stress_checks"
       },
       {
         "covered": true,
@@ -717,17 +528,17 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 366,
+        "line_count": 352,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
-        "name": "run_ai_project_runtime_checks",
+        "name": "run_flowpilot_core_runtime_checks",
         "parse_error": "",
-        "path": "simulations/run_ai_project_runtime_checks.py",
+        "path": "simulations/run_flowpilot_core_runtime_checks.py",
         "release_relevance": "validation_gate",
         "repair_types": [],
         "split_threshold": 650,
-        "surface_id": "model-check:run_ai_project_runtime_checks",
-        "surface_owner": "model-check:run_ai_project_runtime_checks"
+        "surface_id": "model-check:run_flowpilot_core_runtime_checks",
+        "surface_owner": "model-check:run_flowpilot_core_runtime_checks"
       },
       {
         "covered": true,
@@ -742,14 +553,14 @@
         "line_count": 124,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
-        "name": "run_ai_project_runtime_development_checks",
+        "name": "run_flowpilot_core_runtime_development_checks",
         "parse_error": "",
-        "path": "simulations/run_ai_project_runtime_development_checks.py",
+        "path": "simulations/run_flowpilot_core_runtime_development_checks.py",
         "release_relevance": "validation_gate",
         "repair_types": [],
         "split_threshold": 650,
-        "surface_id": "model-check:run_ai_project_runtime_development_checks",
-        "surface_owner": "model-check:run_ai_project_runtime_development_checks"
+        "surface_id": "model-check:run_flowpilot_core_runtime_development_checks",
+        "surface_owner": "model-check:run_flowpilot_core_runtime_development_checks"
       },
       {
         "covered": true,
@@ -874,14 +685,14 @@
         "line_count": 415,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
-        "name": "run_flowpilot_compatibility_layer_pruning_checks",
+        "name": "run_flowpilot_unsupported historical_layer_pruning_checks",
         "parse_error": "",
-        "path": "simulations/run_flowpilot_compatibility_layer_pruning_checks.py",
+        "path": "simulations/run_flowpilot_unsupported historical_layer_pruning_checks.py",
         "release_relevance": "validation_gate",
         "repair_types": [],
         "split_threshold": 650,
-        "surface_id": "model-check:run_flowpilot_compatibility_layer_pruning_checks",
-        "surface_owner": "model-check:run_flowpilot_compatibility_layer_pruning_checks"
+        "surface_id": "model-check:run_flowpilot_unsupported historical_layer_pruning_checks",
+        "surface_owner": "model-check:run_flowpilot_unsupported historical_layer_pruning_checks"
       },
       {
         "covered": true,
@@ -981,7 +792,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 402,
+        "line_count": 388,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_complete_system_runtime_checks",
@@ -1685,7 +1496,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 203,
+        "line_count": 218,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_fake_project_rehearsal_checks",
@@ -1839,7 +1650,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 176,
+        "line_count": 191,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_lifecycle_guard_checks",
@@ -2312,6 +2123,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_process_liveness_checks",
         "surface_owner": "model-check:run_flowpilot_process_liveness_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 213,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_project_topology_orientation_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_project_topology_orientation_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_project_topology_orientation_checks",
+        "surface_owner": "model-check:run_flowpilot_project_topology_orientation_checks"
       },
       {
         "covered": true,
@@ -3027,6 +2860,28 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
+        "line_count": 125,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_stop_host_orphan_recovery_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_stop_host_orphan_recovery_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_stop_host_orphan_recovery_checks",
+        "surface_owner": "model-check:run_flowpilot_stop_host_orphan_recovery_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
         "line_count": 190,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
@@ -3214,6 +3069,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_validation_artifact_canonicalization_checks",
         "surface_owner": "model-check:run_flowpilot_validation_artifact_canonicalization_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 165,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_validation_pm_gate_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_validation_pm_gate_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_validation_pm_gate_checks",
+        "surface_owner": "model-check:run_flowpilot_validation_pm_gate_checks"
       },
       {
         "covered": true,
@@ -4295,7 +4172,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 473,
+        "line_count": 549,
         "local_import_count": 0,
         "max_severity": "medium",
         "model_binding": null,
@@ -4321,7 +4198,7 @@
         "surface_id": "asset:flowpilot_new",
         "surface_owner": "flowpilot_new",
         "top_level_class_count": 0,
-        "top_level_function_count": 25
+        "top_level_function_count": 28
       },
       {
         "covered": true,
@@ -14193,6 +14070,39 @@
         "surface_owner": "script:check_runtime_card_capability_reminders"
       },
       {
+        "covered": false,
+        "deferred_split_reason": "orientation_artifact_contract_current | requires_dedicated_structuremesh_claim_before_cli_split",
+        "evidence_status": "passed",
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "script_entrypoint",
+        "line_count": 755,
+        "max_severity": "medium",
+        "model_binding": null,
+        "name": "flowguard_project_topology",
+        "parse_error": "",
+        "path": "scripts/flowguard_project_topology.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recommended_next_action": "split_topology_generator_after_contract_parity_tests",
+        "release_relevance": "public_cli",
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "project_topology_cli",
+        "split_reason": "new project topology CLI is externally contracted before any structure split",
+        "split_status": "deferred_split",
+        "split_threshold": 650,
+        "structure_split_status": "deferred",
+        "surface_id": "script:flowguard_project_topology",
+        "surface_owner": "script:flowguard_project_topology"
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14268,7 +14178,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 235,
+        "line_count": 251,
         "max_severity": "none",
         "model_binding": "maintenance_registry_cli",
         "name": "flowpilot_maintenance_registry",
@@ -14347,6 +14257,12 @@
         "surface_owner": "script:flowpilot_paths"
       },
       {
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_runtime_args.py",
+          "skills/flowpilot/assets/flowpilot_runtime_command_dispatch.py",
+          "skills/flowpilot/assets/flowpilot_runtime_commands.py",
+          "skills/flowpilot/assets/flowpilot_runtime_role_output_commands.py"
+        ],
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14362,9 +14278,15 @@
         "name": "flowpilot_runtime",
         "parse_error": "",
         "path": "scripts/flowpilot_runtime.py",
+        "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
+        "recommended_next_action": "monitor_unified_runtime_cli_child_contracts",
         "release_relevance": "public_cli",
         "repair_types": [],
+        "safe_split_class": "runtime_cli_facade",
+        "split_reason": "unified_runtime_cli_argument_parsing_command_execution_and_dispatch_extracted",
+        "split_status": "completed_split",
         "split_threshold": 650,
+        "structure_split_status": "deferred",
         "surface_id": "script:flowpilot_runtime",
         "surface_owner": "script:flowpilot_runtime"
       },
@@ -14391,6 +14313,10 @@
         "surface_owner": "script:flowpilot_runtime_retention"
       },
       {
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_user_flow_diagram_generate.py",
+          "skills/flowpilot/assets/flowpilot_user_flow_diagram_cli.py"
+        ],
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14406,9 +14332,15 @@
         "name": "flowpilot_user_flow_diagram",
         "parse_error": "",
         "path": "scripts/flowpilot_user_flow_diagram.py",
+        "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
+        "recommended_next_action": "monitor_route_sign_generate_and_cli_contracts",
         "release_relevance": "public_cli",
         "repair_types": [],
+        "safe_split_class": "route_sign_facade",
+        "split_reason": "route_sign_generation_and_cli_entrypoint_extracted",
+        "split_status": "completed_split",
         "split_threshold": 650,
+        "structure_split_status": "deferred",
         "surface_id": "script:flowpilot_user_flow_diagram",
         "surface_owner": "script:flowpilot_user_flow_diagram"
       },
@@ -14444,7 +14376,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 478,
+        "line_count": 479,
         "max_severity": "none",
         "model_binding": "coverage_sweep_runner",
         "name": "run_flowguard_coverage_sweep",
@@ -14488,20 +14420,20 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 151,
+        "line_count": 162,
         "max_severity": "none",
         "model_binding": "smoke_fast_validation",
-        "name": "smoke_autopilot",
+        "name": "smoke_flowpilot",
         "parse_error": "",
-        "path": "scripts/smoke_autopilot.py",
+        "path": "scripts/smoke_flowpilot.py",
         "release_relevance": "public_cli",
         "repair_types": [],
         "split_threshold": 650,
-        "surface_id": "script:smoke_autopilot",
-        "surface_owner": "script:smoke_autopilot"
+        "surface_id": "script:smoke_flowpilot",
+        "surface_owner": "script:smoke_flowpilot"
       },
       {
-        "command_count": 131,
+        "command_count": 135,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14510,7 +14442,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 131,
+        "line_count": 135,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "all",
@@ -14543,7 +14475,7 @@
         "surface_owner": "test-tier"
       },
       {
-        "command_count": 61,
+        "command_count": 65,
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -14552,7 +14484,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "test_tier",
-        "line_count": 61,
+        "line_count": 65,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
         "name": "fast",
@@ -15531,6 +15463,97 @@
         "background_recommended": false,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "scripts/flowguard_project_topology.py",
+          "build"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/flowguard_project_topology.py build",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "flowguard_project_topology_build",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:flowguard_project_topology_build",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "scripts/flowguard_project_topology.py",
+          "check"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/flowguard_project_topology.py check",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "flowguard_project_topology_check",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:flowguard_project_topology_check",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations/run_flowpilot_project_topology_orientation_checks.py",
+          "--json-out",
+          "simulations/flowpilot_project_topology_orientation_results.json"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/run_flowpilot_project_topology_orientation_checks.py --json-out simulations/flowpilot_project_topology_orientation_results.json",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "flowguard_project_topology_orientation",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:flowguard_project_topology_orientation",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "pytest",
           "tests/test_flowguard_result_proof.py",
@@ -15944,6 +15967,38 @@
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "pytest",
+          "tests/test_flowguard_project_topology.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowguard_project_topology.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "project_topology_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:all:project_topology_tests",
+        "surface_owner": "test-tier:all",
+        "tier": "all"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
           "tests",
           "--collect-only",
           "-q"
@@ -16278,12 +16333,12 @@
           "-k",
           "test_control_blocker_reviewer_followup_rejects_pm_origin",
           "-k",
-          "test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission",
+          "test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission",
           "-k",
           "test_fatal_control_blocker_rejects_pm_ordinary_waiver",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -16314,18 +16369,26 @@
           "unittest",
           "-v",
           "-k",
+          "test_distinct_pm_control_blocker_causes_create_distinct_families",
+          "-k",
           "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
           "-k",
           "test_pm_repair_decision_can_repeat_for_new_control_blocker",
           "-k",
-          "test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
+          "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
           "-k",
           "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
           "-k",
           "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
+          "-k",
+          "test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+          "-k",
+          "test_same_family_delivered_pm_control_blocker_reuses_existing_artifact",
+          "-k",
+          "test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_retired_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_distinct_pm_control_blocker_causes_create_distinct_families -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write -k test_protocol_dead_end_terminal_family_suppresses_reopened_blocker -k test_same_family_delivered_pm_control_blocker_reuses_existing_artifact -k test_same_family_pending_pm_control_blocker_reuses_existing_artifact tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -17552,7 +17615,7 @@
           "unittest",
           "-v",
           "-k",
-          "test_background_agents_allow_requires_six_fresh_live_agent_records",
+          "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
           "-k",
           "test_child_skill_gate_manifest_block_records_repair_without_approval",
           "-k",
@@ -17561,7 +17624,7 @@
           "test_manifest_references_existing_system_cards",
           "tests.router_runtime.quality_gates"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_background_agents_allow_requires_six_fresh_live_agent_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_runtime_role_assistances_allow_requires_six_current_role_binding_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -17852,6 +17915,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
+          "-k",
           "test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker",
           "-k",
           "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence",
@@ -17861,7 +17926,7 @@
           "test_resume_rehydration_settles_existing_output_without_pm",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker -k test_resume_ambiguous_state_blocks_continue_without_recovery_evidence -k test_resume_rehydration_reissues_missing_obligations_before_pm -k test_resume_rehydration_settles_existing_output_without_pm tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker -k test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker -k test_resume_ambiguous_state_blocks_continue_without_recovery_evidence -k test_resume_rehydration_reissues_missing_obligations_before_pm -k test_resume_rehydration_settles_existing_output_without_pm tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18966,39 +19031,41 @@
         "background_evidence": {
           "inspected": [
             {
-              "artifact_name": "smoke_autopilot_fast",
+              "artifact_name": "smoke_flowpilot_fast",
               "artifact_root": "tmp/flowguard_background",
               "artifacts": {
-                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.combined.txt",
-                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.err.txt",
-                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.exit.txt",
-                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
-                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
-              "name": "smoke_autopilot_fast",
-              "ok": true,
+              "execution_status": "running",
+              "exit_code": null,
+              "meta_status": "running",
+              "name": "smoke_flowpilot_fast",
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "missing_exit"
+              ],
+              "status": "running"
             },
             {
-              "artifact_name": "smoke_autopilot_fast",
+              "artifact_name": "smoke_flowpilot_fast",
               "artifact_root": "tmp/test_background",
               "artifacts": {
-                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.combined.txt",
-                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.err.txt",
-                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.exit.txt",
-                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.meta.json",
-                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.out.txt"
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.out.txt"
               },
               "execution_status": "incomplete",
               "exit_code": null,
               "meta_status": null,
-              "name": "smoke_autopilot_fast",
+              "name": "smoke_flowpilot_fast",
               "ok": false,
               "progress_seen": false,
               "proof_scope": "full",
@@ -19010,36 +19077,40 @@
             }
           ],
           "selected": {
-            "artifact_name": "smoke_autopilot_fast",
+            "artifact_name": "smoke_flowpilot_fast",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "smoke_autopilot_fast",
-            "ok": true,
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
+            "name": "smoke_flowpilot_fast",
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
-          "scripts/smoke_autopilot.py",
+          "scripts/smoke_flowpilot.py",
           "--fast"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/smoke_autopilot.py --fast",
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/smoke_flowpilot.py --fast",
+        "covered": false,
+        "evidence_status": "running",
+        "gap_codes": [
+          "stale_evidence"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -19047,16 +19118,18 @@
         "kind": "test_tier_command",
         "line_count": 1,
         "long_running": true,
-        "max_severity": "none",
+        "max_severity": "critical",
         "model_binding": "test_tiering_model",
-        "name": "smoke_autopilot_fast",
+        "name": "smoke_flowpilot_fast",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
-        "repair_types": [],
+        "repair_types": [
+          "complete_background_evidence"
+        ],
         "split_threshold": 999,
-        "surface_id": "tier-command:all:smoke_autopilot_fast",
+        "surface_id": "tier-command:all:smoke_flowpilot_fast",
         "surface_owner": "test-tier:all",
         "tier": "all"
       },
@@ -20323,6 +20396,97 @@
         "background_recommended": false,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "scripts/flowguard_project_topology.py",
+          "build"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/flowguard_project_topology.py build",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "flowguard_project_topology_build",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:flowguard_project_topology_build",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "scripts/flowguard_project_topology.py",
+          "check"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/flowguard_project_topology.py check",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "flowguard_project_topology_check",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:flowguard_project_topology_check",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "simulations/run_flowpilot_project_topology_orientation_checks.py",
+          "--json-out",
+          "simulations/flowpilot_project_topology_orientation_results.json"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe simulations/run_flowpilot_project_topology_orientation_checks.py --json-out simulations/flowpilot_project_topology_orientation_results.json",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "flowguard_project_topology_orientation",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:flowguard_project_topology_orientation",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
           "-m",
           "pytest",
           "tests/test_flowguard_result_proof.py",
@@ -20727,6 +20891,38 @@
         "repair_types": [],
         "split_threshold": 999,
         "surface_id": "tier-command:fast:model_test_alignment_tests",
+        "surface_owner": "test-tier:fast",
+        "tier": "fast"
+      },
+      {
+        "background_recommended": false,
+        "command": [
+          "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
+          "-m",
+          "pytest",
+          "tests/test_flowguard_project_topology.py",
+          "-q"
+        ],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m pytest tests/test_flowguard_project_topology.py -q",
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "test_tier_command",
+        "line_count": 1,
+        "long_running": false,
+        "max_severity": "none",
+        "model_binding": "test_tiering_model",
+        "name": "project_topology_tests",
+        "path": "scripts/run_test_tier.py",
+        "release_only": false,
+        "release_relevance": "release_gate",
+        "repair_types": [],
+        "split_threshold": 999,
+        "surface_id": "tier-command:fast:project_topology_tests",
         "surface_owner": "test-tier:fast",
         "tier": "fast"
       },
@@ -21960,39 +22156,41 @@
         "background_evidence": {
           "inspected": [
             {
-              "artifact_name": "smoke_autopilot_fast",
+              "artifact_name": "smoke_flowpilot_fast",
               "artifact_root": "tmp/flowguard_background",
               "artifacts": {
-                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.combined.txt",
-                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.err.txt",
-                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.exit.txt",
-                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
-                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "passed",
-              "name": "smoke_autopilot_fast",
-              "ok": true,
+              "execution_status": "running",
+              "exit_code": null,
+              "meta_status": "running",
+              "name": "smoke_flowpilot_fast",
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "missing_exit"
+              ],
+              "status": "running"
             },
             {
-              "artifact_name": "smoke_autopilot_fast",
+              "artifact_name": "smoke_flowpilot_fast",
               "artifact_root": "tmp/test_background",
               "artifacts": {
-                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.combined.txt",
-                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.err.txt",
-                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.exit.txt",
-                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.meta.json",
-                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_autopilot_fast.out.txt"
+                "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.combined.txt",
+                "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.err.txt",
+                "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.exit.txt",
+                "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.meta.json",
+                "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\test_background\\smoke_flowpilot_fast.out.txt"
               },
               "execution_status": "incomplete",
               "exit_code": null,
               "meta_status": null,
-              "name": "smoke_autopilot_fast",
+              "name": "smoke_flowpilot_fast",
               "ok": false,
               "progress_seen": false,
               "proof_scope": "full",
@@ -22004,36 +22202,40 @@
             }
           ],
           "selected": {
-            "artifact_name": "smoke_autopilot_fast",
+            "artifact_name": "smoke_flowpilot_fast",
             "artifact_root": "tmp/flowguard_background",
             "artifacts": {
-              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.combined.txt",
-              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.err.txt",
-              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.exit.txt",
-              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.meta.json",
-              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_autopilot_fast.out.txt"
+              "combined": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.combined.txt",
+              "err": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.err.txt",
+              "exit": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.exit.txt",
+              "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.meta.json",
+              "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\smoke_flowpilot_fast.out.txt"
             },
-            "execution_status": "passed",
-            "exit_code": 0,
-            "meta_status": "passed",
-            "name": "smoke_autopilot_fast",
-            "ok": true,
+            "execution_status": "running",
+            "exit_code": null,
+            "meta_status": "running",
+            "name": "smoke_flowpilot_fast",
+            "ok": false,
             "progress_seen": true,
             "proof_scope": "full",
-            "reasons": [],
-            "status": "passed"
+            "reasons": [
+              "missing_exit"
+            ],
+            "status": "running"
           }
         },
         "background_recommended": true,
         "command": [
           "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe",
-          "scripts/smoke_autopilot.py",
+          "scripts/smoke_flowpilot.py",
           "--fast"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/smoke_autopilot.py --fast",
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe scripts/smoke_flowpilot.py --fast",
+        "covered": false,
+        "evidence_status": "running",
+        "gap_codes": [
+          "stale_evidence"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
@@ -22041,16 +22243,18 @@
         "kind": "test_tier_command",
         "line_count": 1,
         "long_running": true,
-        "max_severity": "none",
+        "max_severity": "critical",
         "model_binding": "test_tiering_model",
-        "name": "smoke_autopilot_fast",
+        "name": "smoke_flowpilot_fast",
         "path": "scripts/run_test_tier.py",
         "proof_scope": "full",
         "release_only": false,
         "release_relevance": "release_gate",
-        "repair_types": [],
+        "repair_types": [
+          "complete_background_evidence"
+        ],
         "split_threshold": 999,
-        "surface_id": "tier-command:integration:smoke_autopilot_fast",
+        "surface_id": "tier-command:integration:smoke_flowpilot_fast",
         "surface_owner": "test-tier:integration",
         "tier": "integration"
       },
@@ -23603,7 +23807,7 @@
           "unittest",
           "-v",
           "-k",
-          "test_background_agents_allow_requires_six_fresh_live_agent_records",
+          "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
           "-k",
           "test_child_skill_gate_manifest_block_records_repair_without_approval",
           "-k",
@@ -23612,7 +23816,7 @@
           "test_manifest_references_existing_system_cards",
           "tests.router_runtime.quality_gates"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_background_agents_allow_requires_six_fresh_live_agent_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_runtime_role_assistances_allow_requires_six_current_role_binding_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -24567,12 +24771,12 @@
           "-k",
           "test_control_blocker_reviewer_followup_rejects_pm_origin",
           "-k",
-          "test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission",
+          "test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission",
           "-k",
           "test_fatal_control_blocker_rejects_pm_ordinary_waiver",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -24603,18 +24807,26 @@
           "unittest",
           "-v",
           "-k",
+          "test_distinct_pm_control_blocker_causes_create_distinct_families",
+          "-k",
           "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
           "-k",
           "test_pm_repair_decision_can_repeat_for_new_control_blocker",
           "-k",
-          "test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
+          "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
           "-k",
           "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
           "-k",
           "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
+          "-k",
+          "test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+          "-k",
+          "test_same_family_delivered_pm_control_blocker_reuses_existing_artifact",
+          "-k",
+          "test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_retired_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_distinct_pm_control_blocker_causes_create_distinct_families -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write -k test_protocol_dead_end_terminal_family_suppresses_reopened_blocker -k test_same_family_delivered_pm_control_blocker_reuses_existing_artifact -k test_same_family_pending_pm_control_blocker_reuses_existing_artifact tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25021,7 +25233,7 @@
           "unittest",
           "-v",
           "-k",
-          "test_background_agents_allow_requires_six_fresh_live_agent_records",
+          "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
           "-k",
           "test_child_skill_gate_manifest_block_records_repair_without_approval",
           "-k",
@@ -25030,7 +25242,7 @@
           "test_manifest_references_existing_system_cards",
           "tests.router_runtime.quality_gates"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_background_agents_allow_requires_six_fresh_live_agent_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_runtime_role_assistances_allow_requires_six_current_role_binding_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25321,6 +25533,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
+          "-k",
           "test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker",
           "-k",
           "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence",
@@ -25330,7 +25544,7 @@
           "test_resume_rehydration_settles_existing_output_without_pm",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker -k test_resume_ambiguous_state_blocks_continue_without_recovery_evidence -k test_resume_rehydration_reissues_missing_obligations_before_pm -k test_resume_rehydration_settles_existing_output_without_pm tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker -k test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker -k test_resume_ambiguous_state_blocks_continue_without_recovery_evidence -k test_resume_rehydration_reissues_missing_obligations_before_pm -k test_resume_rehydration_settles_existing_output_without_pm tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25731,12 +25945,12 @@
           "-k",
           "test_control_blocker_reviewer_followup_rejects_pm_origin",
           "-k",
-          "test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission",
+          "test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission",
           "-k",
           "test_fatal_control_blocker_rejects_pm_ordinary_waiver",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -25767,18 +25981,26 @@
           "unittest",
           "-v",
           "-k",
+          "test_distinct_pm_control_blocker_causes_create_distinct_families",
+          "-k",
           "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
           "-k",
           "test_pm_repair_decision_can_repeat_for_new_control_blocker",
           "-k",
-          "test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
+          "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
           "-k",
           "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
           "-k",
           "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
+          "-k",
+          "test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+          "-k",
+          "test_same_family_delivered_pm_control_blocker_reuses_existing_artifact",
+          "-k",
+          "test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
           "tests.router_runtime.control_blockers"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_retired_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_distinct_pm_control_blocker_causes_create_distinct_families -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write -k test_protocol_dead_end_terminal_family_suppresses_reopened_blocker -k test_same_family_delivered_pm_control_blocker_reuses_existing_artifact -k test_same_family_pending_pm_control_blocker_reuses_existing_artifact tests.router_runtime.control_blockers",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -27005,7 +27227,7 @@
           "unittest",
           "-v",
           "-k",
-          "test_background_agents_allow_requires_six_fresh_live_agent_records",
+          "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
           "-k",
           "test_child_skill_gate_manifest_block_records_repair_without_approval",
           "-k",
@@ -27014,7 +27236,7 @@
           "test_manifest_references_existing_system_cards",
           "tests.router_runtime.quality_gates"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_background_agents_allow_requires_six_fresh_live_agent_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_runtime_role_assistances_allow_requires_six_current_role_binding_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -27305,6 +27527,8 @@
           "unittest",
           "-v",
           "-k",
+          "test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
+          "-k",
           "test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker",
           "-k",
           "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence",
@@ -27314,7 +27538,7 @@
           "test_resume_rehydration_settles_existing_output_without_pm",
           "tests.router_runtime.resume"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker -k test_resume_ambiguous_state_blocks_continue_without_recovery_evidence -k test_resume_rehydration_reissues_missing_obligations_before_pm -k test_resume_rehydration_settles_existing_output_without_pm tests.router_runtime.resume",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker -k test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker -k test_resume_ambiguous_state_blocks_continue_without_recovery_evidence -k test_resume_rehydration_reissues_missing_obligations_before_pm -k test_resume_rehydration_settles_existing_output_without_pm tests.router_runtime.resume",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -28149,8 +28373,10 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 0,
-    "unresolved_non_deferred_gap_counts": {}
+    "unresolved_non_deferred_gap_count": 2,
+    "unresolved_non_deferred_gap_counts": {
+      "stale_evidence": 2
+    }
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -29053,7 +29279,7 @@
       }
     }
   ],
-  "ok": false,
+  "ok": true,
   "packet_result_family_parity": {
     "analogous_scan_ok": true,
     "analogous_scan_report": {
@@ -37491,18 +37717,18 @@
           {
             "allow_shared_evidence": false,
             "allow_shared_implementation": false,
-            "description": "A repair transaction cannot use the retired event_replay plan kind; current repair plans need a registered producer/action/handler/terminal stop.",
+            "description": "A repair transaction cannot use the unsupported event_replay plan kind; current repair plans need a registered producer/action/handler/terminal stop.",
             "error_paths": [],
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
             "model_miss_origin": false,
-            "obligation_id": "repair_transactions.retired_event_replay_rejected",
+            "obligation_id": "repair_transactions.unsupported_event_replay_rejected",
             "obligation_type": "hazard",
             "required": true,
             "required_closure_evidence_roles": [],
             "required_runtime_node_ids": [
-              "repair_transactions:repair_transactions.retired_event_replay_rejected"
+              "repair_transactions:repair_transactions.unsupported_event_replay_rejected"
             ],
             "required_test_kinds": [
               "negative_path"
@@ -37696,28 +37922,28 @@
             ],
             "boundary_id": "flowpilot.runtime_path.repair_transactions",
             "child_model_id": "repair_transactions",
-            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_retired_event_replay_rejected",
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_unsupported_event_replay_rejected",
             "exact": true,
             "input_case": "repair_transactions.external_contract_input",
-            "leaf_model_id": "repair_transactions.retired_event_replay_rejected",
+            "leaf_model_id": "repair_transactions.unsupported_event_replay_rejected",
             "metadata": {
               "compared_flowguard_model": "repair_transactions",
               "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
-              "compared_flowguard_obligation": "repair_transactions.retired_event_replay_rejected",
+              "compared_flowguard_obligation": "repair_transactions.unsupported_event_replay_rejected",
               "family": "repair transactions",
               "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
               "source_test_command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
-              "source_test_evidence_id": "repair_transactions.negative.retired_event_replay_plan_kind",
+              "source_test_evidence_id": "repair_transactions.negative.unsupported_event_replay_plan_kind",
               "source_test_path": "tests/router_runtime/control_blockers.py"
             },
             "model_id": "repair_transactions",
-            "model_obligation_id": "repair_transactions.retired_event_replay_rejected",
+            "model_obligation_id": "repair_transactions.unsupported_event_replay_rejected",
             "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
-            "node_id": "repair_transactions:repair_transactions.retired_event_replay_rejected",
+            "node_id": "repair_transactions:repair_transactions.unsupported_event_replay_rejected",
             "ordered": true,
             "required": true,
             "required_observation_ids": [
-              "runtime_path.repair_transactions.02.repair_transactions_retired_event_replay_rejected"
+              "runtime_path.repair_transactions.02.repair_transactions_unsupported_event_replay_rejected"
             ],
             "requires_gateway_binding": false,
             "sequence_index": 2,
@@ -37864,7 +38090,7 @@
               "progress_lines": [
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.executable_plan_required run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.executable_plan_required obligation=repair_transactions.executable_plan_required code_contract=runtime_path.repair_transactions.repair_transactions_executable_plan_required boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.happy.material_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.happy.material_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.executable_plan_required",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.material_rework_requires_fresh_producer run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.material_rework_requires_fresh_producer obligation=repair_transactions.material_rework_requires_fresh_producer code_contract=runtime_path.repair_transactions.repair_transactions_material_rework_requires_fresh_producer boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.material_role_reissue_no_producer progress=compares FlowPilot code/test evidence repair_transactions.negative.material_role_reissue_no_producer with FlowGuard model repair_transactions obligation repair_transactions.material_rework_requires_fresh_producer",
-                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.retired_event_replay_rejected run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.retired_event_replay_rejected obligation=repair_transactions.retired_event_replay_rejected code_contract=runtime_path.repair_transactions.repair_transactions_retired_event_replay_rejected boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.retired_event_replay_plan_kind progress=compares FlowPilot code/test evidence repair_transactions.negative.retired_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.retired_event_replay_rejected",
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.unsupported_event_replay_rejected run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.unsupported_event_replay_rejected obligation=repair_transactions.unsupported_event_replay_rejected code_contract=runtime_path.repair_transactions.repair_transactions_unsupported_event_replay_rejected boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.unsupported_event_replay_plan_kind progress=compares FlowPilot code/test evidence repair_transactions.negative.unsupported_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.unsupported_event_replay_rejected",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.empty_transaction_returns_to_pm_repair run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.empty_transaction_returns_to_pm_repair obligation=repair_transactions.empty_transaction_returns_to_pm_repair code_contract=runtime_path.repair_transactions.repair_transactions_empty_transaction_returns_to_pm_repair boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.empty_followup_wait_fallback progress=compares FlowPilot code/test evidence repair_transactions.negative.empty_followup_wait_fallback with FlowGuard model repair_transactions obligation repair_transactions.empty_transaction_returns_to_pm_repair",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.pm_decision_flag_atomicity run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.pm_decision_flag_atomicity obligation=repair_transactions.pm_decision_flag_atomicity code_contract=runtime_path.repair_transactions.repair_transactions_pm_decision_flag_atomicity boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.pm_decision_side_effect_atomicity progress=compares FlowPilot code/test evidence repair_transactions.edge.pm_decision_side_effect_atomicity with FlowGuard model repair_transactions obligation repair_transactions.pm_decision_flag_atomicity",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery"
@@ -37960,27 +38186,27 @@
                 "assertion_scope": "external_contract",
                 "boundary_id": "flowpilot.runtime_path.repair_transactions",
                 "child_model_id": "repair_transactions",
-                "code_contract_id": "runtime_path.repair_transactions.repair_transactions_retired_event_replay_rejected",
+                "code_contract_id": "runtime_path.repair_transactions.repair_transactions_unsupported_event_replay_rejected",
                 "evidence_current": true,
-                "evidence_id": "repair_transactions.negative.retired_event_replay_plan_kind",
+                "evidence_id": "repair_transactions.negative.unsupported_event_replay_plan_kind",
                 "gateway_id": "",
                 "input_case": "repair_transactions.external_contract_input",
-                "leaf_model_id": "repair_transactions.retired_event_replay_rejected",
+                "leaf_model_id": "repair_transactions.unsupported_event_replay_rejected",
                 "metadata": {
                   "compared_flowguard_model": "repair_transactions",
                   "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
-                  "compared_flowguard_obligation": "repair_transactions.retired_event_replay_rejected",
+                  "compared_flowguard_obligation": "repair_transactions.unsupported_event_replay_rejected",
                   "family": "repair transactions",
                   "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
                   "source_test_command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
-                  "source_test_evidence_id": "repair_transactions.negative.retired_event_replay_plan_kind",
+                  "source_test_evidence_id": "repair_transactions.negative.unsupported_event_replay_plan_kind",
                   "source_test_path": "tests/router_runtime/control_blockers.py"
                 },
                 "model_id": "repair_transactions",
-                "model_obligation_id": "repair_transactions.retired_event_replay_rejected",
+                "model_obligation_id": "repair_transactions.unsupported_event_replay_rejected",
                 "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
-                "node_id": "repair_transactions:repair_transactions.retired_event_replay_rejected",
-                "observation_id": "runtime_path.repair_transactions.02.repair_transactions_retired_event_replay_rejected",
+                "node_id": "repair_transactions:repair_transactions.unsupported_event_replay_rejected",
+                "observation_id": "runtime_path.repair_transactions.02.repair_transactions_unsupported_event_replay_rejected",
                 "observed_error_path": "",
                 "observed_next_state": "repair_transactions.runtime_path_evidence_bound",
                 "observed_output": "model_obligation_runtime_path_bound",
@@ -37990,7 +38216,7 @@
                 "observed_state_writes": [
                   "flowguard_runtime_path_evidence"
                 ],
-                "progress_message": "compares FlowPilot code/test evidence repair_transactions.negative.retired_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.retired_event_replay_rejected",
+                "progress_message": "compares FlowPilot code/test evidence repair_transactions.negative.unsupported_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.unsupported_event_replay_rejected",
                 "proof_artifact": null,
                 "result_status": "passed",
                 "run_id": "repair_transactions:runtime-path-current",
@@ -38177,10 +38403,10 @@
             "command": "python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
             "covered_code_contracts": [],
             "covered_obligations": [
-              "repair_transactions.retired_event_replay_rejected"
+              "repair_transactions.unsupported_event_replay_rejected"
             ],
             "evidence_current": true,
-            "evidence_id": "repair_transactions.negative.retired_event_replay_plan_kind",
+            "evidence_id": "repair_transactions.negative.unsupported_event_replay_plan_kind",
             "evidence_role": "primary",
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
@@ -38189,7 +38415,7 @@
             "result_status": "passed",
             "stale_reasons": [],
             "test_kind": "negative_path",
-            "test_name": "test_pm_repair_decision_rejects_retired_event_replay_plan_kind"
+            "test_name": "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind"
           },
           {
             "assertion_scope": "external_contract",
@@ -38286,7 +38512,7 @@
         "progress_lines": [
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.executable_plan_required run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.executable_plan_required obligation=repair_transactions.executable_plan_required code_contract=runtime_path.repair_transactions.repair_transactions_executable_plan_required boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.happy.material_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.happy.material_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.executable_plan_required",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.material_rework_requires_fresh_producer run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.material_rework_requires_fresh_producer obligation=repair_transactions.material_rework_requires_fresh_producer code_contract=runtime_path.repair_transactions.repair_transactions_material_rework_requires_fresh_producer boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.material_role_reissue_no_producer progress=compares FlowPilot code/test evidence repair_transactions.negative.material_role_reissue_no_producer with FlowGuard model repair_transactions obligation repair_transactions.material_rework_requires_fresh_producer",
-          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.retired_event_replay_rejected run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.retired_event_replay_rejected obligation=repair_transactions.retired_event_replay_rejected code_contract=runtime_path.repair_transactions.repair_transactions_retired_event_replay_rejected boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.retired_event_replay_plan_kind progress=compares FlowPilot code/test evidence repair_transactions.negative.retired_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.retired_event_replay_rejected",
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.unsupported_event_replay_rejected run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.unsupported_event_replay_rejected obligation=repair_transactions.unsupported_event_replay_rejected code_contract=runtime_path.repair_transactions.repair_transactions_unsupported_event_replay_rejected boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.unsupported_event_replay_plan_kind progress=compares FlowPilot code/test evidence repair_transactions.negative.unsupported_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.unsupported_event_replay_rejected",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.empty_transaction_returns_to_pm_repair run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.empty_transaction_returns_to_pm_repair obligation=repair_transactions.empty_transaction_returns_to_pm_repair code_contract=runtime_path.repair_transactions.repair_transactions_empty_transaction_returns_to_pm_repair boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.empty_followup_wait_fallback progress=compares FlowPilot code/test evidence repair_transactions.negative.empty_followup_wait_fallback with FlowGuard model repair_transactions obligation repair_transactions.empty_transaction_returns_to_pm_repair",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.pm_decision_flag_atomicity run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.pm_decision_flag_atomicity obligation=repair_transactions.pm_decision_flag_atomicity code_contract=runtime_path.repair_transactions.repair_transactions_pm_decision_flag_atomicity boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.pm_decision_side_effect_atomicity progress=compares FlowPilot code/test evidence repair_transactions.edge.pm_decision_side_effect_atomicity with FlowGuard model repair_transactions obligation repair_transactions.pm_decision_flag_atomicity",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery"
@@ -39311,11 +39537,11 @@
     }
   ],
   "plan_count": 10,
-  "release_convergence_ok": true,
+  "release_convergence_ok": false,
   "result_type": "flowpilot_model_test_alignment",
   "similarity_convergence": {
     "architecture_reduction": {
-      "compatibility_surfaces": [],
+      "unsupported historical_surfaces": [],
       "completed_candidate_ids": [],
       "decision": "architecture_reduction_ready",
       "findings": [
@@ -40164,7 +40390,7 @@
         "name": "unsafe_branch_fold_without_replay",
         "ok": true,
         "report": {
-          "compatibility_surfaces": [],
+          "unsupported historical_surfaces": [],
           "completed_candidate_ids": [],
           "decision": "conformance_required",
           "findings": [
@@ -41898,7 +42124,7 @@
   },
   "similarity_convergence_ok": true,
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
-  "source_audit_ok": false,
+  "source_audit_ok": true,
   "source_contract_plan": {
     "alignment_report": {
       "decision": "model_test_alignment_green",
@@ -41915,373 +42141,11 @@
       "ok": true,
       "summary": "OK: code_boundary_conformance boundaries=2 observations=5 findings=0"
     },
-    "finding_count": 4,
-    "finding_counts": {
-      "blocker": 4
-    },
-    "findings": [
-      {
-        "code": "source_contract_missing_side_effect",
-        "code_contract_id": "flowpilot_new.submit_result",
-        "evidence_id": "",
-        "layer": "python_source_contract_audit",
-        "message": "source for flowpilot_new.submit_result is missing declared side effects",
-        "metadata": {
-          "contract": {
-            "code_contract_id": "flowpilot_new.submit_result",
-            "error_paths": [],
-            "external_inputs": [
-              "root",
-              "lease_id",
-              "packet_id",
-              "body"
-            ],
-            "external_outputs": [
-              "return"
-            ],
-            "implements_obligations": [
-              "new_entrypoint.symmetric_role_packet_lifecycle",
-              "new_entrypoint.flowguard_run_local_evidence",
-              "new_entrypoint.lifecycle_guard_stale_result_quarantine"
-            ],
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "required": true,
-            "role": "owner",
-            "side_effects": [
-              "submit_host_result",
-              "save_run_ledger"
-            ],
-            "state_reads": [],
-            "state_writes": [],
-            "surface_type": "function",
-            "symbol": "submit_result"
-          },
-          "evidence": {
-            "calls": [
-              "_run_until_wait_and_save",
-              "_runtime_state",
-              "host.submit_host_result",
-              "run_shell.load_run_ledger",
-              "run_shell.load_run_shell"
-            ],
-            "code_contract_id": "flowpilot_new.submit_result",
-            "found": true,
-            "parameters": [
-              "body",
-              "lease_id",
-              "packet_id",
-              "root"
-            ],
-            "parse_error": "",
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "raised_errors": [],
-            "return_values": [],
-            "returns_value": true,
-            "side_effects": [
-              "submit_host_result"
-            ],
-            "state_reads": [
-              "Any",
-              "Path",
-              "_run_until_wait_and_save",
-              "_runtime_state",
-              "body",
-              "dict",
-              "folded",
-              "host",
-              "lease_id",
-              "ledger",
-              "load_run_ledger",
-              "load_run_shell",
-              "packet_id",
-              "result_id",
-              "root",
-              "run_shell",
-              "shell",
-              "str",
-              "submit_host_result"
-            ],
-            "state_writes": [
-              "folded",
-              "ledger",
-              "result_id",
-              "shell"
-            ],
-            "symbol": "submit_result"
-          },
-          "missing": [
-            "save_run_ledger"
-          ]
-        },
-        "path": "skills/flowpilot/assets/flowpilot_new.py",
-        "severity": "blocker"
-      },
-      {
-        "code": "source_contract_missing_side_effect",
-        "code_contract_id": "flowpilot_new.status",
-        "evidence_id": "",
-        "layer": "python_source_contract_audit",
-        "message": "source for flowpilot_new.status is missing declared side effects",
-        "metadata": {
-          "contract": {
-            "code_contract_id": "flowpilot_new.status",
-            "error_paths": [],
-            "external_inputs": [
-              "root"
-            ],
-            "external_outputs": [
-              "return"
-            ],
-            "implements_obligations": [
-              "new_entrypoint.symmetric_role_packet_lifecycle",
-              "new_entrypoint.lifecycle_guard_stop_authority"
-            ],
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "required": true,
-            "role": "owner",
-            "side_effects": [
-              "save_run_ledger"
-            ],
-            "state_reads": [],
-            "state_writes": [],
-            "surface_type": "function",
-            "symbol": "status"
-          },
-          "evidence": {
-            "calls": [
-              "_runtime_state",
-              "cockpit.render_status",
-              "run_shell.load_run_ledger",
-              "run_shell.load_run_shell",
-              "shell.to_json"
-            ],
-            "code_contract_id": "flowpilot_new.status",
-            "found": true,
-            "parameters": [
-              "root"
-            ],
-            "parse_error": "",
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "raised_errors": [],
-            "return_values": [],
-            "returns_value": true,
-            "side_effects": [],
-            "state_reads": [
-              "Any",
-              "Path",
-              "_runtime_state",
-              "cockpit",
-              "dict",
-              "ledger",
-              "load_run_ledger",
-              "load_run_shell",
-              "render_status",
-              "root",
-              "run_shell",
-              "shell",
-              "str",
-              "to_json"
-            ],
-            "state_writes": [
-              "ledger",
-              "shell"
-            ],
-            "symbol": "status"
-          },
-          "missing": [
-            "save_run_ledger"
-          ]
-        },
-        "path": "skills/flowpilot/assets/flowpilot_new.py",
-        "severity": "blocker"
-      },
-      {
-        "code": "source_contract_missing_side_effect",
-        "code_contract_id": "flowpilot_new.patrol",
-        "evidence_id": "",
-        "layer": "python_source_contract_audit",
-        "message": "source for flowpilot_new.patrol is missing declared side effects",
-        "metadata": {
-          "contract": {
-            "code_contract_id": "flowpilot_new.patrol",
-            "error_paths": [],
-            "external_inputs": [
-              "root"
-            ],
-            "external_outputs": [
-              "return"
-            ],
-            "implements_obligations": [
-              "new_entrypoint.lifecycle_guard_stop_authority",
-              "new_entrypoint.lifecycle_guard_resume_patrol"
-            ],
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "required": true,
-            "role": "owner",
-            "side_effects": [
-              "save_run_ledger"
-            ],
-            "state_reads": [],
-            "state_writes": [],
-            "surface_type": "function",
-            "symbol": "patrol"
-          },
-          "evidence": {
-            "calls": [
-              "_run_until_wait_and_save",
-              "_runtime_state",
-              "cockpit.render_status",
-              "run_shell.load_run_ledger",
-              "run_shell.load_run_shell",
-              "shell.to_json",
-              "time.sleep"
-            ],
-            "code_contract_id": "flowpilot_new.patrol",
-            "found": true,
-            "parameters": [
-              "root",
-              "sleep_seconds"
-            ],
-            "parse_error": "",
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "raised_errors": [],
-            "return_values": [],
-            "returns_value": true,
-            "side_effects": [],
-            "state_reads": [
-              "Any",
-              "Path",
-              "_run_until_wait_and_save",
-              "_runtime_state",
-              "cockpit",
-              "dict",
-              "folded",
-              "int",
-              "ledger",
-              "load_run_ledger",
-              "load_run_shell",
-              "render_status",
-              "root",
-              "run_shell",
-              "shell",
-              "sleep",
-              "sleep_seconds",
-              "str",
-              "time",
-              "to_json"
-            ],
-            "state_writes": [
-              "folded",
-              "ledger",
-              "shell"
-            ],
-            "symbol": "patrol"
-          },
-          "missing": [
-            "save_run_ledger"
-          ]
-        },
-        "path": "skills/flowpilot/assets/flowpilot_new.py",
-        "severity": "blocker"
-      },
-      {
-        "code": "source_contract_missing_side_effect",
-        "code_contract_id": "flowpilot_new.resume",
-        "evidence_id": "",
-        "layer": "python_source_contract_audit",
-        "message": "source for flowpilot_new.resume is missing declared side effects",
-        "metadata": {
-          "contract": {
-            "code_contract_id": "flowpilot_new.resume",
-            "error_paths": [],
-            "external_inputs": [
-              "root",
-              "reason"
-            ],
-            "external_outputs": [
-              "return"
-            ],
-            "implements_obligations": [
-              "new_entrypoint.lifecycle_guard_resume_patrol"
-            ],
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "required": true,
-            "role": "owner",
-            "side_effects": [
-              "record_resume_request",
-              "reconcile_resume_request",
-              "save_run_ledger"
-            ],
-            "state_reads": [],
-            "state_writes": [],
-            "surface_type": "function",
-            "symbol": "resume"
-          },
-          "evidence": {
-            "calls": [
-              "_run_until_wait_and_save",
-              "_runtime_state",
-              "cockpit.render_status",
-              "run_shell.load_run_ledger",
-              "run_shell.load_run_shell",
-              "runtime.reconcile_resume_request",
-              "runtime.record_resume_request",
-              "shell.to_json"
-            ],
-            "code_contract_id": "flowpilot_new.resume",
-            "found": true,
-            "parameters": [
-              "reason",
-              "root"
-            ],
-            "parse_error": "",
-            "path": "skills/flowpilot/assets/flowpilot_new.py",
-            "raised_errors": [],
-            "return_values": [],
-            "returns_value": true,
-            "side_effects": [
-              "reconcile_resume_request",
-              "record_resume_request"
-            ],
-            "state_reads": [
-              "Any",
-              "Path",
-              "_run_until_wait_and_save",
-              "_runtime_state",
-              "cockpit",
-              "dict",
-              "folded",
-              "ledger",
-              "load_run_ledger",
-              "load_run_shell",
-              "reason",
-              "reconcile_resume_request",
-              "record_resume_request",
-              "render_status",
-              "root",
-              "run_shell",
-              "runtime",
-              "shell",
-              "str",
-              "to_json"
-            ],
-            "state_writes": [
-              "folded",
-              "ledger",
-              "shell"
-            ],
-            "symbol": "resume"
-          },
-          "missing": [
-            "save_run_ledger"
-          ]
-        },
-        "path": "skills/flowpilot/assets/flowpilot_new.py",
-        "severity": "blocker"
-      }
-    ],
+    "finding_count": 0,
+    "finding_counts": {},
+    "findings": [],
     "model_id": "model_test_code_source_contracts",
-    "ok": false,
+    "ok": true,
     "plan": {
       "allow_orphan_code_contracts": false,
       "allow_orphan_tests": false,
@@ -42603,7 +42467,7 @@
             "new_entrypoint.rehearsal_closure",
             "new_entrypoint.symmetric_role_packet_lifecycle"
           ],
-          "path": "skills/flowpilot/assets/ai_project_runtime/fake_e2e.py",
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -42692,7 +42556,7 @@
           "role": "owner",
           "side_effects": [
             "submit_host_result",
-            "save_run_ledger"
+            "_run_until_wait_and_save"
           ],
           "state_reads": [],
           "state_writes": [],
@@ -42715,9 +42579,7 @@
           "path": "skills/flowpilot/assets/flowpilot_new.py",
           "required": true,
           "role": "owner",
-          "side_effects": [
-            "save_run_ledger"
-          ],
+          "side_effects": [],
           "state_reads": [],
           "state_writes": [],
           "surface_type": "function",
@@ -42740,7 +42602,7 @@
           "required": true,
           "role": "owner",
           "side_effects": [
-            "save_run_ledger"
+            "_run_until_wait_and_save"
           ],
           "state_reads": [],
           "state_writes": [],
@@ -42766,7 +42628,7 @@
           "side_effects": [
             "record_resume_request",
             "reconcile_resume_request",
-            "save_run_ledger"
+            "_run_until_wait_and_save"
           ],
           "state_reads": [],
           "state_writes": [],
@@ -42788,7 +42650,7 @@
           "implements_obligations": [
             "new_entrypoint.lifecycle_guard_stale_result_quarantine"
           ],
-          "path": "skills/flowpilot/assets/ai_project_runtime/host.py",
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/host.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -42816,7 +42678,7 @@
             "new_entrypoint.lifecycle_guard_stop_authority",
             "new_entrypoint.lifecycle_guard_resume_patrol"
           ],
-          "path": "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -42838,7 +42700,7 @@
             "exit_code"
           ],
           "implements_obligations": [
-            "new_entrypoint.side_command_surface_retired",
+            "new_entrypoint.side_command_surface_unsupported",
             "new_entrypoint.host_kind_value_menu"
           ],
           "path": "skills/flowpilot/assets/flowpilot_new.py",
@@ -47984,7 +47846,7 @@
           "implements_obligations": [
             "capability_parent.proof_reuse_and_fast_boundary"
           ],
-          "path": "scripts/smoke_autopilot.py",
+          "path": "scripts/smoke_flowpilot.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -48190,13 +48052,13 @@
         {
           "allow_shared_evidence": false,
           "allow_shared_implementation": true,
-          "description": "Source-audited formal public surface boundary that omits retired direct FlowGuard, review, validation, and closure side-command paths.",
+          "description": "Source-audited formal public surface boundary that omits unsupported direct FlowGuard, review, validation, and closure side-command paths.",
           "error_paths": [],
           "exact_external_contract": false,
           "external_inputs": [],
           "external_outputs": [],
           "model_miss_origin": false,
-          "obligation_id": "new_entrypoint.side_command_surface_retired",
+          "obligation_id": "new_entrypoint.side_command_surface_unsupported",
           "obligation_type": "hazard",
           "required": true,
           "required_closure_evidence_roles": [],
@@ -48213,7 +48075,7 @@
         {
           "allow_shared_evidence": false,
           "allow_shared_implementation": true,
-          "description": "Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_subagent.",
+          "description": "Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_sidecar role.",
           "error_paths": [],
           "exact_external_contract": false,
           "external_inputs": [],
@@ -48942,7 +48804,7 @@
         {
           "allow_shared_evidence": true,
           "allow_shared_implementation": true,
-          "description": "Source-audited router owner helper modules expose stable boundaries behind the compatibility facade.",
+          "description": "Source-audited router owner helper modules expose stable boundaries behind the unsupported historical facade.",
           "error_paths": [],
           "exact_external_contract": false,
           "external_inputs": [],
@@ -49219,7 +49081,7 @@
         {
           "allow_shared_evidence": true,
           "allow_shared_implementation": true,
-          "description": "Source-audited card runtime owner modules preserve bundle, envelope, ledger, path, and hash contracts behind the compatibility facade.",
+          "description": "Source-audited card runtime owner modules preserve bundle, envelope, ledger, path, and hash contracts behind the unsupported historical facade.",
           "error_paths": [],
           "exact_external_contract": false,
           "external_inputs": [],
@@ -49740,12 +49602,12 @@
         {
           "assertion_scope": "external_contract",
           "closure_evidence_role": "",
-          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_public_surface_omits_retired_side_command_paths",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_public_surface_omits_unsupported_side_command_paths",
           "covered_code_contracts": [
             "flowpilot_new.main"
           ],
           "covered_obligations": [
-            "new_entrypoint.side_command_surface_retired"
+            "new_entrypoint.side_command_surface_unsupported"
           ],
           "evidence_current": true,
           "evidence_id": "source.new_entrypoint.side_command_surface",
@@ -49757,12 +49619,12 @@
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "negative_path",
-          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+          "test_name": "test_formal_public_surface_omits_unsupported_side_command_paths"
         },
         {
           "assertion_scope": "external_contract",
           "closure_evidence_role": "",
-          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_public_surface_omits_retired_side_command_paths",
+          "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_public_surface_omits_unsupported_side_command_paths",
           "covered_code_contracts": [
             "flowpilot_new.main"
           ],
@@ -49779,7 +49641,7 @@
           "result_status": "passed",
           "stale_reasons": [],
           "test_kind": "happy_path",
-          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+          "test_name": "test_formal_public_surface_omits_unsupported_side_command_paths"
         },
         {
           "assertion_scope": "external_contract",
@@ -52590,7 +52452,7 @@
             "startup_text"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/ai_project_runtime/fake_e2e.py",
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
           "raised_errors": [
             "BlackBoxRuntimeError"
           ],
@@ -52809,6 +52671,7 @@
           "return_values": [],
           "returns_value": true,
           "side_effects": [
+            "_run_until_wait_and_save",
             "submit_host_result"
           ],
           "state_reads": [
@@ -52902,7 +52765,9 @@
           "raised_errors": [],
           "return_values": [],
           "returns_value": true,
-          "side_effects": [],
+          "side_effects": [
+            "_run_until_wait_and_save"
+          ],
           "state_reads": [
             "Any",
             "Path",
@@ -52955,6 +52820,7 @@
           "return_values": [],
           "returns_value": true,
           "side_effects": [
+            "_run_until_wait_and_save",
             "reconcile_resume_request",
             "record_resume_request"
           ],
@@ -53000,7 +52866,7 @@
             "packet_id"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/ai_project_runtime/host.py",
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/host.py",
           "raised_errors": [],
           "return_values": [
             "submit_result"
@@ -53027,6 +52893,7 @@
         {
           "calls": [
             "_event",
+            "_persist_orphan_evidence_from_guard",
             "get",
             "history.append",
             "ledger.setdefault",
@@ -53043,7 +52910,7 @@
             "trigger"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "raised_errors": [],
           "return_values": [
             "snapshot"
@@ -53054,6 +52921,7 @@
             "Any",
             "_GUARD_HISTORY_LIMIT",
             "_event",
+            "_persist_orphan_evidence_from_guard",
             "action_key",
             "append",
             "bool",
@@ -53095,11 +52963,15 @@
             "argparse.ArgumentParser",
             "args.root.resolve",
             "bool",
+            "cancel_parser.add_argument",
+            "cancel_run",
             "fake.add_argument",
             "final_preflight",
+            "host_liveness",
             "json.dumps",
             "lease.add_argument",
             "lease_agent",
+            "liveness_parser.add_argument",
             "parser.add_argument",
             "parser.add_subparsers",
             "parser.parse_args",
@@ -53121,6 +52993,8 @@
             "start.add_argument",
             "start_run",
             "status",
+            "stop_parser.add_argument",
+            "stop_run",
             "str",
             "sub.add_parser",
             "submit.add_argument",
@@ -53159,7 +53033,10 @@
             "argv",
             "body",
             "bool",
+            "cancel_parser",
+            "cancel_run",
             "command",
+            "detail",
             "dumps",
             "exc",
             "fake",
@@ -53168,12 +53045,14 @@
             "headless_startup_text",
             "host",
             "host_kind",
+            "host_liveness",
             "int",
             "json",
             "lease",
             "lease_agent",
             "lease_id",
             "list",
+            "liveness_parser",
             "max_steps",
             "packet_id",
             "parse_args",
@@ -53199,11 +53078,14 @@
             "runtime",
             "sleep_seconds",
             "sorted",
+            "source",
             "start",
             "start_run",
             "startup_text",
             "status",
             "stderr",
+            "stop_parser",
+            "stop_run",
             "str",
             "sub",
             "submit",
@@ -53213,8 +53095,10 @@
           "state_writes": [
             "ack_parser",
             "args",
+            "cancel_parser",
             "fake",
             "lease",
+            "liveness_parser",
             "parser",
             "patrol_parser",
             "payload",
@@ -53224,6 +53108,7 @@
             "root",
             "run_wait",
             "start",
+            "stop_parser",
             "sub",
             "submit"
           ],
@@ -59868,7 +59753,7 @@
             "bootstrap_flags.get",
             "boundary_reconciliation.get",
             "confirmation.get",
-            "crew_memory_root.mkdir",
+            "role_binding_memory_root.mkdir",
             "get",
             "isinstance",
             "receipt_payload.get",
@@ -59923,7 +59808,7 @@
           ],
           "state_reads": [
             "Any",
-            "CREW_ROLE_KEYS",
+            "RUNTIME_ROLE_KEYS",
             "EXTERNAL_EVENTS",
             "ModuleType",
             "Path",
@@ -59956,7 +59841,7 @@
             "bootstrap_flags",
             "boundary_reconciliation",
             "confirmation",
-            "crew_memory_root",
+            "role_binding_memory_root",
             "dict",
             "display_path",
             "flag",
@@ -60002,7 +59887,7 @@
             "continuation_binding_recorded",
             "controller_boundary_confirmation",
             "controller_core_loaded",
-            "crew_memory_root",
+            "role_binding_memory_root",
             "deterministic_seed_projection",
             "dialog_display_confirmation",
             "display_text_sha256",
@@ -67082,7 +66967,7 @@
             "argv"
           ],
           "parse_error": "",
-          "path": "scripts/smoke_autopilot.py",
+          "path": "scripts/smoke_flowpilot.py",
           "raised_errors": [],
           "return_values": [],
           "returns_value": true,
@@ -67117,6 +67002,9 @@
             "parse_args",
             "parser",
             "persistent_router_daemon_check",
+            "project_topology_build",
+            "project_topology_check",
+            "project_topology_orientation_check",
             "prompt_isolation_check",
             "router_facade_split_check",
             "run",
@@ -67143,6 +67031,9 @@
             "ok",
             "parser",
             "persistent_router_daemon_check",
+            "project_topology_build",
+            "project_topology_check",
+            "project_topology_orientation_check",
             "prompt_isolation_check",
             "router_facade_split_check",
             "similarity_convergence_check",
@@ -67151,366 +67042,10 @@
           "symbol": "main"
         }
       ],
-      "decision": "source_contract_missing_side_effect",
-      "findings": [
-        {
-          "code": "source_contract_missing_side_effect",
-          "code_contract_id": "flowpilot_new.submit_result",
-          "evidence_id": "",
-          "message": "source for flowpilot_new.submit_result is missing declared side effects",
-          "metadata": {
-            "contract": {
-              "code_contract_id": "flowpilot_new.submit_result",
-              "error_paths": [],
-              "external_inputs": [
-                "root",
-                "lease_id",
-                "packet_id",
-                "body"
-              ],
-              "external_outputs": [
-                "return"
-              ],
-              "implements_obligations": [
-                "new_entrypoint.symmetric_role_packet_lifecycle",
-                "new_entrypoint.flowguard_run_local_evidence",
-                "new_entrypoint.lifecycle_guard_stale_result_quarantine"
-              ],
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "required": true,
-              "role": "owner",
-              "side_effects": [
-                "submit_host_result",
-                "save_run_ledger"
-              ],
-              "state_reads": [],
-              "state_writes": [],
-              "surface_type": "function",
-              "symbol": "submit_result"
-            },
-            "evidence": {
-              "calls": [
-                "_run_until_wait_and_save",
-                "_runtime_state",
-                "host.submit_host_result",
-                "run_shell.load_run_ledger",
-                "run_shell.load_run_shell"
-              ],
-              "code_contract_id": "flowpilot_new.submit_result",
-              "found": true,
-              "parameters": [
-                "body",
-                "lease_id",
-                "packet_id",
-                "root"
-              ],
-              "parse_error": "",
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "raised_errors": [],
-              "return_values": [],
-              "returns_value": true,
-              "side_effects": [
-                "submit_host_result"
-              ],
-              "state_reads": [
-                "Any",
-                "Path",
-                "_run_until_wait_and_save",
-                "_runtime_state",
-                "body",
-                "dict",
-                "folded",
-                "host",
-                "lease_id",
-                "ledger",
-                "load_run_ledger",
-                "load_run_shell",
-                "packet_id",
-                "result_id",
-                "root",
-                "run_shell",
-                "shell",
-                "str",
-                "submit_host_result"
-              ],
-              "state_writes": [
-                "folded",
-                "ledger",
-                "result_id",
-                "shell"
-              ],
-              "symbol": "submit_result"
-            },
-            "missing": [
-              "save_run_ledger"
-            ]
-          },
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "severity": "blocker"
-        },
-        {
-          "code": "source_contract_missing_side_effect",
-          "code_contract_id": "flowpilot_new.status",
-          "evidence_id": "",
-          "message": "source for flowpilot_new.status is missing declared side effects",
-          "metadata": {
-            "contract": {
-              "code_contract_id": "flowpilot_new.status",
-              "error_paths": [],
-              "external_inputs": [
-                "root"
-              ],
-              "external_outputs": [
-                "return"
-              ],
-              "implements_obligations": [
-                "new_entrypoint.symmetric_role_packet_lifecycle",
-                "new_entrypoint.lifecycle_guard_stop_authority"
-              ],
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "required": true,
-              "role": "owner",
-              "side_effects": [
-                "save_run_ledger"
-              ],
-              "state_reads": [],
-              "state_writes": [],
-              "surface_type": "function",
-              "symbol": "status"
-            },
-            "evidence": {
-              "calls": [
-                "_runtime_state",
-                "cockpit.render_status",
-                "run_shell.load_run_ledger",
-                "run_shell.load_run_shell",
-                "shell.to_json"
-              ],
-              "code_contract_id": "flowpilot_new.status",
-              "found": true,
-              "parameters": [
-                "root"
-              ],
-              "parse_error": "",
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "raised_errors": [],
-              "return_values": [],
-              "returns_value": true,
-              "side_effects": [],
-              "state_reads": [
-                "Any",
-                "Path",
-                "_runtime_state",
-                "cockpit",
-                "dict",
-                "ledger",
-                "load_run_ledger",
-                "load_run_shell",
-                "render_status",
-                "root",
-                "run_shell",
-                "shell",
-                "str",
-                "to_json"
-              ],
-              "state_writes": [
-                "ledger",
-                "shell"
-              ],
-              "symbol": "status"
-            },
-            "missing": [
-              "save_run_ledger"
-            ]
-          },
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "severity": "blocker"
-        },
-        {
-          "code": "source_contract_missing_side_effect",
-          "code_contract_id": "flowpilot_new.patrol",
-          "evidence_id": "",
-          "message": "source for flowpilot_new.patrol is missing declared side effects",
-          "metadata": {
-            "contract": {
-              "code_contract_id": "flowpilot_new.patrol",
-              "error_paths": [],
-              "external_inputs": [
-                "root"
-              ],
-              "external_outputs": [
-                "return"
-              ],
-              "implements_obligations": [
-                "new_entrypoint.lifecycle_guard_stop_authority",
-                "new_entrypoint.lifecycle_guard_resume_patrol"
-              ],
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "required": true,
-              "role": "owner",
-              "side_effects": [
-                "save_run_ledger"
-              ],
-              "state_reads": [],
-              "state_writes": [],
-              "surface_type": "function",
-              "symbol": "patrol"
-            },
-            "evidence": {
-              "calls": [
-                "_run_until_wait_and_save",
-                "_runtime_state",
-                "cockpit.render_status",
-                "run_shell.load_run_ledger",
-                "run_shell.load_run_shell",
-                "shell.to_json",
-                "time.sleep"
-              ],
-              "code_contract_id": "flowpilot_new.patrol",
-              "found": true,
-              "parameters": [
-                "root",
-                "sleep_seconds"
-              ],
-              "parse_error": "",
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "raised_errors": [],
-              "return_values": [],
-              "returns_value": true,
-              "side_effects": [],
-              "state_reads": [
-                "Any",
-                "Path",
-                "_run_until_wait_and_save",
-                "_runtime_state",
-                "cockpit",
-                "dict",
-                "folded",
-                "int",
-                "ledger",
-                "load_run_ledger",
-                "load_run_shell",
-                "render_status",
-                "root",
-                "run_shell",
-                "shell",
-                "sleep",
-                "sleep_seconds",
-                "str",
-                "time",
-                "to_json"
-              ],
-              "state_writes": [
-                "folded",
-                "ledger",
-                "shell"
-              ],
-              "symbol": "patrol"
-            },
-            "missing": [
-              "save_run_ledger"
-            ]
-          },
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "severity": "blocker"
-        },
-        {
-          "code": "source_contract_missing_side_effect",
-          "code_contract_id": "flowpilot_new.resume",
-          "evidence_id": "",
-          "message": "source for flowpilot_new.resume is missing declared side effects",
-          "metadata": {
-            "contract": {
-              "code_contract_id": "flowpilot_new.resume",
-              "error_paths": [],
-              "external_inputs": [
-                "root",
-                "reason"
-              ],
-              "external_outputs": [
-                "return"
-              ],
-              "implements_obligations": [
-                "new_entrypoint.lifecycle_guard_resume_patrol"
-              ],
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "required": true,
-              "role": "owner",
-              "side_effects": [
-                "record_resume_request",
-                "reconcile_resume_request",
-                "save_run_ledger"
-              ],
-              "state_reads": [],
-              "state_writes": [],
-              "surface_type": "function",
-              "symbol": "resume"
-            },
-            "evidence": {
-              "calls": [
-                "_run_until_wait_and_save",
-                "_runtime_state",
-                "cockpit.render_status",
-                "run_shell.load_run_ledger",
-                "run_shell.load_run_shell",
-                "runtime.reconcile_resume_request",
-                "runtime.record_resume_request",
-                "shell.to_json"
-              ],
-              "code_contract_id": "flowpilot_new.resume",
-              "found": true,
-              "parameters": [
-                "reason",
-                "root"
-              ],
-              "parse_error": "",
-              "path": "skills/flowpilot/assets/flowpilot_new.py",
-              "raised_errors": [],
-              "return_values": [],
-              "returns_value": true,
-              "side_effects": [
-                "reconcile_resume_request",
-                "record_resume_request"
-              ],
-              "state_reads": [
-                "Any",
-                "Path",
-                "_run_until_wait_and_save",
-                "_runtime_state",
-                "cockpit",
-                "dict",
-                "folded",
-                "ledger",
-                "load_run_ledger",
-                "load_run_shell",
-                "reason",
-                "reconcile_resume_request",
-                "record_resume_request",
-                "render_status",
-                "root",
-                "run_shell",
-                "runtime",
-                "shell",
-                "str",
-                "to_json"
-              ],
-              "state_writes": [
-                "folded",
-                "ledger",
-                "shell"
-              ],
-              "symbol": "resume"
-            },
-            "missing": [
-              "save_run_ledger"
-            ]
-          },
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "severity": "blocker"
-        }
-      ],
-      "ok": false,
-      "summary": "BLOCKED: decision=source_contract_missing_side_effect findings=4",
+      "decision": "python_contract_source_audit_green",
+      "findings": [],
+      "ok": true,
+      "summary": "OK: decision=python_contract_source_audit_green findings=0",
       "test_evidence": [
         {
           "assert_count": 30,
@@ -67667,7 +67202,7 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 18,
+          "assert_count": 21,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "fake_e2e.run_fake_e2e",
@@ -67689,6 +67224,7 @@
             "self.assertEqual",
             "self.assertFalse",
             "self.assertIn",
+            "self.assertNotIn",
             "self.assertTrue",
             "tempfile.TemporaryDirectory",
             "values"
@@ -67860,7 +67396,7 @@
           "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
         },
         {
-          "assert_count": 8,
+          "assert_count": 17,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
@@ -67876,7 +67412,9 @@
             "flowpilot_new.start_run",
             "flowpilot_new.status",
             "flowpilot_new.submit_result",
+            "get",
             "iter",
+            "len",
             "next",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
@@ -67884,8 +67422,11 @@
             "self._open_packet_by_kind",
             "self.assertEqual",
             "self.assertFalse",
+            "self.assertNotEqual",
+            "self.assertNotIn",
             "self.assertTrue",
-            "tempfile.TemporaryDirectory"
+            "tempfile.TemporaryDirectory",
+            "values"
           ],
           "evidence_id": "source.new_entrypoint.reviewer_clean_projection",
           "found": true,
@@ -67921,7 +67462,7 @@
           "found": true,
           "parse_error": "",
           "path": "tests/test_flowpilot_new_entrypoint.py",
-          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+          "test_name": "test_formal_public_surface_omits_unsupported_side_command_paths"
         },
         {
           "assert_count": 18,
@@ -67951,7 +67492,7 @@
           "found": true,
           "parse_error": "",
           "path": "tests/test_flowpilot_new_entrypoint.py",
-          "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
+          "test_name": "test_formal_public_surface_omits_unsupported_side_command_paths"
         },
         {
           "assert_count": 5,
@@ -70714,7 +70255,7 @@
             "self.assertEqual",
             "self.assertIn",
             "self.assertNotIn",
-            "smoke_autopilot.main"
+            "smoke_flowpilot.main"
           ],
           "evidence_id": "source.smoke.fast",
           "found": true,

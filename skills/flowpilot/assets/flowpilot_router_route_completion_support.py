@@ -137,7 +137,7 @@ def _resume_waits_for_pm_decision(run_state: dict[str, Any]) -> bool:
         bool(flags.get("resume_reentry_requested"))
         and bool(flags.get("resume_state_loaded"))
         and bool(flags.get("resume_roles_restored"))
-        and bool(flags.get("crew_rehydration_report_written"))
+        and bool(flags.get("role_binding_recovery_report_written"))
         and bool(flags.get("pm_resume_decision_card_delivered"))
         and not bool(flags.get("role_recovery_obligation_replay_completed"))
         and not bool(flags.get("pm_resume_recovery_decision_returned"))

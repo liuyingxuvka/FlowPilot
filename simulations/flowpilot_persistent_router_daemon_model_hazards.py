@@ -316,7 +316,7 @@ def hazard_states() -> dict[str, State]:
         "packet_holder_projection_missing_current_work": replace(
             safe_active,
             current_wait="none",
-            legacy_waiting_for_role_null=True,
+            unsupported_historical_waiting_for_role_null=True,
             active_packet_holder="project_manager",
             packet_holder_projection_needed=True,
             current_work_owner_kind="none",
@@ -327,7 +327,7 @@ def hazard_states() -> dict[str, State]:
         "passive_reconciliation_projection_missing_current_work": replace(
             safe_active,
             current_wait="none",
-            legacy_waiting_for_role_null=True,
+            unsupported_historical_waiting_for_role_null=True,
             passive_reconciliation_wait_open=True,
             current_work_owner_kind="none",
             current_work_owner_key="",
@@ -337,7 +337,7 @@ def hazard_states() -> dict[str, State]:
         "router_internal_projection_missing_current_work": replace(
             safe_active,
             current_wait="none",
-            legacy_waiting_for_role_null=True,
+            unsupported_historical_waiting_for_role_null=True,
             router_internal_projection_needed=True,
             current_work_owner_kind="none",
             current_work_owner_key="",

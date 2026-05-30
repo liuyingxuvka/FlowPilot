@@ -166,7 +166,7 @@ def _spawn_startup_router_daemon_process(router: ModuleType, project_root: Path,
     finally:
         stdout_handle.close()
         stderr_handle.close()
-    router._append_router_daemon_event(run_root, 'formal_router_daemon_process_spawned', {'pid': process.pid, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)})
+    router._append_router_daemon_event(run_root, 'formal_router_daemon_process_opened', {'pid': process.pid, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)})
     return {'pid': process.pid, 'command': command, 'stdout_path': router.project_relative(project_root, stdout_path), 'stderr_path': router.project_relative(project_root, stderr_path)}
 
 

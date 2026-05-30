@@ -28,7 +28,7 @@ def build_recommendation() -> CodeStructureRecommendation:
     target_modules = (
         TargetModuleRecommendation(
             module_id="run_shell",
-            path="skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
             owns_function_blocks=("current_run_shell", "ledger_event_store"),
             owns_state=("current_pointer", "run_index", "run_root", "events"),
             owns_side_effects=("write_run_shell", "append_event"),
@@ -38,7 +38,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="router",
-            path="skills/flowpilot/assets/ai_project_runtime/router.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/router.py",
             owns_function_blocks=("deterministic_router", "route_mutation_runtime"),
             owns_state=("active_route", "router_next_action", "route_mutations"),
             owns_side_effects=("emit_next_action", "mark_evidence_stale"),
@@ -48,7 +48,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="host",
-            path="skills/flowpilot/assets/ai_project_runtime/host.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/host.py",
             owns_function_blocks=("dynamic_host_driver", "responsibility_lease_runtime"),
             owns_state=("leases", "host_runs", "role_memory"),
             owns_side_effects=("start_fake_host", "record_live_host_boundary", "quarantine_late_output"),
@@ -58,7 +58,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="packets",
-            path="skills/flowpilot/assets/ai_project_runtime/packets.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/packets.py",
             owns_function_blocks=("sealed_packet_runtime",),
             owns_state=("packet_envelopes", "packet_bodies", "result_envelopes", "result_bodies"),
             owns_side_effects=("write_packet_body", "write_result_body", "verify_body_hash"),
@@ -68,7 +68,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="flowguard_orders",
-            path="skills/flowpilot/assets/ai_project_runtime/flowguard_orders.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/flowguard_orders.py",
             owns_function_blocks=("flowguard_work_order_runtime",),
             owns_state=("work_orders", "flowguard_reports"),
             owns_side_effects=("select_flowguard_skill", "record_proof_artifact"),
@@ -78,7 +78,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="review_closure",
-            path="skills/flowpilot/assets/ai_project_runtime/review_closure.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/review_closure.py",
             owns_function_blocks=("independent_review_runtime", "validation_evidence_runtime"),
             owns_state=("reviews", "validation_evidence", "final_closure"),
             owns_side_effects=("accept_result", "block_result", "write_backward_chain"),
@@ -88,7 +88,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="cockpit",
-            path="skills/flowpilot/assets/ai_project_runtime/cockpit.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py",
             owns_function_blocks=("cockpit_status_projection",),
             owns_state=("status_projection", "user_events"),
             owns_side_effects=("render_public_status", "record_user_event"),
@@ -98,7 +98,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         ),
         TargetModuleRecommendation(
             module_id="migration",
-            path="skills/flowpilot/assets/ai_project_runtime/migration.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/migration.py",
             owns_function_blocks=("migration_cutover_runtime",),
             owns_state=("imported_evidence", "cutover_gate"),
             owns_side_effects=("classify_old_artifact", "record_cutover_decision"),
@@ -112,7 +112,7 @@ def build_recommendation() -> CodeStructureRecommendation:
         source_model_id="flowpilot_complete_system_development_process",
         source_model_path="simulations/flowpilot_complete_system_development_model.py",
         source_model_evidence_tier="executable_flowguard",
-        parent_module_id="skills/flowpilot/assets/ai_project_runtime",
+        parent_module_id="skills/flowpilot/assets/flowpilot_core_runtime",
         target_modules=target_modules,
         function_block_map=tuple(
             (block, module.module_id)
@@ -134,7 +134,7 @@ def build_recommendation() -> CodeStructureRecommendation:
             for module in target_modules
             for entrypoint in module.public_entrypoints
         ),
-        facade_module_id="skills/flowpilot/assets/ai_project_runtime/__init__.py",
+        facade_module_id="skills/flowpilot/assets/flowpilot_core_runtime/__init__.py",
         validation_boundaries=(
             "run_shell_persistence",
             "router_state_machine",
@@ -182,7 +182,7 @@ def known_bad_recommendations() -> dict[str, CodeStructureRecommendation]:
             target_modules=(
                 TargetModuleRecommendation(
                     module_id="run_shell",
-                    path="skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+                    path="skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
                     owns_function_blocks=("current_run_shell",),
                     owns_state=("current_pointer",),
                     validation_boundaries=("run_shell_persistence",),

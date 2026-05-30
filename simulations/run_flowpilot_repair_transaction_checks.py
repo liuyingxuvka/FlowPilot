@@ -59,7 +59,7 @@ HAZARD_EXPECTED_FAILURES = {
     "out_of_scope_repair_without_reason": "PM out-of-scope repair decision lacked FlowGuard incapability reason",
     "reissue_spec_outside_transaction": "PM repair wrote replacement artifacts outside a repair transaction",
     "await_existing_event_without_producer": "await_existing_event repair transaction lacked an existing producer",
-    "retired_event_replay_plan_kind": "repair transaction used unsupported executable plan kind",
+    "unsupported_event_replay_plan_kind": "repair transaction used unsupported executable plan kind",
     "operation_replay_without_safe_recorded_operation": "operation_replay repair transaction did not queue a safe recorded operation replay",
     "controller_repair_packet_without_boundaries": "controller_repair_work_packet transaction lacked bounded work packet and queued action",
     "role_reissue_without_event_producer": "role_reissue repair transaction lacked a concrete event producer",

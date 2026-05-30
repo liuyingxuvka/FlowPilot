@@ -30,7 +30,7 @@ the current run's Controller action ledger.
 
 ### Requirement: Role cohort recovery remains current-run scoped
 Heartbeat/manual resume SHALL restore or replace the six FlowPilot background
-roles only from current-run role memory and current-run crew records.
+roles only from current-run role memory and current-run role binding records.
 
 #### Scenario: Role is live
 - **WHEN** a role slot is live, current-run scoped, and addressable
@@ -38,7 +38,7 @@ roles only from current-run role memory and current-run crew records.
 
 #### Scenario: Role is missing or stale
 - **WHEN** a role slot is missing, cancelled, stale, unknown, or not addressable
-- **THEN** recovery MUST spawn or rehydrate a replacement role from current-run memory before work that depends on that role continues
+- **THEN** recovery MUST open or rehydrate a replacement role from current-run memory before work that depends on that role continues
 
 ### Requirement: Terminal cleanup stops daemon mode
 Terminal lifecycle events SHALL stop Router daemon mode, Controller ledger
@@ -54,7 +54,7 @@ execution, heartbeat continuation, and role activity for the run.
 
 ### Requirement: Recovery never trusts chat history as route state
 Heartbeat/manual resume SHALL recover only from current-run persisted state,
-daemon status, action ledgers, mailbox evidence, crew memory, and Router
+daemon status, action ledgers, mailbox evidence, role-binding memory, and Router
 records.
 
 #### Scenario: Chat says work is alive

@@ -39,7 +39,7 @@ HAZARD_EXPECTED_FAILURES = {
     "change_before_baseline": "structural refactor changed code before baseline was recorded",
     "change_before_openspec": "structural refactor changed code before OpenSpec contract was ready",
     "change_before_flowguard": "structural refactor changed code before FlowGuard guard passed",
-    "compat_entrypoint_deleted": "structural refactor deleted or bypassed compatibility entrypoints",
+    "compat_entrypoint_deleted": "structural refactor deleted or bypassed unsupported_historical entrypoints",
     "protocol_shape_changed": "structure-only refactor changed protocol or JSON shape",
     "model_split_without_heavy_checks": "Meta/Capability model split completed before both heavyweight checks completed",
     "local_git_sync_before_install_sync": "local git sync happened before installed skill sync check",

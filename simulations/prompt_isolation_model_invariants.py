@@ -77,7 +77,7 @@ def invariant_failures(state: State) -> list[str]:
         state.runtime_kit_copied and state.placeholders_filled and state.mailbox_initialized
     ):
         failures.append("roles started before copied kit, placeholders, and mailbox were ready")
-    if state.roles_started and not state.fresh_role_agents_started:
+    if state.roles_started and not state.fresh_role_bindings_started:
         failures.append("roles were marked started without fresh current-run role-binding evidence")
     if state.startup_fact_reported and not state.reviewer_startup_fact_check_card_delivered:
         failures.append("reviewer startup fact report was accepted before startup fact-check card delivery")
@@ -495,9 +495,9 @@ def invariant_failures(state: State) -> list[str]:
         and state.final_backward_replay_passed
         and state.lifecycle_reconciled
         and state.heartbeat_stopped_or_manual_recorded
-        and state.crew_archived
+        and state.role_binding_ledger_archived
     ):
-        failures.append("PM completion decision before closure card, final replay, lifecycle, continuation cleanup, and crew archive")
+        failures.append("PM completion decision before closure card, final replay, lifecycle, continuation cleanup, and role binding archive")
     if state.prompt_deliveries > state.manifest_checks:
         failures.append("prompt card delivered without a matching manifest check")
     if state.prompt_deliveries and not state.system_card_identity_boundaries_verified:

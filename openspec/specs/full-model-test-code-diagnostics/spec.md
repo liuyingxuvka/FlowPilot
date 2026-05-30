@@ -5,7 +5,7 @@ TBD - created by archiving change full-model-test-code-diagnostics. Update Purpo
 ## Requirements
 ### Requirement: Full diagnostic inventory covers repository maintenance surfaces
 
-The system SHALL inventory FlowPilot owner modules, compatibility facades,
+The system SHALL inventory FlowPilot owner modules, unsupported historical facades,
 script entrypoints, and test tiers as first-class diagnostic surfaces.
 
 #### Scenario: Owner modules and facades are inventoried

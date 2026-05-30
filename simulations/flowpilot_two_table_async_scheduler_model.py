@@ -54,7 +54,7 @@ Risk intent brief:
   independent rows until barrier; broad mechanics are not barriers unless the
   action is a true dependency wall; barriers stop enqueueing; startup banner,
   heartbeat, and display/status are parallel obligations; startup role-slot
-  spawn is only a local dependency; done receipts need
+  open is only a local dependency; done receipts need
   required Router-visible postconditions before reconciliation; startup review
   uses current-scope reconciliation; startup external actions are daemon-owned
   after the minimal run shell exists; the Controller action ledger carries a

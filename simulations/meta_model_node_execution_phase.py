@@ -35,7 +35,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="heartbeat_loaded_state",
-                action="continuation turn loads local state, active route, latest heartbeat or manual-resume evidence, lifecycle evidence, and crew ledger",
+                action="continuation turn loads local state, active route, latest heartbeat or manual-resume evidence, lifecycle evidence, and role-binding ledger",
                 heartbeat_loaded_state=True,
                 active_node="heartbeat_load_frontier",
             )
@@ -55,7 +55,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 label="heartbeat_loaded_packet_ledger",
                 action="continuation turn loads packet_ledger.json before asking PM or dispatching worker work",
                 heartbeat_loaded_packet_ledger=True,
-                active_node="heartbeat_load_crew_memory",
+                active_node="heartbeat_load_role_binding_memory",
             )
             return
         if (
@@ -74,15 +74,15 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 controller_action_watch_active=True,
                 router_daemon_recovered_on_resume=True,
                 terminal_router_daemon_stopped=False,
-                active_node="heartbeat_load_crew_memory",
+                active_node="heartbeat_load_role_binding_memory",
             )
             return
-        if not state.heartbeat_loaded_crew_memory:
+        if not state.heartbeat_loaded_role_binding_memory:
             yield _step(
                 state,
-                label="heartbeat_loaded_crew_memory",
+                label="heartbeat_loaded_role_binding_memory",
                 action="continuation turn loads structured role memory packets before restoring or replacing roles",
-                heartbeat_loaded_crew_memory=True,
+                heartbeat_loaded_role_binding_memory=True,
                 active_node="heartbeat_rehydrate_crew",
             )
             return
@@ -90,7 +90,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="heartbeat_host_spawn_or_rehydrate_six_roles",
-                action="router asks the host to restore or spawn all six live roles before PM resume",
+                action="router asks the host to restore or open all runtime-requested roles before PM resume",
                 heartbeat_host_rehydrate_requested=True,
                 active_node="heartbeat_rehydrate_crew",
             )
@@ -98,8 +98,8 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
         if not state.heartbeat_restored_crew:
             yield _step(
                 state,
-                label="heartbeat_restored_six_agent_crew",
-                action="continuation turn resumes available role agents or prepares replacements from role memory",
+                label="heartbeat_restored_required_role_binding_coverage",
+                action="continuation turn resumes available role bindings or prepares replacements from role memory",
                 heartbeat_restored_crew=True,
                 replacement_roles_seeded_from_memory=True,
                 active_node="heartbeat_rehydrate_crew",
@@ -108,10 +108,10 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
         if not state.heartbeat_rehydrated_crew:
             yield _step(
                 state,
-                label="heartbeat_rehydrated_six_agent_crew",
+                label="heartbeat_rehydrated_required_role_binding_coverage",
                 action="continuation turn records full role-binding rehydration status before asking the PM",
                 heartbeat_rehydrated_crew=True,
-                active_node="write_crew_rehydration_report",
+                active_node="write_role_binding_recovery_report",
             )
             return
         if not state.heartbeat_injected_current_run_memory_into_roles:
@@ -120,15 +120,15 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 label="heartbeat_injected_current_run_memory_into_roles",
                 action="host injects each role's current-run memory and PM resume context before PM runway",
                 heartbeat_injected_current_run_memory_into_roles=True,
-                active_node="write_crew_rehydration_report",
+                active_node="write_role_binding_recovery_report",
             )
             return
-        if not state.crew_rehydration_report_written:
+        if not state.role_binding_recovery_report_written:
             yield _step(
                 state,
-                label="crew_rehydration_report_written",
+                label="role_binding_recovery_report_written",
                 action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
-                crew_rehydration_report_written=True,
+                role_binding_recovery_report_written=True,
                 active_node="heartbeat_ask_project_manager",
             )
             return
@@ -458,7 +458,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                     lightweight_self_check_scope_id="",
                     child_node_sidecar_scan_done=False,
                     sidecar_need="unknown",
-                    subagent_scope_checked=False,
+                    sidecar_role_scope_checked=False,
                     node_visible_roadmap_emitted=False,
                     quality_route_raises=state.quality_route_raises + 1,
                     active_node="run_quality_route_checks",
@@ -485,75 +485,75 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="child_node_sidecar_scan_need_found_no_pool",
-                action="enter the current child node and find a bounded sidecar task with no existing idle subagent",
+                action="enter the current child node and find a bounded sidecar task with no existing idle sidecar role",
                 child_node_sidecar_scan_done=True,
                 sidecar_need="needed",
-                subagent_pool_exists=False,
-                subagent_idle_available=False,
+                sidecar_role_pool_exists=False,
+                sidecar_role_idle_available=False,
                 active_node="sidecar_scope_check",
             )
             yield _step(
                 state,
                 label="child_node_sidecar_scan_need_found_existing_idle",
-                action="enter the current child node and find a bounded sidecar task plus an existing idle subagent",
+                action="enter the current child node and find a bounded sidecar task plus an existing idle sidecar role",
                 child_node_sidecar_scan_done=True,
                 sidecar_need="needed",
-                subagent_pool_exists=True,
-                subagent_idle_available=True,
-                subagent_status="idle",
+                sidecar_role_pool_exists=True,
+                sidecar_role_idle_available=True,
+                sidecar_role_status="idle",
                 active_node="sidecar_scope_check",
             )
             return
-        if state.sidecar_need == "needed" and not state.subagent_scope_checked:
+        if state.sidecar_need == "needed" and not state.sidecar_role_scope_checked:
             yield _step(
                 state,
                 label="sidecar_scope_checked",
                 action="confirm the sidecar task is bounded, non-blocking, and cannot own the node, route, acceptance, or checkpoint",
-                subagent_scope_checked=True,
+                sidecar_role_scope_checked=True,
                 active_node="assign_sidecar",
             )
             return
         if (
             state.sidecar_need == "needed"
-            and state.subagent_scope_checked
-            and state.subagent_status in {"none", "idle"}
+            and state.sidecar_role_scope_checked
+            and state.sidecar_role_status in {"none", "idle"}
         ):
-            if state.subagent_pool_exists and state.subagent_idle_available:
+            if state.sidecar_role_pool_exists and state.sidecar_role_idle_available:
                 yield _step(
                     state,
-                    label="idle_subagent_reused",
-                    action="reuse an existing idle subagent for the child-node sidecar task",
-                    subagent_status="pending",
-                    subagent_idle_available=False,
+                    label="idle_sidecar_role_reused",
+                    action="reuse an existing idle sidecar role for the child-node sidecar task",
+                    sidecar_role_status="pending",
+                    sidecar_role_idle_available=False,
                     active_node="await_sidecar_report",
                 )
             else:
                 yield _step(
                     state,
-                    label="subagent_spawned_on_demand",
-                    action="spawn a subagent only after the current child node has a bounded sidecar task and no suitable idle subagent exists",
-                    subagent_pool_exists=True,
-                    subagent_status="pending",
+                    label="sidecar_role_opened_on_demand",
+                    action="open a sidecar role only after the current child node has a bounded sidecar task and no suitable idle sidecar role exists",
+                    sidecar_role_pool_exists=True,
+                    sidecar_role_status="pending",
                     active_node="await_sidecar_report",
                 )
             return
-        if state.subagent_status == "pending":
+        if state.sidecar_role_status == "pending":
             yield _step(
                 state,
                 label="sidecar_report_returned",
-                action="sidecar subagent returns findings, evidence, changed paths if any, risks, and suggestions",
-                subagent_status="returned",
+                action="sidecar role binding returns findings, evidence, changed paths if any, risks, and suggestions",
+                sidecar_role_status="returned",
                 active_node="merge_sidecar_report",
             )
             return
-        if state.subagent_status == "returned":
+        if state.sidecar_role_status == "returned":
             yield _step(
                 state,
                 label="authorized_integration_review_packet_completed",
                 action="authorized integration/review packet verifies the sidecar report while PM keeps node ownership",
                 sidecar_need="none",
-                subagent_status="idle",
-                subagent_idle_available=True,
+                sidecar_role_status="idle",
+                sidecar_role_idle_available=True,
                 active_node="ready_for_chunk",
             )
             return

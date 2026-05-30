@@ -92,7 +92,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         )
         return root
 
-    def write_retired_layout(self, root: Path, *, active_route: str = "retired-route") -> None:
+    def write_unsupported_layout(self, root: Path, *, active_route: str = "unsupported-route") -> None:
         flowpilot_root = root / ".flowpilot"
         _write_json(flowpilot_root / "state.json", {"active_route_id": active_route})
         _write_json(
@@ -101,9 +101,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
                 "active_route_id": active_route,
                 "route_version": 1,
                 "frontier_version": 1,
-                "active_node_id": "retired-node",
-                "next_gate": "retired execution",
-                "current_mainline": ["retired-node", "retired-complete"],
+                "active_node_id": "unsupported-node",
+                "next_gate": "unsupported execution",
+                "current_mainline": ["unsupported-node", "unsupported-complete"],
             },
         )
         _write_json(
@@ -113,8 +113,8 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
                 "route_version": 1,
                 "status": "active",
                 "nodes": [
-                    {"node_id": "retired-node", "status": "running", "summary": "retired"},
-                    {"node_id": "retired-complete", "status": "pending", "summary": "retired"},
+                    {"node_id": "unsupported-node", "status": "running", "summary": "unsupported"},
+                    {"node_id": "unsupported-complete", "status": "pending", "summary": "unsupported"},
                 ],
             },
         )
@@ -292,7 +292,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertNotIn("Chat evidence:", payload["markdown"])
         self.assertNotIn("mark displayed only after this exact Mermaid block appears", payload["markdown"])
 
-    def test_retired_active_route_and_current_node_aliases_do_not_resolve_current_route(self) -> None:
+    def test_unsupported_active_route_and_current_node_aliases_do_not_resolve_current_route(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")
         current_path = root / ".flowpilot" / "current.json"
         current_path.write_text(
@@ -556,9 +556,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertNotIn("Product Behavior Model", payload["mermaid"])
         self.assertIn("Current status:", payload["markdown"])
 
-    def test_active_run_pointer_is_authoritative_over_retired_state(self) -> None:
+    def test_active_run_pointer_is_authoritative_over_unsupported_state(self) -> None:
         root = self.make_project(active_node="node-004-desktop-implementation")
-        self.write_retired_layout(root)
+        self.write_unsupported_layout(root)
 
         payload = route_sign.generate(
             root,
@@ -576,12 +576,12 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(payload["active_route"], "route-001")
         self.assertEqual(payload["active_node"], "node-004-desktop-implementation")
         self.assertIn(str(root / ".flowpilot" / "runs" / "run-test"), payload["source_frontier_path"])
-        self.assertNotIn("retired-node", payload["mermaid"])
+        self.assertNotIn("unsupported-node", payload["mermaid"])
 
-    def test_missing_active_run_blocks_instead_of_falling_back_to_retired_state(self) -> None:
+    def test_missing_active_run_blocks_instead_of_falling_back_to_unsupported_state(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-missing-run-"))
         _write_json(root / ".flowpilot" / "current.json", {"active_run_id": "missing-run"})
-        self.write_retired_layout(root)
+        self.write_unsupported_layout(root)
 
         payload = route_sign.generate(
             root,
@@ -601,9 +601,9 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIn("Active FlowPilot run root is missing", " ".join(payload["flowpilot_path_findings"]))
         self.assertIn(str(root / ".flowpilot" / "runs" / "missing-run"), payload["source_frontier_path"])
         self.assertIsNone(payload["active_route"])
-        self.assertNotIn("retired-node", payload["mermaid"])
+        self.assertNotIn("unsupported-node", payload["mermaid"])
 
-    def test_invalid_active_run_root_blocks_instead_of_falling_back_to_retired_state(self) -> None:
+    def test_invalid_active_run_root_blocks_instead_of_falling_back_to_unsupported_state(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-invalid-run-"))
         _write_json(
             root / ".flowpilot" / "current.json",
@@ -612,7 +612,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
                 "active_run_root": ".flowpilot/current.json",
             },
         )
-        self.write_retired_layout(root)
+        self.write_unsupported_layout(root)
 
         payload = route_sign.generate(
             root,
@@ -630,11 +630,11 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(payload["display_gate_status"], "blocked_degraded_source")
         self.assertIn("outside .flowpilot/runs", " ".join(payload["flowpilot_path_findings"]))
         self.assertIsNone(payload["active_route"])
-        self.assertNotIn("retired-node", payload["mermaid"])
+        self.assertNotIn("unsupported-node", payload["mermaid"])
 
-    def test_retired_layout_blocks_without_active_run_pointer(self) -> None:
-        root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-retired-"))
-        self.write_retired_layout(root)
+    def test_unsupported_layout_blocks_without_active_run_pointer(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-unsupported-"))
+        self.write_unsupported_layout(root)
 
         payload = route_sign.generate(
             root,
@@ -653,7 +653,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertFalse(payload["current_declares_run"])
         self.assertIsNone(payload["active_route"])
         self.assertIsNone(payload["active_node"])
-        self.assertNotIn("retired-node", payload["mermaid"])
+        self.assertNotIn("unsupported-node", payload["mermaid"])
 
     def test_review_failure_shows_return_edge_and_passes_when_chat_displayed(self) -> None:
         root = self.make_project(

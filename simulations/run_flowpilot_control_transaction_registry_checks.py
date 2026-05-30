@@ -53,7 +53,7 @@ def _state_id(state: model.State) -> str:
         f"repair={state.repair_transaction_required},{state.repair_transaction_present},"
         f"{state.outcome_policy},{state.outcome_events_distinct},{state.non_success_uses_success_event}|"
         f"parent={state.parent_repair},{state.repair_target_is_leaf_event}|"
-        f"commit={state.commit_targets}|retired_transaction_name={state.retired_transaction_name}|"
+        f"commit={state.commit_targets}|unsupported_transaction_name={state.unsupported_transaction_name}|"
         f"reissue={state.control_plane_reissue},{state.reissue_delivery_authority_present},"
         f"{state.original_event_flag_currently_set}|reason={state.terminal_reason}"
     )
@@ -187,7 +187,7 @@ def _architecture_candidate() -> dict[str, object]:
             "Every FlowPilot control write is a registered transaction.",
             "Contract registry, event capability registry, repair transaction records, and packet authority are sub-registries.",
             "The registry authorizes commits, not only event names.",
-            "Retired transaction names are rejected instead of replayed.",
+            "Unsupported transaction names are rejected instead of replayed.",
             "Accepted transactions commit required state surfaces together.",
         ],
         "minimum_runtime_change_set": [
@@ -195,7 +195,7 @@ def _architecture_candidate() -> dict[str, object]:
             "Add source checks that validate transaction rows against existing Router events and contract ids.",
             "Use the registry in the PM control-blocker repair path before writing repair transaction state.",
             "Expose packet authority as a required transaction fact for result absorption.",
-            "Teach the mesh that retired transaction names block current-run continuation.",
+            "Teach the mesh that unsupported transaction names block current-run continuation.",
         ],
     }
 

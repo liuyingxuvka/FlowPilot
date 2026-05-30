@@ -40,7 +40,7 @@ def _handle_heartbeat_or_manual_resume_requested(
         run_state,
         trigger_source=trigger_source,
         recovery_scope="all_six_sweep",
-        target_role_keys=list(router.CREW_ROLE_KEYS),
+        target_role_keys=list(router.RUNTIME_ROLE_KEYS),
         fault_payload=payload or {},
     )
     run_state["flags"]["resume_reentry_requested"] = True

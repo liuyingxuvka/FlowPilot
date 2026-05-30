@@ -4,7 +4,7 @@
 TBD - created by archiving change final-runtime-clarity-pass. Update Purpose after archive.
 ## Requirements
 ### Requirement: Runtime modules have explicit owner boundaries
-The FlowPilot runtime SHALL keep large behavior clusters behind compatibility facades while moving cohesive implementation bodies into explicit owner modules.
+The FlowPilot runtime SHALL keep large behavior clusters behind unsupported historical facades while moving cohesive implementation bodies into explicit owner modules.
 
 #### Scenario: Packet runtime facade remains compatible
 - **WHEN** code imports or invokes the existing `packet_runtime.py` public functions or CLI
@@ -45,7 +45,7 @@ FlowGuard StructureMesh/TestMesh evidence SHALL cover the final runtime split be
 #### Scenario: Public entrypoints remain allowlisted
 - **WHEN** StructureMesh checks inspect public entrypoints
 - **THEN** the documented router/runtime public API remains available
-- **AND** private compatibility exports are not expanded without owner evidence.
+- **AND** private unsupported historical exports are not expanded without owner evidence.
 
 ### Requirement: Heavy regressions use hidden background evidence
 Heavy FlowGuard and router regressions SHALL run through the repository background artifact contract when release-level confidence is claimed.

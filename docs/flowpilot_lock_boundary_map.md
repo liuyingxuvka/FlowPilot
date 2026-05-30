@@ -24,7 +24,7 @@ Runtime JSON write locks are file-write guards. They answer questions such as:
 - did a bounded atomic replace fail because the target was still busy.
 
 The owner is `flowpilot_router_io_locks.py`, while `flowpilot_router_io.py`
-keeps the legacy facade exports such as `_json_write_lock_liveness`,
+keeps the unsupported historical facade exports such as `_json_write_lock_liveness`,
 `_raise_if_runtime_write_active`, and `write_json_atomic`. Callers should not
 reimplement write-lock classification locally.
 

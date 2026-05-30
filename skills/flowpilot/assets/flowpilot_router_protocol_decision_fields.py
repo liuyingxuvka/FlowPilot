@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 STARTUP_ANSWER_ENUMS = {
-    "background_agents": {"allow", "single-agent"},
+    "runtime_role_assistances": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
     "display_surface": {"cockpit", "chat"},
 }
@@ -199,7 +199,7 @@ GATE_DECISION_SEMANTIC_OVERREACH_FIELDS = {
     "controller_approved_gate",
 }
 
-CREW_ROLE_KEYS = (
+RUNTIME_ROLE_KEYS = (
     "project_manager",
     "human_like_reviewer",
     "process_flowguard_officer",
@@ -208,4 +208,4 @@ CREW_ROLE_KEYS = (
     "worker_b",
 )
 
-ROLE_CARD_KEYS = ("controller", *CREW_ROLE_KEYS)
+ROLE_CARD_KEYS = ("controller", *RUNTIME_ROLE_KEYS)

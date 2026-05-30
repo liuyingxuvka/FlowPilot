@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-30T16:53:50.697401+00:00",
+  "created_at": "2026-05-30T18:19:13.676987+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": false,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-05-29T17:41:14.211399+00:00",
+      "created_at": "2026-05-30T18:09:48.070295+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -255,7 +255,7 @@
         "id": "crew_and_heartbeat",
         "invariant_families": [
           "manual_resume",
-          "crew_rehydration",
+          "role_binding_recovery",
           "daemon_liveness_boundary"
         ],
         "ok": true,
@@ -337,7 +337,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_daemon_reconciliation_results.json",
-            "result_fingerprint": "bc7b147963b93b48321816ae2eda873f1f8148a712af5c053b421202d55e5021",
+            "result_fingerprint": "0d0c9c0445c492952b33dca7bef4ed35aadbf10b87fdbfa2acbaa8bfa5697be3",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 1141

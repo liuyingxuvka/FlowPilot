@@ -46,13 +46,13 @@ def _bind_router(router: ModuleType) -> None:
             continue
         current[name] = value
 
-def _require_current_envelope_fields(envelope: dict[str, Any], *, label: str, required_fields: Iterable[str], retired_alias_fields: Iterable[str]) -> None:
+def _require_current_envelope_fields(envelope: dict[str, Any], *, label: str, required_fields: Iterable[str], unsupported_alias_fields: Iterable[str]) -> None:
     missing = [field for field in required_fields if envelope.get(field) in (None, "")]
     if missing:
         raise RouterError(f"{label} requires current envelope fields: {', '.join(missing)}")
-    retired = [field for field in retired_alias_fields if field in envelope]
-    if retired:
-        raise RouterError(f"{label} uses retired envelope alias fields: {', '.join(retired)}")
+    unsupported = [field for field in unsupported_alias_fields if field in envelope]
+    if unsupported:
+        raise RouterError(f"{label} uses unsupported envelope alias fields: {', '.join(unsupported)}")
 
 def _validate_current_node_packet_envelope(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], envelope: dict[str, Any], envelope_path: Path, frontier: dict[str, Any], plan: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
@@ -62,7 +62,7 @@ def _validate_current_node_packet_envelope(router: ModuleType, project_root: Pat
         envelope,
         label='current-node packet envelope',
         required_fields=_CURRENT_NODE_PACKET_REQUIRED_FIELDS,
-        retired_alias_fields=_CURRENT_NODE_PACKET_RETIRED_ALIAS_FIELDS,
+        unsupported_alias_fields=_CURRENT_NODE_PACKET_RETIRED_ALIAS_FIELDS,
     )
     active_bindings = router._active_child_skill_bindings_from_plan(plan)
     active_binding_source_paths = router._active_child_skill_source_paths(active_bindings)
@@ -155,7 +155,7 @@ def _validate_current_node_result_event(router: ModuleType, project_root: Path, 
         result,
         label='current-node result envelope',
         required_fields=_CURRENT_NODE_RESULT_REQUIRED_FIELDS,
-        retired_alias_fields=_CURRENT_NODE_RESULT_RETIRED_ALIAS_FIELDS,
+        unsupported_alias_fields=_CURRENT_NODE_RESULT_RETIRED_ALIAS_FIELDS,
     )
     grant_records = grant.get('grants') if isinstance(grant.get('grants'), list) else [grant]
     grant_by_packet_id = {str(item.get('packet_id')): item for item in grant_records if isinstance(item, dict)}
@@ -184,7 +184,7 @@ def _validate_current_node_result_event(router: ModuleType, project_root: Path, 
             raise RouterError('current-node active-holder result notice must name project_manager as next_recipient')
     packet_path = resolve_project_path(project_root, str(expected_grant.get('packet_envelope_path') or ''))
     packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
-    agent_role_map = router._agent_role_map_from_crew_ledger(run_root)
+    agent_role_map = router._agent_role_map_from_role_binding_ledger(run_root)
     audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=agent_role_map)
     if not audit.get('passed'):
         raise RouterError(f"current-node result failed pre-relay packet runtime audit: {audit.get('blockers')}")

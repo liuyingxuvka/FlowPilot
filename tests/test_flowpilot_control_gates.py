@@ -256,15 +256,15 @@ class FlowPilotControlGateTests(unittest.TestCase):
         state = meta_model.State(
             heartbeat_loaded_state=True,
             heartbeat_loaded_frontier=True,
-            heartbeat_loaded_crew_memory=True,
+            heartbeat_loaded_role_binding_memory=True,
             heartbeat_restored_crew=True,
             heartbeat_rehydrated_crew=True,
-            crew_rehydration_report_written=False,
+            role_binding_recovery_report_written=False,
             replacement_roles_seeded_from_memory=True,
             heartbeat_pm_decision_requested=True,
         )
 
-        result = meta_model.crew_memory_rehydration_required(state, trace=())
+        result = meta_model.role_binding_memory_rehydration_required(state, trace=())
 
         self.assertFalse(result.ok)
         self.assertIn("role-binding memory rehydration", result.message)

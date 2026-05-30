@@ -50,31 +50,13 @@
           {
             "id": "result-0004",
             "kind": "result"
-          },
-          {
-            "id": "packet-0004",
-            "kind": "packet",
-            "packet_kind": "validation"
-          },
-          {
-            "id": "result-0005",
-            "kind": "result"
-          },
-          {
-            "id": "packet-0005",
-            "kind": "packet",
-            "packet_kind": "closure"
-          },
-          {
-            "id": "result-0006",
-            "kind": "result"
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T22:09:08.543223+00:00",
+        "created_at": "2026-05-30T17:07:24.505053+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "validation-result-0005"
+        "validation_evidence_id": "validation-result-0004"
       },
       "details": {
         "late_blockers": [
@@ -138,31 +120,13 @@
           {
             "id": "result-0003",
             "kind": "result"
-          },
-          {
-            "id": "packet-0004",
-            "kind": "packet",
-            "packet_kind": "validation"
-          },
-          {
-            "id": "result-0004",
-            "kind": "result"
-          },
-          {
-            "id": "packet-0005",
-            "kind": "packet",
-            "packet_kind": "closure"
-          },
-          {
-            "id": "result-0005",
-            "kind": "result"
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T22:09:08.544224+00:00",
+        "created_at": "2026-05-30T17:07:24.506047+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "validation-result-0004"
+        "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "event": {
@@ -171,7 +135,7 @@
             "packets"
           ],
           "cockpit_event_type": "pause",
-          "created_at": "2026-05-29T22:09:08.544224+00:00"
+          "created_at": "2026-05-30T17:07:24.506047+00:00"
         }
       },
       "name": "cockpit_direct_write_rejected",
@@ -231,35 +195,17 @@
           {
             "id": "result-0003",
             "kind": "result"
-          },
-          {
-            "id": "packet-0004",
-            "kind": "packet",
-            "packet_kind": "validation"
-          },
-          {
-            "id": "result-0004",
-            "kind": "result"
-          },
-          {
-            "id": "packet-0005",
-            "kind": "packet",
-            "packet_kind": "closure"
-          },
-          {
-            "id": "result-0005",
-            "kind": "result"
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T22:09:08.546226+00:00",
+        "created_at": "2026-05-30T17:07:24.507983+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "validation-result-0004"
+        "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "import": {
-          "created_at": "2026-05-29T22:09:08.546226+00:00",
+          "created_at": "2026-05-30T17:07:24.507983+00:00",
           "current_authority": false,
           "disposition": "imported_read_only",
           "import_id": "import-0001",
@@ -324,33 +270,15 @@
           {
             "id": "result-0003",
             "kind": "result"
-          },
-          {
-            "id": "packet-0004",
-            "kind": "packet",
-            "packet_kind": "validation"
-          },
-          {
-            "id": "result-0004",
-            "kind": "result"
-          },
-          {
-            "id": "packet-0005",
-            "kind": "packet",
-            "packet_kind": "closure"
-          },
-          {
-            "id": "result-0005",
-            "kind": "result"
           }
         ],
         "blockers": [
           "cutover_gate_blocked"
         ],
-        "created_at": "2026-05-29T22:09:08.547226+00:00",
+        "created_at": "2026-05-30T17:07:24.509061+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "validation-result-0004"
+        "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "closure": {
@@ -399,39 +327,21 @@
             {
               "id": "result-0003",
               "kind": "result"
-            },
-            {
-              "id": "packet-0004",
-              "kind": "packet",
-              "packet_kind": "validation"
-            },
-            {
-              "id": "result-0004",
-              "kind": "result"
-            },
-            {
-              "id": "packet-0005",
-              "kind": "packet",
-              "packet_kind": "closure"
-            },
-            {
-              "id": "result-0005",
-              "kind": "result"
             }
           ],
           "blockers": [
             "cutover_gate_blocked"
           ],
-          "created_at": "2026-05-29T22:09:08.547226+00:00",
+          "created_at": "2026-05-30T17:07:24.509061+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
-          "validation_evidence_id": "validation-result-0004"
+          "validation_evidence_id": "validation-result-0003"
         },
         "gate": {
           "blockers": [
             "live_host_not_current"
           ],
-          "created_at": "2026-05-29T22:09:08.547226+00:00",
+          "created_at": "2026-05-30T17:07:24.509061+00:00",
           "decision": "blocked",
           "old_runtime_authority": false
         }
@@ -456,7 +366,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-29T22:09:08.548224+00:00",
+          "created_at": "2026-05-30T17:07:24.510031+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -489,7 +399,7 @@
           "affected_packets": [
             "packet-0001"
           ],
-          "created_at": "2026-05-29T22:09:08.548224+00:00",
+          "created_at": "2026-05-30T17:07:24.510031+00:00",
           "mutation_id": "mutation-0001",
           "new_route_version": 2,
           "old_route_version": 1,
@@ -506,6 +416,19 @@
             "body_hash": "91a4b45c122c77bef7837213696fe091a884b4c01cf2579341bfdb6b076d6e96",
             "body_visibility": "sealed",
             "objective": "Execute packet",
+            "output_contract": {
+              "accepted_authority": "runtime_acceptance_gate",
+              "ack_authority": "lease_ack_only",
+              "ack_result_accepted_separate": true,
+              "contract_id": "black_box_flowpilot.output.task.v1",
+              "expected_result_visibility": "sealed",
+              "packet_id": "packet-0001",
+              "recipient_responsibility": "worker",
+              "result_authority": "sealed_result_envelope",
+              "route_version": 1,
+              "schema_version": "black_box_flowpilot.packet_output_contract.v1",
+              "source_generation": 1
+            },
             "packet_id": "packet-0001",
             "packet_kind": "task",
             "required_flowguard_target": "development_process",
@@ -544,10 +467,24 @@
           "accepted": false,
           "body": "SEALED_RESULT_BODY",
           "envelope": {
+            "ack_result_accepted_separate": true,
             "body_hash": "3e0183dea9d85b0f8b9bad16afb55b409e31d4c1685c5bf7a6e1a2f56884cddb",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
+            "output_contract": {
+              "accepted_authority": "runtime_acceptance_gate",
+              "ack_authority": "lease_ack_only",
+              "ack_result_accepted_separate": true,
+              "contract_id": "black_box_flowpilot.output.task.v1",
+              "expected_result_visibility": "sealed",
+              "packet_id": "packet-0001",
+              "recipient_responsibility": "worker",
+              "result_authority": "sealed_result_envelope",
+              "route_version": 1,
+              "schema_version": "black_box_flowpilot.packet_output_contract.v1",
+              "source_generation": 1
+            },
             "output_type": "artifact",
             "packet_id": "packet-0001",
             "referenced_packet_body_hash": "wrong-body-hash",
@@ -562,6 +499,7 @@
           "producer_agent_id": "worker-lease-0001",
           "producer_lease_id": "lease-0001",
           "quarantine_reason": "body_hash_mismatch",
+          "quarantined": false,
           "result_id": "result-0001",
           "review_id": "",
           "route_version": 1,
@@ -587,10 +525,24 @@
           "accepted": false,
           "body": "SEALED_RESULT_BODY:first",
           "envelope": {
+            "ack_result_accepted_separate": true,
             "body_hash": "c2d6afc02c57b51109e8ebea064f8e2228f381d6316c17e5fe4d221f8138b0d0",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
+            "output_contract": {
+              "accepted_authority": "runtime_acceptance_gate",
+              "ack_authority": "lease_ack_only",
+              "ack_result_accepted_separate": true,
+              "contract_id": "black_box_flowpilot.output.task.v1",
+              "expected_result_visibility": "sealed",
+              "packet_id": "packet-0001",
+              "recipient_responsibility": "worker",
+              "result_authority": "sealed_result_envelope",
+              "route_version": 1,
+              "schema_version": "black_box_flowpilot.packet_output_contract.v1",
+              "source_generation": 1
+            },
             "output_type": "artifact",
             "packet_id": "packet-0001",
             "referenced_packet_body_hash": "91a4b45c122c77bef7837213696fe091a884b4c01cf2579341bfdb6b076d6e96",
@@ -600,22 +552,39 @@
           "mechanical_blockers": [],
           "non_authoritative": false,
           "packet_id": "packet-0001",
+          "packet_outcome_id": "outcome-0001",
           "producer_agent_id": "worker-lease-0001",
           "producer_lease_id": "lease-0001",
           "quarantine_reason": "",
+          "quarantined": false,
           "result_id": "result-0001",
           "review_id": "",
           "route_version": 1,
+          "semantic_decision": "pass",
           "status": "mechanically_valid"
         },
         "second": {
           "accepted": false,
           "body": "SEALED_RESULT_BODY:second",
           "envelope": {
+            "ack_result_accepted_separate": true,
             "body_hash": "42f6e486df6cb09720b28a0cbe6e5daee29642005050c23c246c34df3573df9f",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
+            "output_contract": {
+              "accepted_authority": "runtime_acceptance_gate",
+              "ack_authority": "lease_ack_only",
+              "ack_result_accepted_separate": true,
+              "contract_id": "black_box_flowpilot.output.task.v1",
+              "expected_result_visibility": "sealed",
+              "packet_id": "packet-0001",
+              "recipient_responsibility": "worker",
+              "result_authority": "sealed_result_envelope",
+              "route_version": 1,
+              "schema_version": "black_box_flowpilot.packet_output_contract.v1",
+              "source_generation": 1
+            },
             "output_type": "artifact",
             "packet_id": "packet-0001",
             "referenced_packet_body_hash": "91a4b45c122c77bef7837213696fe091a884b4c01cf2579341bfdb6b076d6e96",
@@ -631,6 +600,7 @@
           "producer_agent_id": "worker-lease-0001",
           "producer_lease_id": "lease-0001",
           "quarantine_reason": "closed_or_inactive_lease,duplicate_output_from_same_lease",
+          "quarantined": true,
           "result_id": "result-0002",
           "review_id": "",
           "route_version": 1,
@@ -657,7 +627,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-29T22:09:08.550221+00:00",
+          "created_at": "2026-05-30T17:07:24.511984+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -687,9 +657,9 @@
       },
       "details": {
         "order": {
-          "completed_at": "2026-05-29T22:09:08.550221+00:00",
+          "completed_at": "2026-05-30T17:07:24.512994+00:00",
           "confidence_boundary": "scoped",
-          "created_at": "2026-05-29T22:09:08.550221+00:00",
+          "created_at": "2026-05-30T17:07:24.512994+00:00",
           "decision": "pass",
           "evidence_id": "flowguard-report",
           "modeled_target": "development_process",
@@ -711,7 +681,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-29T22:09:08.550221+00:00",
+          "created_at": "2026-05-30T17:07:24.512994+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -745,10 +715,10 @@
           "unresolved_residual_risks",
           "unresolved_resources"
         ],
-        "created_at": "2026-05-29T22:09:08.552225+00:00",
+        "created_at": "2026-05-30T17:07:24.513989+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "validation-result-0004"
+        "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "closure": {
@@ -760,10 +730,10 @@
             "unresolved_residual_risks",
             "unresolved_resources"
           ],
-          "created_at": "2026-05-29T22:09:08.552225+00:00",
+          "created_at": "2026-05-30T17:07:24.513989+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
-          "validation_evidence_id": "validation-result-0004"
+          "validation_evidence_id": "validation-result-0003"
         }
       },
       "name": "completion_claim_resources_risks_and_old_ui_block_closure",
@@ -783,7 +753,7 @@
       "details": {
         "fallback": {
           "active": "chat_route_sign",
-          "created_at": "2026-05-29T22:09:08.552225+00:00",
+          "created_at": "2026-05-30T17:07:24.513989+00:00",
           "fallback_reason": "cockpit_unavailable",
           "preferred": "cockpit",
           "route_sign_required": true

@@ -1,4 +1,4 @@
-"""Compatibility facade for the FlowPilot prompt-isolation model."""
+"""Unsupported_historical facade for the FlowPilot prompt-isolation model."""
 
 from __future__ import annotations
 

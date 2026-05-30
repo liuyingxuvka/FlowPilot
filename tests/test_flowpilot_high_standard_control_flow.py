@@ -12,8 +12,8 @@ ASSETS = ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
-runtime = importlib.import_module("ai_project_runtime.runtime")
-host = importlib.import_module("ai_project_runtime.host")
+runtime = importlib.import_module("flowpilot_core_runtime.runtime")
+host = importlib.import_module("flowpilot_core_runtime.host")
 
 
 def _ledger() -> dict:

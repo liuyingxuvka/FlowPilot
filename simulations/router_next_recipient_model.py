@@ -4,7 +4,7 @@ Risk intent brief:
 - Prevent Controller from guessing which role should receive the next FlowPilot
   action after PM route drafts, route checks, worker results, review blocks,
   resume recovery, parent replay failures, and UI state sync.
-- Preserve the legacy obligations while making every controller-visible
+- Preserve the unsupported_historical obligations while making every controller-visible
   transition carry a concrete recipient and allowed follow-up event.
 - Protect route activation from dummy-route fallback, worker packets from
   duplicate owners, repair/reissue from wrong-role routing, resume from chat
@@ -152,7 +152,7 @@ class RouterNextRecipientStep:
     )
     writes = (
         "explicit_recipient_action",
-        "legacy_obligation_bit",
+        "unsupported_historical_obligation_bit",
         "packet_holder",
         "repair_frontier_marker",
         "ui_snapshot_authority",
@@ -468,7 +468,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.ui_used_stale_index_running_entry:
         failures.append("UI snapshot used stale index running entry as active task")
     if state.status == "complete" and state.obligations != ALL_OBLIGATIONS:
-        failures.append("completion recorded before all legacy obligations were preserved")
+        failures.append("completion recorded before all unsupported_historical obligations were preserved")
     return failures
 
 
@@ -542,7 +542,7 @@ def hazard_states() -> dict[str, State]:
         "parent_repair_without_pm_segment_decision": replace(base, parent_segment_pm_decision_recorded=False),
         "frontier_rewrite_without_stale_mark": replace(base, stale_evidence_marked=False),
         "ui_uses_stale_running_index_entry": replace(base, ui_used_stale_index_running_entry=True),
-        "completion_missing_legacy_obligation": replace(
+        "completion_missing_unsupported_historical_obligation": replace(
             base,
             status="complete",
             obligations=ALL_OBLIGATIONS ^ OBLIGATION_BITS["reviewer_route_challenge"],

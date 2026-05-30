@@ -66,7 +66,7 @@ def _relay_packet_records(router: ModuleType, project_root: Path, run_state: dic
 def _relay_result_records(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, to_role: str, controller_agent_id: str) -> list[str]:
     _bind_router(router)
     relayed_ids: list[str] = []
-    agent_role_map = router._agent_role_map_from_crew_ledger(project_root / str(run_state['run_root']))
+    agent_role_map = router._agent_role_map_from_role_binding_ledger(project_root / str(run_state['run_root']))
     for record in records:
         result_path = router._result_envelope_path_from_packet_record(project_root, run_state, record)
         if not result_path.exists():
@@ -85,10 +85,10 @@ def _relay_result_records(router: ModuleType, project_root: Path, run_state: dic
         relayed_ids.append(str(result['packet_id']))
     return relayed_ids
 
-def _agent_role_map_from_crew_ledger(router: ModuleType, run_root: Path) -> dict[str, str] | None:
+def _agent_role_map_from_role_binding_ledger(router: ModuleType, run_root: Path) -> dict[str, str] | None:
     _bind_router(router)
-    crew = read_json_if_exists(run_root / 'crew_ledger.json')
-    role_slots = crew.get('role_slots') if isinstance(crew.get('role_slots'), list) else []
+    role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
+    role_slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
     agent_role_map: dict[str, str] = {}
     for slot in role_slots:
         if not isinstance(slot, dict):
@@ -124,7 +124,7 @@ def _validate_packet_bodies_opened_by_targets(router: ModuleType, project_root: 
 def _validate_results_exist_for_packets(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, next_recipient: str) -> None:
     _bind_router(router)
     run_root = project_root / str(run_state['run_root'])
-    agent_role_map = router._agent_role_map_from_crew_ledger(run_root)
+    agent_role_map = router._agent_role_map_from_role_binding_ledger(run_root)
     for record in records:
         result_path = router._result_envelope_path_from_packet_record(project_root, run_state, record)
         if not result_path.exists():
@@ -142,7 +142,7 @@ def _validate_results_exist_for_packets(router: ModuleType, project_root: Path, 
 
 def _validate_packet_group_for_reviewer(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, audit_path: Path, agent_role_map: dict[str, str] | None=None) -> None:
     _bind_router(router)
-    trusted_agent_role_map = router._agent_role_map_from_crew_ledger(project_root / str(run_state['run_root']))
+    trusted_agent_role_map = router._agent_role_map_from_role_binding_ledger(project_root / str(run_state['run_root']))
     merged_agent_role_map = router._merge_agent_role_maps(trusted_agent_role_map, agent_role_map)
     audits: list[dict[str, Any]] = []
     blockers: list[str] = []
@@ -176,7 +176,7 @@ __all__ = (
     '_packet_runtime_relay_operations',
     '_result_runtime_relay_operations',
     '_relay_result_records',
-    '_agent_role_map_from_crew_ledger',
+    '_agent_role_map_from_role_binding_ledger',
     '_merge_agent_role_maps',
     '_validate_packet_bodies_opened_by_targets',
     '_validate_results_exist_for_packets',

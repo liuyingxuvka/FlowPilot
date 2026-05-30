@@ -16,8 +16,8 @@ INTEGRATION_COMMANDS = (
         description="Local installed-skill freshness and source sync audit.",
     ),
     TierCommand(
-        name="smoke_autopilot_fast",
-        command=_py("scripts/smoke_autopilot.py", "--fast"),
+        name="smoke_flowpilot_fast",
+        command=_py("scripts/smoke_flowpilot.py", "--fast"),
         description="Smoke checks with reusable thin-parent slow-model proofs.",
         long_running=True,
         background_recommended=True,

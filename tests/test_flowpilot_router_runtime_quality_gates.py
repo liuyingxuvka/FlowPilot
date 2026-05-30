@@ -11,7 +11,7 @@ TEST_NAMES = (
     "test_route_draft_requires_product_behavior_model_report",
     "test_route_check_reports_require_hard_gate_verdict_fields",
     "test_process_route_repair_required_blocks_activation_and_reopens_pm_route_draft",
-    "test_background_agents_allow_requires_six_fresh_live_agent_records",
+    "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
     "test_single_agent_answer_records_authorized_role_continuity_without_live_agents",
     "test_role_output_envelope_writes_body_and_keeps_controller_visible_payload_sealed",
     "test_role_output_envelope_hash_survives_same_path_envelope_rewrite",

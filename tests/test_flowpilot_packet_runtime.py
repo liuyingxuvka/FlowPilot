@@ -44,19 +44,19 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
     def write_live_crew_slot(self, root: Path, *, role: str = "worker_a", agent_id: str = "agent-worker-a-1") -> None:
         _write_json(
-            root / ".flowpilot" / "runs" / "run-test" / "crew_ledger.json",
+            root / ".flowpilot" / "runs" / "run-test" / "role_binding_ledger.json",
             {
-                "schema_version": "flowpilot.crew_ledger.v1",
+                "schema_version": "flowpilot.role_binding_ledger.v1",
                 "run_id": "run-test",
                 "role_slots": [
                     {
                         "role_key": role,
                         "status": "live_agent_started",
                         "agent_id": agent_id,
-                        "spawn_result": "spawned_fresh_for_task",
-                        "spawned_for_run_id": "run-test",
-                        "spawned_after_startup_answers": True,
-                        "crew_generation": 1,
+                        "binding_open_result": "opened_for_current_task",
+                        "opened_for_run_id": "run-test",
+                        "opened_after_startup_answers": True,
+                        "role_binding_generation": 1,
                         "role_binding_epoch": 1,
                     }
                 ],
@@ -833,7 +833,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             node_id="startup",
             body_text="user task prompt",
             startup_options={
-                "background_agents_authorized": True,
+                "runtime_role_assistance_authorized": True,
                 "heartbeat_requested": True,
                 "display_surface": "chat-mermaid",
             },
@@ -1030,9 +1030,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
         _write_json(
-            root / ".flowpilot" / "runs" / "run-test" / "crew_ledger.json",
+            root / ".flowpilot" / "runs" / "run-test" / "role_binding_ledger.json",
             {
-                "schema_version": "flowpilot.crew_ledger.v1",
+                "schema_version": "flowpilot.role_binding_ledger.v1",
                 "run_id": "run-test",
                 "role_slots": [
                     {
@@ -1040,8 +1040,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                         "status": "live_agent_recovered",
                         "agent_id": "replacement-worker-a",
                         "host_liveness_status": "unknown",
-                        "liveness_decision": "spawned_replacement_from_current_run_memory",
-                        "last_role_recovery_result": "targeted_replacement_spawned",
+                        "liveness_decision": "opened_replacement_from_current_run_memory",
+                        "last_role_recovery_result": "targeted_replacement_opened",
                     }
                 ],
             },

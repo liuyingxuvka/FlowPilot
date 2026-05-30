@@ -505,7 +505,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             ["router_selects_next_legal_action_after_pm_records_control_blocker_repair_decision"],
         )
         self.assertNotIn("pm_repair_rerun_target", original)
-    def test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission(self) -> None:
+    def test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state = read_json(router.run_state_path(run_root))
@@ -514,9 +514,9 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="packet group reviewer audit failed: retired bad control wait",
+            error_message="packet group reviewer audit failed: unsupported bad control wait",
             event="reviewer_reports_material_sufficient",
-            payload={"report_path": ".flowpilot/runs/test/reviews/retired.json"},
+            payload={"report_path": ".flowpilot/runs/test/reviews/unsupported.json"},
         )
         self.assertTrue(self.handle_pending_control_blocker(root))
         artifact_path = self.control_blocker_path(root, blocker)
@@ -548,7 +548,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="retired empty repair transaction has no event producer",
+            error_message="unsupported empty repair transaction has no event producer",
             event="reviewer_reports_material_sufficient",
             payload={"report_path": ".flowpilot/runs/test/reviews/empty-transaction.json"},
         )
@@ -634,7 +634,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "pm_records_control_blocker_protocol_blocker",
             },
         )
-    def test_pm_repair_decision_rejects_retired_event_replay_plan_kind(self) -> None:
+    def test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state = read_json(router.run_state_path(run_root))
@@ -643,7 +643,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="PM submitted a retired replay plan kind",
+            error_message="PM submitted a unsupported replay plan kind",
             action_type="controller_no_legal_next_action",
             payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
         )
@@ -658,7 +658,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.record_external_event(
                 root,
                 "pm_records_control_blocker_repair_decision",
-                self.role_decision_envelope(root, "control_blocks/retired_event_replay_plan_kind", decision),
+                self.role_decision_envelope(root, "control_blocks/unsupported_event_replay_plan_kind", decision),
             )
     def test_operation_replay_repair_transaction_queues_replay_action(self) -> None:
         root = self.make_project()

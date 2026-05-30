@@ -259,18 +259,18 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root, run_root, action, row = scheduled_role_slots_action()
 
         self.assert_controller_receipt_action_projection(action)
-        self.assertTrue(action["requires_host_spawn"])
+        self.assertTrue(action["requires_host_role_binding"])
         self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
-        self.assertEqual(action["spawn_policy"], "open_runtime_required_role_bindings_before_controller_receipt")
+        self.assertEqual(action["role_binding_open_policy"], "open_runtime_required_role_bindings_before_controller_receipt")
         self.assert_payload_contract_mentions(
             action["payload_contract"],
-            "role_agents[].role_key",
-            "role_agents[].agent_id",
-            "role_agents[].model_policy",
-            "role_agents[].reasoning_effort_policy",
-            "role_agents[].spawned_for_run_id",
-            "role_agents[].spawned_after_startup_answers",
-            "role_agents[].host_spawn_receipt.source_kind",
+            "role_bindings[].role_key",
+            "role_bindings[].agent_id",
+            "role_bindings[].model_policy",
+            "role_bindings[].reasoning_effort_policy",
+            "role_bindings[].opened_for_run_id",
+            "role_bindings[].opened_after_startup_answers",
+            "role_bindings[].host_role_binding_receipt.source_kind",
             "exactly one non-duplicate role-binding record",
         )
         self.assertEqual(action["background_role_agent_model_policy"]["model_policy"], "strongest_available")
@@ -307,21 +307,21 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             )
             self.assertIn(expected_text, json.dumps(reconciliation, sort_keys=True))
 
-        assert_role_slots_receipt_blocked(lambda _: None, "role_agents")
+        assert_role_slots_receipt_blocked(lambda _: None, "role_bindings")
 
         def missing_role_payload(blocked_root: Path) -> dict:
             payload = self.role_agent_payload(blocked_root)
-            payload["role_agents"] = payload["role_agents"][:-1]
+            payload["role_bindings"] = payload["role_bindings"][:-1]
             return payload
 
         assert_role_slots_receipt_blocked(missing_role_payload, "missing live role-binding records")
 
         def stale_run_payload(blocked_root: Path) -> dict:
             payload = self.role_agent_payload(blocked_root)
-            payload["role_agents"][0]["spawned_for_run_id"] = "run-old"
+            payload["role_bindings"][0]["opened_for_run_id"] = "run-old"
             return payload
 
-        assert_role_slots_receipt_blocked(stale_run_payload, "spawned_for_run_id")
+        assert_role_slots_receipt_blocked(stale_run_payload, "opened_for_run_id")
 
         router.record_controller_action_receipt(
             root,
@@ -329,11 +329,11 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             status="done",
             payload=self.role_agent_payload(root),
         )
-        crew = read_json(run_root / "crew_ledger.json")
-        self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
-        self.assertEqual({slot["spawn_result"] for slot in crew["role_slots"]}, {"spawned_fresh_for_task"})
-        self.assertEqual({slot["model_policy"] for slot in crew["role_slots"]}, {"strongest_available"})
-        self.assertEqual({slot["reasoning_effort_policy"] for slot in crew["role_slots"]}, {"highest_available"})
+        role_binding = read_json(run_root / "role_binding_ledger.json")
+        self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"live_agent_started"})
+        self.assertEqual({slot["binding_open_result"] for slot in role_binding["role_slots"]}, {"opened_for_current_task"})
+        self.assertEqual({slot["model_policy"] for slot in role_binding["role_slots"]}, {"strongest_available"})
+        self.assertEqual({slot["reasoning_effort_policy"] for slot in role_binding["role_slots"]}, {"highest_available"})
         role_io = read_json(run_root / "role_io_protocol_ledger.json")
         self.assertEqual(role_io["schema_version"], "flowpilot.role_io_protocol_ledger.v1")
         self.assertEqual(len(role_io["injection_receipts"]), 6)
@@ -341,11 +341,11 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(all((root / item["receipt_path"]).exists() for item in role_io["injection_receipts"]))
     def test_single_agent_answer_records_authorized_role_continuity_without_live_agents(self) -> None:
         root = self.make_project()
-        answers = {**STARTUP_ANSWERS, "background_agents": "single-agent"}
+        answers = {**STARTUP_ANSWERS, "runtime_role_assistances": "single-agent"}
         run_root = self.boot_to_controller(root, startup_answers=answers)
-        crew = read_json(run_root / "crew_ledger.json")
-        self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"single_agent_continuity_authorized"})
-        self.assertEqual({slot["agent_id"] for slot in crew["role_slots"]}, {None})
+        role_binding = read_json(run_root / "role_binding_ledger.json")
+        self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"single_agent_continuity_authorized"})
+        self.assertEqual({slot["agent_id"] for slot in role_binding["role_slots"]}, {None})
     def test_role_output_envelope_hash_survives_same_path_envelope_rewrite(self) -> None:
         root = self.make_project()
         body_path = root / "role_outputs" / "same_path_report.json"
@@ -958,7 +958,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("reviewer.evidence_quality_review", card_ids)
         self.assertIn("reviewer.final_backward_replay", card_ids)
         self.assertIn("controller.resume_reentry", card_ids)
-        self.assertIn("pm.crew_rehydration_freshness", card_ids)
+        self.assertIn("pm.role_binding_recovery_freshness", card_ids)
         self.assertIn("pm.resume_decision", card_ids)
         self.assertIn("pm.role_work_request", card_ids)
         self.assertIn("pm.material_understanding", card_ids)

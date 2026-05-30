@@ -50,21 +50,21 @@ SHALL reconcile them before Reviewer live startup fact review.
 - **THEN** Router MUST return startup current-scope reconciliation instead
 - **AND** startup facts MUST remain unreported.
 
-### Requirement: Startup role-slot spawn is a local dependency
+### Requirement: Startup role-slot open is a local dependency
 
-FlowPilot SHALL treat startup role-slot spawn as a local dependency rather than
+FlowPilot SHALL treat startup role-slot open as a local dependency rather than
 as a global queue barrier.
 
-#### Scenario: Role spawn does not block unrelated startup work
+#### Scenario: Role open does not block unrelated startup work
 
-- **WHEN** startup role-slot spawn is scheduled but not reconciled
+- **WHEN** startup role-slot open is scheduled but not reconciled
 - **AND** the next startup work does not require role ids, role liveness, role
   memory injection, or role card delivery
 - **THEN** Router MAY enqueue that unrelated work.
 
 #### Scenario: Role-dependent work waits for role slots
 
-- **WHEN** startup role-slot spawn is not reconciled
+- **WHEN** startup role-slot open is not reconciled
 - **AND** Router would otherwise deliver role-dependent cards, role memory, role
   freshness review, or role-addressed startup work
 - **THEN** Router MUST wait on the role-slot dependency instead of delivering

@@ -36,16 +36,16 @@ modules so internal-only tests are not counted as full model-code-test coverage.
   external-contract coverage
 
 ### Requirement: Model binding for intentional code surfaces
-Intentional owner modules, compatibility facades, and public script entrypoints SHALL have explicit model binding or diagnostic classification so code is not left as unowned extra surface by default.
+Intentional owner modules, unsupported historical facades, and public script entrypoints SHALL have explicit model binding or diagnostic classification so code is not left as unowned extra surface by default.
 
 #### Scenario: Intentional code receives model binding
 - **WHEN** a code surface is an intentional owner module, facade, or public
   entrypoint
 - **THEN** the diagnostic maps it to a model obligation, source contract, or
-  accepted compatibility classification
+  accepted unsupported historical classification
 
 #### Scenario: Unowned code remains actionable
-- **WHEN** a code surface has no clear model obligation or compatibility
+- **WHEN** a code surface has no clear model obligation or unsupported historical
   classification
 - **THEN** the diagnostic reports it as extra code with the owner path and
   repair action to classify, bind, remove, or split it

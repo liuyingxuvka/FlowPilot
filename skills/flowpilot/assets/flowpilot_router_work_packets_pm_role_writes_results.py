@@ -112,7 +112,7 @@ def _write_role_work_result_returned(router: ModuleType, project_root: Path, run
     packet_path = router._packet_envelope_path_from_record(project_root, run_state, record)
     packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
     result = router._validate_role_work_result_process_binding(project_root, result_path, record=record, packet_envelope=packet_envelope, result=result)
-    audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=router._agent_role_map_from_crew_ledger(run_root))
+    audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=router._agent_role_map_from_role_binding_ledger(run_root))
     if not audit.get('passed'):
         raise RouterError(f"role-work result is not ready for PM relay: {audit.get('blockers')}")
     record['status'] = 'result_returned'

@@ -115,7 +115,7 @@ class FlowPilotControlPlaneFailureCanaryReplayTests(FlowPilotRouterRuntimeTestBa
         resume_evidence = read_json(run_root / "continuation" / "resume_reentry.json")
         self.assertTrue(resume_evidence["router_daemon_liveness_checked"])
         next_action = self.next_after_display_sync(root)
-        self.assertEqual(next_action["action_type"], "rehydrate_role_agents")
+        self.assertEqual(next_action["action_type"], "rehydrate_role_bindings")
         router.stop_router_daemon(root, reason="test_cleanup")
 
     def test_canary_peer_run_stop_does_not_mutate_current_run(self) -> None:

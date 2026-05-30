@@ -196,7 +196,7 @@ def model_target_structure() -> CodeStructureRecommendation:
             "invariant and hazard child model ownership",
         ),
         rationale=(
-            "The model-script target structure keeps legacy simulation import "
+            "The model-script target structure keeps unsupported_historical simulation import "
             "facades and assigns state, transition, invariant, hazard, audit, "
             "and strategy regions to focused child modules."
         ),
@@ -279,7 +279,7 @@ def router_structure_hazard_plan(name: str) -> StructureMeshPlan:
         return replace(router_structure_plan(), child_modules=modules)
     if name == "removed_entrypoint":
         entrypoints = tuple(
-            replace(entrypoint, compatibility_preserved=False, facade_available=False)
+            replace(entrypoint, unsupported_historical_preserved=False, facade_available=False)
             for entrypoint in ROUTER_PUBLIC_ENTRYPOINTS
         )
         return replace(router_structure_plan(), public_entrypoints=entrypoints)
@@ -349,7 +349,7 @@ def model_structure_hazard_plan(name: str) -> StructureMeshPlan:
         return replace(model_structure_plan(), child_modules=modules)
     if name == "removed_model_entrypoint":
         entrypoints = tuple(
-            replace(entrypoint, compatibility_preserved=False, facade_available=False)
+            replace(entrypoint, unsupported_historical_preserved=False, facade_available=False)
             for entrypoint in MODEL_PUBLIC_ENTRYPOINTS
         )
         return replace(model_structure_plan(), public_entrypoints=entrypoints)

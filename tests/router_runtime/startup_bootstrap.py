@@ -542,7 +542,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             (
                 "start_role_slots",
                 "local_dependency",
-                {"requires_host_spawn": True},
+                {"requires_host_role_binding": True},
             ),
         )
 
@@ -883,7 +883,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue((run_root / "runtime_kit" / "manifest.json").exists())
         self.assertTrue((run_root / "packet_ledger.json").exists())
         self.assertTrue((run_root / "execution_frontier.json").exists())
-        self.assertEqual(len(list((run_root / "crew_memory").glob("*.json"))), 6)
+        self.assertEqual(len(list((run_root / "role_binding_memory").glob("*.json"))), 6)
         self.assertTrue((run_root / "user_request.json").exists())
         user_request_record = read_json(run_root / "user_request.json")
         self.assertNotIn(USER_REQUEST["text"], json.dumps(user_request_record))
@@ -896,11 +896,11 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(role_core_delivery["source_action"], "start_role_slots")
         self.assertEqual(set(role_core_delivery["role_card_hashes"]), set(router.ROLE_CARD_KEYS))
 
-        crew = read_json(run_root / "crew_ledger.json")
-        self.assertEqual(len(crew["role_slots"]), 6)
-        self.assertNotIn("controller", {slot["role_key"] for slot in crew["role_slots"]})
-        self.assertEqual({slot["status"] for slot in crew["role_slots"]}, {"live_agent_started"})
-        self.assertTrue(all(slot["agent_id"] for slot in crew["role_slots"]))
+        role_binding = read_json(run_root / "role_binding_ledger.json")
+        self.assertEqual(len(role_binding["role_slots"]), 6)
+        self.assertNotIn("controller", {slot["role_key"] for slot in role_binding["role_slots"]})
+        self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"live_agent_started"})
+        self.assertTrue(all(slot["agent_id"] for slot in role_binding["role_slots"]))
 
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_rows = {
@@ -1076,7 +1076,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "status": "running",
                     "startup_state": "answers_complete",
                     "startup_answers": {
-                        "background_agents": "allow",
+                        "runtime_role_assistances": "allow",
                         "scheduled_continuation": "allow",
                         "display_surface": "cockpit",
                     },

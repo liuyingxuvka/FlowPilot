@@ -17,7 +17,7 @@ if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
 flowpilot_new = importlib.import_module("flowpilot_new")
-run_shell = importlib.import_module("ai_project_runtime.run_shell")
+run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
 entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entrypoint_checks")
 
 
@@ -354,9 +354,9 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             after_patrol = run_shell.load_run_ledger(shell)
             self.assertGreater(len(after_patrol.get("lifecycle_guard_history") or []), before_history)
 
-    def test_formal_public_surface_omits_retired_side_command_paths(self) -> None:
-        retired_functions = ("complete_flowguard", "review", "record_validation", "close")
-        for name in retired_functions:
+    def test_formal_public_surface_omits_unsupported_side_command_paths(self) -> None:
+        unsupported_functions = ("complete_flowguard", "review", "record_validation", "close")
+        for name in unsupported_functions:
             self.assertFalse(hasattr(flowpilot_new, name), name)
 
         direct_help = io.StringIO()
@@ -435,7 +435,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     "--agent-id",
                     "agent-1",
                     "--host-kind",
-                    "codex_subagent",
+                    "codex_sidecar role",
                 ],
                 text=True,
                 capture_output=True,
@@ -460,7 +460,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                             "--agent-id",
                             "agent-1",
                             "--host-kind",
-                            "codex_subagent",
+                            "codex_sidecar role",
                         ]
                     )
             self.assertEqual(direct_exit.exception.code, 2)

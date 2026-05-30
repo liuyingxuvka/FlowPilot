@@ -54,7 +54,7 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_work_request_without_output_contract": "PM work request registered without an output contract",
     "pm_work_request_without_dependency_class": "PM work request registered without blocking/advisory/prep-only mode",
     "duplicate_open_pm_work_request_id": "duplicate open PM work request id would overwrite request ledger state",
-    "controller_spawned_work_without_pm_request": "Controller spawned role work without a PM work request",
+    "controller_opened_work_without_pm_request": "Controller opened role work without a PM work request",
     "controller_reads_pm_work_request_body": "Controller read a sealed PM work-request or result body",
     "pm_work_request_special_cased_outside_generic_channel": "PM role work was special-cased instead of using the generic request channel",
     "blocking_request_ignored_by_pm_final_decision": "PM recorded dependent final decision while blocking role work request was unresolved",

@@ -74,12 +74,12 @@ the reduced branch model and makes ownership clearer.
 
 - **WHEN** implementation splits a reconciliation owner module after branch
   pruning
-- **THEN** the split separates classifier, effect application, compatibility
+- **THEN** the split separates classifier, effect application, unsupported historical
   facade, and genuinely domain-specific handlers
 - **AND** it does not preserve the same large implicit logic tree across more
   files.
 
-#### Scenario: Public compatibility remains stable
+#### Scenario: Public unsupported historical remains stable
 
 - **WHEN** branch-pruning implementation changes module structure
 - **THEN** existing Router, receipt, role-output, and runtime-state import

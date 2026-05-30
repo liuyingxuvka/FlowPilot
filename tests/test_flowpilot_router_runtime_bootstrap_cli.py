@@ -10,7 +10,7 @@ TEST_NAMES = (
     "test_start_command_creates_fresh_run_when_current_is_running",
     "test_new_invocation_preserves_multiple_parallel_running_runs",
     "test_cli_accepts_json_after_subcommand",
-    "test_retired_high_risk_fold_commands_are_not_cli_commands",
+    "test_unsupported_high_risk_fold_commands_are_not_cli_commands",
     "test_skill_entrypoint_remains_small_router_launcher",
 )
 

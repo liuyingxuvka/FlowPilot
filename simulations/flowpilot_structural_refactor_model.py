@@ -3,7 +3,7 @@
 Risk purpose:
 - Uses real FlowGuard (https://github.com/liuyingxuvka/FlowGuard) to review the
   maintenance process for structure-only FlowPilot refactors.
-- Guards against mixing behavior changes into code movement, deleting legacy
+- Guards against mixing behavior changes into code movement, deleting unsupported_historical
   entrypoints, changing protocol/JSON shapes, validating only after multiple
   slices, skipping Meta/Capability checks after model-file edits, or committing
   local main before install/public-boundary validation.
@@ -53,7 +53,7 @@ class State:
     boundary_changed: bool = False
     boundaries_completed: tuple[str, ...] = ()
     focused_validation_done: bool = False
-    compatibility_entrypoints_preserved: bool = True
+    unsupported_historical_entrypoints_preserved: bool = True
     protocol_json_shape_preserved: bool = True
     behavior_tests_passed: bool = False
     model_files_touched: bool = False
@@ -179,8 +179,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("structural refactor changed code before OpenSpec contract was ready")
     if state.boundary_changed and not state.flowguard_ready:
         failures.append("structural refactor changed code before FlowGuard guard passed")
-    if not state.compatibility_entrypoints_preserved:
-        failures.append("structural refactor deleted or bypassed compatibility entrypoints")
+    if not state.unsupported_historical_entrypoints_preserved:
+        failures.append("structural refactor deleted or bypassed unsupported_historical entrypoints")
     if not state.protocol_json_shape_preserved:
         failures.append("structure-only refactor changed protocol or JSON shape")
     if state.current_boundary != "none" and state.focused_validation_done and not state.behavior_tests_passed:
@@ -241,7 +241,7 @@ def hazard_states() -> dict[str, State]:
             openspec_ready=True,
             flowguard_ready=True,
             boundary_changed=True,
-            compatibility_entrypoints_preserved=False,
+            unsupported_historical_entrypoints_preserved=False,
         ),
         "protocol_shape_changed": State(
             status="running",

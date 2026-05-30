@@ -49,16 +49,11 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 
 ## Model Runner Samples
 
-- `ai_project_protocol` (other, unclassified_model_tier): `simulations/run_ai_project_protocol_checks.py` -> `simulations/ai_project_protocol_results.json`; known-bad: expected, hazards, ok
-- `ai_project_protocol_stress` (other, unclassified_model_tier): `simulations/run_ai_project_protocol_stress_checks.py` -> `simulations/ai_project_protocol_stress_results.json`; known-bad: expected, hazards, ok
-- `ai_project_runtime` (other, unclassified_model_tier): `simulations/run_ai_project_runtime_checks.py` -> `simulations/ai_project_runtime_results.json`
-- `ai_project_runtime_development` (other, unclassified_model_tier): `simulations/run_ai_project_runtime_development_checks.py` -> `simulations/ai_project_runtime_development_results.json`; known-bad: expected, hazards, ok
 - `capability` (other, abstract_strong_live_mapping_weaker): `simulations/run_capability_checks.py` -> `simulations/capability_thin_parent_results.json`
 - `card_instruction_coverage` (packet, specialized_assertion_or_local_hazard): `simulations/run_card_instruction_coverage_checks.py` -> `simulations/card_instruction_coverage_results.json`; known-bad: hazards, ok, packet_prompt_hazards
 - `command_refinement` (other, supporting_model_owned): `simulations/run_command_refinement_checks.py` -> `simulations/flowpilot_command_refinement_results.json`; known-bad: card_bundle_fold, final_replay_fold, host_continuation_fold
 - `defect_governance` (other, specialized_assertion_or_local_hazard): `simulations/run_defect_governance_checks.py` -> `simulations/defect_governance_results.json`; known-bad: hazards, ok, blocker_never_logged
 - `flowpilot_card_envelope` (packet, supporting_model_owned): `simulations/run_flowpilot_card_envelope_checks.py` -> `simulations/flowpilot_card_envelope_results.json`; known-bad: hazards, ok, ack_contains_body_content
-- `flowpilot_compatibility_layer_pruning` (other, unclassified_model_tier): `simulations/run_flowpilot_compatibility_layer_pruning_checks.py` -> `simulations/flowpilot_compatibility_layer_pruning_results.json`; known-bad: hazards, ok, current_safety_deleted
 - `flowpilot_complete_system_alignment` (other, unclassified_model_tier): `simulations/run_flowpilot_complete_system_alignment_checks.py` -> `simulations/flowpilot_complete_system_alignment_results.json`
 - `flowpilot_complete_system_development` (other, unclassified_model_tier): `simulations/run_flowpilot_complete_system_development_checks.py` -> `simulations/flowpilot_complete_system_development_results.json`; known-bad: expected, hazards, ok
 - `flowpilot_complete_system_historical_replay` (other, unclassified_model_tier): `simulations/run_flowpilot_complete_system_historical_replay_checks.py` -> `simulations/flowpilot_complete_system_historical_replay_results.json`
@@ -74,6 +69,11 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `flowpilot_control_transaction_registry` (other, coverage_strong): `simulations/run_flowpilot_control_transaction_registry_checks.py` -> `simulations/flowpilot_control_transaction_registry_results.json`; known-bad: failures, hazards, ok
 - `flowpilot_controller_break_glass` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_break_glass_checks.py` -> `simulations/flowpilot_controller_break_glass_results.json`; known-bad: failures, hazards, ok
 - `flowpilot_controller_patrol` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_patrol_checks.py` -> `simulations/flowpilot_controller_patrol_results.json`; known-bad: hazards, ok, command_restart_marked_complete
+- `flowpilot_controller_process_aside` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_process_aside_checks.py` -> `simulations/flowpilot_controller_process_aside_results.json`; known-bad: failures, hazards, ok
+- `flowpilot_controller_receipt_evidence_fold` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_receipt_evidence_fold_checks.py` -> `simulations/flowpilot_controller_receipt_evidence_fold_results.json`; known-bad: failures, hazards, ok
+- `flowpilot_controller_wait_receipt_audit` (controller, supporting_model_owned): `simulations/run_flowpilot_controller_wait_receipt_audit_checks.py` -> `simulations/flowpilot_controller_wait_receipt_audit_results.json`; known-bad: failures, hazards, ok
+- `flowpilot_core_runtime` (other, unclassified_model_tier): `simulations/run_flowpilot_core_runtime_checks.py` -> `simulations/flowpilot_core_runtime_results.json`
+- `flowpilot_core_runtime_development` (other, unclassified_model_tier): `simulations/run_flowpilot_core_runtime_development_checks.py` -> `simulations/flowpilot_core_runtime_development_results.json`; known-bad: expected, hazards, ok
 
 ## Alignment Families
 

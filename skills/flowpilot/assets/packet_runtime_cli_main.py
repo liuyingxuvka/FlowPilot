@@ -64,7 +64,7 @@ def main(argv: list[str] | None = None) -> int:
         startup_options = json.loads(args.startup_options_json) if args.startup_options_json else {}
         startup_options.update(
             {
-                "background_agents_authorized": bool(args.background_agents_authorized),
+                "runtime_role_assistance_authorized": bool(args.runtime_role_assistance_authorized),
                 "heartbeat_requested": bool(args.heartbeat_requested),
                 "display_surface": args.display_surface or "unspecified",
             }

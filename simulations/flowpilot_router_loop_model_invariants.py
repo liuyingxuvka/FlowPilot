@@ -21,7 +21,7 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
 
     if state.active_node_kind not in NODE_KINDS:
-        failures.append("active node kind is outside the modeled event compatibility table")
+        failures.append("active node kind is outside the modeled event unsupported_historical table")
     if state.controller_read_sealed_body:
         failures.append("Controller read a sealed packet/result body")
     if state.controller_originated_project_evidence:

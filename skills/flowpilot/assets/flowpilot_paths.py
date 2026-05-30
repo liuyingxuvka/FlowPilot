@@ -104,8 +104,8 @@ def resolve_flowpilot_paths(project_root: Path) -> dict[str, Any]:
         "state_path": active_root / "state.json",
         "frontier_path": active_root / "execution_frontier.json",
         "routes_root": active_root / "routes",
-        "crew_ledger_path": active_root / "crew_ledger.json",
-        "crew_memory_root": active_root / "crew_memory",
+        "role_binding_ledger_path": active_root / "role_binding_ledger.json",
+        "role_binding_memory_root": active_root / "role_binding_memory",
         "lifecycle_dir": active_root / "lifecycle",
         "diagrams_dir": active_root / "diagrams",
     }

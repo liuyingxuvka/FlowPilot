@@ -8,7 +8,7 @@ FlowPilot SHALL use a durable Controller action ledger as the canonical channel
 from Router daemon to Controller executor.
 
 #### Scenario: Router issues Controller work
-- **WHEN** Router needs Controller to relay a card, deliver a bundle, display text, update visible plan, create automation, spawn roles, close roles, or perform another host action
+- **WHEN** Router needs Controller to relay a card, deliver a bundle, display text, update visible plan, create automation, open roles, close roles, or perform another host action
 - **THEN** Router MUST create a Controller action entry with action id, action type, dependencies, allowed reads, allowed writes, authority boundaries, required receipt path, and initial status `pending`
 
 #### Scenario: Controller action ledger is a checklist

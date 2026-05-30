@@ -55,7 +55,7 @@ Risk intent brief:
   actions, and keeps a foreground standby loop active during ordinary
   daemon-owned role waits; monitor current-work projection names active packet
   holders, passive reconciliation owners, and internal Router/Controller work
-  even when the legacy wait target is null; Router/Controller durable ledgers stay valid JSON
+  even when the unsupported_historical wait target is null; Router/Controller durable ledgers stay valid JSON
   after every write, fresh in-progress write locks defer daemon progress
   instead of surfacing as corruption, self-owned stale write locks are cleared
   only after safe artifact checks and diagnostic evidence, durable ledgers are
@@ -164,7 +164,7 @@ class State:
     controller_local_self_audit_done: bool = False
     controller_local_blocker_recorded: bool = False
     controller_reminded_itself: bool = False
-    legacy_waiting_for_role_null: bool = False
+    unsupported_historical_waiting_for_role_null: bool = False
     active_packet_holder: str = ""
     packet_holder_projection_needed: bool = False
     passive_reconciliation_wait_open: bool = False

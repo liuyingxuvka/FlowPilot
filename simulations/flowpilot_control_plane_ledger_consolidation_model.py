@@ -4,7 +4,7 @@ Risk intent:
 - prevent Router scheduler rows from having multiple live writers;
 - ensure transient daemon-critical JSON access denial defers daemon progress
   instead of killing the daemon;
-- keep legacy pending_action as a projection when Controller action ledger
+- keep unsupported_historical pending_action as a projection when Controller action ledger
   authority exists;
 - derive worker batch waits from member state rather than a single inferred
   worker event role;
@@ -80,8 +80,8 @@ class State:
     daemon_lock_released_error: bool = False
 
     controller_action_ledger_authority: bool = False
-    legacy_pending_action_present: bool = False
-    legacy_pending_apply_required: bool = False
+    unsupported_historical_pending_action_present: bool = False
+    unsupported_historical_pending_apply_required: bool = False
     controller_action_apply_required: bool = False
     controller_action_wait_mode: str = "none"  # none | receipt_only | router_controlled_wait
     decision_used_controller_ledger: bool = False
@@ -149,8 +149,8 @@ def scenario_state(scenario: str) -> State:
         return _accepted(
             scenario,
             controller_action_ledger_authority=True,
-            legacy_pending_action_present=True,
-            legacy_pending_apply_required=True,
+            unsupported_historical_pending_action_present=True,
+            unsupported_historical_pending_apply_required=True,
             controller_action_apply_required=False,
             controller_action_wait_mode="router_controlled_wait",
             decision_used_controller_ledger=True,
@@ -232,8 +232,8 @@ def scenario_state(scenario: str) -> State:
         return _rejected(
             scenario,
             controller_action_ledger_authority=True,
-            legacy_pending_action_present=True,
-            legacy_pending_apply_required=True,
+            unsupported_historical_pending_action_present=True,
+            unsupported_historical_pending_apply_required=True,
             controller_action_apply_required=False,
             controller_action_wait_mode="receipt_only",
             decision_used_controller_ledger=False,
@@ -321,17 +321,17 @@ def consolidation_failures(state: State) -> list[str]:
         failures.append("transient ledger access denial released daemon lock as error")
     if (
         state.controller_action_ledger_authority
-        and state.legacy_pending_action_present
+        and state.unsupported_historical_pending_action_present
         and not state.decision_used_controller_ledger
     ):
-        failures.append("legacy pending_action overrode Controller action ledger authority")
+        failures.append("unsupported_historical pending_action overrode Controller action ledger authority")
     if (
         state.controller_action_ledger_authority
-        and state.legacy_pending_action_present
-        and state.legacy_pending_apply_required != state.controller_action_apply_required
+        and state.unsupported_historical_pending_action_present
+        and state.unsupported_historical_pending_apply_required != state.controller_action_apply_required
         and not state.pending_action_labeled_projection
     ):
-        failures.append("conflicting legacy pending_action was not labeled as projection")
+        failures.append("conflicting unsupported_historical pending_action was not labeled as projection")
     if state.batch_member_roles:
         missing = tuple(role for role in state.batch_member_roles if role not in set(state.batch_returned_roles))
         if state.projected_missing_roles != missing:
@@ -409,7 +409,7 @@ class ControlPlaneLedgerConsolidationStep:
 
     Input x State -> Set(Output x State)
     reads: Controller receipts, Controller action ledger, Router scheduler
-    ledger, legacy pending_action projection, packet batch members, runtime JSON
+    ledger, unsupported_historical pending_action projection, packet batch members, runtime JSON
     write-lock state, and signed envelope metadata
     writes: scheduler folds, action-local receipt metadata, display/current-work
     projections, passive-wait reconciliation, and sidecar projections

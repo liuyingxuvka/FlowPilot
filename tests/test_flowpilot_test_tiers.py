@@ -123,7 +123,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertFalse(payload["release_obligation_visible"])
 
     def test_all_tier_commands_have_external_command_contracts(self) -> None:
-        # Diagnostic evidence literals: integration, smoke_autopilot_fast, flowguard_coverage_sweep.
+        # Diagnostic evidence literals: integration, smoke_flowpilot_fast, flowguard_coverage_sweep.
         tier_names = set(run_test_tier.tier_names())
         for tier in ("fast", "integration", "router", "release", "all"):
             with self.subTest(tier=tier):
@@ -151,9 +151,9 @@ class FlowPilotTestTierTests(unittest.TestCase):
             command.name: command
             for command in run_test_tier.commands_for_tier("integration")
         }
-        self.assertIn("smoke_autopilot_fast", integration_commands)
+        self.assertIn("smoke_flowpilot_fast", integration_commands)
         self.assertIn("flowguard_coverage_sweep", integration_commands)
-        self.assertTrue(integration_commands["smoke_autopilot_fast"].background_recommended)
+        self.assertTrue(integration_commands["smoke_flowpilot_fast"].background_recommended)
         self.assertTrue(integration_commands["flowguard_coverage_sweep"].background_recommended)
         self.assertEqual(
             list(integration_commands["flowguard_coverage_sweep"].command)[-2:],

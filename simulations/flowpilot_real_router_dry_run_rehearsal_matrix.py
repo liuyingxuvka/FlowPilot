@@ -115,7 +115,7 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
         "forbidden_shortcuts": [
             "direct_state_mutation",
             "direct_run_state_mutation",
-            "legacy_record_event_card_ack",
+            "unsupported_historical_record_event_card_ack",
             "invented_external_event",
             "controller_reads_packet_body",
             "terminal_closure_without_lifecycle_record",

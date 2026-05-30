@@ -8,7 +8,7 @@
     "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
     "supports_real_wakeups": null,
     "supports_automations": null,
-    "supports_background_subagents": null,
+    "supports_background_sidecar roles": null,
     "supports_native_plan_tool": null,
     "evidence_sources": []
   },
@@ -27,7 +27,7 @@
     "router_direct_dispatch_required_before_worker": true,
     "reviewer_dispatch_required_before_worker": false,
     "role_reminder_required_in_controller_messages": true,
-    "role_echo_required_in_subagent_responses": true
+    "role_echo_required_in_sidecar role_responses": true
   },
   "packet_resume": {
     "packet_ledger_path": ".flowpilot/runs/<run-id>/packet_ledger.json",

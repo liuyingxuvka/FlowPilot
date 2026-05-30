@@ -46,8 +46,8 @@ def hazard_states() -> dict[str, State]:
         "material_dispatch_write_target_missing": _safe_base(
             material_dispatch_write_target_explicit=False,
         ),
-        "retired_material_packets_left_unrejected": _safe_base(
-            retired_material_packets_rejected=False,
+        "unsupported_material_packets_left_unrejected": _safe_base(
+            unsupported_material_packets_rejected=False,
         ),
         "terminal_closure_missing_run_lifecycle": _safe_base(
             run_lifecycle_record_written=False,

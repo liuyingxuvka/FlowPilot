@@ -2,7 +2,7 @@
 
 Risk intent brief:
 - Make every Router wait and repair outcome pass through the same event
-  capability facts: node-kind compatibility, repair-origin compatibility,
+  capability facts: node-kind unsupported_historical, repair-origin unsupported_historical,
   producer role, current receivability, rerun-target eligibility, and repair
   outcome-row eligibility.
 - Protected harms: parent/module repairs waiting for leaf-only current-node

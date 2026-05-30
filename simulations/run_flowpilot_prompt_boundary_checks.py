@@ -221,8 +221,8 @@ def _actual_prompt_source_report() -> dict[str, object]:
             "After applying a wait-boundary action, prefer `run-until-wait`" not in skill
         ),
         "skill_has_only_current_start_entrypoint": (
-            "Legacy equivalent:" not in skill
-            and "Compatibility-only alias retained for older automation" not in skill
+            "Unsupported_historical equivalent:" not in skill
+            and "Unsupported_historical-only alias retained for older automation" not in skill
             and "--new-invocation" not in skill
             and "run-until-wait --new-invocation" not in skill
             and "next --new-invocation" not in skill
@@ -310,8 +310,8 @@ def _actual_prompt_source_report() -> dict[str, object]:
             "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path." not in router
         ),
         "router_startup_catalog_uses_current_receipt_repair": (
-            "Legacy recovery:" not in router
-            and "Compatibility receipt repair" not in router
+            "Unsupported_historical recovery:" not in router
+            and "Unsupported_historical receipt repair" not in router
             and "Receipt repair:" in router
             and "not external recovery authority" in router
         ),

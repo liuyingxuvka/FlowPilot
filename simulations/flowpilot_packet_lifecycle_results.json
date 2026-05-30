@@ -120,7 +120,7 @@
           "write_grant_issued": false
         }
       },
-      "packet_retired_body_alias_accepted": {
+      "packet_unsupported_body_alias_accepted": {
         "detected": true,
         "expected_failure": "direct dispatch passed without current envelope fields and packet body hash identity",
         "failures": [
@@ -265,7 +265,7 @@
           "write_grant_issued": false
         }
       },
-      "result_retired_body_alias_accepted": {
+      "result_unsupported_body_alias_accepted": {
         "detected": true,
         "expected_failure": "direct dispatch passed without current envelope fields and packet body hash identity",
         "failures": [

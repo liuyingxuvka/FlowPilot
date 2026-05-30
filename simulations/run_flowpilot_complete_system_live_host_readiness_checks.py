@@ -24,7 +24,7 @@ def _load_live_evidence(path: Path | None) -> tuple[bool, dict[str, Any], list[s
     blockers: list[str] = []
     if payload.get("schema_version") != "flowpilot.complete_system.live_host_evidence.v1":
         blockers.append("unsupported_live_host_evidence_schema")
-    if payload.get("host_surface") not in {"multi_agent_v1", "codex_background_agent"}:
+    if payload.get("host_surface") not in {"multi_agent_v1", "codex_runtime_role_assistance"}:
         blockers.append("unsupported_live_host_surface")
     if not isinstance(agents, list) or not agents:
         blockers.append("missing_completed_live_agents")
@@ -56,7 +56,7 @@ def run_checks(
             "status": "passed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["skills/flowpilot/assets/ai_project_runtime/host.py"],
+            "evidence": ["skills/flowpilot/assets/flowpilot_core_runtime/host.py"],
         },
         {
             "id": "real_live_host_project_run",

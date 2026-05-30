@@ -323,7 +323,7 @@ def _material_packet_findings(
     if lineage_split:
         findings.append(
             _finding(
-                code="retired_material_packet_lineage_split",
+                code="unsupported_material_packet_lineage_split",
                 severity="warning",
                 summary="Repair material packets record replacement lineage only in metadata, not in the canonical field.",
                 matched_invariant="material_dispatch_contract_is_explicit",
@@ -760,7 +760,7 @@ def _audit_gate_outcome_contracts(project_root: Path) -> list[dict[str, object]]
     events = _load_router_external_events(project_root / "skills" / "flowpilot" / "assets" / "flowpilot_router.py")
     groups: dict[str, list[str]] = {}
     for event_name, meta in events.items():
-        if bool(meta.get("legacy")):
+        if bool(meta.get("unsupported_historical")):
             continue
         required_flag = str(meta.get("requires_flag") or "")
         if not required_flag:
@@ -809,7 +809,7 @@ def _audit_source_policy(project_root: Path) -> list[dict[str, object]]:
     audit_text = audit_path.read_text(encoding="utf-8") if audit_path.exists() else ""
     cockpit_present = (project_root / "flowpilot_cockpit").exists()
     if cockpit_present and (
-        "retired_cockpit_source_absent_from_main_tree" in audit_text
+        "unsupported_cockpit_source_absent_from_main_tree" in audit_text
         or '"flowpilot_cockpit"' in audit_text
         and "RETIRED_COCKPIT_SOURCE_PATHS" in audit_text
     ):
@@ -894,7 +894,7 @@ def _audit_role_liveness(*, router_state: Any) -> list[dict[str, object]]:
     requested = bool(flags.get("resume_roles_restored") or flags.get("resume_roles_requested"))
     if not requested:
         return []
-    ready = bool(flags.get("resume_role_agents_rehydrated") or flags.get("resume_roles_restored"))
+    ready = bool(flags.get("resume_role_bindings_rehydrated") or flags.get("resume_roles_restored"))
     blocked = bool(router_state.get("active_control_blocker"))
     if ready or blocked:
         return []
@@ -997,8 +997,8 @@ def state_from_findings(findings: list[dict[str, object]]) -> State:
         state = replace(state, material_output_contract_role_scoped=False)
     if "material_dispatch_write_target_missing" in codes:
         state = replace(state, material_dispatch_write_target_explicit=False)
-    if "retired_material_packet_lineage_split" in codes:
-        state = replace(state, retired_material_packets_rejected=False)
+    if "unsupported_material_packet_lineage_split" in codes:
+        state = replace(state, unsupported_material_packets_rejected=False)
     if "terminal_authority_mismatch" in codes:
         state = replace(
             state,

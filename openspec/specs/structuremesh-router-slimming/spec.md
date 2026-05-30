@@ -27,12 +27,12 @@ FlowPilot parent test gates SHALL include a FlowGuard-derived target split deriv
 - **WHEN** the target split derivation omits a registered suite or partition item
 - **THEN** FlowGuard MUST block the parent test claim.
 
-### Requirement: Router facade remains public compatibility owner
+### Requirement: Router facade remains public unsupported historical owner
 The FlowPilot router split SHALL keep `skills/flowpilot/assets/flowpilot_router.py` as the stable public import and CLI facade while moving owned implementation regions into child modules.
 
-#### Scenario: Router import and CLI compatibility are checked
+#### Scenario: Router import and CLI unsupported historical are checked
 - **WHEN** release validation reviews the router split
-- **THEN** the public import path and CLI command MUST remain compatibility-preserved through the facade
+- **THEN** the public import path and CLI command MUST remain unsupported historical-preserved through the facade
 - **AND** behavior parity evidence MUST be current for release-required entrypoints.
 
 ### Requirement: Catalog extraction is behavior-preserving

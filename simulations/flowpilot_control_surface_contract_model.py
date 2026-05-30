@@ -54,9 +54,9 @@ class State:
     status: str = "new"
     scenario: str = ""
     new_current_fields_present: bool = True
-    legacy_current_fields_present: bool = False
+    unsupported_historical_current_fields_present: bool = False
     resolver_accepts_new_fields: bool = True
-    resolver_accepts_legacy_fields: bool = True
+    resolver_accepts_unsupported_historical_fields: bool = True
     resolver_uses_explicit_run_root: bool = True
     resolver_falls_back_to_project_root: bool = False
     resolver_chooses_newest_run: bool = False
@@ -142,7 +142,7 @@ def _selected_state(scenario: str) -> State:
 def control_surface_ready(state: State) -> bool:
     current_pointer_supported = (
         (not state.new_current_fields_present or state.resolver_accepts_new_fields)
-        and (not state.legacy_current_fields_present or state.resolver_accepts_legacy_fields)
+        and (not state.unsupported_historical_current_fields_present or state.resolver_accepts_unsupported_historical_fields)
     )
     all_roles_covered = set(ROLE_SET).issubset(set(state.packet_contract_roles))
     fresh_or_quarantined = (

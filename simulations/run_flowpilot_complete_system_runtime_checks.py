@@ -16,7 +16,7 @@ ASSETS = REPO_ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
-from ai_project_runtime import cockpit, flowguard_orders, host, migration, packets, review_closure, runtime  # noqa: E402
+from flowpilot_core_runtime import cockpit, flowguard_orders, host, migration, packets, review_closure, runtime  # noqa: E402
 
 
 ScenarioFn = Callable[[], dict[str, Any]]
@@ -278,7 +278,7 @@ def completion_claim_resources_risks_and_old_ui_block_closure() -> dict[str, Any
     ledger, packet_id, worker = _base_ledger()
     _complete_packet(ledger, packet_id, worker)
     runtime.record_completion_claim(ledger, source="chat", claim="done")
-    ledger["open_resources"].append("background-agent-slot")
+    ledger["open_resources"].append("runtime-role-slot")
     ledger["residual_risks"].append("live host missing")
     ledger["old_ui_evidence"].append("old screenshot")
     closure = runtime.attempt_final_closure(ledger, _latest_validation_evidence_id(ledger))

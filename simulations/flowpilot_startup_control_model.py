@@ -123,7 +123,7 @@ class State:
     future_actions_prevented: bool = False
     action_issued_after_lifecycle_signal: bool = False
 
-    # Legacy receipt fields are retained as modeled hazards only. The current
+    # Unsupported_historical receipt fields are retained as modeled hazards only. The current
     # design must not require reviewer proof of original user-chat authenticity.
     interpretation_receipt_written: bool = False
     receipt_reviewed_against_user_text: bool = False

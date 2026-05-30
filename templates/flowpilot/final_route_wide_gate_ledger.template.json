@@ -20,7 +20,7 @@
     "generated_resource_ledger": ".flowpilot/runs/<run-id>/generated_resource_ledger.json",
     "self_interrogation_index": ".flowpilot/runs/<run-id>/self_interrogation_index.json",
     "defect_ledger": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
-    "crew_memory": ".flowpilot/runs/<run-id>/crew_memory",
+    "role_binding_memory": ".flowpilot/runs/<run-id>/role_binding_memory",
     "continuation_quarantine": ".flowpilot/runs/<run-id>/continuation/quarantine.json"
   },
   "current_route_scanned": false,

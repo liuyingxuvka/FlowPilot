@@ -15,7 +15,7 @@ from typing import Iterable
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-CREW_SIZE = 6
+REQUIRED_ROLE_BINDING_COUNT = 6
 TARGET_PARENT_NODES = 1
 MAX_STANDARD_EXPANSIONS = 1
 MAX_QUALITY_ROUTE_RAISES = 1
@@ -69,7 +69,7 @@ class State:
     stale_top_level_bootstrap_reused: bool = False
     startup_intake_ui_completed: bool = False
     startup_intake_result_recorded: bool = False
-    startup_background_agent_option_recorded: bool = False
+    startup_runtime_role_assistance_option_recorded: bool = False
     startup_continuation_option_recorded: bool = False
     startup_display_surface_option_recorded: bool = False
     startup_answer_values_valid: bool = False
@@ -142,23 +142,23 @@ class State:
     product_architecture_self_interrogation_record_written: bool = False
     product_architecture_self_interrogation_findings_dispositioned: bool = False
     contract_frozen: bool = False
-    crew_policy_written: bool = False
-    crew_count: int = 0
+    role_binding_policy_written: bool = False
+    role_binding_count: int = 0
     project_manager_ready: bool = False
     reviewer_ready: bool = False
     process_flowguard_officer_ready: bool = False
     product_flowguard_officer_ready: bool = False
     worker_a_ready: bool = False
     worker_b_ready: bool = False
-    crew_ledger_written: bool = False
+    role_binding_ledger_written: bool = False
     role_identity_protocol_recorded: bool = False
     pm_flowguard_delegation_policy_recorded: bool = False
     officer_owned_async_modeling_policy_recorded: bool = False
     officer_model_report_provenance_policy_recorded: bool = False
     controller_coordination_boundary_recorded: bool = False
     independent_approval_protocol_recorded: bool = False
-    crew_memory_policy_written: bool = False
-    crew_memory_packets_written: int = 0
+    role_binding_memory_policy_written: bool = False
+    role_binding_memory_packets_written: int = 0
     controller_core_loaded: bool = False
     router_daemon_started: bool = False
     router_daemon_lock_acquired: bool = False
@@ -172,12 +172,12 @@ class State:
     heartbeat_loaded_state: bool = False
     heartbeat_loaded_frontier: bool = False
     heartbeat_loaded_packet_ledger: bool = False
-    heartbeat_loaded_crew_memory: bool = False
+    heartbeat_loaded_role_binding_memory: bool = False
     heartbeat_host_rehydrate_requested: bool = False
     heartbeat_restored_crew: bool = False
     heartbeat_rehydrated_crew: bool = False
     heartbeat_injected_current_run_memory_into_roles: bool = False
-    crew_rehydration_report_written: bool = False
+    role_binding_recovery_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
     heartbeat_pm_decision_requested: bool = False
     heartbeat_pm_controller_reminder_checked: bool = False
@@ -190,8 +190,8 @@ class State:
     plan_sync_method_recorded: bool = False
     visible_plan_has_runway_depth: bool = False
     pm_capability_work_decision_recorded: bool = False
-    crew_archived: bool = False
-    crew_memory_archived: bool = False
+    role_binding_ledger_archived: bool = False
+    role_binding_memory_archived: bool = False
     continuation_probe_done: bool = False
     continuation_host_kind_recorded: bool = False
     continuation_evidence_written: bool = False
@@ -257,11 +257,11 @@ class State:
     route_heartbeat_interval_minutes: int = 0
     stable_heartbeat_launcher_recorded: bool = False
     heartbeat_health_checked: bool = False
-    live_subagent_decision_recorded: bool = False
-    live_subagents_started: bool = False
-    live_subagents_current_task_fresh: bool = False
-    fresh_agents_spawned_after_startup_answers: bool = False
-    fresh_agents_spawned_after_route_allocation: bool = False
+    runtime_role_assistance_decision_recorded: bool = False
+    runtime_role_bindings_opened: bool = False
+    runtime_role_bindings_current_task_ready: bool = False
+    role_bindings_opened_after_startup_answers: bool = False
+    role_bindings_opened_after_route_allocation: bool = False
     historical_agent_ids_compared: bool = False
     reused_historical_agent_ids: bool = False
     single_agent_role_continuity_authorized: bool = False
@@ -481,10 +481,10 @@ class State:
 
     child_node_sidecar_scan_done: bool = False
     sidecar_need: str = "unknown"  # unknown | none | needed
-    subagent_pool_exists: bool = False
-    subagent_idle_available: bool = False
-    subagent_status: str = "none"  # none | idle | pending | returned | merged
-    subagent_scope_checked: bool = False
+    sidecar_role_pool_exists: bool = False
+    sidecar_role_idle_available: bool = False
+    sidecar_role_status: str = "none"  # none | idle | pending | returned | merged
+    sidecar_role_scope_checked: bool = False
     critical_path_blocked: bool = False
 
     capability_route_version: int = 0
@@ -625,12 +625,12 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "heartbeat_loaded_state": False,
             "heartbeat_loaded_frontier": False,
             "heartbeat_loaded_packet_ledger": False,
-            "heartbeat_loaded_crew_memory": False,
+            "heartbeat_loaded_role_binding_memory": False,
             "heartbeat_host_rehydrate_requested": False,
             "heartbeat_restored_crew": False,
             "heartbeat_rehydrated_crew": False,
             "heartbeat_injected_current_run_memory_into_roles": False,
-            "crew_rehydration_report_written": False,
+            "role_binding_recovery_report_written": False,
             "replacement_roles_seeded_from_memory": False,
             "heartbeat_pm_decision_requested": False,
             "heartbeat_pm_controller_reminder_checked": False,
@@ -664,7 +664,7 @@ def _reset_execution_quality_gates() -> dict[str, object]:
             "node_self_interrogation_findings_dispositioned": False,
             "child_node_sidecar_scan_done": False,
             "sidecar_need": "unknown",
-            "subagent_scope_checked": False,
+            "sidecar_role_scope_checked": False,
             "role_memory_refreshed_after_work": False,
             "current_node_skill_improvement_check_done": False,
             "critical_path_blocked": False,
@@ -764,7 +764,7 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "flowguard_officer_model_adversarial_probe_done": False,
         "meta_route_checked": False,
         "meta_route_process_officer_approved": False,
-        "subagent_status": "none",
+        "sidecar_role_status": "none",
         "capability_structural_route_repairs": state.capability_structural_route_repairs + 1,
     }
 
@@ -921,23 +921,23 @@ def _material_handoff_ready(state: State) -> bool:
 
 def _crew_ready(state: State) -> bool:
     return (
-        state.crew_policy_written
-        and state.crew_count == CREW_SIZE
+        state.role_binding_policy_written
+        and state.role_binding_count == REQUIRED_ROLE_BINDING_COUNT
         and state.project_manager_ready
         and state.reviewer_ready
         and state.process_flowguard_officer_ready
         and state.product_flowguard_officer_ready
         and state.worker_a_ready
         and state.worker_b_ready
-        and state.crew_ledger_written
+        and state.role_binding_ledger_written
         and state.role_identity_protocol_recorded
         and state.pm_flowguard_delegation_policy_recorded
         and state.officer_owned_async_modeling_policy_recorded
         and state.officer_model_report_provenance_policy_recorded
         and state.controller_coordination_boundary_recorded
         and state.independent_approval_protocol_recorded
-        and state.crew_memory_policy_written
-        and state.crew_memory_packets_written == CREW_SIZE
+        and state.role_binding_memory_policy_written
+        and state.role_binding_memory_packets_written == REQUIRED_ROLE_BINDING_COUNT
     )
 
 
@@ -1000,15 +1000,15 @@ def _run_isolation_ready(state: State) -> bool:
     )
 
 
-def _live_subagent_startup_resolved(state: State) -> bool:
+def _runtime_role_binding_startup_resolved(state: State) -> bool:
     return (
-        state.live_subagent_decision_recorded
+        state.runtime_role_assistance_decision_recorded
         and (
             (
-                state.live_subagents_started
-                and state.live_subagents_current_task_fresh
-                and state.fresh_agents_spawned_after_startup_answers
-                and state.fresh_agents_spawned_after_route_allocation
+                state.runtime_role_bindings_opened
+                and state.runtime_role_bindings_current_task_ready
+                and state.role_bindings_opened_after_startup_answers
+                and state.role_bindings_opened_after_route_allocation
                 and state.historical_agent_ids_compared
                 and not state.reused_historical_agent_ids
             )
@@ -1021,7 +1021,7 @@ def _startup_questions_complete(state: State) -> bool:
     return (
         state.startup_intake_ui_completed
         and state.startup_intake_result_recorded
-        and state.startup_background_agent_option_recorded
+        and state.startup_runtime_role_assistance_option_recorded
         and state.startup_continuation_option_recorded
         and state.startup_display_surface_option_recorded
         and state.startup_answer_values_valid
@@ -1183,7 +1183,7 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and _startup_pm_gate_ready(state)
         and state.work_beyond_startup_allowed
     )
@@ -1245,7 +1245,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and _startup_pm_gate_ready(state)
         and state.work_beyond_startup_allowed
     )
@@ -1306,7 +1306,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and _startup_pm_gate_ready(state)
         and state.work_beyond_startup_allowed
     )
@@ -1324,8 +1324,8 @@ def _gates_lifecycle_valid(state: State) -> bool:
     return _route_scaffold_lifecycle_valid(state) and state.heartbeat_health_checked
 
 
-def _subagent_clear(state: State) -> bool:
-    return state.subagent_status in {"none", "idle", "merged"}
+def _sidecar_role_clear(state: State) -> bool:
+    return state.sidecar_role_status in {"none", "idle", "merged"}
 
 
 def _capability_backward_review_steps(
@@ -1647,7 +1647,7 @@ class CapabilityRouterStep:
         "flowpilot_enabled",
         "startup_intake_ui_completed",
         "startup_intake_result_recorded",
-        "startup_background_agent_option_recorded",
+        "startup_runtime_role_assistance_option_recorded",
         "startup_continuation_option_recorded",
         "run_directory_created",
         "current_pointer_written",
@@ -1713,34 +1713,34 @@ class CapabilityRouterStep:
         "product_architecture_self_interrogation_findings_dispositioned",
         "visible_self_interrogation_done",
         "contract_frozen",
-        "crew_policy_written",
-        "crew_count",
+        "role_binding_policy_written",
+        "role_binding_count",
         "project_manager_ready",
         "reviewer_ready",
         "process_flowguard_officer_ready",
         "product_flowguard_officer_ready",
         "worker_a_ready",
         "worker_b_ready",
-        "crew_ledger_written",
+        "role_binding_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
         "officer_owned_async_modeling_policy_recorded",
         "officer_model_report_provenance_policy_recorded",
         "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
-        "crew_memory_policy_written",
-        "crew_memory_packets_written",
+        "role_binding_memory_policy_written",
+        "role_binding_memory_packets_written",
         "controller_core_loaded",
         "pm_initial_capability_decision_recorded",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
         "heartbeat_loaded_packet_ledger",
-        "heartbeat_loaded_crew_memory",
+        "heartbeat_loaded_role_binding_memory",
         "heartbeat_host_rehydrate_requested",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
         "heartbeat_injected_current_run_memory_into_roles",
-        "crew_rehydration_report_written",
+        "role_binding_recovery_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
         "heartbeat_pm_controller_reminder_checked",
@@ -1751,8 +1751,8 @@ class CapabilityRouterStep:
         "pm_runway_checkpoint_cadence_recorded",
         "pm_runway_synced_to_plan",
         "pm_capability_work_decision_recorded",
-        "crew_archived",
-        "crew_memory_archived",
+        "role_binding_ledger_archived",
+        "role_binding_memory_archived",
         "continuation_probe_done",
         "continuation_host_kind_recorded",
         "continuation_evidence_written",
@@ -1814,11 +1814,11 @@ class CapabilityRouterStep:
         "route_heartbeat_interval_minutes",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
-        "live_subagent_decision_recorded",
-        "live_subagents_started",
-        "live_subagents_current_task_fresh",
-        "fresh_agents_spawned_after_startup_answers",
-        "fresh_agents_spawned_after_route_allocation",
+        "runtime_role_assistance_decision_recorded",
+        "runtime_role_bindings_opened",
+        "runtime_role_bindings_current_task_ready",
+        "role_bindings_opened_after_startup_answers",
+        "role_bindings_opened_after_route_allocation",
         "historical_agent_ids_compared",
         "reused_historical_agent_ids",
         "single_agent_role_continuity_authorized",
@@ -2008,9 +2008,9 @@ class CapabilityRouterStep:
         "pm_completion_decision_recorded",
         "child_node_sidecar_scan_done",
         "sidecar_need",
-        "subagent_pool_exists",
-        "subagent_idle_available",
-        "subagent_status",
+        "sidecar_role_pool_exists",
+        "sidecar_role_idle_available",
+        "sidecar_role_status",
     )
     writes = (
         "status",
@@ -2018,7 +2018,7 @@ class CapabilityRouterStep:
         "flowpilot_enabled",
         "startup_intake_ui_completed",
         "startup_intake_result_recorded",
-        "startup_background_agent_option_recorded",
+        "startup_runtime_role_assistance_option_recorded",
         "startup_continuation_option_recorded",
         "run_directory_created",
         "current_pointer_written",
@@ -2085,34 +2085,34 @@ class CapabilityRouterStep:
         "product_architecture_self_interrogation_record_written",
         "product_architecture_self_interrogation_findings_dispositioned",
         "contract_frozen",
-        "crew_policy_written",
-        "crew_count",
+        "role_binding_policy_written",
+        "role_binding_count",
         "project_manager_ready",
         "reviewer_ready",
         "process_flowguard_officer_ready",
         "product_flowguard_officer_ready",
         "worker_a_ready",
         "worker_b_ready",
-        "crew_ledger_written",
+        "role_binding_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
         "officer_owned_async_modeling_policy_recorded",
         "officer_model_report_provenance_policy_recorded",
         "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
-        "crew_memory_policy_written",
-        "crew_memory_packets_written",
+        "role_binding_memory_policy_written",
+        "role_binding_memory_packets_written",
         "controller_core_loaded",
         "pm_initial_capability_decision_recorded",
         "heartbeat_loaded_state",
         "heartbeat_loaded_frontier",
         "heartbeat_loaded_packet_ledger",
-        "heartbeat_loaded_crew_memory",
+        "heartbeat_loaded_role_binding_memory",
         "heartbeat_host_rehydrate_requested",
         "heartbeat_restored_crew",
         "heartbeat_rehydrated_crew",
         "heartbeat_injected_current_run_memory_into_roles",
-        "crew_rehydration_report_written",
+        "role_binding_recovery_report_written",
         "replacement_roles_seeded_from_memory",
         "heartbeat_pm_decision_requested",
         "heartbeat_pm_controller_reminder_checked",
@@ -2123,8 +2123,8 @@ class CapabilityRouterStep:
         "pm_runway_checkpoint_cadence_recorded",
         "pm_runway_synced_to_plan",
         "pm_capability_work_decision_recorded",
-        "crew_archived",
-        "crew_memory_archived",
+        "role_binding_ledger_archived",
+        "role_binding_memory_archived",
         "continuation_probe_done",
         "continuation_host_kind_recorded",
         "continuation_evidence_written",
@@ -2186,11 +2186,11 @@ class CapabilityRouterStep:
         "route_heartbeat_interval_minutes",
         "stable_heartbeat_launcher_recorded",
         "heartbeat_health_checked",
-        "live_subagent_decision_recorded",
-        "live_subagents_started",
-        "live_subagents_current_task_fresh",
-        "fresh_agents_spawned_after_startup_answers",
-        "fresh_agents_spawned_after_route_allocation",
+        "runtime_role_assistance_decision_recorded",
+        "runtime_role_bindings_opened",
+        "runtime_role_bindings_current_task_ready",
+        "role_bindings_opened_after_startup_answers",
+        "role_bindings_opened_after_route_allocation",
         "historical_agent_ids_compared",
         "reused_historical_agent_ids",
         "single_agent_role_continuity_authorized",
@@ -2393,10 +2393,10 @@ class CapabilityRouterStep:
         "pause_snapshot_written",
         "child_node_sidecar_scan_done",
         "sidecar_need",
-        "subagent_pool_exists",
-        "subagent_idle_available",
-        "subagent_status",
-        "subagent_scope_checked",
+        "sidecar_role_pool_exists",
+        "sidecar_role_idle_available",
+        "sidecar_role_status",
+        "sidecar_role_scope_checked",
         "capability_route_version",
         "capability_route_checked",
         "capability_evidence_synced",
@@ -2408,7 +2408,7 @@ class CapabilityRouterStep:
         "capability_user_flow_diagram_emitted",
     )
     accepted_input_type = Tick
-    input_description = "one autopilot capability-routing decision"
+    input_description = "one FlowPilot capability-routing decision"
     output_description = "next allowed capability gate or implementation action"
     idempotency = (
         "Capability routing records evidence for each invoked child skill and "
@@ -2528,7 +2528,7 @@ def self_interrogation_before_contract(state: State, trace) -> InvariantResult:
         and _crew_ready(state)
         and _product_function_architecture_ready(state)
     ):
-        return InvariantResult.fail("contract frozen before fresh run isolation, showcase floor, dynamic per-layer visible self-interrogation evidence, durable self-interrogation disposition, crew recovery, PM product-function architecture, candidate pool, and validation direction")
+        return InvariantResult.fail("contract frozen before fresh run isolation, showcase floor, dynamic per-layer visible self-interrogation evidence, durable self-interrogation disposition, role binding recovery, PM product-function architecture, candidate pool, and validation direction")
     return InvariantResult.pass_()
 
 
@@ -2537,7 +2537,7 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
     if (
         not state.startup_intake_result_recorded
         and (
-            state.startup_background_agent_option_recorded
+            state.startup_runtime_role_assistance_option_recorded
             or state.startup_continuation_option_recorded
             or state.startup_display_surface_option_recorded
             or state.startup_display_entry_action_done
@@ -2553,7 +2553,7 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
     if state.flowpilot_enabled and not state.run_scoped_startup_bootstrap_created:
         return InvariantResult.fail("new capability startup did not create a run-scoped bootstrap")
     if (
-        state.startup_background_agent_option_recorded
+        state.startup_runtime_role_assistance_option_recorded
         and state.startup_continuation_option_recorded
         and state.startup_display_surface_option_recorded
     ) and not (
@@ -2587,12 +2587,12 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
             state.heartbeat_loaded_state
             and state.heartbeat_loaded_frontier
             and state.heartbeat_loaded_packet_ledger
-            and state.heartbeat_loaded_crew_memory
+            and state.heartbeat_loaded_role_binding_memory
             and state.heartbeat_host_rehydrate_requested
             and state.heartbeat_restored_crew
             and state.heartbeat_rehydrated_crew
             and state.heartbeat_injected_current_run_memory_into_roles
-            and state.crew_rehydration_report_written
+            and state.role_binding_recovery_report_written
             and state.replacement_roles_seeded_from_memory
             and state.heartbeat_pm_decision_requested
             and state.heartbeat_pm_controller_reminder_checked
@@ -2722,7 +2722,7 @@ def dependency_plan_before_route_or_implementation(
         )
     if (
         state.startup_preflight_review_report_written
-        and state.live_subagents_started
+        and state.runtime_role_bindings_opened
         and not (
             state.startup_reviewer_checked_live_agent_freshness
             and state.startup_reviewer_checked_no_historical_agent_reuse
@@ -2784,7 +2784,7 @@ def dependency_plan_before_route_or_implementation(
         return InvariantResult.fail(
             "PM allowed capability work before fresh run isolation and prior-work boundary were resolved"
         )
-    if state.work_beyond_startup_allowed and not _live_subagent_startup_resolved(state):
+    if state.work_beyond_startup_allowed and not _runtime_role_binding_startup_resolved(state):
         return InvariantResult.fail(
             "PM allowed capability work before fresh current-task role bindings or explicit single-agent fallback were resolved"
         )
@@ -3426,22 +3426,22 @@ def backend_route_does_not_run_ui_gates(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
-def subagent_result_must_merge_before_implementation_or_completion(
+def sidecar_role_result_must_merge_before_implementation_or_completion(
     state: State, trace
 ) -> InvariantResult:
     del trace
-    if state.subagent_status in {"pending", "returned"}:
+    if state.sidecar_role_status in {"pending", "returned"}:
         if state.non_ui_implemented or state.ui_implemented or state.status == "complete":
             return InvariantResult.fail(
-                "implementation/completion proceeded before subagent merge"
+                "implementation/completion proceeded before sidecar role merge"
             )
-    if state.subagent_status in {"pending", "returned"}:
+    if state.sidecar_role_status in {"pending", "returned"}:
         if not state.child_node_sidecar_scan_done:
-            return InvariantResult.fail("subagent used before child-node sidecar scan")
-    if state.subagent_status == "pending" and not state.subagent_scope_checked:
-        return InvariantResult.fail("sidecar subagent assigned before disjoint scope check")
-    if state.subagent_status == "pending" and state.sidecar_need != "needed":
-        return InvariantResult.fail("subagent assigned without a bounded sidecar need")
+            return InvariantResult.fail("sidecar role used before child-node sidecar scan")
+    if state.sidecar_role_status == "pending" and not state.sidecar_role_scope_checked:
+        return InvariantResult.fail("sidecar role binding assigned before disjoint scope check")
+    if state.sidecar_role_status == "pending" and state.sidecar_need != "needed":
+        return InvariantResult.fail("sidecar role assigned without a bounded sidecar need")
     return InvariantResult.pass_()
 
 
@@ -3591,8 +3591,8 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
         and state.pm_initial_capability_decision_recorded
         and state.pm_resume_decision_recorded
         and state.pm_capability_work_decision_recorded
-        and state.crew_memory_archived
-        and state.crew_archived
+        and state.role_binding_memory_archived
+        and state.role_binding_ledger_archived
     ):
         return InvariantResult.fail(
             "completed before runtime role-binding authority, PM decisions, role memory archive, and terminal role archive"
@@ -3899,7 +3899,7 @@ def actor_authority_gates_require_correct_role(
         _crew_ready(state) and _material_handoff_ready(state)
     ):
         return InvariantResult.fail(
-            "capability product-function architecture was synthesized before crew recovery and reviewed material handoff"
+            "capability product-function architecture was synthesized before role binding recovery and reviewed material handoff"
         )
     product_architecture_inputs_ready = (
         state.product_function_architecture_pm_synthesized
@@ -4184,10 +4184,10 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "PM completion decision recorded before terminal closure suite refreshed capability state and evidence"
         )
-    if state.crew_archived and not state.crew_memory_archived:
-        return InvariantResult.fail("crew ledger archived before compact role memory archive")
-    if state.pm_completion_decision_recorded and not state.crew_archived:
-        return InvariantResult.fail("PM completion decision recorded before crew archive")
+    if state.role_binding_ledger_archived and not state.role_binding_memory_archived:
+        return InvariantResult.fail("role-binding ledger archived before compact role memory archive")
+    if state.pm_completion_decision_recorded and not state.role_binding_ledger_archived:
+        return InvariantResult.fail("PM completion decision recorded before role binding archive")
     if state.status == "complete" and not state.pm_completion_decision_recorded:
         return InvariantResult.fail("capability route completed before PM completion approval")
     if state.status == "complete" and not state.terminal_router_daemon_stopped:
@@ -4195,11 +4195,11 @@ def actor_authority_gates_require_correct_role(
     return InvariantResult.pass_()
 
 
-def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
+def role_binding_memory_rehydration_required(state: State, trace) -> InvariantResult:
     del trace
     if state.self_interrogation_pm_ratified and not (
-        state.crew_memory_policy_written
-        and state.crew_memory_packets_written == CREW_SIZE
+        state.role_binding_memory_policy_written
+        and state.role_binding_memory_packets_written == REQUIRED_ROLE_BINDING_COUNT
     ):
         return InvariantResult.fail(
             "PM ratified capability startup before six compact role memory packets existed"
@@ -4211,16 +4211,16 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.router_daemon_recovered_on_resume
         and state.router_daemon_started
         and state.controller_action_watch_active
-        and state.heartbeat_loaded_crew_memory
+        and state.heartbeat_loaded_role_binding_memory
         and state.heartbeat_host_rehydrate_requested
         and state.heartbeat_restored_crew
         and state.heartbeat_rehydrated_crew
         and state.heartbeat_injected_current_run_memory_into_roles
-        and state.crew_rehydration_report_written
+        and state.role_binding_recovery_report_written
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "heartbeat asked PM for capability work before current-run state, packet ledger, live crew rehydration, and role memory injection completed"
+            "heartbeat asked PM for capability work before current-run state, packet ledger, live role binding recovery, and role memory injection completed"
         )
     if state.pm_resume_decision_recorded and not (
         state.heartbeat_pm_controller_reminder_checked
@@ -4241,8 +4241,8 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         return InvariantResult.fail(
             "final verification started before PM checked whether the capability node exposed a nonblocking FlowPilot skill improvement observation"
         )
-    if state.crew_archived and not state.crew_memory_archived:
-        return InvariantResult.fail("crew archive written before role memory archive")
+    if state.role_binding_ledger_archived and not state.role_binding_memory_archived:
+        return InvariantResult.fail("role binding archive written before role memory archive")
     return InvariantResult.pass_()
 
 
@@ -4313,9 +4313,9 @@ INVARIANTS = (
         predicate=backend_route_does_not_run_ui_gates,
     ),
     Invariant(
-        name="subagent_result_must_merge_before_implementation_or_completion",
-        description="Subagent work must be scope-checked, returned, and merged before dependent implementation or completion.",
-        predicate=subagent_result_must_merge_before_implementation_or_completion,
+        name="sidecar_role_result_must_merge_before_implementation_or_completion",
+        description="Sidecar role work must be scope-checked, returned, and merged before dependent implementation or completion.",
+        predicate=sidecar_role_result_must_merge_before_implementation_or_completion,
     ),
     Invariant(
         name="human_review_judgement_requires_neutral_observation",
@@ -4348,9 +4348,9 @@ INVARIANTS = (
         predicate=actor_authority_gates_require_correct_role,
     ),
     Invariant(
-        name="crew_memory_rehydration_required",
-        description="Heartbeat recovery must load compact role memory, rehydrate or seed replacements, refresh memory after work, and archive it before crew closure.",
-        predicate=crew_memory_rehydration_required,
+        name="role_binding_memory_rehydration_required",
+        description="Heartbeat recovery must load compact role memory, rehydrate or seed replacements, refresh memory after work, and archive it before role binding closure.",
+        predicate=role_binding_memory_rehydration_required,
     ),
 )
 

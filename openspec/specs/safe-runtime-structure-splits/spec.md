@@ -5,13 +5,13 @@ TBD - created by archiving change add-runtime-owner-contracts-and-safe-splits. U
 ## Requirements
 ### Requirement: Safe Runtime Structure Split
 
-FlowPilot SHALL split runtime modules only when the target owner boundary is stable, compatibility is preserved, and validation covers the moved boundary.
+FlowPilot SHALL split runtime modules only when the target owner boundary is stable, unsupported historical is preserved, and validation covers the moved boundary.
 
 #### Scenario: stable isolated owner boundary
 
 - **WHEN** a broad runtime module has an isolated function family with an explicit owner boundary
 - **THEN** the implementation MAY extract that family into a child owner module
-- **AND** the original module SHALL preserve the import/export compatibility surface
+- **AND** the original module SHALL preserve the import/export unsupported historical surface
 - **AND** focused tests and the model-code-test diagnostic SHALL pass after the split
 
 #### Scenario: peer or state-ordering risk

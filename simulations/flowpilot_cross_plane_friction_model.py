@@ -1,4 +1,4 @@
-"""Compatibility facade for the FlowPilot cross-plane friction model."""
+"""Unsupported_historical facade for the FlowPilot cross-plane friction model."""
 
 from __future__ import annotations
 

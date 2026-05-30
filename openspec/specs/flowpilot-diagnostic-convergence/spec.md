@@ -29,7 +29,7 @@ background evidence for all inventoried surfaces.
 
 #### Scenario: Structure split is proposed
 
-- **WHEN** an oversized runtime module, compatibility facade, script entrypoint,
+- **WHEN** an oversized runtime module, unsupported historical facade, script entrypoint,
   or model-check runner is split
 - **THEN** StructureMesh evidence SHALL preserve public entrypoints, import
   names, event names, JSON schemas, command-line behavior, and config

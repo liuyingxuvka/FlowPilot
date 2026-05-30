@@ -14,11 +14,11 @@ FlowPilot SHALL use shared closure classification before lifecycle records affec
 - **WHEN** a lifecycle row has an unknown status, missing evidence, or mismatched reconciliation identity
 - **THEN** the progress scan SHALL keep the row visible as blocking, repair-required, or needing recheck
 
-### Requirement: Registry Authorities Derive Compatibility Views
+### Requirement: Registry Authorities Derive Unsupported historical Views
 FlowPilot SHALL keep control transaction, route action, output-contract, and prompt-policy registries as the authority for their derived runtime views.
 
 #### Scenario: Facade export matches owner-derived view
-- **WHEN** public compatibility exports expose control transaction or route action policy maps
+- **WHEN** public unsupported historical exports expose control transaction or route action policy maps
 - **THEN** those exports SHALL match the values derived or owned by the registry owner module
 
 #### Scenario: Registry drift is detected

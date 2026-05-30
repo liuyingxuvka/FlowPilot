@@ -10,12 +10,12 @@ Risk intent brief:
   concrete return lease, a role guessing an event name, a registered event being
   unavailable in the current wait state, and green role-output validation being
   mistaken for permission to continue.
-- Protect gate-bearing phases from accepting a retired/general report or repair
+- Protect gate-bearing phases from accepting a unsupported/general report or repair
   follow-up that is recorded but does not satisfy the current gate flag.
 - Treat the Product FlowGuard Officer product-architecture gate as a product
   behavior model submission, and treat the Process FlowGuard Officer route
   gate as a process route model submission. Older event names are rejected as
-  non-completing retired inputs rather than mirrored into current artifacts.
+  non-completing unsupported inputs rather than mirrored into current artifacts.
 - Hard invariants: router-supplied contracts require a concrete event from the
   current Router wait or a PM role-work packet result contract; system cards do
   not authorize formal output by themselves; mechanical output validation cannot
@@ -55,13 +55,13 @@ ROLE_GUESSES_UNKNOWN_EVENT = "role_guesses_unknown_event"
 REGISTERED_EVENT_NOT_CURRENTLY_ALLOWED = "registered_event_not_currently_allowed"
 MECHANICAL_GREEN_USED_AS_ROUTER_ACCEPTANCE = "mechanical_green_used_as_router_acceptance"
 STATIC_CARD_GUIDANCE_USED_AS_DYNAMIC_LEASE = "static_card_guidance_used_as_dynamic_lease"
-RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET = "retired_direct_event_competes_with_pm_packet"
+RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET = "unsupported_direct_event_competes_with_pm_packet"
 PM_ROLE_WORK_WRONG_RECIPIENT = "pm_role_work_wrong_recipient"
 WRONG_ROLE_USES_WORK_AUTHORITY = "wrong_role_uses_work_authority"
 WRONG_CONTRACT_USES_WORK_AUTHORITY = "wrong_contract_uses_work_authority"
 STALE_WORK_AUTHORITY_USED = "stale_work_authority_used"
 GATE_CARD_WITHOUT_COMPLETION_CONTRACT = "gate_card_without_completion_contract"
-RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG = "retired_event_accepted_without_required_gate_flag"
+RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG = "unsupported_event_accepted_without_required_gate_flag"
 PM_REPAIR_RESOLVES_BLOCKER_WITHOUT_GATE_EVENT = "pm_repair_resolves_blocker_without_gate_event"
 PM_ROLE_WORK_RESULT_NOT_MAPPED_TO_CURRENT_GATE = "pm_role_work_result_not_mapped_to_current_gate"
 PRODUCT_BEHAVIOR_MODEL_GATE_USES_MODELABILITY_AS_CANONICAL_COMPLETION = (
@@ -195,7 +195,7 @@ class State:
     pm_role_work_result_contract_present: bool = False
     pm_role_work_result_maps_to_current_gate: bool = True
     direct_router_wait_present: bool = False
-    retired_direct_event_present: bool = False
+    unsupported_direct_event_present: bool = False
 
     current_gate_active: bool = False
     current_gate_name: str = "none"
@@ -597,7 +597,7 @@ def _scenario_state(scenario: str) -> State:
             return_event_currently_allowed=False,
             pm_role_work_packet_present=True,
             pm_role_work_result_contract_present=True,
-            retired_direct_event_present=True,
+            unsupported_direct_event_present=True,
             router_accepted_event=False,
             current_run_allowed_to_continue=False,
         )
@@ -729,7 +729,7 @@ def _scenario_state(scenario: str) -> State:
             current_gate_required_flag="product_architecture_modelability_passed",
             return_event_satisfies_current_gate=False,
             current_gate_flag_satisfied=False,
-            retired_direct_event_present=True,
+            unsupported_direct_event_present=True,
             router_accepted_event=True,
             current_run_allowed_to_continue=False,
         )
@@ -993,8 +993,8 @@ def return_path_failures(state: State) -> list[str]:
         failures.append("Router accepted an event that was not currently allowed")
     if state.mechanical_role_output_valid and state.current_run_allowed_to_continue and not state.router_accepted_event:
         failures.append("mechanical role-output validation was treated as Router acceptance")
-    if state.retired_direct_event_present and state.pm_role_work_packet_present:
-        failures.append("retired direct officer event competes with PM role-work result contract")
+    if state.unsupported_direct_event_present and state.pm_role_work_packet_present:
+        failures.append("unsupported direct officer event competes with PM role-work result contract")
     if state.pm_role_work_packet_present and not state.pm_role_work_result_contract_present:
         failures.append("PM role-work packet has no result contract")
     if state.current_gate_active:
@@ -1328,7 +1328,7 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
                 projection["current_findings"].append(finding)
 
     if (
-        flags.get("retired_product_officer_model_report_received")
+        flags.get("unsupported_product_officer_model_report_received")
         and flags.get("product_architecture_modelability_passed")
         and any(
             item.get("kind") == "resolved_no_legal_next_action_without_gate_event"
@@ -1337,13 +1337,13 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
     ):
         projection["historical_gate_alignment_findings"].append(
             {
-                "kind": "retired_product_officer_report_preceded_gate_specific_resolution",
-                "retired_events": sorted(PRODUCT_ARCHITECTURE_RETIRED_EVENTS),
+                "kind": "unsupported_product_officer_report_preceded_gate_specific_resolution",
+                "unsupported_events": sorted(PRODUCT_ARCHITECTURE_RETIRED_EVENTS),
                 "gate_events": sorted(PRODUCT_ARCHITECTURE_GATE_EVENTS),
-                "retired_flag": "retired_product_officer_model_report_received",
+                "unsupported_flag": "unsupported_product_officer_model_report_received",
                 "gate_flag": "product_architecture_modelability_passed",
                 "model_meaning": (
-                    "The run recovered, but it shows the exact class this model protects: a retired/general "
+                    "The run recovered, but it shows the exact class this model protects: a unsupported/general "
                     "officer report was recorded before the concrete gate event that actually satisfied "
                     "product_architecture_modelability."
                 ),

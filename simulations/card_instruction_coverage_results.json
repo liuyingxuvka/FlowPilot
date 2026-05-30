@@ -15,7 +15,7 @@
       "card_instruction_checked:pm.continuation_capability_binding",
       "card_instruction_checked:pm.controller_reset_duty",
       "card_instruction_checked:pm.core",
-      "card_instruction_checked:pm.crew_rehydration_freshness",
+      "card_instruction_checked:pm.role_binding_recovery_freshness",
       "card_instruction_checked:pm.current_node_loop",
       "card_instruction_checked:pm.dependency_policy",
       "card_instruction_checked:pm.event.node_started",

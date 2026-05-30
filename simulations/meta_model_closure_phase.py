@@ -36,7 +36,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
         state.completed_chunks >= state.required_chunks
         and state.checkpoint_written
         and _route_ready(state)
-        and state.subagent_status not in {"pending", "returned"}
+        and state.sidecar_role_status not in {"pending", "returned"}
     ):
         if not state.completion_visible_roadmap_emitted:
             yield _step(
@@ -598,21 +598,21 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                 active_node="terminal_lifecycle_frontier_synced",
             )
             return
-        if not state.crew_memory_archived:
+        if not state.role_binding_memory_archived:
             yield _step(
                 state,
-                label="crew_memory_archived_at_terminal",
-                action="archive final role memory packet statuses after lifecycle reconciliation and before crew ledger archive",
-                crew_memory_archived=True,
+                label="role_binding_memory_archived_at_terminal",
+                action="archive final role memory packet statuses after lifecycle reconciliation and before role-binding ledger archive",
+                role_binding_memory_archived=True,
                 active_node="ready_to_archive_crew",
             )
             return
-        if not state.crew_archived:
+        if not state.role_binding_ledger_archived:
             yield _step(
                 state,
-                label="crew_archived_at_terminal",
-                action="archive persistent crew ledger and final role statuses after role memory archive and before final report",
-                crew_archived=True,
+                label="role_binding_ledger_archived_at_terminal",
+                action="archive persistent role-binding ledger and final role statuses after role memory archive and before final report",
+                role_binding_ledger_archived=True,
                 active_node="ready_to_emit_final_report",
             )
             return
@@ -629,7 +629,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="pm_completion_decision_recorded",
-                action="project manager approves completion after final product replay, final human review, high-value review, lifecycle cleanup, and crew archive",
+                action="project manager approves completion after final product replay, final human review, high-value review, lifecycle cleanup, and role binding archive",
                 pm_completion_decision_recorded=True,
                 active_node="ready_to_emit_final_report",
             )

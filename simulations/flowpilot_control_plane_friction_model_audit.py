@@ -15,7 +15,7 @@ ASSETS_ROOT = Path(__file__).resolve().parents[1] / "skills" / "flowpilot" / "as
 if str(ASSETS_ROOT) not in sys.path:
     sys.path.insert(0, str(ASSETS_ROOT))
 
-from ai_project_runtime import control_surface  # noqa: E402
+from flowpilot_core_runtime import control_surface  # noqa: E402
 from flowpilot_control_plane_friction_model_hazards import _safe_base
 from flowpilot_control_plane_friction_model_invariants import invariant_failures
 from flowpilot_control_plane_friction_model_state import PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
@@ -633,10 +633,10 @@ def _audit_role_output_event_dedup(router_state: object) -> dict[str, object]:
 
 def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
     packet_ledger, packet_error = _read_json(run_root / "packet_ledger.json")
-    crew_ledger, crew_error = _read_json(run_root / "crew_ledger.json")
+    role_binding_ledger, crew_error = _read_json(run_root / "role_binding_ledger.json")
     role_keys = {
         str(slot.get("role_key"))
-        for slot in (crew_ledger.get("role_slots") if isinstance(crew_ledger, dict) else []) or []
+        for slot in (role_binding_ledger.get("role_slots") if isinstance(role_binding_ledger, dict) else []) or []
         if isinstance(slot, dict) and slot.get("role_key")
     }
     issues: list[dict[str, object]] = []
@@ -654,7 +654,7 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
                 "completed_by_role": completed_by_role,
                 "completed_agent_id": result.get("completed_agent_id"),
                 "completed_agent_id_belongs_to_role": result.get("completed_agent_id_belongs_to_role"),
-                "role_exists_in_crew_ledger": completed_by_role in role_keys,
+                "role_exists_in_role_binding_ledger": completed_by_role in role_keys,
             }
             if (
                 isinstance(result.get("author_identity_quarantine"), dict)
@@ -667,9 +667,9 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
             )
     return {
         "packet_ledger_error": packet_error,
-        "crew_ledger_error": crew_error,
+        "role_binding_ledger_error": crew_error,
         "result_author_identity_replayable": not issues,
-        "result_author_matches_current_role": all(issue.get("role_exists_in_crew_ledger") for issue in issues),
+        "result_author_matches_current_role": all(issue.get("role_exists_in_role_binding_ledger") for issue in issues),
         "issues": issues[:12],
         "terminal_quarantined_issues": quarantined_issues[:12],
     }

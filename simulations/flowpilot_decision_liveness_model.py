@@ -83,7 +83,7 @@ class State:
 
     pm_decision_context_open: bool = False
     pm_work_request_channel_available: bool = False
-    controller_spawned_work_without_pm_request: bool = False
+    controller_opened_work_without_pm_request: bool = False
     controller_read_sealed_body: bool = False
 
     decision: str = "none"
@@ -471,8 +471,8 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.controller_read_sealed_body:
         failures.append("Controller read a sealed PM work-request or result body")
-    if state.controller_spawned_work_without_pm_request:
-        failures.append("Controller spawned role work without a PM work request")
+    if state.controller_opened_work_without_pm_request:
+        failures.append("Controller opened role work without a PM work request")
     if state.pm_decision_context_open and not state.pm_work_request_channel_available:
         failures.append("PM decision context opened without always-available role-work-request channel")
     if state.request_registered and not state.pm_work_request_channel_available:
@@ -683,8 +683,8 @@ def hazard_states() -> dict[str, State]:
         "duplicate_open_pm_work_request_id": _valid_open_request(
             duplicate_open_request_id=True,
         ),
-        "controller_spawned_work_without_pm_request": _open_pm_context(
-            controller_spawned_work_without_pm_request=True,
+        "controller_opened_work_without_pm_request": _open_pm_context(
+            controller_opened_work_without_pm_request=True,
         ),
         "controller_reads_pm_work_request_body": _valid_open_request(
             controller_read_sealed_body=True,

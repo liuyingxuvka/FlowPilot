@@ -16,8 +16,8 @@ user-level:
 - `runs/<run-id>/packet_ledger.json`
 - `runs/<run-id>/route_memory/route_history_index.json`
 - `runs/<run-id>/route_memory/pm_prior_path_context.json`
-- `crew_ledger.json`
-- `crew_memory/*.json`
+- `role_binding_ledger.json`
+- `role_binding_memory/*.json`
 - `product_function_architecture.json`
 - `root_acceptance_contract.json`
 - `standard_scenario_pack.json`
@@ -179,10 +179,10 @@ chunks until this block and the matching frontier block show:
 - canonical route files, current-run `state.json`, and
   `execution_frontier.json` are
   written for the same active nonterminal route;
-- prior top-level control state is absent, retired-only, or quarantined and is
+- prior top-level control state is absent, unsupported-only, or quarantined and is
   not used as the current run state;
 - continuing prior work has a current-run prior-work import packet;
-- `crew_ledger_current: true`;
+- `role_binding_ledger_current: true`;
 - `role_memory_packets_current` is at least 6;
 - role-binding startup records either current-run live bindings for
   runtime-required roles after a user decision or explicit user authorization
@@ -212,7 +212,7 @@ chunks until this block and the matching frontier block show:
 - `provenance`: exactly `explicit_user_reply`; values such as
   `agent_inferred`, `default`, `prior_route`, `naked`, or
   `single_message_invocation` are invalid;
-- `answers.background_agents.answer`: `allow` for host-supported role
+- `answers.runtime_role_assistances.answer`: `allow` for host-supported role
   mechanisms or `single-agent` for explicit fallback role continuity;
 - `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or
   `manual` for manual resume;
@@ -247,9 +247,9 @@ runtime startup-check script writes it. It must include:
   authorization, and shadow/residual state;
 - required facts for route heartbeat interval 1 minute and route heartbeat
   RRULE `FREQ=MINUTELY;INTERVAL=1` when automated continuation is selected;
-- if `answers.background_agents.answer` is `allow`, runtime-required role
+- if `answers.runtime_role_assistances.answer` is `allow`, runtime-required role
   bindings must be active or resumed after the user decision;
-- if `answers.background_agents.answer` is `single-agent`, explicit
+- if `answers.runtime_role_assistances.answer` is `single-agent`, explicit
   single-agent role-continuity authorization must exist and the route must not
   claim live role bindings.
 
@@ -287,7 +287,7 @@ quarantined or superseded before work continues.
 
 ## Crew Ledger
 
-`crew_ledger.json` records role authority and role memory for a formal
+`role_binding_ledger.json` records role authority and role memory for a formal
 FlowPilot route.
 
 For each role, the ledger records the role name, agent id when available,
@@ -295,7 +295,7 @@ status, authority boundary, latest report path, role memory path, memory
 freshness, recovery or replacement rule, and terminal archive state. It is
 loaded before formal route work and before heartbeat recovery.
 
-Role memory packets under `crew_memory/*.json` are the durable continuity
+Role memory packets under `role_binding_memory/*.json` are the durable continuity
 state for the crew. Each packet records:
 
 - role and nickname;
@@ -563,7 +563,7 @@ The frontier records:
   `advance_allowed`;
 - checks required before the next jump;
 - visible Codex plan projection for the current mainline;
-- crew ledger path, role memory root, rehydration status, restored/replaced
+- role-binding ledger path, role memory root, rehydration status, restored/replaced
   role lists, and latest project-manager decision, including the PM repair
   strategy interrogation evidence path when a review failure mutates the route;
 - route mutation status;
@@ -694,7 +694,7 @@ Generated with [FlowPilot](https://github.com/liuyingxuvka/FlowPilot) - a projec
 The terminal summary action is the only time the Controller may read all files
 under the current run root as one summary source. The read scope is
 `current_run_root_all_files`. It does not allow route mutation, gate approval,
-new project evidence, role spawning, or writes outside the final summary files,
+new project evidence, role opening, or writes outside the final summary files,
 `.flowpilot/index.json`, `.flowpilot/current.json`, and router state.
 
 The execution frontier stores the native plan sync status separately from the
@@ -718,7 +718,7 @@ validation evidence, or blocked/waived with evidence from the responsible role.
 Before any child-skill, imagegen, implementation, or formal route chunk starts,
 the human-like reviewer personally checks `.flowpilot/current.json`,
 `.flowpilot/index.json`, current-run `state.json`, `execution_frontier.json`,
-`routes/<active-route>/flow.json`, `crew_ledger.json`, all role memory packets,
+`routes/<active-route>/flow.json`, `role_binding_ledger.json`, all role memory packets,
 continuation evidence, Codex heartbeat automation or manual-resume evidence,
 requested cleanup evidence, and prior-work import boundary when continuing.
 The reviewer then writes
@@ -857,7 +857,7 @@ It records:
 - standard scenario and residual-risk replay status;
 - terminal human backward replay pass status and repair/restart freshness;
 - heartbeat stop or manual-resume no-automation evidence;
-- role memory and crew archive status;
+- role memory and role binding archive status;
 - FlowPilot skill improvement report path and written status;
 - controlled-stop/completion notice status;
 - final report readiness and user-visible summary evidence.

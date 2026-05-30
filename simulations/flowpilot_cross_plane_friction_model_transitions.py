@@ -67,7 +67,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 material_scan_packets_observed=True,
                 material_output_contract_role_scoped=True,
                 material_dispatch_write_target_explicit=True,
-                retired_material_packets_rejected=True,
+                unsupported_material_packets_rejected=True,
             ),
         )
         return

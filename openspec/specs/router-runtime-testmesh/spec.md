@@ -18,10 +18,10 @@ replay.
 - **AND** it SHALL NOT use the old monolithic `router_route_mutation_core`
   command as routine evidence.
 
-### Requirement: Compatibility aggregate remains available
+### Requirement: Unsupported historical aggregate remains available
 
-The legacy `tests.router_runtime.route_mutation` module SHALL remain runnable
-as a compatibility aggregate for explicit full-oracle checks.
+The unsupported historical `tests.router_runtime.route_mutation` module SHALL remain runnable
+as a unsupported historical aggregate for explicit full-oracle checks.
 
 #### Scenario: Full route-mutation oracle is requested explicitly
 

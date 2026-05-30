@@ -278,19 +278,19 @@ def write_live_crew_slot(
     agent_id: str = "agent-worker-a-1",
 ) -> None:
     write_json(
-        root / ".flowpilot" / "runs" / "run-test" / "crew_ledger.json",
+        root / ".flowpilot" / "runs" / "run-test" / "role_binding_ledger.json",
         {
-            "schema_version": "flowpilot.crew_ledger.v1",
+            "schema_version": "flowpilot.role_binding_ledger.v1",
             "run_id": "run-test",
             "role_slots": [
                 {
                     "role_key": role,
                     "status": "live_agent_started",
                     "agent_id": agent_id,
-                    "spawn_result": "spawned_fresh_for_task",
-                    "spawned_for_run_id": "run-test",
-                    "spawned_after_startup_answers": True,
-                    "crew_generation": 1,
+                    "binding_open_result": "opened_for_current_task",
+                    "opened_for_run_id": "run-test",
+                    "opened_after_startup_answers": True,
+                    "role_binding_generation": 1,
                     "role_binding_epoch": 1,
                 }
             ],

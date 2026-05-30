@@ -25,7 +25,7 @@ HAZARD_EXPECTED_FAILURES = {
     "parent_repair_without_pm_segment_decision": "parent replay repair proceeded without PM segment decision",
     "frontier_rewrite_without_stale_mark": "frontier rewritten without marking affected evidence stale",
     "ui_uses_stale_running_index_entry": "UI snapshot used stale index running entry as active task",
-    "completion_missing_legacy_obligation": "completion recorded before all legacy obligations were preserved",
+    "completion_missing_unsupported_historical_obligation": "completion recorded before all unsupported_historical obligations were preserved",
 }
 
 

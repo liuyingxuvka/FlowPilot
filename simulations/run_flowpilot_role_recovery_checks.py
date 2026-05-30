@@ -25,12 +25,12 @@ REQUIRED_LABELS = (
     "targeted_role_scope_selected",
     "restore_attempted_before_replacement",
     "old_role_restored",
-    "targeted_replacement_spawned",
+    "targeted_replacement_opened",
     "targeted_replacement_capacity_full",
     "slot_reconciliation_attempted_after_capacity_full",
-    "full_crew_recycle_attempted",
-    "full_crew_recycle_succeeded",
-    "full_crew_recycle_failure_blocks_environment",
+    "full_role_binding_recovery_attempted",
+    "full_role_binding_recovery_succeeded",
+    "full_role_binding_recovery_failure_blocks_environment",
     "memory_context_injected",
     "packet_ownership_reconciled",
     "stale_generation_output_quarantined",
@@ -65,7 +65,7 @@ def _state_id(state: model.State) -> str:
         f"slot={state.slot_reconciliation_attempted},"
         f"{state.slot_reconciliation_result}|"
         f"full={state.full_recycle_attempted},{state.full_recycle_result}|"
-        f"crew={state.crew_ready},gen={state.crew_generation},"
+        f"crew={state.crew_ready},gen={state.role_binding_generation},"
         f"epoch={state.role_binding_epoch_advanced}|"
         f"memory={state.memory_context_injected}|"
         f"packet={state.packet_holder_lost},"

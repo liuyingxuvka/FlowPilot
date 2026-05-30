@@ -272,8 +272,7 @@
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
     "heavy_parent_full_regression_obligations": [
-      "meta",
-      "capability"
+      "meta"
     ],
     "heavyweight_threshold": 10000,
     "large_child_models": [],
@@ -285,7 +284,7 @@
         "layered_full_regression": {
           "current": false,
           "proof": {
-            "created_at": "2026-05-29T17:41:14.211399+00:00",
+            "created_at": "2026-05-30T18:09:48.070295+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -299,7 +298,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-29T17:41:14.211399+00:00",
+          "created_at": "2026-05-30T18:09:48.070295+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -320,7 +319,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-30T10:12:22.436360+00:00",
+            "created_at": "2026-05-30T18:17:08.595041+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -344,33 +343,33 @@
       {
         "edge_count": 14,
         "layered_full_regression": {
-          "current": false,
+          "current": true,
           "proof": {
-            "created_at": "2026-05-29T17:41:14.194889+00:00",
+            "created_at": "2026-05-30T18:09:48.058776+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
-            "reason": "input fingerprint changed",
+            "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
             "state_count": 10,
-            "valid": false
+            "valid": true
           }
         },
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-29T17:41:14.194889+00:00",
+          "created_at": "2026-05-30T18:09:48.058776+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
-          "reason": "input fingerprint changed",
+          "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/capability_layered_full_results.json",
           "state_count": 10,
-          "valid": false
+          "valid": true
         },
-        "release_confidence": "requires_full_regression",
+        "release_confidence": "current_with_layered_full_parent",
         "release_validation_command": "python simulations/run_capability_checks.py --full",
         "result_file": "simulations/capability_thin_parent_results.json",
         "result_type": "thin_parent",
@@ -381,7 +380,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-30T10:12:25.387946+00:00",
+            "created_at": "2026-05-30T18:17:57.066427+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -392,7 +391,7 @@
             "edge_count": 14,
             "model_id": "capability",
             "ok": true,
-            "release_confidence": "requires_full_regression",
+            "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -435,7 +434,7 @@
             "flowpilot_role_recovery"
           ],
           "invariant_families": [
-            "crew_rehydration",
+            "role_binding_recovery",
             "daemon_liveness_boundary",
             "manual_resume"
           ],
@@ -783,7 +782,7 @@
             ],
             "invariant_families": [
               "manual_resume",
-              "crew_rehydration",
+              "role_binding_recovery",
               "daemon_liveness_boundary"
             ],
             "owner": "shared_kernel",
@@ -944,7 +943,7 @@
           "owner": "product_architecture"
         },
         {
-          "field": "crew_memory",
+          "field": "role_binding_memory",
           "owner": "crew_and_heartbeat"
         },
         {
@@ -1021,7 +1020,7 @@
           "flowpilot_role_recovery"
         ],
         "invariant_families": [
-          "crew_rehydration",
+          "role_binding_recovery",
           "daemon_liveness_boundary",
           "manual_resume"
         ],

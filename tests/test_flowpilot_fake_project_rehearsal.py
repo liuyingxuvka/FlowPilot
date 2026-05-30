@@ -31,7 +31,7 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
                 "stop_terminal_fence",
                 "host_liveness_bridge_recovery",
                 "orphan_runner_summary_recovery",
-                "retired_side_command",
+                "unsupported_side_command",
             },
         )
         self.assertIn("wrong_role_lease_accepted", result["hazard_detection"]["hazards"])

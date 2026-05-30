@@ -39,7 +39,7 @@ import flowpilot_router_startup_fact_boundary_checks as _flowpilot_router_startu
 from flowpilot_router_startup_fact_boundary_checks import (
     _startup_fact_checks,
     _startup_intake_record_context,
-    _role_slots_have_host_spawn_receipts,
+    _role_slots_have_host_role_binding_receipts,
     _continuation_has_host_bound_automation_receipt,
     _startup_external_fact_requirements,
     _startup_fact_review_ownership,

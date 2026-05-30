@@ -362,7 +362,7 @@ $Xaml = @"
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="AgentsTitle" Text="Runtime role assistance" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock x:Name="AgentsTitle" Text="Runtime role collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
                     <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to request additional role bindings when the current task needs them and the host supports it." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
                   </StackPanel>
                   <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
@@ -445,7 +445,7 @@ $Copy = @{
         Title = "Start FlowPilot"
         RequestLabel = "Work request"
         Placeholder = "Write the instructions you want the AI to follow."
-        AgentsTitle = "Runtime role assistance"
+        AgentsTitle = "Runtime role collaboration"
         AgentsBody = "Allow FlowPilot to request additional role bindings when the current task needs them and the host supports it."
         ContinuationTitle = "Scheduled continuation"
         ContinuationBody = "Allow heartbeat or manual-resume setup for long work."

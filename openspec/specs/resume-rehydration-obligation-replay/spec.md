@@ -7,18 +7,18 @@ TBD - created by archiving change replay-resume-rehydration-obligations. Update 
 
 Router SHALL run metadata-only obligation replay before delivering a PM resume
 decision card after heartbeat or manual resume restores or replaces the six
-role agents, unless current-run memory or resume state is missing.
+role bindings, unless current-run memory or resume state is missing.
 
 #### Scenario: Heartbeat resume replays mechanical obligations
 
 - **WHEN** `heartbeat_or_manual_resume_requested` has been recorded
 - **AND** `load_resume_state` has loaded current-run state and daemon evidence
-- **AND** `rehydrate_role_agents` reports all six roles ready with current-run memory or common context
+- **AND** `rehydrate_role_bindings` reports all runtime roles ready with current-run memory or common context
 - **THEN** Router scans current-run outstanding waits for the restored roles before delivering `pm.resume_decision`
 
 #### Scenario: Manual resume shares the same replay path
 
-- **WHEN** a manual resume wake follows the same state load and six-role rehydration path
+- **WHEN** a manual resume wake follows the same state load and runtime-role rehydration path
 - **THEN** Router uses the same obligation replay rules as heartbeat resume
 
 ### Requirement: Mechanical resume replay SHALL avoid PM when evidence is unambiguous
@@ -59,7 +59,7 @@ determine safe continuation.
 
 ### Requirement: Historical replay packages cover host role lifecycle recovery
 The system SHALL include host/role lifecycle replay packages that require full
-six-role liveness, memory, prompt, and PM resume-context evidence before normal
+runtime-role liveness, memory, prompt, and PM resume-context evidence before normal
 work resumes.
 
 #### Scenario: Partial role rehydration blocks normal work

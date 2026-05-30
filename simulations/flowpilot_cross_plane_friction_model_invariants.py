@@ -29,8 +29,8 @@ def material_dispatch_contract_is_explicit(state: State, _trace: object) -> Inva
         missing.append("role-scoped output contract")
     if not state.material_dispatch_write_target_explicit:
         missing.append("explicit result write target")
-    if not state.retired_material_packets_rejected:
-        missing.append("retired packet rejection")
+    if not state.unsupported_material_packets_rejected:
+        missing.append("unsupported packet rejection")
     if missing:
         return _fail(
             "material-scan dispatch lacks "
@@ -145,7 +145,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="material_dispatch_contract_is_explicit",
-        description="Material-scan dispatch carries role contract, write target, and legacy policy.",
+        description="Material-scan dispatch carries role contract, write target, and unsupported_historical policy.",
         predicate=material_dispatch_contract_is_explicit,
     ),
     Invariant(

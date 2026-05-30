@@ -99,7 +99,7 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
             checks = tmp / "sample_checks_results.json"
             results = tmp / "sample_results.json"
             checks.write_text(
-                json.dumps({"ok": True, "note": "retaining modelability names as compatibility aliases"}),
+                json.dumps({"ok": True, "note": "retaining modelability names as unsupported_historical aliases"}),
                 encoding="utf-8",
             )
             results.write_text(json.dumps({"ok": True, "note": "current canonical artifact"}), encoding="utf-8")

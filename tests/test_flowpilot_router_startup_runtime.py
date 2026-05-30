@@ -17,7 +17,7 @@ import packet_runtime  # noqa: E402
 
 
 STARTUP_ANSWERS = {
-    "background_agents": "allow",
+    "runtime_role_assistances": "allow",
     "scheduled_continuation": "manual",
     "display_surface": "chat",
     "provenance": "explicit_user_reply",

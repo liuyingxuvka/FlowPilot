@@ -5,7 +5,7 @@ Risk intent brief:
   registered transaction authority.
 - Protected harms: route or packet state moving from only contract validity,
   only event validity, unchecked packet authority, collapsed repair outcomes,
-  parent repair leaf-event reuse, partial state commits, and retired repair
+  parent repair leaf-event reuse, partial state commits, and unsupported repair
   transaction names being treated as current permission.
 - Hard invariant: a FlowPilot control write is safe only when the transaction
   type is registered and its referenced contract, event capability, packet
@@ -42,7 +42,7 @@ REPAIR_WITHOUT_TRANSACTION = "repair_without_transaction"
 PARENT_REPAIR_LEAF_EVENT = "parent_repair_leaf_event"
 PARTIAL_COMMIT_TARGETS = "partial_commit_targets"
 ACTIVE_BLOCKER_MARKED_GREEN = "active_blocker_marked_green"
-RETIRED_RECONCILE_TRANSACTION_CONTINUES = "retired_reconcile_transaction_continues"
+RETIRED_RECONCILE_TRANSACTION_CONTINUES = "unsupported_reconcile_transaction_continues"
 REGISTRY_REFERENCE_MISSING = "registry_reference_missing"
 ROUTE_MUTATION_WITHOUT_STALE_POLICY = "route_mutation_without_stale_policy"
 REVIEWER_NON_SUCCESS_USES_SUCCESS_EVENT = "reviewer_non_success_uses_success_event"
@@ -151,7 +151,7 @@ class State:
     atomic_commit_declared: bool = True
     active_blocker_present: bool = False
     safe_to_continue_claimed: bool = False
-    retired_transaction_name: bool = False
+    unsupported_transaction_name: bool = False
     route_mutation: bool = False
     stale_evidence_policy_applied: bool = False
     control_plane_reissue: bool = False
@@ -285,9 +285,9 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             _scenario_state(VALID_CONTROL_BLOCKER_REPAIR),
             scenario=scenario,
-            transaction_type="legacy_reconcile",
+            transaction_type="unsupported_historical_reconcile",
             registry_row_present=False,
-            retired_transaction_name=True,
+            unsupported_transaction_name=True,
             safe_to_continue_claimed=True,
         )
     if scenario == REGISTRY_REFERENCE_MISSING:

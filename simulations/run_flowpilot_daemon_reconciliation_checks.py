@@ -1,4 +1,4 @@
-"""Compatibility facade for `run_flowpilot_daemon_reconciliation_checks.py`."""
+"""Unsupported_historical facade for `run_flowpilot_daemon_reconciliation_checks.py`."""
 
 from __future__ import annotations
 

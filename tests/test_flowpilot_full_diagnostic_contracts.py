@@ -1533,7 +1533,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             )
             boot_depends = startup_bootloader._startup_bootloader_action_depends_on_role_slots(
                 router,
-                "recover_role_agents",
+                "recover_role_bindings",
             )
             closure_ready = startup_closure._host_heartbeat_binding_ready(router, run_root, run_state)
             constraints = startup_fact_boundary._controller_boundary_constraints(router)
@@ -1612,8 +1612,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             startup_intake_materialization._write_startup_answers_record,
         )
         self.assertIs(
-            startup_role_transactions._current_crew_generation,
-            startup_role_transactions_core._current_crew_generation,
+            startup_role_transactions._current_role_binding_generation,
+            startup_role_transactions_core._current_role_binding_generation,
         )
         self.assertIs(
             startup_role_transactions._normalize_role_recovery_agent_records,

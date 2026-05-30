@@ -80,7 +80,7 @@ def _role_slot_has_current_host_liveness(slot: dict[str, Any]) -> bool:
     if status == "live_agent_rehydrated":
         return host_liveness == "active" and liveness_decision == "confirmed_existing_agent"
     if status in {"live_agent_recovered", "live_agent_recycled"}:
-        return host_liveness == "active" and liveness_decision in ROLE_AGENT_LIVENESS_DECISIONS
+        return host_liveness == "active" and liveness_decision in ROLE_BINDING_LIVENESS_DECISIONS
     return False
 
 
@@ -120,8 +120,8 @@ def _ensure_startup_run_state(project_root: Path, bootstrap_state: dict[str, Any
     return run_state, run_root
 
 def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
-    crew = read_json_if_exists(run_root / "crew_ledger.json")
-    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    role_binding = read_json_if_exists(run_root / "role_binding_ledger.json")
+    slots = role_binding.get("role_slots") if isinstance(role_binding.get("role_slots"), list) else []
     for slot in slots:
         if isinstance(slot, dict) and slot.get("role_key") == role:
             agent_id = slot.get("agent_id")

@@ -46,7 +46,7 @@ class State:
     user_request_provenance: str = "none"  # none | explicit_user_request | inferred | default
     user_intake_ready: bool = False
     roles_started: bool = False
-    fresh_role_agents_started: bool = False
+    fresh_role_bindings_started: bool = False
     role_core_prompts_injected: bool = False
     controller_core_loaded: bool = False
     controller_boundary_confirmation_written: bool = False
@@ -177,7 +177,7 @@ class State:
     pm_closure_card_delivered: bool = False
     lifecycle_reconciled: bool = False
     heartbeat_stopped_or_manual_recorded: bool = False
-    crew_archived: bool = False
+    role_binding_ledger_archived: bool = False
     pm_completion_decision: bool = False
 
     prompt_deliveries: int = 0

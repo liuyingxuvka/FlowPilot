@@ -388,7 +388,7 @@ def hazard_states() -> dict[str, State]:
             generalized_result_target_is_pm=False,
         ),
         "active_holder_unknown_packet_family": _generalized_active_holder_leased(
-            "legacy_unknown",
+            "unsupported_historical_unknown",
         ),
         "fast_lane_progress_leaks_controller_visible_content": _active_holder_leased(
             active_holder_contact_attempted=True,
@@ -429,7 +429,7 @@ def hazard_states() -> dict[str, State]:
             worker_result_ledger_checked=False,
             fast_lane_controller_notice_written=True,
         ),
-        "legacy_worker_result_return_without_fast_lane_mechanics": _active_holder_leased(
+        "unsupported_historical_worker_result_return_without_fast_lane_mechanics": _active_holder_leased(
             worker_result_returned=True,
             worker_result_identity_boundary_present=True,
             fast_lane_result_mechanics_passed=False,

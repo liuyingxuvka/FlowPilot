@@ -132,8 +132,8 @@
       "answered_at": null,
       "banner_emitted_after_answers": false,
       "answers": {
-        "background_agents": {
-          "question": "May FlowPilot use the standard six background subagents?",
+        "runtime_role_assistances": {
+          "question": "May FlowPilot use runtime role collaboration for this task?",
           "answer": null,
           "answered": false
         },
@@ -164,9 +164,9 @@
     "prior_control_state_quarantined": false,
     "canonical_state_written": false,
     "execution_frontier_written": false,
-    "crew_ledger_current": false,
+    "role_binding_ledger_current": false,
     "role_memory_packets_current": 0,
-    "live_subagent_startup": {
+    "runtime_role_binding_startup": {
       "required_by_default": true,
       "decision": "unknown",
       "user_decision_recorded": false,
@@ -174,13 +174,13 @@
       "live_start_attempted": false,
       "live_agents_active": 0,
       "current_task_fresh_agents_required": true,
-      "fresh_agents_spawned_after_startup_answers": false,
-      "fresh_agents_spawned_after_route_allocation": false,
+      "role_bindings_opened_after_startup_answers": false,
+      "role_bindings_opened_after_route_allocation": false,
       "agent_cohort_id": null,
       "historical_agent_ids_compared": false,
       "reused_historical_agent_ids": [],
       "historical_agent_reuse_blocked": true,
-      "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/live_subagents_fresh_for_current_task.json",
+      "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/role_bindings_current_for_current_task.json",
       "single_agent_role_continuity_authorized": false,
       "blocker": "no_user_decision",
       "evidence_path": null
@@ -199,10 +199,10 @@
       "checked_route_state_frontier_consistency": false,
       "checked_old_route_and_asset_reuse_boundary": false,
       "checked_heartbeat_or_manual_resume_evidence": false,
-      "checked_background_agent_role_evidence": false,
-      "checked_background_agent_user_decision_matches_actual_state": false,
-      "checked_live_subagent_count_or_single_agent_authorization": false,
-      "checked_live_subagent_current_task_freshness": false,
+      "checked_runtime_role_assistance_role_evidence": false,
+      "checked_runtime_role_assistance_user_decision_matches_actual_state": false,
+      "checked_runtime_role_binding_count_or_single_agent_authorization": false,
+      "checked_runtime_role_binding_current_task_freshness": false,
       "checked_no_historical_agent_id_reuse": false,
       "checked_shadow_route_and_residual_state": false,
       "checked_real_codex_automation_records": false,
@@ -675,15 +675,15 @@
     }
   },
   "checks_before_next_jump": [
-    "crew_ledger_loaded",
+    "role_binding_ledger_loaded",
     "run_directory_created",
     "current_pointer_written",
     "run_index_updated",
     "prior_control_state_quarantined",
-    "crew_memory_packets_loaded",
-    "current_task_fresh_live_agent_ids_checked",
-    "six_agent_crew_rehydrated",
-    "six_agent_crew_restored",
+    "role_binding_memory_packets_loaded",
+    "current_task_current_role_binding_ids_checked",
+    "required_role_binding_coverage_rehydrated",
+    "required_role_binding_coverage_restored",
     "project_manager_decision_recorded",
     "product_function_architecture_approved_before_contract_freeze",
     "material_research_package_completed_or_not_required",
@@ -704,10 +704,10 @@
     "chunk_verification_defined",
     "final_route_wide_gate_ledger_replayed_before_completion"
   ],
-  "crew": {
-    "ledger_path": ".flowpilot/runs/run-001/crew_ledger.json",
-    "memory_root": ".flowpilot/runs/run-001/crew_memory",
-    "rehydration_status_path": ".flowpilot/runs/run-001/crew_memory/rehydration-latest.json",
+  "role_bindings": {
+    "ledger_path": ".flowpilot/runs/run-001/role_binding_ledger.json",
+    "memory_root": ".flowpilot/runs/run-001/role_binding_memory",
+    "rehydration_status_path": ".flowpilot/runs/run-001/role_binding_memory/rehydration-latest.json",
     "required_roles": [
       "project_manager",
       "human_like_reviewer",
@@ -722,7 +722,7 @@
     "role_memory_schema_checked": false,
     "live_agent_continuity": "best_effort",
     "role_continuity": "mandatory",
-    "rehydration_report_template": "templates/flowpilot/crew_memory/crew_rehydration_report.template.json",
+    "rehydration_report_template": "templates/flowpilot/role_binding_memory/role_binding_recovery_report.template.json",
     "restored_roles": [],
     "replaced_roles": [],
     "unavailable_roles": [],

@@ -16,7 +16,7 @@ every route advancement, packet dispatch, result absorption, reviewer gate,
 control-plane reissue, repair, or route mutation must be evaluated as a registered control
 transaction before it can mutate run state.
 
-This is not a temporary compatibility layer. It is the new bottom-level
+This is not a temporary unsupported historical layer. It is the new bottom-level
 authority for FlowPilot control writes. The existing three tables remain as
 sub-registries referenced by the transaction registry; their facts are not
 duplicated.
@@ -26,11 +26,11 @@ duplicated.
 | Order | Optimization point | Concrete work | FlowGuard proof before runtime edit | Runtime done evidence |
 | --- | --- | --- | --- | --- |
 | 1 | Freeze transaction architecture | Record the transaction types, referenced sub-registries, commit targets, and non-goals in this plan. | Plan risks are represented in `flowpilot_control_transaction_registry_model.py`. | `docs/flowpilot_control_transaction_registry_plan.md` exists and is install-checked. |
-| 2 | Add the control transaction model | Model `route_progression`, `packet_dispatch`, `result_absorption`, `reviewer_gate_result`, `control_blocker_repair`, `control_plane_reissue`, `route_mutation`, and `legacy_reconcile`. | Valid scenarios accept; every risk in the bug checklist rejects with a named failure. | New runner writes `flowpilot_control_transaction_registry_results.json`. |
+| 2 | Add the control transaction model | Model `route_progression`, `packet_dispatch`, `result_absorption`, `reviewer_gate_result`, `control_blocker_repair`, `control_plane_reissue`, `route_mutation`, and `unsupported historical_reconcile`. | Valid scenarios accept; every risk in the bug checklist rejects with a named failure. | New runner writes `flowpilot_control_transaction_registry_results.json`. |
 | 3 | Add the registry artifact | Add one runtime-kit registry that names each transaction type and references existing contract, event capability, repair transaction, packet authority, and commit-target requirements. | Source checks reject missing transaction rows, bad references, and unsafe outcome policies. | `control_transaction_registry.json` is present in repo and installed skill. |
 | 4 | Make repair decisions use the registry | PM control-blocker repair must validate the `control_blocker_repair` transaction row before writing the repair decision, transaction record, allowed events, blocker record, or indexes. | Model rejects repair without transaction registration, collapsed outcomes, parent repair leaf events, and partial commits. | Router path for `pm_records_control_blocker_repair_decision` validates transaction row before commit. |
 | 5 | Make packet/result authority a transaction gate | Packet result absorption must not unlock continuation unless packet ledger role-origin checks and completed-agent checks pass. | Model rejects packet evidence accepted with missing role origin or invalid completed agent. | Router and source checks expose packet authority as a required transaction fact. |
-| 6 | Add legacy reconcile/quarantine | Existing live artifacts that predate the registry, such as collapsed repair outcome tables, are not continued. They are classified as invalid legacy transactions requiring PM reissue/repair. | Model rejects old bad transactions being used as permission to continue. | Mesh live projection and targeted Router checks classify stale invalid transactions as blocked, not safe. |
+| 6 | Add unsupported historical reconcile/quarantine | Existing live artifacts that predate the registry, such as collapsed repair outcome tables, are not continued. They are classified as invalid unsupported historical transactions requiring PM reissue/repair. | Model rejects old bad transactions being used as permission to continue. | Mesh live projection and targeted Router checks classify stale invalid transactions as blocked, not safe. |
 | 7 | Integrate install, smoke, and coverage sweep | Add plan/model/registry/result to check-install and smoke; classify the new model as strong coverage. | Coverage sweep parses the new runner and reports findings if any transaction risk is live. | `check_install.py`, coverage sweep, and fast smoke pass. |
 | 8 | Sync local install and local git only | After all checks pass, sync the repository-owned installed skill and commit locally. | Adoption log records commands, findings, skipped GitHub push, and residual blindspots. | `install_flowpilot.py --sync-repo-owned --json`, audit/check, local git stage/commit succeed. |
 
@@ -48,7 +48,7 @@ duplicated.
 | T8 | Parent/backward repair targets a leaf-only current-node event. | Parent composition can jump into child-local packet dispatch. | Reject `parent_repair_leaf_event`. |
 | T9 | A transaction writes only part of the state surface. | Frontier, packet ledger, blocker index, and status can disagree. | Reject `partial_commit_targets`. |
 | T10 | Active blocker exists while the transaction reports safe continuation. | A blocked run can be treated as green. | Reject `active_blocker_marked_green`. |
-| T11 | Old invalid repair transactions are used as current permission. | Previously persisted bad state can bypass new checks. | Reject `legacy_bad_transaction_continues`. |
+| T11 | Old invalid repair transactions are used as current permission. | Previously persisted bad state can bypass new checks. | Reject `unsupported historical_bad_transaction_continues`. |
 | T12 | Registry rows reference nonexistent contract ids or events. | The registry advertises impossible transactions. | Reject `registry_reference_missing`. |
 | T13 | Route mutation commits without stale-evidence and route-version policy. | Old approvals can remain valid after structural change. | Reject `route_mutation_without_stale_policy`. |
 | T14 | Reviewer blocker/protocol output uses a success-only event. | Non-success review outcomes can close as success. | Reject `reviewer_non_success_uses_success_event`. |
@@ -72,7 +72,7 @@ transaction bodies.
 | `repair_transaction_required` | Whether a repair transaction record is mandatory. |
 | `outcome_policy` | `none`, `single_event`, or `three_distinct_outcomes`. |
 | `commit_targets` | State surfaces that must be committed together. |
-| `legacy_policy` | How stale pre-registry artifacts are handled. |
+| `unsupported historical_policy` | How stale pre-registry artifacts are handled. |
 
 ## Required Transaction Types
 
@@ -85,7 +85,7 @@ transaction bodies.
 | `control_blocker_repair` | yes | yes | yes | conditional | repair_transaction, blocker_index, run_state, status_summary, optional packet_ledger/frontier |
 | `control_plane_reissue` | no | yes | no | audit existing only | blocker_index, run_state, status_summary |
 | `route_mutation` | yes | yes | conditional | no | route, frontier, stale_evidence, run_state, status_summary |
-| `legacy_reconcile` | no | yes | yes | yes | blocker_index, repair_transaction_index, status_summary |
+| `unsupported historical_reconcile` | no | yes | yes | yes | blocker_index, repair_transaction_index, status_summary |
 
 ## Non-Goals
 

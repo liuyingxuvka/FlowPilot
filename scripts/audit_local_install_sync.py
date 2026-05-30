@@ -1,4 +1,4 @@
-"""Audit repository source, local Codex skill installs, and retired UI cleanup."""
+"""Audit repository source, local Codex skill installs, and unsupported UI cleanup."""
 
 from __future__ import annotations
 
@@ -145,7 +145,7 @@ def main() -> int:
         present = [path for path in RETIRED_COCKPIT_SOURCE_PATHS if path in tracked]
         add_check(
             checks,
-            name="retired_cockpit_source_not_tracked",
+            name="unsupported_cockpit_source_not_tracked",
             ok=not present,
             present=present,
             expected_absent=RETIRED_COCKPIT_SOURCE_PATHS,
@@ -153,25 +153,25 @@ def main() -> int:
         if present:
             result["ok"] = False
 
-    retired_cockpit_present_on_disk = [path for path in RETIRED_COCKPIT_SOURCE_PATHS if (ROOT / path).exists()]
+    unsupported_cockpit_present_on_disk = [path for path in RETIRED_COCKPIT_SOURCE_PATHS if (ROOT / path).exists()]
     add_check(
         checks,
-        name="retired_cockpit_source_absent_from_main_tree",
-        ok=not retired_cockpit_present_on_disk,
-        present=retired_cockpit_present_on_disk,
+        name="unsupported_cockpit_source_absent_from_main_tree",
+        ok=not unsupported_cockpit_present_on_disk,
+        present=unsupported_cockpit_present_on_disk,
     )
-    if retired_cockpit_present_on_disk:
+    if unsupported_cockpit_present_on_disk:
         result["ok"] = False
 
-    retired_present_on_disk = [path for path in RETIRED_CONTINUATION_PATHS if (ROOT / path).exists()]
+    unsupported_present_on_disk = [path for path in RETIRED_CONTINUATION_PATHS if (ROOT / path).exists()]
     add_check(
         checks,
-        name="retired_watchdog_supervisor_sources_absent_from_main_tree",
-        ok=not retired_present_on_disk,
-        present=retired_present_on_disk,
+        name="unsupported_watchdog_supervisor_sources_absent_from_main_tree",
+        ok=not unsupported_present_on_disk,
+        present=unsupported_present_on_disk,
         expected_absent=RETIRED_CONTINUATION_PATHS,
     )
-    if retired_present_on_disk:
+    if unsupported_present_on_disk:
         result["ok"] = False
 
     if args.json:

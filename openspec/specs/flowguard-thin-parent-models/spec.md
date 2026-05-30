@@ -28,12 +28,12 @@ workflows.
 
 #### Scenario: Full Meta regression requested
 - **WHEN** a caller explicitly requests full Meta regression
-- **THEN** the system MUST run or schedule the legacy Meta graph exploration
+- **THEN** the system MUST run or schedule the unsupported historical Meta graph exploration
   rather than treating thin evidence as a full regression pass
 
 #### Scenario: Full Capability regression requested
 - **WHEN** a caller explicitly requests full Capability regression
-- **THEN** the system MUST run or schedule the legacy Capability graph
+- **THEN** the system MUST run or schedule the unsupported historical Capability graph
   exploration rather than treating thin evidence as a full regression pass
 
 ### Requirement: Parent responsibility ledger is machine-readable
@@ -105,7 +105,7 @@ bounded child evidence before it is used for routine foreground validation.
 
 ### Requirement: Equivalence hazards guard the migration
 The system SHALL include executable hazards that compare thin-parent decisions
-against known legacy parent expectations for representative safe paths and
+against known unsupported historical parent expectations for representative safe paths and
 known-bad paths.
 
 #### Scenario: Thin parent passes known bad evidence

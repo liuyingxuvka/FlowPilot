@@ -67,7 +67,7 @@ without rereading every large script. The key fields are:
 - `surface_owner`: the module, script, tier, or model runner that owns the
   repair.
 - `release_relevance`: whether the gap blocks release tooling, validation,
-  runtime contracts, public CLI behavior, retired-input validation, or maintenance
+  runtime contracts, public CLI behavior, unsupported-input validation, or maintenance
   only.
 - `repair_type`: the next repair class, such as adding external-contract tests,
   completing background evidence, rerunning public release evidence, or

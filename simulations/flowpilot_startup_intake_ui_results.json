@@ -4,7 +4,7 @@
     "ok": true,
     "state": {
       "artifact_encoding_contract_verified": true,
-      "background_agents": "allow",
+      "runtime_role_assistances": "allow",
       "body_has_leading_bom": false,
       "body_hash_verified": true,
       "body_path_recorded": true,
@@ -22,7 +22,7 @@
       "headless_result": false,
       "heartbeat_created": true,
       "launch_mode": "interactive_native",
-      "legacy_powershell_source_parse_safe": true,
+      "unsupported historical_powershell_source_parse_safe": true,
       "old_chat_answer_required": false,
       "pm_intake_packet_created": true,
       "pm_is_only_body_reader": true,
@@ -70,7 +70,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": false,
           "body_path_recorded": true,
@@ -88,7 +88,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -125,7 +125,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": true,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -143,7 +143,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": true,
           "pm_is_only_body_reader": false,
@@ -180,7 +180,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": false,
           "body_path_recorded": true,
@@ -198,7 +198,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -235,7 +235,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": false,
-          "background_agents": "unknown",
+          "runtime_role_assistances": "unknown",
           "body_has_leading_bom": false,
           "body_hash_verified": false,
           "body_path_recorded": false,
@@ -253,7 +253,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": false,
+          "unsupported historical_powershell_source_parse_safe": false,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -290,7 +290,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -308,7 +308,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -345,7 +345,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": false,
-          "background_agents": "unknown",
+          "runtime_role_assistances": "unknown",
           "body_has_leading_bom": false,
           "body_hash_verified": false,
           "body_path_recorded": false,
@@ -363,7 +363,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "none",
-          "legacy_powershell_source_parse_safe": false,
+          "unsupported historical_powershell_source_parse_safe": false,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -400,7 +400,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -418,7 +418,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -455,7 +455,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -473,7 +473,7 @@
           "headless_result": true,
           "heartbeat_created": false,
           "launch_mode": "headless",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -504,13 +504,13 @@
       },
       "invalid_toggle_value": {
         "detected": true,
-        "expected_failure": "background agent toggle did not map to a startup answer enum",
+        "expected_failure": "runtime role toggle did not map to a startup answer enum",
         "failures": [
-          "background agent toggle did not map to a startup answer enum"
+          "runtime role toggle did not map to a startup answer enum"
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "yes",
+          "runtime_role_assistances": "yes",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -528,7 +528,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -557,7 +557,7 @@
           "user_request_ref_recorded": false
         }
       },
-      "legacy_bom_json_without_router_fallback": {
+      "unsupported historical_bom_json_without_router_fallback": {
         "detected": true,
         "expected_failure": "Router startup intake JSON reader is not BOM-compatible",
         "failures": [
@@ -565,7 +565,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -583,7 +583,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -620,7 +620,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -638,7 +638,7 @@
           "headless_result": false,
           "heartbeat_created": true,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -675,7 +675,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -693,7 +693,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": true,
           "pm_is_only_body_reader": false,
@@ -730,7 +730,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "single-agent",
+          "runtime_role_assistances": "single-agent",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -748,7 +748,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -785,7 +785,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -803,7 +803,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": true,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -840,7 +840,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -858,7 +858,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -895,7 +895,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": false,
-          "background_agents": "unknown",
+          "runtime_role_assistances": "unknown",
           "body_has_leading_bom": false,
           "body_hash_verified": false,
           "body_path_recorded": false,
@@ -913,7 +913,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "none",
-          "legacy_powershell_source_parse_safe": false,
+          "unsupported historical_powershell_source_parse_safe": false,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -950,7 +950,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -968,7 +968,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -1005,7 +1005,7 @@
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -1023,7 +1023,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": true,
+          "unsupported historical_powershell_source_parse_safe": true,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,
@@ -1052,15 +1052,15 @@
           "user_request_ref_recorded": false
         }
       },
-      "utf8_no_bom_script_source_legacy_powershell_parse_break": {
+      "utf8_no_bom_script_source_unsupported historical_powershell_parse_break": {
         "detected": true,
-        "expected_failure": "startup UI launcher source may not parse on legacy Windows PowerShell",
+        "expected_failure": "startup UI launcher source may not parse on unsupported historical Windows PowerShell",
         "failures": [
-          "startup UI launcher source may not parse on legacy Windows PowerShell"
+          "startup UI launcher source may not parse on unsupported historical Windows PowerShell"
         ],
         "state": {
           "artifact_encoding_contract_verified": true,
-          "background_agents": "allow",
+          "runtime_role_assistances": "allow",
           "body_has_leading_bom": false,
           "body_hash_verified": true,
           "body_path_recorded": true,
@@ -1078,7 +1078,7 @@
           "headless_result": false,
           "heartbeat_created": false,
           "launch_mode": "interactive_native",
-          "legacy_powershell_source_parse_safe": false,
+          "unsupported historical_powershell_source_parse_safe": false,
           "old_chat_answer_required": false,
           "pm_intake_packet_created": false,
           "pm_is_only_body_reader": false,

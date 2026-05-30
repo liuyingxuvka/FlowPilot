@@ -39,9 +39,9 @@ def _active_holder_liveness_evidence(
     holder_agent_id: str,
 ) -> dict[str, Any]:
     paths = packet_paths_from_envelope(project_root, packet_envelope)
-    crew_path = paths["run_root"] / "crew_ledger.json"
-    crew = read_json_if_exists(crew_path)
-    slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    role_binding_path = paths["run_root"] / "role_binding_ledger.json"
+    role_binding = read_json_if_exists(role_binding_path)
+    slots = role_binding.get("role_slots") if isinstance(role_binding.get("role_slots"), list) else []
     for slot in slots:
         if not isinstance(slot, dict):
             continue
@@ -63,23 +63,23 @@ def _active_holder_liveness_evidence(
         else:
             host_liveness_proven = liveness_status == "active" and liveness_decision in {
                 "confirmed_existing_agent",
-                "spawned_replacement_from_current_run_memory",
+                "opened_replacement_from_current_run_memory",
             }
         if not host_liveness_proven:
             raise PacketRuntimeError(f"active-holder lease requires active host liveness proof for {holder_role}")
         return {
             "schema_version": "flowpilot.active_holder_liveness_evidence.v1",
-            "source": "crew_ledger",
-            "crew_ledger_path": project_relative(project_root, crew_path),
+            "source": "role_binding_ledger",
+            "role_binding_ledger_path": project_relative(project_root, crew_path),
             "run_id": paths["run_id"],
             "role_key": holder_role,
             "agent_id": holder_agent_id,
             "role_slot_status": status,
             "host_liveness_status": slot.get("host_liveness_status"),
             "liveness_decision": slot.get("liveness_decision"),
-            "spawn_result": slot.get("spawn_result"),
+            "binding_open_result": slot.get("binding_open_result"),
             "recovery_result": slot.get("last_role_recovery_result") or slot.get("recovery_result"),
-            "crew_generation": slot.get("crew_generation"),
+            "role_binding_generation": slot.get("role_binding_generation"),
             "role_binding_epoch": slot.get("role_binding_epoch"),
             "host_liveness_proven": host_liveness_proven,
         }

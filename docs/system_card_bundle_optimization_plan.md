@@ -19,7 +19,7 @@ Protected harms:
 - A card that should wait for a PM, reviewer, officer, packet, mail, host, or
   user event is silently batched with later work.
 - Resume or replacement roles process stale bundle envelopes.
-- Existing single-card delivery compatibility regresses.
+- Existing single-card delivery unsupported historical regresses.
 - A recoverable incomplete bundle ACK becomes a dead-end instead of returning
   to the same role with explicit missing-card evidence.
 

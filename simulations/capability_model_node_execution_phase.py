@@ -17,7 +17,7 @@ _REQUIRED_MODEL_NAMES = (
     "_base_ready",
     "_reset_execution_quality_gates",
     "_step",
-    "_subagent_clear",
+    "_sidecar_role_clear",
 )
 for _name in _REQUIRED_MODEL_NAMES:
     globals()[_name] = getattr(_model, _name)
@@ -165,82 +165,82 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="child_node_sidecar_scan_need_found_no_pool",
-            action="enter the current child node and find a bounded sidecar task with no existing idle subagent",
+            action="enter the current child node and find a bounded sidecar task with no existing idle sidecar role",
             child_node_sidecar_scan_done=True,
             sidecar_need="needed",
-            subagent_pool_exists=False,
-            subagent_idle_available=False,
+            sidecar_role_pool_exists=False,
+            sidecar_role_idle_available=False,
         )
         yield _step(
             state,
             label="child_node_sidecar_scan_need_found_existing_idle",
-            action="enter the current child node and find a bounded sidecar task plus an existing idle subagent",
+            action="enter the current child node and find a bounded sidecar task plus an existing idle sidecar role",
             child_node_sidecar_scan_done=True,
             sidecar_need="needed",
-            subagent_pool_exists=True,
-            subagent_idle_available=True,
-            subagent_status="idle",
+            sidecar_role_pool_exists=True,
+            sidecar_role_idle_available=True,
+            sidecar_role_status="idle",
         )
         return
 
     if (
         _base_ready(state)
         and state.sidecar_need == "needed"
-        and not state.subagent_scope_checked
+        and not state.sidecar_role_scope_checked
     ):
         yield _step(
             state,
             label="sidecar_scope_checked",
             action="confirm the sidecar task is bounded, non-blocking, and disjoint from node ownership and route advancement",
-            subagent_scope_checked=True,
+            sidecar_role_scope_checked=True,
         )
         return
 
     if (
         _base_ready(state)
         and state.sidecar_need == "needed"
-        and state.subagent_scope_checked
-        and state.subagent_status in {"none", "idle"}
+        and state.sidecar_role_scope_checked
+        and state.sidecar_role_status in {"none", "idle"}
     ):
-        if state.subagent_pool_exists and state.subagent_idle_available:
+        if state.sidecar_role_pool_exists and state.sidecar_role_idle_available:
             yield _step(
                 state,
-                label="idle_subagent_reused",
-                action="reuse an existing idle subagent for the child-node sidecar task",
-                subagent_status="pending",
-                subagent_idle_available=False,
+                label="idle_sidecar_role_reused",
+                action="reuse an existing idle sidecar role for the child-node sidecar task",
+                sidecar_role_status="pending",
+                sidecar_role_idle_available=False,
             )
         else:
             yield _step(
                 state,
-                label="subagent_spawned_on_demand",
-                action="spawn a subagent only after the current child node has a bounded sidecar task and no suitable idle subagent exists",
-                subagent_pool_exists=True,
-                subagent_status="pending",
+                label="sidecar_role_opened_on_demand",
+                action="open a sidecar role only after the current child node has a bounded sidecar task and no suitable idle sidecar role exists",
+                sidecar_role_pool_exists=True,
+                sidecar_role_status="pending",
             )
         return
 
-    if state.subagent_status == "pending":
+    if state.sidecar_role_status == "pending":
         yield _step(
             state,
             label="sidecar_report_returned",
-            action="sidecar subagent returns findings, evidence, changed paths if any, risks, and suggestions",
-            subagent_status="returned",
+            action="sidecar role binding returns findings, evidence, changed paths if any, risks, and suggestions",
+            sidecar_role_status="returned",
         )
         return
 
-    if state.subagent_status == "returned":
+    if state.sidecar_role_status == "returned":
         yield _step(
             state,
             label="authorized_integration_review_packet_completed",
             action="authorized integration/review packet verifies the sidecar result while PM keeps node ownership",
             sidecar_need="none",
-            subagent_status="idle",
-            subagent_idle_available=True,
+            sidecar_role_status="idle",
+            sidecar_role_idle_available=True,
         )
         return
 
-    if not _base_ready(state) or not _subagent_clear(state):
+    if not _base_ready(state) or not _sidecar_role_clear(state):
         yield _step(
             state,
             label="blocked_unready_capability_state",
@@ -326,7 +326,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 flowguard_model_report_confidence_boundary_done=False,
                 meta_route_checked=False,
                 meta_route_process_officer_approved=False,
-                subagent_status="none",
+                sidecar_role_status="none",
                 heartbeat_health_checked=False,
                 quality_route_raises=state.quality_route_raises + 1,
                 **_reset_execution_quality_gates(),

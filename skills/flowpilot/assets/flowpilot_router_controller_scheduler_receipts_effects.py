@@ -105,16 +105,16 @@ def _apply_stateful_receipt_postcondition(router: ModuleType, project_root: Path
         result['source'] = 'router_owned_state_replay_receipt'
         result['action_type'] = action_type
         return result
-    if action_type == 'recover_role_agents':
-        if 'recovered_role_agents' in receipt_payload or 'role_agents' in receipt_payload:
+    if action_type == 'recover_role_bindings':
+        if 'recovered_role_bindings' in receipt_payload or 'role_bindings' in receipt_payload:
             router._write_role_recovery_report(project_root, run_root, run_state, receipt_payload)
             return {'applied': True, 'postcondition': 'role_recovery_roles_restored', 'source': 'controller_receipt_role_recovery_report_write'}
         return router._reclaim_role_recovery_postcondition_from_report(project_root, run_root, run_state, source='controller_receipt_role_recovery_report_reclaim')
-    if action_type == 'rehydrate_role_agents':
-        has_rehydration_payload = 'rehydrated_role_agents' in receipt_payload or 'role_agents' in receipt_payload
+    if action_type == 'rehydrate_role_bindings':
+        has_rehydration_payload = 'rehydrated_role_bindings' in receipt_payload or 'role_bindings' in receipt_payload
         has_report_reference = any(
             isinstance(receipt_payload.get(key), str) and str(receipt_payload.get(key)).strip()
-            for key in ('crew_rehydration_report_path', 'report_path', 'rehydration_report_path')
+            for key in ('role_binding_recovery_report_path', 'report_path', 'rehydration_report_path')
         )
         if has_report_reference or not has_rehydration_payload:
             reclaim = router._reclaim_resume_rehydration_postcondition_from_report(

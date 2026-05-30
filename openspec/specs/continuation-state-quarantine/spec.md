@@ -22,20 +22,20 @@ current run.
 - **THEN** FlowPilot prevents those files from becoming current-run authority
   unless transformed into current-run records by an explicit import path.
 
-### Requirement: Old role agent identities are audit-only by default
+### Requirement: Old role binding identities are audit-only by default
 
 FlowPilot SHALL treat prior-run or prior-task role `agent_id` values as audit
 history unless the current run records a same-task continuation match.
 
-#### Scenario: Old agent id appears in imported crew memory
+#### Scenario: Old agent id appears in imported role-binding memory
 - **WHEN** a prior role `agent_id` is found during continuation startup
 - **THEN** the quarantine record marks it audit-only or requires fresh current
   role recovery before role approval can proceed.
 
 #### Scenario: Fresh role recovery clears quarantine
-- **WHEN** a current-run role is spawned, restored, or explicitly approved by
+- **WHEN** a current-run role is opened, restored, or explicitly approved by
   the allowed fallback path
-- **THEN** the current-run crew ledger records the current role identity and the
+- **THEN** the current-run role-binding ledger records the current role identity and the
   old `agent_id` remains non-authoritative history.
 
 ### Requirement: Old assets and generated resources are not current evidence by default

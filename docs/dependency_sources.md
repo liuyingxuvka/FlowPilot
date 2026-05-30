@@ -83,7 +83,7 @@ copy_from_repo`. This is a local development sync path only; public install
 source remains the GitHub source declared in the dependency entry. Use
 `scripts/audit_local_install_sync.py` before publishing or handoff to confirm
 that repo-owned installed skills are source-fresh, installed skill names are
-unique, and the retired Cockpit prototype is absent from the active source
+unique, and the unsupported Cockpit prototype is absent from the active source
 tree before a from-scratch UI restart.
 
 Host-specific tools are not hard dependencies by name. For example, Codex maps

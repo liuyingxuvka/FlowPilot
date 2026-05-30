@@ -189,7 +189,7 @@ class State:
     stop_scope: str = "none"  # none | flowpilot_run | all_codex_host
     flowpilot_daemon_stopped: bool = False
     flowpilot_heartbeat_stopped: bool = False
-    flowpilot_role_agents_stopped: bool = False
+    flowpilot_role_bindings_stopped: bool = False
     unrelated_host_automations_active: bool = False
     global_host_cleanup_claimed: bool = False
     root_fix_claimed: bool = False
@@ -340,7 +340,7 @@ def _stop_scope_good() -> dict[str, object]:
         "stop_scope": "flowpilot_run",
         "flowpilot_daemon_stopped": True,
         "flowpilot_heartbeat_stopped": True,
-        "flowpilot_role_agents_stopped": True,
+        "flowpilot_role_bindings_stopped": True,
         "unrelated_host_automations_active": True,
         "global_host_cleanup_claimed": False,
     }
@@ -617,7 +617,7 @@ def scenario_state(scenario: str) -> State:
             stop_scope="all_codex_host",
             flowpilot_daemon_stopped=True,
             flowpilot_heartbeat_stopped=True,
-            flowpilot_role_agents_stopped=True,
+            flowpilot_role_bindings_stopped=True,
             unrelated_host_automations_active=True,
             global_host_cleanup_claimed=True,
         )
@@ -823,9 +823,9 @@ def consistency_failures(state: State) -> list[str]:
     if state.stop_scope == "flowpilot_run" and not (
         state.flowpilot_daemon_stopped
         and state.flowpilot_heartbeat_stopped
-        and state.flowpilot_role_agents_stopped
+        and state.flowpilot_role_bindings_stopped
     ):
-        failures.append("FlowPilot run stop did not reconcile daemon, heartbeat, and role agents")
+        failures.append("FlowPilot run stop did not reconcile daemon, heartbeat, and role bindings")
 
     if state.global_host_cleanup_claimed and state.unrelated_host_automations_active:
         failures.append("global host stop was claimed while unrelated host automations remained active")

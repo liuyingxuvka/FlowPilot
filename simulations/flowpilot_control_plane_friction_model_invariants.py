@@ -572,7 +572,7 @@ def packet_result_authority_is_ledger_replayable(state: State, trace) -> Invaria
         )
     if not state.packet_result_author_matches_current_role:
         return InvariantResult.fail(
-            "packet result author identity did not match the current crew role binding"
+            "packet result author identity did not match the current runtime responsibility binding"
         )
     return InvariantResult.pass_()
 
@@ -1327,7 +1327,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="packet_result_authority_is_ledger_replayable",
-        description="Packet result authorship remains replayable from the packet ledger and matches the current crew role.",
+        description="Packet result authorship remains replayable from the packet ledger and matches the current runtime responsibility.",
         predicate=packet_result_authority_is_ledger_replayable,
     ),
     Invariant(

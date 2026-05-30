@@ -980,7 +980,7 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                     flowguard_model_report_confidence_boundary_done=False,
                     meta_route_checked=False,
                     meta_route_process_officer_approved=False,
-                    subagent_status="none",
+                    sidecar_role_status="none",
                     ui_palette_contract_written=False,
                     ui_palette_default_or_override_rationale_recorded=False,
                     ui_selected_concept_bound_to_review_packet=False,
@@ -1093,20 +1093,20 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 terminal_lifecycle_frontier_written=True,
             )
             return
-        if not state.crew_memory_archived:
+        if not state.role_binding_memory_archived:
             yield _step(
                 state,
-                label="crew_memory_archived_at_terminal",
+                label="role_binding_memory_archived_at_terminal",
                 action="archive compact role memory packets with final capability statuses before UI route close",
-                crew_memory_archived=True,
+                role_binding_memory_archived=True,
             )
             return
-        if not state.crew_archived:
+        if not state.role_binding_ledger_archived:
             yield _step(
                 state,
-                label="crew_archived_at_terminal",
-                action="archive persistent crew ledger after role memory and UI lifecycle reconciliation",
-                crew_archived=True,
+                label="role_binding_ledger_archived_at_terminal",
+                action="archive persistent role-binding ledger after role memory and UI lifecycle reconciliation",
+                role_binding_ledger_archived=True,
             )
             return
         if not state.flowpilot_skill_improvement_report_written:

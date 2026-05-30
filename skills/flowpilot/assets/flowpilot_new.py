@@ -1,7 +1,7 @@
 """Formal entrypoint for the new black-box FlowPilot runtime.
 
 This entrypoint starts a new FlowPilot run from the native startup intake UI,
-then hands all authority to ``ai_project_runtime``. The old router remains
+then hands all authority to ``flowpilot_core_runtime``. The old router remains
 available for diagnostics, but a fresh formal run should enter here.
 """
 
@@ -33,10 +33,10 @@ HOST_KIND_HELP = (
 )
 
 try:  # pragma: no cover - direct script fallback.
-    from ai_project_runtime import cockpit, fake_e2e, host, router, run_shell, runtime
+    from flowpilot_core_runtime import cockpit, fake_e2e, host, router, run_shell, runtime
 except ImportError:  # pragma: no cover
     sys.path.insert(0, str(ASSETS_ROOT))
-    from ai_project_runtime import cockpit, fake_e2e, host, router, run_shell, runtime  # type: ignore
+    from flowpilot_core_runtime import cockpit, fake_e2e, host, router, run_shell, runtime  # type: ignore
 
 
 def _print(payload: object) -> None:

@@ -29,9 +29,9 @@ confidence.
 - **THEN** the StructureMesh SHALL require current parity evidence at the
   configured evidence tier.
 
-### Requirement: Router facade preserves public compatibility
+### Requirement: Router facade preserves public unsupported historical
 
-Router structural maintenance SHALL keep public compatibility through the
+Router structural maintenance SHALL keep public unsupported historical through the
 existing router facade unless a separate explicit behavior change is approved.
 
 #### Scenario: Public router entrypoint remains available

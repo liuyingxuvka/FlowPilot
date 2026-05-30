@@ -16,7 +16,7 @@ _REQUIRED_MODEL_NAMES = (
     "State",
     "TARGET_PARENT_NODES",
     "_capability_structural_repair_changes",
-    "_live_subagent_startup_resolved",
+    "_runtime_role_binding_startup_resolved",
     "_merged_changes",
     "_reset_execution_quality_gates",
     "_step",
@@ -330,7 +330,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="pm_initial_capability_decision_recorded",
-            action="ask the project manager to choose the capability-route direction from the contract, child-skill map, dependency plan, and crew reports",
+            action="ask the project manager to choose the capability-route direction from the contract, child-skill map, dependency plan, and role binding reports",
             pm_initial_capability_decision_recorded=True,
         )
         return
@@ -479,13 +479,13 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and not state.live_subagent_decision_recorded
+        and not state.runtime_role_assistance_decision_recorded
     ):
         yield _step(
             state,
-            label="live_subagent_start_authorized",
+            label="runtime_role_binding_start_authorized",
             action="ask for and record user authorization to request runtime FlowPilot role assistance from the host",
-            live_subagent_decision_recorded=True,
+            runtime_role_assistance_decision_recorded=True,
         )
         return
 
@@ -499,18 +499,18 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and state.live_subagent_decision_recorded
-        and not state.live_subagents_started
+        and state.runtime_role_assistance_decision_recorded
+        and not state.runtime_role_bindings_opened
         and not state.single_agent_role_continuity_authorized
     ):
         yield _step(
             state,
-            label="fresh_six_live_subagents_started",
+            label="fresh_six_runtime_role_bindings_opened",
             action="open runtime-requested FlowPilot role bindings as fresh current-task bindings and record nonreuse evidence",
-            live_subagents_started=True,
-            live_subagents_current_task_fresh=True,
-            fresh_agents_spawned_after_startup_answers=True,
-            fresh_agents_spawned_after_route_allocation=True,
+            runtime_role_bindings_opened=True,
+            runtime_role_bindings_current_task_ready=True,
+            role_bindings_opened_after_startup_answers=True,
+            role_bindings_opened_after_route_allocation=True,
             historical_agent_ids_compared=True,
             reused_historical_agent_ids=False,
         )
@@ -526,7 +526,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and not state.startup_preflight_review_report_written
         and not state.startup_worker_remediation_completed
     ):
@@ -598,14 +598,14 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and _live_subagent_startup_resolved(state)
+        and _runtime_role_binding_startup_resolved(state)
         and not state.startup_preflight_review_report_written
         and state.startup_worker_remediation_completed
     ):
         yield _step(
             state,
             label="startup_preflight_reviewer_fact_report_clean",
-            action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh crew evidence, and writes a clean fact report for PM",
+            action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh role binding evidence, and writes a clean fact report for PM",
             startup_preflight_review_report_written=True,
             startup_preflight_review_blocking_findings=False,
             startup_reviewer_fact_evidence_checked=True,

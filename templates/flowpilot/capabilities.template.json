@@ -81,29 +81,29 @@
       "status": "planned"
     },
     {
-      "evidence_path": ".flowpilot/runs/run-001/capabilities/six-agent-crew-when-formal.json",
-      "id": "six_agent_crew",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/role-bindings-when-formal.json",
+      "id": "required_role_binding_coverage",
       "required": "for every formal FlowPilot route",
       "source_skill": "flowpilot",
       "evidence_required": [
-        "crew_policy_written",
-        "crew_ledger_path",
+        "role_binding_policy_written",
+        "role_binding_ledger_path",
         "role_memory_root",
-        "role_memory_packets_for_all_six_roles",
+        "role_memory_packets_for_required_role_bindings",
         "project_manager_agent",
         "human_like_reviewer_agent",
         "process_flowguard_officer_agent",
         "product_flowguard_officer_agent",
         "worker_a_agent",
         "worker_b_agent",
-        "current_task_fresh_agent_ids_when_live_background_agents_authorized",
+        "current_task_fresh_agent_ids_when_live_runtime_role_assistance_authorized",
         "historical_agent_ids_compared_and_excluded",
         "project_manager_decision_evidence",
         "heartbeat_recovery_loaded_role_memory",
         "heartbeat_recovery_resumed_or_replaced_each_role",
         "replacement_roles_seeded_from_memory",
         "role_memory_refreshed_after_meaningful_role_work",
-        "terminal_crew_and_memory_archive"
+        "terminal_role_binding_and_memory_archive"
       ],
       "status": "planned"
     },
@@ -261,9 +261,9 @@
       "status": "conditional"
     },
     {
-      "evidence_path": ".flowpilot/runs/run-001/capabilities/child_node_sidecar_subagents-when-used.json",
-      "id": "child_node_sidecar_subagents",
-      "required": "when sidecar_subagents_are_used",
+      "evidence_path": ".flowpilot/runs/run-001/capabilities/child_node_sidecar_sidecar roles-when-used.json",
+      "id": "child_node_sidecar_sidecar roles",
+      "required": "when sidecar_sidecar roles_are_used",
       "source_skill": "FlowPilot coordination protocol",
       "evidence_required": [
         "child_node_sidecar_scan_decision",

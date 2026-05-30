@@ -5,7 +5,7 @@
 Build and maintain a Codex skill named `flowpilot`.
 
 FlowPilot lets an AI agent manage a substantial software project as a
-model-backed autopilot:
+model-backed project-control runtime:
 
 1. interrogate its understanding before freezing a contract;
 2. create persistent project-control state under `.flowpilot/`;
@@ -267,7 +267,7 @@ and model-confidence overclaims must also fail.
 - Runtime-required roles are persistent as role responsibilities, but each new
   formal FlowPilot task must receive fresh current-run role-binding evidence
   when the user authorizes host-supported role assistance. FlowPilot writes
-  compact per-role memory packets under `.flowpilot/runs/<run-id>/crew_memory/`;
+  compact per-role memory packets under `.flowpilot/runs/<run-id>/role_binding_memory/`;
   heartbeat and manual resume may load and resume stored agent ids only when
   they belong to the same active task-born cohort.
   Prior-route or earlier-task `agent_id` values are audit history only, not
@@ -338,7 +338,7 @@ and model-confidence overclaims must also fail.
   read-only evidence; old control state, agent IDs, screenshots, icons, or
   route files must not become current state.
 - Heartbeat/manual-resume lifecycle state now trusts current-run `state.json`,
-  latest heartbeat evidence, execution frontier, and crew memory. There is no
+  latest heartbeat evidence, execution frontier, and role-binding memory. There is no
   extra reset path or registry layer.
 - Heartbeat/manual-resume now re-enters the packet-gated controller loop. The
   stable launcher loads the active run and packet ledger, restores roles, asks
@@ -460,7 +460,7 @@ FlowGuard caught and fixed these design issues:
     mutation, or completion decision must record the correct approving role,
     and route repair must invalidate stale approvals together with stale
     product evidence.
-15. Live subagent continuity is not reliable enough to be a source of truth
+15. Live sidecar role continuity is not reliable enough to be a source of truth
     after heartbeat sleep or manual resume. Role continuity must be persisted
     through structured role memory packets; replacement roles must be seeded
     from those packets before they can approve gates.
@@ -518,7 +518,7 @@ FlowGuard caught and fixed these design issues:
   `skills/flowpilot/assets/runtime_kit/manifest.json`.
 - Resume re-entry now has explicit Controller and PM system cards:
   `controller.resume_reentry` and `pm.resume_decision`. The Controller loads
-  current-run state, frontier, packet ledger, and crew memory into
+  current-run state, frontier, packet ledger, and role-binding memory into
   `continuation/resume_reentry.json` without reading sealed bodies or inferring
   progress from chat history; ambiguous resume state blocks for PM recovery.
 - `flowpilot_router.py` now drives the current-node packet loop through the
@@ -702,7 +702,7 @@ python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simul
 python simulations/run_flowpilot_similarity_convergence_checks.py --json-out simulations/flowpilot_similarity_convergence_results.json
 python simulations/run_flowpilot_model_maturation_checks.py --json-out simulations/flowpilot_model_maturation_results.json
 python scripts/check_install.py
-python scripts/smoke_autopilot.py
+python scripts/smoke_flowpilot.py
 ```
 
 If any fail, fix the model, protocol, templates, or checks before continuing.

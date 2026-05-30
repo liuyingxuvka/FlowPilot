@@ -34,7 +34,7 @@
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       },
-      "legacy_reviewer_relay_used_as_current_acceptance": {
+      "unsupported historical_reviewer_relay_used_as_current_acceptance": {
         "detected": true,
         "expected_failure": "PM-issued worker result did not return to project_manager",
         "failures": [
@@ -42,7 +42,7 @@
           "formal evidence used a worker result without PM absorbed disposition",
           "PM formal gate package release lacked absorbed disposition or package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate",
-          "legacy direct-reviewer relay flag was used as current acceptance"
+          "unsupported historical direct-reviewer relay flag was used as current acceptance"
         ]
       },
       "material_research_decision_without_gate": {
@@ -155,7 +155,7 @@
       "controller_reads_sealed_body",
       "critical_reviewer_gate_removed",
       "formal_evidence_from_undispositioned_result",
-      "legacy_reviewer_relay_used_as_current_acceptance",
+      "unsupported historical_reviewer_relay_used_as_current_acceptance",
       "material_research_decision_without_gate",
       "node_completion_without_reviewer_gate",
       "pm_disposition_half_written_accepted",

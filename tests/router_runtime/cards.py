@@ -193,7 +193,7 @@ class CardsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(blocked_report["ok"])
         self.assertTrue(blocked_report["report_quarantined"])
         self.assertTrue(blocked_report["recoverable"])
-        with self.assertRaisesRegex(router.RouterError, "retired record-event ACK path is disabled"):
+        with self.assertRaisesRegex(router.RouterError, "unsupported record-event ACK path is disabled"):
             router.record_external_event(root, "reviewer_card_ack")
 
         open_result = card_runtime.open_card(
@@ -209,7 +209,7 @@ class CardsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             agent_id=str(second["target_agent_id"]),
             receipt_paths=[str(open_result["read_receipt_path"])],
         )
-        with self.assertRaisesRegex(router.RouterError, "retired record-event ACK path is disabled"):
+        with self.assertRaisesRegex(router.RouterError, "unsupported record-event ACK path is disabled"):
             router.record_external_event(root, "reviewer_card_ack")
         next_action = self.next_after_display_sync(root)
         self.assertNotEqual(next_action["action_type"], "check_card_return_event")

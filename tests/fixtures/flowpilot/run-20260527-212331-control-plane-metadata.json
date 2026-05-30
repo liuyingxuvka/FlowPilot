@@ -16,14 +16,14 @@
   },
   "resume_rehydration": {
     "expected_role_count": 6,
-    "report_all_six_roles_ready": true,
+    "report_required_role_bindings_ready": true,
     "report_current_run_memory_complete": true,
     "final_resume_roles_restored_flag": false,
     "wait_agent_timeout_treated_as_active": false
   },
   "control_blockers": {
     "total_blocker_files": 608,
-    "dominant_family_key": "mechanical_control_plane_reissue||rehydrate_role_agents|controller",
+    "dominant_family_key": "mechanical_control_plane_reissue||rehydrate_role_bindings|controller",
     "dominant_family_count": 607,
     "same_family_should_collapse_to_one_active_or_terminal_record": true
   },

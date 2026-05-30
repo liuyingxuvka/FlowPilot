@@ -78,7 +78,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "fake_e2e.run_fake_e2e",
-            path="skills/flowpilot/assets/ai_project_runtime/fake_e2e.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
             symbol="run_fake_e2e",
             implements=(
                 "new_entrypoint.rehearsal_closure",
@@ -156,7 +156,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "host.submit_host_result",
-            path="skills/flowpilot/assets/ai_project_runtime/host.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/host.py",
             symbol="submit_host_result",
             implements=("new_entrypoint.lifecycle_guard_stale_result_quarantine",),
             external_inputs=("ledger", "lease_id", "packet_id", "body"),
@@ -165,7 +165,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "runtime.refresh_lifecycle_guard",
-            path="skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             symbol="refresh_lifecycle_guard",
             implements=(
                 "new_entrypoint.lifecycle_guard_stop_authority",
@@ -180,7 +180,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             path="skills/flowpilot/assets/flowpilot_new.py",
             symbol="main",
             implements=(
-                "new_entrypoint.side_command_surface_retired",
+                "new_entrypoint.side_command_surface_unsupported",
                 "new_entrypoint.host_kind_value_menu",
             ),
             external_inputs=("argv",),
@@ -1861,7 +1861,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "smoke.main",
-            path="scripts/smoke_autopilot.py",
+            path="scripts/smoke_flowpilot.py",
             symbol="main",
             implements=("capability_parent.proof_reuse_and_fast_boundary",),
             external_inputs=("argv",),

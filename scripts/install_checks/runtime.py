@@ -174,30 +174,30 @@ def run_checks(result: dict[str, object]) -> None:
                     flowpilot_router.parse_args(case)
                 except BaseException as exc:  # argparse raises SystemExit.
                     cli_parse_errors.append({"case": case, "error": repr(exc)})
-            retired_fold_commands = [
+            unsupported_fold_commands = [
                 "deliver-card-bundle-checked",
                 "relay-checked",
                 "prepare-startup-fact-check",
                 "record-role-output-checked",
             ]
-            unexpected_retired_commands = []
-            for command in retired_fold_commands:
+            unexpected_unsupported_commands = []
+            for command in unsupported_fold_commands:
                 try:
                     with contextlib.redirect_stderr(io.StringIO()):
                         flowpilot_router.parse_args(["--root", str(ROOT), command, "--json"])
-                    unexpected_retired_commands.append(command)
+                    unexpected_unsupported_commands.append(command)
                 except SystemExit:
                     pass
                 except BaseException as exc:
-                    unexpected_retired_commands.append(f"{command}: {exc!r}")
-            cli_ok = not cli_parse_errors and not unexpected_retired_commands
+                    unexpected_unsupported_commands.append(f"{command}: {exc!r}")
+            cli_ok = not cli_parse_errors and not unexpected_unsupported_commands
             result["checks"].append(
                 {
                     "name": "flowpilot_router_cli_commands_parse",
                     "ok": cli_ok,
                     "parse_error_count": len(cli_parse_errors),
                     "parse_errors": cli_parse_errors,
-                    "unexpected_retired_fold_commands": unexpected_retired_commands,
+                    "unexpected_unsupported_fold_commands": unexpected_unsupported_commands,
                 }
             )
             if not cli_ok:

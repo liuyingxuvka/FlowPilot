@@ -2830,8 +2830,8 @@
             "target": "_record_controller_boundary_confirmation_from_core_load"
           },
           {
-            "public": "_role_slots_have_host_spawn_receipts",
-            "target": "_role_slots_have_host_spawn_receipts"
+            "public": "_role_slots_have_host_role_binding_receipts",
+            "target": "_role_slots_have_host_role_binding_receipts"
           },
           {
             "public": "_run_manifest_path",
@@ -3016,8 +3016,8 @@
             "target": "_controller_action_wait_roles"
           },
           {
-            "public": "_current_crew_generation",
-            "target": "_current_crew_generation"
+            "public": "_current_role_binding_generation",
+            "target": "_current_role_binding_generation"
           },
           {
             "public": "_latest_resume_tick_id",
@@ -3541,8 +3541,8 @@
             "target": "_active_pm_role_work_request"
           },
           {
-            "public": "_agent_role_map_from_crew_ledger",
-            "target": "_agent_role_map_from_crew_ledger"
+            "public": "_agent_role_map_from_role_binding_ledger",
+            "target": "_agent_role_map_from_role_binding_ledger"
           },
           {
             "public": "_apply_pm_role_work_gate_mappings",

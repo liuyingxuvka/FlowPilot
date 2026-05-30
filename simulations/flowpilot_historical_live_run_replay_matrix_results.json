@@ -472,14 +472,14 @@
       "entrypoints": [
         "real_router_runtime",
         "load_resume_state",
-        "rehydrate_role_agents",
+        "rehydrate_role_bindings",
         "role_io_protocol"
       ],
       "evidence_current": true,
       "evidence_role": "primary_historical_replay",
       "evidence_status": "passed",
       "evidence_test": "FlowPilotHistoricalLiveRunReplayTests.test_host_role_lifecycle_resume_requires_full_rehydrate_evidence",
-      "expected_standard_state": "normal work stays blocked until all six role records and resume memory evidence pass",
+      "expected_standard_state": "normal work stays blocked until all runtime role records and resume memory evidence pass",
       "failure_package": "resume continues after only some roles report liveness or after unknown liveness is treated as active",
       "fake_ai_artifacts": [
         "partial_rehydration_receipt",
@@ -498,7 +498,7 @@
       "phase_sequence": [
         "resume_wake",
         "load_resume_state",
-        "rehydrate_role_agents",
+        "rehydrate_role_bindings",
         "normal_work_gate"
       ],
       "priority": "P0",
@@ -514,7 +514,7 @@
       ],
       "source_records": [
         "resume_reentry",
-        "crew_rehydration_report",
+        "role_binding_recovery_report",
         "role_io_protocol_ledger"
       ],
       "surface": "host_role_lifecycle"

@@ -39,7 +39,7 @@ OWNER_MODULE = 'flowpilot_router_startup_role_recovery'
 import flowpilot_router_startup_role_transactions_core as _flowpilot_router_startup_role_transactions_core
 from flowpilot_router_startup_role_transactions_core import (
     _reclaim_role_recovery_postcondition_from_report,
-    _current_crew_generation,
+    _current_role_binding_generation,
     _open_role_recovery_transaction,
     _role_recovery_payload_contract,
     _load_role_recovery_state,
@@ -95,7 +95,7 @@ def _bound_router() -> ModuleType:
 
 __all__ = (
     '_reclaim_role_recovery_postcondition_from_report',
-    '_current_crew_generation',
+    '_current_role_binding_generation',
     '_open_role_recovery_transaction',
     '_role_recovery_payload_contract',
     '_load_role_recovery_state',

@@ -497,7 +497,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.roles_started:
         yield Transition(
             "runtime_role_bindings_recorded_from_user_answer",
-            _boot(state, roles_started=True, fresh_role_agents_started=True),
+            _boot(state, roles_started=True, fresh_role_bindings_started=True),
         )
         return
     if not state.role_core_prompts_injected:
@@ -1241,8 +1241,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.heartbeat_stopped_or_manual_recorded:
         yield Transition("heartbeat_stopped_or_manual_resume_recorded", replace(state, heartbeat_stopped_or_manual_recorded=True))
         return
-    if not state.crew_archived:
-        yield Transition("crew_archived", replace(state, crew_archived=True))
+    if not state.role_binding_ledger_archived:
+        yield Transition("role_binding_ledger_archived", replace(state, role_binding_ledger_archived=True))
         return
     if not state.pm_completion_decision:
         yield Transition("pm_completion_decision_recorded", replace(state, pm_completion_decision=True))

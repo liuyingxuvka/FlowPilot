@@ -59,7 +59,7 @@
           ],
           "invariant_families": [
             "manual_resume",
-            "crew_rehydration",
+            "role_binding_recovery",
             "daemon_liveness_boundary"
           ],
           "release_obligation": "thin_parent_ok"
@@ -284,7 +284,7 @@
       "owner": "product_architecture"
     },
     {
-      "field": "crew_memory",
+      "field": "role_binding_memory",
       "owner": "crew_and_heartbeat"
     },
     {

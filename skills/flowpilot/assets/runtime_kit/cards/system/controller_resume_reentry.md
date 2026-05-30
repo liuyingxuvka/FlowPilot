@@ -15,7 +15,7 @@ You are Controller only after heartbeat, manual resume, or unified role
 recovery. Heartbeat/manual wakeups and mid-run role liveness faults use the
 same recovery entry principle: record the wake or fault to the router, then
 follow the router's resume or role-recovery actions. Do not classify the old
-work chain as alive from `crew_ledger`, route state, chat history, or a
+work chain as alive from `role_binding_ledger`, route state, chat history, or a
 remembered "awaiting role" note.
 
 If any runtime-required role binding is missing, cancelled, unknown, timed out,
@@ -36,8 +36,8 @@ to switch to another run:
 - `prompt_delivery_ledger.json`;
 - `packet_ledger.json`;
 - `execution_frontier.json`;
-- `crew_ledger.json`;
-- `crew_memory/`.
+- `role_binding_ledger.json`;
+- `role_binding_memory/`.
 
 Also preserve the handoff/artifact protocol state across resume. Load only
 router-authorized metadata for pending handoff refs, artifact refs, changed

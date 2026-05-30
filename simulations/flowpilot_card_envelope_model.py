@@ -12,8 +12,8 @@ Risk intent brief:
   explicit runtime check-in instructions, direct Router ack/report envelope
   identity,
   same-role system-card bundle eligibility, batch dependency graph, cross-role
-  parallel delivery joins, and legacy prompt-delivery compatibility.
-- Adversarial branches include legacy delivery treated as read, missing read
+  parallel delivery joins, and unsupported_historical prompt-delivery unsupported_historical.
+- Adversarial branches include unsupported_historical delivery treated as read, missing read
   receipt, missing ack/report envelope, ack/report without receipt references,
   wrong role, old run, old agent after replacement, hash mismatch, receipt
   before delivery, missing runtime check-in instructions, hand-written ACKs,
@@ -71,8 +71,8 @@ class State:
     status: str = "new"  # new | running | passed
     steps: int = 0
 
-    legacy_prompt_delivery_recorded: bool = False
-    legacy_delivery_treated_as_read: bool = False
+    unsupported_historical_prompt_delivery_recorded: bool = False
+    unsupported_historical_delivery_treated_as_read: bool = False
 
     resume_tick_active: bool = False
     role_replacement_active: bool = False
@@ -102,7 +102,7 @@ class State:
     startup_card_before_frontier: bool = False
     direct_ack_token_frontier_optional_when_missing: bool = False
     direct_ack_token_requires_frontier_before_available: bool = False
-    legacy_return_event_field_used: bool = False
+    unsupported_historical_return_event_field_used: bool = False
     expected_return_path_recorded: bool = False
     pending_return_recorded: bool = False
     controller_relayed_card_envelope: bool = False
@@ -286,8 +286,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.status == "new":
         yield Transition(
-            "legacy_prompt_delivery_shape_recorded_without_v2_receipt",
-            _inc(state, legacy_prompt_delivery_recorded=True),
+            "unsupported_historical_prompt_delivery_shape_recorded_without_v2_receipt",
+            _inc(state, unsupported_historical_prompt_delivery_recorded=True),
         )
         yield Transition(
             "role_io_protocol_injected_and_acknowledged_for_current_tick",
@@ -301,9 +301,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.legacy_prompt_delivery_recorded:
+    if state.unsupported_historical_prompt_delivery_recorded:
         yield Transition(
-            "legacy_delivery_stops_before_v2_authorization",
+            "unsupported_historical_delivery_stops_before_v2_authorization",
             replace(_inc(state), status="passed"),
         )
         return
@@ -499,7 +499,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and not state.required_card_coverage_checked
     ):
         yield Transition(
-            "router_rejects_card_ack_received_at_legacy_external_event_entrypoint",
+            "router_rejects_card_ack_received_at_unsupported_historical_external_event_entrypoint",
             _inc(
                 state,
                 card_ack_sent_to_external_event_entrypoint=True,
@@ -675,8 +675,8 @@ def is_terminal(state: State) -> bool:
 def is_success(state: State) -> bool:
     if not is_terminal(state):
         return False
-    if state.legacy_prompt_delivery_recorded:
-        return not state.router_advanced and not state.legacy_delivery_treated_as_read
+    if state.unsupported_historical_prompt_delivery_recorded:
+        return not state.router_advanced and not state.unsupported_historical_delivery_treated_as_read
     return state.router_advanced and not invariant_failures(state)
 
 
@@ -737,8 +737,8 @@ def controller_must_stay_envelope_only(state: State, trace) -> InvariantResult:
 
 def required_card_receipt_gate(state: State, trace) -> InvariantResult:
     del trace
-    if state.legacy_return_event_field_used:
-        return InvariantResult.fail("legacy return_event JSON field was still emitted")
+    if state.unsupported_historical_return_event_field_used:
+        return InvariantResult.fail("unsupported_historical return_event JSON field was still emitted")
     if state.card_envelope_issued and not (
         state.card_return_event_declared and state.expected_return_path_recorded and state.pending_return_recorded
     ):
@@ -761,8 +761,8 @@ def required_card_receipt_gate(state: State, trace) -> InvariantResult:
         and state.post_apply_envelope_issued
     ):
         return InvariantResult.fail("system card envelope was issued without an internal auto-commit artifact lifecycle")
-    if state.legacy_delivery_treated_as_read:
-        return InvariantResult.fail("legacy prompt delivery record was treated as a v2 read receipt")
+    if state.unsupported_historical_delivery_treated_as_read:
+        return InvariantResult.fail("unsupported_historical prompt delivery record was treated as a v2 read receipt")
     if state.required_card_coverage_passed and not (_receipt_valid(state) and _ack_valid(state)):
         return InvariantResult.fail("required system card coverage passed without valid read receipt and ack/report envelope")
     if state.router_advanced and state.required_card_declared and not (
@@ -784,9 +784,9 @@ def card_return_ack_uses_router_check_action(state: State, trace) -> InvariantRe
     if state.card_ack_recorded_as_external_event:
         return InvariantResult.fail("card ack was accepted as a normal external event instead of direct Router ACK")
     if state.card_ack_external_event_auto_rerouted:
-        return InvariantResult.fail("legacy card ACK external-event entrypoint still auto-rerouted instead of hard failing")
+        return InvariantResult.fail("unsupported_historical card ACK external-event entrypoint still auto-rerouted instead of hard failing")
     if state.card_ack_sent_to_external_event_entrypoint and not state.card_ack_external_event_rejected:
-        return InvariantResult.fail("legacy card ACK external-event entrypoint was not rejected")
+        return InvariantResult.fail("unsupported_historical card ACK external-event entrypoint was not rejected")
     if state.required_card_coverage_checked and not state.check_card_return_apply_required:
         return InvariantResult.fail("check_card_return_event changed state but was marked apply_required false")
     return InvariantResult.pass_()
@@ -1062,8 +1062,8 @@ EXTERNAL_INPUTS = (Tick(),)
 MAX_SEQUENCE_LENGTH = 25
 
 REQUIRED_LABELS = (
-    "legacy_prompt_delivery_shape_recorded_without_v2_receipt",
-    "legacy_delivery_stops_before_v2_authorization",
+    "unsupported_historical_prompt_delivery_shape_recorded_without_v2_receipt",
+    "unsupported_historical_delivery_stops_before_v2_authorization",
     "role_io_protocol_injected_and_acknowledged_for_current_tick",
     "router_computes_internal_card_delivery_action_without_relay_permission",
     "router_issues_card_envelope_with_manifest_hash_and_card_return_event",
@@ -1077,7 +1077,7 @@ REQUIRED_LABELS = (
     "router_reissues_stale_delivery_attempt_before_role_ack",
     "role_runtime_open_card_writes_current_receipt",
     "role_returns_card_ack_envelope_referencing_read_receipts",
-    "router_rejects_card_ack_received_at_legacy_external_event_entrypoint",
+    "router_rejects_card_ack_received_at_unsupported_historical_external_event_entrypoint",
     "prompt_coverage_confirms_direct_router_ack_instructions",
     "router_checks_ack_report_and_required_card_receipt_coverage",
     "router_clears_gate_boundary_after_scope_ack",
@@ -1222,19 +1222,19 @@ def target_v2_state() -> State:
     )
 
 
-def legacy_prompt_delivery_state() -> State:
+def unsupported_historical_prompt_delivery_state() -> State:
     return State(
         status="passed",
-        legacy_prompt_delivery_recorded=True,
+        unsupported_historical_prompt_delivery_recorded=True,
         card_delivery_recorded=True,
         required_card_declared=True,
     )
 
 
-def legacy_expected_bad_state() -> State:
+def unsupported_historical_expected_bad_state() -> State:
     return replace(
-        legacy_prompt_delivery_state(),
-        legacy_delivery_treated_as_read=True,
+        unsupported_historical_prompt_delivery_state(),
+        unsupported_historical_delivery_treated_as_read=True,
         required_card_coverage_checked=True,
         required_card_coverage_passed=True,
         check_card_return_apply_required=True,
@@ -1246,7 +1246,7 @@ def legacy_expected_bad_state() -> State:
 def hazard_states() -> dict[str, State]:
     safe = target_v2_state()
     return {
-        "legacy_delivery_treated_as_read": legacy_expected_bad_state(),
+        "unsupported_historical_delivery_treated_as_read": unsupported_historical_expected_bad_state(),
         "preapply_pending_relayed_as_committed_artifact": replace(
             safe,
             router_auto_committed_internal_action=False,
@@ -1266,9 +1266,9 @@ def hazard_states() -> dict[str, State]:
             safe,
             public_system_card_apply_used=True,
         ),
-        "legacy_return_event_field_used": replace(
+        "unsupported_historical_return_event_field_used": replace(
             safe,
-            legacy_return_event_field_used=True,
+            unsupported_historical_return_event_field_used=True,
         ),
         "missing_checkin_instruction": replace(
             safe,

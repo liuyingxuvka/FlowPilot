@@ -105,7 +105,7 @@ The representative success trace contains 441 heartbeat steps, 28 leaf entries,
 28 leaf Self-interrogation rounds, 28 leaf FlowGuard stack checks, 14 group reviews, and
 6 phase reviews before route completion.
 
-Existing compatibility checks also passed:
+Existing unsupported historical checks also passed:
 
 ```powershell
 python simulations/run_meta_checks.py

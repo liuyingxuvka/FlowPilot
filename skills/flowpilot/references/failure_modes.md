@@ -58,13 +58,13 @@ The FlowGuard models for FlowPilot found or guard against:
   loads current state and makes or records concrete progress;
 - route decided before FlowGuard process design;
 - formal route work starts before runtime-required role bindings are opened,
-  restored, and persisted in `crew_ledger.json`;
+  restored, and persisted in `role_binding_ledger.json`;
 - heartbeat recovery reads state but does not restore or replace required role
   bindings before asking the project manager what to do next;
 - heartbeat recovery assumes stored role ids still have live private
   context and asks the project manager before loading role memory packets;
 - an unavailable role is replaced from a generic prompt instead of the latest
-  `.flowpilot/runs/<run-id>/crew_memory/` packet;
+  `.flowpilot/runs/<run-id>/role_binding_memory/` packet;
 - meaningful role work updates only a report path or raw transcript but does
   not refresh the compact role memory packet before checkpoint;
 - a raw chat transcript is treated as the authoritative role memory instead of
@@ -147,9 +147,9 @@ The FlowGuard models for FlowPilot found or guard against:
 - stale implementation reused after a completion review raised the standard;
 - sidecar role-binding work returned but not merged;
 - parent/module-level sidecar scan treated as permission to assign work;
-- sidecar role agent assigned ownership of a child node, checkpoint, route advancement,
+- sidecar role binding assigned ownership of a child node, checkpoint, route advancement,
   or completion decision;
-- new sidecar role agent opened while a suitable idle role binding was available;
+- new sidecar role binding opened while a suitable idle role binding was available;
 - UI implementation before the relevant UI child-skill gates and evidence;
 - post-implementation rendered QA evidence substituted for the child skill's
   pre-implementation concept-target/reference decision;
@@ -306,7 +306,7 @@ Keep these failure modes in the model and tests.
   the human-like reviewer has replayed the ledger backward from the final
   product, and the PM has approved the clean ledger.
 - Child-node sidecar scan is the only formal sidecar opportunity gate. Parent
-  or module review may not directly open role agents or transfer node ownership.
+  or module review may not directly open role bindings or transfer node ownership.
 - Sidecar scope checking must be separate from reuse-or-open role-binding assignment.
 - `sidecar_report_returned` is not completion evidence; authorized integration/review and
   verification are required.
@@ -315,14 +315,14 @@ Keep these failure modes in the model and tests.
   completion-runway, PM stop, repair, and completion decisions; workers are
   sidecars only.
 - Heartbeat recovery loads the role-binding ledger and role memory packets,
-  restores/replaces the crew from that memory, asks the project manager for a
+  restores/replaces the role binding from that memory, asks the project manager for a
   completion-oriented runway, syncs that runway into the visible plan, executes
   at least the current gate when executable, then continues until a PM stop
   signal, hard gate, blocker, route mutation, or real execution limit stops
   progress.
 - Completion must archive the role-binding ledger and role memory packets after
   lifecycle reconciliation.
-- Idle role agents are a reusable pool, not proof that the current child node has
+- Idle role bindings are a reusable pool, not proof that the current child node has
   already been scanned.
 - A model gap forces route update, model recheck, and summary resync before more
   formal work.

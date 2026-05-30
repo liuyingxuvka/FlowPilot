@@ -16,7 +16,7 @@ repair outcome row.
 | Step | Optimization point | Concrete work | FlowGuard gate | Runtime gate |
 | --- | --- | --- | --- | --- |
 | O1 | Freeze the migration inventory | Inventory prompt/command surfaces: `runtime_kit/manifest.json`, card markdown, `contract_index.json`, `packet_runtime.py` command lists, `EXTERNAL_EVENTS`, repair outcome tables, and Controller action payloads. | Planning table maps each surface to a model or source check. | `scripts/check_install.py` knows the new model/doc artifacts. |
-| O2 | Add a first-class event capability registry | Define event capability rows with event name, producer role, node-kind compatibility, repair-origin compatibility, waitability, rerun-target eligibility, and repair outcome eligibility. | New event-capability FlowGuard model catches all listed event/table hazards. | Router uses one validator before writing waits or repair outcome tables. |
+| O2 | Add a first-class event capability registry | Define event capability rows with event name, producer role, node-kind unsupported historical, repair-origin unsupported historical, waitability, rerun-target eligibility, and repair outcome eligibility. | New event-capability FlowGuard model catches all listed event/table hazards. | Router uses one validator before writing waits or repair outcome tables. |
 | O3 | Split repair outcomes into real exits | Require repair `success`, `blocker`, and `protocol_blocker` rows to have distinct registered, context-compatible events unless a row is explicitly unsupported and rejected before persistence. | Existing repair-transaction and new event-capability models reject collapsed outcome rows. | Material repair keeps three routable events; unsupported generic collapsed outcomes fail before state write. |
 | O4 | Lock parent/backward replay repair to parent-safe events | Parent/module backward-replay repairs may only rerun or wait for parent-safe events: parent target build, reviewer backward replay, parent segment decision, parent completion, or a parent protocol blocker. | Event-capability model rejects parent repair targeting leaf current-node packet registration. | Router rejects incompatible `rerun_target` and never persists that wait. |
 | O5 | Unify prompt authorization slices | Generate or compose role prompt authorization text from registry rows rather than duplicating command lists in phase cards. | Card/source coverage model must detect manual command text that is not backed by a registry row. | Prompt/card tests compare generated slices with card references. |
@@ -85,7 +85,7 @@ bounded adaptation:
   operate around route mutation/activation, while this slice gates event waits
   and repair transaction outcomes.
 
-Production implementation therefore follows this compatibility rule:
+Production implementation therefore follows this unsupported historical rule:
 
 | Current surface | Landing rule |
 | --- | --- |

@@ -47,7 +47,7 @@
 - No GitHub push, tag, release, deploy, or public publication was performed in
   this local sync round.
 - Existing peer changes in shared dirty files were not reverted or staged.
-- The legacy full meta/capability regressions reused current proof files where
+- The unsupported historical full meta/capability regressions reused current proof files where
   the background contract marked them valid.
 
 ## Next Actions

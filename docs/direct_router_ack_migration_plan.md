@@ -23,10 +23,10 @@ The target behavior is single-track:
 | Step | Change | Primary files | Done signal |
 | --- | --- | --- | --- |
 | 1 | Record this plan and the risk ledger before production edits. | `docs/direct_router_ack_migration_plan.md` | Plan lists affected areas, old paths to remove, and model/test coverage. |
-| 2 | Upgrade the card ACK FlowGuard model for direct Router ACKs and prompt coverage. | `simulations/flowpilot_card_envelope_model.py`, `simulations/run_flowpilot_card_envelope_checks.py` | Model rejects legacy ACK paths and missing/new-stale prompt guidance hazards. |
+| 2 | Upgrade the card ACK FlowGuard model for direct Router ACKs and prompt coverage. | `simulations/flowpilot_card_envelope_model.py`, `simulations/run_flowpilot_card_envelope_checks.py` | Model rejects unsupported historical ACK paths and missing/new-stale prompt guidance hazards. |
 | 3 | Run the upgraded model before runtime edits. | `simulations/flowpilot_card_envelope_results.json` | Model passes and hazard table proves all listed risks are detected. |
 | 4 | Make system-card ACKs token/direct-router only. | `skills/flowpilot/assets/card_runtime.py`, `skills/flowpilot/assets/flowpilot_runtime.py`, `skills/flowpilot/assets/flowpilot_router.py` | Valid runtime ACKs carry direct Router authorization; stale or tokenless ACKs fail. |
-| 5 | Remove legacy card ACK compatibility. | `skills/flowpilot/assets/flowpilot_router.py` | `record_external_event(..., "*_card_ack")` no longer reroutes; it raises a protocol error. |
+| 5 | Remove unsupported historical card ACK unsupported historical. | `skills/flowpilot/assets/flowpilot_router.py` | `record_external_event(..., "*_card_ack")` no longer reroutes; it raises a protocol error. |
 | 6 | Keep packet ACK/result fast lane as the packet-local Router path and align text around it. | `skills/flowpilot/assets/packet_runtime.py`, `templates/flowpilot/packets/*.template.md` | Packet bodies tell active holders to ACK and return packet completion to Router, not Controller. |
 | 7 | Update all role/system/phase/reviewer/officer cards that still teach old ACK routing. | `skills/flowpilot/assets/runtime_kit/cards/**/*.md` | No card prompt says Controller should receive, teach, hand-write, or relay ACKs. |
 | 8 | Update protocol documentation and skill guidance. | `skills/flowpilot/SKILL.md`, `skills/flowpilot/references/*.md`, `docs/*.md` | Docs describe ACKs, active-holder packet results, and formal role outputs as Router-direct; Controller relays only Router-authorized metadata. |
@@ -37,7 +37,7 @@ The target behavior is single-track:
 
 | Surface | Current risk | Required result |
 | --- | --- | --- |
-| Router card return event handling | Old external-event ACKs can still be auto-rerouted. | Old external-event ACKs are rejected as legacy protocol violations. |
+| Router card return event handling | Old external-event ACKs can still be auto-rerouted. | Old external-event ACKs are rejected as unsupported historical protocol violations. |
 | Card runtime ACK envelopes | ACKs prove receipt but do not yet make the Router-direct authorization explicit enough. | ACK envelopes include direct Router authorization fields tied to run, role, agent, delivery, card hash, and expected return. |
 | Controller card | Controller guidance still mentions role/event envelopes and ACK handling in a way that can preserve old habits. | Controller is told to wait for Router card/packet status and never receive, write, or relay ACKs. |
 | Role cards | Many role cards still say role outputs return to Controller. | Cards tell roles to submit formal outputs with `flowpilot_runtime.py submit-output-to-router`; reports/decisions no longer return to Controller as the receiver. |
@@ -51,7 +51,7 @@ The target behavior is single-track:
 | Risk id | Failure mode | Model/test must catch |
 | --- | --- | --- |
 | R1 | A card ACK is accepted as a normal external event. | FlowGuard hazard and router runtime test reject external-event card ACK. |
-| R2 | Router silently reroutes old card ACK compatibility instead of rejecting it. | FlowGuard hazard and router runtime test require hard failure. |
+| R2 | Router silently reroutes old card ACK unsupported historical instead of rejecting it. | FlowGuard hazard and router runtime test require hard failure. |
 | R3 | Controller hand-writes, receives, or relays a system-card ACK. | Prompt coverage test and FlowGuard prompt hazard fail. |
 | R4 | A role card or packet still instructs ACK return to Controller. | Prompt coverage scan fails on stale ACK/Controller phrases. |
 | R5 | New Router-direct ACK instruction is missing from a role/system card that needs it. | Prompt coverage scan fails for missing direct Router ACK wording. |
@@ -61,7 +61,7 @@ The target behavior is single-track:
 | R9 | Same-role bundle ACK advances with missing per-card receipts. | Existing bundle FlowGuard hazard and card runtime test fail. |
 | R10 | Mechanical system-card ACK is treated as semantic review/PM approval. | Existing FlowGuard semantic-gate invariant remains required. |
 | R11 | Controller does not know when to move after direct Router submission. | Router writes next-action/status notice; router/packet tests verify it. |
-| R12 | Documentation keeps teaching dual-track behavior. | Documentation/prompt scan fails on legacy ACK routing terms. |
+| R12 | Documentation keeps teaching dual-track behavior. | Documentation/prompt scan fails on unsupported historical ACK routing terms. |
 
 ## Verification Plan
 
@@ -70,7 +70,7 @@ Run these in order:
 1. `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
 2. `python simulations/run_flowpilot_card_envelope_checks.py --json-out simulations/flowpilot_card_envelope_results.json`
 3. Focused card runtime tests.
-4. Focused router runtime tests around card ACK check-in and rejected legacy external-event ACK.
+4. Focused router runtime tests around card ACK check-in and rejected unsupported historical external-event ACK.
 5. Focused packet runtime tests around active-holder ACK/result guidance.
 6. Prompt coverage scan for stale ACK instructions and missing Router-direct instructions.
 7. `python simulations/run_meta_checks.py`
@@ -87,6 +87,6 @@ read before claiming completion.
 ## Non-goals
 
 - Do not push to GitHub.
-- Do not add a permanent old-ACK compatibility bridge.
+- Do not add a permanent old-ACK unsupported historical bridge.
 - Do not change semantic PM/reviewer/officer decision authority.
 - Do not make Controller read sealed packet or result bodies.

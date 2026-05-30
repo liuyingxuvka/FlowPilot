@@ -864,7 +864,7 @@
     {
       "lines": 142,
       "over_threshold": false,
-      "path": "scripts/smoke_autopilot.py",
+      "path": "scripts/smoke_flowpilot.py",
       "threshold": 450
     },
     {
@@ -1038,7 +1038,7 @@
           "router_control_blockers_followup_fatal",
           "check_install",
           "audit_local_install_sync",
-          "smoke_autopilot_fast",
+          "smoke_flowpilot_fast",
           "flowguard_coverage_sweep"
         ],
         "long_running_count": 3,
@@ -1137,7 +1137,7 @@
         "commands": [
           "check_install",
           "audit_local_install_sync",
-          "smoke_autopilot_fast",
+          "smoke_flowpilot_fast",
           "flowguard_coverage_sweep"
         ],
         "long_running_count": 2,

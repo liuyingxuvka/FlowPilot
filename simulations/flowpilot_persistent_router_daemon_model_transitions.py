@@ -31,7 +31,7 @@ class PersistentRouterDaemonStep:
         "controller_action_ledger",
         "controller_receipts",
         "heartbeat_state",
-        "crew_memory",
+        "role_binding_memory",
     )
     writes = (
         "daemon_status",
@@ -117,7 +117,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 startup_bootstrap_pending_action_open=False,
                 startup_row_scheduled_after_terminal_fence=False,
                 heartbeat_binding_scheduled_after_terminal_fence=False,
-                legacy_waiting_for_role_null=False,
+                unsupported_historical_waiting_for_role_null=False,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
                 passive_reconciliation_wait_open=False,
@@ -446,7 +446,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "daemon_projects_packet_holder_current_work_owner",
             _step(
                 state,
-                legacy_waiting_for_role_null=True,
+                unsupported_historical_waiting_for_role_null=True,
                 active_packet_holder="project_manager",
                 packet_holder_projection_needed=True,
                 current_work_owner_kind="role",
@@ -459,7 +459,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "daemon_projects_passive_reconciliation_current_work_owner",
             _step(
                 state,
-                legacy_waiting_for_role_null=True,
+                unsupported_historical_waiting_for_role_null=True,
                 passive_reconciliation_wait_open=True,
                 current_work_owner_kind="controller",
                 current_work_owner_key="controller",
@@ -471,7 +471,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "daemon_projects_router_internal_current_work_owner",
             _step(
                 state,
-                legacy_waiting_for_role_null=True,
+                unsupported_historical_waiting_for_role_null=True,
                 router_internal_projection_needed=True,
                 current_work_owner_kind="router",
                 current_work_owner_key="router",
@@ -491,7 +491,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="ack",
-                legacy_waiting_for_role_null=False,
+                unsupported_historical_waiting_for_role_null=False,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
                 passive_reconciliation_wait_open=False,
@@ -521,7 +521,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="report",
-                legacy_waiting_for_role_null=False,
+                unsupported_historical_waiting_for_role_null=False,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
                 passive_reconciliation_wait_open=False,
@@ -552,7 +552,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_local",
-                legacy_waiting_for_role_null=True,
+                unsupported_historical_waiting_for_role_null=True,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
                 passive_reconciliation_wait_open=False,
@@ -575,7 +575,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(
                 state,
                 current_wait="controller_local",
-                legacy_waiting_for_role_null=True,
+                unsupported_historical_waiting_for_role_null=True,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
                 passive_reconciliation_wait_open=False,

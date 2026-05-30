@@ -289,9 +289,9 @@
       },
       "formal_flowpilot_without_six_roles": {
         "detected": true,
-        "expected_failure": "formal FlowPilot started without the standard six-role crew",
+        "expected_failure": "formal FlowPilot started without the standard runtime role-binding coverage",
         "failures": [
-          "formal FlowPilot started without the standard six-role crew"
+          "formal FlowPilot started without the standard runtime role-binding coverage"
         ],
         "state": {
           "advisory_blocks_completion": false,

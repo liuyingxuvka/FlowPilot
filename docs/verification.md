@@ -20,7 +20,7 @@ python simulations/run_meta_checks.py
 python simulations/run_capability_checks.py
 python scripts/check_install.py
 python scripts/audit_local_install_sync.py
-python scripts/smoke_autopilot.py
+python scripts/smoke_flowpilot.py
 ```
 
 For maintenance that touches the split router/runtime/model structure, also use
@@ -38,7 +38,7 @@ FlowGuard model obligations and ordinary test evidence. A green alignment report
 means each declared obligation has current passing evidence for the required
 test kinds; it is not a substitute for the model runner or production replay.
 
-The tier runner can execute the router domain suites without loading the retired
+The tier runner can execute the router domain suites without loading the unsupported
 aggregate implementation file as the routine source of truth:
 
 ```powershell
@@ -121,7 +121,7 @@ Expected:
 - repository-owned installed skills are source-fresh;
 - installed skill names are unique, so stale backup skills cannot shadow the
   active FlowPilot skill;
-- the retired Cockpit prototype is absent from the active source tree before a
+- the unsupported Cockpit prototype is absent from the active source tree before a
   from-scratch UI restart.
 - If local `.flowpilot/` runtime state exists, its main JSON files parse.
 
@@ -154,7 +154,7 @@ whether and when to publish or update those companion skill repositories.
 Run:
 
 ```powershell
-python scripts/smoke_autopilot.py
+python scripts/smoke_flowpilot.py
 ```
 
 Expected:
@@ -190,10 +190,10 @@ Expected:
 - current-run `state.json`, `execution_frontier.json`, and
   `routes/<active-route>/flow.json`
   agree on the same active nonterminal route;
-- old top-level control state is absent, retired-only, or quarantined and is
+- old top-level control state is absent, unsupported-only, or quarantined and is
   not used as current state;
 - continuing prior work has a current-run prior-work import packet;
-- `crew_ledger.json` is current for that route and required role memory
+- `role_binding_ledger.json` is current for that route and required role memory
   packets are present and current;
 - continuation is either a complete automated bundle or explicit
   `manual-resume` evidence with no automation claim;

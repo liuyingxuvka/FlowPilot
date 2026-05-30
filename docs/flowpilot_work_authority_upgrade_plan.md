@@ -66,7 +66,7 @@ The core rule is:
 | R7 | Wrong role uses a packet/result authority. | Packet holder role mismatch accepted. |
 | R8 | A packet uses the wrong output contract for the addressed role/task. | Contract/task/role mismatch accepted. |
 | R9 | Stale route/frontier/holder authority is reused after state changed. | Stale authority accepted. |
-| R10 | Legacy direct officer events remain the default path and compete with PM packets. | Legacy direct event accepted while PM packet authority exists. |
+| R10 | Unsupported historical direct officer events remain the default path and compete with PM packets. | Unsupported historical direct event accepted while PM packet authority exists. |
 | R11 | The fix blocks valid fixed-event contracts. | Fixed-event contract falsely rejected. |
 | R12 | The fix blocks valid current Router waits. | Direct live Router wait falsely rejected. |
 | R13 | The fix blocks valid PM role-work packet results. | PM packet result falsely rejected. |

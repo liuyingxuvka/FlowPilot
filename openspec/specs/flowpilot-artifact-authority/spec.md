@@ -7,14 +7,14 @@ TBD - created by archiving change unify-flowpilot-control-plane-contracts. Updat
 
 FlowPilot SHALL NOT rewrite a packet or result envelope after a Controller relay signature binds the envelope hash.
 
-#### Scenario: Legacy migration finds missing material packet projection fields
+#### Scenario: Unsupported historical migration finds missing material packet projection fields
 - **WHEN** a material packet envelope contains a Controller relay signature
-- **AND** legacy migration needs to backfill result body, result envelope, write target, or output contract projection fields
+- **AND** unsupported historical migration needs to backfill result body, result envelope, write target, or output contract projection fields
 - **THEN** migration MUST preserve the envelope file bytes and signed hash
 - **AND** migration MAY update mutable indexes, packet ledger projection fields, or a migration sidecar
 - **AND** the migration sidecar MUST identify the packet and the projection fields it supplied
 
-#### Scenario: Legacy migration sees an unsigned envelope
+#### Scenario: Unsupported historical migration sees an unsigned envelope
 - **WHEN** a material packet envelope has no Controller relay signature
 - **THEN** migration MAY update compatible envelope projection fields
 - **AND** it MUST still avoid reading or rewriting sealed packet bodies

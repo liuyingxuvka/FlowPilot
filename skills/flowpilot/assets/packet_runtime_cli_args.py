@@ -29,7 +29,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     intake.add_argument("--body-text", default="")
     intake.add_argument("--body-file", default="")
     intake.add_argument("--startup-options-json", default="")
-    intake.add_argument("--background-agents-authorized", action="store_true")
+    intake.add_argument("--runtime-roles-authorized", action="store_true")
     intake.add_argument("--heartbeat-requested", action="store_true")
     intake.add_argument("--display-surface", default="")
 

@@ -47,11 +47,11 @@ a valid object when possible.
 ### Requirement: Active Holder Lease Requires Live Role Evidence
 
 Active-holder leases MUST be issued only to the packet `to_role` and exact
-current agent id proven by the run's live crew ledger evidence.
+current agent id proven by the run's live role-binding ledger evidence.
 
 #### Scenario: Holder agent id is not current for role
 
-- **GIVEN** the target role has no live crew slot for the requested agent id
+- **GIVEN** the target role has no live role binding slot for the requested agent id
 - **WHEN** the packet runtime tries to issue an active-holder lease
 - **THEN** the lease is rejected
 

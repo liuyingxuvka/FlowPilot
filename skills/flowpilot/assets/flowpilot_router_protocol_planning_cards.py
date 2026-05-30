@@ -60,9 +60,9 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "controller",
     },
     {
-        "flag": "pm_crew_rehydration_freshness_card_delivered",
-        "label": "pm_crew_rehydration_freshness_card_delivered",
-        "card_id": "pm.crew_rehydration_freshness",
+        "flag": "pm_role_binding_recovery_freshness_card_delivered",
+        "label": "pm_role_binding_recovery_freshness_card_delivered",
+        "card_id": "pm.role_binding_recovery_freshness",
         "requires_flag": "resume_roles_restored",
         "to_role": "project_manager",
     },
@@ -70,7 +70,7 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "flag": "pm_resume_decision_card_delivered",
         "label": "pm_resume_decision_card_delivered",
         "card_id": "pm.resume_decision",
-        "requires_flag": "pm_crew_rehydration_freshness_card_delivered",
+        "requires_flag": "pm_role_binding_recovery_freshness_card_delivered",
         "to_role": "project_manager",
     },
     {

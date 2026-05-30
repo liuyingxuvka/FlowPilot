@@ -12,7 +12,7 @@ def main() -> int:
     parser.add_argument(
         "--text",
         action="store_true",
-        help="Print the legacy human-readable scenario review instead of JSON.",
+        help="Print the unsupported_historical human-readable scenario review instead of JSON.",
     )
     args = parser.parse_args()
 

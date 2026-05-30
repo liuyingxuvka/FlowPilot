@@ -37,7 +37,7 @@ def _apply_inject_role_io_protocol(
     del payload
     role = str(pending.get("to_role") or "")
     agent_id = str(pending.get("target_agent_id") or "")
-    if role not in router.CREW_ROLE_KEYS or not agent_id:
+    if role not in router.RUNTIME_ROLE_KEYS or not agent_id:
         raise router.RouterError("role I/O protocol injection requires a live target role and agent")
     resume_tick_id = str(pending.get("resume_tick_id") or router._latest_resume_tick_id(run_state))
     receipts = router._append_role_io_protocol_injections(
@@ -137,7 +137,7 @@ def _apply_load_role_recovery_state(
     router._load_role_recovery_state(project_root, run_root, run_state)
     return ActionHandlerOutcome()
 
-def _apply_recover_role_agents(
+def _apply_recover_role_bindings(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
@@ -169,8 +169,8 @@ def _apply_load_resume_state(
         "prompt_delivery_ledger": run_root / "prompt_delivery_ledger.json",
         "packet_ledger": run_root / "packet_ledger.json",
         "execution_frontier": run_root / "execution_frontier.json",
-        "crew_ledger": run_root / "crew_ledger.json",
-        "crew_memory": run_root / "crew_memory",
+        "role_binding_ledger": run_root / "role_binding_ledger.json",
+        "role_binding_memory": run_root / "role_binding_memory",
         "continuation_binding": router._continuation_binding_path(run_root),
         "continuation_quarantine": router._continuation_quarantine_path(run_root),
         "route_history_index": router._route_history_index_path(run_root),
@@ -179,7 +179,7 @@ def _apply_load_resume_state(
         "controller_action_ledger": router._controller_action_ledger_path(run_root),
     }
     missing = [name for name, path in required_paths.items() if not path.exists()]
-    crew_memory_files = sorted((run_root / "crew_memory").glob("*.json")) if (run_root / "crew_memory").exists() else []
+    role_binding_memory_files = sorted((run_root / "role_binding_memory").glob("*.json")) if (run_root / "role_binding_memory").exists() else []
     display_payload = router._display_plan_sync_payload(project_root, run_root, run_state)
     role_recovery_context = router._role_recovery_ready_context(project_root, run_root, run_state)
     roles_ready_from_recovery = role_recovery_context is not None
@@ -188,7 +188,7 @@ def _apply_load_resume_state(
         recovery_report = role_recovery_context["report"]
         pm_resume_decision_required = bool(recovery_report.get("pm_decision_required_before_normal_work"))
     ambiguous_state = bool(missing) or (
-        len(crew_memory_files) != len(router.CREW_ROLE_KEYS) and not roles_ready_from_recovery
+        len(role_binding_memory_files) != len(router.RUNTIME_ROLE_KEYS) and not roles_ready_from_recovery
     )
     resume_record = {
         "schema_version": router.RESUME_EVIDENCE_SCHEMA,
@@ -210,8 +210,8 @@ def _apply_load_resume_state(
             else None,
         },
         "missing_paths": missing,
-        "crew_memory_count": len(crew_memory_files),
-        "crew_memory_ready_for_rehydration": len(crew_memory_files) == len(router.CREW_ROLE_KEYS),
+        "role_binding_memory_count": len(role_binding_memory_files),
+        "role_binding_memory_ready_for_rehydration": len(role_binding_memory_files) == len(router.RUNTIME_ROLE_KEYS),
         "roles_restored_or_replaced": roles_ready_from_recovery,
         "role_rehydration_required": not roles_ready_from_recovery,
         "controller_visibility": "state_and_envelopes_only",
@@ -253,7 +253,7 @@ def _apply_load_resume_state(
         run_state["flags"]["role_recovery_state_loaded"] = True
     return ActionHandlerOutcome()
 
-def _apply_rehydrate_role_agents(
+def _apply_rehydrate_role_bindings(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
@@ -337,9 +337,9 @@ __all__ = (
     '_apply_deliver_mail',
     '_apply_controller_repair_work_packet',
     '_apply_load_role_recovery_state',
-    '_apply_recover_role_agents',
+    '_apply_recover_role_bindings',
     '_apply_load_resume_state',
-    '_apply_rehydrate_role_agents',
+    '_apply_rehydrate_role_bindings',
     '_apply_create_heartbeat_automation',
     '_apply_write_display_surface_status',
     '_apply_handle_control_blocker',

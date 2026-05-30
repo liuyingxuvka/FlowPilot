@@ -122,7 +122,7 @@ def _state_id(state: model.State) -> str:
         f"{state.prompt_hash_mismatch_blocks_daemon_recovery},"
         f"{state.daemon_recovery_status_write_succeeds}|"
         f"stop={state.stop_scope},{state.flowpilot_daemon_stopped},"
-        f"{state.flowpilot_heartbeat_stopped},{state.flowpilot_role_agents_stopped},"
+        f"{state.flowpilot_heartbeat_stopped},{state.flowpilot_role_bindings_stopped},"
         f"{state.unrelated_host_automations_active},{state.global_host_cleanup_claimed}|"
         f"root={state.shared_reconcile_before_next_action},"
         f"{state.next_action_from_reconciled_state},{state.root_fix_claimed}|"

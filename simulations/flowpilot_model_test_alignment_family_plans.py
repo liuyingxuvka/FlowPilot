@@ -884,9 +884,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
-                "repair_transactions.retired_event_replay_rejected",
+                "repair_transactions.unsupported_event_replay_rejected",
                 obligation_type="hazard",
-                description="A repair transaction cannot use the retired event_replay plan kind; current repair plans need a registered producer/action/handler/terminal stop.",
+                description="A repair transaction cannot use the unsupported event_replay plan kind; current repair plans need a registered producer/action/handler/terminal stop.",
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
@@ -926,12 +926,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("repair_transactions.material_rework_requires_fresh_producer",),
             ),
             _evidence(
-                "repair_transactions.negative.retired_event_replay_plan_kind",
-                test_name="test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
+                "repair_transactions.negative.unsupported_event_replay_plan_kind",
+                test_name="test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
                 path="tests/router_runtime/control_blockers.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
                 test_kind=NEGATIVE,
-                covers=("repair_transactions.retired_event_replay_rejected",),
+                covers=("repair_transactions.unsupported_event_replay_rejected",),
             ),
             _evidence(
                 "repair_transactions.negative.empty_followup_wait_fallback",

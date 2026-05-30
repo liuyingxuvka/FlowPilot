@@ -21,7 +21,7 @@ def _state_id(state: model.State) -> str:
         f"scenario={state.scenario}|status={state.status}|"
         f"canonical={state.canonical_result_exists},shadow={state.shadow_result_exists},"
         f"canonical_preferred={state.canonical_preferred},shadow_current={state.shadow_used_as_current}|"
-        f"retired_shadow={state.shadow_has_retired_alias_semantics},reported={state.shadow_pair_reported},"
+        f"unsupported_shadow={state.shadow_has_unsupported_alias_semantics},reported={state.shadow_pair_reported},"
         f"duplicate={state.exact_duplicate_reported},cleanup={state.cleanup_required_reported},"
         f"read_only={state.audit_read_only}"
     )

@@ -65,7 +65,7 @@ frontier, ledger, or run-state mutations.
 | `record_parent_segment_decision` | PM | `pm_records_parent_segment_decision` | route_progression/route_mutation | reviewer-passed parent replay and current prior-path context | replay not passed, stale evidence unresolved, child chain not closed |
 | `complete_parent_node` | PM | `pm_completes_parent_node_from_backward_replay` | route_progression | parent segment decision is `continue`, current route/frontier/ledger match | non-continue decision, stale legal-action snapshot, incomplete descendants |
 | `mutate_route` | PM | `pm_mutates_route_after_review_block` | route_mutation | reviewer/PM blocker requires structural route change | mutation would reuse stale evidence without marking |
-| `terminal_closure` | PM | terminal closure event | route_progression/legacy closure transaction | all route nodes completed and final gates pass | any active route node, open child, active blocker, or stale evidence |
+| `terminal_closure` | PM | terminal closure event | route_progression/unsupported historical closure transaction | all route nodes completed and final gates pass | any active route node, open child, active blocker, or stale evidence |
 
 ## Bug and Regression Checklist
 

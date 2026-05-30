@@ -188,11 +188,11 @@
     },
     {
       "audience": "project_manager",
-      "id": "pm.crew_rehydration_freshness",
+      "id": "pm.role_binding_recovery_freshness",
       "issued_by": "router",
       "kind": "phase",
-      "path": "cards/phases/pm_crew_rehydration_freshness.md",
-      "phase": "crew_rehydration_freshness",
+      "path": "cards/phases/pm_role_binding_recovery_freshness.md",
+      "phase": "role_binding_recovery_freshness",
       "source": "system"
     },
     {

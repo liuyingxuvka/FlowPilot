@@ -1,4 +1,4 @@
-"""Compatibility facade for the FlowPilot persistent Router daemon model.
+"""Unsupported_historical facade for the FlowPilot persistent Router daemon model.
 
 FlowGuard model for FlowPilot persistent Router daemon control.
 
@@ -53,7 +53,7 @@ Risk intent brief:
   actions, and keeps a foreground standby loop active during ordinary
   daemon-owned role waits; monitor current-work projection names active packet
   holders, passive reconciliation owners, and internal Router/Controller work
-  even when the legacy wait target is null; Router/Controller durable ledgers stay valid JSON
+  even when the unsupported_historical wait target is null; Router/Controller durable ledgers stay valid JSON
   after every write, fresh in-progress write locks defer daemon progress
   instead of surfacing as corruption, nested status/state writes during that
   wait do not terminate the daemon, runtime write-lock failures remain

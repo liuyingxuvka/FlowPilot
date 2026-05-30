@@ -55,7 +55,7 @@ with explicit parity evidence.
 
 #### Scenario: Unsafe IO split remains blocked
 
-- **WHEN** validation finds a missing compatibility export, changed lock
+- **WHEN** validation finds a missing unsupported historical export, changed lock
   behavior, changed JSON read/write behavior, or missing child contract evidence
 - **THEN** the change is blocked
 - **AND** the failed evidence is reported instead of being treated as a

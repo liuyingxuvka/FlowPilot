@@ -8,7 +8,7 @@
     "summary": "sequences=6 initial_states=1 traces=21",
     "violation_count": 0
   },
-  "flowguard_retired_input_rejection_explorer": {
+  "flowguard_unsupported_input_rejection_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
     "ok": true,
@@ -26,17 +26,17 @@
           "completion without current start"
         ],
         "state": {
-          "accepted_retired_input": false,
-          "canonicalized_retired_event": false,
+          "accepted_unsupported_input": false,
+          "canonicalized_unsupported_event": false,
           "current_event_seen": true,
           "current_layout_seen": true,
           "current_repair_transaction_seen": true,
           "current_role_output_seen": true,
           "current_start_seen": false,
           "current_startup_intake_seen": true,
-          "migrated_retired_input": false,
+          "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "retired_prompt_path_offered": false,
+          "unsupported_prompt_path_offered": false,
           "status": "complete"
         }
       },
@@ -47,101 +47,101 @@
           "prior authority quarantine was removed"
         ],
         "state": {
-          "accepted_retired_input": false,
-          "canonicalized_retired_event": false,
+          "accepted_unsupported_input": false,
+          "canonicalized_unsupported_event": false,
           "current_event_seen": true,
           "current_layout_seen": true,
           "current_repair_transaction_seen": true,
           "current_role_output_seen": true,
           "current_start_seen": true,
           "current_startup_intake_seen": true,
-          "migrated_retired_input": false,
+          "migrated_unsupported_input": false,
           "prior_authority_quarantined": false,
-          "retired_prompt_path_offered": false,
+          "unsupported_prompt_path_offered": false,
           "status": "complete"
         }
       },
-      "retired_event_canonicalized": {
+      "unsupported_event_canonicalized": {
         "detected": true,
-        "expected_failure": "retired event alias was canonicalized",
+        "expected_failure": "unsupported event alias was canonicalized",
         "failures": [
-          "retired event alias was canonicalized"
+          "unsupported event alias was canonicalized"
         ],
         "state": {
-          "accepted_retired_input": false,
-          "canonicalized_retired_event": true,
+          "accepted_unsupported_input": false,
+          "canonicalized_unsupported_event": true,
           "current_event_seen": true,
           "current_layout_seen": true,
           "current_repair_transaction_seen": true,
           "current_role_output_seen": true,
           "current_start_seen": true,
           "current_startup_intake_seen": true,
-          "migrated_retired_input": false,
+          "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "retired_prompt_path_offered": false,
+          "unsupported_prompt_path_offered": false,
           "status": "complete"
         }
       },
-      "retired_input_accepted": {
+      "unsupported_input_accepted": {
         "detected": true,
-        "expected_failure": "retired input was accepted as current runtime input",
+        "expected_failure": "unsupported input was accepted as current runtime input",
         "failures": [
-          "retired input was accepted as current runtime input"
+          "unsupported input was accepted as current runtime input"
         ],
         "state": {
-          "accepted_retired_input": true,
-          "canonicalized_retired_event": false,
+          "accepted_unsupported_input": true,
+          "canonicalized_unsupported_event": false,
           "current_event_seen": true,
           "current_layout_seen": true,
           "current_repair_transaction_seen": true,
           "current_role_output_seen": true,
           "current_start_seen": true,
           "current_startup_intake_seen": true,
-          "migrated_retired_input": false,
+          "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "retired_prompt_path_offered": false,
+          "unsupported_prompt_path_offered": false,
           "status": "complete"
         }
       },
-      "retired_input_migrated": {
+      "unsupported_input_migrated": {
         "detected": true,
-        "expected_failure": "retired input was migrated into current state",
+        "expected_failure": "unsupported input was migrated into current state",
         "failures": [
-          "retired input was migrated into current state"
+          "unsupported input was migrated into current state"
         ],
         "state": {
-          "accepted_retired_input": false,
-          "canonicalized_retired_event": false,
+          "accepted_unsupported_input": false,
+          "canonicalized_unsupported_event": false,
           "current_event_seen": true,
           "current_layout_seen": true,
           "current_repair_transaction_seen": true,
           "current_role_output_seen": true,
           "current_start_seen": true,
           "current_startup_intake_seen": true,
-          "migrated_retired_input": true,
+          "migrated_unsupported_input": true,
           "prior_authority_quarantined": true,
-          "retired_prompt_path_offered": false,
+          "unsupported_prompt_path_offered": false,
           "status": "complete"
         }
       },
-      "retired_prompt_path_offered": {
+      "unsupported_prompt_path_offered": {
         "detected": true,
-        "expected_failure": "active prompt offered a retired path",
+        "expected_failure": "active prompt offered a unsupported path",
         "failures": [
-          "active prompt offered a retired path"
+          "active prompt offered a unsupported path"
         ],
         "state": {
-          "accepted_retired_input": false,
-          "canonicalized_retired_event": false,
+          "accepted_unsupported_input": false,
+          "canonicalized_unsupported_event": false,
           "current_event_seen": true,
           "current_layout_seen": true,
           "current_repair_transaction_seen": true,
           "current_role_output_seen": true,
           "current_start_seen": true,
           "current_startup_intake_seen": true,
-          "migrated_retired_input": false,
+          "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "retired_prompt_path_offered": true,
+          "unsupported_prompt_path_offered": true,
           "status": "complete"
         }
       }
@@ -168,14 +168,14 @@
       "current_startup_intake_recorded",
       "unsupported_event_replay_transaction_rejected",
       "unsupported_next_new_invocation_alias_rejected",
-      "unsupported_retired_chat_startup_payload_rejected",
-      "unsupported_retired_layout_root_rejected",
-      "unsupported_retired_material_packet_contract_rejected",
-      "unsupported_retired_officer_event_alias_rejected",
-      "unsupported_retired_output_type_alias_rejected",
-      "unsupported_retired_reconcile_transaction_rejected",
-      "unsupported_retired_reviewer_event_alias_rejected",
-      "unsupported_retired_startup_answer_record_rejected",
+      "unsupported_unsupported_chat_startup_payload_rejected",
+      "unsupported_unsupported_layout_root_rejected",
+      "unsupported_unsupported_material_packet_contract_rejected",
+      "unsupported_unsupported_officer_event_alias_rejected",
+      "unsupported_unsupported_output_type_alias_rejected",
+      "unsupported_unsupported_reconcile_transaction_rejected",
+      "unsupported_unsupported_reviewer_event_alias_rejected",
+      "unsupported_unsupported_startup_answer_record_rejected",
       "unsupported_run_until_wait_new_invocation_alias_rejected"
     ],
     "missing_labels": [],

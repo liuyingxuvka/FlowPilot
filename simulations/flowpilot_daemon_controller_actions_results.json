@@ -106,7 +106,7 @@
   "parent_partition": "router_daemon_resume",
   "parent_reattachment": {
     "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
-    "compatibility_full_model": "flowpilot_persistent_router_daemon",
+    "unsupported historical_full_model": "flowpilot_persistent_router_daemon",
     "parent": "meta",
     "parent_consumes_this_child": true,
     "partition": "router_daemon_resume"

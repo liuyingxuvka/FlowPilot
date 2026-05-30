@@ -163,7 +163,7 @@ busy source, and wait reason.
 - **AND** it does not expose sealed packet or result body content.
 
 ### Requirement: Router direct dispatch replaces Reviewer pre-dispatch approval for new PM packets
-Router SHALL use direct-dispatch validation as the active pre-worker gate for new PM-authored work packets. Reviewer pre-dispatch approval SHALL remain legacy-only and SHALL NOT be required before relaying a valid PM-authored Worker or Officer packet.
+Router SHALL use direct-dispatch validation as the active pre-worker gate for new PM-authored work packets. Reviewer pre-dispatch approval SHALL remain unsupported historical-only and SHALL NOT be required before relaying a valid PM-authored Worker or Officer packet.
 
 #### Scenario: Valid PM packet relays after Router validation
 - **WHEN** PM registers a work packet for a Worker or Officer

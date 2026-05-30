@@ -14,7 +14,7 @@
     "startup_answer_recorded",
     "startup_review_written",
     "pm_gate_decision",
-    "crew_memory_rehydrated",
+    "role_binding_memory_rehydrated",
     "continuation_evidence_written",
     "route_created",
     "route_mutated",

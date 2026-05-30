@@ -15,10 +15,10 @@ ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "flowpilot_new_only_runtime_results.json"
 
 HAZARD_EXPECTED_FAILURES = {
-    "retired_input_accepted": "retired input was accepted as current runtime input",
-    "retired_input_migrated": "retired input was migrated into current state",
-    "retired_event_canonicalized": "retired event alias was canonicalized",
-    "retired_prompt_path_offered": "active prompt offered a retired path",
+    "unsupported_input_accepted": "unsupported input was accepted as current runtime input",
+    "unsupported_input_migrated": "unsupported input was migrated into current state",
+    "unsupported_event_canonicalized": "unsupported event alias was canonicalized",
+    "unsupported_prompt_path_offered": "active prompt offered a unsupported path",
     "prior_authority_quarantine_removed": "prior authority quarantine was removed",
     "completion_without_current_start": "completion without current start",
 }
@@ -29,9 +29,9 @@ def _state_id(state: model.State) -> str:
         f"status={state.status}|current={state.current_start_seen},"
         f"{state.current_startup_intake_seen},{state.current_event_seen},"
         f"{state.current_role_output_seen},{state.current_repair_transaction_seen},"
-        f"{state.current_layout_seen}|retired={state.accepted_retired_input},"
-        f"{state.migrated_retired_input},{state.canonicalized_retired_event},"
-        f"{state.retired_prompt_path_offered}|"
+        f"{state.current_layout_seen}|unsupported={state.accepted_unsupported_input},"
+        f"{state.migrated_unsupported_input},{state.canonicalized_unsupported_event},"
+        f"{state.unsupported_prompt_path_offered}|"
         f"prior_quarantined={state.prior_authority_quarantined}"
     )
 
@@ -140,7 +140,7 @@ def _explore_current_path() -> dict[str, object]:
     }
 
 
-def _explore_retired_input_rejections() -> dict[str, object]:
+def _explore_unsupported_input_rejections() -> dict[str, object]:
     report = Explorer(
         workflow=model.build_workflow(),
         initial_states=(model.initial_state(),),
@@ -184,20 +184,20 @@ def run_checks() -> dict[str, object]:
     safe_graph = _graph_report(graph)
     progress = _check_progress(graph)
     current_explorer = _explore_current_path()
-    retired_input_explorer = _explore_retired_input_rejections()
+    unsupported_input_explorer = _explore_unsupported_input_rejections()
     hazards = _check_hazards()
     return {
         "ok": (
             bool(safe_graph["ok"])
             and bool(progress["ok"])
             and bool(current_explorer["ok"])
-            and bool(retired_input_explorer["ok"])
+            and bool(unsupported_input_explorer["ok"])
             and bool(hazards["ok"])
         ),
         "safe_graph": safe_graph,
         "progress": progress,
         "flowguard_current_path_explorer": current_explorer,
-        "flowguard_retired_input_rejection_explorer": retired_input_explorer,
+        "flowguard_unsupported_input_rejection_explorer": unsupported_input_explorer,
         "hazard_checks": hazards,
     }
 

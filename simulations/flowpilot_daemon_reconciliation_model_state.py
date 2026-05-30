@@ -74,7 +74,7 @@ class State:
     daemon_alive: bool = True
     reconciliation_barrier_started: bool = False
 
-    pending_action_kind: str = "await_role_decision"  # none | await_role_decision | rehydrate_role_agents
+    pending_action_kind: str = "await_role_decision"  # none | await_role_decision | rehydrate_role_bindings
     pending_action_status: str = "waiting"  # none | pending | waiting | done | blocked
     pending_action_returned_again: bool = False
     next_action_computed: bool = False

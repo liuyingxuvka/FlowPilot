@@ -22,13 +22,13 @@ for review.
    `continues_from_run_id` and write a prior-work import packet that treats old
    runs and project files as input materials. Do not reuse old control state,
    old live-agent IDs, old screenshots, or old route gates as current evidence.
-5. Ask the native startup intake options: background-agent permission,
+5. Ask the native startup intake options: runtime-role permission,
    scheduled-continuation permission, and whether to open Cockpit UI. Stop immediately after asking and wait
    for a later user reply. Do not emit the banner, create route state, load
-   child skills, spawn subagents, probe heartbeat, run image generation, or
+   child skills, open sidecar roles, probe heartbeat, run image generation, or
    start implementation in the question-asking response.
 6. Record all three later user answers explicitly. Do not infer
-   background-agent authorization, scheduled-continuation authorization,
+   runtime-role authorization, scheduled-continuation authorization,
    display surface, or fallback execution from invocation text, `.flowpilot/`
    state, host limits, or previous routes. If the user chose Cockpit, open the
    Cockpit UI as soon as startup state is ready; if the user chose chat, show
@@ -36,14 +36,14 @@ for review.
 7. Emit `startup_banner.template.md` in chat only after the complete explicit
    answer set has been recorded.
 8. Run FlowPilot's internal self-interrogation.
-9. Create a fresh fixed six-agent crew for the new formal FlowPilot task, write
-   `crew_ledger.json`, and write a compact role memory packet for every
-   required crew role. The default startup target is six live background
-   subagents freshly spawned after the startup answers and current route
+9. Create a fresh fixed role-binding role binding for the new formal FlowPilot task, write
+   `role_binding_ledger.json`, and write a compact role memory packet for every
+   required runtime responsibility. The default startup target is runtime-requested background
+   sidecar roles freshly opened after the startup answers and current route
    allocation where the host and current tool policy permit them. Prior-route
    `agent_id` values are audit history only. If authorization is missing or
    startup fails, pause and ask. Continue with memory-seeded single-agent
-   six-role continuity only after an explicit user fallback decision.
+   runtime-role continuity only after an explicit user fallback decision.
 10. PM issues a material-intake packet envelope/body pair; after router
    direct-dispatch, an authorized non-controller worker reads the body and
    writes the material scan result back to PM. PM records a package-result
@@ -163,9 +163,9 @@ for review.
    show the runway in chat.
 28. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
-   current route, crew, role memory, live-subagent startup decision,
+   current route, role bindings, role memory, runtime-collaboration startup decision,
    continuation, and visible-plan evidence. The human-like reviewer then
-   personally checks the real route, state, frontier, crew, role memory,
+   personally checks the real route, state, frontier, role bindings, role memory,
    heartbeat or manual-resume evidence, automation records, and cleanup
    evidence, then writes
    `.flowpilot/runs/<run-id>/startup_review/latest.json`.
@@ -178,13 +178,13 @@ for review.
 
    Work beyond startup is blocked until the PM-owned gate is open and the
    PM records `work_beyond_startup_allowed: true`. A route-local file without
-   matching canonical state/frontier/crew/continuation evidence, a startup
+   matching canonical state/frontier/role-binding/continuation evidence, a startup
    record with neither live agents nor explicit fallback authorization, or
    missing requested old-route cleanup is blocked and must be repaired before
    continuing.
-   Before PM runway work on heartbeat or manual resume, restore all six role
-   identities and work memories from `crew_ledger.json` and `crew_memory/`,
-   then write a crew rehydration report. Do not lazily rehydrate roles only
+   Before PM runway work on heartbeat or manual resume, restore all runtime role
+   identities and work memories from `role_binding_ledger.json` and `role_binding_memory/`,
+   then write a role binding recovery report. Do not lazily rehydrate roles only
    when first needed.
 29. Before terminal completion, have the project manager rebuild
    `final_route_wide_gate_ledger.json` from the current route and frontier,
@@ -230,13 +230,13 @@ for review.
   native/fallback visible plan sync method, visible plan projection depth, the
   realtime FlowPilot Route Sign chat/UI display gate, and startup PM gate and
   resume notice metadata.
-- `crew_ledger.template.json`: persistent six-agent crew roles, ids, status,
+- `role_binding_ledger.template.json`: persistent role-binding runtime responsibilities, ids, status,
   authority boundaries, memory paths, recovery rules, and terminal archive
   state.
-- `crew_memory/role_memory.template.json`: compact per-role recovery memory
-  packet used to resume or replace unavailable subagents after heartbeat or
+- `role_binding_memory/role_memory.template.json`: compact per-role recovery memory
+  packet used to resume or replace unavailable sidecar roles after heartbeat or
   manual resume.
-- `crew_memory/crew_rehydration_report.template.json`: resume-time all-role recovery report
+- `role_binding_memory/role_binding_recovery_report.template.json`: resume-time all-role recovery report
   proving project manager, reviewer, both FlowGuard officers, and both workers
   were restored from ledger and role memory before PM runway work.
 - `material_intake_packet.template.json`: authorized-worker material inventory,

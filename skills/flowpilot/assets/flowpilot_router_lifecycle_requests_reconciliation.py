@@ -148,24 +148,24 @@ def _reconcile_terminal_lifecycle_authorities(
             }
         )
 
-    crew_path = run_root / "crew_ledger.json"
-    if crew_path.exists():
-        crew = read_json(crew_path)
-        source_paths["crew_ledger"] = project_relative(project_root, crew_path)
-        role_slots = crew.get("role_slots") if isinstance(crew.get("role_slots"), list) else []
+    role_binding_path = run_root / "role_binding_ledger.json"
+    if role_binding_path.exists():
+        role_binding = read_json(role_binding_path)
+        source_paths["role_binding_ledger"] = project_relative(project_root, role_binding_path)
+        role_slots = role_binding.get("role_slots") if isinstance(role_binding.get("role_slots"), list) else []
         live_before = sum(1 for slot in role_slots if isinstance(slot, dict) and str(slot.get("status") or "").startswith("live_"))
         for slot in role_slots:
             if isinstance(slot, dict):
                 slot["status"] = "stopped_with_run"
                 slot["live_agent_active"] = False
                 slot["stopped_at"] = reconciled_at
-        crew["lifecycle_status"] = mode
-        crew["terminal_reconciled_at"] = reconciled_at
-        write_json(crew_path, crew)
+        role_binding["lifecycle_status"] = mode
+        role_binding["terminal_reconciled_at"] = reconciled_at
+        write_json(role_binding_path, role_binding)
         receipts.append(
             {
-                "authority": "crew_ledger",
-                "path": project_relative(project_root, crew_path),
+                "authority": "role_binding_ledger",
+                "path": project_relative(project_root, role_binding_path),
                 "live_role_slots_before": live_before,
                 "live_role_slots_after": 0,
             }

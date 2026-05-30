@@ -104,19 +104,19 @@ def _apply_startup_bootloader_receipt_effects(
     elif action_type == "start_role_slots":
         role_slots = router._normalize_role_agent_records(bootstrap, receipt_payload)
         write_json(
-            run_root / "crew_ledger.json",
+            run_root / "role_binding_ledger.json",
             {
-                "schema_version": "flowpilot.crew_ledger.v1",
+                "schema_version": "flowpilot.role_binding_ledger.v1",
                 "run_id": run_state["run_id"],
-                "background_agents_mode": (bootstrap.get("startup_answers") or {}).get("background_agents"),
+                "runtime_role_assistance_mode": (bootstrap.get("startup_answers") or {}).get("runtime_role_assistances"),
                 "role_slots": role_slots,
                 "created_at": utc_now(),
             },
         )
-        crew_memory_root = run_root / "crew_memory"
-        crew_memory_root.mkdir(parents=True, exist_ok=True)
-        for role in CREW_ROLE_KEYS:
-            write_json(crew_memory_root / f"{role}.json", router._create_empty_role_memory(str(run_state["run_id"]), role))
+        role_binding_memory_root = run_root / "role_binding_memory"
+        role_binding_memory_root.mkdir(parents=True, exist_ok=True)
+        for role in RUNTIME_ROLE_KEYS:
+            write_json(role_binding_memory_root / f"{role}.json", router._create_empty_role_memory(str(run_state["run_id"]), role))
         _append_role_io_protocol_injections(
             project_root,
             run_root,

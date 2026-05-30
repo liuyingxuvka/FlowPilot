@@ -2,7 +2,7 @@
 
 Created with FlowGuard: https://github.com/liuyingxuvka/FlowGuard
 Purpose: review the cross-repository observability plan for long FlowGuard
-checks before changing FlowGuard skill guidance or FlowPilot legacy runners.
+checks before changing FlowGuard skill guidance or FlowPilot unsupported_historical runners.
 Guards against: scattered logs, missing exit evidence, stdout progress
 pollution, final-only runners being misreported as live progress, missing local
 skill sync, and pushing the wrong GitHub repository before user approval.

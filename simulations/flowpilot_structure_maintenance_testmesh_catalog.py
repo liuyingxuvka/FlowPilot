@@ -379,7 +379,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_terminal_replay_summary",
-        command="python -m unittest -v -k test_reconcile_recovers_legacy_terminal_closure_state -k test_reconcile_run_recovers_terminal_status_from_current_pointer -k test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions -k test_terminal_summary_payload_requires_attribution_display_and_run_root_sources tests.router_runtime.terminal",
+        command="python -m unittest -v -k test_reconcile_recovers_unsupported_historical_terminal_closure_state -k test_reconcile_run_recovers_terminal_status_from_current_pointer -k test_terminal_replay_requires_reviewed_segments_and_pm_segment_decisions -k test_terminal_summary_payload_requires_attribution_display_and_run_root_sources tests.router_runtime.terminal",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=4,
@@ -470,7 +470,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_resume_liveness_faults",
-        command="python -m unittest -v -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_legacy_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
+        command="python -m unittest -v -k test_blocked_role_recovery_receipt_reclaims_existing_report -k test_unsupported_historical_liveness_fault_no_output_redirects_to_reissue_not_recovery -k test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work -k test_role_no_output_escalates_to_pm_after_two_reissues -k test_role_no_output_report_reissues_same_work_before_role_recovery tests.router_runtime.resume",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=5,
@@ -509,7 +509,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_control_blockers_pm_repair_decisions",
-        command="python -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_retired_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
+        command="python -m unittest -v -k test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it -k test_pm_repair_decision_can_repeat_for_new_control_blocker -k test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind -k test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target -k test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write tests.router_runtime.control_blockers",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=5,
@@ -535,7 +535,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_control_blockers_followup_fatal",
-        command="python -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_legacy_invalid_wait_falls_back_to_pm_repair_decision -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
+        command="python -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_unsupported_historical_invalid_wait_falls_back_to_pm_repair_decision -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=3,
@@ -587,7 +587,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_quality_gates_background_manifest",
-        command="python -m unittest -v -k test_background_agents_allow_requires_six_fresh_live_agent_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
+        command="python -m unittest -v -k test_runtime_role_assistances_allow_requires_six_current_role_binding_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=4,
@@ -678,7 +678,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_material_modeling_modelability",
-        command="python -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_compatibility_alias -k test_legacy_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
+        command="python -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_unsupported_historical_alias -k test_unsupported_historical_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=5,

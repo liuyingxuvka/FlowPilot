@@ -3819,29 +3819,29 @@
       "evidence_current": true,
       "evidence_role": "primary_known_friction_gate",
       "evidence_status": "passed",
-      "expected_safe_behavior": "Router validates the current-run crew rehydration report, reclaims the resume postcondition idempotently, and only opens a blocker when current-run evidence is absent or invalid.",
+      "expected_safe_behavior": "Router validates the current-run role binding recovery report, reclaims the resume postcondition idempotently, and only opens a blocker when current-run evidence is absent or invalid.",
       "forbidden_shortcuts": [
-        "ignore_current_run_crew_rehydration_report",
+        "ignore_current_run_role_binding_recovery_report",
         "open_rehydrate_blocker_before_replay_scan"
       ],
       "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
-      "full_confidence_boundary": "Covers current-run six-role report replay and invalid-report blocking; does not prove host agents stay alive forever after rehydration.",
+      "full_confidence_boundary": "Covers current-run runtime-role report replay and invalid-report blocking; does not prove host agents stay alive forever after rehydration.",
       "global_gates": [
         "historical_live_run_replay",
         "current_transcript_regression",
         "background_final_artifact_contract",
         "scoped_confidence_disclosure"
       ],
-      "historical_bad_case": "run-20260527-212331 had a valid six-role rehydration report, but a later receipt replay did not restore resume_roles_restored and reopened a mechanical control blocker.",
+      "historical_bad_case": "run-20260527-212331 had a valid runtime-role rehydration report, but a later receipt replay did not restore resume_roles_restored and reopened a mechanical control blocker.",
       "live_ai_semantic_quality_proven": false,
       "model_check": "python simulations/run_flowpilot_resume_checks.py",
       "model_obligation": "resume.resume_rehydration_obligations_replayed_mechanically",
       "priority": "P0",
-      "replay_fixture": "run-20260527-212331.crew_rehydration_report_ready_but_resume_flags_false",
+      "replay_fixture": "run-20260527-212331.role_binding_recovery_report_ready_but_resume_flags_false",
       "runtime_surface": "startup resume binding reports + Controller scheduler receipt reconciliation",
       "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
       "source_class": "resume_rehydration_postcondition_replay",
-      "trigger_state": "Heartbeat/manual resume sees a done rehydrate_role_agents receipt or report while run-state flags are stale or incomplete."
+      "trigger_state": "Heartbeat/manual resume sees a done rehydrate_role_bindings receipt or report while run-state flags are stale or incomplete."
     },
     {
       "child_evidence_ids": [

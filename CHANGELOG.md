@@ -124,7 +124,7 @@ All notable changes to FlowPilot will be documented in this file.
   Reviewer, Validator, and Closure officer all use the same packet lifecycle:
   issued packet, lease, ACK, sealed result, packet-owned ledger side effect,
   and next packet.
-- Removed the retired formal side-command surface from `flowpilot_new.py`;
+- Removed the unsupported formal side-command surface from `flowpilot_new.py`;
   fresh formal operation now advances through `lease-agent`, `ack`, and
   `submit-result` only after startup.
 - Updated fake-host rehearsal, runtime scenario runners, and complete-system
@@ -145,10 +145,10 @@ All notable changes to FlowPilot will be documented in this file.
   and completed role packets must leave no active dirty lease rows.
 - Added a real black-box fake-project rehearsal that starts through the
   startup intake script, drives only public CLI packet commands, and covers
-  normal completion plus wrong-role, missing-ACK, ACK-only, and retired
+  normal completion plus wrong-role, missing-ACK, ACK-only, and unsupported
   side-command error flows.
 - Added model-test alignment obligations and source-audited evidence for the
-  symmetric packet lifecycle, black-box fake-project rehearsal, and retired
+  symmetric packet lifecycle, black-box fake-project rehearsal, and unsupported
   side-command surface.
 
 ## 0.9.19 - 2026-05-29
@@ -182,7 +182,7 @@ All notable changes to FlowPilot will be documented in this file.
   leases, modeled FlowGuard work orders, startup intake, Cockpit/status,
   review/repair/closure, migration/cutover, historical replay, install sync,
   background regression, and live-host evidence gates.
-- Extended `ai_project_runtime` with current-run shell persistence,
+- Extended `flowpilot_core_runtime` with current-run shell persistence,
   append-only event projection, startup-intake import, dynamic host evidence,
   route mutation records, FlowGuard proof boundaries, review metadata,
   Cockpit fallback, migration gates, and materialized run artifacts.
@@ -209,7 +209,7 @@ All notable changes to FlowPilot will be documented in this file.
 - Added the `build-black-box-flowpilot-runtime` OpenSpec change for the clean
   black-box runtime that turns the protocol kernel into executable ledger,
   lease, packet, review, FlowGuard, closure, and console behavior.
-- Added `skills/flowpilot/assets/ai_project_runtime/` with a serializable
+- Added `skills/flowpilot/assets/flowpilot_core_runtime/` with a serializable
   project ledger, dynamic agent leases, sealed task/result packets,
   FlowGuard work-order scheduling, independent review, final backward closure,
   and safe public console projection.
@@ -224,8 +224,8 @@ All notable changes to FlowPilot will be documented in this file.
 
 - Updated install checks so the clean runtime assets, simulations, result
   artifacts, and tests are part of local source/install parity.
-- Kept the clean runtime additive: legacy FlowPilot remains reference material,
-  while old runtime state and fixed six-role startup are not accepted as new
+- Kept the clean runtime additive: unsupported historical FlowPilot remains reference material,
+  while old runtime state and fixed runtime-role startup are not accepted as new
   runtime authority.
 
 ## 0.9.16 - 2026-05-29
@@ -238,8 +238,8 @@ All notable changes to FlowPilot will be documented in this file.
 - Added protocol stress-testing documentation covering fake actors, replacement
   workers, historical bad-case replay, seeded long-run checks, FlowGuard target
   discipline, and TestMesh evidence rows.
-- Added `simulations/ai_project_protocol_stress_model.py` and
-  `simulations/run_ai_project_protocol_stress_checks.py` to rehearse multi-round
+- Added `simulations/flowpilot_protocol_kernel_stress_model.py` and
+  `simulations/run_flowpilot_protocol_kernel_stress_checks.py` to rehearse multi-round
   leases, stale route returns, weak/self review, stale evidence, progress-only
   background evidence, wrong FlowGuard targets, and final closure gaps.
 - Added focused tests for the stress harness, historical replay, random
@@ -260,16 +260,16 @@ All notable changes to FlowPilot will be documented in this file.
 
 - Added the `introduce-ai-project-protocol-kernel` OpenSpec change for a clean
   AI project execution protocol that uses a black-box ledger, dynamic
-  background-agent leases, sealed task/result packets, independent review,
+  runtime-role leases, sealed task/result packets, independent review,
   FlowGuard route scheduling, and final backward closure.
-- Added a legacy source snapshot under
-  `backups/ai-project-protocol-legacy-snapshot-20260529/` so old FlowPilot
+- Added a unsupported historical source snapshot under
+  `backups/ai-project-protocol-unsupported historical-snapshot-20260529/` so old FlowPilot
   assets and failure cases remain read-only references instead of the new
   protocol foundation.
-- Added `skills/flowpilot/assets/ai_project_protocol/` with the protocol
+- Added `skills/flowpilot/assets/flowpilot_protocol_kernel/` with the protocol
   contract, schema examples, and FlowGuard route scheduler table.
-- Added `simulations/ai_project_protocol_model.py` and
-  `simulations/run_ai_project_protocol_checks.py` to rehearse fake-agent
+- Added `simulations/flowpilot_protocol_kernel_model.py` and
+  `simulations/run_flowpilot_protocol_kernel_checks.py` to rehearse fake-agent
   success and failure paths before runtime integration.
 - Added focused tests for the AI project protocol kernel assets, route table,
   model checks, and false-completion hazards.
@@ -354,7 +354,7 @@ All notable changes to FlowPilot will be documented in this file.
 
 ### Changed
 
-- Reduced the remaining heavy compatibility facades to small import surfaces
+- Reduced the remaining heavy unsupported historical facades to small import surfaces
   while preserving router exports, bound-router behavior, and packet
   control-plane model behavior.
 - Updated StructureMesh/TestMesh/model-alignment evidence, install required
@@ -377,7 +377,7 @@ All notable changes to FlowPilot will be documented in this file.
 
 ### Changed
 
-- Refreshed legacy prompt/card and system-card bundle maintenance notes so
+- Refreshed unsupported historical prompt/card and system-card bundle maintenance notes so
   future work targets the new facades and helper modules instead of stale
   monolithic runtime files.
 
@@ -415,7 +415,7 @@ All notable changes to FlowPilot will be documented in this file.
 
 ### Changed
 
-- Reduced `flowpilot_router.py` to a much smaller compatibility facade while
+- Reduced `flowpilot_router.py` to a much smaller unsupported historical facade while
   preserving public names, imports, persisted JSON shapes, and CLI behavior.
 - Updated StructureMesh/TestMesh evidence, card-instruction coverage scanning,
   handoff notes, and local version metadata for the new router owner modules.
@@ -439,7 +439,7 @@ All notable changes to FlowPilot will be documented in this file.
 ### Changed
 
 - Reduced `flowpilot_router.py` further by moving the large declarative
-  protocol/catalog band behind the compatibility facade.
+  protocol/catalog band behind the unsupported historical facade.
 - Updated StructureMesh ownership evidence for the new protocol catalog owner
   while preserving the public router import and CLI paths.
 - Prepared local release materials for v0.9.8; GitHub push and remote release
@@ -484,19 +484,19 @@ All notable changes to FlowPilot will be documented in this file.
 ### Changed
 
 - Converted `scripts/flowpilot_user_flow_diagram.py` and
-  `scripts/check_install.py` into compatibility entrypoints backed by smaller
+  `scripts/check_install.py` into unsupported historical entrypoints backed by smaller
   source-of-truth modules.
 - Reduced `packet_runtime.py`, `meta_model.py`, and `capability_model.py` into
   facade-style modules that delegate cohesive work to focused helpers.
 - Moved selected router external-event intake and controller action helper
   logic behind smaller module boundaries without changing public event names,
   command arguments, imports, or persisted JSON shapes.
-- Converted the aggregate router runtime test file into a compatibility loader
+- Converted the aggregate router runtime test file into a unsupported historical loader
   backed by direct domain-owned test modules.
 - Moved low-risk external-event finalization and additional Controller action
   bodies behind focused router helper modules.
 - Converted prompt-isolation, cross-plane friction, and persistent router
-  daemon models into compatibility facades backed by state, transition,
+  daemon models into unsupported historical facades backed by state, transition,
   invariant, hazard, audit, and strategy helpers where applicable.
 - Split the router validation tier into smaller packet/card/ACK, route,
   terminal/closure/resume, and supporting child suites while keeping release
@@ -595,7 +595,7 @@ All notable changes to FlowPilot will be documented in this file.
 - Preserved the router facade import surface after helper extraction, including
   the role-output envelope helper used by dispatch paths.
 - Recovered terminal closure approval when durable terminal authorities prove a
-  legacy run is already closed.
+  unsupported historical run is already closed.
 - Synchronized local installed FlowPilot skill freshness after the main-branch
   merge so the installed skill matches the repository source.
 
@@ -630,8 +630,8 @@ All notable changes to FlowPilot will be documented in this file.
   model and PM product-model acceptance, while Process route checks now verify
   route coverage against that product model.
 - Reduced final-closure role slices to PM and Reviewer while preserving all
-  legacy completion obligations, final ledger, and backward replay checks.
-- Marked Product route check events as legacy compatibility paths instead of
+  unsupported historical completion obligations, final ledger, and backward replay checks.
+- Marked Product route check events as unsupported historical unsupported historical paths instead of
   default route-skeleton gates.
 
 ### Fixed
@@ -696,7 +696,7 @@ All notable changes to FlowPilot will be documented in this file.
   event contract checks, event capability registry checks, model mesh checks,
   and the unified control transaction registry for route progression,
   packet dispatch, result absorption, reviewer gates, control blockers,
-  route mutation, and legacy reconciliation.
+  route mutation, and unsupported historical reconciliation.
 - Added direct Router paths for FlowPilot role outputs, startup fact reports,
   ACK/check-in handling, and FlowPilot output envelopes so the Controller stays
   on envelope relay rather than informal body interpretation.
@@ -778,7 +778,7 @@ All notable changes to FlowPilot will be documented in this file.
 
 ### Fixed
 
-- Hardened role spawn and resume normalization so missing or downgraded
+- Hardened role open and resume normalization so missing or downgraded
   background role model/reasoning policy is rejected before PM startup or
   resume decisions can depend on that role record.
 - Reduced friction from missing hand-written report fields by moving fixed
@@ -786,7 +786,7 @@ All notable changes to FlowPilot will be documented in this file.
   role-output runtime while keeping semantic judgement with the owning role and
   downstream gates.
 - Updated router, output-contract, and protocol-conformance checks to accept
-  compact role-output envelopes while preserving compatibility with legacy
+  compact role-output envelopes while preserving unsupported historical with unsupported historical
   top-level role-output path/hash pairs.
 - Changed the public release preflight to use the fast smoke path so the
   release gate reuses valid FlowGuard meta/capability proofs instead of
@@ -883,7 +883,7 @@ All notable changes to FlowPilot will be documented in this file.
 ### Added
 
 - Added FlowGuard resume-model coverage for router wake recording, visible plan
-  restoration, six-role liveness preflight, and timeout-unknown handling.
+  restoration, runtime-role liveness preflight, and timeout-unknown handling.
 
 ### Fixed
 
@@ -968,7 +968,7 @@ All notable changes to FlowPilot will be documented in this file.
 - Added a command-refinement model and release checks for FlowPilot command
   folding candidates.
 - Added CLI parsing coverage for all active router subcommands and explicit
-  absence checks for retired high-risk folding commands.
+  absence checks for unsupported high-risk folding commands.
 
 ### Changed
 
@@ -985,7 +985,7 @@ All notable changes to FlowPilot will be documented in this file.
   payload retries.
 - Removed incomplete high-risk command folds that could break startup before
   FlowPilot reached the three-question pre-banner gate.
-- Prevented retired fold commands such as `deliver-card-bundle-checked`,
+- Prevented unsupported fold commands such as `deliver-card-bundle-checked`,
   `relay-checked`, `prepare-startup-fact-check`, and
   `record-role-output-checked` from remaining exposed as CLI commands.
 
@@ -1088,9 +1088,9 @@ All notable changes to FlowPilot will be documented in this file.
 - Updated heartbeat/manual resume so continuation loads the packet ledger,
   requires PM `controller_reminder`, requires reviewer dispatch policy before
   worker execution, and blocks ambiguous worker state for PM recovery.
-- Updated local install sync checks to require the legacy Cockpit prototype to
+- Updated local install sync checks to require the unsupported historical Cockpit prototype to
   be absent from the active tree before a clean UI restart.
-- Updated install and local-sync audits to fail if retired external recovery
+- Updated install and local-sync audits to fail if unsupported external recovery
   scripts, prompts, or templates reappear in the active source tree.
 
 ### Removed
@@ -1098,7 +1098,7 @@ All notable changes to FlowPilot will be documented in this file.
 - Removed the previous native Cockpit prototype from the active source tree so
   the next Windows desktop UI can be rebuilt from scratch without reusing old
   UI assets or implementation code.
-- Removed the retired external recovery scripts, Windows task helper, prompt,
+- Removed the unsupported external recovery scripts, Windows task helper, prompt,
   template, and obsolete findings page from the active source tree.
 
 ### Fixed

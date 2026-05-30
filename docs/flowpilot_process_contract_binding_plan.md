@@ -54,7 +54,7 @@ layer decides which registry rows are legal for the active process kind.
 | 4 | Add Router binding validation at packet creation | Before any packet is written, Router validates process kind, contract family, target role, packet type, and required result recipient. | Mismatched packet is rejected before files/state are written. |
 | 5 | Add Router binding validation at result return | Router validates completed-by role, result `next_recipient`, and expected absorbing role. No silent recipient normalization for new protocol paths. | Bad result envelopes are rejected; valid PM role-work results return to PM. |
 | 6 | Add Router binding validation at wait creation | Every wait event must declare a legal producer role, and `to_role` must match that producer or route to it first. | A PM wait for a reviewer-only event is rejected before persistence. |
-| 7 | Keep legacy repair compatibility explicit | Existing delivered blockers may still be recovered through documented legacy fallback, but new packets/waits use strict binding. | Regression tests prove old blocker recovery still works without allowing new mismatches. |
+| 7 | Keep unsupported historical repair unsupported historical explicit | Existing delivered blockers may still be recovered through documented unsupported historical fallback, but new packets/waits use strict binding. | Regression tests prove old blocker recovery still works without allowing new mismatches. |
 | 8 | Sync local install and local git only | After tests pass, sync the installed local skill from this repository and make a scoped local commit. | Installed skill matches repo; no remote push. |
 
 ## Bug/Risk Checklist
@@ -71,7 +71,7 @@ layer decides which registry rows are legal for the active process kind.
 | R8 | Current-node worker packets are accidentally forced to use PM role-work contracts. | Real node execution would stop going through reviewer review. | Safe current-node scenario plus wrong-for-current-node hazard. |
 | R9 | Officer model-miss requests are blocked because they are not PM role-work. | PM must still delegate model-miss analysis. | Safe officer-report scenario. |
 | R10 | Material scan or research flows lose reviewer-first review. | Evidence quality gates can be bypassed. | Safe material/research reviewer recipient scenarios. |
-| R11 | Existing delivered control blockers become unrecoverable. | Active runs need an escape path from old artifacts. | Legacy recovery scenario with explicit compatibility lane. |
+| R11 | Existing delivered control blockers become unrecoverable. | Active runs need an escape path from old artifacts. | Unsupported historical recovery scenario with explicit unsupported historical lane. |
 | R12 | Source conformance passes while only prose says the binding exists. | Runtime can still drift from docs. | Source scan must check executable Router/contract facts, not only docs. |
 
 ## FlowGuard Coverage Contract
@@ -83,7 +83,7 @@ layer decides which registry rows are legal for the active process kind.
 | Result recipient drift is caught | Hazard: result recipient differs from binding-required recipient; model rejects it. | Runtime test rejects bad result envelope instead of normalizing on strict paths. |
 | Wait producer mismatch is caught | Hazard: wait for reviewer event with PM as `to_role`; model rejects it. | Runtime test rejects or redirects before waiting. |
 | Valid existing flows still pass | Safe scenarios for current-node, PM role-work, officer, material, research, control-blocker, resume. | Existing focused tests still pass. |
-| Legacy active runs have a recovery lane | Legacy scenario allows documented fallback only for pre-existing artifacts. | Existing legacy control-blocker tests still pass. |
+| Unsupported historical active runs have a recovery lane | Unsupported historical scenario allows documented fallback only for pre-existing artifacts. | Existing unsupported historical control-blocker tests still pass. |
 
 ## Minimal Implementation Boundary
 
@@ -96,7 +96,7 @@ The implementation should avoid a broad Router rewrite. The smallest root fix:
   handling, role-work result return, control-blocker repair follow-up selection,
   and wait-boundary construction.
 - Replace silent PM role-work result recipient normalization with strict
-  rejection for newly created strict-binding packets. Keep a documented legacy
+  rejection for newly created strict-binding packets. Keep a documented unsupported historical
   fallback only when an older packet lacks the binding marker.
 - Add focused runtime tests around the helper instead of duplicating the full
   route loop.
@@ -107,5 +107,5 @@ The implementation should avoid a broad Router rewrite. The smallest root fix:
 - Do not redesign the entire packet runtime.
 - Do not read sealed packet/result/report bodies.
 - Do not overwrite concurrent unrelated changes.
-- Do not remove legacy recovery for already persisted runs unless a separate
+- Do not remove unsupported historical recovery for already persisted runs unless a separate
   migration proves it is safe.

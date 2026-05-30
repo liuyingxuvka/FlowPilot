@@ -32,9 +32,9 @@ run_meta_checks = load_module(
     "flowpilot_test_run_meta_checks",
     ROOT / "simulations" / "run_meta_checks.py",
 )
-smoke_autopilot = load_module(
-    "flowpilot_test_smoke_autopilot",
-    ROOT / "scripts" / "smoke_autopilot.py",
+smoke_flowpilot = load_module(
+    "flowpilot_test_smoke_flowpilot",
+    ROOT / "scripts" / "smoke_flowpilot.py",
 )
 
 
@@ -72,12 +72,12 @@ class FlowGuardResultProofTests(unittest.TestCase):
 
     def test_smoke_fast_only_marks_slow_model_checks_fast(self) -> None:
         commands: list[list[str]] = []
-        old_run = smoke_autopilot.run
+        old_run = smoke_flowpilot.run
         try:
-            smoke_autopilot.run = lambda command: commands.append(command) or True
-            self.assertEqual(smoke_autopilot.main(["--fast"]), 0)
+            smoke_flowpilot.run = lambda command: commands.append(command) or True
+            self.assertEqual(smoke_flowpilot.main(["--fast"]), 0)
         finally:
-            smoke_autopilot.run = old_run
+            smoke_flowpilot.run = old_run
 
         self.assertIn([sys.executable, "simulations/run_meta_checks.py", "--fast"], commands)
         self.assertIn([sys.executable, "simulations/run_capability_checks.py", "--fast"], commands)

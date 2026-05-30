@@ -45,11 +45,11 @@ the artifact, receipt, hashes, or boundary checks.
 - **THEN** the confirmation SHALL preserve that Controller cannot approve gates,
   mutate route state, read sealed bodies, or perform PM/Worker/Reviewer work
 
-### Requirement: Legacy Boundary Actions Remain Reconcileable
+### Requirement: Unsupported historical Boundary Actions Remain Reconcileable
 
 FlowPilot SHALL continue to accept and reconcile valid
 `confirm_controller_core_boundary` evidence for existing runs that already
-contain that action. Compatibility SHALL NOT cause new fresh-start runs to
+contain that action. Unsupported historical SHALL NOT cause new fresh-start runs to
 reintroduce the redundant row.
 
 #### Scenario: Existing pending boundary action is accepted
@@ -59,7 +59,7 @@ reintroduce the redundant row.
 - **THEN** Router SHALL reconcile the action and update Controller boundary
   flags
 
-#### Scenario: Reconciled legacy action is not reissued
-- **WHEN** a legacy boundary action has already been reconciled from valid
+#### Scenario: Reconciled unsupported historical action is not reissued
+- **WHEN** a unsupported historical boundary action has already been reconciled from valid
   evidence
 - **THEN** Router SHALL NOT reissue another boundary action for the same run

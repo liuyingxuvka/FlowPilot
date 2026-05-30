@@ -42,7 +42,7 @@
   "model_id": "flowpilot_semantic_gate_outcomes",
   "model_test_alignment": {
     "evidence": [
-      "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
       "tests/test_flowpilot_high_standard_control_flow.py"
     ],
     "missing": [],
@@ -52,7 +52,7 @@
       "reviewer_block_no_validation": true,
       "same_class_recheck": true,
       "semantic_outcome_parser": true,
-      "validator_fail_no_closure": true,
+      "system_validation_failure_routes_pm": true,
       "worker_block_no_flowguard": true
     },
     "ok": true
@@ -122,7 +122,7 @@
       },
       {
         "evidence": [
-          "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "tests/test_flowpilot_high_standard_control_flow.py"
         ],
         "freshness": "current",

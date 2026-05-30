@@ -11,11 +11,11 @@
   },
   "hazard_checks": {
     "hazards": {
-      "completion_missing_legacy_obligation": {
+      "completion_missing_unsupported historical_obligation": {
         "detected": true,
-        "expected_failure": "completion recorded before all legacy obligations were preserved",
+        "expected_failure": "completion recorded before all unsupported historical obligations were preserved",
         "failures": [
-          "completion recorded before all legacy obligations were preserved"
+          "completion recorded before all unsupported historical obligations were preserved"
         ],
         "state": {
           "controller_content_decision": false,
@@ -415,7 +415,7 @@
       "ui_snapshot_built_from_active_canonical_sources",
       "worker_owner_returns_result"
     ],
-    "legacy_obligation_count": 13,
+    "unsupported historical_obligation_count": 13,
     "missing_labels": [],
     "missing_obligations_at_completion": [],
     "missing_recipient_edges": [],

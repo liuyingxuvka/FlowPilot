@@ -454,8 +454,8 @@ def build_pause_snapshot(args: argparse.Namespace) -> dict[str, Any]:
         "lifecycle_summary": {
             "heartbeat_automation_ids": split_csv(args.heartbeat_ids),
             "codex_automation_status_checked": args.automation_checked,
-            "active_background_agents": split_csv(args.active_agents),
-            "closed_or_paused_background_agents": split_csv(args.closed_agents),
+            "active_runtime_role_assistances": split_csv(args.active_agents),
+            "closed_or_paused_runtime_role_assistances": split_csv(args.closed_agents),
             "manual_resume_notice_required": args.manual_resume_notice_required,
         },
         "cleanup_boundary": {

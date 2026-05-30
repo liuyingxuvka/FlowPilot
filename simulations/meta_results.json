@@ -3,7 +3,7 @@
     "edge_count": 916,
     "invariant_failures": [],
     "labels": [
-      "autopilot_started",
+      "flowpilot_runtime_started",
       "blocked_after_experiment_budget",
       "blocked_after_model_gap_budget",
       "blocked_after_repeated_route_failures",
@@ -25,9 +25,9 @@
       "route_created",
       "route_model_checked",
       "route_updated_after_model_gap",
-      "subagent_merged",
-      "subagent_returned",
-      "subagent_spawned",
+      "sidecar role_merged",
+      "sidecar role_returned",
+      "sidecar role_opened",
       "verification_found_impl_failure",
       "verification_found_model_gap"
     ],

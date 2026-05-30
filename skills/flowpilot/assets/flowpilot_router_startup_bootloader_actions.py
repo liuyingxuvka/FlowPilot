@@ -164,12 +164,12 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
     elif action_type == 'start_role_slots':
         run_root = project_root / str(state['run_root'])
         role_slots = router._normalize_role_agent_records(state, payload)
-        background_mode = (state.get('startup_answers') or {}).get('background_agents')
-        write_json(run_root / 'crew_ledger.json', {'schema_version': 'flowpilot.crew_ledger.v1', 'run_id': state['run_id'], 'background_agents_mode': background_mode, 'role_slots': role_slots, 'created_at': utc_now()})
-        crew_memory_root = run_root / 'crew_memory'
-        crew_memory_root.mkdir(parents=True, exist_ok=True)
-        for role in CREW_ROLE_KEYS:
-            write_json(crew_memory_root / f'{role}.json', router._create_empty_role_memory(str(state['run_id']), role))
+        background_mode = (state.get('startup_answers') or {}).get('runtime_role_assistances')
+        write_json(run_root / 'role_binding_ledger.json', {'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': state['run_id'], 'runtime_role_assistance_mode': background_mode, 'role_slots': role_slots, 'created_at': utc_now()})
+        role_binding_memory_root = run_root / 'role_binding_memory'
+        role_binding_memory_root.mkdir(parents=True, exist_ok=True)
+        for role in RUNTIME_ROLE_KEYS:
+            write_json(role_binding_memory_root / f'{role}.json', router._create_empty_role_memory(str(state['run_id']), role))
         _append_role_io_protocol_injections(project_root, run_root, str(state['run_id']), role_slots, default_lifecycle_phase='fresh_spawn', resume_tick_id='manual-resume', source_action='start_role_slots')
         write_json(run_root / 'role_core_prompt_delivery.json', router._role_core_prompt_delivery_payload(project_root, run_root, str(state['run_id']), source_action='start_role_slots'))
         state.setdefault('flags', {})['role_core_prompts_injected'] = True

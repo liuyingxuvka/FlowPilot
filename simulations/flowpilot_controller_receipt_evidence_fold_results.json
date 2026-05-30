@@ -531,8 +531,8 @@
     "receipt_registered_actions": [
       "confirm_controller_core_boundary",
       "deliver_mail",
-      "recover_role_agents",
-      "rehydrate_role_agents",
+      "recover_role_bindings",
+      "rehydrate_role_bindings",
       "relay_current_node_packet",
       "relay_current_node_result_to_pm",
       "relay_current_node_result_to_reviewer",

@@ -20,10 +20,10 @@ review or can be satisfied by reading worker/PM summaries.
    authorization, and cleanup boundary. PM may open only from a clean factual
    report.
 2. Live role-binding review is not a count-only check. For every new formal
-   FlowPilot task where the user authorizes role agents, the reviewer
+   FlowPilot task where the user authorizes role bindings, the reviewer
    must verify that every runtime-required role binding was opened after
    the current startup answers and current route allocation. Historical
-   `agent_id` values from prior crew ledgers or older role-memory packets are
+   `agent_id` values from prior role-binding ledgers or older role-memory packets are
    audit history only and must be listed as reused-ID blockers if they appear
    in current role-binding evidence.
 3. Human-like implementation inspection already requires context loading,
@@ -97,10 +97,10 @@ the assigned role.
   when the reviewer cannot personally operate the surface.
 - Startup reviewer reports should include `current_task_fresh_agents: true`,
   `reused_historical_agent_ids: []`, and direct evidence paths for current
-  binding creation or attachment time when live role agents are authorized.
+  binding creation or attachment time when live role bindings are authorized.
 - Startup reviewer reports must also include current-run isolation evidence:
   `.flowpilot/current.json`, `.flowpilot/index.json`, current run manifest,
-  current-run state/frontier/route paths, top-level legacy control-state
+  current-run state/frontier/route paths, top-level unsupported historical control-state
   quarantine status, and a prior-work import packet when the run continues old
   work.
 - FlowGuard model labels should prefer `fact_report`, `neutral_observation`,

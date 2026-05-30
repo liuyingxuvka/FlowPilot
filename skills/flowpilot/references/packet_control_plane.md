@@ -313,7 +313,7 @@ not open `packet_body.md` or `result_body.md`.
 
 The heartbeat prompt is a stable launcher. It must not carry route-specific
 next-step instructions, must not classify the old work chain as alive from
-stored route/crew state, and must not be rewritten just because the route or PM
+stored route/role binding state, and must not be rewritten just because the route or PM
 runway changed. Current work comes from persisted state and PM decisions.
 
 `wait_agent` timeout is `timeout_unknown`, not active. Missing, cancelled,

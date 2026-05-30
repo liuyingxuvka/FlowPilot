@@ -234,8 +234,8 @@ def _controller_ledger_action_view(
             "After the UI closes, write a Controller receipt with only the returned startup_intake_result.result_path in the receipt payload.",
         )
         view["plain_instruction"] = plain
-    if isinstance(view.get("spawn_policy"), str):
-        view["spawn_policy"] = str(view["spawn_policy"]).replace(
+    if isinstance(view.get("role_binding_open_policy"), str):
+        view["role_binding_open_policy"] = str(view["role_binding_open_policy"]).replace(
             "before_applying_action",
             "before_controller_receipt",
         )

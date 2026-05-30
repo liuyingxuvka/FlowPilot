@@ -78,15 +78,15 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(NEGATIVE,),
         ),
         _source_obligation(
-            "new_entrypoint.side_command_surface_retired",
+            "new_entrypoint.side_command_surface_unsupported",
             obligation_type="hazard",
-            description="Source-audited formal public surface boundary that omits retired direct FlowGuard, review, validation, and closure side-command paths.",
+            description="Source-audited formal public surface boundary that omits unsupported direct FlowGuard, review, validation, and closure side-command paths.",
             required_test_kinds=(NEGATIVE,),
         ),
         _source_obligation(
             "new_entrypoint.host_kind_value_menu",
             obligation_type="contract",
-            description="Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_subagent.",
+            description="Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_sidecar_role.",
             required_test_kinds=(HAPPY, NEGATIVE),
         ),
         _source_obligation(
@@ -282,7 +282,7 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "runtime_owner.router_boundary_helpers",
             obligation_type="contract",
-            description="Source-audited router owner helper modules expose stable boundaries behind the compatibility facade.",
+            description="Source-audited router owner helper modules expose stable boundaries behind the unsupported_historical facade.",
             required_test_kinds=(HAPPY,),
             allow_shared_evidence=True,
         ),
@@ -356,7 +356,7 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "card_runtime.owner_helper_contracts",
             obligation_type="contract",
-            description="Source-audited card runtime owner modules preserve bundle, envelope, ledger, path, and hash contracts behind the compatibility facade.",
+            description="Source-audited card runtime owner modules preserve bundle, envelope, ledger, path, and hash contracts behind the unsupported_historical facade.",
             required_test_kinds=(HAPPY,),
             allow_shared_evidence=True,
         ),

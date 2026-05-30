@@ -103,7 +103,7 @@ def _defect_ledger_reconciliation_status(router: ModuleType, project_root: Path,
 
 def _role_memory_reconciliation_status(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
-    memory_root = run_root / 'crew_memory'
+    memory_root = run_root / 'role_binding_memory'
     files = sorted(memory_root.glob('*.json')) if memory_root.exists() else []
     expected_run_id = str(run_state.get('run_id') or run_root.name)
     issues: list[str] = []
@@ -116,7 +116,7 @@ def _role_memory_reconciliation_status(router: ModuleType, project_root: Path, r
         if memory.get('schema_version') != 'flowpilot.role_memory.v1':
             issues.append(f'{rel_path}: schema_version mismatch')
         role_key = str(memory.get('role_key') or path.stem)
-        if role_key not in CREW_ROLE_KEYS:
+        if role_key not in RUNTIME_ROLE_KEYS:
             issues.append(f'{rel_path}: unknown role_key')
         else:
             role_keys_seen.add(role_key)
@@ -134,7 +134,7 @@ def _role_memory_reconciliation_status(router: ModuleType, project_root: Path, r
         if memory.get('controller_decision_authority') is True or memory.get('role_memory_used_for_completion_authority') is True:
             historical_authority_count += 1
             issues.append(f'{rel_path}: role memory claims completion authority')
-    missing_roles = [role for role in CREW_ROLE_KEYS if files and role not in role_keys_seen]
+    missing_roles = [role for role in RUNTIME_ROLE_KEYS if files and role not in role_keys_seen]
     return {'present': bool(files), 'path': project_relative(project_root, memory_root) if memory_root.exists() else None, 'required_for_current_run': bool(files), 'absence_is_pass_claim': False, 'file_count': len(files), 'role_count': len(role_keys_seen), 'missing_role_keys': missing_roles, 'stale_role_memory_paths': stale_paths, 'historical_agent_authority_count': historical_authority_count, 'issue_count': len(issues), 'issues': issues, 'clean': not issues}
 
 def _continuation_quarantine_reconciliation_status(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any]:

@@ -24,7 +24,7 @@ REQUIRED_ROLE_MEMORY_PACKETS = 6
 class State:
     startup_intake_ui_completed: bool = False
     dialog_stopped_for_user_answers: bool = False
-    background_agents_answer: str = "unknown"  # unknown | allow | single-agent | pause
+    runtime_role_assistances_answer: str = "unknown"  # unknown | allow | single-agent | pause
     scheduled_continuation_answer: str = "unknown"  # unknown | allow | manual | pause
     display_surface_answer: str = "unknown"  # unknown | cockpit | chat | pause
     explicit_user_answer_recorded: bool = False
@@ -47,14 +47,14 @@ class State:
     route_file_written: bool = False
     canonical_state_written: bool = False
     execution_frontier_written: bool = False
-    crew_ledger_current: bool = False
+    role_binding_ledger_current: bool = False
     role_memory_packets_current: int = 0
-    live_subagents_started: bool = False
+    runtime_role_bindings_opened: bool = False
     live_agents_active: int = 0
-    background_agents_capability_status: str = "unknown"  # unknown | available | unavailable | damaged
-    live_subagents_current_task_fresh: bool = False
-    fresh_agents_spawned_after_startup_answers: bool = False
-    fresh_agents_spawned_after_route_allocation: bool = False
+    runtime_role_assistance_capability_status: str = "unknown"  # unknown | available | unavailable | damaged
+    runtime_role_bindings_current_task_ready: bool = False
+    role_bindings_opened_after_startup_answers: bool = False
+    role_bindings_opened_after_route_allocation: bool = False
     historical_agent_ids_compared: bool = False
     reused_historical_agent_ids: bool = False
     single_agent_role_continuity_authorized: bool = False
@@ -74,17 +74,17 @@ class State:
     reviewer_checked_run_isolation: bool = False
     reviewer_checked_prior_work_boundary: bool = False
     reviewer_checked_old_route_assets: bool = False
-    reviewer_checked_background_agents: bool = False
+    reviewer_checked_runtime_role_assistances: bool = False
     reviewer_checked_live_agent_freshness: bool = False
     reviewer_checked_no_historical_agent_reuse: bool = False
     reviewer_checked_shadow_route: bool = False
     reviewer_checked_continuation_evidence: bool = False
     reviewer_checked_current_heartbeat_binding: bool = False
     reviewer_checked_display_surface_evidence: bool = False
-    reviewer_probed_background_agent_capability: bool = False
+    reviewer_probed_runtime_role_assistance_capability: bool = False
     reviewer_probed_scheduled_continuation_capability: bool = False
     reviewer_probed_cockpit_capability: bool = False
-    reviewer_verified_background_agent_fallback_needed: bool = False
+    reviewer_verified_runtime_role_assistance_fallback_needed: bool = False
     reviewer_verified_scheduled_continuation_fallback_needed: bool = False
     reviewer_verified_cockpit_fallback_needed: bool = False
     startup_mechanical_audit_file_backed: bool = False
@@ -106,7 +106,7 @@ class State:
     startup_review_status: str = "pending"  # pending | blocked | clean
     worker_remediation_done: bool = False
     pm_independent_gate_audit_done: bool = False
-    pm_recorded_background_agent_fallback: bool = False
+    pm_recorded_runtime_role_assistance_fallback: bool = False
     pm_recorded_scheduled_continuation_fallback: bool = False
     pm_recorded_cockpit_fallback: bool = False
     pm_start_gate_decision: str = "pending"  # pending | return_to_worker | protocol_dead_end | open
@@ -132,7 +132,7 @@ def startup_answers_complete(state: State) -> bool:
     return (
         state.startup_intake_ui_completed
         and state.dialog_stopped_for_user_answers
-        and state.background_agents_answer in {"allow", "single-agent"}
+        and state.runtime_role_assistances_answer in {"allow", "single-agent"}
         and state.scheduled_continuation_answer in {"allow", "manual"}
         and state.display_surface_answer in {"cockpit", "chat"}
         and state.explicit_user_answer_recorded
@@ -141,33 +141,33 @@ def startup_answers_complete(state: State) -> bool:
     )
 
 
-def subagent_decision_matches_answer(state: State) -> bool:
-    if state.background_agents_answer == "allow":
+def sidecar_role_decision_matches_answer(state: State) -> bool:
+    if state.runtime_role_assistances_answer == "allow":
         live_agents_ready = (
-            state.live_subagents_started
+            state.runtime_role_bindings_opened
             and state.live_agents_active >= REQUIRED_ROLE_MEMORY_PACKETS
-            and state.background_agents_capability_status == "available"
-            and state.live_subagents_current_task_fresh
-            and state.fresh_agents_spawned_after_startup_answers
-            and state.fresh_agents_spawned_after_route_allocation
+            and state.runtime_role_assistance_capability_status == "available"
+            and state.runtime_role_bindings_current_task_ready
+            and state.role_bindings_opened_after_startup_answers
+            and state.role_bindings_opened_after_route_allocation
             and state.historical_agent_ids_compared
             and not state.reused_historical_agent_ids
             and not state.single_agent_role_continuity_authorized
         )
         reviewer_verified_fallback = (
-            state.background_agents_capability_status in {"unavailable", "damaged"}
-            and state.reviewer_probed_background_agent_capability
-            and state.reviewer_verified_background_agent_fallback_needed
-            and state.pm_recorded_background_agent_fallback
+            state.runtime_role_assistance_capability_status in {"unavailable", "damaged"}
+            and state.reviewer_probed_runtime_role_assistance_capability
+            and state.reviewer_verified_runtime_role_assistance_fallback_needed
+            and state.pm_recorded_runtime_role_assistance_fallback
             and state.single_agent_role_continuity_authorized
-            and not state.live_subagents_started
+            and not state.runtime_role_bindings_opened
             and state.live_agents_active == 0
         )
         return live_agents_ready or reviewer_verified_fallback
-    if state.background_agents_answer == "single-agent":
+    if state.runtime_role_assistances_answer == "single-agent":
         return (
             state.single_agent_role_continuity_authorized
-            and not state.live_subagents_started
+            and not state.runtime_role_bindings_opened
             and state.live_agents_active == 0
         )
     return False
@@ -254,20 +254,20 @@ def run_isolation_ready(state: State) -> bool:
 
 
 def reviewer_fact_scope_complete(state: State) -> bool:
-    background_agent_scope = state.reviewer_checked_background_agents
-    if state.background_agents_answer == "allow":
+    runtime_role_assistance_scope = state.reviewer_checked_runtime_role_assistances
+    if state.runtime_role_assistances_answer == "allow":
         live_agent_scope = (
-            state.background_agents_capability_status == "available"
+            state.runtime_role_assistance_capability_status == "available"
             and state.reviewer_checked_live_agent_freshness
             and state.reviewer_checked_no_historical_agent_reuse
         )
         fallback_scope = (
-            state.background_agents_capability_status in {"unavailable", "damaged"}
-            and state.reviewer_verified_background_agent_fallback_needed
+            state.runtime_role_assistance_capability_status in {"unavailable", "damaged"}
+            and state.reviewer_verified_runtime_role_assistance_fallback_needed
         )
-        background_agent_scope = (
-            background_agent_scope
-            and state.reviewer_probed_background_agent_capability
+        runtime_role_assistance_scope = (
+            runtime_role_assistance_scope
+            and state.reviewer_probed_runtime_role_assistance_capability
             and (live_agent_scope or fallback_scope)
         )
     continuation_scope = state.reviewer_checked_continuation_evidence
@@ -309,7 +309,7 @@ def reviewer_fact_scope_complete(state: State) -> bool:
         and state.reviewer_checked_run_isolation
         and state.reviewer_checked_prior_work_boundary
         and state.reviewer_checked_old_route_assets
-        and background_agent_scope
+        and runtime_role_assistance_scope
         and state.reviewer_checked_shadow_route
         and continuation_scope
         and display_scope
@@ -324,9 +324,9 @@ def startup_ready_for_pm_open(state: State) -> bool:
         and state.route_file_written
         and state.canonical_state_written
         and state.execution_frontier_written
-        and state.crew_ledger_current
+        and state.role_binding_ledger_current
         and state.role_memory_packets_current == REQUIRED_ROLE_MEMORY_PACKETS
-        and subagent_decision_matches_answer(state)
+        and sidecar_role_decision_matches_answer(state)
         and continuation_matches_answer(state)
         and display_entry_action_matches_answer(state)
         and cleanup_matches_request(state)
@@ -360,9 +360,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.dialog_stopped_for_user_answers:
         yield Transition("startup_dialog_stopped_for_user_answers", replace(state, dialog_stopped_for_user_answers=True))
         return
-    if state.background_agents_answer == "unknown":
-        yield Transition("background_agents_allowed", replace(state, background_agents_answer="allow"))
-        yield Transition("background_agents_declined_single_agent", replace(state, background_agents_answer="single-agent"))
+    if state.runtime_role_assistances_answer == "unknown":
+        yield Transition("runtime_role_assistances_allowed", replace(state, runtime_role_assistances_answer="allow"))
+        yield Transition("runtime_role_assistances_declined_single_agent", replace(state, runtime_role_assistances_answer="single-agent"))
         return
     if state.scheduled_continuation_answer == "unknown":
         yield Transition("scheduled_continuation_allowed", replace(state, scheduled_continuation_answer="allow"))
@@ -449,40 +449,40 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 replace(state, cockpit_entry_action_done=True, chat_route_sign_displayed=True),
             )
             return
-    if not state.crew_ledger_current:
-        yield Transition("crew_ledger_current", replace(state, crew_ledger_current=True))
+    if not state.role_binding_ledger_current:
+        yield Transition("role_binding_ledger_current", replace(state, role_binding_ledger_current=True))
         return
     if state.role_memory_packets_current < REQUIRED_ROLE_MEMORY_PACKETS:
         yield Transition("role_memory_packets_current", replace(state, role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS))
         return
     if (
-        state.background_agents_answer == "allow"
-        and state.background_agents_capability_status == "unknown"
+        state.runtime_role_assistances_answer == "allow"
+        and state.runtime_role_assistance_capability_status == "unknown"
     ):
         yield Transition(
-            "fresh_live_subagents_started",
+            "fresh_runtime_role_bindings_opened",
             replace(
                 state,
-                background_agents_capability_status="available",
-                live_subagents_started=True,
+                runtime_role_assistance_capability_status="available",
+                runtime_role_bindings_opened=True,
                 live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS,
-                live_subagents_current_task_fresh=True,
-                fresh_agents_spawned_after_startup_answers=True,
-                fresh_agents_spawned_after_route_allocation=True,
+                runtime_role_bindings_current_task_ready=True,
+                role_bindings_opened_after_startup_answers=True,
+                role_bindings_opened_after_route_allocation=True,
                 historical_agent_ids_compared=True,
                 reused_historical_agent_ids=False,
             ),
         )
         yield Transition(
-            "background_agent_capability_unavailable_detected",
+            "runtime_role_assistance_capability_unavailable_detected",
             replace(
                 state,
-                background_agents_capability_status="unavailable",
+                runtime_role_assistance_capability_status="unavailable",
                 worker_claimed_capability_unavailable=True,
             ),
         )
         return
-    if state.background_agents_answer == "single-agent" and not state.single_agent_role_continuity_authorized:
+    if state.runtime_role_assistances_answer == "single-agent" and not state.single_agent_role_continuity_authorized:
         yield Transition("single_agent_role_continuity_authorized", replace(state, single_agent_role_continuity_authorized=True))
         return
     if (
@@ -547,19 +547,19 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "reviewer_checked_run_isolation": True,
             "reviewer_checked_prior_work_boundary": True,
             "reviewer_checked_old_route_assets": True,
-            "reviewer_checked_background_agents": True,
+            "reviewer_checked_runtime_role_assistances": True,
             "reviewer_checked_live_agent_freshness": True,
             "reviewer_checked_no_historical_agent_reuse": True,
             "reviewer_checked_shadow_route": True,
             "reviewer_checked_continuation_evidence": True,
             "reviewer_checked_current_heartbeat_binding": True,
             "reviewer_checked_display_surface_evidence": True,
-            "reviewer_probed_background_agent_capability": True,
+            "reviewer_probed_runtime_role_assistance_capability": True,
             "reviewer_probed_scheduled_continuation_capability": True,
             "reviewer_probed_cockpit_capability": True,
         }
-        if state.background_agents_capability_status in {"unavailable", "damaged"}:
-            reviewer_changes["reviewer_verified_background_agent_fallback_needed"] = True
+        if state.runtime_role_assistance_capability_status in {"unavailable", "damaged"}:
+            reviewer_changes["reviewer_verified_runtime_role_assistance_fallback_needed"] = True
             reviewer_changes["reviewer_checked_live_agent_freshness"] = False
             reviewer_changes["reviewer_checked_no_historical_agent_reuse"] = False
         if state.scheduled_continuation_capability_status in {"unavailable", "damaged"}:
@@ -638,21 +638,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 reviewer_checked_run_isolation=False,
                 reviewer_checked_prior_work_boundary=False,
                 reviewer_checked_old_route_assets=False,
-                reviewer_checked_background_agents=False,
+                reviewer_checked_runtime_role_assistances=False,
                 reviewer_checked_live_agent_freshness=False,
                 reviewer_checked_no_historical_agent_reuse=False,
                 reviewer_checked_shadow_route=False,
                 reviewer_checked_continuation_evidence=False,
                 reviewer_checked_current_heartbeat_binding=False,
                 reviewer_checked_display_surface_evidence=False,
-                reviewer_probed_background_agent_capability=False,
+                reviewer_probed_runtime_role_assistance_capability=False,
                 reviewer_probed_scheduled_continuation_capability=False,
                 reviewer_probed_cockpit_capability=False,
-                reviewer_verified_background_agent_fallback_needed=False,
+                reviewer_verified_runtime_role_assistance_fallback_needed=False,
                 reviewer_verified_scheduled_continuation_fallback_needed=False,
                 reviewer_verified_cockpit_fallback_needed=False,
                 pm_independent_gate_audit_done=False,
-                pm_recorded_background_agent_fallback=False,
+                pm_recorded_runtime_role_assistance_fallback=False,
                 pm_recorded_scheduled_continuation_fallback=False,
                 pm_recorded_cockpit_fallback=False,
             ),
@@ -664,10 +664,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         and state.pm_start_gate_decision == "pending"
     ):
         pm_audit_changes = {"pm_independent_gate_audit_done": True}
-        if state.reviewer_verified_background_agent_fallback_needed:
+        if state.reviewer_verified_runtime_role_assistance_fallback_needed:
             pm_audit_changes.update(
                 {
-                    "pm_recorded_background_agent_fallback": True,
+                    "pm_recorded_runtime_role_assistance_fallback": True,
                     "single_agent_role_continuity_authorized": True,
                 }
             )
@@ -716,7 +716,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.explicit_user_answer_recorded and state.startup_answer_provenance != "explicit_user_reply":
         failures.append("startup answers were recorded without explicit_user_reply provenance")
     if state.explicit_user_answer_recorded and (
-        state.background_agents_answer not in {"allow", "single-agent"}
+        state.runtime_role_assistances_answer not in {"allow", "single-agent"}
         or state.scheduled_continuation_answer not in {"allow", "manual"}
         or state.display_surface_answer not in {"cockpit", "chat"}
     ):
@@ -724,7 +724,7 @@ def invariant_failures(state: State) -> list[str]:
     if (
         not state.dialog_stopped_for_user_answers
         and (
-            state.background_agents_answer != "unknown"
+            state.runtime_role_assistances_answer != "unknown"
             or state.scheduled_continuation_answer != "unknown"
             or state.display_surface_answer != "unknown"
             or state.explicit_user_answer_recorded
@@ -737,9 +737,9 @@ def invariant_failures(state: State) -> list[str]:
             or state.run_index_updated
             or state.control_state_written_under_run_root
             or state.route_file_written
-            or state.live_subagents_started
+            or state.runtime_role_bindings_opened
             or state.live_agents_active
-            or state.live_subagents_current_task_fresh
+            or state.runtime_role_bindings_current_task_ready
             or state.reused_historical_agent_ids
             or state.single_agent_role_continuity_authorized
             or state.automated_continuation_ready
@@ -850,42 +850,42 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM opened startup before the display entry action matched the user's fourth startup answer")
     if (
         state.single_agent_role_continuity_authorized
-        and state.background_agents_answer != "single-agent"
+        and state.runtime_role_assistances_answer != "single-agent"
         and not (
-            state.background_agents_answer == "allow"
-            and state.pm_recorded_background_agent_fallback
-            and state.reviewer_verified_background_agent_fallback_needed
+            state.runtime_role_assistances_answer == "allow"
+            and state.pm_recorded_runtime_role_assistance_fallback
+            and state.reviewer_verified_runtime_role_assistance_fallback_needed
         )
     ):
         failures.append("single-agent role continuity was authorized without the user's single-agent answer")
-    if state.live_subagents_started and state.background_agents_answer != "allow":
+    if state.runtime_role_bindings_opened and state.runtime_role_assistances_answer != "allow":
         failures.append("live role bindings were opened without the user's runtime role-assistance answer")
-    if state.live_agents_active and state.background_agents_answer != "allow":
+    if state.live_agents_active and state.runtime_role_assistances_answer != "allow":
         failures.append("active live role bindings exist without the user's runtime role-assistance answer")
     if (
         state.startup_review_status == "clean"
-        and state.background_agents_answer == "allow"
-        and state.background_agents_capability_status == "available"
+        and state.runtime_role_assistances_answer == "allow"
+        and state.runtime_role_assistance_capability_status == "available"
         and state.live_agents_active < REQUIRED_ROLE_MEMORY_PACKETS
     ):
         failures.append("reviewer accepted live role-binding startup without full requested-role coverage")
     if (
         state.startup_review_status == "clean"
-        and state.background_agents_answer == "allow"
-        and state.background_agents_capability_status == "available"
+        and state.runtime_role_assistances_answer == "allow"
+        and state.runtime_role_assistance_capability_status == "available"
         and not (
-            state.live_subagents_current_task_fresh
-            and state.fresh_agents_spawned_after_startup_answers
-            and state.fresh_agents_spawned_after_route_allocation
+            state.runtime_role_bindings_current_task_ready
+            and state.role_bindings_opened_after_startup_answers
+            and state.role_bindings_opened_after_route_allocation
             and state.historical_agent_ids_compared
             and not state.reused_historical_agent_ids
         )
     ):
-        failures.append("reviewer accepted role-binding startup without current-task fresh agent ids")
+        failures.append("reviewer accepted role-binding startup without current-task current role binding ids")
     if (
         state.startup_review_status == "clean"
-        and state.background_agents_answer == "allow"
-        and state.background_agents_capability_status == "available"
+        and state.runtime_role_assistances_answer == "allow"
+        and state.runtime_role_assistance_capability_status == "available"
         and not (
             state.reviewer_checked_live_agent_freshness
             and state.reviewer_checked_no_historical_agent_reuse
@@ -930,9 +930,9 @@ def invariant_failures(state: State) -> list[str]:
         )
     ):
         failures.append("heartbeat verification did not prove the automation is attached to the current run")
-    if state.pm_recorded_background_agent_fallback and not (
-        state.reviewer_probed_background_agent_capability
-        and state.reviewer_verified_background_agent_fallback_needed
+    if state.pm_recorded_runtime_role_assistance_fallback and not (
+        state.reviewer_probed_runtime_role_assistance_capability
+        and state.reviewer_verified_runtime_role_assistance_fallback_needed
     ):
         failures.append("PM recorded single-agent fallback without reviewer-verified role-binding capability evidence")
     if state.pm_recorded_scheduled_continuation_fallback and not (
@@ -947,8 +947,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM recorded chat-display fallback without reviewer-verified Cockpit evidence")
     if state.pm_start_gate_decision == "open" and (
         (
-            state.background_agents_answer == "allow"
-            and state.background_agents_capability_status == "unknown"
+            state.runtime_role_assistances_answer == "allow"
+            and state.runtime_role_assistance_capability_status == "unknown"
         )
         or (
             state.scheduled_continuation_answer == "allow"
@@ -971,7 +971,7 @@ def _ready_base(**changes: object) -> State:
     base = State(
         startup_intake_ui_completed=True,
         dialog_stopped_for_user_answers=True,
-        background_agents_answer="allow",
+        runtime_role_assistances_answer="allow",
         scheduled_continuation_answer="allow",
         display_surface_answer="cockpit",
         explicit_user_answer_recorded=True,
@@ -989,14 +989,14 @@ def _ready_base(**changes: object) -> State:
         cockpit_entry_action_done=True,
         cockpit_ui_opened=True,
         cockpit_capability_status="available",
-        crew_ledger_current=True,
+        role_binding_ledger_current=True,
         role_memory_packets_current=REQUIRED_ROLE_MEMORY_PACKETS,
-        background_agents_capability_status="available",
-        live_subagents_started=True,
+        runtime_role_assistance_capability_status="available",
+        runtime_role_bindings_opened=True,
         live_agents_active=REQUIRED_ROLE_MEMORY_PACKETS,
-        live_subagents_current_task_fresh=True,
-        fresh_agents_spawned_after_startup_answers=True,
-        fresh_agents_spawned_after_route_allocation=True,
+        runtime_role_bindings_current_task_ready=True,
+        role_bindings_opened_after_startup_answers=True,
+        role_bindings_opened_after_route_allocation=True,
         historical_agent_ids_compared=True,
         reused_historical_agent_ids=False,
         scheduled_continuation_capability_status="available",
@@ -1012,14 +1012,14 @@ def _ready_base(**changes: object) -> State:
         reviewer_checked_run_isolation=True,
         reviewer_checked_prior_work_boundary=True,
         reviewer_checked_old_route_assets=True,
-        reviewer_checked_background_agents=True,
+        reviewer_checked_runtime_role_assistances=True,
         reviewer_checked_live_agent_freshness=True,
         reviewer_checked_no_historical_agent_reuse=True,
         reviewer_checked_shadow_route=True,
         reviewer_checked_continuation_evidence=True,
         reviewer_checked_current_heartbeat_binding=True,
         reviewer_checked_display_surface_evidence=True,
-        reviewer_probed_background_agent_capability=True,
+        reviewer_probed_runtime_role_assistance_capability=True,
         reviewer_probed_scheduled_continuation_capability=True,
         reviewer_probed_cockpit_capability=True,
         startup_mechanical_audit_file_backed=True,
@@ -1039,7 +1039,7 @@ def hazard_states() -> dict[str, State]:
         "banner_before_three_answers": State(startup_intake_ui_completed=True, banner_emitted=True),
         "answers_recorded_without_dialog_stop": State(
             startup_intake_ui_completed=True,
-            background_agents_answer="allow",
+            runtime_role_assistances_answer="allow",
             scheduled_continuation_answer="allow",
             display_surface_answer="cockpit",
             explicit_user_answer_recorded=True,
@@ -1048,7 +1048,7 @@ def hazard_states() -> dict[str, State]:
         "answers_recorded_with_inferred_provenance": State(
             startup_intake_ui_completed=True,
             dialog_stopped_for_user_answers=True,
-            background_agents_answer="allow",
+            runtime_role_assistances_answer="allow",
             scheduled_continuation_answer="manual",
             display_surface_answer="chat",
             explicit_user_answer_recorded=True,
@@ -1057,7 +1057,7 @@ def hazard_states() -> dict[str, State]:
         "answers_recorded_with_naked_provenance": State(
             startup_intake_ui_completed=True,
             dialog_stopped_for_user_answers=True,
-            background_agents_answer="allow",
+            runtime_role_assistances_answer="allow",
             scheduled_continuation_answer="manual",
             display_surface_answer="chat",
             explicit_user_answer_recorded=True,
@@ -1066,7 +1066,7 @@ def hazard_states() -> dict[str, State]:
         "answers_recorded_with_illegal_value": State(
             startup_intake_ui_completed=True,
             dialog_stopped_for_user_answers=True,
-            background_agents_answer="assistant-default-long-text",
+            runtime_role_assistances_answer="assistant-default-long-text",
             scheduled_continuation_answer="manual",
             display_surface_answer="chat",
             explicit_user_answer_recorded=True,
@@ -1151,9 +1151,9 @@ def hazard_states() -> dict[str, State]:
             pm_start_gate_decision="open",
             work_beyond_startup_allowed=True,
         ),
-        "reviewer_clean_accepts_underfilled_live_subagents": _ready_base(live_agents_active=3),
+        "reviewer_clean_accepts_underfilled_runtime_role_bindings": _ready_base(live_agents_active=3),
         "reviewer_clean_accepts_reused_historical_agent_ids": _ready_base(
-            live_subagents_current_task_fresh=False,
+            runtime_role_bindings_current_task_ready=False,
             reused_historical_agent_ids=True,
         ),
         "reviewer_clean_without_agent_freshness_check": _ready_base(
@@ -1170,18 +1170,18 @@ def hazard_states() -> dict[str, State]:
             heartbeat_same_name_only_checked=True,
         ),
         "pm_single_agent_fallback_without_reviewer_probe": _ready_base(
-            background_agents_capability_status="unavailable",
-            live_subagents_started=False,
+            runtime_role_assistance_capability_status="unavailable",
+            runtime_role_bindings_opened=False,
             live_agents_active=0,
-            live_subagents_current_task_fresh=False,
-            fresh_agents_spawned_after_startup_answers=False,
-            fresh_agents_spawned_after_route_allocation=False,
+            runtime_role_bindings_current_task_ready=False,
+            role_bindings_opened_after_startup_answers=False,
+            role_bindings_opened_after_route_allocation=False,
             historical_agent_ids_compared=False,
-            reviewer_probed_background_agent_capability=False,
-            reviewer_verified_background_agent_fallback_needed=False,
+            reviewer_probed_runtime_role_assistance_capability=False,
+            reviewer_verified_runtime_role_assistance_fallback_needed=False,
             reviewer_checked_live_agent_freshness=False,
             reviewer_checked_no_historical_agent_reuse=False,
-            pm_recorded_background_agent_fallback=True,
+            pm_recorded_runtime_role_assistance_fallback=True,
             single_agent_role_continuity_authorized=True,
             pm_start_gate_decision="open",
             work_beyond_startup_allowed=True,
@@ -1214,22 +1214,22 @@ def hazard_states() -> dict[str, State]:
             work_beyond_startup_allowed=True,
         ),
         "pm_opens_ambiguous_capability_status": _ready_base(
-            background_agents_capability_status="unknown",
+            runtime_role_assistance_capability_status="unknown",
             pm_start_gate_decision="open",
             work_beyond_startup_allowed=True,
         ),
         "worker_claimed_no_capability_pm_fallback": _ready_base(
-            background_agents_capability_status="unavailable",
+            runtime_role_assistance_capability_status="unavailable",
             worker_claimed_capability_unavailable=True,
-            live_subagents_started=False,
+            runtime_role_bindings_opened=False,
             live_agents_active=0,
-            live_subagents_current_task_fresh=False,
-            fresh_agents_spawned_after_startup_answers=False,
-            fresh_agents_spawned_after_route_allocation=False,
+            runtime_role_bindings_current_task_ready=False,
+            role_bindings_opened_after_startup_answers=False,
+            role_bindings_opened_after_route_allocation=False,
             historical_agent_ids_compared=False,
-            reviewer_probed_background_agent_capability=False,
-            reviewer_verified_background_agent_fallback_needed=False,
-            pm_recorded_background_agent_fallback=True,
+            reviewer_probed_runtime_role_assistance_capability=False,
+            reviewer_verified_runtime_role_assistance_fallback_needed=False,
+            pm_recorded_runtime_role_assistance_fallback=True,
             single_agent_role_continuity_authorized=True,
             pm_start_gate_decision="open",
             work_beyond_startup_allowed=True,

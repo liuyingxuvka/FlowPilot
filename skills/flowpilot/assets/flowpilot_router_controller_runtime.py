@@ -344,7 +344,7 @@ def run_until_wait(project_root: Path, *, max_steps: int = 50, new_invocation: b
             or bool(action.get("requires_user"))
             or bool(action.get("requires_payload"))
             or bool(action.get("requires_user_dialog_display_confirmation"))
-            or bool(action.get("requires_host_spawn"))
+            or bool(action.get("requires_host_role_binding"))
             or bool(action.get("requires_host_automation"))
             or bool(action.get("card_id"))
         )

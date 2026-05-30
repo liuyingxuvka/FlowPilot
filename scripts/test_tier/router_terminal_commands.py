@@ -138,7 +138,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
             "test_distinct_pm_control_blocker_causes_create_distinct_families",
             "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
             "test_pm_repair_decision_can_repeat_for_new_control_blocker",
-            "test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
+            "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
             "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
             "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
             "test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
@@ -164,7 +164,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.control_blockers",
         patterns=(
             "test_control_blocker_reviewer_followup_rejects_pm_origin",
-            "test_delivered_control_blocker_with_retired_invalid_wait_requires_pm_repair_resubmission",
+            "test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission",
             "test_fatal_control_blocker_rejects_pm_ordinary_waiver",
         ),
         description="Control-blocker reviewer follow-up and fatal-blocker slice.",
@@ -209,12 +209,12 @@ ROUTER_QUALITY_GATE_COMMANDS = (
         "router_quality_gates_background_manifest",
         "tests.router_runtime.quality_gates",
         patterns=(
-            "test_background_agents_allow_requires_six_fresh_live_agent_records",
+            "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
             "test_child_skill_gate_manifest_block_records_repair_without_approval",
             "test_child_skill_gate_manifest_repair_pass_clears_active_gate_block",
             "test_manifest_references_existing_system_cards",
         ),
-        description="Quality-gate background agent and manifest slice.",
+        description="Quality-gate runtime role and manifest slice.",
     ),
     _unittest_k(
         "router_quality_gates_decisions",

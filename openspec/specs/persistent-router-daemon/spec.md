@@ -14,7 +14,7 @@ Router reconciliation for one active run without requiring Controller to invoke
 
 #### Scenario: Daemon uses current run state
 - **WHEN** the Router daemon starts or restarts
-- **THEN** it MUST load the current run pointer, router state, execution frontier, packet ledger, return ledger, continuation binding, and crew ledger before computing or consuming any next action
+- **THEN** it MUST load the current run pointer, router state, execution frontier, packet ledger, return ledger, continuation binding, and role-binding ledger before computing or consuming any next action
 
 ### Requirement: Fixed one-second daemon tick
 The Router daemon SHALL run a fixed one-second tick while the run lifecycle is
@@ -58,8 +58,8 @@ unchanged mailbox files as idempotent.
 
 ### Requirement: Router daemon does not execute host actions
 The Router daemon SHALL NOT perform Controller-only host actions such as sending
-messages to role agents, displaying user-dialog text, creating automations,
-spawning roles, or closing roles.
+messages to role bindings, displaying user-dialog text, creating automations,
+opening roles, or closing roles.
 
 #### Scenario: Next action requires Controller
 - **WHEN** the next Router action requires a host tool, user-dialog display, role relay, role spawn, automation update, or Controller receipt

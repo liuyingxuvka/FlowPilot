@@ -79,7 +79,7 @@ passing coverage evidence.
 
 FlowPilot SHALL NOT claim full synthetic/model/test coverage while the full
 model-test-code diagnostic reports unresolved actionable findings. Structure
-split findings MUST be either fixed through compatibility-preserving extraction
+split findings MUST be either fixed through unsupported historical-preserving extraction
 or explicitly rejected as blockers.
 
 #### Scenario: Deferred structure split blocks full coverage

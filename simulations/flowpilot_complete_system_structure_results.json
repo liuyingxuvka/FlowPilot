@@ -118,7 +118,7 @@
             "owns_state": [
               "current_pointer"
             ],
-            "path": "skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
             "public_entrypoints": [],
             "rationale": "",
             "validation_boundaries": [

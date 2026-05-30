@@ -324,7 +324,7 @@ SCRIPT_MODEL_BINDING_STEMS = {
     "install_flowpilot": "local_install_sync",
     "run_flowguard_coverage_sweep": "coverage_sweep_runner",
     "run_test_tier": "test_tier_runner",
-    "smoke_autopilot": "smoke_fast_validation",
+    "smoke_flowpilot": "smoke_fast_validation",
 }
 
 MODEL_CHECK_RUNNER_CONTRACT_TEST_PATH = (

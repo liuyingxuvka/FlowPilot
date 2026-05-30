@@ -31,10 +31,10 @@ maintenance change, not as an unmodeled cleanup.
 - **WHEN** maintenance validation runs for this change
 - **THEN** the router facade split checks pass
 - **AND** the model-test alignment source contracts cover the canonical registry
-  and compatibility view functions.
+  and unsupported historical view functions.
 
 #### Scenario: Unsafe contraction remains blocked
-- **WHEN** validation finds a removed public export, missing compatibility view,
+- **WHEN** validation finds a removed public export, missing unsupported historical view,
   stale parity, or missing model-test evidence
 - **THEN** the maintenance pass is blocked
 - **AND** local install sync and local git completion are not claimed.

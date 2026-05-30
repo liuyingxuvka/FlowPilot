@@ -4,7 +4,7 @@ The model captures the maintenance rule for result artifacts: when a current
 ``*_results.json`` artifact and an older ``*_checks_results.json`` shadow exist
 for the same family, the current result is the authority. Shadow artifacts may
 remain only as reported duplicates or historical evidence; they must not carry
-stale compatibility semantics as current proof.
+stale unsupported_historical semantics as current proof.
 """
 
 from __future__ import annotations
@@ -37,7 +37,7 @@ NEGATIVE_SCENARIOS = (
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
 EXPECTED_REJECTIONS = {
-    STALE_SHADOW_ALIAS_WITH_CANONICAL: "shadow artifact with retired alias semantics cannot be current evidence",
+    STALE_SHADOW_ALIAS_WITH_CANONICAL: "shadow artifact with unsupported alias semantics cannot be current evidence",
     SHADOW_USED_AS_CURRENT_WITH_CANONICAL: "shadow artifact was selected while canonical result exists",
     READ_ONLY_AUDIT_MUTATES_FILES: "read-only artifact audit mutated files",
 }
@@ -67,7 +67,7 @@ class State:
     shadow_result_exists: bool = False
     canonical_preferred: bool = False
     shadow_used_as_current: bool = False
-    shadow_has_retired_alias_semantics: bool = False
+    shadow_has_unsupported_alias_semantics: bool = False
     shadow_pair_reported: bool = False
     exact_duplicate_reported: bool = False
     cleanup_required_reported: bool = False
@@ -158,7 +158,7 @@ def next_states(input_obj: Tick, state: State) -> tuple[Transition, ...]:
             canonical_result_exists=True,
             shadow_result_exists=True,
             canonical_preferred=False,
-            shadow_has_retired_alias_semantics=True,
+            shadow_has_unsupported_alias_semantics=True,
             cleanup_required_reported=True,
         )
         return (_reject(scenario, next_state),)
@@ -198,11 +198,11 @@ def invariant_failures(state: State) -> list[str]:
     if (
         state.canonical_result_exists
         and state.shadow_result_exists
-        and state.shadow_has_retired_alias_semantics
+        and state.shadow_has_unsupported_alias_semantics
         and state.status == "accepted"
     ):
-        failures.append("shadow artifact with retired alias semantics cannot be current evidence")
-    if state.shadow_has_retired_alias_semantics and not state.cleanup_required_reported:
+        failures.append("shadow artifact with unsupported alias semantics cannot be current evidence")
+    if state.shadow_has_unsupported_alias_semantics and not state.cleanup_required_reported:
         failures.append("stale shadow artifact cleanup requirement was not reported")
     if not state.audit_read_only:
         failures.append("read-only artifact audit mutated files")
@@ -222,7 +222,7 @@ INVARIANTS = (
         name="validation_artifact_canonicalization",
         description=(
             "Canonical result artifacts are preferred over shadow check artifacts, "
-            "stale compatibility semantics are not current evidence, and read-only "
+            "stale unsupported_historical semantics are not current evidence, and read-only "
             "audits do not mutate files."
         ),
         predicate=canonicalization_invariant,
@@ -253,7 +253,7 @@ def hazard_states() -> dict[str, State]:
             canonical_result_exists=True,
             shadow_result_exists=True,
             canonical_preferred=True,
-            shadow_has_retired_alias_semantics=True,
+            shadow_has_unsupported_alias_semantics=True,
             shadow_pair_reported=True,
             cleanup_required_reported=True,
         ),

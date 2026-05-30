@@ -202,7 +202,7 @@ def _state_id(state: model.State) -> str:
         f"controller_self_audit={state.controller_local_self_audit_done},"
         f"controller_local_blocker={state.controller_local_blocker_recorded},"
         f"controller_reminded_itself={state.controller_reminded_itself}|"
-        f"legacy_wait_null={state.legacy_waiting_for_role_null},"
+        f"unsupported_historical_wait_null={state.unsupported_historical_waiting_for_role_null},"
         f"packet_holder={state.active_packet_holder},"
         f"packet_projection={state.packet_holder_projection_needed},"
         f"passive_reconcile={state.passive_reconciliation_wait_open},"

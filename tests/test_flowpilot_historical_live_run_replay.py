@@ -260,14 +260,14 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(resume_evidence["role_rehydration_required"])
 
         action = router.next_action(root)
-        self.assertEqual(action["action_type"], "rehydrate_role_agents")
+        self.assertEqual(action["action_type"], "rehydrate_role_bindings")
         missing_payload = self.resume_role_agent_payload(root, action)
-        missing_payload["rehydrated_role_agents"] = missing_payload["rehydrated_role_agents"][:-1]
-        with self.assertRaisesRegex(router.RouterError, "missing rehydrated live role agent records"):
-            router.apply_action(root, "rehydrate_role_agents", missing_payload)
+        missing_payload["rehydrated_role_bindings"] = missing_payload["rehydrated_role_bindings"][:-1]
+        with self.assertRaisesRegex(router.RouterError, "missing rehydrated live role binding records"):
+            router.apply_action(root, "rehydrate_role_bindings", missing_payload)
 
         timeout_payload = self.resume_role_agent_payload(root, router.next_action(root))
-        timeout_payload["rehydrated_role_agents"][0].update(
+        timeout_payload["rehydrated_role_bindings"][0].update(
             {
                 "rehydration_result": "live_agent_continuity_confirmed",
                 "host_liveness_status": "timeout_unknown",
@@ -277,13 +277,13 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
             }
         )
         with self.assertRaisesRegex(router.RouterError, "timeout_unknown|wait_agent_timeout_treated_as_active"):
-            router.apply_action(root, "rehydrate_role_agents", timeout_payload)
+            router.apply_action(root, "rehydrate_role_bindings", timeout_payload)
 
         valid_payload = self.resume_role_agent_payload(root, router.next_action(root))
-        router.apply_action(root, "rehydrate_role_agents", valid_payload)
-        rehydration = read_json(run_root / "continuation" / "crew_rehydration_report.json")
-        self.assertTrue(rehydration["all_six_roles_ready"])
-        self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], list(router.CREW_ROLE_KEYS))
+        router.apply_action(root, "rehydrate_role_bindings", valid_payload)
+        rehydration = read_json(run_root / "continuation" / "role_binding_recovery_report.json")
+        self.assertTrue(rehydration["required_role_bindings_ready"])
+        self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], list(router.RUNTIME_ROLE_KEYS))
         self.assertFalse(rehydration["liveness_preflight"]["wait_agent_timeout_treated_as_active"])
 
     def test_relay_lifecycle_and_semantic_contract_packages_block_overclaims(self) -> None:

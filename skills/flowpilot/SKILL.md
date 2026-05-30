@@ -35,7 +35,7 @@ The assistant is only the FlowPilot bootloader until a new `flowpilot_new.py` ru
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
-Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. It reuses the native startup intake UI and records the result into the new current-run ledger. Legacy `flowpilot_router.py` commands are diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. It reuses the native startup intake UI and records the result into the new current-run ledger. `flowpilot_router.py` commands are diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
 
 Manual diagnostic/repair commands:
 
@@ -80,7 +80,7 @@ Before any final answer, done claim, or Controller shutdown for a new runtime ru
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 ```
 
-Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end the Controller role. Status projection is display-only and never authorizes Controller stop. Legacy `flowpilot_router.py` daemon files, controller ledgers, patrol timers, monitor wording, and stale summaries are old-run diagnostics, not fresh-run authority.
+Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end the Controller role. Status projection is display-only and never authorizes Controller stop. `flowpilot_router.py` daemon files, controller ledgers, patrol timers, monitor wording, and stale summaries are old-run diagnostics, not fresh-run authority.
 
 ## Startup And Packet Work
 
@@ -90,7 +90,7 @@ After startup, the new runtime materializes the first PM-bound high-standard con
 
 When the new runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported role mechanism, record the addressable host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Every opened role binding must be explicitly requested with the strongest available host model and highest available reasoning effort.
 
-All new formal runtime roles are packet roles, but not every gate is a dispatched role. PM, FlowGuard operator, reviewer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are router-owned ledger facts after accepted review evidence; do not spawn validator or Closure Officer workers, and do not complete FlowGuard or review through side-command shortcuts.
+All new formal runtime roles are packet roles, but not every gate is a dispatched role. PM, FlowGuard operator, reviewer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are router-owned ledger facts after accepted review evidence; do not open validator or Closure Officer workers, and do not complete FlowGuard or review through side-command shortcuts.
 
 After PM planning closes, the runtime materializes executable route nodes, requires accepted node acceptance plans, issues each node as its own packet chain, runs FlowGuard and review packets, records system validation and system closure, applies PM disposition per node, uses same-node repair for ordinary quality gaps, runs parent backward replay where needed, then builds a final route-wide gate ledger plus requirement-evidence matrix before terminal completion.
 
@@ -102,7 +102,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 ## Controller Boundary
 
-After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit old-run repair/recovery.
+After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit unsupported-run inspection/recovery.
 
 Controller must not implement product work, write project evidence for a worker node, approve gates, mark route nodes complete, mutate the route from its own judgement, read sealed packet/result bodies, or receive/submit formal role outputs. Role outputs go directly to Router through the runtime command named by the packet.
 

@@ -84,7 +84,7 @@ def _selected_state(scenario: str) -> State:
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="active",
-            liveness_decision="spawned_replacement_from_current_run_memory",
+            liveness_decision="opened_replacement_from_current_run_memory",
         )
     if scenario == STALE_REPORT_RECLAIM:
         return State(
@@ -96,7 +96,7 @@ def _selected_state(scenario: str) -> State:
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="active",
-            liveness_decision="spawned_replacement_from_current_run_memory",
+            liveness_decision="opened_replacement_from_current_run_memory",
         )
     if scenario == UNKNOWN_LIVENESS:
         return State(
@@ -108,7 +108,7 @@ def _selected_state(scenario: str) -> State:
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="unknown",
-            liveness_decision="spawned_replacement_from_current_run_memory",
+            liveness_decision="opened_replacement_from_current_run_memory",
         )
     if scenario == REPLACEMENT_INTENT_ONLY:
         return State(
@@ -120,7 +120,7 @@ def _selected_state(scenario: str) -> State:
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="missing",
-            liveness_decision="spawned_replacement_from_current_run_memory",
+            liveness_decision="opened_replacement_from_current_run_memory",
             replacement_intent_recorded=True,
         )
     if scenario == DAEMON_ERROR_WITH_DIAGNOSTICS:
@@ -151,7 +151,7 @@ def _role_recovery_proof_is_current(state: State) -> bool:
         and state.host_liveness_status == "active"
         and state.liveness_decision in {
             "confirmed_existing_agent",
-            "spawned_replacement_from_current_run_memory",
+            "opened_replacement_from_current_run_memory",
         }
     )
 

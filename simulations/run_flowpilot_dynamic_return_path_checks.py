@@ -30,7 +30,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.REGISTERED_EVENT_NOT_CURRENTLY_ALLOWED: "formal return event is not currently allowed by Router wait state",
     model.MECHANICAL_GREEN_USED_AS_ROUTER_ACCEPTANCE: "mechanical role-output validation was treated as Router acceptance",
     model.STATIC_CARD_GUIDANCE_USED_AS_DYNAMIC_LEASE: "static card text was treated as a dynamic event lease",
-    model.RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET: "retired direct officer event competes with PM role-work result contract",
+    model.RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET: "unsupported direct officer event competes with PM role-work result contract",
     model.PM_ROLE_WORK_WRONG_RECIPIENT: "PM role-work result does not return to project_manager",
     model.WRONG_ROLE_USES_WORK_AUTHORITY: "work authority role does not match submitting role",
     model.WRONG_CONTRACT_USES_WORK_AUTHORITY: "work authority contract does not match submitted output",
@@ -209,7 +209,7 @@ def _candidate_fix_plan() -> dict[str, object]:
         "minimum_runtime_change_set": [
             "Declare a machine-readable gate contract for every gate-bearing card or wait.",
             "Attach the active gate contract to card envelopes and await_role_decision actions.",
-            "Keep retired/general events non-completing for gate waits.",
+            "Keep unsupported/general events non-completing for gate waits.",
             "Treat a gate group as complete only when a terminal gate outcome satisfies the active gate flag.",
             "Map gate-targeted PM role-work results to a concrete gate pass/block event before continuation.",
             "Use product behavior model submission as the only Product Officer gate completion path.",
@@ -221,7 +221,7 @@ def _candidate_fix_plan() -> dict[str, object]:
         ],
         "risk_coverage": {
             "gate_card_without_completion_contract": model.GATE_CARD_WITHOUT_COMPLETION_CONTRACT,
-            "retired_event_cannot_close_gate": model.RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG,
+            "unsupported_event_cannot_close_gate": model.RETIRED_EVENT_ACCEPTED_WITHOUT_REQUIRED_GATE_FLAG,
             "repair_success_cannot_skip_gate": model.PM_REPAIR_RESOLVES_BLOCKER_WITHOUT_GATE_EVENT,
             "role_work_result_must_map_to_gate": model.PM_ROLE_WORK_RESULT_NOT_MAPPED_TO_CURRENT_GATE,
             "canonical_product_behavior_model_semantics": (

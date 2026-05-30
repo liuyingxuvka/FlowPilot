@@ -69,7 +69,7 @@ def _hazard_report() -> dict[str, Any]:
 
 def _model_test_alignment_report() -> dict[str, Any]:
     high_standard_test = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
-    runtime = REPO_ROOT / "skills" / "flowpilot" / "assets" / "ai_project_runtime" / "runtime.py"
+    runtime = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
     test_text = high_standard_test.read_text(encoding="utf-8")
     runtime_text = runtime.read_text(encoding="utf-8")
     obligations = {
@@ -87,7 +87,7 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "obligations": obligations,
         "missing": missing,
         "evidence": [
-            "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             "tests/test_flowpilot_high_standard_control_flow.py",
         ],
     }

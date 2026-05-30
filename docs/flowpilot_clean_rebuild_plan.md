@@ -9,7 +9,7 @@ user request explicitly asks for it.
 
 ## Operating Rules
 
-1. Preserve the second legacy backup under
+1. Preserve the second unsupported historical backup under
    `backups/flowpilot-20260504-second-backup-20260504-195841/` and the
    matching zip archive. Cleanup must not delete it.
 2. Keep `skills/flowpilot/SKILL.md` small. It is a launcher that runs the
@@ -33,7 +33,7 @@ user request explicitly asks for it.
 1. Keep the new-only runtime contract executable.
    - Output: `simulations/flowpilot_new_only_runtime_results.json`.
    - Check: `scripts/check_install.py` verifies the new-only model result
-     exists, parses, and rejects retired compatibility entrypoints.
+     exists, parses, and rejects unsupported unsupported historical entrypoints.
 
 2. Repair the adoption log for the first clean-rebuild pass.
    - Record the background capability-model result that completed after the
@@ -49,8 +49,8 @@ user request explicitly asks for it.
 
 4. Model heartbeat/manual-resume with FlowGuard.
    - Model that wakeup loads current pointer, active run root, router state,
-     prompt ledger, packet ledger, execution frontier, and crew memory.
-   - Model crew restoration or replacement before PM resume decision.
+     prompt ledger, packet ledger, execution frontier, and role-binding memory.
+   - Model role binding restoration or replacement before PM resume decision.
    - Model that ambiguous state blocks for PM recovery.
    - Model that Controller cannot read sealed packet/result bodies or use chat
      history as route state.
@@ -85,7 +85,7 @@ user request explicitly asks for it.
    - Packet ledger and chain validator.
    - Role isolation validator.
    - Runtime kit card coverage validator.
-   - Legacy equivalence coverage validator.
+   - Unsupported historical equivalence coverage validator.
    - Backup preservation validator.
 
 8. Expand FlowGuard coverage.
@@ -94,7 +94,7 @@ user request explicitly asks for it.
    - Packet loop.
    - Route mutation.
    - Final ledger.
-   - Legacy equivalence/refinement from old protocol obligations to new
+   - Unsupported historical equivalence/refinement from old protocol obligations to new
      router/card artifacts.
 
 9. Run verification.

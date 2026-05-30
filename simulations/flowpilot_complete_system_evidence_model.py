@@ -244,7 +244,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
     code_contracts = (
         CodeContract(
             "run_shell_create_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
             symbol="create_run_shell",
             implements_obligations=("current_run_shell_persistence",),
             external_inputs=("goal", "acceptance_contract", "old_state"),
@@ -253,7 +253,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "startup_intake_import_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
             symbol="record_startup_intake_result",
             implements_obligations=("startup_intake_sealed_authority",),
             external_inputs=("startup_intake_result", "startup_body"),
@@ -262,7 +262,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "run_artifact_materialization_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/run_shell.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
             symbol="materialize_run_artifacts",
             implements_obligations=("run_artifact_materialization",),
             external_inputs=("ledger_state",),
@@ -271,7 +271,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "runtime_ledger_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             symbol="new_ledger",
             implements_obligations=("ledger_authority",),
             external_inputs=("chat_claim", "old_state", "current_ledger"),
@@ -280,7 +280,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "runtime_lease_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             symbol="lease_agent",
             implements_obligations=("dynamic_lease_lifecycle",),
             external_inputs=("lease_event", "result_submission"),
@@ -289,7 +289,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "runtime_flowguard_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             symbol="create_flowguard_work_order",
             implements_obligations=("flowguard_target_scheduler",),
             external_inputs=("modeled_target", "flowguard_report"),
@@ -298,7 +298,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "runtime_console_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             symbol="render_console",
             implements_obligations=("cockpit_projection_only",),
             external_inputs=("ui_event", "sealed_body"),
@@ -308,7 +308,7 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         ),
         CodeContract(
             "runtime_closure_contract",
-            path="skills/flowpilot/assets/ai_project_runtime/runtime.py",
+            path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             symbol="attempt_final_closure",
             implements_obligations=("full_evidence_gate",),
             external_inputs=("evidence_rows",),
@@ -388,8 +388,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_ledger_authority",
             test_name="test_router_closes_only_after_backward_chain_and_validation",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="scenario",
@@ -399,8 +399,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_ledger_boundary",
             test_name="test_runtime_testmesh_does_not_overclaim_release_evidence",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="boundary",
@@ -410,8 +410,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_lease_scenario",
             test_name="test_ack_and_progress_do_not_complete_packet",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="scenario",
@@ -422,8 +422,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_lease_lifecycle",
             test_name="test_replacement_worker_can_finish_but_closed_worker_late_output_is_blocked",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="same_class",
@@ -434,8 +434,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_flowguard_target",
             test_name="test_wrong_flowguard_target_self_review_stale_route_and_stale_evidence_block",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="scenario",
@@ -445,8 +445,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_cockpit_projection",
             test_name="test_public_console_hides_sealed_bodies",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="ui",
@@ -456,8 +456,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_cockpit_boundary",
             test_name="test_public_console_hides_sealed_bodies",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="boundary",
@@ -467,8 +467,8 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         TestEvidence(
             "test_scoped_release_gate",
             test_name="test_runtime_testmesh_does_not_overclaim_release_evidence",
-            path="tests/test_ai_project_runtime.py",
-            command="python -m pytest tests/test_ai_project_runtime.py",
+            path="tests/test_flowpilot_core_runtime.py",
+            command="python -m pytest tests/test_flowpilot_core_runtime.py",
             result_status="passed",
             evidence_current=True,
             test_kind="release_gate",

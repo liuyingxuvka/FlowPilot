@@ -7,7 +7,7 @@ TBD - created by archiving change preempt-controller-stale-role-waits. Update Pu
 
 The FlowPilot Controller SHALL check Router status, `next`, or
 `run-until-wait` immediately after router-authored card, bundle, packet, or
-result relay actions before waiting on a role chat response or subagent
+result relay actions before waiting on a role chat response or sidecar role
 foreground completion.
 
 #### Scenario: Direct card ACK exists after relay
@@ -20,7 +20,7 @@ foreground completion.
 
 #### Scenario: Router pending action already exists
 - **WHEN** Router state already contains a pending controller action
-- **THEN** Controller MUST apply or inspect that router action rather than starting or continuing a role/subagent wait
+- **THEN** Controller MUST apply or inspect that router action rather than starting or continuing a role/sidecar role wait
 
 ### Requirement: Foreground liveness waits remain recovery-only
 

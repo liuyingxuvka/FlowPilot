@@ -768,9 +768,9 @@
       },
       "lazy_six_roles": {
         "detected": true,
-        "expected_failure": "formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles",
+        "expected_failure": "formal FlowPilot optimization used lazy roles, light mode, or fewer than runtime-requested roles",
         "failures": [
-          "formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles"
+          "formal FlowPilot optimization used lazy roles, light mode, or fewer than runtime-requested roles"
         ],
         "state": {
           "advanced_after_first_parallel_pass": false,
@@ -1524,9 +1524,9 @@
       },
       "small_task_light_mode": {
         "detected": true,
-        "expected_failure": "formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles",
+        "expected_failure": "formal FlowPilot optimization used lazy roles, light mode, or fewer than runtime-requested roles",
         "failures": [
-          "formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles"
+          "formal FlowPilot optimization used lazy roles, light mode, or fewer than runtime-requested roles"
         ],
         "state": {
           "advanced_after_first_parallel_pass": false,

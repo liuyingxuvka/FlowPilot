@@ -9,7 +9,7 @@ PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
     "pm.route_skeleton",
     "pm.product_behavior_model_decision",
     "pm.process_route_model_decision",
-    "pm.crew_rehydration_freshness",
+    "pm.role_binding_recovery_freshness",
     "pm.resume_decision",
     "pm.current_node_loop",
     "pm.node_acceptance_plan",
@@ -23,7 +23,7 @@ PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
 
 STARTUP_QUESTIONS = (
     {
-        "id": "background_agents",
+        "id": "runtime_role_assistances",
         "question": "Allow live role bindings through available host mechanisms when the runtime requests them, or use single-controller continuity?",
     },
     {

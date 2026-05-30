@@ -26,7 +26,7 @@ existing JSON shape and severity semantics.
 #### Scenario: JSON output keeps the current contract
 
 - **GIVEN** install checks are split into file presence, manifest, runtime card,
-  JSON parse, retired-path, and optional local runtime groups
+  JSON parse, unsupported-path, and optional local runtime groups
 - **WHEN** `python scripts\check_install.py --json` runs
 - **THEN** top-level `ok` and `checks` output MUST keep the current contract
   for supported callers.

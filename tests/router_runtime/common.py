@@ -28,7 +28,7 @@ import role_output_runtime  # noqa: E402
 
 
 STARTUP_ANSWERS = {
-    "background_agents": "allow",
+    "runtime_role_assistances": "allow",
     "scheduled_continuation": "manual",
     "display_surface": "chat",
     "provenance": "explicit_user_reply",
@@ -1255,23 +1255,23 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         return {"startup_intake_result": {"result_path": self.rel(root, result_path)}}
     def role_agent_payload(self, root: Path, startup_answers: dict | None = None) -> dict:
         startup_answers = startup_answers or STARTUP_ANSWERS
-        if startup_answers.get("background_agents") == "single-agent":
+        if startup_answers.get("runtime_role_assistances") == "single-agent":
             return {}
         bootstrap = self.bootstrap_state(root)
         run_id = bootstrap["run_id"]
         return {
-            "background_agents_capability_status": "available",
-            "role_agents": [
+            "runtime_role_assistance_capability_status": "available",
+            "role_bindings": [
                 {
                     "role_key": role,
                     "agent_id": f"agent-{run_id}-{role}",
                     "model_policy": "strongest_available",
                     "reasoning_effort_policy": "highest_available",
-                    "spawn_result": "spawned_fresh_for_task",
-                    "spawned_for_run_id": run_id,
-                    "spawned_after_startup_answers": True,
+                    "binding_open_result": "opened_for_current_task",
+                    "opened_for_run_id": run_id,
+                    "opened_after_startup_answers": True,
                 }
-                for role in router.CREW_ROLE_KEYS
+                for role in router.RUNTIME_ROLE_KEYS
             ],
         }
     def resume_role_agent_payload(self, root: Path, action: dict | None = None) -> dict:
@@ -1299,7 +1299,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "rehydrated_for_run_id": request["rehydrated_for_run_id"],
                 "rehydrated_after_resume_tick_id": request["rehydrated_after_resume_tick_id"],
                 "rehydrated_after_resume_state_loaded": True,
-                "replacement_spawned_after_resume_state_loaded": False,
+                "replacement_opened_after_resume_state_loaded": False,
                 "core_prompt_path": request["core_prompt_path"],
                 "core_prompt_hash": request["core_prompt_hash"],
             }
@@ -1322,37 +1322,37 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 record["pm_resume_context_delivered"] = True
             records.append(record)
         return {
-            "background_agents_capability_status": "available",
+            "runtime_role_assistance_capability_status": "available",
             "liveness_probe_batch_id": batch_id,
             "liveness_probe_mode": "concurrent_batch",
             "all_liveness_probes_started_before_wait": True,
-            "rehydrated_role_agents": records,
+            "rehydrated_role_bindings": records,
         }
     def role_recovery_agent_payload(self, root: Path, action: dict, *, role: str = "worker_a") -> dict:
         request = next(item for item in action["role_recovery_request"] if item["role_key"] == role)
         transaction = action["role_recovery_transaction"]
         return {
-            "background_agents_capability_status": "available",
+            "runtime_role_assistance_capability_status": "available",
             "recovery_transaction_id": transaction["transaction_id"],
             "trigger_source": transaction["trigger_source"],
             "recovery_scope": transaction["recovery_scope"],
             "target_role_keys": transaction["target_role_keys"],
-            "recovered_role_agents": [
+            "recovered_role_bindings": [
                 {
                     "role_key": role,
                     "old_agent_id": request["old_agent_id"],
                     "agent_id": f"recovered-{transaction['transaction_id']}-{role}",
                     "model_policy": "strongest_available",
                     "reasoning_effort_policy": "highest_available",
-                    "recovery_result": "targeted_replacement_spawned",
+                    "recovery_result": "targeted_replacement_opened",
                     "restore_attempted": True,
                     "restore_result": "failed",
                     "targeted_replacement_attempted": True,
                     "targeted_replacement_result": "success",
                     "host_liveness_status": "active",
-                    "liveness_decision": "spawned_replacement_from_current_run_memory",
+                    "liveness_decision": "opened_replacement_from_current_run_memory",
                     "slot_reconciliation_attempted": False,
-                    "full_crew_recycle_attempted": False,
+                    "full_role_binding_recovery_attempted": False,
                     "rehydrated_for_run_id": transaction["run_id"],
                     "memory_context_injected": True,
                     "packet_ownership_reconciled": True,
@@ -1401,8 +1401,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         self.assertEqual(action["action_type"], "load_role_recovery_state")
         router.apply_action(root, "load_role_recovery_state")
         action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "recover_role_agents")
-        router.apply_action(root, "recover_role_agents", self.role_recovery_agent_payload(root, action, role="worker_a"))
+        self.assertEqual(action["action_type"], "recover_role_bindings")
+        router.apply_action(root, "recover_role_bindings", self.role_recovery_agent_payload(root, action, role="worker_a"))
         return read_json(self.run_root_for(root) / "continuation" / "role_recovery_report.json")
     def bootstrap_state(self, root: Path) -> dict:
         return read_json(router.bootstrap_state_path(root))
@@ -1948,7 +1948,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 ],
                 "direct_evidence_paths_checked": [
                     self.rel(root, run_root / "startup_answers.json"),
-                    self.rel(root, run_root / "crew_ledger.json"),
+                    self.rel(root, run_root / "role_binding_ledger.json"),
                     self.rel(root, run_root / "continuation" / "continuation_binding.json"),
                 ],
             },

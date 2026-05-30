@@ -7,7 +7,7 @@ TBD - created by archiving change deterministic-startup-bootstrap. Update Purpos
 FlowPilot SHALL create deterministic startup foundation files through code
 before the unified Router scheduler starts. The seed MUST be limited to local
 file and ledger initialization that requires no AI judgment, host automation,
-role spawning, heartbeat creation, Controller core loading, or PM repair
+role opening, heartbeat creation, Controller core loading, or PM repair
 decision.
 
 #### Scenario: Seed creates the foundation before scheduling

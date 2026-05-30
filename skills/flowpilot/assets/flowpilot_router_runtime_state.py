@@ -275,7 +275,7 @@ def _role_memory_event_role(router: ModuleType, event: str, payload: dict[str, A
     _bind_router(router)
     for key in ('completed_by_role', 'reviewed_by_role', 'decided_by_role', 'recorded_by_role', 'requested_by_role', 'written_by_role', 'from_role'):
         value = str(payload.get(key) or '').strip()
-        if value in CREW_ROLE_KEYS:
+        if value in RUNTIME_ROLE_KEYS:
             return value
     if event.startswith('pm_') or event.startswith('project_manager_'):
         return 'project_manager'
@@ -292,7 +292,7 @@ def _role_memory_event_role(router: ModuleType, event: str, payload: dict[str, A
 def _append_role_memory_delta(router: ModuleType, run_root: Path, run_state: dict[str, Any], *, event: str, payload: dict[str, Any]) -> dict[str, Any] | None:
     _bind_router(router)
     role = router._role_memory_event_role(event, payload)
-    if role not in CREW_ROLE_KEYS:
+    if role not in RUNTIME_ROLE_KEYS:
         return None
     memory_path = router._role_memory_path(run_root, role)
     memory = read_json_if_exists(memory_path) or router._create_empty_role_memory(str(run_state['run_id']), role)

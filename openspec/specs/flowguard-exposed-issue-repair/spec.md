@@ -3,9 +3,9 @@
 ## Purpose
 TBD - created by archiving change repair-flowguard-exposed-issues. Update Purpose after archive.
 ## Requirements
-### Requirement: Compatibility Facade JSON Capability Is Discovered
+### Requirement: Unsupported historical Facade JSON Capability Is Discovered
 
-The coverage sweep SHALL discover compact JSON support from a compatibility
+The coverage sweep SHALL discover compact JSON support from a unsupported historical
 facade's implementation module when the facade itself delegates to `_impl`.
 
 #### Scenario: facade delegates to JSON-capable implementation

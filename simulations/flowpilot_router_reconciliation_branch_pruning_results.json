@@ -183,7 +183,7 @@
       "scheduled_card_return_resolved",
       "scheduled_current_scope_resolved",
       "scheduled_invalid_schema",
-      "scheduled_legacy_startup_canonical",
+      "scheduled_unsupported historical_startup_canonical",
       "scheduled_no_action_dir",
       "scheduled_receipt_apply_blocked",
       "scheduled_reconciled_postcondition_repair_pending",

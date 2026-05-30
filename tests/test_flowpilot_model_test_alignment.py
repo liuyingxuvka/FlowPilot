@@ -221,8 +221,8 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
 
         for surface_id in (
             "tier:integration",
-            "tier-command:integration:smoke_autopilot_fast",
-            "tier-command:all:smoke_autopilot_fast",
+            "tier-command:integration:smoke_flowpilot_fast",
+            "tier-command:all:smoke_flowpilot_fast",
         ):
             with self.subTest(surface_id=surface_id):
                 surface = surfaces[surface_id]

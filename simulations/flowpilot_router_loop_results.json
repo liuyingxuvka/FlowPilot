@@ -935,7 +935,7 @@
           "active_holder_contact_packet_current": true,
           "active_holder_contact_route_frontier_current": true,
           "active_holder_lease_issued": true,
-          "active_holder_packet_family": "legacy_unknown",
+          "active_holder_packet_family": "unsupported historical_unknown",
           "active_holder_packet_opened_through_runtime": false,
           "active_holder_progress_controller_safe": true,
           "active_holder_progress_recorded": false,
@@ -10104,7 +10104,7 @@
           "write_grant_issued": false
         }
       },
-      "legacy_worker_result_return_without_fast_lane_mechanics": {
+      "unsupported historical_worker_result_return_without_fast_lane_mechanics": {
         "detected": true,
         "expected_failure": "worker result returned before active-holder mechanics pass",
         "failures": [

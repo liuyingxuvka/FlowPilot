@@ -13,7 +13,7 @@ entrypoint for migrated events.
 
 - **GIVEN** heartbeat/manual resume, stop/cancel, heartbeat binding, or route
   activation events are submitted
-- **WHEN** the compatibility entrypoint receives the event
+- **WHEN** the unsupported historical entrypoint receives the event
 - **THEN** it MAY delegate to a handler table
 - **AND** the observable result and persisted state MUST match the pre-refactor
   behavior.

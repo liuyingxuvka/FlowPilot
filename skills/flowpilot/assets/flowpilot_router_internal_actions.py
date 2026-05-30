@@ -71,7 +71,7 @@ def _action_is_router_internal_mechanical(action: dict[str, Any] | None) -> bool
         return False
     if bool(action.get("requires_user")) or bool(action.get("requires_payload")):
         return False
-    if bool(action.get("requires_host_spawn")) or bool(action.get("requires_host_automation")):
+    if bool(action.get("requires_host_role_binding")) or bool(action.get("requires_host_automation")):
         return False
     if bool(action.get("requires_user_dialog_display_confirmation")):
         return False

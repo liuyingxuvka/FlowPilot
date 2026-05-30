@@ -706,7 +706,7 @@ def review_split_evidence(evidence: RouterFacadeSplitEvidence) -> dict[str, Any]
                 "code": "retained_obsolete_compat_wrapper",
                 "severity": "blocker",
                 "wrapper_count": evidence.obsolete_compat_wrapper_count,
-                "message": "obsolete hand-written compatibility wrappers remain in the router skeleton",
+                "message": "obsolete hand-written unsupported_historical wrappers remain in the router skeleton",
             }
         )
     if not evidence.owner_export_registry_declared:

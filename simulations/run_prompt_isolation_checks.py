@@ -132,7 +132,7 @@ REQUIRED_LABELS = (
     "pm_closure_phase_card_delivered",
     "lifecycle_reconciled",
     "heartbeat_stopped_or_manual_resume_recorded",
-    "crew_archived",
+    "role_binding_ledger_archived",
     "pm_completion_decision_recorded",
     "completed",
 )
@@ -149,7 +149,7 @@ def _state_id(state: model.State) -> str:
         f"visible_banner={state.startup_banner_user_visible}|"
         f"kit={state.runtime_kit_copied}|"
         f"user_request={state.user_request_recorded},{state.user_request_provenance}|"
-        f"roles={state.roles_started},{state.fresh_role_agents_started}|"
+        f"roles={state.roles_started},{state.fresh_role_bindings_started}|"
         f"role_return={state.role_output_body_file_written},"
         f"{state.role_output_envelope_only_to_controller},"
         f"{state.role_output_path_hash_verified},"

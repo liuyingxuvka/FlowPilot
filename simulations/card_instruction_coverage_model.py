@@ -634,7 +634,7 @@ def collect_router_facts(project_root: Path) -> RouterFacts:
     card_delivery_flags = {str(item["flag"]) for item in router.SYSTEM_CARD_SEQUENCE}
     external_card_flag_errors: list[str] = []
     for event_name, event in sorted(router.EXTERNAL_EVENTS.items()):
-        if bool(event.get("legacy")):
+        if bool(event.get("unsupported_historical")):
             continue
         requires = str(event.get("requires_flag", ""))
         if requires.endswith("_card_delivered") and requires not in card_delivery_flags:

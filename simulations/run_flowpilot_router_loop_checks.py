@@ -190,7 +190,7 @@ HAZARD_EXPECTED_FAILURES = {
     "fast_lane_mechanical_pass_marks_node_complete": "PM completed current node before reviewer pass",
     "fast_lane_closes_without_controller_notice": "worker result routed to PM before router wrote Controller next-action notice",
     "fast_lane_controller_notice_before_ledger_check": "router wrote Controller next-action notice before fast-lane mechanics and ledger check passed",
-    "legacy_worker_result_return_without_fast_lane_mechanics": "worker result returned before active-holder mechanics pass",
+    "unsupported_historical_worker_result_return_without_fast_lane_mechanics": "worker result returned before active-holder mechanics pass",
     "true_no_next_action_without_blocker": "Controller detected no legal next action without writing a PM decision-required blocker",
 }
 

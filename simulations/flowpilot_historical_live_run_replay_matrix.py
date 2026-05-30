@@ -123,12 +123,12 @@ HISTORICAL_LIVE_RUN_REPLAY_ROWS: tuple[dict[str, Any], ...] = (
         "replay_id": "host.lifecycle.partial_rehydrate_thread_limit",
         "priority": "P0",
         "surface": "host_role_lifecycle",
-        "source_records": ["resume_reentry", "crew_rehydration_report", "role_io_protocol_ledger"],
-        "phase_sequence": ["resume_wake", "load_resume_state", "rehydrate_role_agents", "normal_work_gate"],
-        "entrypoints": ["real_router_runtime", "load_resume_state", "rehydrate_role_agents", "role_io_protocol"],
+        "source_records": ["resume_reentry", "role_binding_recovery_report", "role_io_protocol_ledger"],
+        "phase_sequence": ["resume_wake", "load_resume_state", "rehydrate_role_bindings", "normal_work_gate"],
+        "entrypoints": ["real_router_runtime", "load_resume_state", "rehydrate_role_bindings", "role_io_protocol"],
         "fake_ai_artifacts": ["partial_rehydration_receipt", "stale_memory_packet", "timeout_unknown_liveness"],
         "failure_package": "resume continues after only some roles report liveness or after unknown liveness is treated as active",
-        "expected_standard_state": "normal work stays blocked until all six role records and resume memory evidence pass",
+        "expected_standard_state": "normal work stays blocked until all runtime role records and resume memory evidence pass",
         "protected_state_invariant": "resume cannot resume work from partial host-role lifecycle evidence",
         "required_evidence": [
             "load_resume_state_evidence_written",
@@ -639,12 +639,12 @@ def validate_rows(rows: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
                         "message": "relay and semantic rows must bind to packet or role-output runtime entrypoints",
                     }
                 )
-        if row.get("surface") == "host_role_lifecycle" and "rehydrate_role_agents" not in entrypoints:
+        if row.get("surface") == "host_role_lifecycle" and "rehydrate_role_bindings" not in entrypoints:
             findings.append(
                 {
                     "code": "missing_rehydrate_entrypoint",
                     "replay_id": replay_id,
-                    "message": "host lifecycle rows must bind to the rehydrate_role_agents action",
+                    "message": "host lifecycle rows must bind to the rehydrate_role_bindings action",
                 }
             )
         if row.get("surface") == "background_proof_edges" and "background_artifact_classifier" not in entrypoints:

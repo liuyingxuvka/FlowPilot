@@ -205,7 +205,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     banner-after-answers evidence, role-binding freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
-    retired-only, or quarantined and is not being used as current state. It
+    unsupported-only, or quarantined and is not being used as current state. It
     must also check user authorization against actual state,
     old-route and old-asset cleanup when a clean start was requested, the real
     route heartbeat automation at one minute when scheduled continuation is
@@ -279,7 +279,7 @@ Use FlowPilot. Ask the startup intake options first.
 ```
 
 FlowPilot invocation only opens the three-question startup prompt. It is not
-authorization for role agents, fallback execution,
+authorization for role bindings, fallback execution,
 scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
@@ -778,8 +778,8 @@ can proceed. Live role continuity still depends on host and tool support, so
 FlowPilot must not treat missing role bindings as an invisible downgrade. It
 pauses for a user decision, records either live binding evidence or explicit
 fallback authorization, and only then proceeds.
-The authoritative recovery state is `.flowpilot/runs/<run-id>/crew_ledger.json`
-plus compact role memory packets under `.flowpilot/runs/<run-id>/crew_memory/`.
+The authoritative recovery state is `.flowpilot/runs/<run-id>/role_binding_ledger.json`
+plus compact role memory packets under `.flowpilot/runs/<run-id>/role_binding_memory/`.
 Each role memory packet
 stores the role charter, authority boundary, frozen contract pointer, current
 route position, latest decisions, open obligations, blockers, evidence paths,
@@ -795,11 +795,11 @@ and routing id. `display_name` is the user-facing chat/UI label. `agent_id` is
 only a diagnostic/recovery handle and must not be shown as the primary label or
 used as the authority key.
 
-## Retired Run Modes
+## Unsupported Run Modes
 
 FlowPilot no longer has run modes. `Use FlowPilot`, an existing `.flowpilot/`
 directory, host inability to pause, prior route state, or a generic request to
-continue cannot authorize role agents, scheduled jobs, fallback
+continue cannot authorize role bindings, scheduled jobs, fallback
 execution, or display-surface choices.
 
 Removing modes does not lower hard gates or quality tier. Every formal
@@ -943,8 +943,8 @@ The real continuation, when available, should be a stable launcher. It tells
 FlowPilot to resolve `.flowpilot/current.json`, then load
 `.flowpilot/runs/<run-id>/state.json`, the active `flow.json`,
 `.flowpilot/runs/<run-id>/execution_frontier.json`,
-`.flowpilot/runs/<run-id>/crew_ledger.json`,
-`.flowpilot/runs/<run-id>/crew_memory/`,
+`.flowpilot/runs/<run-id>/role_binding_ledger.json`,
+`.flowpilot/runs/<run-id>/role_binding_memory/`,
 `.flowpilot/runs/<run-id>/packet_ledger.json`, lifecycle evidence, and latest
 heartbeat or manual-resume evidence. It then
 rehydrates runtime-required role bindings by resuming stored agent ids when
@@ -987,10 +987,10 @@ written.
 
 On heartbeat or manual resume, "continue later" is not progress. FlowPilot
 first restores the runtime-required role identities and work memory from
-`crew_ledger.json` and current role memory packets, then writes a role
+`role_binding_ledger.json` and current role memory packets, then writes a role
 rehydration report for the bindings required by the current ledger. It must not lazily
 rehydrate a role only when that role is first needed. FlowPilot asks the
-project manager for a completion-oriented runway only after the crew memory
+project manager for a completion-oriented runway only after the role-binding memory
 rehydration gate passes. It syncs that runway into the visible plan, then loads
 the persisted `current_subnode`, `next_gate`, and packet recovery state for
 the unfinished active node. It continues the internal packet loop as far as PM
@@ -1049,7 +1049,7 @@ Generated with [FlowPilot](https://github.com/liuyingxuvka/FlowPilot) - a projec
 ```
 
 This action does not reopen route work. It may not approve gates, mutate routes,
-spawn roles, create project evidence, or write anything other than the summary
+open roles, create project evidence, or write anything other than the summary
 receipt, index/current pointers, and router state.
 
 Pause, restart, and terminal closure all use the same lifecycle reconciliation
@@ -1714,7 +1714,7 @@ Completion requires:
   frontier, and heartbeat/manual-resume evidence;
 - terminal continuation lifecycle state written back to local
   state/frontier/lifecycle/heartbeat or manual-resume evidence;
-- crew ledger and role memory packets archived with final role statuses;
+- role-binding ledger and role memory packets archived with final role statuses;
 - run final summary written, displayed to the user, and registered in
   `.flowpilot/index.json` with the FlowPilot GitHub attribution;
 - completion report emitted.

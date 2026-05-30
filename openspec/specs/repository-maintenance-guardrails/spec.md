@@ -255,7 +255,7 @@ bug-risk reduction.
   the same observable state or side effects
 - **THEN** Code Structure Recommendation derives target modules from the
   reduced FunctionBlocks, state ownership, side-effect ownership, and public
-  compatibility boundary.
+  unsupported historical boundary.
 
 #### Scenario: Risky state owners remain explicit
 

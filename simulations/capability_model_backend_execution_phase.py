@@ -556,7 +556,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     flowguard_model_report_confidence_boundary_done=False,
                     meta_route_checked=False,
                     meta_route_process_officer_approved=False,
-                    subagent_status="none",
+                    sidecar_role_status="none",
                     non_ui_implemented=False,
                     final_verification_done=False,
                     completion_self_interrogation_done=False,
@@ -633,20 +633,20 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                 terminal_lifecycle_frontier_written=True,
             )
             return
-        if not state.crew_memory_archived:
+        if not state.role_binding_memory_archived:
             yield _step(
                 state,
-                label="crew_memory_archived_at_terminal",
+                label="role_binding_memory_archived_at_terminal",
                 action="archive compact role memory packets with final capability statuses before backend route close",
-                crew_memory_archived=True,
+                role_binding_memory_archived=True,
             )
             return
-        if not state.crew_archived:
+        if not state.role_binding_ledger_archived:
             yield _step(
                 state,
-                label="crew_archived_at_terminal",
-                action="archive persistent crew ledger after role memory and backend lifecycle reconciliation",
-                crew_archived=True,
+                label="role_binding_ledger_archived_at_terminal",
+                action="archive persistent role-binding ledger after role memory and backend lifecycle reconciliation",
+                role_binding_ledger_archived=True,
             )
             return
         if not state.flowpilot_skill_improvement_report_written:

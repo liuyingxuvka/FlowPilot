@@ -449,7 +449,7 @@
       "branch_kind": "negative_path",
       "family": "repair transactions",
       "model_id": "repair_transactions",
-      "obligation_id": "repair_transactions.retired_event_replay_rejected"
+      "obligation_id": "repair_transactions.unsupported_event_replay_rejected"
     },
     {
       "branch_kind": "negative_path",
@@ -2534,7 +2534,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "repair_transactions.negative.retired_event_replay_plan_kind",
+      "evidence_id": "repair_transactions.negative.unsupported_event_replay_plan_kind",
       "evidence_owner": "control_blockers",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -2542,7 +2542,7 @@
       "live_completion_allowed": false,
       "model_id": "repair_transactions",
       "non_replayable_reason": "",
-      "obligation_id": "repair_transactions.retired_event_replay_rejected",
+      "obligation_id": "repair_transactions.unsupported_event_replay_rejected",
       "obligation_type": "hazard",
       "path": "tests/router_runtime/control_blockers.py",
       "recovery_loop": "",
@@ -2553,7 +2553,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_pm_repair_decision_rejects_retired_event_replay_plan_kind"
+      "test_name": "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind"
     },
     {
       "branch_kind": "negative_path",

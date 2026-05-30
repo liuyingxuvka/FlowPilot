@@ -40,7 +40,7 @@ and the role rehydration report.
 | R7 | Required-role liveness still happens serially during resume. | Resume liveness without concurrent batch proof fails. |
 | R8 | Resume treats `timeout_unknown`, missing, cancelled, or unknown as active. | Timeout or missing liveness used as continuity fails. |
 | R9 | PM resume starts before required roles are restored/replaced and reported. | PM decision before required-role join, memory injection, report, and lifecycle reconciliation fails. |
-| R10 | Replacement roles are spawned without current-run memory or common run context. | Unseeded replacement crew fails. |
+| R10 | Replacement roles are opened without current-run memory or common run context. | Unseeded replacement role binding fails. |
 
 ## Model-First Execution Order
 

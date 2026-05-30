@@ -6,7 +6,7 @@ Risk purpose:
   the Project Manager before any reviewer gate.
 - Guards against raw worker results being sent to the human-like reviewer,
   PM decisions using undisposed worker results, accidental removal of critical
-  reviewer gates, resume paths bypassing PM disposition, legacy reviewer-relay
+  reviewer gates, resume paths bypassing PM disposition, unsupported_historical reviewer-relay
   flags becoming current proof, and Controller sealed-body access.
 - Update and run this model whenever package result routing, reviewer gate
   authority, resume result handling, or packet/result envelope contracts change.
@@ -20,16 +20,16 @@ Risk intent brief:
 - Model-critical state: PM package authorship, worker result return, mechanical
   result validation, PM relay, PM disposition, formal PM gate package creation,
   reviewer gate review, route/node/material/research evidence use, resume
-  result handling, legacy direct-review flags, and Controller body isolation.
+  result handling, unsupported_historical direct-review flags, and Controller body isolation.
 - Adversarial branches: raw direct-to-reviewer routing, hidden PM forwarding
   to reviewer, node completion without reviewer gate, formal evidence from
   undisposed worker result, reviewer gate without PM package, removed critical
   gate, resume direct-to-reviewer, material/research decision without gate,
-  legacy reviewer relay used as current acceptance, and Controller body reads.
+  unsupported_historical reviewer relay used as current acceptance, and Controller body reads.
 - Hard invariants: every PM-issued worker result returns to PM; reviewer reviews
   only PM-built formal gate packages; PM disposition is mandatory before formal
   evidence use; protected route/node/material/research/closure gates still
-  require reviewer participation; resume follows the same PM-first rule; legacy
+  require reviewer participation; resume follows the same PM-first rule; unsupported_historical
   reviewer-relay flags are audit history only; Controller remains envelope-only.
 - Blindspot: this is an abstract protocol model. Runtime tests must still check
   concrete router actions, cards, contract files, and installed-skill sync.
@@ -58,7 +58,7 @@ RESUME_RESULT_DIRECT_TO_REVIEWER = "resume_result_direct_to_reviewer"
 MATERIAL_RESEARCH_DECISION_WITHOUT_GATE = "material_research_decision_without_gate"
 CONTROLLER_READS_SEALED_BODY = "controller_reads_sealed_body"
 RETIRED_REVIEWER_RELAY_USED_AS_CURRENT_ACCEPTANCE = (
-    "legacy_reviewer_relay_used_as_current_acceptance"
+    "unsupported_historical_reviewer_relay_used_as_current_acceptance"
 )
 PM_FORWARDED_RAW_PACKAGE_TO_REVIEWER = "pm_forwarded_raw_package_to_reviewer"
 PM_FORMAL_PACKAGE_RELEASE_WITHOUT_IDENTITY = (
@@ -176,8 +176,8 @@ class State:
     route_or_node_decision_recorded: bool = False
     node_completion_recorded: bool = False
 
-    legacy_direct_reviewer_relay_flag: bool = False
-    legacy_flag_used_as_current_acceptance: bool = False
+    unsupported_historical_direct_reviewer_relay_flag: bool = False
+    unsupported_historical_flag_used_as_current_acceptance: bool = False
     controller_read_sealed_body: bool = False
     terminal_reason: str = "none"
 
@@ -192,11 +192,11 @@ class PMPackageAbsorptionStep:
 
     Input x State -> Set(Output x State)
     reads: package kind, worker result envelope, PM disposition, reviewer gate
-    package, resume marker, legacy relay marker, and Controller boundary
+    package, resume marker, unsupported_historical relay marker, and Controller boundary
     writes: PM result relay, PM disposition, formal gate package, reviewer gate
     decision, route/node/material/research use, or terminal rejection
     idempotency: a worker result has one PM disposition; repeated ticks do not
-    create a second current acceptance from the same raw or legacy result.
+    create a second current acceptance from the same raw or unsupported_historical result.
     """
 
     name = "PMPackageAbsorptionStep"
@@ -207,7 +207,7 @@ class PMPackageAbsorptionStep:
         "pm_disposition",
         "reviewer_gate_package",
         "resume_state",
-        "legacy_direct_reviewer_relay_flag",
+        "unsupported_historical_direct_reviewer_relay_flag",
     )
     writes = (
         "pm_result_relay",
@@ -410,8 +410,8 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             _scenario_base(VALID_CURRENT_NODE_PM_GATE),
             scenario=scenario,
-            legacy_direct_reviewer_relay_flag=True,
-            legacy_flag_used_as_current_acceptance=True,
+            unsupported_historical_direct_reviewer_relay_flag=True,
+            unsupported_historical_flag_used_as_current_acceptance=True,
             result_relayed_to_pm=False,
             pm_disposition=DISPOSITION_NONE,
             pm_disposition_recorded=False,
@@ -572,8 +572,8 @@ def package_absorption_failures(state: State) -> list[str]:
         and (state.reviewer_received_raw_worker_result or not state.result_relayed_to_pm)
     ):
         failures.append("resume worker result bypassed PM disposition")
-    if state.legacy_direct_reviewer_relay_flag and state.legacy_flag_used_as_current_acceptance:
-        failures.append("legacy direct-reviewer relay flag was used as current acceptance")
+    if state.unsupported_historical_direct_reviewer_relay_flag and state.unsupported_historical_flag_used_as_current_acceptance:
+        failures.append("unsupported_historical direct-reviewer relay flag was used as current acceptance")
     return failures
 
 
@@ -621,10 +621,10 @@ def resume_uses_same_pm_first_path(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
-def legacy_reviewer_relay_is_audit_only(state: State, trace) -> InvariantResult:
+def unsupported_historical_reviewer_relay_is_audit_only(state: State, trace) -> InvariantResult:
     del trace
-    if state.status == "accepted" and state.legacy_flag_used_as_current_acceptance:
-        return InvariantResult.fail("accepted legacy reviewer relay as current proof")
+    if state.status == "accepted" and state.unsupported_historical_flag_used_as_current_acceptance:
+        return InvariantResult.fail("accepted unsupported_historical reviewer relay as current proof")
     return InvariantResult.pass_()
 
 
@@ -655,9 +655,9 @@ INVARIANTS = (
         predicate=resume_uses_same_pm_first_path,
     ),
     Invariant(
-        name="legacy_reviewer_relay_is_audit_only",
-        description="Legacy direct-reviewer relay flags cannot satisfy current PM disposition or gate proof.",
-        predicate=legacy_reviewer_relay_is_audit_only,
+        name="unsupported_historical_reviewer_relay_is_audit_only",
+        description="Unsupported_historical direct-reviewer relay flags cannot satisfy current PM disposition or gate proof.",
+        predicate=unsupported_historical_reviewer_relay_is_audit_only,
     ),
 )
 

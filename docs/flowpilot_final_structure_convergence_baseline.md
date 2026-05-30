@@ -67,7 +67,7 @@ At minimum, final completion must include:
 - `python scripts/audit_local_install_sync.py --json`.
 - `python scripts/check_install.py --json`.
 - `python scripts/check_public_release.py --json`.
-- `python scripts/smoke_autopilot.py`.
+- `python scripts/smoke_flowpilot.py`.
 - `git diff --check`.
 - Local commit on `main` after validation.
 

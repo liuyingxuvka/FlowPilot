@@ -63,11 +63,11 @@ safe to replay after daemon/controller reconciliation.
 - **AND** FlowPilot MUST NOT reissue a separate answer-recording row for the same
   completed intake.
 
-#### Scenario: retired answer-recording receipt replay is safe
-- **WHEN** a retired answer-recording receipt is replayed after the same
+#### Scenario: unsupported answer-recording receipt replay is safe
+- **WHEN** a unsupported answer-recording receipt is replayed after the same
   startup answers are already durable for the run
 - **THEN** FlowPilot preserves the native startup answer owner and treats the
-  retired receipt as non-current replay evidence
+  unsupported receipt as non-current replay evidence
 - **AND** FlowPilot MUST NOT create a PM/control blocker from the replay.
 
 #### Scenario: unsupported startup receipt still blocks

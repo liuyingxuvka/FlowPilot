@@ -48,7 +48,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     if event == 'controller_reports_role_liveness_fault':
         target_role_keys = router._role_recovery_target_roles((payload or {}).get('target_role_keys') or (payload or {}).get('role_key') or (payload or {}).get('missing_role_key'))
         transaction = router._open_role_recovery_transaction(project_root, run_root, run_state, trigger_source='mid_run_liveness_fault', recovery_scope='targeted', target_role_keys=target_role_keys, fault_payload=payload or {})
-        for recovery_flag in ('role_recovery_state_loaded', 'role_recovery_roles_restored', 'role_recovery_report_written', 'role_recovery_environment_blocked', 'controller_resume_card_delivered', 'pm_crew_rehydration_freshness_card_delivered', 'pm_resume_decision_card_delivered', 'pm_resume_recovery_decision_returned', 'role_recovery_obligations_scanned', 'role_recovery_obligation_replay_completed', 'role_recovery_pm_escalation_required'):
+        for recovery_flag in ('role_recovery_state_loaded', 'role_recovery_roles_restored', 'role_recovery_report_written', 'role_recovery_environment_blocked', 'controller_resume_card_delivered', 'pm_role_binding_recovery_freshness_card_delivered', 'pm_resume_decision_card_delivered', 'pm_resume_recovery_decision_returned', 'role_recovery_obligations_scanned', 'role_recovery_obligation_replay_completed', 'role_recovery_pm_escalation_required'):
             run_state['flags'][recovery_flag] = False
         run_state['flags']['role_recovery_requested'] = True
         run_state['pending_action'] = None

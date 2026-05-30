@@ -26,21 +26,21 @@ deterministic startup seed.
 - **AND** Router MUST NOT schedule seed-owned setup rows as ordinary Controller
   work.
 
-### Requirement: Retired startup answer receipts are not current work
+### Requirement: Unsupported startup answer receipts are not current work
 FlowPilot SHALL keep durable native startup intake answers as the current
-answer owner and SHALL NOT treat retired answer-recording receipts as current
-Controller work. Replayed retired receipts MUST NOT overwrite durable answers.
+answer owner and SHALL NOT treat unsupported answer-recording receipts as current
+Controller work. Replayed unsupported receipts MUST NOT overwrite durable answers.
 
-#### Scenario: retired answer receipt matches durable answers
-- **WHEN** a retired answer-recording Controller receipt contains startup
+#### Scenario: unsupported answer receipt matches durable answers
+- **WHEN** a unsupported answer-recording Controller receipt contains startup
   answers matching the run's durable startup answers
 - **THEN** Router keeps the durable startup answer owner unchanged
 - **AND** Router MUST NOT create a PM/control blocker from that replay.
 
-#### Scenario: retired answer receipt differs from durable answers
-- **WHEN** a retired answer-recording Controller receipt contains startup
+#### Scenario: unsupported answer receipt differs from durable answers
+- **WHEN** a unsupported answer-recording Controller receipt contains startup
   answers that conflict with the run's durable startup answers
-- **THEN** Router MUST reject or quarantine the retired receipt through the existing
+- **THEN** Router MUST reject or quarantine the unsupported receipt through the existing
   unsupported/missing-postcondition path
 - **AND** Router MUST NOT silently overwrite the durable answers.
 
@@ -54,7 +54,7 @@ postcondition.
 - **WHEN** Router needs to prove startup answers for the current run
 - **THEN** the startup receipt effect handler uses native intake and deterministic
   seed evidence
-- **AND** it returns a precise unsupported reason for retired answer-recording rows.
+- **AND** it returns a precise unsupported reason for unsupported answer-recording rows.
 
 #### Scenario: router-apply-only row is not mislabeled
 - **WHEN** a startup row can only be completed through Router bootloader apply

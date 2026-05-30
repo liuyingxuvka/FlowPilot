@@ -16,7 +16,7 @@ The protected harm is authority drift: the reviewer silently becoming the PM's r
 | O4 | Split material/research intake from material/research gate review | Material-scan and research results go directly to reviewer for sufficiency/source checks | Worker result returns to PM; PM absorbs or rejects it; PM then builds material or research gate evidence when the result will influence a protected decision | Material/research cards, contracts, control-plane model |
 | O5 | Update resume/continuation paths | Existing or fresh worker results found during resume route directly to reviewer | Resume routes existing/fresh worker results to PM disposition first; only PM-built gate packages reach reviewer | Resume model and launcher/router status transitions |
 | O6 | Update tests and runtime prompts together | Cards may keep telling roles to use old events even if router logic changes | Cards, contracts, manifest entries, tests, and FlowGuard hazards all use the same PM-first vocabulary | Runtime kit cards/templates, test suite, event/contract checks |
-| O7 | Keep legacy state readable without treating it as current proof | Existing runs may contain `*_relayed_to_reviewer` flags | Legacy flags are audit history; next advancement requires PM disposition or a formal PM gate package under the new rule | Router state migration/compatibility checks |
+| O7 | Keep unsupported historical state readable without treating it as current proof | Existing runs may contain `*_relayed_to_reviewer` flags | Unsupported historical flags are audit history; next advancement requires PM disposition or a formal PM gate package under the new rule | Router state migration/unsupported historical checks |
 | O8 | Sync safely after validation | Repo source and installed FlowPilot skill can drift | After tests pass, sync installed local skill from repo source and make a local git commit only; do not push to GitHub | `scripts/install_flowpilot.py`, local git |
 
 ## Bug-Risk Coverage Matrix
@@ -31,7 +31,7 @@ The protected harm is authority drift: the reviewer silently becoming the PM's r
 | R6 | Resume path sends existing or fresh worker result to reviewer first | Fail if resume worker result is routed to reviewer before PM disposition | Resume model update plus PM package model hazard: `resume_result_direct_to_reviewer` |
 | R7 | Material/research direct-source checks disappear entirely | Fail if material/research result affects product/route decisions without PM absorption and a formal reviewer gate when required | PM package model material/research hazards plus capability model updates |
 | R8 | Controller reads or summarizes sealed packet/result bodies while changing relays | Fail if controller body access appears in PM-first flow | Existing router-loop/control-plane invariants plus PM package model hazard |
-| R9 | Old `*_relayed_to_reviewer` flags are accepted as fresh evidence after the protocol change | Fail if legacy direct-review flags satisfy PM disposition or gate pass | PM package model hazard: `legacy_reviewer_relay_used_as_current_acceptance` |
+| R9 | Old `*_relayed_to_reviewer` flags are accepted as fresh evidence after the protocol change | Fail if unsupported historical direct-review flags satisfy PM disposition or gate pass | PM package model hazard: `unsupported historical_reviewer_relay_used_as_current_acceptance` |
 | R10 | PM disposition has a hidden "forward raw package to reviewer" escape hatch | Fail if PM disposition outcome causes raw package review rather than a formal gate package | PM package model hazard: `pm_forwarded_raw_package_to_reviewer` |
 | R11 | Contracts, cards, and router bindings disagree on `next_recipient` | Fail through contract/event checks or direct tests when runtime expects reviewer while contracts require PM | Event contract checks, router runtime tests, contract registry checks |
 | R12 | Local installed FlowPilot skill remains stale after repo change | Fail final sync audit if installed skill content does not match repo-owned source | install sync/check commands |
@@ -42,7 +42,7 @@ The protected harm is authority drift: the reviewer silently becoming the PM's r
 2. Run negative hazards to prove the model catches R1-R10 before trusting a green plan.
 3. Run the safe PM-first plan through the model and update existing router-loop, resume, control-plane, meta, and capability models where they still encode reviewer-first package routing.
 4. Update runtime contracts and result-envelope recipient rules for current-node, material-scan, and research worker results.
-5. Update router actions, flags, event names, and compatibility handling so worker results relay to PM and PM disposition gates formal reviewer packages.
+5. Update router actions, flags, event names, and unsupported historical handling so worker results relay to PM and PM disposition gates formal reviewer packages.
 6. Update cards/templates so PM, workers, and reviewers receive the same protocol instructions.
 7. Run focused tests after each batch, then the strongest practical full verification.
 8. Sync the local installed FlowPilot skill from the repository and create a local git commit; leave remote GitHub untouched.

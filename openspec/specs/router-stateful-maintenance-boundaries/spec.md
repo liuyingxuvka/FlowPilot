@@ -33,7 +33,7 @@ runtime flow.
   helper computes a classification, identity, table, command payload, or
   side-effect-free payload
 - **THEN** the helper MAY move into a boundary module
-- **AND** `flowpilot_router.py` SHALL keep compatibility imports for existing
+- **AND** `flowpilot_router.py` SHALL keep unsupported historical imports for existing
   tests and scripts.
 
 #### Scenario: Stateful finalizer stays in router without stronger contract

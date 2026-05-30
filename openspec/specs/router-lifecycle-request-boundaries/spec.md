@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define the compatibility, behavior, and evidence boundaries for splitting the
+Define the unsupported historical, behavior, and evidence boundaries for splitting the
 FlowPilot router lifecycle request owner into child modules while preserving
 the existing router-facing lifecycle request surface.
 
@@ -29,7 +29,7 @@ while splitting the implementation into child owner modules.
 
 - **WHEN** the router facade binds `flowpilot_router_lifecycle_requests`
 - **THEN** every lifecycle-request child owner receives the same router binding
-- **AND** legacy private helper lookups keep resolving through the retained
+- **AND** unsupported historical private helper lookups keep resolving through the retained
   facade.
 
 ### Requirement: Lifecycle split preserves terminal behavior
@@ -48,7 +48,7 @@ unchanged after the split.
 #### Scenario: Terminal reconciliation clears stale authorities
 
 - **WHEN** terminal lifecycle reconciliation runs
-- **THEN** continuation binding, crew ledger, packet ledger, execution frontier,
+- **THEN** continuation binding, role-binding ledger, packet ledger, execution frontier,
   and active control blocker state are reconciled as before
 - **AND** cleanup receipts remain visible in the lifecycle record.
 
@@ -67,7 +67,7 @@ refactor with explicit parity evidence.
 
 #### Scenario: Unsafe lifecycle split remains blocked
 
-- **WHEN** validation finds a missing compatibility export, changed lifecycle
+- **WHEN** validation finds a missing unsupported historical export, changed lifecycle
   schema, missing child binding, or failed terminal/control-blocker parity test
 - **THEN** the change is blocked
 - **AND** the failed evidence is reported instead of being treated as a

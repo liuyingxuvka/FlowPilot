@@ -1,4 +1,4 @@
-"""Compatibility facade for `run_flowpilot_process_liveness_checks.py`."""
+"""Unsupported_historical facade for `run_flowpilot_process_liveness_checks.py`."""
 
 from __future__ import annotations
 

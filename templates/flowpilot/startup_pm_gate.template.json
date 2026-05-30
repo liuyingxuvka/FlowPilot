@@ -16,7 +16,7 @@
     "startup_review_report_checked_as_pointer": false,
     "review_report_direct_sources_verified": false,
     "blocked_findings_and_remediation_state_checked": false,
-    "background_agent_decision_matches_actual_state_checked": false,
+    "runtime_role_assistance_decision_matches_actual_state_checked": false,
     "continuation_lifecycle_evidence_checked": false,
     "startup_capability_resolution_checked": false,
     "reviewer_probe_evidence_checked_for_each_fallback": false,
@@ -29,7 +29,7 @@
   },
   "requires_run_isolation_review": true,
   "old_control_state_reuse_blocks_startup": true,
-  "requires_current_task_fresh_live_agent_report_when_background_agents_allowed": true,
+  "requires_current_task_current_role_binding_report_when_runtime_role_assistances_allowed": true,
   "reused_historical_agent_ids_block_startup": true,
   "capability_fallback_policy": {
     "worker_claim_only_fallback_forbidden": true,
@@ -39,7 +39,7 @@
     "chat_fallback_for_missing_cockpit_is_display_fallback_only": true
   },
   "capability_resolution_decision": {
-    "background_agents": {
+    "runtime_role_assistances": {
       "requested": "<allow|single-agent|unknown>",
       "resolved": "<six-live-agents|single-agent-fallback|blocked|unknown>",
       "fallback_reason": "<none|host_unavailable|host_damaged|blocked|unknown>",

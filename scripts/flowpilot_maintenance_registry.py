@@ -95,8 +95,8 @@ MAINTENANCE_SURFACES: tuple[MaintenanceSurface, ...] = (
         evidence_family="test_tier_runner",
     ),
     MaintenanceSurface(
-        surface_id="script-entrypoint:smoke-autopilot",
-        path="scripts/smoke_autopilot.py",
+        surface_id="script-entrypoint:smoke-flowpilot",
+        path="scripts/smoke_flowpilot.py",
         kind="script_entrypoint",
         owner="smoke_fast_validation",
         public_role="smoke_cli",

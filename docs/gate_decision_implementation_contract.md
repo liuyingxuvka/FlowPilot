@@ -143,7 +143,7 @@ the meaning of each field.
 
 Router/protocol models should check only mechanical conformance: required
 fields, allowed enum values, evidence reference shape, path/hash availability,
-blocking compatibility, routeable next action, and atomic state refresh.
+blocking unsupported historical, routeable next action, and atomic state refresh.
 Runtime recording uses event `role_records_gate_decision` and contract
 `flowpilot.output_contract.gate_decision.v1`.
 

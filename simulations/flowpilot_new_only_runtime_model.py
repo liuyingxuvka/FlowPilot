@@ -1,7 +1,7 @@
 """FlowGuard model for FlowPilot new-only runtime contraction.
 
 The model checks the contraction boundary for this change: current FlowPilot
-inputs may advance the control plane, while retired inputs must be rejected
+inputs may advance the control plane, while unsupported inputs must be rejected
 instead of migrated or canonicalized into current authority-bearing state.
 """
 
@@ -26,15 +26,15 @@ CURRENT_CONTRACT_TICK = "current_contract_tick"
 RETIRED_INPUTS = (
     "next_new_invocation_alias",
     "run_until_wait_new_invocation_alias",
-    "retired_chat_startup_payload",
-    "retired_startup_answer_record",
-    "retired_officer_event_alias",
-    "retired_reviewer_event_alias",
-    "retired_output_type_alias",
+    "unsupported_chat_startup_payload",
+    "unsupported_startup_answer_record",
+    "unsupported_officer_event_alias",
+    "unsupported_reviewer_event_alias",
+    "unsupported_output_type_alias",
     "event_replay_transaction",
-    "retired_reconcile_transaction",
-    "retired_material_packet_contract",
-    "retired_layout_root",
+    "unsupported_reconcile_transaction",
+    "unsupported_material_packet_contract",
+    "unsupported_layout_root",
 )
 
 REQUIRED_CURRENT_LABELS = (
@@ -47,7 +47,7 @@ REQUIRED_CURRENT_LABELS = (
 )
 
 REQUIRED_REJECTION_LABELS = tuple(
-    f"unsupported_{retired_input}_rejected" for retired_input in RETIRED_INPUTS
+    f"unsupported_{unsupported_input}_rejected" for unsupported_input in RETIRED_INPUTS
 )
 
 
@@ -72,10 +72,10 @@ class State:
     current_role_output_seen: bool = False
     current_repair_transaction_seen: bool = False
     current_layout_seen: bool = False
-    accepted_retired_input: bool = False
-    migrated_retired_input: bool = False
-    canonicalized_retired_event: bool = False
-    retired_prompt_path_offered: bool = False
+    accepted_unsupported_input: bool = False
+    migrated_unsupported_input: bool = False
+    canonicalized_unsupported_event: bool = False
+    unsupported_prompt_path_offered: bool = False
     prior_authority_quarantined: bool = True
 
 
@@ -93,7 +93,7 @@ class NewOnlyRuntimeStep:
 
     Input x State -> Set(Output x State)
     reads: external input kind, current phase, prior-authority quarantine flag
-    writes: one current phase advancement or an unsupported retired-input rejection
+    writes: one current phase advancement or an unsupported unsupported-input rejection
     idempotency: old inputs never alter current authority-bearing state; current
     inputs advance only along the current FlowPilot contract order.
     """
@@ -102,8 +102,8 @@ class NewOnlyRuntimeStep:
     reads = ("input_kind", "runtime_phase", "prior_authority_quarantine")
     writes = ("runtime_phase", "unsupported_rejection")
     input_description = "current or old FlowPilot runtime input"
-    output_description = "current transition or unsupported retired-input rejection"
-    idempotency = "retired inputs are rejected without migration or canonicalization"
+    output_description = "current transition or unsupported unsupported-input rejection"
+    idempotency = "unsupported inputs are rejected without migration or canonicalization"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         for transition in next_states(input_obj, state):
@@ -229,14 +229,14 @@ def _next_current_contract_state(state: State) -> tuple[Transition, ...]:
 
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
-    if state.accepted_retired_input:
-        failures.append("retired input was accepted as current runtime input")
-    if state.migrated_retired_input:
-        failures.append("retired input was migrated into current state")
-    if state.canonicalized_retired_event:
-        failures.append("retired event alias was canonicalized")
-    if state.retired_prompt_path_offered:
-        failures.append("active prompt offered a retired path")
+    if state.accepted_unsupported_input:
+        failures.append("unsupported input was accepted as current runtime input")
+    if state.migrated_unsupported_input:
+        failures.append("unsupported input was migrated into current state")
+    if state.canonicalized_unsupported_event:
+        failures.append("unsupported event alias was canonicalized")
+    if state.unsupported_prompt_path_offered:
+        failures.append("active prompt offered a unsupported path")
     if not state.prior_authority_quarantined:
         failures.append("prior authority quarantine was removed")
     if state.status == "complete":
@@ -267,7 +267,7 @@ INVARIANTS = (
     Invariant(
         name="flowpilot_new_only_runtime",
         description=(
-            "Current FlowPilot inputs may advance, retired inputs must be rejected, "
+            "Current FlowPilot inputs may advance, unsupported inputs must be rejected, "
             "and prior authority quarantine must remain intact."
         ),
         predicate=new_only_runtime_invariant,
@@ -301,10 +301,10 @@ def hazard_states() -> dict[str, State]:
         current_layout_seen=True,
     )
     return {
-        "retired_input_accepted": replace(complete, accepted_retired_input=True),
-        "retired_input_migrated": replace(complete, migrated_retired_input=True),
-        "retired_event_canonicalized": replace(complete, canonicalized_retired_event=True),
-        "retired_prompt_path_offered": replace(complete, retired_prompt_path_offered=True),
+        "unsupported_input_accepted": replace(complete, accepted_unsupported_input=True),
+        "unsupported_input_migrated": replace(complete, migrated_unsupported_input=True),
+        "unsupported_event_canonicalized": replace(complete, canonicalized_unsupported_event=True),
+        "unsupported_prompt_path_offered": replace(complete, unsupported_prompt_path_offered=True),
         "prior_authority_quarantine_removed": replace(
             complete,
             prior_authority_quarantined=False,

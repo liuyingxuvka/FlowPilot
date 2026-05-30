@@ -9,7 +9,7 @@ After a background role is restored or replaced, Router SHALL require current-ru
 
 #### Scenario: Recovered role has memory before replay
 
-- **WHEN** `recover_role_agents` reports a recovered role with `role_recovery_roles_restored=true`
+- **WHEN** `recover_role_bindings` reports a recovered role with `role_recovery_roles_restored=true`
 - **THEN** Router records that the role received current-run role memory and controller-visible run metadata before replaying waits for that role
 
 #### Scenario: Missing memory blocks replay

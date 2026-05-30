@@ -353,7 +353,7 @@ def _direct_violation_observations(findings: Iterable[StaticWriteFinding]) -> li
                 write_kind=RUNTIME_WRITE_DIRECT,
                 result_status="failed",
                 current=True,
-                legacy_bypass_reason=finding.message,
+                unsupported_historical_bypass_reason=finding.message,
                 metadata=finding.to_dict(),
             )
         )
@@ -427,7 +427,7 @@ def known_bad_cases() -> list[dict[str, Any]]:
             "report": report.to_dict(),
             "expected_codes": [
                 "writer_observation_not_passing",
-                "declared_legacy_gateway_bypass",
+                "declared_unsupported_historical_gateway_bypass",
                 "direct_state_write_bypasses_gateway",
             ],
         }

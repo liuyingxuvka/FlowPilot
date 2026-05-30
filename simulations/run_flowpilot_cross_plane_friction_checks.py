@@ -37,7 +37,7 @@ HAZARD_EXPECTED_FAILURES = {
     "controller_reads_sealed_body_during_audit": "Controller opened sealed body files during cross-plane reconciliation",
     "material_dispatch_output_contract_role_drift": "material-scan dispatch lacks role-scoped output contract",
     "material_dispatch_write_target_missing": "material-scan dispatch lacks explicit result write target",
-    "retired_material_packets_left_unrejected": "material-scan dispatch lacks retired packet rejection",
+    "unsupported_material_packets_left_unrejected": "material-scan dispatch lacks unsupported packet rejection",
     "terminal_closure_missing_run_lifecycle": "terminal closure is missing run_lifecycle.json",
     "terminal_authority_mismatch": "terminal closure is missing router/frontier/lifecycle terminal agreement",
     "terminal_control_blocker_not_cleared": "terminal closure is missing cleared active control blocker",
@@ -68,7 +68,7 @@ def _state_id(state: model.State) -> str:
         f"material={state.material_scan_packets_observed},"
         f"{state.material_output_contract_role_scoped},"
         f"{state.material_dispatch_write_target_explicit},"
-        f"{state.retired_material_packets_rejected}|"
+        f"{state.unsupported_material_packets_rejected}|"
         f"terminal={state.terminal_closure_observed},"
         f"{state.run_lifecycle_record_written},"
         f"{state.router_frontier_lifecycle_terminal_consistent},"

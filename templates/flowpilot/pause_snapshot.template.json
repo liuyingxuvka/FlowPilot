@@ -22,8 +22,8 @@
   "lifecycle_summary": {
     "heartbeat_automation_ids": [],
     "codex_automation_status_checked": false,
-    "active_background_agents": [],
-    "closed_or_paused_background_agents": [],
+    "active_runtime_role_assistances": [],
+    "closed_or_paused_runtime_role_assistances": [],
     "manual_resume_notice_required": false
   },
   "cleanup_boundary": {

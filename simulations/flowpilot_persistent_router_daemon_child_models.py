@@ -1,7 +1,7 @@
 """Thin FlowGuard child models for the persistent Router daemon mesh.
 
 The full `flowpilot_persistent_router_daemon` model remains available as a
-compatibility check. These child models provide the bounded evidence consumed by
+unsupported_historical check. These child models provide the bounded evidence consumed by
 the parent hierarchy for the `router_daemon_resume` partition.
 """
 
@@ -421,7 +421,7 @@ def build_report(family: str) -> dict[str, Any]:
         "parent_reattachment": {
             "parent": "meta",
             "partition": "router_daemon_resume",
-            "compatibility_full_model": "flowpilot_persistent_router_daemon",
+            "unsupported_historical_full_model": "flowpilot_persistent_router_daemon",
             "parent_consumes_this_child": True,
             "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
         },

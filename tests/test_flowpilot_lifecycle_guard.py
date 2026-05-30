@@ -15,9 +15,9 @@ if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
 flowpilot_new = importlib.import_module("flowpilot_new")
-host = importlib.import_module("ai_project_runtime.host")
-run_shell = importlib.import_module("ai_project_runtime.run_shell")
-runtime = importlib.import_module("ai_project_runtime.runtime")
+host = importlib.import_module("flowpilot_core_runtime.host")
+run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
+runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 lifecycle_runner = importlib.import_module("simulations.run_flowpilot_lifecycle_guard_checks")
 
 

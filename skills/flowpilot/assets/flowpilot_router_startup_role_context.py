@@ -58,71 +58,71 @@ OWNER_MODULE = 'flowpilot_router_startup_role_recovery'
 def _role_spawn_action_extra(router: ModuleType, state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     answers = state.get('startup_answers') if isinstance(state.get('startup_answers'), dict) else {}
-    mode = answers.get('background_agents')
-    extra: dict[str, Any] = {'background_agents_mode': mode, 'role_keys': list(CREW_ROLE_KEYS), 'background_role_agent_model_policy': {'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['startup_live_role_binding', 'heartbeat_resume_rehydration', 'manual_resume_rehydration', 'missing_role_replacement']}}
+    mode = answers.get('runtime_role_assistances')
+    extra: dict[str, Any] = {'runtime_role_assistance_mode': mode, 'role_keys': list(RUNTIME_ROLE_KEYS), 'background_role_agent_model_policy': {'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['startup_live_role_binding', 'heartbeat_resume_rehydration', 'manual_resume_rehydration', 'missing_role_replacement']}}
     if mode == 'allow':
-        extra.update({'requires_payload': 'role_agents', 'requires_host_spawn': True, 'spawn_policy': 'open_runtime_required_role_bindings_before_controller_receipt', 'payload_contract': _role_slots_payload_contract(), 'role_spawn_request': [{'role_key': role, 'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'spawn_result': ROLE_AGENT_SPAWN_RESULT, 'spawned_for_run_id': state.get('run_id'), 'spawned_after_startup_answers': True} for role in CREW_ROLE_KEYS]})
+        extra.update({'requires_payload': 'role_bindings', 'requires_host_role_binding': True, 'role_binding_open_policy': 'open_runtime_required_role_bindings_before_controller_receipt', 'payload_contract': _role_slots_payload_contract(), 'role_spawn_request': [{'role_key': role, 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'binding_open_result': ROLE_BINDING_OPEN_RESULT, 'opened_for_run_id': state.get('run_id'), 'opened_after_startup_answers': True} for role in RUNTIME_ROLE_KEYS]})
     elif mode == 'single-agent':
-        extra.update({'requires_host_spawn': False, 'single_agent_continuity_authorized': True})
+        extra.update({'requires_host_role_binding': False, 'single_agent_continuity_authorized': True})
     return extra
 
 def _normalize_role_agent_records(router: ModuleType, state: dict[str, Any], payload: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
     answers = state.get('startup_answers') if isinstance(state.get('startup_answers'), dict) else {}
-    mode = answers.get('background_agents')
+    mode = answers.get('runtime_role_assistances')
     run_id = str(state.get('run_id') or '')
     if mode == 'single-agent':
-        return [{'role_key': role, 'status': 'single_agent_continuity_authorized', 'agent_id': None, 'spawn_result': 'not_requested_single_agent_continuity', 'fallback_authorized_by_startup_answer': True, 'recorded_at': utc_now()} for role in CREW_ROLE_KEYS]
+        return [{'role_key': role, 'status': 'single_agent_continuity_authorized', 'agent_id': None, 'binding_open_result': 'not_requested_single_agent_continuity', 'fallback_authorized_by_startup_answer': True, 'recorded_at': utc_now()} for role in RUNTIME_ROLE_KEYS]
     if mode != 'allow':
-        raise RouterError('cannot start roles before background_agents startup answer is recorded')
-    raw_records = payload.get('role_agents')
+        raise RouterError('cannot start roles before runtime_role_assistances startup answer is recorded')
+    raw_records = payload.get('role_bindings')
     if isinstance(raw_records, dict):
         iterable = list(raw_records.values())
     elif isinstance(raw_records, list):
         iterable = raw_records
     else:
-        raise RouterError('start_role_slots requires payload.role_agents list or object')
-    if payload.get('background_agents_capability_status') != 'available':
-        raise RouterError('live role bindings require background_agents_capability_status=available')
+        raise RouterError('start_role_slots requires payload.role_bindings list or object')
+    if payload.get('runtime_role_assistance_capability_status') != 'available':
+        raise RouterError('live role bindings require runtime_role_assistance_capability_status=available')
     records_by_role: dict[str, dict[str, Any]] = {}
     for raw in iterable:
         if not isinstance(raw, dict):
             raise RouterError('each role-binding record must be an object')
         role = raw.get('role_key')
-        if role not in CREW_ROLE_KEYS:
+        if role not in RUNTIME_ROLE_KEYS:
             raise RouterError(f'role-binding record has unsupported role_key: {role!r}')
         if role in records_by_role:
             raise RouterError(f'duplicate role-binding record for {role}')
         agent_id = raw.get('agent_id')
         if not isinstance(agent_id, str) or not agent_id.strip():
             raise RouterError(f'{role} requires a non-empty current agent_id')
-        if raw.get('model_policy') != BACKGROUND_ROLE_MODEL_POLICY:
-            raise RouterError(f'{role} requires model_policy={BACKGROUND_ROLE_MODEL_POLICY}')
-        if raw.get('reasoning_effort_policy') != BACKGROUND_ROLE_REASONING_EFFORT_POLICY:
-            raise RouterError(f'{role} requires reasoning_effort_policy={BACKGROUND_ROLE_REASONING_EFFORT_POLICY}')
-        if raw.get('spawn_result') != ROLE_AGENT_SPAWN_RESULT:
-            raise RouterError(f'{role} requires spawn_result=spawned_fresh_for_task')
-        if raw.get('spawned_after_startup_answers') is not True:
-            raise RouterError(f'{role} must be spawned_after_startup_answers=true')
-        if raw.get('spawned_for_run_id') != run_id:
-            raise RouterError(f'{role} must be spawned_for_run_id={run_id}')
-        host_spawn_receipt = raw.get('host_spawn_receipt')
-        if host_spawn_receipt is not None:
-            if not isinstance(host_spawn_receipt, dict):
-                raise RouterError(f'{role} host_spawn_receipt must be an object')
-            if host_spawn_receipt.get('source_kind') != 'host_receipt':
-                raise RouterError(f'{role} host_spawn_receipt requires source_kind=host_receipt')
-            if host_spawn_receipt.get('spawned_for_run_id') != run_id:
-                raise RouterError(f'{role} host_spawn_receipt spawned_for_run_id mismatch')
-            if host_spawn_receipt.get('role_key') != role:
-                raise RouterError(f'{role} host_spawn_receipt role_key mismatch')
-            if host_spawn_receipt.get('agent_id') != agent_id:
-                raise RouterError(f'{role} host_spawn_receipt agent_id mismatch')
-        records_by_role[str(role)] = {'role_key': str(role), 'status': 'live_agent_started', 'agent_id': agent_id.strip(), 'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'spawn_result': ROLE_AGENT_SPAWN_RESULT, 'spawned_for_run_id': run_id, 'spawned_after_startup_answers': True, 'crew_generation': 1, 'role_binding_epoch': 1, **({'host_spawn_receipt': host_spawn_receipt} if isinstance(host_spawn_receipt, dict) else {}), 'recorded_at': utc_now()}
-    missing = [role for role in CREW_ROLE_KEYS if role not in records_by_role]
+        if raw.get('model_policy') != ROLE_BINDING_MODEL_POLICY:
+            raise RouterError(f'{role} requires model_policy={ROLE_BINDING_MODEL_POLICY}')
+        if raw.get('reasoning_effort_policy') != ROLE_BINDING_REASONING_EFFORT_POLICY:
+            raise RouterError(f'{role} requires reasoning_effort_policy={ROLE_BINDING_REASONING_EFFORT_POLICY}')
+        if raw.get('binding_open_result') != ROLE_BINDING_OPEN_RESULT:
+            raise RouterError(f'{role} requires binding_open_result=opened_for_current_task')
+        if raw.get('opened_after_startup_answers') is not True:
+            raise RouterError(f'{role} must be opened_after_startup_answers=true')
+        if raw.get('opened_for_run_id') != run_id:
+            raise RouterError(f'{role} must be opened_for_run_id={run_id}')
+        host_role_binding_receipt = raw.get('host_role_binding_receipt')
+        if host_role_binding_receipt is not None:
+            if not isinstance(host_role_binding_receipt, dict):
+                raise RouterError(f'{role} host_role_binding_receipt must be an object')
+            if host_role_binding_receipt.get('source_kind') != 'host_receipt':
+                raise RouterError(f'{role} host_role_binding_receipt requires source_kind=host_receipt')
+            if host_role_binding_receipt.get('opened_for_run_id') != run_id:
+                raise RouterError(f'{role} host_role_binding_receipt opened_for_run_id mismatch')
+            if host_role_binding_receipt.get('role_key') != role:
+                raise RouterError(f'{role} host_role_binding_receipt role_key mismatch')
+            if host_role_binding_receipt.get('agent_id') != agent_id:
+                raise RouterError(f'{role} host_role_binding_receipt agent_id mismatch')
+        records_by_role[str(role)] = {'role_key': str(role), 'status': 'live_agent_started', 'agent_id': agent_id.strip(), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'binding_open_result': ROLE_BINDING_OPEN_RESULT, 'opened_for_run_id': run_id, 'opened_after_startup_answers': True, 'role_binding_generation': 1, 'role_binding_epoch': 1, **({'host_role_binding_receipt': host_role_binding_receipt} if isinstance(host_role_binding_receipt, dict) else {}), 'recorded_at': utc_now()}
+    missing = [role for role in RUNTIME_ROLE_KEYS if role not in records_by_role]
     if missing:
         raise RouterError(f"missing live role-binding records: {', '.join(missing)}")
-    return [records_by_role[role] for role in CREW_ROLE_KEYS]
+    return [records_by_role[role] for role in RUNTIME_ROLE_KEYS]
 
 def _latest_resume_tick_id(router: ModuleType, run_state: dict[str, Any]) -> str:
     _bind_router(router)
@@ -138,7 +138,7 @@ def _role_core_prompt_path(router: ModuleType, run_root: Path, role: str) -> Pat
 
 def _role_memory_path(router: ModuleType, run_root: Path, role: str) -> Path:
     _bind_router(router)
-    return run_root / 'crew_memory' / f'{role}.json'
+    return run_root / 'role_binding_memory' / f'{role}.json'
 
 def _path_hash(router: ModuleType, path: Path) -> str | None:
     _bind_router(router)
@@ -162,16 +162,16 @@ def _resume_role_context(router: ModuleType, project_root: Path, run_root: Path,
     _bind_router(router)
     memory_path = router._role_memory_path(run_root, role)
     core_path = router._role_core_prompt_path(run_root, role)
-    common_context = {'resume_reentry': project_relative(project_root, run_root / 'continuation' / 'resume_reentry.json'), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'prompt_delivery_ledger': project_relative(project_root, run_root / 'prompt_delivery_ledger.json'), 'role_io_protocol_ledger': project_relative(project_root, _role_io_protocol_ledger_path(run_root)), 'crew_ledger': project_relative(project_root, run_root / 'crew_ledger.json'), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root)), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'display_plan': project_relative(project_root, router._display_plan_path(run_root))}
-    context = {'role_key': role, 'required_rehydration_result': 'conditional_on_host_liveness', 'active_liveness_rehydration_result': ROLE_AGENT_CONTINUITY_RESULT, 'replacement_rehydration_result': ROLE_AGENT_REHYDRATION_RESULT, 'allowed_rehydration_results': sorted(RESUME_ROLE_AGENT_RESULTS), 'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': router._latest_resume_tick_id(run_state), 'rehydrated_after_resume_state_loaded': True, 'replacement_spawned_after_resume_state_loaded': False, 'replacement_spawned_after_resume_state_loaded_required_if_replaced': True, 'core_prompt_path': project_relative(project_root, core_path), 'core_prompt_hash': router._path_hash(core_path), 'memory_packet_path': project_relative(project_root, memory_path), 'memory_packet_hash': router._path_hash(memory_path), 'role_memory_status': 'available' if memory_path.exists() else 'missing', 'common_context_paths': common_context, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
+    common_context = {'resume_reentry': project_relative(project_root, run_root / 'continuation' / 'resume_reentry.json'), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'prompt_delivery_ledger': project_relative(project_root, run_root / 'prompt_delivery_ledger.json'), 'role_io_protocol_ledger': project_relative(project_root, _role_io_protocol_ledger_path(run_root)), 'role_binding_ledger': project_relative(project_root, run_root / 'role_binding_ledger.json'), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root)), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'display_plan': project_relative(project_root, router._display_plan_path(run_root))}
+    context = {'role_key': role, 'required_rehydration_result': 'conditional_on_host_liveness', 'active_liveness_rehydration_result': ROLE_BINDING_CONTINUITY_RESULT, 'replacement_rehydration_result': ROLE_BINDING_REHYDRATION_RESULT, 'allowed_rehydration_results': sorted(RESUME_ROLE_BINDING_RESULTS), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': router._latest_resume_tick_id(run_state), 'rehydrated_after_resume_state_loaded': True, 'replacement_opened_after_resume_state_loaded': False, 'replacement_opened_after_resume_state_loaded_required_if_replaced': True, 'core_prompt_path': project_relative(project_root, core_path), 'core_prompt_hash': router._path_hash(core_path), 'memory_packet_path': project_relative(project_root, memory_path), 'memory_packet_hash': router._path_hash(memory_path), 'role_memory_status': 'available' if memory_path.exists() else 'missing', 'common_context_paths': common_context, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
     if role == 'project_manager':
         context['pm_resume_context_required'] = True
-        context['pm_resume_context_paths'] = {'resume_reentry': common_context['resume_reentry'], 'execution_frontier': common_context['execution_frontier'], 'packet_ledger': common_context['packet_ledger'], 'prompt_delivery_ledger': common_context['prompt_delivery_ledger'], 'crew_ledger': common_context['crew_ledger'], 'crew_memory': project_relative(project_root, run_root / 'crew_memory'), 'route_history_index': common_context['route_history_index'], 'pm_prior_path_context': common_context['pm_prior_path_context'], 'display_plan': common_context['display_plan']}
+        context['pm_resume_context_paths'] = {'resume_reentry': common_context['resume_reentry'], 'execution_frontier': common_context['execution_frontier'], 'packet_ledger': common_context['packet_ledger'], 'prompt_delivery_ledger': common_context['prompt_delivery_ledger'], 'role_binding_ledger': common_context['role_binding_ledger'], 'role_binding_memory': project_relative(project_root, run_root / 'role_binding_memory'), 'route_history_index': common_context['route_history_index'], 'pm_prior_path_context': common_context['pm_prior_path_context'], 'display_plan': common_context['display_plan']}
     return context
 
 def _resume_role_contexts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
-    return [router._resume_role_context(project_root, run_root, run_state, role) for role in CREW_ROLE_KEYS]
+    return [router._resume_role_context(project_root, run_root, run_state, role) for role in RUNTIME_ROLE_KEYS]
 
 def _resume_liveness_probe_batch_id(router: ModuleType, run_state: dict[str, Any]) -> str:
     _bind_router(router)
@@ -196,7 +196,7 @@ def _role_recovery_report_path(router: ModuleType, run_root: Path) -> Path:
 def _role_recovery_target_roles(router: ModuleType, raw_roles: object, *, default_all: bool=False) -> list[str]:
     _bind_router(router)
     if default_all:
-        return list(CREW_ROLE_KEYS)
+        return list(RUNTIME_ROLE_KEYS)
     if isinstance(raw_roles, str):
         roles = [raw_roles]
     elif isinstance(raw_roles, list):
@@ -206,7 +206,7 @@ def _role_recovery_target_roles(router: ModuleType, raw_roles: object, *, defaul
     normalized: list[str] = []
     for role in roles:
         role_key = str(role).strip()
-        if role_key not in CREW_ROLE_KEYS:
+        if role_key not in RUNTIME_ROLE_KEYS:
             raise RouterError(f'role recovery target has unsupported role_key: {role_key!r}')
         if role_key not in normalized:
             normalized.append(role_key)
@@ -235,11 +235,11 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
     transaction_targets = [str(role) for role in transaction.get('target_role_keys') or []]
     if report_targets != transaction_targets:
         return None
-    if report.get('all_six_roles_ready') is not True or report.get('environment_blocked') is True:
+    if report.get('required_role_bindings_ready') is not True or report.get('environment_blocked') is True:
         return None
-    crew_path = run_root / 'crew_ledger.json'
-    crew = read_json_if_exists(crew_path)
-    slots = crew.get('role_slots') if isinstance(crew.get('role_slots'), list) else []
+    crew_path = run_root / 'role_binding_ledger.json'
+    role_binding = read_json_if_exists(crew_path)
+    slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
     ready_agents: dict[str, str] = {}
     for slot in slots:
         if not isinstance(slot, dict):
@@ -248,12 +248,12 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
         agent_id = slot.get('agent_id')
         if role in transaction_targets and str(slot.get('last_role_recovery_transaction_id') or '') != str(transaction.get('transaction_id') or ''):
             continue
-        if role in CREW_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip() and router._role_slot_has_current_host_liveness(slot):
+        if role in RUNTIME_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip() and router._role_slot_has_current_host_liveness(slot):
             ready_agents[role] = agent_id.strip()
-    missing_roles = [role for role in CREW_ROLE_KEYS if role not in ready_agents]
+    missing_roles = [role for role in RUNTIME_ROLE_KEYS if role not in ready_agents]
     if missing_roles:
         return None
-    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'crew_path': crew_path, 'crew_relpath': project_relative(project_root, crew_path), 'ready_role_keys': list(CREW_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
+    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'crew_path': crew_path, 'crew_relpath': project_relative(project_root, crew_path), 'ready_role_keys': list(RUNTIME_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
 
 __all__ = (
     '_role_spawn_action_extra',

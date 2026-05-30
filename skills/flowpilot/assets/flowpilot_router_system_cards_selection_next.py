@@ -64,7 +64,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         and not bool(flags.get("pm_resume_recovery_decision_returned"))
     )
     resume_replayed_without_pm = _resume_mechanical_replay_completed_without_pm(run_state)
-    resume_card_ids = {"controller.resume_reentry", "pm.crew_rehydration_freshness", "pm.resume_decision"}
+    resume_card_ids = {"controller.resume_reentry", "pm.role_binding_recovery_freshness", "pm.resume_decision"}
     for entry in SYSTEM_CARD_SEQUENCE:
         if entry["card_id"] == REVIEWER_STARTUP_FACT_CARD_ID:
             blockers = _startup_pre_review_reconciliation_blockers(project_root, run_root, run_state)
@@ -78,7 +78,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                     blockers=blockers,
                     review_trigger=entry["card_id"],
                 )
-        if resume_replayed_without_pm and entry["card_id"] in {"pm.crew_rehydration_freshness", "pm.resume_decision"}:
+        if resume_replayed_without_pm and entry["card_id"] in {"pm.role_binding_recovery_freshness", "pm.resume_decision"}:
             continue
         if resume_waiting_for_pm and entry["card_id"] not in resume_card_ids:
             continue
@@ -112,7 +112,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             if policy_action not in {str(item) for item in legal_context.get("legal_action_ids", [])}:
                 continue
         to_role = _system_card_to_role(run_root, entry)
-        if entry["card_id"] in STARTUP_ASYNC_CARD_IDS and to_role in CREW_ROLE_KEYS and not _active_agent_id_for_role(run_root, to_role):
+        if entry["card_id"] in STARTUP_ASYNC_CARD_IDS and to_role in RUNTIME_ROLE_KEYS and not _active_agent_id_for_role(run_root, to_role):
             return _current_scope_pre_review_reconciliation_action(
                 project_root,
                 run_root,
@@ -214,7 +214,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
                     f"system card {entry['card_id']}."
                 ),
                 allowed_reads=[
-                    project_relative(project_root, run_root / "crew_ledger.json"),
+                    project_relative(project_root, run_root / "role_binding_ledger.json"),
                     project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
                 ],
                 allowed_writes=[

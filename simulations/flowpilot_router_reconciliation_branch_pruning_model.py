@@ -36,7 +36,7 @@ BACKGROUND_VALIDATION_SURFACE = "background_validation"
 
 SCHEDULED_NO_ACTION_DIR = "scheduled_no_action_dir"
 SCHEDULED_INVALID_SCHEMA = "scheduled_invalid_schema"
-SCHEDULED_RETIRED_STARTUP_CANONICAL = "scheduled_legacy_startup_canonical"
+SCHEDULED_RETIRED_STARTUP_CANONICAL = "scheduled_unsupported_historical_startup_canonical"
 SCHEDULED_ROW_RECONCILIATION = "scheduled_row_reconciliation"
 SCHEDULED_CURRENT_SCOPE_RESOLVED = "scheduled_current_scope_resolved"
 SCHEDULED_CARD_RETURN_RESOLVED = "scheduled_card_return_resolved"
@@ -230,7 +230,7 @@ def _scenario_state(scenario: str) -> State:
         return _scheduled_state(
             scenario,
             "reconciled",
-            subcase="legacy_startup_canonical",
+            subcase="unsupported_historical_startup_canonical",
             writes=(
                 "controller_action_row",
                 "router_scheduler_row",

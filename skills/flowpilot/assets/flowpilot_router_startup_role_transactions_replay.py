@@ -122,7 +122,7 @@ def _supersede_role_recovery_original_wait(router: ModuleType, project_root: Pat
 
 def _plan_role_recovery_obligation_replay(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, transaction: dict[str, Any], records: list[dict[str, Any]], report_path: Path) -> dict[str, Any]:
     _bind_router(router)
-    target_roles = {str(record.get('role_key') or '') for record in records if record.get('recovery_result') != ROLE_AGENT_ENVIRONMENT_BLOCKED_RESULT}
+    target_roles = {str(record.get('role_key') or '') for record in records if record.get('recovery_result') != ROLE_BINDING_ENVIRONMENT_BLOCKED_RESULT}
     target_roles.discard('')
     _reconcile_durable_wait_evidence(project_root, run_root, run_state)
     _run_router_return_settlement_finalizers(project_root, run_root, run_state, source='role_recovery_obligation_replay_pre_scan')

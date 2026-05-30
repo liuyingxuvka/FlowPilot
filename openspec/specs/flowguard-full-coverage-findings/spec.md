@@ -6,7 +6,7 @@ TBD - created by archiving change close-flowguard-full-coverage-findings. Update
 ### Requirement: Split Facade Source Audits Resolve Owner Modules
 
 FlowGuard source audits SHALL resolve behavior-bearing helpers and data tables
-from the owner modules exported through a compatibility facade.
+from the owner modules exported through a unsupported historical facade.
 
 #### Scenario: helper moved out of router facade
 

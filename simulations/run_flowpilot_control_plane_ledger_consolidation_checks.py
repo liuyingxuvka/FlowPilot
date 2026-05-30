@@ -26,7 +26,7 @@ REQUIRED_LABELS = tuple(
 HAZARD_EXPECTED_FAILURES = {
     "foreground_receipt_writes_scheduler_during_daemon": "foreground receipt path mutated Router scheduler ledger while daemon owned folding",
     "readback_permission_kills_daemon": "transient ledger access denial released daemon lock as error",
-    "pending_action_overrides_controller_ledger": "legacy pending_action overrode Controller action ledger authority",
+    "pending_action_overrides_controller_ledger": "unsupported_historical pending_action overrode Controller action ledger authority",
     "worker_event_collapses_batch_to_worker_a": "batch wait projection did not derive missing roles from member state",
     "stale_passive_wait_left_open": "stale passive wait remained unresolved after prerequisite resolved",
     "closed_status_vocabulary_blocks_passive_wait": "closed Controller row was counted as pending by a noncanonical blocker scan",
@@ -48,8 +48,8 @@ def _state_id(state: model.State) -> str:
         f"deferred={state.daemon_deferred_tick},"
         f"lock_error={state.daemon_lock_released_error}|"
         f"ledger_auth={state.controller_action_ledger_authority},"
-        f"pending={state.legacy_pending_action_present},"
-        f"pending_apply={state.legacy_pending_apply_required},"
+        f"pending={state.unsupported_historical_pending_action_present},"
+        f"pending_apply={state.unsupported_historical_pending_apply_required},"
         f"action_apply={state.controller_action_apply_required},"
         f"mode={state.controller_action_wait_mode},"
         f"decision_ledger={state.decision_used_controller_ledger},"

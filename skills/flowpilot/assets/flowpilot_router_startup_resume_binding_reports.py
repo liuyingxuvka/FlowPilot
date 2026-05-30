@@ -52,21 +52,21 @@ def _write_resume_role_rehydration_report(router: ModuleType, project_root: Path
     resume_next = router._derive_resume_next_recipient_from_packet_ledger(run_root)
     timeout_unknown_roles = [record['role_key'] for record in records if record.get('host_liveness_status') == 'timeout_unknown' or record.get('bounded_wait_result') == 'timeout_unknown']
     missing_or_cancelled_roles = [record['role_key'] for record in records if record.get('host_liveness_status') in {'missing', 'cancelled', 'unknown'}]
-    replacement_roles = [record['role_key'] for record in records if record.get('liveness_decision') == 'spawned_replacement_from_current_run_memory']
-    report_path = run_root / 'continuation' / 'crew_rehydration_report.json'
-    report = {'schema_version': 'flowpilot.crew_rehydration_report.v1', 'run_id': run_state['run_id'], 'resume_tick_id': router._latest_resume_tick_id(run_state), 'background_agents_mode': router._startup_answers_from_run(run_root).get('background_agents'), 'recorded_at': utc_now(), 'source_paths': {'resume_reentry': project_relative(project_root, run_root / 'continuation' / 'resume_reentry.json'), 'crew_ledger': project_relative(project_root, run_root / 'crew_ledger.json'), 'crew_memory': project_relative(project_root, run_root / 'crew_memory'), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'prompt_delivery_ledger': project_relative(project_root, run_root / 'prompt_delivery_ledger.json'), 'role_io_protocol_ledger': project_relative(project_root, _role_io_protocol_ledger_path(run_root)), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root))}, 'all_six_roles_ready': len(records) == len(CREW_ROLE_KEYS), 'liveness_preflight': {'checked_at': utc_now(), 'probe_mode': ROLE_AGENT_LIVENESS_PROBE_MODE, 'liveness_probe_batch_id': router._resume_liveness_probe_batch_id(run_state), 'all_liveness_probes_started_before_wait': True, 'awaiting_role': resume_next.get('next_recipient_role'), 'roles_checked': [record['role_key'] for record in records], 'timeout_unknown_role_keys': timeout_unknown_roles, 'missing_cancelled_or_unknown_role_keys': missing_or_cancelled_roles, 'replacement_role_keys': replacement_roles, 'wait_agent_timeout_treated_as_active': False, 'decision': 'roles_ready_after_replacement' if replacement_roles else 'all_roles_active'}, 'current_run_memory_complete': memory_complete, 'missing_memory_role_keys': [record['role_key'] for record in records if record.get('role_memory_status') != 'available'], 'pm_memory_rehydrated': any((record['role_key'] == 'project_manager' and record.get('pm_resume_context_delivered') is True and (record.get('role_memory_status') == 'available') for record in records)), 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
+    replacement_roles = [record['role_key'] for record in records if record.get('liveness_decision') == 'opened_replacement_from_current_run_memory']
+    report_path = run_root / 'continuation' / 'role_binding_recovery_report.json'
+    report = {'schema_version': 'flowpilot.role_binding_recovery_report.v1', 'run_id': run_state['run_id'], 'resume_tick_id': router._latest_resume_tick_id(run_state), 'runtime_role_assistance_mode': router._startup_answers_from_run(run_root).get('runtime_role_assistances'), 'recorded_at': utc_now(), 'source_paths': {'resume_reentry': project_relative(project_root, run_root / 'continuation' / 'resume_reentry.json'), 'role_binding_ledger': project_relative(project_root, run_root / 'role_binding_ledger.json'), 'role_binding_memory': project_relative(project_root, run_root / 'role_binding_memory'), 'execution_frontier': project_relative(project_root, run_root / 'execution_frontier.json'), 'packet_ledger': project_relative(project_root, run_root / 'packet_ledger.json'), 'prompt_delivery_ledger': project_relative(project_root, run_root / 'prompt_delivery_ledger.json'), 'role_io_protocol_ledger': project_relative(project_root, _role_io_protocol_ledger_path(run_root)), 'pm_prior_path_context': project_relative(project_root, router._pm_prior_path_context_path(run_root)), 'route_history_index': project_relative(project_root, router._route_history_index_path(run_root))}, 'required_role_bindings_ready': len(records) == len(RUNTIME_ROLE_KEYS), 'liveness_preflight': {'checked_at': utc_now(), 'probe_mode': ROLE_BINDING_LIVENESS_PROBE_MODE, 'liveness_probe_batch_id': router._resume_liveness_probe_batch_id(run_state), 'all_liveness_probes_started_before_wait': True, 'awaiting_role': resume_next.get('next_recipient_role'), 'roles_checked': [record['role_key'] for record in records], 'timeout_unknown_role_keys': timeout_unknown_roles, 'missing_cancelled_or_unknown_role_keys': missing_or_cancelled_roles, 'replacement_role_keys': replacement_roles, 'wait_agent_timeout_treated_as_active': False, 'decision': 'roles_ready_after_replacement' if replacement_roles else 'all_roles_active'}, 'current_run_memory_complete': memory_complete, 'missing_memory_role_keys': [record['role_key'] for record in records if record.get('role_memory_status') != 'available'], 'pm_memory_rehydrated': any((record['role_key'] == 'project_manager' and record.get('pm_resume_context_delivered') is True and (record.get('role_memory_status') == 'available') for record in records)), 'role_records': records, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
     write_json(report_path, report)
-    crew_path = run_root / 'crew_ledger.json'
-    crew = read_json_if_exists(crew_path)
-    history = crew.get('resume_rehydration_history') if isinstance(crew.get('resume_rehydration_history'), list) else []
-    history.append({'report_path': project_relative(project_root, report_path), 'resume_tick_id': report['resume_tick_id'], 'recorded_at': report['recorded_at'], 'all_six_roles_ready': report['all_six_roles_ready'], 'current_run_memory_complete': memory_complete, 'liveness_decision': report['liveness_preflight']['decision'], 'timeout_unknown_role_keys': timeout_unknown_roles, 'missing_cancelled_or_unknown_role_keys': missing_or_cancelled_roles})
-    crew.update({'schema_version': 'flowpilot.crew_ledger.v1', 'run_id': run_state['run_id'], 'role_slots': records, 'crew_generation': router._current_crew_generation(crew), 'latest_resume_rehydration_report': project_relative(project_root, report_path), 'resume_rehydration_history': history, 'updated_at': utc_now()})
-    write_json(crew_path, crew)
+    crew_path = run_root / 'role_binding_ledger.json'
+    role_binding = read_json_if_exists(crew_path)
+    history = role_binding.get('resume_rehydration_history') if isinstance(role_binding.get('resume_rehydration_history'), list) else []
+    history.append({'report_path': project_relative(project_root, report_path), 'resume_tick_id': report['resume_tick_id'], 'recorded_at': report['recorded_at'], 'required_role_bindings_ready': report['required_role_bindings_ready'], 'current_run_memory_complete': memory_complete, 'liveness_decision': report['liveness_preflight']['decision'], 'timeout_unknown_role_keys': timeout_unknown_roles, 'missing_cancelled_or_unknown_role_keys': missing_or_cancelled_roles})
+    role_binding.update({'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': run_state['run_id'], 'role_slots': records, 'role_binding_generation': router._current_role_binding_generation(role_binding), 'latest_resume_rehydration_report': project_relative(project_root, report_path), 'resume_rehydration_history': history, 'updated_at': utc_now()})
+    write_json(crew_path, role_binding)
     transaction = router._latest_role_recovery_transaction(run_root)
     if transaction.get('schema_version') == ROLE_RECOVERY_TRANSACTION_SCHEMA:
         role_recovery_report_path = router._role_recovery_report_path(run_root)
-        replay_ready = memory_complete and bool(report['all_six_roles_ready'])
-        role_recovery_report = {'schema_version': ROLE_RECOVERY_REPORT_SCHEMA, 'run_id': run_state['run_id'], 'transaction_id': transaction.get('transaction_id'), 'trigger_source': transaction.get('trigger_source'), 'recovery_scope': transaction.get('recovery_scope'), 'target_role_keys': transaction.get('target_role_keys') or list(CREW_ROLE_KEYS), 'recorded_at': report['recorded_at'], 'priority': 'preempt_normal_work', 'normal_work_suspended_until_report': True, 'all_six_roles_ready': report['all_six_roles_ready'], 'environment_blocked': False, 'crew_generation_after': crew.get('crew_generation'), 'role_records': [{'role_key': record['role_key'], 'old_agent_id': None, 'agent_id': record.get('agent_id'), 'recovery_result': ROLE_AGENT_OLD_RESTORE_RESULT if record.get('rehydration_result') == ROLE_AGENT_CONTINUITY_RESULT else ROLE_AGENT_TARGETED_REPLACEMENT_RESULT, 'memory_context_injected': record.get('role_memory_status') == 'available', 'packet_ownership_reconciled': True, 'role_binding_epoch': record.get('role_binding_epoch'), 'crew_generation': record.get('crew_generation'), 'superseded_agent_output_quarantined': bool(record.get('superseded_agent_ids'))} for record in records], 'packet_ownership_reconciled': True, 'memory_context_injected': memory_complete, 'stale_generation_output_quarantined': True, 'pm_decision_required_before_normal_work': not replay_ready, 'mechanical_obligation_replay_before_pm': replay_ready, 'mechanical_obligation_replay_completed': False, 'crew_rehydration_report_path': project_relative(project_root, report_path), 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
+        replay_ready = memory_complete and bool(report['required_role_bindings_ready'])
+        role_recovery_report = {'schema_version': ROLE_RECOVERY_REPORT_SCHEMA, 'run_id': run_state['run_id'], 'transaction_id': transaction.get('transaction_id'), 'trigger_source': transaction.get('trigger_source'), 'recovery_scope': transaction.get('recovery_scope'), 'target_role_keys': transaction.get('target_role_keys') or list(RUNTIME_ROLE_KEYS), 'recorded_at': report['recorded_at'], 'priority': 'preempt_normal_work', 'normal_work_suspended_until_report': True, 'required_role_bindings_ready': report['required_role_bindings_ready'], 'environment_blocked': False, 'role_binding_generation_after': role_binding.get('role_binding_generation'), 'role_records': [{'role_key': record['role_key'], 'old_agent_id': None, 'agent_id': record.get('agent_id'), 'recovery_result': ROLE_BINDING_RESTORE_RESULT if record.get('rehydration_result') == ROLE_BINDING_CONTINUITY_RESULT else ROLE_BINDING_TARGETED_REPLACEMENT_RESULT, 'memory_context_injected': record.get('role_memory_status') == 'available', 'packet_ownership_reconciled': True, 'role_binding_epoch': record.get('role_binding_epoch'), 'role_binding_generation': record.get('role_binding_generation'), 'superseded_agent_output_quarantined': bool(record.get('superseded_agent_ids'))} for record in records], 'packet_ownership_reconciled': True, 'memory_context_injected': memory_complete, 'stale_generation_output_quarantined': True, 'pm_decision_required_before_normal_work': not replay_ready, 'mechanical_obligation_replay_before_pm': replay_ready, 'mechanical_obligation_replay_completed': False, 'role_binding_recovery_report_path': project_relative(project_root, report_path), 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
         write_json(role_recovery_report_path, role_recovery_report)
         run_state['flags']['role_recovery_state_loaded'] = True
         run_state['flags']['role_recovery_roles_restored'] = True
@@ -88,11 +88,11 @@ def _write_resume_role_rehydration_report(router: ModuleType, project_root: Path
             run_state['flags']['role_recovery_obligation_replay_completed'] = False
             run_state['flags']['role_recovery_pm_escalation_required'] = True
             run_state['flags']['pm_resume_recovery_decision_returned'] = False
-            append_history(run_state, 'router_skipped_resume_obligation_replay', {'transaction_id': transaction.get('transaction_id'), 'reason': skipped_reason, 'memory_complete': memory_complete, 'all_six_roles_ready': report['all_six_roles_ready']})
-    _append_role_io_protocol_injections(project_root, run_root, str(run_state['run_id']), records, default_lifecycle_phase='heartbeat_rehydration', resume_tick_id=report['resume_tick_id'], source_action='rehydrate_role_agents')
+            append_history(run_state, 'router_skipped_resume_obligation_replay', {'transaction_id': transaction.get('transaction_id'), 'reason': skipped_reason, 'memory_complete': memory_complete, 'required_role_bindings_ready': report['required_role_bindings_ready']})
+    _append_role_io_protocol_injections(project_root, run_root, str(run_state['run_id']), records, default_lifecycle_phase='heartbeat_rehydration', resume_tick_id=report['resume_tick_id'], source_action='rehydrate_role_bindings')
     run_state['flags']['resume_roles_restored'] = True
-    run_state['flags']['resume_role_agents_rehydrated'] = True
-    run_state['flags']['crew_rehydration_report_written'] = True
+    run_state['flags']['resume_role_bindings_rehydrated'] = True
+    run_state['flags']['role_binding_recovery_report_written'] = True
     if not memory_complete:
         run_state['flags']['resume_state_ambiguous'] = True
 
@@ -100,11 +100,11 @@ def _resume_rehydration_report_candidates(router: ModuleType, project_root: Path
     _bind_router(router)
     candidates: list[Path] = []
     payload = payload if isinstance(payload, dict) else {}
-    for key in ('crew_rehydration_report_path', 'report_path', 'rehydration_report_path'):
+    for key in ('role_binding_recovery_report_path', 'report_path', 'rehydration_report_path'):
         raw = payload.get(key)
         if isinstance(raw, str) and raw.strip():
             candidates.append(resolve_project_path(project_root, raw))
-    candidates.append(run_root / 'continuation' / 'crew_rehydration_report.json')
+    candidates.append(run_root / 'continuation' / 'role_binding_recovery_report.json')
     unique: list[Path] = []
     seen: set[str] = set()
     for path in candidates:
@@ -117,41 +117,41 @@ def _resume_rehydration_report_candidates(router: ModuleType, project_root: Path
 
 def _reclaim_resume_rehydration_postcondition_from_report(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, source: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
     _bind_router(router)
-    expected_roles = set(CREW_ROLE_KEYS)
-    last_reason = 'crew_rehydration_report_missing'
+    expected_roles = set(RUNTIME_ROLE_KEYS)
+    last_reason = 'role_binding_recovery_report_missing'
     for report_path in router._resume_rehydration_report_candidates(project_root, run_root, payload):
         report = read_json_if_exists(report_path)
         if not report:
-            last_reason = 'crew_rehydration_report_missing'
+            last_reason = 'role_binding_recovery_report_missing'
             continue
-        if report.get('schema_version') != 'flowpilot.crew_rehydration_report.v1':
-            last_reason = 'crew_rehydration_report_schema_mismatch'
+        if report.get('schema_version') != 'flowpilot.role_binding_recovery_report.v1':
+            last_reason = 'role_binding_recovery_report_schema_mismatch'
             continue
         if str(report.get('run_id') or '') != str(run_state.get('run_id') or ''):
-            last_reason = 'crew_rehydration_report_wrong_run'
+            last_reason = 'role_binding_recovery_report_wrong_run'
             continue
         records = report.get('role_records') if isinstance(report.get('role_records'), list) else []
         role_keys = {str(record.get('role_key') or '') for record in records if isinstance(record, dict)}
         if role_keys != expected_roles:
-            last_reason = 'crew_rehydration_report_role_set_incomplete'
+            last_reason = 'role_binding_recovery_report_role_set_incomplete'
             continue
-        if report.get('all_six_roles_ready') is not True:
-            last_reason = 'crew_rehydration_report_roles_not_ready'
+        if report.get('required_role_bindings_ready') is not True:
+            last_reason = 'role_binding_recovery_report_roles_not_ready'
             continue
         if report.get('current_run_memory_complete') is not True:
-            last_reason = 'crew_rehydration_report_memory_incomplete'
+            last_reason = 'role_binding_recovery_report_memory_incomplete'
             continue
         liveness = report.get('liveness_preflight') if isinstance(report.get('liveness_preflight'), dict) else {}
         if liveness.get('wait_agent_timeout_treated_as_active') is not False:
-            last_reason = 'crew_rehydration_report_timeout_classified_alive'
+            last_reason = 'role_binding_recovery_report_timeout_classified_alive'
             continue
         if report.get('sealed_body_reads_allowed') is not False:
-            last_reason = 'crew_rehydration_report_boundary_not_confirmed'
+            last_reason = 'role_binding_recovery_report_boundary_not_confirmed'
             continue
         flags = run_state.setdefault('flags', {})
         flags['resume_roles_restored'] = True
-        flags['resume_role_agents_rehydrated'] = True
-        flags['crew_rehydration_report_written'] = True
+        flags['resume_role_bindings_rehydrated'] = True
+        flags['role_binding_recovery_report_written'] = True
         flags['resume_state_loaded'] = True
         flags['resume_reentry_requested'] = True
         relpath = project_relative(project_root, report_path)
@@ -160,7 +160,7 @@ def _reclaim_resume_rehydration_postcondition_from_report(router: ModuleType, pr
             'router_reclaimed_resume_rehydration_report_postcondition',
             {
                 'source': source,
-                'crew_rehydration_report_path': relpath,
+                'role_binding_recovery_report_path': relpath,
                 'role_keys': sorted(role_keys),
                 'current_run_memory_complete': True,
             },
@@ -169,14 +169,14 @@ def _reclaim_resume_rehydration_postcondition_from_report(router: ModuleType, pr
             'applied': True,
             'source': source,
             'postcondition': 'resume_roles_restored',
-            'crew_rehydration_report_path': relpath,
+            'role_binding_recovery_report_path': relpath,
             'role_keys': sorted(role_keys),
         }
     return {'applied': False, 'reason': last_reason, 'postcondition': 'resume_roles_restored'}
 
 def _stable_resume_launcher_contract(router: ModuleType) -> dict[str, Any]:
     _bind_router(router)
-    return {'event': 'heartbeat_or_manual_resume_requested', 'wake_sources': ['heartbeat', 'manual_resume'], 'resume_action': 'load_resume_state', 'role_liveness_action': 'rehydrate_role_agents', 'router_reentry_required_on_every_wake': True, 'heartbeat_and_manual_resume_share_path': True, 'self_keepalive_allowed': False, 'diagnostic_work_chain_status_only': True, 'controller_only': True, 'sealed_body_reads_allowed': False}
+    return {'event': 'heartbeat_or_manual_resume_requested', 'wake_sources': ['heartbeat', 'manual_resume'], 'resume_action': 'load_resume_state', 'role_liveness_action': 'rehydrate_role_bindings', 'router_reentry_required_on_every_wake': True, 'heartbeat_and_manual_resume_share_path': True, 'self_keepalive_allowed': False, 'diagnostic_work_chain_status_only': True, 'controller_only': True, 'sealed_body_reads_allowed': False}
 
 def _write_initial_continuation_binding(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
     _bind_router(router)

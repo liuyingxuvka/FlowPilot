@@ -11,27 +11,22 @@
   "hazard_detection": {
     "expected": [
       "ack_only_completion",
-      "closure_before_validation_packet",
-      "closure_side_command_completion",
       "dirty_flowguard_projection",
       "dirty_reviewer_projection",
       "flowguard_side_command_completion",
       "lingering_active_lease_after_completion",
       "nonpacket_flowguard_lease",
+      "old_closure_packet_accepted",
+      "old_validator_packet_accepted",
       "pm_only_terminal",
       "review_side_command_completion",
       "review_without_packet",
-      "validation_side_command_completion"
+      "system_closure_before_validation",
+      "system_validation_before_review"
     ],
     "hazards": {
       "ack_only_completion": [
         "ACK-only packet was treated as completed work"
-      ],
-      "closure_before_validation_packet": [
-        "Closure packet issued before validation packet result"
-      ],
-      "closure_side_command_completion": [
-        "Closure was completed through a side command instead of a closure packet result"
       ],
       "dirty_flowguard_projection": [
         "FlowGuard lease projection remained active or missing packet ACK after evidence"
@@ -48,8 +43,14 @@
       "nonpacket_flowguard_lease": [
         "non-PM role was leased without an issued packet"
       ],
+      "old_closure_packet_accepted": [
+        "old closure packet was accepted in the clean runtime"
+      ],
+      "old_validator_packet_accepted": [
+        "old validator packet was accepted in the clean runtime"
+      ],
       "pm_only_terminal": [
-        "PM-only result reached terminal closure without check/review/validation/closure packets"
+        "PM-only result reached terminal closure without check, review, system validation, and system closure"
       ],
       "review_side_command_completion": [
         "Review was completed through a side command instead of a reviewer packet result"
@@ -57,8 +58,11 @@
       "review_without_packet": [
         "Reviewer leased without review packet"
       ],
-      "validation_side_command_completion": [
-        "Validation was recorded through a side command instead of a validation packet result"
+      "system_closure_before_validation": [
+        "System closure recorded before system validation"
+      ],
+      "system_validation_before_review": [
+        "System validation recorded before review packet result"
       ]
     },
     "ok": true
@@ -85,23 +89,12 @@
       "ack_reviewer_packet",
       "submit_reviewer_result",
       "record_review_from_packet",
-      "issue_validation_packet",
-      "lease_validation_packet",
-      "ack_validation_packet",
-      "submit_validation_result",
-      "record_validation_from_packet",
-      "issue_closure_packet",
-      "lease_closure_packet",
-      "ack_closure_packet",
-      "submit_closure_result_and_close"
+      "record_system_validation_after_review",
+      "record_system_closure_after_system_validation"
     ],
     "ok": true,
     "state": {
       "ack_only_completed": false,
-      "closure_ack": true,
-      "closure_leased": true,
-      "closure_packet_issued": true,
-      "closure_result": true,
       "dirty_flowguard_projection": false,
       "dirty_reviewer_projection": false,
       "final_closure_complete": true,
@@ -112,6 +105,8 @@
       "flowguard_result": true,
       "lingering_active_lease_after_completion": false,
       "nonpacket_role_lease": false,
+      "old_closure_packet_accepted": false,
+      "old_validator_packet_accepted": false,
       "pm_ack": true,
       "pm_leased": true,
       "pm_only_terminal": false,
@@ -123,17 +118,12 @@
       "reviewer_packet_issued": true,
       "reviewer_result": true,
       "route_created": true,
-      "side_command_closure": false,
       "side_command_flowguard": false,
       "side_command_review": false,
-      "side_command_validation": false,
       "startup_recorded": true,
       "status": "complete",
-      "validation_ack": true,
-      "validation_leased": true,
-      "validation_packet_issued": true,
-      "validation_recorded": true,
-      "validation_result": true
+      "system_closure_recorded": true,
+      "system_validation_recorded": true
     }
   },
   "test_mesh": {

@@ -15,7 +15,7 @@ Status: implemented.
 
 - Complete `skills/flowpilot/SKILL.md`.
 - Document trigger conditions.
-- Document that run modes are retired; startup asks only runtime role
+- Document that run modes are unsupported; startup asks only runtime role
   assistance, scheduled-continuation, and display-surface questions.
 - Document that formal FlowPilot routes start at showcase-grade scope and do
   not have a lower default tier.
@@ -40,7 +40,7 @@ Status: implemented.
 
 - `scripts/check_install.py`: verify FlowGuard and expected skill/document
   layout.
-- `scripts/smoke_autopilot.py`: run simulation smoke checks.
+- `scripts/smoke_flowpilot.py`: run simulation smoke checks.
 
 ## Phase 5: Skill Validation
 

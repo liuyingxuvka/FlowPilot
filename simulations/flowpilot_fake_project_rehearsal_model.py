@@ -43,7 +43,7 @@ class State:
     accepted_packet_reassignment_rejected: bool = False
     nonterminal_guard_stop_blocked: bool = False
     scoped_closure_final_preflight_blocked: bool = False
-    retired_side_command_rejected: bool = False
+    unsupported_side_command_rejected: bool = False
     scenario_report_written: bool = False
     internal_helper_only: bool = False
     startup_body_leaked: bool = False
@@ -112,7 +112,7 @@ REQUIRED_SAFE_LABELS = (
     "observe_accepted_packet_reassignment_rejection",
     "observe_lifecycle_guard_blocks_nonterminal_stop",
     "observe_scoped_closure_final_preflight_block",
-    "observe_retired_side_command_rejection",
+    "observe_unsupported_side_command_rejection",
     "write_rehearsal_report",
 )
 
@@ -224,8 +224,8 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("observe_lifecycle_guard_blocks_nonterminal_stop", replace(state, nonterminal_guard_stop_blocked=True)),)
     if not state.scoped_closure_final_preflight_blocked:
         return (Transition("observe_scoped_closure_final_preflight_block", replace(state, scoped_closure_final_preflight_blocked=True)),)
-    if not state.retired_side_command_rejected:
-        return (Transition("observe_retired_side_command_rejection", replace(state, retired_side_command_rejected=True)),)
+    if not state.unsupported_side_command_rejected:
+        return (Transition("observe_unsupported_side_command_rejection", replace(state, unsupported_side_command_rejected=True)),)
     if not state.scenario_report_written:
         return (Transition("write_rehearsal_report", replace(state, scenario_report_written=True, status="complete")),)
     return ()
@@ -282,7 +282,7 @@ def invariant_failures(state: State) -> list[str]:
         and state.accepted_packet_reassignment_rejected
         and state.nonterminal_guard_stop_blocked
         and state.scoped_closure_final_preflight_blocked
-        and state.retired_side_command_rejected
+        and state.unsupported_side_command_rejected
     ):
         failures.append("Rehearsal report written before normal and error scenarios completed")
     if state.internal_helper_only:
@@ -324,7 +324,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.route_mutation_without_frontier_rewrite:
         failures.append("Route mutation did not rewrite the execution frontier")
     if state.side_command_surface_available:
-        failures.append("Retired side-command completion surface was still available")
+        failures.append("Unsupported side-command completion surface was still available")
     if state.terminal_active_lease:
         failures.append("Terminal status retained an active lease")
     if state.terminal_missing_role_packet:

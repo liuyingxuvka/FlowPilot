@@ -10,7 +10,7 @@ Risk purpose:
 - Guard against Windows PowerShell UTF-8 BOM artifacts breaking Router JSON
   parsing or leaking an encoding marker into the PM-bound intake packet.
 - Guard against Windows PowerShell 5.1 parsing non-ASCII UTF-8 no-BOM `.ps1`
-  source under a legacy code page before the startup intake UI can open.
+  source under a unsupported_historical code page before the startup intake UI can open.
 - Guard against headless or synthesized startup intake output being accepted as
   a formal user-operated native UI confirmation.
 - Run with `python simulations/run_flowpilot_startup_intake_ui_checks.py`
@@ -27,7 +27,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 STARTUP_ENUMS = {
-    "background_agents": {"allow", "single-agent"},
+    "runtime_role_assistances": {"allow", "single-agent"},
     "scheduled_continuation": {"allow", "manual"},
     "display_surface": {"cockpit", "chat"},
 }
@@ -81,7 +81,7 @@ class State:
     controller_read_body: bool = False
     script_source_contains_non_ascii: bool = False
     script_source_utf8_bom: bool = False
-    legacy_powershell_source_parse_safe: bool = False
+    unsupported_historical_powershell_source_parse_safe: bool = False
     source_encoding_contract_verified: bool = False
     result_json_no_bom: bool = False
     receipt_json_no_bom: bool = False
@@ -93,7 +93,7 @@ class State:
 
     startup_answers_recorded: bool = False
     startup_answer_values_valid: bool = False
-    background_agents: str = "unknown"  # unknown | allow | single-agent
+    runtime_role_assistances: str = "unknown"  # unknown | allow | single-agent
     scheduled_continuation: str = "unknown"  # unknown | allow | manual
     display_surface: str = "unknown"  # unknown | cockpit | chat
     old_chat_answer_required: bool = False
@@ -196,7 +196,7 @@ def _confirm_state(state: State, *, background: str, continuation: str, display:
         envelope_json_no_bom=True,
         router_json_reader_bom_tolerant=True,
         pm_packet_body_bom_stripped=True,
-        background_agents=background,
+        runtime_role_assistances=background,
         scheduled_continuation=continuation,
         display_surface=display,
     )
@@ -207,7 +207,7 @@ def _source_safe_state(state: State) -> State:
         state,
         script_source_contains_non_ascii=True,
         script_source_utf8_bom=True,
-        legacy_powershell_source_parse_safe=True,
+        unsupported_historical_powershell_source_parse_safe=True,
         source_encoding_contract_verified=True,
     )
 
@@ -328,7 +328,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 "host_options_applied_from_ui_choices",
                 replace(
                     state,
-                    roles_started=state.background_agents == "allow",
+                    roles_started=state.runtime_role_assistances == "allow",
                     heartbeat_created=state.scheduled_continuation == "allow",
                     cockpit_opened=state.display_surface == "cockpit" and not state.cockpit_launch_failed,
                     chat_display_fallback_recorded=state.display_surface == "chat"
@@ -338,7 +338,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         )
     if state.reviewer_startup_passed and not state.controller_core_loaded:
         options_applied = (
-            (state.background_agents != "allow" or state.roles_started)
+            (state.runtime_role_assistances != "allow" or state.roles_started)
             and (state.scheduled_continuation != "allow" or state.heartbeat_created)
             and (
                 (state.display_surface == "cockpit" and state.cockpit_opened)
@@ -386,9 +386,9 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
     if state.ui_opened and not state.source_encoding_contract_verified:
         return InvariantResult.fail("startup UI opened before launcher source encoding contract was verified")
     if state.source_encoding_contract_verified and state.script_source_contains_non_ascii and not state.script_source_utf8_bom:
-        return InvariantResult.fail("startup UI launcher source may not parse on legacy Windows PowerShell")
-    if state.ui_opened and not state.legacy_powershell_source_parse_safe:
-        return InvariantResult.fail("startup UI launcher source may not parse on legacy Windows PowerShell")
+        return InvariantResult.fail("startup UI launcher source may not parse on unsupported_historical Windows PowerShell")
+    if state.ui_opened and not state.unsupported_historical_powershell_source_parse_safe:
+        return InvariantResult.fail("startup UI launcher source may not parse on unsupported_historical Windows PowerShell")
     if state.startup_answers_recorded and not (
         state.receipt_written
         and state.envelope_written
@@ -409,13 +409,13 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
     if state.pm_intake_packet_created and state.body_has_leading_bom and not state.pm_packet_body_bom_stripped:
         return InvariantResult.fail("PM intake packet leaked leading UTF-8 BOM marker")
     if state.startup_answers_recorded:
-        if state.background_agents not in STARTUP_ENUMS["background_agents"]:
-            return InvariantResult.fail("background agent toggle did not map to a startup answer enum")
+        if state.runtime_role_assistances not in STARTUP_ENUMS["runtime_role_assistances"]:
+            return InvariantResult.fail("runtime role toggle did not map to a startup answer enum")
         if state.scheduled_continuation not in STARTUP_ENUMS["scheduled_continuation"]:
             return InvariantResult.fail("scheduled continuation toggle did not map to a startup answer enum")
         if state.display_surface not in STARTUP_ENUMS["display_surface"]:
             return InvariantResult.fail("display surface toggle did not map to a startup answer enum")
-    if state.background_agents == "single-agent" and state.roles_started:
+    if state.runtime_role_assistances == "single-agent" and state.roles_started:
         return InvariantResult.fail("runtime role assistance started despite UI single-agent choice")
     if state.scheduled_continuation == "manual" and state.heartbeat_created:
         return InvariantResult.fail("heartbeat created despite UI manual continuation choice")
@@ -484,17 +484,17 @@ def hazard_states() -> dict[str, State]:
             ui_opened=True,
             status="waiting_ui",
         ),
-        "utf8_no_bom_script_source_legacy_powershell_parse_break": replace(
+        "utf8_no_bom_script_source_unsupported_historical_powershell_parse_break": replace(
             recorded,
             script_source_contains_non_ascii=True,
             script_source_utf8_bom=False,
-            legacy_powershell_source_parse_safe=False,
+            unsupported_historical_powershell_source_parse_safe=False,
         ),
         "accepted_without_hash": replace(recorded, body_hash_verified=False),
         "ui_result_json_bom_breaks_router": replace(recorded, result_json_no_bom=False),
         "ui_receipt_json_bom_breaks_router": replace(recorded, receipt_json_no_bom=False),
         "ui_envelope_json_bom_breaks_router": replace(recorded, envelope_json_no_bom=False),
-        "legacy_bom_json_without_router_fallback": replace(recorded, router_json_reader_bom_tolerant=False),
+        "unsupported_historical_bom_json_without_router_fallback": replace(recorded, router_json_reader_bom_tolerant=False),
         "headless_result_accepted": replace(
             recorded,
             launch_mode="headless",
@@ -508,10 +508,10 @@ def hazard_states() -> dict[str, State]:
             pm_packet_body_bom_stripped=False,
         ),
         "bom_repair_bypasses_body_hash": replace(recorded, body_hash_verified=False),
-        "invalid_toggle_value": replace(recorded, background_agents="yes"),
+        "invalid_toggle_value": replace(recorded, runtime_role_assistances="yes"),
         "single_agent_starts_roles": replace(
             recorded,
-            background_agents="single-agent",
+            runtime_role_assistances="single-agent",
             roles_started=True,
         ),
         "manual_creates_heartbeat": replace(

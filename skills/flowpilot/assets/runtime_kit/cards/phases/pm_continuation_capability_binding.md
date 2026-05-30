@@ -27,7 +27,7 @@ Check:
 
 - heartbeat is allowed only when startup answers selected scheduled continuation;
 - manual resume is valid when heartbeat is unavailable or not authorized;
-- continuation evidence names current-run state, frontier, packet ledger, and crew memory;
+- continuation evidence names current-run state, frontier, packet ledger, and role-binding memory;
 - any heartbeat claim cites the latest current-run heartbeat record, not old state;
 - unsupported continuation capability becomes a PM blocker or manual-resume plan.
 

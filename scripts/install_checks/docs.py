@@ -15,8 +15,8 @@ def run_checks(result: dict[str, object]) -> None:
             hazard_checks = payload.get("hazard_checks")
             safe_graph = payload.get("safe_graph")
             current_path_explorer = payload.get("flowguard_current_path_explorer")
-            retired_input_rejection_explorer = payload.get(
-                "flowguard_retired_input_rejection_explorer"
+            unsupported_input_rejection_explorer = payload.get(
+                "flowguard_unsupported_input_rejection_explorer"
             )
             ok = (
                 payload.get("ok") is True
@@ -26,8 +26,8 @@ def run_checks(result: dict[str, object]) -> None:
                 and safe_graph.get("ok") is True
                 and isinstance(current_path_explorer, dict)
                 and current_path_explorer.get("ok") is True
-                and isinstance(retired_input_rejection_explorer, dict)
-                and retired_input_rejection_explorer.get("ok") is True
+                and isinstance(unsupported_input_rejection_explorer, dict)
+                and unsupported_input_rejection_explorer.get("ok") is True
             )
             result["checks"].append(
                 {

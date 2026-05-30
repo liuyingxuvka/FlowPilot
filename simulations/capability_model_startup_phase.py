@@ -10,7 +10,7 @@ else:
     import capability_model as _model
 
 _REQUIRED_MODEL_NAMES = (
-    "CREW_SIZE",
+    "REQUIRED_ROLE_BINDING_COUNT",
     "FunctionResult",
     "Iterable",
     "MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER",
@@ -30,7 +30,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
     if state.status == "new":
         yield _step(
             state,
-            label="autopilot_started",
+            label="flowpilot_runtime_started",
             action="start capability router",
             status="running",
             flowpilot_enabled=True,
@@ -56,12 +56,12 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if not state.startup_background_agent_option_recorded:
+    if not state.startup_runtime_role_assistance_option_recorded:
         yield _step(
             state,
-            label="startup_background_agent_option_recorded",
+            label="startup_runtime_role_assistance_option_recorded",
             action="record the startup intake runtime role-assistance option for host-supported role bindings versus single-agent continuity",
-            startup_background_agent_option_recorded=True,
+            startup_runtime_role_assistance_option_recorded=True,
         )
         return
 
@@ -204,7 +204,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="prior_control_state_quarantined",
-            action="verify prior top-level control state is absent, retired-only, or quarantined before capability work continues",
+            action="verify prior top-level control state is absent, unsupported-only, or quarantined before capability work continues",
             prior_control_state_quarantined=True,
         )
         return
@@ -256,81 +256,81 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if not state.crew_policy_written:
+    if not state.role_binding_policy_written:
         yield _step(
             state,
-            label="six_agent_crew_policy_written",
+            label="required_role_binding_role_binding_policy_written",
             action="write runtime role-binding authority policy for capability routing",
-            crew_policy_written=True,
+            role_binding_policy_written=True,
         )
         return
 
-    if state.crew_count == 0:
+    if state.role_binding_count == 0:
         yield _step(
             state,
-            label="project_manager_spawned_fresh_for_task",
-            action="spawn a fresh project manager for the new formal FlowPilot task before capability routing",
-            crew_count=1,
+            label="project_manager_opened_for_current_task",
+            action="open a fresh project manager for the new formal FlowPilot task before capability routing",
+            role_binding_count=1,
             project_manager_ready=True,
         )
         return
 
-    if state.crew_count == 1:
+    if state.role_binding_count == 1:
         yield _step(
             state,
-            label="human_like_reviewer_spawned_fresh_for_task",
-            action="spawn a fresh reviewer for the new formal FlowPilot task before capability routing",
-            crew_count=2,
+            label="human_like_reviewer_opened_for_current_task",
+            action="open a fresh reviewer for the new formal FlowPilot task before capability routing",
+            role_binding_count=2,
             reviewer_ready=True,
         )
         return
 
-    if state.crew_count == 2:
+    if state.role_binding_count == 2:
         yield _step(
             state,
-            label="process_flowguard_officer_spawned_fresh_for_task",
-            action="spawn a fresh process FlowGuard officer for the new formal FlowPilot task before capability routing",
-            crew_count=3,
+            label="process_flowguard_officer_opened_for_current_task",
+            action="open a fresh process FlowGuard officer for the new formal FlowPilot task before capability routing",
+            role_binding_count=3,
             process_flowguard_officer_ready=True,
         )
         return
 
-    if state.crew_count == 3:
+    if state.role_binding_count == 3:
         yield _step(
             state,
-            label="product_flowguard_officer_spawned_fresh_for_task",
-            action="spawn a fresh product FlowGuard officer for the new formal FlowPilot task before capability routing",
-            crew_count=4,
+            label="product_flowguard_officer_opened_for_current_task",
+            action="open a fresh product FlowGuard officer for the new formal FlowPilot task before capability routing",
+            role_binding_count=4,
             product_flowguard_officer_ready=True,
         )
         return
 
-    if state.crew_count == 4:
+    if state.role_binding_count == 4:
         yield _step(
             state,
-            label="worker_a_spawned_fresh_for_task",
-            action="spawn a fresh worker A for bounded capability sidecar work in the new formal FlowPilot task",
-            crew_count=5,
+            label="worker_a_opened_for_current_task",
+            action="open a fresh worker A for bounded capability sidecar work in the new formal FlowPilot task",
+            role_binding_count=5,
             worker_a_ready=True,
         )
         return
 
-    if state.crew_count == 5:
+    if state.role_binding_count == 5:
         yield _step(
             state,
-            label="worker_b_spawned_fresh_for_task",
-            action="spawn a fresh worker B for bounded capability sidecar work in the new formal FlowPilot task",
-            crew_count=CREW_SIZE,
+            label="worker_b_opened_for_current_task",
+            action="open a fresh worker B for bounded capability sidecar work in the new formal FlowPilot task",
+            role_binding_count=REQUIRED_ROLE_BINDING_COUNT,
             worker_b_ready=True,
         )
         return
 
-    if not state.crew_ledger_written:
+    if not state.role_binding_ledger_written:
         yield _step(
             state,
-            label="crew_ledger_written",
-            action="persist crew names, role authority, agent ids, status, and recovery rules before capability work",
-            crew_ledger_written=True,
+            label="role_binding_ledger_written",
+            action="persist role binding names, role authority, agent ids, status, and recovery rules before capability work",
+            role_binding_ledger_written=True,
         )
         return
 
@@ -388,13 +388,13 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if not state.crew_memory_policy_written:
+    if not state.role_binding_memory_policy_written:
         yield _step(
             state,
-            label="crew_memory_packets_written",
+            label="role_binding_memory_packets_written",
             action="write compact role memory packets for runtime-required capability-routing roles before PM ratification",
-            crew_memory_policy_written=True,
-            crew_memory_packets_written=CREW_SIZE,
+            role_binding_memory_policy_written=True,
+            role_binding_memory_packets_written=REQUIRED_ROLE_BINDING_COUNT,
         )
         return
 

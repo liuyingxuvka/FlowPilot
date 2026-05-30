@@ -1,0 +1,27 @@
+{
+  "backup_id": "flowpilot-protocol-reference-snapshot-20260529",
+  "created_date": "2026-05-29",
+  "purpose": "Preserve tracked reference source before introducing the FlowPilot protocol kernel.",
+  "source_commit": "85337f0883600cdb1b2341e9a654d8b2725acf7d",
+  "source_commit_subject": "Adopt FlowPilot runtime path evidence",
+  "archive": "flowpilot-tracked-head-20260529.zip",
+  "archive_sha256": "3A02BAAB3CE8671FCA3050FF8C1F7E1F815F0588EDEE9347C1C7A7D56C9B5EA5",
+  "reuse_policy": {
+    "allowed": [
+      "startup panel visual references",
+      "brand icons",
+      "historical failure cases",
+      "test scenario ideas"
+    ],
+    "forbidden": [
+      "prior runtime state as current truth",
+      "unsupported transition routes",
+      "prior fixed-agent topology as a requirement",
+      "stale validation evidence"
+    ]
+  },
+  "notes": [
+    "The backup is a local source snapshot, not an active execution ledger.",
+    "New protocol work must rebuild FlowGuard models from first principles."
+  ]
+}

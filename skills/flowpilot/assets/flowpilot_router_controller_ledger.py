@@ -98,7 +98,7 @@ def router_scheduler_progress_class(
         return "true_barrier"
     if bool(action.get("requires_user")):
         return "true_barrier"
-    if bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn")) or bool(action.get("requires_host_automation")):
+    if bool(action.get("requires_payload")) or bool(action.get("requires_host_role_binding")) or bool(action.get("requires_host_automation")):
         return "true_barrier"
     if bool(action.get("requires_user_dialog_display_confirmation")):
         return "true_barrier"
@@ -119,7 +119,7 @@ def router_scheduler_barrier_kind(
     if progress == "true_barrier" and str(action.get("actor") or "") == "host":
         return "host_action_barrier"
     if progress == "true_barrier" and (
-        bool(action.get("requires_user")) or bool(action.get("requires_payload")) or bool(action.get("requires_host_spawn"))
+        bool(action.get("requires_user")) or bool(action.get("requires_payload")) or bool(action.get("requires_host_role_binding"))
     ):
         return "external_barrier"
     if progress == "true_barrier" and bool(action.get("requires_host_automation")):

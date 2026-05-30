@@ -2,17 +2,17 @@
 
 Risk intent brief:
 - Prevent resume launchers from becoming a second route-control authority.
-- Protect current-run state, packet bodies, prompt cards, crew authority, and
+- Protect current-run state, packet bodies, prompt cards, role binding authority, and
   PM decisions from chat-history reconstruction or old-run reuse.
 - Model-critical durable state: current pointer, current run root, router
-  state, packet ledger, prompt ledger, execution frontier, crew memory, prompt
+  state, packet ledger, prompt ledger, execution frontier, role-binding memory, prompt
   manifest checks, packet-ledger checks, reviewed worker results, and PM
   recovery blocks.
 - Adversarial branches include ambiguous worker state, duplicate resume ticks,
   old run control state, body reads, missing manifest/ledger checks, dynamic
-  launchers, heartbeat keepalive self-classification, stale crew ids, missing
+  launchers, heartbeat keepalive self-classification, stale role binding ids, missing
   one-minute heartbeat evidence, stale lifecycle flags, host role liveness
-  ambiguity, unnecessary replacement of live roles, replacing all six roles
+  ambiguity, unnecessary replacement of live roles, replacing all runtime roles
   when only one role failed, active control blockers racing ahead of resume
   re-entry, and route progress inferred from chat history.
 - Hard invariants: stable launcher only; Controller is relay-only; PM decisions
@@ -86,7 +86,7 @@ class State:
     prompt_ledger_loaded: bool = False
     frontier_loaded: bool = False
     visible_plan_restored_from_run: bool = False
-    crew_memory_loaded: bool = False
+    role_binding_memory_loaded: bool = False
     liveness_probe_batch_started: bool = False
     liveness_probe_batch_concurrent: bool = False
     all_six_liveness_probes_started_before_wait: bool = False
@@ -110,11 +110,11 @@ class State:
     controller_advanced_route: bool = False
     controller_self_approved_pm_decision: bool = False
 
-    crew_roles_ready: bool = False
+    runtime_responsibilitys_ready: bool = False
     crew_restored: bool = False
     crew_replaced: bool = False
     run_memory_injected_into_roles: bool = False
-    crew_rehydration_report_written: bool = False
+    role_binding_recovery_report_written: bool = False
     all_roles_current_run_bound: bool = False
     replacement_roles_seeded_from_memory: bool = False
     crew_old_agent_ids_reused: bool = False
@@ -190,7 +190,7 @@ class ResumeReentryStep:
     """
 
     name = "ResumeReentryStep"
-    reads = ("status", "entry_mode", "loaded_state", "crew_roles", "prompt_mail_gates")
+    reads = ("status", "entry_mode", "loaded_state", "runtime_responsibilitys", "prompt_mail_gates")
     writes = ("control_plane_fact", "manifest_or_ledger_check", "terminal_status")
     input_description = "heartbeat/manual resume tick"
     output_description = "one abstract FlowPilot resume control-plane action"
@@ -260,7 +260,7 @@ def _loaded_current_run_state(state: State) -> bool:
         and state.prompt_ledger_loaded
         and state.frontier_loaded
         and state.visible_plan_restored_from_run
-        and state.crew_memory_loaded
+        and state.role_binding_memory_loaded
     )
 
 
@@ -302,7 +302,7 @@ def _next_required_prompt(state: State) -> str:
         return "none"
     if (
         state.ambiguous_state == "clear"
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and state.resume_obligation_replay_pm_escalation_required
         and not state.pm_decision_prompt_delivered
     ):
@@ -500,8 +500,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, visible_plan_restored_from_run=True),
         )
         return
-    if not state.crew_memory_loaded:
-        yield Transition("crew_memory_loaded", replace(state, crew_memory_loaded=True))
+    if not state.role_binding_memory_loaded:
+        yield Transition("role_binding_memory_loaded", replace(state, role_binding_memory_loaded=True))
         return
     if not state.controller_relay_boundary_confirmed:
         yield Transition(
@@ -564,13 +564,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             replace(state, run_memory_injected_into_roles=True),
         )
         return
-    if not state.crew_roles_ready:
+    if not state.runtime_responsibilitys_ready:
         if state.role_liveness_outcome == "all_active":
             yield Transition(
                 "active_live_resume_roles_reused_after_memory_refresh",
                 replace(
                     state,
-                    crew_roles_ready=True,
+                    runtime_responsibilitys_ready=True,
                     crew_restored=True,
                     active_live_agents_reused=True,
                     all_roles_current_run_bound=True,
@@ -582,7 +582,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 "only_failed_resume_roles_replaced_from_current_run_memory",
                 replace(
                     state,
-                    crew_roles_ready=True,
+                    runtime_responsibilitys_ready=True,
                     crew_replaced=True,
                     active_live_agents_reused=True,
                     all_roles_current_run_bound=True,
@@ -595,7 +595,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 "all_uncertain_resume_roles_replaced_from_current_run_memory",
                 replace(
                     state,
-                    crew_roles_ready=True,
+                    runtime_responsibilitys_ready=True,
                     crew_replaced=True,
                     all_roles_current_run_bound=True,
                     replacement_roles_seeded_from_memory=True,
@@ -603,10 +603,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 ),
             )
         return
-    if not state.crew_rehydration_report_written:
+    if not state.role_binding_recovery_report_written:
         yield Transition(
-            "crew_rehydration_report_written_before_pm_resume",
-            replace(state, crew_rehydration_report_written=True),
+            "role_binding_recovery_report_written_before_pm_resume",
+            replace(state, role_binding_recovery_report_written=True),
         )
         return
     if not _lifecycle_flags_current(state):
@@ -846,9 +846,9 @@ def invariant_failures(state: State) -> list[str]:
     if state.control_blocker_handled and not (
         state.host_role_rehydrate_requested
         and state.all_six_role_liveness_checked
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and state.run_memory_injected_into_roles
-        and state.crew_rehydration_report_written
+        and state.role_binding_recovery_report_written
     ):
         failures.append("active control blocker handled before role rehydration")
     if state.control_blocker_handled and not _resume_replay_allows_normal_work(state):
@@ -881,7 +881,7 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("packet ledger loaded before router_state")
     if (
         state.packet_ledger_loaded
-        or state.crew_memory_loaded
+        or state.role_binding_memory_loaded
         or state.pm_decision_requested
     ) and not (
         state.router_daemon_status_loaded
@@ -897,10 +897,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("frontier loaded before prompt ledger")
     if state.visible_plan_restored_from_run and not state.frontier_loaded:
         failures.append("visible plan restored before execution frontier")
-    if state.crew_memory_loaded and not (
+    if state.role_binding_memory_loaded and not (
         state.frontier_loaded and state.visible_plan_restored_from_run
     ):
-        failures.append("crew memory loaded before execution frontier and visible plan restoration")
+        failures.append("role-binding memory loaded before execution frontier and visible plan restoration")
     if state.controller_relay_boundary_confirmed and not _loaded_current_run_state(state):
         failures.append("Controller relay boundary confirmed before loading current-run state")
 
@@ -926,7 +926,7 @@ def invariant_failures(state: State) -> list[str]:
     if (
         state.all_six_role_liveness_checked
         or state.host_role_rehydrate_requested
-        or state.crew_roles_ready
+        or state.runtime_responsibilitys_ready
         or state.pm_decision_requested
         or state.pm_decision_prompt_delivered
         or state.pm_decision_returned
@@ -954,29 +954,29 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("all-active resume replaced live roles instead of reusing them")
     if (
         state.role_liveness_outcome == "all_active"
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and not (state.crew_restored and state.active_live_agents_reused and state.replacement_role_count == 0)
     ):
         failures.append("all-active resume did not reuse live roles after memory refresh")
     if (
         state.role_liveness_outcome == "recovery_needed"
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and state.replacement_role_count != state.failed_role_count
     ):
         failures.append("recovery-needed resume replaced a count different from failed roles")
     if (
         state.role_liveness_outcome == "recovery_needed"
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and not state.active_live_agents_reused
     ):
         failures.append("recovery-needed resume did not reuse still-active roles")
     if (
         state.role_liveness_outcome == "timeout_unknown"
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and state.replacement_role_count != state.failed_role_count
     ):
         failures.append("timeout_unknown resume did not replace every uncertain role")
-    if state.crew_roles_ready and not (
+    if state.runtime_responsibilitys_ready and not (
         state.host_role_rehydrate_requested
         and state.all_six_role_liveness_checked
         and state.all_roles_current_run_bound
@@ -985,15 +985,15 @@ def invariant_failures(state: State) -> list[str]:
         or (state.crew_replaced and state.replacement_roles_seeded_from_memory)
         )
     ):
-        failures.append("crew roles became ready without host rehydration, current-run binding, and restore or memory-seeded replacement")
-    if state.host_role_rehydrate_requested and state.crew_roles_ready and not state.run_memory_injected_into_roles:
+        failures.append("runtime responsibilities became ready without host rehydration, current-run binding, and restore or memory-seeded replacement")
+    if state.host_role_rehydrate_requested and state.runtime_responsibilitys_ready and not state.run_memory_injected_into_roles:
         failures.append("host restored resume roles before current-run memory was injected")
-    if state.run_memory_injected_into_roles and not state.crew_rehydration_report_written and (
+    if state.run_memory_injected_into_roles and not state.role_binding_recovery_report_written and (
         state.pm_decision_requested or state.pm_decision_prompt_delivered or state.pm_decision_returned
     ):
-        failures.append("PM resume path proceeded before crew rehydration report was written")
+        failures.append("PM resume path proceeded before role binding recovery report was written")
     if state.crew_replaced and not state.replacement_roles_seeded_from_memory:
-        failures.append("replacement crew roles were not seeded from current-run memory")
+        failures.append("replacement runtime responsibilities were not seeded from current-run memory")
     if state.crew_old_agent_ids_reused:
         failures.append("old task agent ids were reused as current live crew")
     if (
@@ -1005,14 +1005,14 @@ def invariant_failures(state: State) -> list[str]:
         state.host_role_rehydrate_requested
         and state.all_six_role_liveness_checked
         and state.run_memory_injected_into_roles
-        and state.crew_rehydration_report_written
+        and state.role_binding_recovery_report_written
         and _lifecycle_flags_current(state)
         and state.resume_obligation_replay_scanned
     ):
         failures.append("PM resume or closure proceeded before live role rehydration, memory injection, report, lifecycle reconciliation, and resume obligation replay")
 
     if (
-        state.crew_rehydration_report_written
+        state.role_binding_recovery_report_written
         and _lifecycle_flags_current(state)
         and state.ambiguous_state == "clear"
         and not state.resume_obligation_replay_scanned
@@ -1055,7 +1055,7 @@ def invariant_failures(state: State) -> list[str]:
         and _loaded_current_run_state(state)
         and state.controller_relay_boundary_confirmed
         and state.all_six_role_liveness_checked
-        and state.crew_roles_ready
+        and state.runtime_responsibilitys_ready
         and state.ambiguous_state == "clear"
         and state.resume_obligation_replay_scanned
         and state.resume_obligation_replay_pm_escalation_required
@@ -1163,7 +1163,7 @@ INVARIANTS = (
         description=(
             "Heartbeat and manual resume re-enter through a stable launcher, "
             "confirm one-minute heartbeat evidence when automated, load current-run "
-            "state and ledgers, reconcile lifecycle flags, recover crew before PM "
+            "state and ledgers, reconcile lifecycle flags, recover role binding before PM "
             "decision, defer active control blockers until PM resume decision, "
             "keep Controller relay-only, and gate prompt/mail/project progress "
             "through manifest, packet ledger, reviewer, PM evidence, manifest-check "
@@ -1221,7 +1221,7 @@ def _ready_for_pm(**changes: object) -> State:
         prompt_ledger_loaded=True,
         frontier_loaded=True,
         visible_plan_restored_from_run=True,
-        crew_memory_loaded=True,
+        role_binding_memory_loaded=True,
         controller_relay_boundary_confirmed=True,
         liveness_probe_batch_started=True,
         liveness_probe_batch_concurrent=True,
@@ -1230,14 +1230,14 @@ def _ready_for_pm(**changes: object) -> State:
         all_six_role_liveness_checked=True,
         role_liveness_outcome="all_active",
         host_role_rehydrate_requested=True,
-        crew_roles_ready=True,
+        runtime_responsibilitys_ready=True,
         crew_restored=True,
         live_agent_reuse_preferred=True,
         active_live_agents_reused=True,
         failed_role_count=0,
         replacement_role_count=0,
         run_memory_injected_into_roles=True,
-        crew_rehydration_report_written=True,
+        role_binding_recovery_report_written=True,
         all_roles_current_run_bound=True,
         crew_lifecycle_flags_current=True,
         capability_lifecycle_flags_current=True,
@@ -1369,7 +1369,7 @@ def hazard_states() -> dict[str, State]:
             prompt_ledger_loaded=True,
             frontier_loaded=True,
             visible_plan_restored_from_run=True,
-            crew_memory_loaded=True,
+            role_binding_memory_loaded=True,
             controller_relay_boundary_confirmed=True,
             control_blocker_waited_before_resume_ready=True,
         ),
@@ -1398,7 +1398,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_decision_before_visible_plan_restore": _ready_for_pm(
             visible_plan_restored_from_run=False,
-            crew_memory_loaded=False,
+            role_binding_memory_loaded=False,
             pm_decision_requested=True,
         ),
         "pm_decision_before_six_role_liveness": _ready_for_pm(
@@ -1421,7 +1421,7 @@ def hazard_states() -> dict[str, State]:
             liveness_probe_batch_id_consistent=False,
         ),
         "pm_decision_before_crew_recovery": _ready_for_pm(
-            crew_roles_ready=False,
+            runtime_responsibilitys_ready=False,
             crew_restored=False,
             pm_decision_requested=True,
         ),
@@ -1435,7 +1435,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "pm_decision_before_run_memory_injection": _ready_for_pm(
             run_memory_injected_into_roles=False,
-            crew_rehydration_report_written=False,
+            role_binding_recovery_report_written=False,
             pm_decision_requested=True,
         ),
         "all_active_roles_replaced_instead_of_reused": _ready_for_pm(
@@ -1467,11 +1467,11 @@ def hazard_states() -> dict[str, State]:
         ),
         "six_memory_files_counted_without_role_rehydrate": _ready_for_pm(
             host_role_rehydrate_requested=False,
-            crew_roles_ready=True,
+            runtime_responsibilitys_ready=True,
             crew_restored=True,
             all_roles_current_run_bound=True,
             run_memory_injected_into_roles=False,
-            crew_rehydration_report_written=False,
+            role_binding_recovery_report_written=False,
             pm_decision_requested=True,
         ),
         "pm_decision_before_lifecycle_reconciliation": _ready_for_pm(
@@ -1583,7 +1583,7 @@ def hazard_states() -> dict[str, State]:
         "prompt_before_prompt_ledger": _ready_for_pm(
             prompt_ledger_loaded=False,
             frontier_loaded=False,
-            crew_memory_loaded=False,
+            role_binding_memory_loaded=False,
             prompt_deliveries=1,
             manifest_check_requests=1,
             manifest_checks=1,
@@ -1601,7 +1601,7 @@ def hazard_states() -> dict[str, State]:
             packet_ledger_loaded=False,
             prompt_ledger_loaded=False,
             frontier_loaded=False,
-            crew_memory_loaded=False,
+            role_binding_memory_loaded=False,
             mail_deliveries=1,
             ledger_check_requests=1,
             ledger_checks=1,

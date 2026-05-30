@@ -58,7 +58,7 @@ def _write_startup_mechanical_audit(router: ModuleType, project_root: Path, run_
     _bind_router(router)
     audit_path = run_root / 'startup' / 'startup_mechanical_audit.json'
     proof_path = _router_owned_check_proof_path(audit_path)
-    evidence_paths = [run_root / 'startup_answers.json', project_root / '.flowpilot' / 'current.json', project_root / '.flowpilot' / 'index.json', run_root / 'crew_ledger.json', router._continuation_binding_path(run_root), router.run_state_path(run_root)]
+    evidence_paths = [run_root / 'startup_answers.json', project_root / '.flowpilot' / 'current.json', project_root / '.flowpilot' / 'index.json', run_root / 'role_binding_ledger.json', router._continuation_binding_path(run_root), router.run_state_path(run_root)]
     startup_intake_context = router._startup_intake_record_context(project_root, run_root, run_state)
     if startup_intake_context is not None:
         evidence_paths.extend([startup_intake_context['record_path'], startup_intake_context['result_path'], startup_intake_context['receipt_path'], startup_intake_context['envelope_path'], startup_intake_context['body_path']])
@@ -112,7 +112,7 @@ def _next_startup_mechanical_audit_action(router: ModuleType, project_root: Path
         return None
     if router._controller_action_open_for(run_root, action_type='write_startup_mechanical_audit', postcondition='startup_mechanical_audit_written'):
         return None
-    allowed_reads = [project_relative(project_root, run_root / 'startup_answers.json'), project_relative(project_root, project_root / '.flowpilot' / 'current.json'), project_relative(project_root, project_root / '.flowpilot' / 'index.json'), project_relative(project_root, run_root / 'crew_ledger.json'), project_relative(project_root, router._continuation_binding_path(run_root)), project_relative(project_root, router.run_state_path(run_root))]
+    allowed_reads = [project_relative(project_root, run_root / 'startup_answers.json'), project_relative(project_root, project_root / '.flowpilot' / 'current.json'), project_relative(project_root, project_root / '.flowpilot' / 'index.json'), project_relative(project_root, run_root / 'role_binding_ledger.json'), project_relative(project_root, router._continuation_binding_path(run_root)), project_relative(project_root, router.run_state_path(run_root))]
     boundary_path = router._controller_boundary_confirmation_path(run_root)
     if boundary_path.exists():
         allowed_reads.append(project_relative(project_root, boundary_path))

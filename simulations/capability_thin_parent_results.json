@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-30T16:53:59.439934+00:00",
+  "created_at": "2026-05-30T18:17:57.054515+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -8,18 +8,18 @@
     "state_count": 8
   },
   "layered_full_regression": {
-    "current": false,
+    "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-05-29T17:41:14.194889+00:00",
+      "created_at": "2026-05-30T18:09:48.058776+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
-      "reason": "input fingerprint changed",
+      "reason": "valid proof",
       "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/capability_layered_full_results.json",
       "state_count": 10,
-      "valid": false
+      "valid": true
     }
   },
   "loop": {
@@ -35,7 +35,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -172,7 +172,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/card_instruction_coverage_results.json",
-            "result_fingerprint": "0c8316bef9f9bf061f0979943d73a342ddf4f7d54a11f94468318324476d7784",
+            "result_fingerprint": "3d0400ce0ad83a9cdf22aef064ab4360618a4e94c3deca6729f352810eca5f88",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 67

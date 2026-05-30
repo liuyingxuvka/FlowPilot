@@ -448,7 +448,7 @@ def hazard_states() -> dict[str, State]:
             packet_body_hash_identity_synced=False,
             router_direct_dispatch_passed=True,
         ),
-        "packet_retired_body_alias_accepted": State(
+        "packet_unsupported_body_alias_accepted": State(
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,
@@ -456,7 +456,7 @@ def hazard_states() -> dict[str, State]:
             result_current_body_fields_present=True,
             router_direct_dispatch_passed=True,
         ),
-        "result_retired_body_alias_accepted": State(
+        "result_unsupported_body_alias_accepted": State(
             status="running",
             dispatch_gate_checked=True,
             packet_body_hash_identity_synced=True,

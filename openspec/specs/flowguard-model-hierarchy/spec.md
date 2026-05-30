@@ -39,7 +39,7 @@ entrypoints, state, side effects, or config ownership are moved.
   new child modules
 - **THEN** hierarchy or companion maintenance evidence MUST identify the
   StructureMesh result that proves child ownership and public-entrypoint
-  compatibility for that split.
+  unsupported historical for that split.
 
 ### Requirement: Child evidence freshness is visible
 The system SHALL expose each child model's result path, freshness rule, evidence tier, skipped checks, and stale-result status before using child evidence for parent confidence.
@@ -191,5 +191,5 @@ The FlowPilot parent hierarchy SHALL NOT consume the full
 - **THEN** it consumes focused daemon child evidence for startup/lock,
   Controller actions, wait/liveness, and terminal/projection contracts
 - **AND** each focused child result is below the thin-child state threshold
-- **AND** the compatibility persistent daemon model may still run outside the
+- **AND** the unsupported historical persistent daemon model may still run outside the
   parent thin-child evidence set.

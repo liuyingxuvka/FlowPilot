@@ -150,7 +150,7 @@ Choose the executable plan kind deliberately:
 - Use `terminal_stop` for user stop, protocol dead-end, or human escalation.
 
 Use `await_existing_event` only for an event with an existing current producer;
-use `operation_replay` only for a safe recorded operation replay. Retired replay
+use `operation_replay` only for a safe recorded operation replay. Unsupported replay
 aliases are not valid repair plan kinds.
 
 Do not mark the node complete until repair evidence passes the required review

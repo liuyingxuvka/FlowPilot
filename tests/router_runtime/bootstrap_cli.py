@@ -242,7 +242,7 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(exit_code, 0, full_payload)
         self.assertFalse(full_payload["compact"])
         self.assertIn("actions", full_payload["controller_action_ledger"])
-    def test_retired_high_risk_fold_commands_are_not_cli_commands(self) -> None:
+    def test_unsupported_high_risk_fold_commands_are_not_cli_commands(self) -> None:
         for command in (
             "deliver-card-bundle-checked",
             "relay-checked",

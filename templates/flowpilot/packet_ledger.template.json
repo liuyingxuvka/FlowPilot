@@ -21,7 +21,7 @@
     "router_direct_dispatch_required_before_worker": true,
     "reviewer_dispatch_required_before_worker": false,
     "role_reminder_required_in_controller_messages": true,
-    "role_echo_required_in_subagent_responses": true
+    "role_echo_required_in_sidecar role_responses": true
   },
   "active_packet_id": "<packet-id-or-null>",
   "active_packet_status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>",

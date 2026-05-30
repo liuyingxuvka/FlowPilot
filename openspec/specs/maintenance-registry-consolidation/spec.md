@@ -11,7 +11,7 @@ FlowPilot SHALL provide a canonical maintenance surface registry for files and p
 
 - **GIVEN** a runtime owner module participates in FlowPilot maintenance diagnostics
 - **WHEN** the maintenance surface registry is read
-- **THEN** the registry includes the module path, kind, owner identity, compatibility role, and expected evidence family.
+- **THEN** the registry includes the module path, kind, owner identity, unsupported historical role, and expected evidence family.
 
 #### Scenario: Derived inventories preserve current coverage
 
@@ -20,21 +20,21 @@ FlowPilot SHALL provide a canonical maintenance surface registry for files and p
 - **THEN** they include every previously required surface
 - **AND** they do not silently drop deferred structure split findings.
 
-### Requirement: Compatibility views are generated from canonical registries
+### Requirement: Unsupported historical views are generated from canonical registries
 
 FlowPilot SHALL keep existing public protocol tables available while deriving them from canonical registries where duplication has been removed.
 
 #### Scenario: Gate outcome exports keep current values
 
 - **GIVEN** gate outcome facts are represented in a canonical gate registry
-- **WHEN** legacy gate outcome tables are imported
+- **WHEN** unsupported historical gate outcome tables are imported
 - **THEN** `GATE_OUTCOME_BLOCK_EVENT_SPECS`, `GATE_OUTCOME_BLOCK_EVENTS`, `GATE_OUTCOME_PASS_CLEAR_FLAGS`, reset flag tuples, and `GATE_OUTCOME_PASS_CLEARS_EVENTS` expose the same values as before the registry conversion.
 
 #### Scenario: External event exports keep current values
 
 - **GIVEN** external event facts are represented in a canonical event registry
-- **WHEN** legacy external event shard modules and `EXTERNAL_EVENTS` are imported
-- **THEN** startup, material, route, terminal, and merged event mappings expose the same event names, flags, legacy markers, and descriptions as before the registry conversion.
+- **WHEN** unsupported historical external event shard modules and `EXTERNAL_EVENTS` are imported
+- **THEN** startup, material, route, terminal, and merged event mappings expose the same event names, flags, unsupported historical markers, and descriptions as before the registry conversion.
 
 ### Requirement: Contract identity has one primary source
 
