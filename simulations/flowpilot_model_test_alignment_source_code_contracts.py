@@ -120,7 +120,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             ),
             external_inputs=("root", "lease_id", "packet_id", "body"),
             external_outputs=("return",),
-            side_effects=("submit_host_result", "save_run_ledger"),
+            side_effects=("submit_host_result", "_run_until_wait_and_save"),
         ),
         _contract(
             "flowpilot_new.status",
@@ -132,7 +132,6 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             ),
             external_inputs=("root",),
             external_outputs=("return",),
-            side_effects=("save_run_ledger",),
         ),
         _contract(
             "flowpilot_new.patrol",
@@ -144,7 +143,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             ),
             external_inputs=("root",),
             external_outputs=("return",),
-            side_effects=("save_run_ledger",),
+            side_effects=("_run_until_wait_and_save",),
         ),
         _contract(
             "flowpilot_new.resume",
@@ -153,7 +152,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             implements=("new_entrypoint.lifecycle_guard_resume_patrol",),
             external_inputs=("root", "reason"),
             external_outputs=("return",),
-            side_effects=("record_resume_request", "reconcile_resume_request", "save_run_ledger"),
+            side_effects=("record_resume_request", "reconcile_resume_request", "_run_until_wait_and_save"),
         ),
         _contract(
             "host.submit_host_result",

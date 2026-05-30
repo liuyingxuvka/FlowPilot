@@ -21576,3 +21576,39 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - No OpenSpec archive was performed; the change remains reviewable.
 - No GitHub push, tag, release, deploy, or public-release claim was performed.
 - The integrated commit is intentionally local-only unless the user separately asks for a remote push or release.
+
+## source-contract-alignment-after-system-closure-20260530 - Model-test alignment closeout
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Final validation after system-owned closure found stale source-audit contract rows for `flowpilot_new.submit_result`, `status`, `patrol`, and `resume`; the implementation was correct, but the model-test source contract still claimed direct `save_run_ledger` side effects where the current runtime either stays read-only (`status`) or saves through `_run_until_wait_and_save`.
+- Status: implemented_validated_installed_synced_local_git_ready
+- Recorded: 2026-05-30T18:00:00Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_model_test_alignment_source_code_contracts.py`
+- `simulations/flowpilot_model_test_alignment_results.json`
+
+### Commands
+- `python -m pytest tests/test_flowpilot_model_test_alignment.py -q` - ok; 17 tests and 273 subtests passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - ok.
+- `python scripts/flowguard_project_topology.py build` - ok; required after result-file freshness changed in the working tree.
+- `python scripts/flowguard_project_topology.py check` - ok.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok after topology refresh; installed FlowPilot skill synced.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/check_install.py --json` - ok.
+- `python -m pytest tests/test_flowpilot_test_tiers.py tests/test_flowguard_project_topology.py -q` - ok; 31 tests and 408 subtests passed after aligning current test-tier shards.
+- `python simulations/run_meta_checks.py --full` via `tmp/flowguard_background/run_meta_checks.*` - ok; exit 0, status completed, latest artifact update 2026-05-30T20:09:51 local time, fresh layered full parent, no valid proof reuse was claimed.
+- `python simulations/run_capability_checks.py --full` via `tmp/flowguard_background/run_capability_checks.*` - ok; exit 0, status completed, latest artifact update 2026-05-30T20:09:51 local time, fresh layered full parent, no valid proof reuse was claimed.
+
+### Findings
+- `status` remains read-only; it must not grow lifecycle guard history.
+- `submit_result`, `patrol`, and `resume` save through `_run_until_wait_and_save`, so the source-audit contract now names that boundary instead of a direct `save_run_ledger` call.
+- The model-test alignment baseline no longer contains the four stale `source_contract_missing_side_effect` findings.
+- The fast test tier now asserts topology build/check by command name, and router child shards cover the current packet-result, resume rehydration, and PM blocker-family tests.
+
+### Skipped Steps
+- The concurrently present project-topology OpenSpec/code changes were not merged into this scoped closeout commit; they remain separate working-tree changes.
+- No OpenSpec archive, remote push, tag, release, deploy, or public-release claim was performed.
