@@ -1,0 +1,135 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=20 initial_states=1 traces=210",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "blocker_without_pm_repair",
+      "pm_impersonated_reviewer_pass",
+      "semantic_block_treated_as_pass",
+      "stale_failed_evidence_used_as_pass",
+      "validation_fail_issued_closure",
+      "wrong_role_recheck_cleared_blocker"
+    ],
+    "hazards": {
+      "blocker_without_pm_repair": [
+        "blocker lacked PM repair decision packet"
+      ],
+      "pm_impersonated_reviewer_pass": [
+        "PM repair decision impersonated reviewer pass"
+      ],
+      "semantic_block_treated_as_pass": [
+        "semantic block treated as pass"
+      ],
+      "stale_failed_evidence_used_as_pass": [
+        "stale failed evidence used as pass"
+      ],
+      "validation_fail_issued_closure": [
+        "validation fail issued closure"
+      ],
+      "wrong_role_recheck_cleared_blocker": [
+        "wrong role recheck cleared blocker"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_semantic_gate_outcomes",
+  "model_test_alignment": {
+    "evidence": [
+      "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+      "tests/test_flowpilot_high_standard_control_flow.py"
+    ],
+    "missing": [],
+    "obligations": {
+      "active_blocker_ledger": true,
+      "pm_repair_decision_packet": true,
+      "reviewer_block_no_validation": true,
+      "same_class_recheck": true,
+      "semantic_outcome_parser": true,
+      "validator_fail_no_closure": true,
+      "worker_block_no_flowguard": true
+    },
+    "ok": true
+  },
+  "ok": true,
+  "result_type": "flowpilot_semantic_gate_outcome_checks",
+  "target_plan": {
+    "evidence_role": "semantic_gate_outcome_model_not_live_host_proof",
+    "failures": [],
+    "labels": [
+      "record_mechanically_valid_result",
+      "parse_semantic_outcome",
+      "advance_on_pass_outcome",
+      "record_nonpass_outcome",
+      "record_active_blocker",
+      "issue_pm_repair_decision_packet",
+      "record_pm_repair_decision",
+      "open_repair_transaction",
+      "preserve_stale_failed_evidence",
+      "require_same_class_recheck",
+      "record_same_class_pass",
+      "clear_blocker_by_same_class_pass",
+      "release_downstream_after_clear"
+    ],
+    "ok": true,
+    "state": {
+      "active_blocker_recorded": true,
+      "blocker_cleared_by_same_class_pass": true,
+      "downstream_released_after_clear": true,
+      "pm_repair_decision_recorded": true,
+      "same_class_recheck_required": true,
+      "semantic_outcome_parsed": true,
+      "status": "complete"
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_semantic_gate_outcome_model.py"
+        ],
+        "freshness": "current",
+        "id": "semantic_gate_outcome_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/enforce-new-flowpilot-semantic-gate-outcomes/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "semantic_gate_outcome_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_semantic_gate_outcome_model.py"
+        ],
+        "freshness": "current",
+        "id": "semantic_gate_outcome_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+          "tests/test_flowpilot_high_standard_control_flow.py"
+        ],
+        "freshness": "current",
+        "id": "semantic_gate_outcome_model_test_alignment",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

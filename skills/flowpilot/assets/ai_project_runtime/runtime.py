@@ -73,6 +73,11 @@ EVENT_FAMILY_BY_TYPE = {
     "lease_progress": "lease",
     "accepted_packet_assignment_repaired": "packet",
     "result_submitted": "packet",
+    "packet_outcome_recorded": "packet",
+    "semantic_blocker_recorded": "repair",
+    "semantic_blocker_cleared": "repair",
+    "pm_repair_decision_recorded": "repair",
+    "repair_reissue_packet_issued": "repair",
     "flowguard_work_order_created": "flowguard",
     "flowguard_work_order_completed": "flowguard",
     "result_reviewed": "review",
@@ -275,6 +280,10 @@ def new_ledger(
         "leases": {},
         "packets": {},
         "results": {},
+        "packet_outcomes": {},
+        "active_blockers": {},
+        "pm_repair_decisions": {},
+        "repair_transactions": {},
         "reviews": {},
         "flowguard_work_orders": {},
         "validation_evidence": {},
@@ -1288,6 +1297,529 @@ def _decision_from_pm_body(body: str) -> tuple[str, str]:
     return "accept", body[:240]
 
 
+_PASSING_OUTCOME_DECISIONS = {"accept", "accepted", "pass", "passed", "complete", "completed", "success", "ok"}
+_BLOCKING_OUTCOME_DECISIONS = {
+    "block",
+    "blocked",
+    "fail",
+    "failed",
+    "failure",
+    "reject",
+    "rejected",
+    "needs_pm",
+    "needs_more_evidence",
+    "more_evidence_required",
+    "partial_with_blockers",
+    "stop",
+    "stopped",
+}
+_NONPASS_TEXT_RE = re.compile(
+    r"\b(block|blocked|fail|failed|failure|reject|rejected|needs[_ -]?pm|needs[_ -]?more[_ -]?evidence|partial[_ -]?with[_ -]?blockers)\b",
+    re.IGNORECASE,
+)
+_PM_REPAIR_DECISIONS = {
+    "same_node_repair",
+    "sender_reissue",
+    "collect_more_evidence",
+    "rerun_validation",
+    "mutate_route",
+    "quarantine_evidence",
+    "waive_with_authority",
+    "stop_for_user",
+}
+_PM_REPAIR_ALIASES = {
+    "repair": "same_node_repair",
+    "local_repair": "same_node_repair",
+    "repair_local": "same_node_repair",
+    "reissue": "sender_reissue",
+    "request_sender_reissue": "sender_reissue",
+    "more_evidence": "collect_more_evidence",
+    "collect_evidence": "collect_more_evidence",
+    "validation_rerun": "rerun_validation",
+    "route_mutation": "mutate_route",
+    "quarantine": "quarantine_evidence",
+    "waive": "waive_with_authority",
+    "stop": "stop_for_user",
+    "block": "stop_for_user",
+}
+
+
+def _json_payload_from_body(body: str) -> dict[str, Any] | None:
+    stripped = body.strip()
+    candidates = [stripped]
+    if ":" in stripped:
+        candidates.append(stripped.split(":", 1)[1].strip())
+    for candidate in candidates:
+        if not candidate.startswith("{"):
+            continue
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(payload, dict):
+            return payload
+    return None
+
+
+def _normalize_outcome_token(value: Any) -> str:
+    return str(value or "").strip().lower().replace("-", "_").replace(" ", "_")
+
+
+def _payload_outcome_token(payload: Mapping[str, Any], packet_kind: str) -> str:
+    if isinstance(payload.get("passed"), bool):
+        return "pass" if payload["passed"] else "block"
+    challenge = payload.get("independent_challenge")
+    if isinstance(challenge, Mapping):
+        nested = _normalize_outcome_token(challenge.get("pass_or_block"))
+        if nested:
+            return nested
+    for key in (
+        "decision",
+        "status",
+        "outcome",
+        "result",
+        "pass_or_block",
+        "validation_status",
+        "flowguard_decision",
+        "worker_status",
+    ):
+        token = _normalize_outcome_token(payload.get(key))
+        if token:
+            return token
+    if packet_kind == "validation" and isinstance(payload.get("valid"), bool):
+        return "pass" if payload["valid"] else "fail"
+    return ""
+
+
+def _default_blocker_class(packet_kind: str, owner_role: str, token: str) -> str:
+    if owner_role == "validator" or packet_kind == "validation":
+        return "validation_failure"
+    if owner_role == "flowguard_operator" or packet_kind == "flowguard_check":
+        return "flowguard_failure"
+    if token in {"needs_more_evidence", "more_evidence_required"}:
+        return "evidence_gap"
+    if token in {"needs_pm", "stop", "stopped"}:
+        return "needs_user"
+    if token in {"reject", "rejected"}:
+        return "protocol_error"
+    return "local_artifact"
+
+
+def _parse_packet_outcome(packet: Mapping[str, Any], result: Mapping[str, Any]) -> dict[str, Any]:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    packet_kind = str(envelope.get("packet_kind", "task"))
+    owner_role = str(envelope.get("responsibility", ""))
+    body = str(result.get("body", ""))
+    payload = _json_payload_from_body(body)
+    token = _payload_outcome_token(payload, packet_kind) if payload else ""
+    if not token and payload and isinstance(payload.get("contract_self_check"), Mapping):
+        token = "pass"
+    match = _NONPASS_TEXT_RE.search(body)
+    if not token and match:
+        token = _normalize_outcome_token(match.group(0))
+    if token in _PASSING_OUTCOME_DECISIONS:
+        decision = "pass"
+    elif token in _BLOCKING_OUTCOME_DECISIONS:
+        decision = "fail" if token in {"fail", "failed", "failure"} else "block"
+    else:
+        decision = "pass"
+    blocking = decision != "pass"
+    recommendation = ""
+    evidence_refs: list[str] = []
+    blocker_class = _default_blocker_class(packet_kind, owner_role, token)
+    if payload:
+        if "blocking" in payload:
+            blocking = bool(payload.get("blocking"))
+            if blocking and decision == "pass":
+                decision = "block"
+        blocker_class = str(payload.get("blocker_class") or payload.get("failure_class") or blocker_class)
+        recommendation = str(
+            payload.get("recommended_resolution")
+            or payload.get("recommendation")
+            or payload.get("pm_recommendation")
+            or ""
+        )
+        refs = payload.get("evidence_refs") or payload.get("direct_evidence_paths_checked") or payload.get("evidence_ids") or []
+        if isinstance(refs, list):
+            evidence_refs = [str(item) for item in refs]
+    reason = recommendation or (f"{owner_role or packet_kind} reported {decision}" if blocking else "")
+    return {
+        "decision": decision,
+        "blocking": blocking,
+        "blocker_class": blocker_class,
+        "recommended_resolution": recommendation,
+        "evidence_refs": evidence_refs,
+        "reason": reason,
+        "raw_token": token,
+        "schema_version": str(payload.get("schema_version", "")) if payload else "",
+    }
+
+
+def _record_packet_outcome(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+    outcome: Mapping[str, Any],
+) -> str:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    packet_kind = str(envelope.get("packet_kind", "task"))
+    subject_packet_id = str(envelope.get("subject_id") or packet.get("packet_id") or "")
+    outcome_id = _next_id(ledger, "outcome")
+    row = {
+        "outcome_id": outcome_id,
+        "packet_id": str(packet.get("packet_id") or ""),
+        "packet_kind": packet_kind,
+        "subject_packet_id": subject_packet_id,
+        "target_result_id": str(envelope.get("target_result_id") or result.get("result_id") or ""),
+        "result_id": str(result.get("result_id") or ""),
+        "owner_role": str(envelope.get("responsibility") or ""),
+        "decision": str(outcome.get("decision") or "pass"),
+        "blocking": bool(outcome.get("blocking")),
+        "blocker_class": str(outcome.get("blocker_class") or "unknown"),
+        "recommended_resolution": str(outcome.get("recommended_resolution") or ""),
+        "evidence_refs": list(outcome.get("evidence_refs") or []),
+        "reason": str(outcome.get("reason") or ""),
+        "route_version": envelope.get("route_version"),
+        "route_node_id": str(envelope.get("route_node_id") or ""),
+        "route_scope": str(envelope.get("route_scope") or ""),
+        "created_at": now_iso(),
+    }
+    ledger.setdefault("packet_outcomes", {})[outcome_id] = row
+    result["packet_outcome_id"] = outcome_id
+    _event(
+        ledger,
+        "packet_outcome_recorded",
+        outcome_id=outcome_id,
+        packet_id=row["packet_id"],
+        decision=row["decision"],
+        blocking=row["blocking"],
+    )
+    return outcome_id
+
+
+def _active_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [
+        blocker
+        for blocker in ledger.get("active_blockers", {}).values()
+        if isinstance(blocker, Mapping) and blocker.get("status") in {"active", "repairing", "awaiting_recheck"}
+    ]
+
+
+def _required_recheck_role(packet_kind: str, owner_role: str) -> str:
+    if packet_kind == "review":
+        return "reviewer"
+    if packet_kind == "validation":
+        return "validator"
+    if packet_kind == "flowguard_check":
+        return "flowguard_operator"
+    return owner_role or "pm"
+
+
+def _packet_repair_blocker_id(ledger: Mapping[str, Any], packet_id: str) -> str:
+    packet = ledger.get("packets", {}).get(packet_id)
+    if not isinstance(packet, Mapping):
+        return ""
+    if packet.get("repair_blocker_id"):
+        return str(packet.get("repair_blocker_id"))
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    subject_id = str(envelope.get("subject_id") or "")
+    if subject_id:
+        return _packet_repair_blocker_id(ledger, subject_id)
+    return str(packet.get("active_blocker_id") or "")
+
+
+def _record_semantic_blocker(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+    outcome_id: str,
+) -> str:
+    outcome = _require(ledger.setdefault("packet_outcomes", {}), outcome_id, "packet outcome")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    packet_kind = str(envelope.get("packet_kind", "task"))
+    blocker_id = _next_id(ledger, "blocker")
+    repair_target_packet_id = str(outcome.get("subject_packet_id") or packet.get("packet_id") or "")
+    subject_packet = ledger.get("packets", {}).get(repair_target_packet_id, {})
+    subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet, Mapping) else {}
+    route_node_id = str(outcome.get("route_node_id") or subject_envelope.get("route_node_id") or "")
+    repair_generation = 0
+    if route_node_id and route_node_id in ledger.get("route_nodes", {}):
+        repair_generation = int(ledger["route_nodes"][route_node_id].get("repair_generation", 0))
+    blocker = {
+        "blocker_id": blocker_id,
+        "status": "active",
+        "outcome_id": outcome_id,
+        "packet_id": str(packet.get("packet_id") or ""),
+        "packet_kind": packet_kind,
+        "subject_packet_id": str(outcome.get("subject_packet_id") or ""),
+        "repair_target_packet_id": repair_target_packet_id,
+        "target_result_id": str(outcome.get("target_result_id") or ""),
+        "result_id": str(result.get("result_id") or ""),
+        "owner_role": str(outcome.get("owner_role") or ""),
+        "required_recheck_role": _required_recheck_role(packet_kind, str(outcome.get("owner_role") or "")),
+        "gate_kind": packet_kind,
+        "blocker_class": str(outcome.get("blocker_class") or "unknown"),
+        "recommended_resolution": str(outcome.get("recommended_resolution") or outcome.get("reason") or ""),
+        "route_version": outcome.get("route_version"),
+        "route_node_id": route_node_id,
+        "route_scope": str(outcome.get("route_scope") or subject_envelope.get("route_scope") or ""),
+        "repair_generation": repair_generation,
+        "stale_evidence_ids": [str(result.get("result_id") or ""), str(outcome.get("target_result_id") or "")],
+        "created_at": now_iso(),
+        "pm_repair_packet_id": "",
+        "pm_repair_decision_id": "",
+        "cleared_by_outcome_id": "",
+    }
+    ledger.setdefault("active_blockers", {})[blocker_id] = blocker
+    if isinstance(subject_packet, dict):
+        subject_packet["active_blocker_id"] = blocker_id
+    _event(
+        ledger,
+        "semantic_blocker_recorded",
+        blocker_id=blocker_id,
+        packet_id=blocker["packet_id"],
+        required_recheck_role=blocker["required_recheck_role"],
+    )
+    _ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
+    return blocker_id
+
+
+def _clear_semantic_blockers_for_pass(
+    ledger: dict[str, Any],
+    *,
+    subject_packet_id: str,
+    gate_kind: str,
+    recheck_role: str,
+    outcome_id: str,
+) -> None:
+    repair_blocker_id = _packet_repair_blocker_id(ledger, subject_packet_id)
+    for blocker in ledger.setdefault("active_blockers", {}).values():
+        if blocker.get("status") not in {"active", "repairing", "awaiting_recheck"}:
+            continue
+        same_subject = blocker.get("subject_packet_id") == subject_packet_id
+        same_repair_chain = repair_blocker_id and blocker.get("blocker_id") == repair_blocker_id
+        if not (same_subject or same_repair_chain):
+            continue
+        if blocker.get("gate_kind") != gate_kind and not same_repair_chain:
+            continue
+        if blocker.get("required_recheck_role") not in {"", recheck_role}:
+            continue
+        blocker["status"] = "cleared"
+        blocker["cleared_by_outcome_id"] = outcome_id
+        blocker["cleared_at"] = now_iso()
+        subject = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
+        if isinstance(subject, dict) and subject.get("active_blocker_id") == blocker.get("blocker_id"):
+            subject["active_blocker_id"] = ""
+        _event(
+            ledger,
+            "semantic_blocker_cleared",
+            blocker_id=str(blocker.get("blocker_id") or ""),
+            outcome_id=outcome_id,
+        )
+
+
+def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocker_id: str) -> str:
+    blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
+    existing = _find_packet(ledger, packet_kind="pm_repair_decision", subject_id=blocker_id)
+    if existing:
+        blocker["pm_repair_packet_id"] = str(existing["packet_id"])
+        return str(existing["packet_id"])
+    packet_id = issue_task_packet(
+        ledger,
+        "pm",
+        f"Choose repair strategy for semantic blocker {blocker_id}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.pm_repair_decision_packet.v1",
+                "blocker_id": blocker_id,
+                "blocked_packet_id": blocker["packet_id"],
+                "repair_target_packet_id": blocker["repair_target_packet_id"],
+                "gate_kind": blocker["gate_kind"],
+                "required_recheck_role": blocker["required_recheck_role"],
+                "allowed_decisions": sorted(_PM_REPAIR_DECISIONS),
+                "instruction": "Return a PM repair decision. PM chooses the repair route; PM does not impersonate the blocked reviewer, validator, or FlowGuard pass.",
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="",
+        packet_kind="pm_repair_decision",
+        subject_id=blocker_id,
+        target_result_id=str(blocker.get("outcome_id") or ""),
+        route_node_id=str(blocker.get("route_node_id") or ""),
+        route_scope="pm_repair_decision",
+    )
+    blocker["pm_repair_packet_id"] = packet_id
+    return packet_id
+
+
+def _parse_pm_repair_decision_body(body: str) -> tuple[str, str]:
+    payload = _json_payload_from_body(body)
+    if payload:
+        raw = _normalize_outcome_token(payload.get("decision") or payload.get("repair_decision") or payload.get("recovery_option"))
+        reason = str(payload.get("reason") or payload.get("summary") or payload.get("recommended_resolution") or "")
+    else:
+        raw = ""
+        reason = body.strip()[:500]
+    decision = _PM_REPAIR_ALIASES.get(raw, raw)
+    if decision not in _PM_REPAIR_DECISIONS:
+        lowered = body.lower()
+        for candidate in sorted(_PM_REPAIR_DECISIONS | set(_PM_REPAIR_ALIASES)):
+            if candidate in lowered:
+                decision = _PM_REPAIR_ALIASES.get(candidate, candidate)
+                break
+    if decision not in _PM_REPAIR_DECISIONS:
+        decision = "sender_reissue"
+    return decision, reason
+
+
+def _record_pm_repair_decision_from_packet_result(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> str:
+    blocker_id = str(packet["envelope"].get("subject_id") or "")
+    blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
+    decision, reason = _parse_pm_repair_decision_body(str(result.get("body", "")))
+    decision_id = _next_id(ledger, "pm_repair_decision")
+    row = {
+        "decision_id": decision_id,
+        "blocker_id": blocker_id,
+        "packet_id": packet["packet_id"],
+        "result_id": result["result_id"],
+        "decision": decision,
+        "reason": reason,
+        "created_at": now_iso(),
+    }
+    ledger.setdefault("pm_repair_decisions", {})[decision_id] = row
+    blocker["pm_repair_decision_id"] = decision_id
+    if decision not in {"waive_with_authority", "stop_for_user"}:
+        blocker["status"] = "repairing"
+    _event(
+        ledger,
+        "pm_repair_decision_recorded",
+        decision_id=decision_id,
+        blocker_id=blocker_id,
+        decision=decision,
+    )
+    _apply_pm_repair_decision(ledger, blocker_id, decision_id)
+    return decision_id
+
+
+def _latest_open_packet_for_repair(ledger: Mapping[str, Any], *, route_node_id: str, before_ids: set[str]) -> str:
+    for packet_id in reversed(list(ledger.get("packets", {}))):
+        if packet_id in before_ids:
+            continue
+        packet = ledger.get("packets", {}).get(packet_id)
+        if not isinstance(packet, Mapping):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if packet.get("status") == "open" and envelope.get("route_node_id") == route_node_id:
+            return str(packet_id)
+    return ""
+
+
+def _issue_sender_repair_packet(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+    decision_id: str,
+    *,
+    responsibility: str = "",
+    packet_kind: str = "task",
+) -> str:
+    target_packet_id = str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or "")
+    target_packet = _require(ledger["packets"], target_packet_id, "repair target packet")
+    target_envelope = target_packet["envelope"]
+    repair_role = responsibility or str(target_envelope.get("responsibility") or "worker")
+    packet_id = issue_task_packet(
+        ledger,
+        repair_role,
+        f"Repair and reissue work for blocker {blocker['blocker_id']}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.repair_reissue_packet.v1",
+                "blocker_id": blocker["blocker_id"],
+                "pm_repair_decision_id": decision_id,
+                "original_packet_id": target_packet_id,
+                "original_body_hash": target_envelope.get("body_hash", ""),
+                "required_recheck_role": blocker.get("required_recheck_role", ""),
+                "recommended_resolution": blocker.get("recommended_resolution", ""),
+                "instruction": "Produce fresh repaired evidence. The prior blocked artifact is context only, not passing evidence.",
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target=str(target_envelope.get("required_flowguard_target") or ""),
+        packet_kind=packet_kind,
+        subject_id=target_packet_id if packet_kind != "task" else "",
+        target_result_id=str(blocker.get("target_result_id") or ""),
+        route_node_id=str(target_envelope.get("route_node_id") or ""),
+        route_scope=str(target_envelope.get("route_scope") or ""),
+        acceptance_criteria=list(target_envelope.get("acceptance_criteria") or []),
+    )
+    ledger["packets"][packet_id]["repair_blocker_id"] = str(blocker["blocker_id"])
+    ledger.setdefault("repair_transactions", {})[decision_id] = {
+        "transaction_id": decision_id,
+        "blocker_id": blocker["blocker_id"],
+        "decision": "sender_reissue",
+        "fresh_packet_id": packet_id,
+        "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
+        "created_at": now_iso(),
+    }
+    _event(ledger, "repair_reissue_packet_issued", blocker_id=blocker["blocker_id"], packet_id=packet_id)
+    return packet_id
+
+
+def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_id: str) -> None:
+    blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
+    decision = str(ledger["pm_repair_decisions"][decision_id]["decision"])
+    reason = str(ledger["pm_repair_decisions"][decision_id].get("reason") or f"pm_repair_{decision}")
+    route_node_id = str(blocker.get("route_node_id") or "")
+    before_packets = set(ledger.get("packets", {}))
+    if decision == "same_node_repair" and route_node_id and route_node_id in ledger.get("route_nodes", {}):
+        _prepare_same_node_repair(ledger, route_node_id, disposition_id=decision_id, reason=reason)
+        fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=route_node_id, before_ids=before_packets)
+        if fresh_packet_id:
+            ledger["packets"][fresh_packet_id]["repair_blocker_id"] = blocker_id
+        ledger.setdefault("repair_transactions", {})[decision_id] = {
+            "transaction_id": decision_id,
+            "blocker_id": blocker_id,
+            "decision": decision,
+            "fresh_packet_id": fresh_packet_id,
+            "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
+            "created_at": now_iso(),
+        }
+        blocker["status"] = "awaiting_recheck"
+        return
+    if decision in {"same_node_repair", "sender_reissue", "collect_more_evidence"}:
+        _issue_sender_repair_packet(ledger, blocker, decision_id)
+        blocker["status"] = "awaiting_recheck"
+        return
+    if decision == "rerun_validation":
+        _issue_sender_repair_packet(ledger, blocker, decision_id, responsibility="validator", packet_kind="validation")
+        blocker["status"] = "awaiting_recheck"
+        return
+    if decision == "mutate_route" and route_node_id and route_node_id in ledger.get("route_nodes", {}):
+        _mutate_route_for_node(ledger, route_node_id, disposition_id=decision_id, reason=reason)
+        blocker["status"] = "awaiting_recheck"
+        return
+    if decision == "quarantine_evidence":
+        blocker["status"] = "quarantined"
+        blocker["quarantined_at"] = now_iso()
+        return
+    if decision == "waive_with_authority":
+        blocker["status"] = "waived"
+        blocker["waived_at"] = now_iso()
+        blocker["cleared_by_outcome_id"] = str(blocker.get("outcome_id") or "")
+        return
+    if decision == "stop_for_user":
+        blocker["status"] = "stopped"
+        blocker["stopped_at"] = now_iso()
+        target_packet = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
+        if isinstance(target_packet, dict):
+            target_packet["status"] = "pm_stopped"
+
+
 def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str) -> None:
     frontier = ledger.get("execution_frontier") or {}
     completed = list(frontier.get("completed_nodes") or [])
@@ -1646,29 +2178,99 @@ def _apply_valid_packet_result(
     lease: dict[str, Any],
 ) -> None:
     packet_kind = packet["envelope"].get("packet_kind", "task")
+    outcome = _parse_packet_outcome(packet, result)
+    outcome_id = _record_packet_outcome(ledger, packet, result, outcome)
+    result["semantic_decision"] = outcome["decision"]
+    if outcome["blocking"]:
+        if packet_kind == "task":
+            result["status"] = "semantic_blocked"
+            result["accepted"] = False
+            packet["status"] = "result_blocked"
+            close_lease(ledger, lease["lease_id"], "semantic_result_blocked")
+            _record_semantic_blocker(ledger, packet, result, outcome_id)
+            return
+        if packet_kind == "flowguard_check":
+            result["status"] = "flowguard_blocked"
+            result["accepted"] = False
+            packet["status"] = "flowguard_blocked"
+            close_lease(ledger, lease["lease_id"], "flowguard_result_blocked")
+            _record_flowguard_from_packet_result(ledger, packet, result, outcome=outcome)
+            _record_semantic_blocker(ledger, packet, result, outcome_id)
+            return
+        if packet_kind == "review":
+            _record_review_from_packet_result(ledger, packet, result, outcome=outcome, outcome_id=outcome_id)
+            _accept_packet_result(ledger, packet, result, lease, reason="review_block_result_submitted")
+            _record_semantic_blocker(ledger, packet, result, outcome_id)
+            return
+        if packet_kind == "validation":
+            _accept_packet_result(ledger, packet, result, lease, reason="validation_failed_result_submitted")
+            evidence_id = f"validation-{result['result_id']}"
+            record_validation_evidence(ledger, evidence_id, status="failed")
+            result["validation_evidence_id"] = evidence_id
+            subject_packet = ledger.get("packets", {}).get(packet["envelope"].get("subject_id", ""), {})
+            if isinstance(subject_packet, dict):
+                subject_packet["status"] = "validation_blocked"
+            _record_semantic_blocker(ledger, packet, result, outcome_id)
+            return
+        if packet_kind == "closure":
+            result["status"] = "closure_blocked"
+            result["accepted"] = False
+            packet["status"] = "closure_blocked"
+            close_lease(ledger, lease["lease_id"], "closure_result_blocked")
+            _record_semantic_blocker(ledger, packet, result, outcome_id)
+            return
     if packet_kind == "task":
         close_lease(ledger, lease["lease_id"], "result_submitted")
+        _clear_semantic_blockers_for_pass(
+            ledger,
+            subject_packet_id=packet["packet_id"],
+            gate_kind="task",
+            recheck_role=packet["envelope"]["responsibility"],
+            outcome_id=outcome_id,
+        )
         _ensure_flowguard_packet_for_task_result(ledger, packet, result)
         return
     if packet_kind == "flowguard_check":
         _accept_packet_result(ledger, packet, result, lease, reason="flowguard_result_submitted")
-        _record_flowguard_from_packet_result(ledger, packet, result)
+        _record_flowguard_from_packet_result(ledger, packet, result, outcome=outcome)
+        _clear_semantic_blockers_for_pass(
+            ledger,
+            subject_packet_id=str(packet["envelope"]["subject_id"]),
+            gate_kind="flowguard_check",
+            recheck_role="flowguard_operator",
+            outcome_id=outcome_id,
+        )
         _ensure_review_packet_for_task_result(ledger, packet["envelope"]["subject_id"])
         return
     if packet_kind == "review":
-        _record_review_from_packet_result(ledger, packet, result)
+        _record_review_from_packet_result(ledger, packet, result, outcome=outcome, outcome_id=outcome_id)
         _accept_packet_result(ledger, packet, result, lease, reason="review_result_submitted")
+        _clear_semantic_blockers_for_pass(
+            ledger,
+            subject_packet_id=str(packet["envelope"]["subject_id"]),
+            gate_kind="review",
+            recheck_role="reviewer",
+            outcome_id=outcome_id,
+        )
         _ensure_validation_packet_for_task(ledger, packet["envelope"]["subject_id"])
         return
     if packet_kind == "validation":
         _accept_packet_result(ledger, packet, result, lease, reason="validation_result_submitted")
         evidence_id = f"validation-{result['result_id']}"
         record_validation_evidence(ledger, evidence_id)
+        result["validation_evidence_id"] = evidence_id
         ledger["latest_validation_evidence_id"] = evidence_id
         subject_packet = ledger.get("packets", {}).get(packet["envelope"].get("subject_id", ""), {})
         node_id = str((subject_packet.get("envelope", {}) if isinstance(subject_packet, dict) else {}).get("route_node_id") or "")
         if node_id and node_id in ledger.get("route_nodes", {}):
             ledger["route_nodes"][node_id].setdefault("validation_evidence_ids", []).append(evidence_id)
+        _clear_semantic_blockers_for_pass(
+            ledger,
+            subject_packet_id=str(packet["envelope"]["subject_id"]),
+            gate_kind="validation",
+            recheck_role="validator",
+            outcome_id=outcome_id,
+        )
         _ensure_closure_packet_for_task(ledger, packet["envelope"]["subject_id"])
         return
     if packet_kind == "closure":
@@ -1682,6 +2284,10 @@ def _apply_valid_packet_result(
             raise BlackBoxRuntimeError("PM disposition packet is missing route_node_id")
         decision, reason = _decision_from_pm_body(str(result.get("body", "")))
         record_pm_disposition(ledger, node_id, result["result_id"], decision=decision, reason=reason)
+        return
+    if packet_kind == "pm_repair_decision":
+        _accept_packet_result(ledger, packet, result, lease, reason="pm_repair_decision_submitted")
+        _record_pm_repair_decision_from_packet_result(ledger, packet, result)
         return
     raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
 
@@ -2023,6 +2629,8 @@ def _record_flowguard_from_packet_result(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
     result: Mapping[str, Any],
+    *,
+    outcome: Mapping[str, Any] | None = None,
 ) -> str:
     subject_id = str(packet["envelope"]["subject_id"])
     subject_packet = _require(ledger["packets"], subject_id, "packet")
@@ -2033,7 +2641,9 @@ def _record_flowguard_from_packet_result(
     order["packet_id"] = packet["packet_id"]
     order["producer_result_id"] = result["result_id"]
     node_id = str(subject_packet["envelope"].get("route_node_id") or "")
-    complete_flowguard_work_order(ledger, order_id, evidence_id=result["result_id"])
+    semantic = outcome if isinstance(outcome, Mapping) else {}
+    decision = "fail" if semantic.get("blocking") else "pass"
+    complete_flowguard_work_order(ledger, order_id, decision=decision, evidence_id=result["result_id"])
     order["proof_artifact"] = result["result_id"]
     order["confidence_boundary"] = "current_run_packet"
     if node_id and node_id in ledger.get("route_nodes", {}):
@@ -2075,27 +2685,36 @@ def _record_review_from_packet_result(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
     result: Mapping[str, Any],
+    *,
+    outcome: Mapping[str, Any] | None = None,
+    outcome_id: str = "",
 ) -> str:
     subject_id = str(packet["envelope"]["subject_id"])
     target_result_id = str(packet["envelope"]["target_result_id"])
+    semantic = outcome if isinstance(outcome, Mapping) else {}
+    accepted = not bool(semantic.get("blocking"))
     review_id = review_result(
         ledger,
         target_result_id,
         result["producer_lease_id"],
-        decision="accept",
+        decision="accept" if accepted else "block",
         checks_evidence=True,
         direct_evidence_ids=[result["result_id"]],
-        pm_routing_decision="accept_result",
+        pm_routing_decision="accept_result" if accepted else "pm_repair_decision_required",
     )
     review = ledger["reviews"][review_id]
     review["review_packet_id"] = packet["packet_id"]
     review["review_packet_result_id"] = result["result_id"]
     review["subject_packet_id"] = subject_id
+    review["packet_outcome_id"] = outcome_id
+    if not accepted:
+        blocker_note = str(semantic.get("reason") or semantic.get("recommended_resolution") or "reviewer_blocked")
+        review["blockers"] = sorted(set(list(review.get("blockers") or []) + [blocker_note]))
     subject_envelope = ledger.get("packets", {}).get(subject_id, {}).get("envelope", {}) or {}
     node_id = str(subject_envelope.get("route_node_id") or "")
     if node_id and node_id in ledger.get("route_nodes", {}):
         ledger["route_nodes"][node_id].setdefault("review_ids", []).append(review_id)
-        if subject_envelope.get("route_scope") == "node":
+        if accepted and subject_envelope.get("route_scope") == "node":
             ledger["route_nodes"][node_id]["accepted_result_id"] = target_result_id
             ledger["route_nodes"][node_id]["accepted_repair_generation"] = int(
                 ledger["route_nodes"][node_id].get("repair_generation", 0)
@@ -3009,6 +3628,8 @@ def _closure_blockers(
         blockers.append("unresolved_residual_risks")
     if ledger.get("old_ui_evidence"):
         blockers.append("old_ui_evidence_unresolved")
+    for blocker in _active_semantic_blockers(ledger):
+        blockers.append(f"active_semantic_blocker:{blocker.get('blocker_id', '')}")
     if recursive_route_required(ledger):
         route_wide = ledger.get("final_route_wide_gate_ledger")
         if not isinstance(route_wide, dict):
@@ -3165,7 +3786,7 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                 return RuntimeAction("wait_for_result", "ACK is liveness only", packet["packet_id"])
 
     for packet in active_packets:
-        if packet["status"] in {"result_blocked", "review_blocked"}:
+        if packet["status"] in {"result_blocked", "review_blocked", "validation_blocked", "flowguard_blocked", "closure_blocked"}:
             return RuntimeAction("repair_packet", "packet result or review is blocked", packet["packet_id"])
         if packet["status"] == "result_submitted" and packet["envelope"].get("packet_kind", "task") == "task":
             required_target = packet["envelope"]["required_flowguard_target"]
@@ -3192,6 +3813,17 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
 
     if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
         return RuntimeAction("issue_preplanning_gate_packet", "preplanning high-standard gates are required", responsibility="pm")
+
+    for blocker in _active_semantic_blockers(ledger):
+        packet_id = str(blocker.get("pm_repair_packet_id") or "")
+        packet = ledger.get("packets", {}).get(packet_id)
+        if not isinstance(packet, Mapping) or packet.get("status") in {"accepted", "quarantined_after_route_mutation"}:
+            return RuntimeAction(
+                "issue_pm_repair_decision_packet",
+                "semantic blocker requires PM repair decision",
+                str(blocker.get("blocker_id") or ""),
+                "pm",
+            )
 
     if recursive_route_required(ledger):
         frontier = ledger.get("execution_frontier") or {}
@@ -3305,6 +3937,34 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
             }
             for evidence in ledger.get("validation_evidence", {}).values()
         ],
+        "packet_outcomes": [
+            {
+                "outcome_id": outcome["outcome_id"],
+                "packet_id": outcome["packet_id"],
+                "packet_kind": outcome["packet_kind"],
+                "subject_packet_id": outcome["subject_packet_id"],
+                "owner_role": outcome["owner_role"],
+                "decision": outcome["decision"],
+                "blocking": outcome["blocking"],
+                "blocker_class": outcome["blocker_class"],
+            }
+            for outcome in ledger.get("packet_outcomes", {}).values()
+        ],
+        "active_blockers": [
+            {
+                "blocker_id": blocker["blocker_id"],
+                "status": blocker["status"],
+                "packet_id": blocker["packet_id"],
+                "subject_packet_id": blocker["subject_packet_id"],
+                "repair_target_packet_id": blocker["repair_target_packet_id"],
+                "required_recheck_role": blocker["required_recheck_role"],
+                "blocker_class": blocker["blocker_class"],
+                "pm_repair_packet_id": blocker.get("pm_repair_packet_id", ""),
+                "pm_repair_decision_id": blocker.get("pm_repair_decision_id", ""),
+            }
+            for blocker in ledger.get("active_blockers", {}).values()
+            if blocker.get("status") in {"active", "repairing", "awaiting_recheck"}
+        ],
         "host_evidence": list(ledger.get("host_evidence", {}).values()),
         "route_nodes": [
             {
@@ -3349,6 +4009,8 @@ def _route_stage(ledger: Mapping[str, Any]) -> str:
         return "route_planning"
     if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
         return "high_standard_preplanning"
+    if _active_semantic_blockers(ledger):
+        return "semantic_repair"
     if recursive_route_required(ledger):
         frontier = ledger.get("execution_frontier") or {}
         if not ledger.get("route_nodes"):

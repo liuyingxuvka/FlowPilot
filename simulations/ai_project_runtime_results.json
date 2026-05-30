@@ -72,7 +72,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T21:00:47.901262+00:00",
+        "created_at": "2026-05-30T13:35:27.448355+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0005"
@@ -104,7 +104,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-05-29T21:00:47.902261+00:00",
+        "created_at": "2026-05-30T13:35:27.448355+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -156,6 +156,7 @@
       },
       "details": {
         "blockers": [
+          "quarantined_packet",
           "stale_route_version"
         ]
       },
@@ -292,7 +293,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-29T21:00:47.905261+00:00",
+        "created_at": "2026-05-30T13:35:27.450335+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -307,6 +308,8 @@
             "packet_id": "packet-0001",
             "packet_kind": "task",
             "responsibility": "worker",
+            "route_node_id": "",
+            "route_scope": "",
             "route_version": 1,
             "sealed_body_hidden": true,
             "status": "accepted",
@@ -315,11 +318,13 @@
           },
           {
             "accepted_result_id": "result-0002",
-            "body_hash": "dc4d2c5afb0099942e881d8ce720adb69ce54fbab616e52e964edbe73b67b701",
+            "body_hash": "e7ece1f4ea1449f5f43a01855db5403477f3cb899adbad5dce99777af0e01203",
             "objective": "Run FlowGuard evidence for packet-0001",
             "packet_id": "packet-0002",
             "packet_kind": "flowguard_check",
             "responsibility": "flowguard_operator",
+            "route_node_id": "",
+            "route_scope": "",
             "route_version": 1,
             "sealed_body_hidden": true,
             "status": "accepted",
@@ -333,6 +338,8 @@
             "packet_id": "packet-0003",
             "packet_kind": "review",
             "responsibility": "reviewer",
+            "route_node_id": "",
+            "route_scope": "",
             "route_version": 1,
             "sealed_body_hidden": true,
             "status": "accepted",
@@ -346,6 +353,8 @@
             "packet_id": "packet-0004",
             "packet_kind": "validation",
             "responsibility": "validator",
+            "route_node_id": "",
+            "route_scope": "",
             "route_version": 1,
             "sealed_body_hidden": true,
             "status": "accepted",
@@ -359,6 +368,8 @@
             "packet_id": "packet-0005",
             "packet_kind": "closure",
             "responsibility": "closure_officer",
+            "route_node_id": "",
+            "route_scope": "",
             "route_version": 1,
             "sealed_body_hidden": true,
             "status": "accepted",
