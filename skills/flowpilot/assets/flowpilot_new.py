@@ -132,9 +132,10 @@ def _run_until_wait_and_save(
     *,
     guard_trigger: str,
     max_steps: int = runtime.RUN_UNTIL_WAIT_MAX_STEPS,
+    resume_source: str = "",
 ) -> dict[str, Any]:
     folded = runtime.run_until_wait(ledger, max_steps=max_steps)
-    run_shell.save_run_ledger(shell, ledger, guard_trigger=guard_trigger)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger=guard_trigger, resume_source=resume_source)
     return folded
 
 
@@ -308,7 +309,7 @@ def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
     ledger = run_shell.load_run_ledger(shell)
     runtime.record_resume_request(ledger, reason)
     runtime.reconcile_resume_request(ledger, resume_source=reason)
-    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="resume")
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="resume", resume_source=reason)
     return {
         "ok": True,
         "run": shell.to_json(),

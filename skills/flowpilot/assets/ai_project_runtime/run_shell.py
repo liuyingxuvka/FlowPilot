@@ -123,11 +123,18 @@ def load_run_shell(root: Path, *, run_id: str | None = None) -> RunShell:
     )
 
 
-def save_run_ledger(shell: RunShell, ledger: dict[str, Any], *, guard_trigger: str = "save") -> None:
+def save_run_ledger(
+    shell: RunShell,
+    ledger: dict[str, Any],
+    *,
+    guard_trigger: str = "save",
+    resume_source: str = "",
+) -> None:
     record_guard_progress = guard_trigger != "save"
     runtime.refresh_lifecycle_guard(
         ledger,
         trigger=guard_trigger,
+        resume_source=resume_source,
         record_history=record_guard_progress,
         record_event=record_guard_progress,
     )

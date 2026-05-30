@@ -21375,3 +21375,29 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Use `run-until-wait` as the foreground controller duty step whenever the controller asks the black box for the next action.
 - Keep external role waits on the 60-second patrol cadence and internal router mechanics on the fast fold path.
 - Archive the OpenSpec change only after review/approval of this behavior contract.
+
+## persist-new-flowpilot-resume-source-duty-20260530 - Resume source persistence follow-up
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Completion audit found a small uncommitted FlowPilot source change after the control-plane duty commit. Because the installed skill must match current source and the local git version must be synced, this needed validation and a scoped follow-up commit.
+- Status: implemented_validated_committed
+- Recorded: 2026-05-30T14:50:31Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_lifecycle_guard_model.py`
+- `simulations/run_flowpilot_lifecycle_guard_checks.py`
+- `simulations/flowpilot_lifecycle_guard_results.json`
+
+### Commands
+- `python -m pytest tests/test_flowpilot_lifecycle_guard.py tests/test_flowpilot_new_entrypoint.py -q` - ok; 23 tests passed.
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py` - ok; 465 FlowGuard traces, model-test alignment passed.
+
+### Findings
+- `save_run_ledger` now accepts `resume_source` and passes it into `refresh_lifecycle_guard`.
+- `flowpilot_new.resume` now passes the manual resume reason through `_run_until_wait_and_save`, preserving the reason after folding to the next foreground boundary.
+- Existing lifecycle tests cover manual resume rehydration and assert `resume_source` is preserved.
+
+### Skipped Steps
+- No broad release claim was made from this small follow-up alone; it relies on the already completed control-plane duty release evidence plus the focused lifecycle evidence here.
