@@ -242,7 +242,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertIn("pm_writes_route_draft", action["allowed_external_events"])
-    def test_background_agents_allow_requires_six_fresh_live_agent_records(self) -> None:
+    def test_host_role_mode_requires_fresh_role_binding_records(self) -> None:
         def scheduled_role_slots_action() -> tuple[Path, Path, dict, dict]:
             root = self.make_project()
             router.run_until_wait(root, new_invocation=True)
@@ -261,7 +261,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assert_controller_receipt_action_projection(action)
         self.assertTrue(action["requires_host_spawn"])
         self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
-        self.assertEqual(action["spawn_policy"], "spawn_all_six_fresh_current_task_agents_before_controller_receipt")
+        self.assertEqual(action["spawn_policy"], "open_runtime_required_role_bindings_before_controller_receipt")
         self.assert_payload_contract_mentions(
             action["payload_contract"],
             "role_agents[].role_key",
@@ -271,7 +271,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "role_agents[].spawned_for_run_id",
             "role_agents[].spawned_after_startup_answers",
             "role_agents[].host_spawn_receipt.source_kind",
-            "exactly one non-duplicate role agent record",
+            "exactly one non-duplicate role-binding record",
         )
         self.assertEqual(action["background_role_agent_model_policy"]["model_policy"], "strongest_available")
         self.assertEqual(
@@ -314,7 +314,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             payload["role_agents"] = payload["role_agents"][:-1]
             return payload
 
-        assert_role_slots_receipt_blocked(missing_role_payload, "missing live role agent records")
+        assert_role_slots_receipt_blocked(missing_role_payload, "missing live role-binding records")
 
         def stale_run_payload(blocked_root: Path) -> dict:
             payload = self.role_agent_payload(blocked_root)

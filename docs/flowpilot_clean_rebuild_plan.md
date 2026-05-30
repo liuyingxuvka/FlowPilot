@@ -26,7 +26,7 @@ user request explicitly asks for it.
    and workers communicate through packet envelopes and result envelopes rather
    than broad prompt context.
 7. Use FlowGuard before behavior-bearing protocol changes. Large simulations
-   and regressions should run in background agents when available.
+   and regressions should run through host-supported helper contexts when available.
 
 ## Work Items
 
@@ -99,7 +99,7 @@ user request explicitly asks for it.
 
 9. Run verification.
    - Fast checks in the main thread: compile, unit tests, install self-check.
-   - Heavy checks in background agents: meta model, capability model, expanded
+   - Heavy checks in host-supported helper contexts: meta model, capability model, expanded
      resume/prompt/packet models.
    - Main thread integrates failures and reruns the narrow failed checks.
 
@@ -129,7 +129,7 @@ Foreground checks passed:
 - `python scripts\check_install.py`
 
 Heavy meta, capability, prompt-isolation, resume, router-loop, and broad unit
-regressions passed through background agents:
+regressions passed through host-supported helper contexts:
 
 - broad unit regression: 58 tests
 - prompt isolation: 349 states, 348 edges, 54 hazards detected

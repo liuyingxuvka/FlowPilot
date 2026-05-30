@@ -38,7 +38,8 @@ class State:
     terminal_controller_stop_allowed: bool = False
     old_router_authority: bool = False
     monitor_ui_required: bool = False
-    fixed_six_required: bool = False
+    historical_role_topology_required: bool = False
+    active_prompt_historical_role_topology_residue: bool = False
     chat_body_leaked: bool = False
     headless_result_treated_as_formal: bool = False
     ack_only_completed: bool = False
@@ -228,8 +229,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("old flowpilot_router authority was used by the new system")
     if state.monitor_ui_required:
         failures.append("non-startup monitoring UI was required")
-    if state.fixed_six_required:
-        failures.append("fixed six agents were required instead of dynamic leases")
+    if state.historical_role_topology_required:
+        failures.append("historical role topology was required instead of runtime-requested role bindings")
+    if state.active_prompt_historical_role_topology_residue:
+        failures.append("active prompt carried historical role topology wording as runtime authority")
     if state.chat_body_leaked:
         failures.append("sealed startup body leaked into chat/status")
     if state.headless_result_treated_as_formal:
@@ -276,7 +279,11 @@ def hazard_states() -> dict[str, State]:
     return {
         "old_router_authority": replace(target_state(), old_router_authority=True),
         "monitor_ui_required": replace(target_state(), monitor_ui_required=True),
-        "fixed_six_required": replace(target_state(), fixed_six_required=True),
+        "historical_role_topology_required": replace(target_state(), historical_role_topology_required=True),
+        "active_prompt_historical_role_topology_residue": replace(
+            target_state(),
+            active_prompt_historical_role_topology_residue=True,
+        ),
         "chat_body_leak": replace(target_state(), chat_body_leaked=True),
         "headless_formal_overclaim": replace(target_state(), headless_result_treated_as_formal=True),
         "ack_only_completion": replace(target_state(), ack_only_completed=True),

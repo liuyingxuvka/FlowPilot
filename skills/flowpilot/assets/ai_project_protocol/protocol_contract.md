@@ -22,9 +22,10 @@ The system has stable responsibilities, not fixed permanent people:
 - Reviewer: independently checks a result packet.
 - FlowGuard operator: models the risk and reports executable evidence.
 
-Any of these responsibilities may be served by a newly leased background agent.
-An agent lease can be closed, replaced, retried, or superseded. The protocol
-must not require a fixed number of always-alive agents.
+Any of these responsibilities may be served by a newly leased host-supported
+role binding. A binding can be closed, replaced, retried, or superseded. The
+protocol must not require always-alive role bindings before the runtime asks
+for the responsibility.
 
 ## Black-Box Ledger
 
@@ -44,23 +45,23 @@ only their own packet body and approved references. Reviewers get the submitted
 result, claimed evidence, and review criteria. This separation is the prompt
 isolation boundary.
 
-## Dynamic Agent Lease Contract
+## Runtime Role Binding Contract
 
-ACK means the agent is alive. ACK does not mean the work is done.
+ACK means the role binding is reachable. ACK does not mean the work is done.
 
-Progress means the agent may still be working. Progress does not mean the work
-is done.
+Progress means the role binding may still be working. Progress does not mean
+the work is done.
 
 Completion requires all of these:
 
-- the lease is active when the result is submitted;
+- the binding is active when the result is submitted;
 - the result packet matches the task packet and route version;
 - the result packet has a valid envelope and body;
 - claimed evidence is fresh for the current route/source state;
 - an independent reviewer accepts the result;
 - required FlowGuard checks pass or explicitly scope a remaining gap.
 
-Output from a closed, expired, or superseded lease is not authoritative.
+Output from a closed, expired, or superseded binding is not authoritative.
 
 ## Packet Isolation
 

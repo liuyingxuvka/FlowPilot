@@ -59,9 +59,9 @@ def _role_spawn_action_extra(router: ModuleType, state: dict[str, Any]) -> dict[
     _bind_router(router)
     answers = state.get('startup_answers') if isinstance(state.get('startup_answers'), dict) else {}
     mode = answers.get('background_agents')
-    extra: dict[str, Any] = {'background_agents_mode': mode, 'role_keys': list(CREW_ROLE_KEYS), 'background_role_agent_model_policy': {'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['startup_live_role_spawn', 'heartbeat_resume_rehydration', 'manual_resume_rehydration', 'missing_role_replacement']}}
+    extra: dict[str, Any] = {'background_agents_mode': mode, 'role_keys': list(CREW_ROLE_KEYS), 'background_role_agent_model_policy': {'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['startup_live_role_binding', 'heartbeat_resume_rehydration', 'manual_resume_rehydration', 'missing_role_replacement']}}
     if mode == 'allow':
-        extra.update({'requires_payload': 'role_agents', 'requires_host_spawn': True, 'spawn_policy': 'spawn_all_six_fresh_current_task_agents_before_controller_receipt', 'payload_contract': _role_slots_payload_contract(), 'role_spawn_request': [{'role_key': role, 'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'spawn_result': ROLE_AGENT_SPAWN_RESULT, 'spawned_for_run_id': state.get('run_id'), 'spawned_after_startup_answers': True} for role in CREW_ROLE_KEYS]})
+        extra.update({'requires_payload': 'role_agents', 'requires_host_spawn': True, 'spawn_policy': 'open_runtime_required_role_bindings_before_controller_receipt', 'payload_contract': _role_slots_payload_contract(), 'role_spawn_request': [{'role_key': role, 'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': BACKGROUND_ROLE_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'spawn_result': ROLE_AGENT_SPAWN_RESULT, 'spawned_for_run_id': state.get('run_id'), 'spawned_after_startup_answers': True} for role in CREW_ROLE_KEYS]})
     elif mode == 'single-agent':
         extra.update({'requires_host_spawn': False, 'single_agent_continuity_authorized': True})
     return extra
@@ -83,16 +83,16 @@ def _normalize_role_agent_records(router: ModuleType, state: dict[str, Any], pay
     else:
         raise RouterError('start_role_slots requires payload.role_agents list or object')
     if payload.get('background_agents_capability_status') != 'available':
-        raise RouterError('live background roles require background_agents_capability_status=available')
+        raise RouterError('live role bindings require background_agents_capability_status=available')
     records_by_role: dict[str, dict[str, Any]] = {}
     for raw in iterable:
         if not isinstance(raw, dict):
-            raise RouterError('each role agent record must be an object')
+            raise RouterError('each role-binding record must be an object')
         role = raw.get('role_key')
         if role not in CREW_ROLE_KEYS:
-            raise RouterError(f'role agent record has unsupported role_key: {role!r}')
+            raise RouterError(f'role-binding record has unsupported role_key: {role!r}')
         if role in records_by_role:
-            raise RouterError(f'duplicate role agent record for {role}')
+            raise RouterError(f'duplicate role-binding record for {role}')
         agent_id = raw.get('agent_id')
         if not isinstance(agent_id, str) or not agent_id.strip():
             raise RouterError(f'{role} requires a non-empty current agent_id')
@@ -121,7 +121,7 @@ def _normalize_role_agent_records(router: ModuleType, state: dict[str, Any], pay
         records_by_role[str(role)] = {'role_key': str(role), 'status': 'live_agent_started', 'agent_id': agent_id.strip(), 'model_policy': BACKGROUND_ROLE_MODEL_POLICY, 'reasoning_effort_policy': BACKGROUND_ROLE_REASONING_EFFORT_POLICY, 'spawn_result': ROLE_AGENT_SPAWN_RESULT, 'spawned_for_run_id': run_id, 'spawned_after_startup_answers': True, 'crew_generation': 1, 'role_binding_epoch': 1, **({'host_spawn_receipt': host_spawn_receipt} if isinstance(host_spawn_receipt, dict) else {}), 'recorded_at': utc_now()}
     missing = [role for role in CREW_ROLE_KEYS if role not in records_by_role]
     if missing:
-        raise RouterError(f"missing live role agent records: {', '.join(missing)}")
+        raise RouterError(f"missing live role-binding records: {', '.join(missing)}")
     return [records_by_role[role] for role in CREW_ROLE_KEYS]
 
 def _latest_resume_tick_id(router: ModuleType, run_state: dict[str, Any]) -> str:

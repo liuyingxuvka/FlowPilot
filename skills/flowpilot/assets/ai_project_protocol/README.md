@@ -7,8 +7,9 @@ state and compatibility routes.
 The kernel answers one question:
 
 How can a project be split into isolated AI work packets, routed through
-dynamic background agents, reviewed independently, checked with FlowGuard, and
-closed only when fresh evidence connects the user goal to the delivered result?
+host-supported role bindings, reviewed independently, checked with FlowGuard,
+and closed only when fresh evidence connects the user goal to the delivered
+result?
 
 ## Files
 
@@ -26,5 +27,5 @@ The old FlowPilot source is backed up under
 `backups/ai-project-protocol-legacy-snapshot-20260529/`. Old startup visuals,
 icons, and known failure cases may be reused as references.
 
-Old runtime state, old route compatibility logic, old fixed-role counts, and
-old validation evidence are not source of truth for this protocol.
+Old runtime state, old route compatibility logic, historical role topologies,
+and old validation evidence are not source of truth for this protocol.

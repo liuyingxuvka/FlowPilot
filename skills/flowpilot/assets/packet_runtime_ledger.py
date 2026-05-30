@@ -99,7 +99,7 @@ def _empty_packet_ledger(project_root: Path, run_id: str, run_root: Path) -> dic
             "router_direct_dispatch_required_before_worker": True,
             "reviewer_dispatch_required_before_worker": False,
             "role_reminder_required_in_controller_messages": True,
-            "role_echo_required_in_subagent_responses": True,
+            "role_echo_required_in_role_binding_responses": True,
             "role_output_body_must_be_file_backed": True,
             "role_chat_response_must_be_envelope_only": True,
             "role_chat_body_content_contaminates_mail": True,

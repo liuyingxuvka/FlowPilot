@@ -3,7 +3,7 @@
 This directory contains the clean black-box runtime for the AI project
 protocol. It is additive: the legacy FlowPilot router remains available as
 reference material, but this runtime does not use old `.flowpilot` state,
-fixed-role startup, or stale result artifacts as authority.
+historical role topology, or stale result artifacts as authority.
 
 ## Shape
 
@@ -44,6 +44,6 @@ fixed-role startup, or stale result artifacts as authority.
 Allowed reference material: startup panel ideas, icons, envelope field names,
 install scripts, and historical failure cases.
 
-Forbidden authority: old runtime state, fixed six-agent topology, old chat
+Forbidden authority: old runtime state, historical role topology, old chat
 memory, stale validation artifacts, or compatibility paths that bypass the new
 ledger.

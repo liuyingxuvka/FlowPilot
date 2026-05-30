@@ -7,10 +7,10 @@ branches, heartbeat behavior, and any task-local behavior models.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask native startup intake options: background-agent permission,
+2. Ask native startup intake options: role-agent permission,
    scheduled-continuation permission, and whether to open Cockpit UI. End the assistant response immediately
    after these questions. Do not inspect files, start tools, create route state,
-   launch subagents, probe heartbeat, or show the banner in the same response.
+   open role bindings, probe heartbeat, or show the banner in the same response.
    FlowPilot remains in `startup_pending_user_answers` until the user's later
    reply supplies all three answers. Do not ask the user to choose a mode.
 3. Record the explicit answer set in state/frontier startup activation
@@ -34,21 +34,16 @@ branches, heartbeat behavior, and any task-local behavior models.
    round, draft the intended floor, seed the improvement candidate pool, seed
    the initial validation direction, and surface product-function questions.
    Do not freeze the contract yet.
-8. Create the fixed six-agent crew for the new formal FlowPilot task and write
-   `.flowpilot/runs/<run-id>/crew_ledger.json` plus one compact role memory
-   packet under `.flowpilot/runs/<run-id>/crew_memory/` for project manager,
-   human-like reviewer, process
-   FlowGuard officer, product FlowGuard officer, worker A, and worker B.
-   Resolve the live-subagent startup gate at the same time. The default target
-   is six live background agents freshly spawned for this task after the
-   startup answers and current route allocation. Prior-route or earlier-task
-   `agent_id` values are audit history only and must not be resumed or counted
-   as current live-agent evidence. If authorization is missing, pause and ask.
-   If the user asked for live background agents but the host/tool appears
-   unable to provide them, treat that as an unproven capability failure until
-   the human-like reviewer directly probes the host/tool state and writes the
-   finding for PM. Only the PM may record single-agent six-role continuity as
-   a capability fallback, and worker/front-executor claims are pointers only.
+8. Initialize the current-run role ledger and compact role memory area for
+   runtime-requested responsibilities. A role becomes active only when the
+   runtime asks for that responsibility and the host returns an addressable
+   current-run binding. Prior-route or earlier-task `agent_id` values are audit
+   history only and must not be resumed or counted as current role-binding
+   evidence. If authorization is missing, pause and ask. If the host/tool
+   cannot provide a requested role binding, treat that as an unproven
+   capability failure until the human-like reviewer directly probes the
+   host/tool state and writes the finding for PM. Only the PM may record an
+   explicit fallback, and worker/front-executor claims are pointers only.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
@@ -138,8 +133,9 @@ branches, heartbeat behavior, and any task-local behavior models.
     carrying route-specific next-jump instructions in its prompt. On every
     heartbeat or manual mid-run wakeup it first records
     `heartbeat_or_manual_resume_requested` to the router, restores the visible
-    plan from the current run, checks the packet-ledger holder and all six role
-    agents, resumes or replaces each role from memory, then asks the project
+    plan from the current run, checks the packet-ledger holder and the
+    runtime-required role bindings, resumes or replaces required bindings from
+    memory, then asks the project
     manager for a completion-oriented runway from the current position to
     project completion. A `wait_agent` timeout is `timeout_unknown`, not active.
 26. If the user selected manual resume, record `manual-resume` mode and do not
@@ -202,11 +198,11 @@ branches, heartbeat behavior, and any task-local behavior models.
     `work_beyond_startup_allowed: true`.
 
     The human-like reviewer report must verify matching active route,
-    canonical current-run state, execution frontier, current six-role crew
-    ledger, current role memory, `.flowpilot/current.json`,
+    canonical current-run state, execution frontier, current role ledger,
+    current role memory, `.flowpilot/current.json`,
     `.flowpilot/index.json`, the run manifest, prior-work import packet when
     continuing, the three explicit startup answers, stop-and-wait evidence,
-    banner-after-answers evidence, live-subagent startup freshness,
+    banner-after-answers evidence, role-binding freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
     retired-only, or quarantined and is not being used as current state. It
@@ -216,16 +212,15 @@ branches, heartbeat behavior, and any task-local behavior models.
     allowed, manual-resume evidence when manual continuation is selected or
     reviewer-verified scheduler unavailability is PM-downgraded,
     residual route state, and shadow-route evidence. It must bind the
-    background-agent answer to actual
-    subagent state: if the user allowed background agents, verify six live
-    role-bearing subagents were freshly spawned for this FlowPilot task after
-    that user decision and after current route allocation, and verify none of
-    their `agent_id` values comes from prior route ledgers or older role-memory
-    packets. If live agents are unavailable or damaged, the reviewer must
+    role-agent answer to actual role-binding state: if the user allowed role
+    agents, verify each runtime-required binding was opened for this FlowPilot
+    task after that user decision and after current route allocation, and
+    verify none of its `agent_id` values comes from prior route ledgers or
+    older role-memory packets. If role bindings are unavailable or damaged, the reviewer must
     directly probe and say so; PM may then record single-agent continuity as a
     capability fallback without treating the worker's failed-start report as
     proof. If the user chose single-agent continuity, verify the explicit
-    fallback authorization and do not claim live subagents.
+    fallback authorization and do not claim live role bindings.
 
     It must bind the scheduled-continuation answer to actual automation state:
     if heartbeat is used, verify the concrete automation id, cadence, status,
@@ -251,7 +246,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     Work beyond startup is illegal until the PM records
     `work_beyond_startup_allowed: true` from the clean factual report. If the
     three answers are incomplete, the prompt did not stop for the user's reply,
-    answers are inconsistent with subagent/continuation evidence, or required
+    answers are inconsistent with role-binding/continuation evidence, or required
     cleanup evidence is missing, route the issue back through PM and workers. A
     route-local file without matching canonical state/frontier/crew/continuation
     evidence is a shadow route and must be quarantined or superseded before
@@ -284,7 +279,7 @@ Use FlowPilot. Ask the startup intake options first.
 ```
 
 FlowPilot invocation only opens the three-question startup prompt. It is not
-authorization for background agents, fallback execution,
+authorization for role agents, fallback execution,
 scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
@@ -572,8 +567,8 @@ route, or advances the active node.
 
 ## Actor Authority
 
-FlowPilot's six-agent crew is an authority system, not a decorative report
-list. Every formal gate records who may draft it, who executes it, who must
+FlowPilot's role system is an authority system, not a decorative report list.
+Every formal gate records who may draft it, who executes it, who must
 approve it, and who is forbidden to approve it. The controller is the packet
 flow coordinator only: it can load state, relay PM packets, relay reviewer
 decisions, relay worker results, sync the visible plan from PM decisions,
@@ -778,11 +773,11 @@ startup reports must separately cover any listed
 router proof only for envelope/hash mechanics, not for result quality or
 acceptance judgement.
 
-The six agents are persistent roles, and the default startup target is six
-live background agents. Live subagent continuity still depends on host and tool
-support, so FlowPilot must not treat missing live agents as an invisible
-downgrade. It pauses for a user decision, records either live startup evidence
-or explicit single-agent role-continuity authorization, and only then proceeds.
+Runtime-required roles need current-run addressable bindings before their work
+can proceed. Live role continuity still depends on host and tool support, so
+FlowPilot must not treat missing role bindings as an invisible downgrade. It
+pauses for a user decision, records either live binding evidence or explicit
+fallback authorization, and only then proceeds.
 The authoritative recovery state is `.flowpilot/runs/<run-id>/crew_ledger.json`
 plus compact role memory packets under `.flowpilot/runs/<run-id>/crew_memory/`.
 Each role memory packet
@@ -804,7 +799,7 @@ used as the authority key.
 
 FlowPilot no longer has run modes. `Use FlowPilot`, an existing `.flowpilot/`
 directory, host inability to pause, prior route state, or a generic request to
-continue cannot authorize background agents, scheduled jobs, fallback
+continue cannot authorize role agents, scheduled jobs, fallback
 execution, or display-surface choices.
 
 Removing modes does not lower hard gates or quality tier. Every formal
@@ -991,10 +986,9 @@ declared verification, node evidence, and continuation/checkpoint evidence are
 written.
 
 On heartbeat or manual resume, "continue later" is not progress. FlowPilot
-first restores all six role identities and work memory from
-`crew_ledger.json` and every role memory packet, then writes a crew
-rehydration report covering project manager, reviewer, process FlowGuard
-officer, product FlowGuard officer, worker A, and worker B. It must not lazily
+first restores the runtime-required role identities and work memory from
+`crew_ledger.json` and current role memory packets, then writes a role
+rehydration report for the bindings required by the current ledger. It must not lazily
 rehydrate a role only when that role is first needed. FlowPilot asks the
 project manager for a completion-oriented runway only after the crew memory
 rehydration gate passes. It syncs that runway into the visible plan, then loads
@@ -1682,7 +1676,7 @@ Completion requires:
 - route checked;
 - current summaries synced;
 - required capability evidence present;
-- subagent work merged;
+- role-agent work merged;
 - final verification passed;
 - anti-rough-finish review passed;
 - every completed node has product-function model evidence, human-like

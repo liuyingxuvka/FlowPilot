@@ -104,7 +104,7 @@ def run_checks(result: dict[str, object]) -> None:
                 "native startup intake UI",
                 "There is no requirement for a non-startup monitoring UI",
                 ".flowpilot/runs/<run-id>/ledger.json` is authority",
-                "Do not require a fixed six-agent startup",
+                "create or attach only the requested responsibility through an available host-supported role mechanism",
             )
         )
         result["checks"].append(

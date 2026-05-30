@@ -18,8 +18,8 @@ follow the router's resume or role-recovery actions. Do not classify the old
 work chain as alive from `crew_ledger`, route state, chat history, or a
 remembered "awaiting role" note.
 
-If any background role is missing, cancelled, unknown, timed out, or no longer
-addressable while the run is active, record
+If any runtime-required role binding is missing, cancelled, unknown, timed out,
+or no longer addressable while the run is active, record
 `controller_reports_role_liveness_fault` immediately. Do not wait for other
 route work, packet waits, gates, or control blockers first; those waits may
 depend on the missing role.
@@ -71,23 +71,23 @@ current run `display_plan.json`. If it is missing, show only the waiting-for-PM
 placeholder provided by the router; do not restore a previous ordinary Codex
 plan from chat history.
 
-Before declaring any background role alive, perform the router-requested
-six-role liveness preflight. Check the currently awaited role from the packet
-ledger and all six standard roles. A bounded `wait_agent` timeout is
-`timeout_unknown`, not active. Missing, cancelled, unknown, or timeout-unknown
-roles must be restored or replaced from current-run memory before PM resume
+Before declaring a role binding alive, perform the router-requested liveness
+preflight for the currently awaited role and any other roles required by the
+current runtime ledger. A bounded `wait_agent` timeout is `timeout_unknown`,
+not active. Missing, cancelled, unknown, or timeout-unknown role bindings must
+be restored, replaced, or blocked from current-run memory before PM resume
 decision.
 
 For mid-run role recovery, follow the same ladder in order: restore the old
-agent first, then targeted replacement, then slot reconciliation, then full
-six-role recycle, then environment/user block if full recycle fails. After any
-replacement or recycle, quarantine late output from superseded agent ids and
-reconcile any packet ownership before PM is asked to continue.
+binding first, then targeted replacement, then slot reconciliation, then
+environment/user block if recovery cannot produce an addressable current-run
+binding. After any replacement, quarantine late output from superseded agent
+ids and reconcile any packet ownership before PM is asked to continue.
 
 Whenever this resume path restores, rehydrates, replaces, or otherwise opens a
-live background role agent, request the strongest available host model and the
-highest available reasoning effort explicitly. Do not let resumed background
-roles inherit the foreground/Controller model by omission.
+live role binding, request the strongest available host model and the highest
+available reasoning effort explicitly. Do not let resumed roles inherit the
+foreground/Controller model by omission.
 
 After loading state, report only whether the required files and role memories
 exist and whether continuation authority is current. If anything is missing,

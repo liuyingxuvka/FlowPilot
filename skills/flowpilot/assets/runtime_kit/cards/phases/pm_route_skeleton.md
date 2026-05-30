@@ -52,7 +52,7 @@ Route requirements:
   `research_writing`, `release_delivery`, `debug_repair`, or
   `long_running_multi_role`. The profile chooses domain-specific modules, not
   a lighter FlowPilot mode. A formal FlowPilot run always keeps the full
-  protocol, six-role authority, PM-owned contracts, reviewer/officer gates,
+  protocol, runtime-requested role authority, PM-owned contracts, reviewer/officer gates,
   node acceptance, mutation invalidation, and final route-wide closure. If a
   task is too small to justify that, the correct decision is not to use
   FlowPilot for it, not to create a light/simple FlowPilot path;

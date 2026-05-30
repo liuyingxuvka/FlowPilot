@@ -20861,6 +20861,57 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## adopt-runtime-requested-role-bindings-20260530 - Runtime requested role-binding prompt cleanup
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that active FlowPilot prompts should not carry historical fixed-role traces or over-explain host mechanisms; the active rule should be to bind only the role requested by the current runtime action.
+- Status: implemented, validated, installed/synced; local git closure pending.
+- Route: predictive KB preflight, OpenSpec, FlowGuard existing-model preflight, DevelopmentProcessFlow, and model/test alignment.
+
+### Model And Runtime Files
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/flowpilot_new.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_startup_catalog.py`
+- `skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py`
+- `skills/flowpilot/assets/flowpilot_router_startup_resume_binding_actions.py`
+- `skills/flowpilot/assets/flowpilot_router_startup_role_context.py`
+- `skills/flowpilot/assets/runtime_kit/cards/`
+- `skills/flowpilot/references/`
+- `simulations/flowpilot_new_entrypoint_model.py`
+- `simulations/ai_project_runtime_development_model.py`
+- `simulations/flowpilot_complete_system_development_model.py`
+- `simulations/prompt_isolation_model_transitions.py`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- `openspec validate adopt-runtime-requested-role-bindings --strict` - ok.
+- `python simulations/run_flowpilot_new_entrypoint_checks.py` - ok; prompt-residue hazard detected.
+- `python simulations/run_ai_project_runtime_development_checks.py` - ok.
+- `python simulations/run_flowpilot_complete_system_development_checks.py` - ok.
+- `python simulations/run_prompt_isolation_checks.py` - ok.
+- `python simulations/run_flowpilot_resume_checks.py` - ok; conformance replay skipped with documented no-production-adapter reason.
+- `python simulations/run_card_instruction_coverage_checks.py` - ok.
+- `python -m unittest tests.test_flowpilot_new_entrypoint tests.test_ai_project_runtime` - ok after split rerun.
+- `python -m unittest tests.router_runtime.quality_gates.QualityGatesRuntimeTests.test_host_role_mode_requires_fresh_role_binding_records tests.router_runtime.quality_gates.QualityGatesRuntimeTests.test_single_agent_answer_records_authorized_role_continuity_without_live_agents` - ok.
+- `python simulations/run_meta_checks.py --full --json-out tmp/flowguard_background/run_meta_checks_full.out.json --proof-out tmp/flowguard_background/run_meta_checks_full.proof.json --thin-json-out tmp/flowguard_background/run_meta_checks_full.thin.json --thin-proof-out tmp/flowguard_background/run_meta_checks_full.thin.proof.json` - ok.
+- `python simulations/run_capability_checks.py --fast --json-out tmp/flowguard_background/run_capability_checks.out.json --proof-out tmp/flowguard_background/run_capability_checks.proof.json` - ok.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - ok.
+- `python scripts/check_install.py --json` - ok.
+- `python scripts/install_flowpilot.py --install-missing --sync-repo-owned --install-flowguard --json` - ok.
+- `python scripts/audit_local_install_sync.py --json` and `python scripts/install_flowpilot.py --check --json` - ok.
+
+### Findings
+- Active FlowPilot skill, runtime cards, references, protocol docs, and installable assets now use positive current-rule wording around requested role bindings and host-supported mechanisms.
+- The new-entrypoint model catches active prompt historical-topology residue as a hazard.
+- Install validation was updated so it no longer requires the old negative fixed-topology sentence.
+- The installed FlowPilot skill digest matched the repository source after sync.
+
+### Skipped Or Partial Steps
+- Full `tests.router_runtime.quality_gates` was not rerun to completion; the broad combined unittest run timed out. The directly affected quality-gate tests were rerun and passed.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
+
+
 ## harden-flowpilot-enum-prompts-and-run-evidence - Formal run prompt and evidence repair
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -21671,3 +21722,41 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - `python scripts/smoke_autopilot.py --fast` did not complete: the foreground run timed out, the background run stalled at FlowGuard 90% with no CPU/log progress, and it was recorded as `terminated_after_stall` with exit 124 under `tmp/flowguard_background/smoke_autopilot_fast.*`.
 - The coverage sweep still exits 1 because of existing boundary items: `flowpilot_final_confidence_gate`, `flowpilot_process_liveness` without an active current run root, and a missing old `flowpilot_stop_host_orphan_recovery_results.json` baseline. These were not introduced by the topology model.
 - No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-30T18:59:17+00:00
+- Ended: 2026-05-30T18:59:17+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.39.1
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.

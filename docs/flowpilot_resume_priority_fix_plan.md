@@ -4,7 +4,7 @@
 
 Heartbeat and manual resume are the control-plane reconnection gate. After a
 wakeup is recorded, FlowPilot must reload current-run state, restore the visible
-plan, rehydrate or replace the six role agents, and obtain the PM resume
+plan, rehydrate or replace the runtime-required role bindings, and obtain the PM resume
 decision before any old route work or active control blocker can proceed.
 
 ## Minimal Implementation Checklist
@@ -24,7 +24,7 @@ decision before any old route work or active control blocker can proceed.
 | Risk id | Possible new bug | Protected behavior | FlowGuard/model coverage | Runtime coverage |
 | --- | --- | --- | --- | --- |
 | R1 | A heartbeat wake sees an old active control blocker and handles it before `load_resume_state`. | Current-run state and ledgers must be loaded before any blocker work. | New hazard: `active_blocker_handled_before_resume_state_load`. | New router test expects `load_resume_state`. |
-| R2 | A blocker wait/repair path starts after state load but before six-role liveness and rehydration. | Live role freshness must be known before PM or role work resumes. | New hazard: `active_blocker_waited_before_role_rehydration`. | New router test expects `rehydrate_role_agents`. |
+| R2 | A blocker wait/repair path starts after state load but before runtime-required role liveness and rehydration. | Live role freshness must be known before PM or role work resumes. | New hazard: `active_blocker_waited_before_role_rehydration`. | New router test expects `rehydrate_role_agents`. |
 | R3 | A blocker is handled after role rehydration but before PM resume decision. | PM owns the resume runway and must decide what to do with the old blocker. | New hazard: `active_blocker_handled_before_pm_resume_decision`. | New router test expects resume system cards and PM wait before blocker. |
 | R4 | The fix hides or drops an existing active blocker permanently. | Old blockers are deferred, not cleared. | New hazard: `resume_completed_with_unhandled_active_blocker`. | New router test expects blocker handling after PM resume decision. |
 | R5 | Resume priority blocks normal blocker handling when no resume is active. | Existing control-blocker behavior must remain unchanged outside heartbeat/manual resume. | Safe graph includes no-active-resume path where blocker handling is still legal. | Existing control-blocker tests continue to pass. |

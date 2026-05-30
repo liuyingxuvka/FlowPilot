@@ -11,11 +11,12 @@
   "hazard_detection": {
     "expected": [
       "ack_only_completion",
+      "active_prompt_historical_role_topology_residue",
       "chat_body_leak",
       "fake_live_overclaim",
-      "fixed_six_required",
       "flowguard_without_run_local_evidence",
       "headless_formal_overclaim",
+      "historical_role_topology_required",
       "invented_host_kind_value",
       "missing_host_kind_menu",
       "monitor_ui_required",
@@ -30,20 +31,23 @@
       "ack_only_completion": [
         "ACK-only liveness was treated as completion"
       ],
+      "active_prompt_historical_role_topology_residue": [
+        "active prompt carried historical role topology wording as runtime authority"
+      ],
       "chat_body_leak": [
         "sealed startup body leaked into chat/status"
       ],
       "fake_live_overclaim": [
         "fake host evidence was claimed as live host confidence"
       ],
-      "fixed_six_required": [
-        "fixed six agents were required instead of dynamic leases"
-      ],
       "flowguard_without_run_local_evidence": [
         "FlowGuard ran before run-local evidence output was selected"
       ],
       "headless_formal_overclaim": [
         "headless startup result was treated as formal UI evidence"
+      ],
+      "historical_role_topology_required": [
+        "historical role topology was required instead of runtime-requested role bindings"
       ],
       "invented_host_kind_value": [
         "an unlisted host kind value was invented"
@@ -108,17 +112,18 @@
     "state": {
       "ack_only_completed": false,
       "ack_recorded": true,
+      "active_prompt_historical_role_topology_residue": false,
       "chat_body_leaked": false,
       "contract_frozen": true,
       "dynamic_agent_lease_bound": true,
       "dynamic_agent_lease_requested": true,
       "fake_host_claimed_live": false,
       "final_closure_complete": true,
-      "fixed_six_required": false,
       "flowguard_evidence_run_local": true,
       "flowguard_targeted": true,
       "formal_use_flowpilot_request": true,
       "headless_result_treated_as_formal": false,
+      "historical_role_topology_required": false,
       "host_kind_menu_missing": false,
       "host_kind_selected_from_allowed_menu": true,
       "host_kind_value_menu_presented": true,

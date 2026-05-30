@@ -68,7 +68,7 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
         raise RouterError("PM resume decision requires crew_rehydration_report before PM runway")
     rehydration_report = read_json(rehydration_path)
     if rehydration_report.get("all_six_roles_ready") is not True:
-        raise RouterError("PM resume decision requires all six roles ready")
+        raise RouterError("PM resume decision requires runtime-required role bindings ready")
     if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("background_agents_mode") != "single-agent":
         raise RouterError("PM resume decision requires project_manager memory rehydration")
     decision = str(payload.get("decision") or "continue_current_packet_loop")

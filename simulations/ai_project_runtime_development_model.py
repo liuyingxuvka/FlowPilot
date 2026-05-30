@@ -27,7 +27,7 @@ class State:
     background_regressions_inspected: bool = False
     install_synced_and_checked: bool = False
     git_committed: bool = False
-    fixed_six_role_requirement: bool = False
+    historical_role_topology_requirement: bool = False
     old_runtime_state_authoritative: bool = False
     console_exposes_sealed_body: bool = False
     release_claimed: bool = False
@@ -188,8 +188,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("git commit happened before install sync/check")
     if state.release_claimed and not state.git_committed:
         failures.append("release completion was claimed before local git closure")
-    if state.fixed_six_role_requirement:
-        failures.append("clean runtime reintroduced a fixed six-role requirement")
+    if state.historical_role_topology_requirement:
+        failures.append("clean runtime reintroduced historical role topology as a requirement")
     if state.old_runtime_state_authoritative:
         failures.append("old runtime state was used as current authority")
     if state.console_exposes_sealed_body:
@@ -222,7 +222,7 @@ def hazard_states() -> dict[str, State]:
         "install_before_background": replace(safe, background_regressions_inspected=False),
         "git_before_install": replace(safe, install_synced_and_checked=False),
         "release_before_git": replace(safe, git_committed=False),
-        "fixed_six_roles_reintroduced": replace(safe, fixed_six_role_requirement=True),
+        "historical_role_topology_reintroduced": replace(safe, historical_role_topology_requirement=True),
         "old_runtime_state_authoritative": replace(safe, old_runtime_state_authoritative=True),
         "console_leaks_sealed_body": replace(safe, console_exposes_sealed_body=True),
     }

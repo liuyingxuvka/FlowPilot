@@ -22,7 +22,7 @@ STARTUP_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'user_requests_run_sto
                                           'summary': 'A heartbeat or manual resume wakeup '
                                                      'requested router-guided re-entry.'},
  'controller_reports_role_liveness_fault': {'flag': 'role_recovery_requested',
-                                            'summary': 'Controller reported that a background role '
+                                            'summary': 'Controller reported that a role binding '
                                                        'is missing, cancelled, unknown, timed out, '
                                                        'or no longer addressable; unified role '
                                                        'recovery must preempt normal work.'},

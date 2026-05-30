@@ -27,9 +27,9 @@ DEFAULT_ACCEPTANCE_CONTRACT = (
     "backward closure."
 )
 HOST_KIND_HELP = (
-    "Allowed values: live=real Codex/multi-agent/background host, "
+    "Allowed values: live=real Codex host-supported role mechanism, "
     "fake=deterministic rehearsal wrapper, dry_run=no real agent. "
-    "Do not invent values such as codex_subagent."
+    "Do not invent values outside this menu."
 )
 
 try:  # pragma: no cover - direct script fallback.

@@ -144,7 +144,7 @@ class AIProjectRuntimeTests(unittest.TestCase):
         self.assertTrue(report["flowguard"]["ok"])
         self.assertTrue(report["target_plan"]["ok"])
         self.assertTrue(report["hazard_detection"]["ok"])
-        self.assertIn("fixed_six_roles_reintroduced", report["hazard_detection"]["hazards"])
+        self.assertIn("historical_role_topology_reintroduced", report["hazard_detection"]["hazards"])
 
     def test_flowguard_control_plane_duty_model_matches_runtime_repairs(self) -> None:
         report = control_plane_duty_runner.run_checks()

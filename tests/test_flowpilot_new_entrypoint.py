@@ -394,8 +394,10 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         )
         self.assertEqual(lease_help.returncode, 0, lease_help.stderr)
         self.assertIn("{live,fake,dry_run}", lease_help.stdout)
-        self.assertIn("live=real Codex", lease_help.stdout)
-        self.assertIn("codex_subagent", lease_help.stdout)
+        self.assertIn("live=real Codex host-supported role", lease_help.stdout)
+        self.assertIn("mechanism", lease_help.stdout)
+        self.assertIn("Do not invent values outside", lease_help.stdout)
+        self.assertIn("this menu", lease_help.stdout)
 
         rejected = subprocess.run(
             [sys.executable, str(ASSETS / "flowpilot_new.py"), "--root", str(Path.cwd()), "complete-flowguard"],
@@ -485,6 +487,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertIn("headless_formal_overclaim", result["hazard_detection"]["hazards"])
         self.assertIn("missing_host_kind_menu", result["hazard_detection"]["hazards"])
         self.assertIn("invented_host_kind_value", result["hazard_detection"]["hazards"])
+        self.assertIn("active_prompt_historical_role_topology_residue", result["hazard_detection"]["hazards"])
         self.assertIn("tracked_baseline_flowguard_evidence", result["hazard_detection"]["hazards"])
         self.assertIn("nonterminal_stop_allowed", result["hazard_detection"]["hazards"])
         self.assertIn("terminal_without_lifecycle_guard", result["hazard_detection"]["hazards"])

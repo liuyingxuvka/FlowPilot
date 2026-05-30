@@ -67,9 +67,9 @@ Required checks:
   present and current;
 - `.flowpilot/current.json` points to the current run root;
 - `.flowpilot/index.json` includes the current run id;
-- the router-dispatched FlowPilot role slots are fresh for this run or have
+- the router-dispatched FlowPilot role bindings are fresh for this run or have
   explicit same-task rehydration/fallback evidence;
-- live background role records, when background agents are allowed, show the
+- role binding records, when host-supported role mechanisms are used, show the
   strongest-available model policy and highest-available reasoning-effort
   policy rather than foreground/Controller model inheritance;
 - continuation mode is recorded from the user's startup answer and matched to

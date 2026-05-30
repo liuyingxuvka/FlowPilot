@@ -24,7 +24,7 @@ PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
 STARTUP_QUESTIONS = (
     {
         "id": "background_agents",
-        "question": "Allow the standard six live background roles, or use single-agent six-role continuity?",
+        "question": "Allow live role bindings through available host mechanisms when the runtime requests them, or use single-controller continuity?",
     },
     {
         "id": "scheduled_continuation",
@@ -136,8 +136,8 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
     {
         "action_type": "start_role_slots",
         "flag": "roles_started",
-        "label": "six_roles_started_from_user_answer",
-        "summary": "Start the six current-task roles and record same-action role core prompt delivery according to the user's background-agent answer.",
+        "label": "runtime_role_bindings_recorded_from_user_answer",
+        "summary": "Record the startup role-binding mode and same-action role core prompt delivery according to the user's host-mechanism answer.",
         "actor": "bootloader",
     },
     {

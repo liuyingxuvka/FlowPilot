@@ -16,8 +16,8 @@
       "code_before_models",
       "completion_before_git",
       "fake_only_live_claim",
-      "fixed_six_roles_authoritative",
       "flowguard_orders_before_host",
+      "historical_role_topology_authoritative",
       "history_before_routine",
       "host_before_router",
       "install_before_live_boundary",
@@ -45,11 +45,11 @@
       "fake_only_live_claim": [
         "fake-agent evidence was claimed as live-host confidence"
       ],
-      "fixed_six_roles_authoritative": [
-        "fixed six roles were reintroduced as runtime authority"
-      ],
       "flowguard_orders_before_host": [
         "FlowGuard work orders implemented before dynamic host boundary"
+      ],
+      "historical_role_topology_authoritative": [
+        "historical role topology was reintroduced as runtime authority"
       ],
       "history_before_routine": [
         "historical replay passed before routine checks"

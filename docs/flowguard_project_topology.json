@@ -113,7 +113,7 @@
     "other": {
       "alignment_family_count": 4,
       "code_surface_count": 226,
-      "known_bad_count": 1149,
+      "known_bad_count": 1150,
       "model_count": 72,
       "runner_keys": [
         "ai_project_protocol",
@@ -12490,13 +12490,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780166019.3260329,
+  "generated_at_epoch": 1780169060.6088674,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 10,
     "code_surfaces": 922,
     "evidence_summaries": 5,
-    "known_bad_signals": 2277,
+    "known_bad_signals": 2278,
     "models": 132,
     "test_commands": 350
   },
@@ -12816,8 +12816,8 @@
           "checks_before_tests",
           "code_before_openspec",
           "console_leaks_sealed_body",
-          "fixed_six_roles_reintroduced",
           "git_before_install",
+          "historical_role_topology_reintroduced",
           "install_before_background",
           "old_runtime_state_authoritative",
           "release_before_git",
@@ -13121,8 +13121,8 @@
           "code_before_models",
           "completion_before_git",
           "fake_only_live_claim",
-          "fixed_six_roles_authoritative",
           "flowguard_orders_before_host",
+          "historical_role_topology_authoritative",
           "history_before_routine",
           "host_before_router",
           "install_before_live_boundary",
@@ -15036,11 +15036,12 @@
           "hazards",
           "ok",
           "ack_only_completion",
+          "active_prompt_historical_role_topology_residue",
           "chat_body_leak",
           "fake_live_overclaim",
-          "fixed_six_required",
           "flowguard_without_run_local_evidence",
           "headless_formal_overclaim",
+          "historical_role_topology_required",
           "invented_host_kind_value",
           "missing_host_kind_menu",
           "monitor_ui_required",
@@ -17737,9 +17738,9 @@
   "sources": [
     {
       "exists": true,
-      "mtime_ns": 1780163199360284500,
+      "mtime_ns": 1780167557772453400,
       "path": "AGENTS.md",
-      "size": 5830
+      "size": 5863
     },
     {
       "exists": true,
@@ -17947,15 +17948,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780067930257309100,
+      "mtime_ns": 1780167651342078900,
       "path": "simulations/ai_project_runtime_development_model.py",
-      "size": 11542
+      "size": 11594
     },
     {
       "exists": true,
-      "mtime_ns": 1780148127896360100,
+      "mtime_ns": 1780168101057609100,
       "path": "simulations/ai_project_runtime_development_results.json",
-      "size": 4000
+      "size": 4031
     },
     {
       "exists": true,
@@ -18001,7 +18002,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780164260770763900,
+      "mtime_ns": 1780168997217984800,
       "path": "simulations/card_instruction_coverage_results.json",
       "size": 45546
     },
@@ -18061,15 +18062,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780071740633609600,
+      "mtime_ns": 1780167651344590800,
       "path": "simulations/flowpilot_complete_system_development_model.py",
-      "size": 17174
+      "size": 17218
     },
     {
       "exists": true,
-      "mtime_ns": 1780074118163750100,
+      "mtime_ns": 1780168101366907000,
       "path": "simulations/flowpilot_complete_system_development_results.json",
-      "size": 5535
+      "size": 5561
     },
     {
       "exists": true,
@@ -18685,15 +18686,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780126330176111500,
+      "mtime_ns": 1780167651339038700,
       "path": "simulations/flowpilot_new_entrypoint_model.py",
-      "size": 15532
+      "size": 16016
     },
     {
       "exists": true,
-      "mtime_ns": 1780160845360287900,
+      "mtime_ns": 1780168101194453900,
       "path": "simulations/flowpilot_new_entrypoint_results.json",
-      "size": 5927
+      "size": 6273
     },
     {
       "exists": true,
@@ -18979,7 +18980,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779954285021288900,
+      "mtime_ns": 1780168999330553700,
       "path": "simulations/flowpilot_resume_results.json",
       "size": 364528
     },
@@ -19465,9 +19466,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780164264530112600,
+      "mtime_ns": 1780168101693907500,
       "path": "simulations/prompt_isolation_results.json",
-      "size": 759170
+      "size": 759183
     },
     {
       "exists": true,
@@ -20257,9 +20258,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780009653452706900,
+      "mtime_ns": 1780168011918706800,
       "path": "simulations/run_prompt_isolation_checks.py",
-      "size": 12814
+      "size": 12826
     },
     {
       "exists": true,
@@ -20329,9 +20330,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780164985629943300,
+      "mtime_ns": 1780167095671790200,
       "path": "skills/flowpilot/SKILL.md",
-      "size": 11363
+      "size": 11380
     },
     {
       "exists": true,
@@ -20425,9 +20426,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780158898583420900,
+      "mtime_ns": 1780168063647405600,
       "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "size": 22202
+      "size": 22199
     },
     {
       "exists": true,
@@ -21307,9 +21308,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011901875334500,
+      "mtime_ns": 1780168751113077200,
       "path": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py",
-      "size": 14150
+      "size": 14188
     },
     {
       "exists": true,
@@ -21397,9 +21398,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011632944232900,
+      "mtime_ns": 1780168011913689600,
       "path": "skills/flowpilot/assets/flowpilot_router_protocol_external_event_data_startup.py",
-      "size": 4959
+      "size": 4951
     },
     {
       "exists": true,
@@ -21517,9 +21518,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780014637093998400,
+      "mtime_ns": 1780168011905672500,
       "path": "skills/flowpilot/assets/flowpilot_router_protocol_startup_catalog.py",
-      "size": 6760
+      "size": 6800
     },
     {
       "exists": true,
@@ -21649,9 +21650,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011756452026500,
+      "mtime_ns": 1780168035604524400,
       "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_resume.py",
-      "size": 7387
+      "size": 7404
     },
     {
       "exists": true,
@@ -21871,9 +21872,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011633256461900,
+      "mtime_ns": 1780168035606030900,
       "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_checks.py",
-      "size": 15639
+      "size": 15633
     },
     {
       "exists": true,
@@ -21931,9 +21932,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011633300460000,
+      "mtime_ns": 1780168011910175600,
       "path": "skills/flowpilot/assets/flowpilot_router_startup_resume_binding_actions.py",
-      "size": 13742
+      "size": 13743
     },
     {
       "exists": true,
@@ -21949,9 +21950,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011895005329800,
+      "mtime_ns": 1780168751112074100,
       "path": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py",
-      "size": 17863
+      "size": 17858
     },
     {
       "exists": true,
@@ -22513,9 +22514,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780011633682344400,
+      "mtime_ns": 1780168011915202700,
       "path": "skills/flowpilot/assets/packet_runtime_ledger.py",
-      "size": 8889
+      "size": 8892
     },
     {
       "exists": true,
@@ -22729,9 +22730,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780160041103998000,
+      "mtime_ns": 1780167095683350000,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_crew_rehydration_freshness.md",
-      "size": 5532
+      "size": 5540
     },
     {
       "exists": true,
@@ -22879,9 +22880,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780163261482531200,
+      "mtime_ns": 1780167095687388800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
-      "size": 17013
+      "size": 17027
     },
     {
       "exists": true,
@@ -22957,9 +22958,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780160045099059500,
+      "mtime_ns": 1780167095700984800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md",
-      "size": 9661
+      "size": 9663
     },
     {
       "exists": true,
@@ -22975,9 +22976,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779997995892407900,
+      "mtime_ns": 1780167095711052300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
-      "size": 23547
+      "size": 23553
     },
     {
       "exists": true,
@@ -23029,9 +23030,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779998002193212900,
+      "mtime_ns": 1780167095705525800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
-      "size": 11332
+      "size": 11334
     },
     {
       "exists": true,
@@ -23125,9 +23126,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779182772547577500,
+      "mtime_ns": 1780167095678328000,
       "path": "skills/flowpilot/assets/runtime_kit/prompts/startup/heartbeat_resume.md",
-      "size": 1611
+      "size": 1632
     },
     {
       "exists": true,

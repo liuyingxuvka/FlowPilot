@@ -43,18 +43,14 @@ long-form public explanation lives in `docs/protocol.md`.
    draft the intended floor, seed the improvement candidate pool, seed the
    initial validation direction, and surface product-function questions. Do
    not freeze the contract yet.
-8. Create the fixed six-agent crew for the new formal FlowPilot task and write
-   `.flowpilot/runs/<run-id>/crew_ledger.json` plus one compact role memory
-   packet under `.flowpilot/runs/<run-id>/crew_memory/` for project manager,
-   human-like reviewer, process
-   FlowGuard officer, product FlowGuard officer, worker A, and worker B. Each
-   role record separates `role_key` for authority/routing, `display_name` for
-   chat/UI labels, and diagnostic-only `agent_id` for same-task continuation
-   diagnostics. At formal startup, all live background subagent IDs must be
-   freshly spawned for this FlowPilot task after the startup answers and
-   current route allocation. IDs from prior routes, old crew ledgers, or older
-   role-memory packets are audit history only and must not be resumed,
-   relabeled, or counted as current live-agent evidence.
+8. Initialize the current-run role ledger and compact role memory area for
+   runtime-requested responsibilities. Each role record separates `role_key`
+   for authority/routing, `display_name` for chat/UI labels, and
+   diagnostic-only `agent_id` for same-task continuation diagnostics. A role
+   becomes active only when the runtime asks for that responsibility and the
+   host returns an addressable current-run binding. IDs from prior routes, old
+   crew ledgers, or older role-memory packets are audit history only and must
+   not be resumed, relabeled, or counted as current live-agent evidence.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
@@ -154,8 +150,8 @@ long-form public explanation lives in `docs/protocol.md`.
     ledger rather than carrying route-specific next-jump instructions in its
     prompt. On every heartbeat or manual mid-run wakeup, it first records
     `heartbeat_or_manual_resume_requested` to the router, restores the current
-    visible plan from the run, checks the current packet-ledger holder and all
-    six role agents, resumes or replaces each role from current-run memory, then
+    visible plan from the run, checks the current packet-ledger holder and
+    runtime-required role bindings, resumes or replaces required bindings from current-run memory, then
     asks the project manager for the current `PM_DECISION` and
     completion-oriented runway. A `wait_agent` timeout is `timeout_unknown`,
     never active. The controller may relay only PM packets after router
@@ -168,7 +164,7 @@ long-form public explanation lives in `docs/protocol.md`.
     router-authored card, bundle, packet, result envelope, status packet,
     resolved direct ACK, or `controller_next_action_notice.json`, Controller
     clears pending ledger actions and writes Controller receipts before
-    waiting on role chat or subagent foreground completion. Ordinary
+    waiting on role chat or role-agent foreground completion. Ordinary
     `await_card_return_event`, `await_card_bundle_return_event`, and
     `await_role_decision` are controlled wait records under daemon ownership,
     not reasons to stop the Controller role. The foreground Controller must
@@ -248,11 +244,11 @@ long-form public explanation lives in `docs/protocol.md`.
     `work_beyond_startup_allowed: true`.
 
     The human-like reviewer report must verify matching active route,
-    canonical current-run state, execution frontier, current six-role crew
-    ledger, current role memory, `.flowpilot/current.json`,
+    canonical current-run state, execution frontier, current role ledger,
+    current role memory, `.flowpilot/current.json`,
     `.flowpilot/index.json`, the run manifest, prior-work import packet when
     continuing, the three explicit startup answers, stop-and-wait evidence,
-    banner-after-answers evidence, live-subagent startup freshness,
+    banner-after-answers evidence, role-binding freshness,
     continuation readiness, and `startup_activation` records in state and
     frontier. It must also verify old top-level control state is absent,
     archival-only, or quarantined and is not being used as current state. It
@@ -261,13 +257,12 @@ long-form public explanation lives in `docs/protocol.md`.
     route heartbeat automation at one minute when scheduled continuation is
     allowed, manual-resume evidence when manual continuation is selected,
     residual route state, and shadow-route evidence. It must bind the
-    background-agent answer to actual
-    subagent state: if the user allowed background agents, verify six live
-    role-bearing subagents were freshly spawned for this FlowPilot task after
-    that user decision and after current route allocation, and verify none of
-    their `agent_id` values comes from prior route ledgers or older role-memory
-    packets. If the user chose single-agent continuity, verify the explicit
-    fallback authorization and do not claim live subagents. The reviewer writes a report only; the reviewer
+    role-agent answer to actual role-binding state: if the user allowed role
+    agents, verify each runtime-required binding was opened for this FlowPilot
+    task after that user decision and after current route allocation, and
+    verify none of its `agent_id` values comes from prior route ledgers or
+    older role-memory packets. If the user chose fallback continuity, verify
+    the explicit fallback authorization and do not claim live role bindings. The reviewer writes a report only; the reviewer
     does not approve startup and does not open the gate. The project manager
     reads the report. If it contains blockers, PM sends remediation items back
     to authorized workers through a PM packet and requires a new factual reviewer report. If it
@@ -277,7 +272,7 @@ long-form public explanation lives in `docs/protocol.md`.
     Work beyond startup is illegal until the PM records
     `work_beyond_startup_allowed: true` from the clean factual report. If the
     three answers are incomplete, the prompt did not stop for the user's
-    reply, answers are inconsistent with subagent/continuation evidence, or
+    reply, answers are inconsistent with role-binding/continuation evidence, or
     required cleanup evidence is missing, route the issue back through PM and
     workers. A route-local file without matching canonical
     state/frontier/crew/continuation evidence is a shadow route and must be
@@ -331,7 +326,7 @@ Use FlowPilot. Ask the startup questions first.
 ```
 
 FlowPilot invocation only opens the three-question startup prompt. It is not
-authorization for background agents, fallback execution,
+authorization for role agents, fallback execution,
 scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
 asking those questions, and the banner is emitted only after the later user
 answer set is complete.
@@ -755,19 +750,18 @@ Repeat until complete or blocked:
    `.flowpilot/current.json` is not daemon authority after a run binding exists;
    top-level archival state is import or quarantine evidence only and must not
    override the bound run.
-2. Rehydrate all six role identities and work memories before PM runway work.
+2. Rehydrate runtime-required role identities and work memories before PM runway work.
    Stored agent ids may be resumed only when they belong to the same active
    FlowPilot task-born cohort and a bounded host liveness preflight confirms
    them. A new formal FlowPilot task must create fresh
-   live subagents instead of resuming prior-route IDs. If live agents are
+   live role bindings instead of resuming prior-route IDs. If live agents are
    missing, cancelled, unknown, or timeout-unknown, ask for the missing
    startup/fallback decision when needed before replacing roles from memory.
    Record resumed, replaced, seeded, blocked, liveness status, and
    unavailable roles in a crew rehydration report covering project manager,
-   reviewer, process FlowGuard officer, product FlowGuard officer, worker A,
-   and worker B. Do not lazily rehydrate a role only when it is first needed.
-   Live background agents are the default startup target; role continuity
-   through persisted memory is allowed only after explicit fallback approval.
+   the runtime-required role bindings. Do not lazily rehydrate a required role
+   only when it is first needed. Role continuity through persisted memory is
+   allowed only after explicit fallback approval.
 3. Ask the rehydrated project manager for a completion-oriented runway from
    the current position to project completion. The runway names the current
    gate, downstream steps, hard-stop conditions, checkpoint cadence, and any PM
@@ -926,7 +920,7 @@ inspection, cited model files, state fields, state/edge counts, blindspots, and
 approval is a draft, not a completed gate.
 
 Model gates are dispatched as officer-owned asynchronous gates when live
-background roles are available. The PM writes a modeling request with an
+role bindings are available. The PM writes a modeling request with an
 officer output root and a controller non-dependent coordination boundary. While
 the matching officer authors, runs, interprets, and reports, the controller may
 continue only non-dependent coordination such as read-only status
@@ -1215,14 +1209,14 @@ Conditional:
 - After rendered screenshot QA, record a rendered-UI aesthetic verdict and
   concrete reviewer reasons before divergence or loop closure. A screenshot
   existing is not proof that the UI looks good enough.
-- Subagent opportunity checks happen at child-node entry. Parent/module review
-  may identify likely sidecar areas, but it does not spawn subagents or assign
+- Sidecar opportunity checks happen at child-node entry. Parent/module review
+  may identify likely sidecar areas, but it does not open role agents or assign
   node ownership.
-- Sidecar subagents may only receive bounded helper tasks inside the active
+- Sidecar role agents may only receive bounded helper tasks inside the active
   child node. They cannot own the child node, route advancement, acceptance
   floor, checkpoint, or completion decision.
-- Reuse a suitable idle subagent before spawning a new one. Spawn only on demand
-  when no idle subagent fits and the task is worth the coordination cost.
+- Reuse a suitable idle role binding before opening a new one. Open only on demand
+  when no idle binding fits and the task is worth the coordination cost.
 - Sidecar reports require an authorized integration/review packet before
   dependent implementation, checkpoint, route advancement, or completion.
 

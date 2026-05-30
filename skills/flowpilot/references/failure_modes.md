@@ -57,11 +57,11 @@ The FlowGuard models for FlowPilot found or guard against:
   FlowPilot claims unattended recovery without a later continuation turn that
   loads current state and makes or records concrete progress;
 - route decided before FlowGuard process design;
-- formal route work starts before the fixed six-agent crew is created,
+- formal route work starts before runtime-required role bindings are opened,
   restored, and persisted in `crew_ledger.json`;
-- heartbeat recovery reads state but does not restore or replace the six-agent
-  crew before asking the project manager what to do next;
-- heartbeat recovery assumes stored subagent ids still have live private
+- heartbeat recovery reads state but does not restore or replace required role
+  bindings before asking the project manager what to do next;
+- heartbeat recovery assumes stored role ids still have live private
   context and asks the project manager before loading role memory packets;
 - an unavailable role is replaced from a generic prompt instead of the latest
   `.flowpilot/runs/<run-id>/crew_memory/` packet;
@@ -145,11 +145,11 @@ The FlowGuard models for FlowPilot found or guard against:
 - high-risk gate overlap with active work;
 - stale route continuing after model gap;
 - stale implementation reused after a completion review raised the standard;
-- sidecar subagent returned but not merged;
-- parent/module-level subagent scan treated as permission to assign work;
-- subagent assigned ownership of a child node, checkpoint, route advancement,
+- sidecar role-agent work returned but not merged;
+- parent/module-level sidecar scan treated as permission to assign work;
+- sidecar role agent assigned ownership of a child node, checkpoint, route advancement,
   or completion decision;
-- new subagent spawned while a suitable idle subagent was available;
+- new sidecar role agent opened while a suitable idle role binding was available;
 - UI implementation before the relevant UI child-skill gates and evidence;
 - post-implementation rendered QA evidence substituted for the child skill's
   pre-implementation concept-target/reference decision;
@@ -305,14 +305,13 @@ Keep these failure modes in the model and tests.
   discarded_with_reason disposition,
   the human-like reviewer has replayed the ledger backward from the final
   product, and the PM has approved the clean ledger.
-- Child-node sidecar scan is the only formal subagent opportunity gate. Parent
-  or module review may not directly spawn subagents or transfer node ownership.
+- Child-node sidecar scan is the only formal sidecar opportunity gate. Parent
+  or module review may not directly open role agents or transfer node ownership.
 - Sidecar scope checking must be separate from reuse-or-spawn assignment.
 - `sidecar_report_returned` is not completion evidence; authorized integration/review and
   verification are required.
-- Formal routes create a persistent six-agent crew: project manager,
-  human-like reviewer, process FlowGuard officer, product FlowGuard officer,
-  worker A, and worker B. The project manager owns route, heartbeat-resume,
+- Formal routes keep persistent role authority and current-run role memory.
+  The project manager owns route, heartbeat-resume,
   completion-runway, PM stop, repair, and completion decisions; workers are
   sidecars only.
 - Heartbeat recovery loads the crew ledger and role memory packets,
@@ -323,7 +322,7 @@ Keep these failure modes in the model and tests.
   progress.
 - Completion must archive the crew ledger and role memory packets after
   lifecycle reconciliation.
-- Idle subagents are a reusable pool, not proof that the current child node has
+- Idle role agents are a reusable pool, not proof that the current child node has
   already been scanned.
 - A model gap forces route update, model recheck, and summary resync before more
   formal work.

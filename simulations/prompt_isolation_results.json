@@ -14699,7 +14699,7 @@
       "router_direct_research_dispatch_preflight_passed",
       "run_index_updated",
       "run_shell_created",
-      "six_roles_started_from_user_answer",
+      "runtime_role_bindings_recorded_from_user_answer",
       "startup_answers_recorded_by_router",
       "startup_banner_emitted_after_answers",
       "startup_intake_ui_completed_from_router",

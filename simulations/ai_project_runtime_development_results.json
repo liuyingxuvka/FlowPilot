@@ -13,8 +13,8 @@
       "checks_before_tests",
       "code_before_openspec",
       "console_leaks_sealed_body",
-      "fixed_six_roles_reintroduced",
       "git_before_install",
+      "historical_role_topology_reintroduced",
       "install_before_background",
       "old_runtime_state_authoritative",
       "release_before_git",
@@ -31,11 +31,11 @@
       "console_leaks_sealed_body": [
         "console exposed sealed packet or result body"
       ],
-      "fixed_six_roles_reintroduced": [
-        "clean runtime reintroduced a fixed six-role requirement"
-      ],
       "git_before_install": [
         "git commit happened before install sync/check"
+      ],
+      "historical_role_topology_reintroduced": [
+        "clean runtime reintroduced historical role topology as a requirement"
       ],
       "install_before_background": [
         "install sync/check ran before background evidence was inspected"

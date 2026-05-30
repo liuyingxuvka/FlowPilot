@@ -184,15 +184,15 @@ chunks until this block and the matching frontier block show:
 - continuing prior work has a current-run prior-work import packet;
 - `crew_ledger_current: true`;
 - `role_memory_packets_current` is at least 6;
-- `live_subagent_startup` records either six live background agents
-  started/resumed after a user decision or explicit user authorization for
-  single-agent six-role continuity;
+- role-binding startup records either current-run live bindings for
+  runtime-required roles after a user decision or explicit user authorization
+  for fallback role continuity;
 - `continuation_ready: true`, either as automated heartbeat evidence or
   explicit `manual-resume` no-automation evidence;
 - `startup_preflight_review` records the human-like reviewer's factual startup
   audit, including user authorization versus actual state, route/state/frontier
   consistency, old-route or old-asset cleanup when requested, real Codex
-  heartbeat automation or manual-resume evidence, background-agent role
+  heartbeat automation or manual-resume evidence, role-binding
   evidence, and shadow or residual route state;
 - `pm_start_gate` records the project manager's decision from the current
   reviewer report. The reviewer cannot open this gate. If the report has
@@ -212,8 +212,8 @@ chunks until this block and the matching frontier block show:
 - `provenance`: exactly `explicit_user_reply`; values such as
   `agent_inferred`, `default`, `prior_route`, `naked`, or
   `single_message_invocation` are invalid;
-- `answers.background_agents.answer`: `allow` for six live background agents
-  or `single-agent` for single-agent six-role continuity;
+- `answers.background_agents.answer`: `allow` for host-supported role
+  mechanisms or `single-agent` for explicit fallback role continuity;
 - `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or
   `manual` for manual resume;
 - `answers.display_surface.answer`: `cockpit` to open the native Cockpit UI
@@ -224,7 +224,7 @@ chunks until this block and the matching frontier block show:
 
 If any answer is absent, ambiguous, or `pause`, startup remains
 `startup_pending_user_answers` and no banner, route work, child skill,
-imagegen, implementation, fallback execution, subagent startup, heartbeat probe,
+imagegen, implementation, fallback execution, role-binding startup, heartbeat probe,
 heartbeat job, or manual-resume claim may proceed. If the questions were asked
 but the assistant did not stop and wait for the user's reply, the answer
 evidence is invalid and the PM must not open startup.
@@ -242,16 +242,16 @@ runtime startup-check script writes it. It must include:
 - `blocking_findings`;
 - scope flags for user authorization, route consistency, cleanup boundary,
   continuation evidence, real Codex heartbeat automation or manual-resume
-  evidence, background-agent roles, user background-agent decision versus
-  actual subagent state, live subagent count or explicit single-agent
+  evidence, role-agent decisions, user role-agent decision versus
+  actual role-binding state, current binding coverage or explicit fallback
   authorization, and shadow/residual state;
 - required facts for route heartbeat interval 1 minute and route heartbeat
   RRULE `FREQ=MINUTELY;INTERVAL=1` when automated continuation is selected;
-- if `answers.background_agents.answer` is `allow`, six live role-bearing
-  subagents must be active or resumed after the user decision;
+- if `answers.background_agents.answer` is `allow`, runtime-required role
+  bindings must be active or resumed after the user decision;
 - if `answers.background_agents.answer` is `single-agent`, explicit
   single-agent role-continuity authorization must exist and the route must not
-  claim six live subagents.
+  claim live role bindings.
 
 `startup_activation.pm_start_gate` is written by the project manager after
 reading the reviewer report. It must include:
@@ -273,29 +273,22 @@ without matching canonical state/frontier/crew/continuation evidence is a
 shadow route. Shadow routes are invalid startup evidence and must be
 quarantined or superseded before work continues.
 
-`startup_activation.live_subagent_startup` records this decision:
+`startup_activation.role_binding_startup` records this decision:
 
 - `required_by_default: true`;
 - `decision`: `live_agents_started`, `live_agents_resumed`,
   `single_agent_role_continuity_authorized`, or `blocked`;
 - `user_decision_recorded: true` before the PM can open startup;
 - `user_authorized_live_start: true`, `live_start_attempted: true`, and
-  `live_agents_active >= 6` for the live-agent path;
+  current-run live binding evidence for the runtime-required roles;
 - `single_agent_role_continuity_authorized: true` for the fallback path;
 - `blocker` and `evidence_path` for the prompt, failed attempt, or fallback
   decision evidence.
 
 ## Crew Ledger
 
-`crew_ledger.json` records the persistent six-agent crew for a formal
-FlowPilot route:
-
-- project manager;
-- human-like reviewer;
-- process FlowGuard officer;
-- product FlowGuard officer;
-- worker A;
-- worker B.
+`crew_ledger.json` records role authority and role memory for a formal
+FlowPilot route.
 
 For each role, the ledger records the role name, agent id when available,
 status, authority boundary, latest report path, role memory path, memory
@@ -317,24 +310,24 @@ state for the crew. Each packet records:
 - latest rehydration result;
 - update timestamp.
 
-Live subagent context is not the source of truth, but six live background
-agents are the default startup target. Heartbeat or manual resume may try to
-resume a stored agent id. If live agents are unavailable, FlowPilot records the
-block and asks for a user decision before falling back to replacement from the
-latest role memory packet. Raw transcripts are optional evidence only; a
-compact structured memory packet is required before a replacement role can
-approve gates. Heartbeat recovery loads the ledger and memory packets, records
-which roles were resumed, replaced, or blocked, and only then asks the project
-manager for a completion-oriented runway from the current route position to
-project completion.
+Live host context is not the source of truth. Heartbeat or manual resume may
+try to resume a stored agent id only when the current runtime ledger still
+requires that role binding. If a required live binding is unavailable,
+FlowPilot records the block and asks for a user decision before falling back to
+replacement from the latest role memory packet. Raw transcripts are optional
+evidence only; a compact structured memory packet is required before a
+replacement role can approve gates. Heartbeat recovery loads the ledger and
+memory packets, records which runtime-required roles were resumed, replaced, or
+blocked, and only then asks the project manager for a completion-oriented
+runway from the current route position to project completion.
 
 Valid current role statuses may represent live or memory-seeded continuity,
 including `active`, `idle`, `ready`, `running`, `restored`, `recovered`,
 `replaced_from_memory`, `memory_recovered`, `memory_seeded`, or
 `live_unavailable_memory_seeded`. `archived`, `paused`, `blocked`, and other
 terminal statuses cannot satisfy startup activation. FlowPilot must distinguish
-between "the role is recovered and authorized" and "a live subagent process is
-currently running"; when the latter is unavailable, the fallback is valid only
+between "the role is recovered and authorized" and "a live role binding is
+currently addressable"; when the latter is unavailable, the fallback is valid only
 after explicit user authorization for single-agent role continuity.
 
 ## Material Intake Packet
@@ -384,8 +377,8 @@ It records:
 ## Product Function Architecture
 
 `product_function_architecture.json` is the PM-owned pre-contract product
-design package. It is written after startup self-interrogation and six-agent
-crew recovery, and before acceptance contract freeze, route generation,
+design package. It is written after startup self-interrogation and required
+role-binding recovery, and before acceptance contract freeze, route generation,
 capability routing, or implementation.
 
 It records:

@@ -193,13 +193,13 @@ Expected:
 - old top-level control state is absent, retired-only, or quarantined and is
   not used as current state;
 - continuing prior work has a current-run prior-work import packet;
-- `crew_ledger.json` is current for that route and all six role memory packets
-  are present and current;
+- `crew_ledger.json` is current for that route and required role memory
+  packets are present and current;
 - continuation is either a complete automated bundle or explicit
   `manual-resume` evidence with no automation claim;
-- `startup_activation.live_subagent_startup` records either six live
-  background agents started/resumed after a user decision or explicit
-  user-authorized single-agent six-role continuity;
+- startup role-binding evidence records either current-run live bindings for
+  runtime-required roles after a user decision or explicit user-authorized
+  fallback continuity;
 - `startup_activation.startup_preflight_review` records a clean report-only
   reviewer audit;
 - `startup_activation.pm_start_gate` records the project manager's open

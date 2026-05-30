@@ -26,16 +26,15 @@ slots for the current formal task are fresh.
 
 Accept only:
 
-- live roles spawned for this run after the current startup answers;
+- live role bindings opened for this run after the runtime requested their responsibilities;
 - live continuity confirmed by a host liveness preflight for the current run;
-- same-task role memory packets rehydrated into replacement roles;
-- explicit user-approved single-agent fallback for dispatched role work.
+- same-task role memory packets rehydrated into replacement role bindings;
+- explicit user-approved fallback for dispatched role work.
 
-For any live background role agent, whether it is first spawned, restored,
-rehydrated, or replaced during heartbeat/manual resume, require an explicit
+For any live role binding, whether it is first opened, restored, rehydrated, or
+replaced during heartbeat/manual resume, require an explicit
 strongest-available host model request and highest-available reasoning-effort
-request. Foreground/Controller model inheritance is not sufficient background
-role setup.
+request. Foreground/Controller model inheritance is not sufficient role setup.
 
 The same freshness rule applies to mid-run role recovery. If Controller reports
 a role liveness fault, require the router-written `role_recovery_report.json`
@@ -43,9 +42,9 @@ before allowing normal work to continue. The report must show current-run memory
 packet ownership reconciliation, and stale/superseded agent output quarantine
 for any restored, replaced, or recycled role.
 
-Prior-run `agent_id` values are audit history only. If any required role is
-missing, stale, cross-run, or unverifiable, block route work until PM records a
-replacement or fallback decision.
+Prior-run `agent_id` values are audit history only. If any runtime-required
+role binding is missing, stale, cross-run, or unverifiable, block route work
+until PM records a replacement or fallback decision.
 
 `wait_agent` timeout is not freshness proof. Treat it as `timeout_unknown`;
 Controller must not continue waiting on that old role unless a later bounded

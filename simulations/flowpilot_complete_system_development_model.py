@@ -37,7 +37,7 @@ class State:
     install_synced_and_checked: bool = False
     git_committed: bool = False
     full_completion_claimed: bool = False
-    fixed_six_roles_authoritative: bool = False
+    historical_role_topology_authoritative: bool = False
     old_state_authoritative: bool = False
     cockpit_direct_state_write: bool = False
     sealed_body_leaked: bool = False
@@ -243,8 +243,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("git commit happened before install sync/check")
     if state.full_completion_claimed and not state.git_committed:
         failures.append("full completion claimed before local git closure")
-    if state.fixed_six_roles_authoritative:
-        failures.append("fixed six roles were reintroduced as runtime authority")
+    if state.historical_role_topology_authoritative:
+        failures.append("historical role topology was reintroduced as runtime authority")
     if state.old_state_authoritative:
         failures.append("old FlowPilot state was used as current authority")
     if state.cockpit_direct_state_write:
@@ -298,7 +298,7 @@ def hazard_states() -> dict[str, State]:
         "background_before_history": replace(safe, historical_replay_passed=False),
         "install_before_live_boundary": replace(safe, live_host_evidence_recorded=False),
         "completion_before_git": replace(safe, git_committed=False),
-        "fixed_six_roles_authoritative": replace(safe, fixed_six_roles_authoritative=True),
+        "historical_role_topology_authoritative": replace(safe, historical_role_topology_authoritative=True),
         "old_state_authoritative": replace(safe, old_state_authoritative=True),
         "cockpit_direct_write": replace(safe, cockpit_direct_state_write=True),
         "sealed_body_leak": replace(safe, sealed_body_leaked=True),

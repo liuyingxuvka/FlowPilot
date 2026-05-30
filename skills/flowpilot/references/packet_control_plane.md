@@ -306,8 +306,9 @@ assistant is Controller only. It first records
 `.flowpilot/current.json`, loads the active run state/frontier/route, crew
 ledger, role memory, latest heartbeat or manual-resume evidence,
 `packet_ledger.json`, visible plan projection, and controller relay history.
-Only after that router re-entry may it run the six-role liveness preflight,
-restore or replace the six roles, and ask PM for the current decision. It must
+Only after that router re-entry may it run the runtime-required role-binding
+liveness preflight, restore or replace required bindings, and ask PM for the
+current decision. It must
 not open `packet_body.md` or `result_body.md`.
 
 The heartbeat prompt is a stable launcher. It must not carry route-specific

@@ -15,13 +15,13 @@ review or can be satisfied by reading worker/PM summaries.
    That path is removed. Startup now has only a human-like reviewer factual
    report and a PM-owned startup opening decision. The reviewer must check real
    state/frontier/route, crew, role memory, heartbeat or manual-resume
-   evidence, background-agent user decision versus actual subagent state, live
-   subagent count plus current-task freshness or explicit single-agent fallback
+   evidence, role-agent user decision versus actual role-binding state, current
+   binding coverage plus current-task freshness or explicit fallback
    authorization, and cleanup boundary. PM may open only from a clean factual
    report.
-2. Live-subagent review is not a count-only check. For every new formal
-   FlowPilot task where the user authorizes background agents, the reviewer
-   must verify that all six role-bearing subagents were freshly spawned after
+2. Live role-binding review is not a count-only check. For every new formal
+   FlowPilot task where the user authorizes role agents, the reviewer
+   must verify that every runtime-required role binding was opened after
    the current startup answers and current route allocation. Historical
    `agent_id` values from prior crew ledgers or older role-memory packets are
    audit history only and must be listed as reused-ID blockers if they appear
@@ -97,7 +97,7 @@ the assigned role.
   when the reviewer cannot personally operate the surface.
 - Startup reviewer reports should include `current_task_fresh_agents: true`,
   `reused_historical_agent_ids: []`, and direct evidence paths for current
-  agent birth or spawn time when live background agents are authorized.
+  binding creation or attachment time when live role agents are authorized.
 - Startup reviewer reports must also include current-run isolation evidence:
   `.flowpilot/current.json`, `.flowpilot/index.json`, current run manifest,
   current-run state/frontier/route paths, top-level legacy control-state

@@ -5,7 +5,7 @@ Date: 2026-05-09
 ## Risk Intent Brief
 
 FlowPilot startup is behavior-bearing control-plane work. The optimization must
-reduce startup latency without weakening six-role authority, current-run
+reduce startup latency without weakening runtime-requested role authority, current-run
 continuation binding, reviewer startup fact checking, PM startup activation, or
 Controller sealed-body boundaries.
 
@@ -25,7 +25,7 @@ Protected harms:
 - a speed path uses Controller inference or self-attested claims as proof.
 
 Residual blindspot: the startup optimization model is a control-plane model. It
-does not prove host-specific subagent spawn or Codex heartbeat UI behavior by
+does not prove host-specific role binding or Codex heartbeat UI behavior by
 itself; runtime tests and local install checks remain required after code
 changes.
 
@@ -33,8 +33,8 @@ changes.
 
 | Order | Optimization | Current Friction | Target Behavior | Acceptance Evidence |
 | --- | --- | --- | --- | --- |
-| 1 | Merge six-role startup with role-core delivery | `start_role_slots` and `inject_role_core_prompts` are separate bootloader actions | Every role spawn/start receipt also records the role core card path/hash and current role I/O protocol receipt; no later startup core-injection action is needed | `crew_ledger.json`, `role_core_prompt_delivery.json`, and role I/O receipts are written by `start_role_slots`; bootstrap flag `role_core_prompts_injected` is set during the same action |
-| 2 | Create heartbeat early when the user allows scheduled continuation | Heartbeat is currently a Controller action after display-plan sync; if later startup gets slow, continuation protection is delayed | After run id and six-role ledger exist, the first Controller action for scheduled continuation is heartbeat creation, before reviewer/PM startup work | `continuation_binding.json` has current run id, one-minute cadence, verified host automation proof, and exists before startup fact-card delivery |
+| 1 | Merge role binding with role-core delivery | `start_role_slots` and `inject_role_core_prompts` are separate bootloader actions | Every role binding receipt also records the role core card path/hash and current role I/O protocol receipt; no later startup core-injection action is needed | `crew_ledger.json`, `role_core_prompt_delivery.json`, and role I/O receipts are written by `start_role_slots`; bootstrap flag `role_core_prompts_injected` is set during the same action |
+| 2 | Create heartbeat early when the user allows scheduled continuation | Heartbeat is currently a Controller action after display-plan sync; if later startup gets slow, continuation protection is delayed | After run id and role ledger exist, the first Controller action for scheduled continuation is heartbeat creation, before reviewer/PM startup work | `continuation_binding.json` has current run id, one-minute cadence, verified host automation proof, and exists before startup fact-card delivery |
 | 3 | Dispatch reviewer startup fact check before PM prep cards | Reviewer fact check currently waits behind several PM card deliveries and user-intake mail | Controller writes mechanical audit and display receipt, then sends `reviewer.startup_fact_check` before PM prep cards; after reviewer card ack, PM prep cards can be delivered while the reviewer report is still pending | Card ledger shows reviewer startup card delivery before PM prep cards; PM activation still waits for reviewer report |
 | 4 | Split router-owned mechanical proof from reviewer external facts | Reviewer may get pushed into rechecking facts already proved by the router, while missing direct external receipts such as display fallback | Reviewer receives router-owned proof for mechanical facts, is told not to re-prove them, and receives direct evidence paths for external facts such as display-surface receipt | `startup_mechanical_audit.json` owns mechanical checks; reviewer delivery context includes display evidence; startup report blockers do not cite router-computable facts |
 | 5 | Keep system-card batching as a separate future replay-mode change | Barrier bundles exist, but same-role multi-card delivery is not implemented and generic `card_bundle_fold` is rejected today | Do not depend on multi-card body merging for this startup pass; only consider a later batch-envelope feature with per-card receipts and dedicated replay semantics | Existing command-refinement rejection remains valid unless a dedicated replay model and runtime are added |

@@ -496,7 +496,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if not state.roles_started:
         yield Transition(
-            "six_roles_started_from_user_answer",
+            "runtime_role_bindings_recorded_from_user_answer",
             _boot(state, roles_started=True, fresh_role_agents_started=True),
         )
         return

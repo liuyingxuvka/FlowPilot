@@ -26,7 +26,7 @@ REQUIRED_LABELS = (
     "mailbox_initialized_from_copied_kit",
     "user_request_recorded_from_explicit_user_request",
     "user_intake_template_filled_from_raw_user_request",
-    "six_roles_started_from_user_answer",
+    "runtime_role_bindings_recorded_from_user_answer",
     "role_core_prompts_injected_from_copied_kit",
     "controller_core_loaded",
     "controller_role_confirmed_from_router_core",

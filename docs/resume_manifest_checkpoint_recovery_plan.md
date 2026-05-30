@@ -4,7 +4,7 @@ Date: 2026-05-13
 
 ## Situation
 
-Heartbeat/manual resume can currently rehydrate the six-role crew, reach the
+Heartbeat/manual resume can currently rehydrate runtime-required role bindings, reach the
 prompt-manifest controller action, report that the current checkpoint manifest
 has not yet entered the PM resume decision, and then stop. That is the wrong
 behavior: `check_prompt_manifest` is an internal router safety check before a

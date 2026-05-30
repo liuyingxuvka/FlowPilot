@@ -88,7 +88,7 @@ When `flowpilot_new.py start` opens the native startup intake UI, formal startup
 
 After startup, the new runtime materializes the first PM-bound high-standard contract packet. PM route planning is not legal until the high-standard contract, current discovery, and selected skill standard gates are accepted.
 
-When the new runtime returns `lease_agent`, spawn only the requested responsibility, record the real host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort.
+When the new runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported role mechanism, record the addressable host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Every opened role binding must be explicitly requested with the strongest available host model and highest available reasoning effort.
 
 All new formal runtime roles are packet roles, but not every gate is a dispatched role. PM, FlowGuard operator, reviewer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are router-owned ledger facts after accepted review evidence; do not spawn validator or Closure Officer workers, and do not complete FlowGuard or review through side-command shortcuts.
 

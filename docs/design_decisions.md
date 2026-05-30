@@ -31,12 +31,12 @@ The first user-facing startup gate is the three-question prompt:
 background-agent permission, scheduled-continuation permission, and display
 surface preference. The
 assistant must stop immediately after asking and wait for the user's later
-reply before banner display, route writes, child skills, subagents, heartbeat
+reply before banner display, route writes, child skills, role bindings, heartbeat
 probes, image generation, or implementation.
 
 Run modes are retired entirely. A compact later reply may provide all three
 startup answers at once, but host limits, invocation text, existing state, and
-prior routes cannot authorize background agents, scheduled jobs, fallback
+prior routes cannot authorize role agents, scheduled jobs, fallback
 execution, or display-surface choices.
 
 Removing modes does not change hard-gate behavior or the quality floor.
@@ -44,7 +44,7 @@ Removing modes does not change hard-gate behavior or the quality floor.
 Startup includes a PM-owned activation transaction before child skills,
 imagegen, implementation, route chunks, or completion work. The transaction is
 valid only when the human-like reviewer has personally checked real
-state/frontier/route, current six-role crew ledger, role memory packets,
+state/frontier/route, current role ledger, role memory packets,
 continuation, heartbeat/manual-resume evidence, and cleanup
 evidence for the same active nonterminal route. The reviewer writes a factual
 `.flowpilot/runs/<run-id>/startup_review/latest.json` report and cannot open startup. The PM
@@ -237,13 +237,12 @@ progress surface is the same user flow diagram shown in chat, refreshed at
 startup, major route-node entry, PM current-node work brief, route mutation,
 completion review, or user request.
 
-## Persistent Crew And Workers
+## Persistent Roles And Workers
 
-Formal FlowPilot routes now create or restore a fixed six-agent crew before
-route work: project manager, human-like reviewer, process FlowGuard officer,
-product FlowGuard officer, worker A, and worker B. The project manager owns
-route, heartbeat-resume runway, PM stop signals, repair, and completion
-decisions. The reviewer inspects; the FlowGuard officers own their models end
+Formal FlowPilot routes keep role authority and memory in the current run, but
+live host bindings are opened only when the runtime requests a responsibility.
+The project manager owns route, heartbeat-resume runway, PM stop signals,
+repair, and completion decisions. The reviewer inspects; the FlowGuard officers own their models end
 to end by authoring, running, interpreting, and approving or blocking them.
 They do not implement product code and they do not decide route movement. Their
 reports give the project manager a decision packet: hard blockers,
@@ -251,10 +250,10 @@ PM-review-required hotspots, later-gate replay items, non-risk scope notes,
 toolchain/model improvement suggestions, human walkthrough targets, and the
 confidence boundary of the model result.
 
-The crew is persistent as six roles, and the default formal startup target is
-six live background subagents where the host/tool policy permits them.
-Heartbeat, sleep, manual resume, or host boundaries may make stored subagent
-ids unavailable. FlowPilot therefore stores compact role memory packets under
+Role authority is persistent in the run ledger, while live bindings depend on
+current runtime requests and host/tool support. Heartbeat, sleep, manual
+resume, or host boundaries may make stored role ids unavailable. FlowPilot
+therefore stores compact role memory packets under
 `.flowpilot/runs/<run-id>/crew_memory/` and treats them as the authoritative recovery state.
 A resume may reuse a live agent when the host supports it, but an unavailable
 role may be replaced from its latest memory packet only after explicit user
