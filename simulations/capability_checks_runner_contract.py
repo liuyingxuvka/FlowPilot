@@ -258,7 +258,7 @@ REQUIRED_LABELS = (
     "capability_backward_review_found_existing_child_gap",
     "capability_backward_review_found_missing_sibling",
     "capability_backward_review_found_subtree_mismatch",
-    "capability_backward_issue_grilled",
+    "capability_backward_issue_interrogated",
     "pm_repair_decision_interrogated",
     "capability_route_updated_to_rework_child_node",
     "capability_route_updated_to_add_sibling_child_node",
@@ -548,9 +548,9 @@ def _state_id(state: model.State) -> str:
         f"{state.capability_backward_review_reviewer_approved},"
         f"pm_segment={state.capability_backward_pm_segment_decision_recorded},"
         f"{state.capability_backward_pm_segment_decisions_recorded},"
-        f"cap_issue={state.capability_backward_issue_grilled},"
+        f"cap_issue={state.capability_backward_issue_interrogated},"
         f"{state.capability_backward_issue_strategy},"
-        f"pm_repair_grills={state.pm_repair_decision_interrogations},"
+        f"pm_repair_interrogates={state.pm_repair_decision_interrogations},"
         f"skill_improvement={state.current_node_skill_improvement_check_done},"
         f"{state.flowpilot_skill_improvement_report_written},"
         f"structural_repairs={state.capability_structural_route_repairs},"

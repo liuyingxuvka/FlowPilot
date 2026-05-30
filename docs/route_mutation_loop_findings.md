@@ -30,7 +30,7 @@ Before any route tree delta is applied, the heartbeat must:
 1. enter a mutation boundary;
 2. quiesce active leaf work;
 3. emit a mutation roadmap;
-4. run layered mutation Grill-me;
+4. run layered mutation Self-interrogation;
 5. complete impact analysis;
 6. build the mutation FlowGuard model;
 7. run mutation FlowGuard checks;
@@ -91,7 +91,7 @@ Result:
 
 Every mutation kind has a representative success trace. Each trace includes
 trigger detection, mutation boundary entry, mutation roadmap, full mutation
-Grill-me, impact analysis, mutation model build/check, delta planning, mutation
+Self-interrogation, impact analysis, mutation model build/check, delta planning, mutation
 application, route recheck, conformance replay, updated map emission,
 transition record, resume target classification, resume, and completion.
 
@@ -102,7 +102,7 @@ events:
 
 - route mutation is its own heartbeat-controlled node;
 - active work is quiesced before route mutation;
-- mutation reviews require full formal Grill-me and FlowGuard discipline;
+- mutation reviews require full formal Self-interrogation and FlowGuard discipline;
 - evidence must be invalidated, preserved, regenerated, or replayed depending
   on the mutation kind;
 - a new checked route version and visible map are required before resume.

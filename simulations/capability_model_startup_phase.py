@@ -13,7 +13,7 @@ _REQUIRED_MODEL_NAMES = (
     "CREW_SIZE",
     "FunctionResult",
     "Iterable",
-    "MIN_FULL_GRILLME_QUESTIONS_PER_LAYER",
+    "MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER",
     "MODEL_DYNAMIC_LAYER_COUNT",
     "REQUIRED_RISK_FAMILY_MASK",
     "State",
@@ -231,16 +231,16 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="visible_self_interrogation_completed",
-            action="derive dynamic layers, expose at least 100 grill-me questions per active layer, seed the improvement candidate pool, and seed initial validation direction",
+            action="derive dynamic layers, expose at least 100 self-interrogation questions per active layer, seed the improvement candidate pool, and seed initial validation direction",
             self_interrogation_done=True,
             self_interrogation_evidence=True,
             visible_self_interrogation_done=True,
             self_interrogation_questions=(
                 MODEL_DYNAMIC_LAYER_COUNT
-                * MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
+                * MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
             ),
             self_interrogation_layer_count=MODEL_DYNAMIC_LAYER_COUNT,
-            self_interrogation_questions_per_layer=MIN_FULL_GRILLME_QUESTIONS_PER_LAYER,
+            self_interrogation_questions_per_layer=MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER,
             self_interrogation_layers=REQUIRED_RISK_FAMILY_MASK,
             quality_candidate_pool_seeded=True,
             validation_strategy_seeded=True,

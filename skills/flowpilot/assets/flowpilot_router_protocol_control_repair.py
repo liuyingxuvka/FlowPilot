@@ -205,7 +205,7 @@ BLOCKER_REPAIR_POLICY_ROWS: dict[str, dict[str, Any]] = {
         "hard_stop_conditions": [
             "unresolved_hard_current_findings_require_repair_or_authorized_waiver",
         ],
-        "controller_boundary": "deliver blocker metadata to PM; do not rerun grill-me or decide finding disposition",
+        "controller_boundary": "deliver blocker metadata to PM; do not rerun self-interrogation or decide finding disposition",
     },
 }
 

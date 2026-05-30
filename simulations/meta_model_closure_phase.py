@@ -14,7 +14,7 @@ _REQUIRED_MODEL_NAMES = (
     "Iterable",
     "MAX_STANDARD_EXPANSIONS",
     "MAX_TERMINAL_BACKWARD_REPLAY_REPAIRS",
-    "MIN_FULL_GRILLME_QUESTIONS_PER_LAYER",
+    "MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER",
     "MODEL_DYNAMIC_LAYER_COUNT",
     "REQUIRED_RISK_FAMILY_MASK",
     "State",
@@ -51,7 +51,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_feature_matrix_reviewed",
-                action="review implemented feature matrix and mark thin areas before completion grill-me",
+                action="review implemented feature matrix and mark thin areas before completion self-interrogation",
                 final_feature_matrix_review_done=True,
                 active_node="final_acceptance_matrix_review",
             )
@@ -60,7 +60,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_acceptance_matrix_reviewed",
-                action="review acceptance matrix and identify missing verification evidence before completion grill-me",
+                action="review acceptance matrix and identify missing verification evidence before completion self-interrogation",
                 final_acceptance_matrix_review_done=True,
                 active_node="final_standard_scenario_pack_replay",
             )
@@ -78,7 +78,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_quality_candidate_reviewed",
-                action="summarize quality candidates as done, deferred with reason, waived with reason, or must-supplement before completion grill-me",
+                action="summarize quality candidates as done, deferred with reason, waived with reason, or must-supplement before completion self-interrogation",
                 final_quality_candidate_review_done=True,
                 active_node="final_product_function_replay",
             )
@@ -96,7 +96,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_product_function_model_replayed",
-                action="product FlowGuard officer replays and approves final product behavior against the root product-function model before completion grill-me",
+                action="product FlowGuard officer replays and approves final product behavior against the root product-function model before completion self-interrogation",
                 final_product_function_model_replayed=True,
                 final_product_function_model_product_officer_approved=True,
                 active_node="final_human_inspection_context",
@@ -124,7 +124,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_human_manual_experiments_run",
-                action="operate or inspect the final product as a human reviewer before completion grill-me",
+                action="operate or inspect the final product as a human reviewer before completion self-interrogation",
                 final_human_manual_experiments_run=True,
                 active_node="final_human_inspection_decision",
             )
@@ -152,14 +152,14 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="completion_self_interrogation_completed",
-                action="derive completion layers and run at least 100 grill-me questions per active layer to find remaining high-value work",
+                action="derive completion layers and run at least 100 self-interrogation questions per active layer to find remaining high-value work",
                 completion_self_interrogation_done=True,
                 completion_self_interrogation_questions=(
                     MODEL_DYNAMIC_LAYER_COUNT
-                    * MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
+                    * MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
                 ),
                 completion_self_interrogation_layer_count=MODEL_DYNAMIC_LAYER_COUNT,
-                completion_self_interrogation_questions_per_layer=MIN_FULL_GRILLME_QUESTIONS_PER_LAYER,
+                completion_self_interrogation_questions_per_layer=MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER,
                 completion_self_interrogation_layers=REQUIRED_RISK_FAMILY_MASK,
                 active_node="review_high_value_work",
             )
@@ -272,7 +272,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="no_obvious_high_value_work_remaining",
-                action="record that completion grill-me found no obvious high-value work",
+                action="record that completion self-interrogation found no obvious high-value work",
                 high_value_work_review="exhausted",
                 active_node="ready_to_complete",
             )

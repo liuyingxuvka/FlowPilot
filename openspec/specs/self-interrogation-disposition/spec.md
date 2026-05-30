@@ -5,7 +5,7 @@ TBD - created by archiving change persist-self-interrogation-findings. Update Pu
 ## Requirements
 ### Requirement: Self-interrogation findings are durable evidence
 
-FlowPilot SHALL represent meaningful grill-me/self-interrogation findings in a
+FlowPilot SHALL represent meaningful self-interrogation findings in a
 durable `flowpilot.self_interrogation_record.v1` artifact or in a PM suggestion
 ledger entry that cites such a source.
 

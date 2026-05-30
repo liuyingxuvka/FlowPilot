@@ -92,6 +92,12 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_router_facade_split_results.json",
     ]
+    similarity_convergence_check = [
+        sys.executable,
+        "simulations/run_flowpilot_similarity_convergence_checks.py",
+        "--json-out",
+        "simulations/flowpilot_similarity_convergence_results.json",
+    ]
     model_test_alignment_check = [
         sys.executable,
         "simulations/run_flowpilot_model_test_alignment_checks.py",
@@ -131,6 +137,7 @@ def main(argv: list[str] | None = None) -> int:
         model_hierarchy_check,
         structure_maintenance_check,
         router_facade_split_check,
+        similarity_convergence_check,
         model_test_alignment_check,
     ]
     ok = True

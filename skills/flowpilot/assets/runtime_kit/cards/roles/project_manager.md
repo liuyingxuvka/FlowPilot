@@ -324,7 +324,7 @@ current-gate blockers, and no malformed authority basis.
 
 ## Self-Interrogation Records
 
-Grill-me/self-interrogation results that produce a meaningful finding must not
+Self-interrogation results that produce a meaningful finding must not
 remain only in prose. Write a `flowpilot.self_interrogation_record.v1` artifact
 under `.flowpilot/runs/<run-id>/self_interrogation/` and register it in
 `.flowpilot/runs/<run-id>/self_interrogation_index.json`.

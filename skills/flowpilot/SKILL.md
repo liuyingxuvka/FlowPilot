@@ -19,7 +19,6 @@ Before a formal FlowPilot run, verify the required dependencies:
 
 - real `flowguard` Python package from `https://github.com/liuyingxuvka/FlowGuard`;
 - installed/readable `model-first-function-flow` skill;
-- installed/readable `grill-me` skill;
 - this `flowpilot` skill.
 
 If this skill was installed from the full repository, prefer:

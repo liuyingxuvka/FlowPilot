@@ -17,7 +17,7 @@ plan -> node -> heartbeat frontier -> route mutation -> verification
 and adds a recursive inspection system:
 
 ```text
-evidence -> human-like inspection -> issue grill -> route mutation ->
+evidence -> human-like inspection -> issue interrogate -> route mutation ->
 repair node -> same-inspector recheck -> parent/backward review
 ```
 
@@ -65,7 +65,7 @@ The model verifies these rules:
    leaf process model and leaf product-function model pass.
 4. Human-like review requires context and manual experiments. Screenshot
    existence or app-launch evidence is not enough.
-5. Blocking inspection issues must be made specific through inspector grilling.
+5. Blocking inspection issues must be made specific through inspector interrogation.
 6. Blocking inspection issues mutate the route and create repair nodes.
 7. Repair nodes need their own process and product-function models.
 8. Issues close only after same-inspector recheck passes.

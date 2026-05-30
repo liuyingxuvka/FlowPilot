@@ -52,7 +52,7 @@ repair.
 
 ### Requirement: Self-interrogation blockers use PM recovery policy
 FlowPilot SHALL classify missing, malformed, stale, dirty, or unresolved
-self-interrogation/grill-me records as PM-handled blocker policy rows.
+self-interrogation records as PM-handled blocker policy rows.
 
 #### Scenario: missing self-interrogation record
 - **WHEN** a protected gate requires a clean self-interrogation record and the record is missing

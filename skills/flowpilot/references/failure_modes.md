@@ -6,16 +6,16 @@ The FlowGuard models for FlowPilot found or guard against:
 - target drift;
 - low-standard formal route created after FlowPilot activation;
 - hidden self-interrogation evidence with no visible user-facing transcript;
-- full grill-me rounds with fewer than 100 questions per active layer;
-- full grill-me rounds that hit the question count but over-focus
+- full self-interrogation rounds with fewer than 100 questions per active layer;
+- full self-interrogation rounds that hit the question count but over-focus
   on one layer, such as UI, while skipping functional, state, implementation,
   validation, recovery, or delivery/showcase questions;
-- focused grill-me repeated against the same scope without stale evidence,
+- focused self-interrogation repeated against the same scope without stale evidence,
   route mutation, or impact bubbling;
-- focused grill-me replaced by either a full round at every tiny scope or a
+- focused self-interrogation replaced by either a full round at every tiny scope or a
   lightweight self-check that is too shallow for a phase, group, module, leaf
   node, or child-skill boundary;
-- lightweight self-checks treated as formal grill-me evidence;
+- lightweight self-checks treated as formal self-interrogation evidence;
 - route progress hidden in `.flowpilot/` with no visible user flow diagram while
   the Cockpit UI is unavailable;
 - user flow diagrams that invent a new execution path, or mix superseded routes
@@ -87,7 +87,7 @@ The FlowGuard models for FlowPilot found or guard against:
 - technical evidence such as test success, screenshot existence, or app launch
   is treated as product acceptance without human-like inspection;
 - human-like inspection finds a blocking issue but the route continues without
-  issue grilling, route mutation, repair modeling, repair evidence, and
+  issue interrogation, route mutation, repair modeling, repair evidence, and
   same-inspector recheck;
 - repair work starts or closes without its own development-process model and
   product-function model;
@@ -132,8 +132,8 @@ The FlowGuard models for FlowPilot found or guard against:
 - required child-skill step skipped without an explicit reason, waiver, or
   blocker;
 - formal chunk execution without verification;
-- formal chunk execution without focused parent-scope grill-me, parent-subtree
-  FlowGuard review, focused node-level grill-me, or lightweight heartbeat
+- formal chunk execution without focused parent-scope self-interrogation, parent-subtree
+  FlowGuard review, focused node-level self-interrogation, or lightweight heartbeat
   self-check;
 - formal chunk execution without the reusable quality package;
 - quality package treated as an empty pass with no typed result for thinness,
@@ -196,23 +196,23 @@ Keep these failure modes in the model and tests.
 - The PM product-function architecture must record the highest reasonably
   achievable target, unacceptable-result bar, and semantic-fidelity/no-silent-
   downgrade policy before contract freeze.
-- Full grill-me runs at formal boundaries only: startup, route mutation or
+- Full self-interrogation runs at formal boundaries only: startup, route mutation or
   standard expansion, and completion review.
   It must be user-visible, persisted as evidence, contain at least 100
   questions per active layer, and cover the full layer matrix:
   goal/acceptance, functional capability, data/state/source of truth,
   implementation strategy, UI/UX when relevant, validation/QA,
   recovery/heartbeat, and delivery/showcase/public-boundary quality.
-- Startup full grill-me seeds the frozen floor, improvement candidate pool, and
+- Startup full self-interrogation seeds the frozen floor, improvement candidate pool, and
   initial validation direction in one round. Do not add separate immediate
   post-freeze interviews for the same topics.
-- Focused grill-me runs at phase, group, module, leaf-node, and child-skill
+- Focused self-interrogation runs at phase, group, module, leaf-node, and child-skill
   boundaries with 20-40 questions by default and up to 50 for complex
   boundaries. It must record the scope id, local ambiguity, child-skill gates,
   validation needs, unchanged cross-layer impacts, and parent impact-bubbling
   decisions.
 - Lightweight self-check runs at continuation micro-steps with 5-10 targeted
-  questions and cannot satisfy a full or focused grill-me gate.
+  questions and cannot satisfy a full or focused self-interrogation gate.
 - Until the Cockpit UI is available, chat is the temporary cockpit: emit user
   flow diagrams, simulated next jumps, checks, fallback exits, continuation
   state, and acceptance delta at startup, route updates, and node transitions.
@@ -279,7 +279,7 @@ Keep these failure modes in the model and tests.
 - Every meaningful route scope must have both a development-process model and
   a product-function model. FlowGuard enforces the state transitions; the AI
   inspector judges product quality and writes evidence-backed issues.
-- Blocking inspection issues must be grilled into specific repairable records,
+- Blocking inspection issues must be interrogated into specific repairable records,
   mutate the route into repair nodes, run repair process/product models, and
   close only after same-inspector recheck passes.
 - Every non-leaf parent/module/group must run composite backward review before

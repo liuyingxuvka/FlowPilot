@@ -168,7 +168,7 @@ gates or return the parent node from its own checklist pass.
 FlowPilot keeps route structure maintainable by adding one reusable quality
 package instead of many repeated "raise the standard" stations.
 
-The package runs at parent/module and node boundaries after focused grill-me
+The package runs at parent/module and node boundaries after focused self-interrogation
 and before formal work. It records whether the current scope is too thin,
 whether a low-risk high-value improvement exists, whether child-skill
 milestones are visible, whether validation is strong enough, and whether
@@ -197,9 +197,9 @@ Required early gate:
   Intake Packet, the human-like reviewer approves sufficiency, and the project
   manager writes a material understanding memo with complexity classification
   and any discovery-subtree decision;
-- visible full grill-me at formal boundaries, with at least 100 questions per
+- visible full self-interrogation at formal boundaries, with at least 100 questions per
   active layer;
-- focused grill-me at phase/group/module/leaf-node/child-skill boundaries,
+- focused self-interrogation at phase/group/module/leaf-node/child-skill boundaries,
   with 20-40 questions by default and up to 50 for complex boundaries;
 - lightweight self-check at heartbeat/manual-resume micro-steps, with 5-10 targeted
   questions and no claim to satisfy a full or focused gate;

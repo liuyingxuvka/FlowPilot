@@ -31,7 +31,7 @@ The user wants the policy to be explicit and practical:
   blockers to PM.
 - Represent PM recovery choices without allowing PM to mark a failed gate as
   passed directly.
-- Bring self-interrogation/grill-me record failures into the same blocker
+- Bring self-interrogation record failures into the same blocker
   repair framework.
 - Cover the policy in FlowGuard meta/capability checks and runtime tests.
 

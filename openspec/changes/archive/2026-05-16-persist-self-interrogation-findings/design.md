@@ -1,6 +1,6 @@
 ## Context
 
-FlowPilot already performs several grill-me/self-interrogation passes:
+FlowPilot already performs several self-interrogation passes:
 
 - startup self-interrogation before product architecture;
 - PM ratification of startup self-interrogation;
@@ -28,7 +28,7 @@ This is intentionally mechanical:
 
 ## Non-Goals
 
-- Do not make Router judge whether a grill-me answer is insightful.
+- Do not make Router judge whether a self-interrogation answer is insightful.
 - Do not add a second reviewer framework beside the existing reviewer/officer
   gates.
 - Do not require every minor thought to become a blocker.

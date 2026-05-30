@@ -25,10 +25,10 @@ MAX_QUALITY_ROUTE_RAISES = 1
 MAX_QUALITY_REWORKS = 1
 MAX_COMPOSITE_STRUCTURAL_REPAIRS = 1
 MAX_TERMINAL_BACKWARD_REPLAY_REPAIRS = 1
-MIN_FULL_GRILLME_QUESTIONS_PER_LAYER = 100
-MIN_FOCUSED_GRILLME_QUESTIONS = 20
-MAX_FOCUSED_GRILLME_QUESTIONS = 50
-DEFAULT_FOCUSED_GRILLME_QUESTIONS = 30
+MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER = 100
+MIN_FOCUSED_SELF_INTERROGATION_QUESTIONS = 20
+MAX_FOCUSED_SELF_INTERROGATION_QUESTIONS = 50
+DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS = 30
 MIN_LIGHTWEIGHT_SELF_CHECK_QUESTIONS = 5
 MAX_LIGHTWEIGHT_SELF_CHECK_QUESTIONS = 10
 DEFAULT_LIGHTWEIGHT_SELF_CHECK_QUESTIONS = 7
@@ -387,7 +387,7 @@ class State:
     node_human_review_reviewer_approved: bool = False
     current_node_skill_improvement_check_done: bool = False
     node_human_inspections_passed: int = 0
-    inspection_issue_grilled: bool = False
+    inspection_issue_interrogated: bool = False
     pm_repair_decision_interrogations: int = 0
     human_inspection_repairs: int = 0
     composite_backward_context_loaded: bool = False
@@ -400,7 +400,7 @@ class State:
     composite_backward_reviews_passed: int = 0
     composite_backward_pm_segment_decision_recorded: bool = False
     composite_backward_pm_segment_decisions_recorded: int = 0
-    composite_issue_grilled: bool = False
+    composite_issue_interrogated: bool = False
     composite_issue_strategy: str = "none"
     composite_structural_route_repairs: int = 0
     composite_new_sibling_nodes: int = 0
@@ -546,7 +546,7 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "packet_result_author_matches_assignment": False,
         "worker_child_skill_use_evidence_returned": False,
         "reviewer_child_skill_use_evidence_checked": False,
-        "inspection_issue_grilled": False,
+        "inspection_issue_interrogated": False,
         "composite_backward_context_loaded": False,
         "composite_child_evidence_replayed": False,
         "composite_backward_neutral_observation_written": False,
@@ -555,7 +555,7 @@ def _reset_dual_layer_scope_gates() -> dict[str, object]:
         "composite_backward_human_review_passed": False,
         "composite_backward_review_reviewer_approved": False,
         "composite_backward_pm_segment_decision_recorded": False,
-        "composite_issue_grilled": False,
+        "composite_issue_interrogated": False,
         "composite_issue_strategy": "none",
     }
 
@@ -670,8 +670,8 @@ def _full_interrogation_ready(
 ) -> bool:
     return (
         layer_count > 0
-        and questions_per_layer >= MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
-        and total_questions >= layer_count * MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
+        and questions_per_layer >= MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
+        and total_questions >= layer_count * MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
         and _covers_required_risk_families(risk_family_mask)
     )
 
@@ -708,9 +708,9 @@ def _root_self_interrogation_gate_ready(state: State) -> bool:
 def _focused_interrogation_ready(*, total_questions: int, scope_id: str) -> bool:
     return (
         bool(scope_id)
-        and MIN_FOCUSED_GRILLME_QUESTIONS
+        and MIN_FOCUSED_SELF_INTERROGATION_QUESTIONS
         <= total_questions
-        <= MAX_FOCUSED_GRILLME_QUESTIONS
+        <= MAX_FOCUSED_SELF_INTERROGATION_QUESTIONS
     )
 
 
@@ -1336,7 +1336,7 @@ class AutopilotStep:
         "node_human_review_reviewer_approved",
         "current_node_skill_improvement_check_done",
         "node_human_inspections_passed",
-        "inspection_issue_grilled",
+        "inspection_issue_interrogated",
         "human_inspection_repairs",
         "composite_backward_context_loaded",
         "composite_child_evidence_replayed",
@@ -1348,7 +1348,7 @@ class AutopilotStep:
         "composite_backward_reviews_passed",
         "composite_backward_pm_segment_decision_recorded",
         "composite_backward_pm_segment_decisions_recorded",
-        "composite_issue_grilled",
+        "composite_issue_interrogated",
         "composite_issue_strategy",
         "composite_structural_route_repairs",
         "composite_new_sibling_nodes",
@@ -1660,7 +1660,7 @@ class AutopilotStep:
         "node_human_review_reviewer_approved",
         "current_node_skill_improvement_check_done",
         "node_human_inspections_passed",
-        "inspection_issue_grilled",
+        "inspection_issue_interrogated",
         "human_inspection_repairs",
         "composite_backward_context_loaded",
         "composite_child_evidence_replayed",
@@ -1672,7 +1672,7 @@ class AutopilotStep:
         "composite_backward_reviews_passed",
         "composite_backward_pm_segment_decision_recorded",
         "composite_backward_pm_segment_decisions_recorded",
-        "composite_issue_grilled",
+        "composite_issue_interrogated",
         "composite_issue_strategy",
         "composite_structural_route_repairs",
         "composite_new_sibling_nodes",
@@ -1895,7 +1895,7 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         )
     if not (state.quality_candidate_pool_seeded and state.validation_strategy_seeded):
         return InvariantResult.fail(
-            "final report emitted before startup grill-me seeded the improvement candidate pool and validation direction"
+            "final report emitted before startup self-interrogation seeded the improvement candidate pool and validation direction"
         )
     if not _root_self_interrogation_gate_ready(state):
         return InvariantResult.fail(
@@ -1978,7 +1978,7 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         state.completion_self_interrogation_done
         and state.high_value_work_review == "exhausted"
     ):
-        return InvariantResult.fail("final report emitted before completion grill-me exhausted obvious high-value work")
+        return InvariantResult.fail("final report emitted before completion self-interrogation exhausted obvious high-value work")
     if not _self_interrogation_index_final_ready(state):
         return InvariantResult.fail(
             "final report emitted before self-interrogation records were collected into a clean final index"
@@ -2334,26 +2334,26 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
         if not state.unfinished_current_node_recovery_checked:
             return InvariantResult.fail("chunk started before unfinished-current-node recovery check")
         if not state.parent_focused_interrogation_done:
-            return InvariantResult.fail("chunk started before focused parent-scope grill-me")
+            return InvariantResult.fail("chunk started before focused parent-scope self-interrogation")
         if not _focused_interrogation_ready(
             total_questions=state.parent_focused_interrogation_questions,
             scope_id=state.parent_focused_interrogation_scope_id,
         ):
             return InvariantResult.fail(
-                "chunk started before parent focused grill-me had 20-50 questions and a scope id"
+                "chunk started before parent focused self-interrogation had 20-50 questions and a scope id"
             )
         if not state.parent_subtree_review_checked:
             return InvariantResult.fail("chunk started before parent-subtree FlowGuard review")
         if not state.parent_product_function_model_checked:
             return InvariantResult.fail("chunk started before parent product-function model check")
         if not state.node_focused_interrogation_done:
-            return InvariantResult.fail("chunk started before focused node-level grill-me")
+            return InvariantResult.fail("chunk started before focused node-level self-interrogation")
         if not _focused_interrogation_ready(
             total_questions=state.node_focused_interrogation_questions,
             scope_id=state.node_focused_interrogation_scope_id,
         ):
             return InvariantResult.fail(
-                "chunk started before node focused grill-me had 20-50 questions and a scope id"
+                "chunk started before node focused self-interrogation had 20-50 questions and a scope id"
             )
         if not _node_self_interrogation_gate_ready(state):
             return InvariantResult.fail(

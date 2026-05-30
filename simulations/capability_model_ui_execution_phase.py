@@ -16,7 +16,7 @@ _REQUIRED_MODEL_NAMES = (
     "MAX_QUALITY_REWORKS",
     "MAX_STANDARD_EXPANSIONS",
     "MAX_UI_VISUAL_ITERATIONS",
-    "MIN_FULL_GRILLME_QUESTIONS_PER_LAYER",
+    "MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER",
     "MODEL_DYNAMIC_LAYER_COUNT",
     "REQUIRED_RISK_FAMILY_MASK",
     "State",
@@ -808,7 +808,7 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_feature_matrix_reviewed",
-                action="review UI feature matrix and mark thin areas before completion grill-me",
+                action="review UI feature matrix and mark thin areas before completion self-interrogation",
                 final_feature_matrix_review_done=True,
             )
             return
@@ -816,7 +816,7 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_acceptance_matrix_reviewed",
-                action="review UI acceptance matrix and identify missing verification evidence before completion grill-me",
+                action="review UI acceptance matrix and identify missing verification evidence before completion self-interrogation",
                 final_acceptance_matrix_review_done=True,
             )
             return
@@ -832,7 +832,7 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_quality_candidate_reviewed",
-                action="summarize UI quality candidates as done, deferred with reason, waived with reason, or must-supplement before completion grill-me",
+                action="summarize UI quality candidates as done, deferred with reason, waived with reason, or must-supplement before completion self-interrogation",
                 final_quality_candidate_review_done=True,
             )
             return
@@ -873,7 +873,7 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_human_manual_experiments_run",
-                action="operate the final UI like a human reviewer before completion grill-me",
+                action="operate the final UI like a human reviewer before completion self-interrogation",
                 final_human_manual_experiments_run=True,
             )
             return
@@ -898,14 +898,14 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="completion_self_interrogation_completed",
-                action="derive completion layers and run at least 100 grill-me questions per active layer before UI route close",
+                action="derive completion layers and run at least 100 self-interrogation questions per active layer before UI route close",
                 completion_self_interrogation_done=True,
                 completion_self_interrogation_questions=(
                     MODEL_DYNAMIC_LAYER_COUNT
-                    * MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
+                    * MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
                 ),
                 completion_self_interrogation_layer_count=MODEL_DYNAMIC_LAYER_COUNT,
-                completion_self_interrogation_questions_per_layer=MIN_FULL_GRILLME_QUESTIONS_PER_LAYER,
+                completion_self_interrogation_questions_per_layer=MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER,
                 completion_self_interrogation_layers=REQUIRED_RISK_FAMILY_MASK,
             )
             return
@@ -1039,7 +1039,7 @@ def apply_ui_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="no_obvious_high_value_work_remaining",
-                action="record that completion grill-me found no obvious high-value work",
+                action="record that completion self-interrogation found no obvious high-value work",
                 high_value_work_review="exhausted",
             )
             return

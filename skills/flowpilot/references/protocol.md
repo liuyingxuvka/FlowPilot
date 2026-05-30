@@ -39,7 +39,7 @@ long-form public explanation lives in `docs/protocol.md`.
    routes, agent IDs, screenshots, icons, or evidence may be referenced as
    read-only input only and must not become current control state.
 6. Commit the showcase-grade long-horizon floor.
-7. Run visible full grill-me before freezing the contract. In the same round,
+7. Run visible full self-interrogation before freezing the contract. In the same round,
    draft the intended floor, seed the improvement candidate pool, seed the
    initial validation direction, and surface product-function questions. Do
    not freeze the contract yet.
@@ -317,8 +317,8 @@ long-form public explanation lives in `docs/protocol.md`.
     routes use heartbeat restore; manual-resume routes load the same
     state/frontier/crew-memory inputs in the active turn. In both modes the
     project manager issues a completion-oriented runway, the controller syncs that
-    runway into the visible plan, and focused parent grill-me, parent-subtree
-    review, unfinished-current-node recovery check, focused node grill-me,
+    runway into the visible plan, and focused parent self-interrogation, parent-subtree
+    review, unfinished-current-node recovery check, focused node self-interrogation,
     lightweight self-check, quality package, child-skill gates when needed,
     dual-layer product/process gates, human-like inspection gates, and
     verification have been defined.
@@ -796,11 +796,11 @@ Repeat until complete or blocked:
    kind (`codex_heartbeat_automation`, `windows_scheduled_task`,
    `manual_resume`, or `blocked_unsupported`) and the exact host evidence
    source.
-8. Run focused parent-scope grill-me, then rerun the current parent node's
+8. Run focused parent-scope self-interrogation, then rerun the current parent node's
    FlowGuard process model against its existing child subtree and rerun the
    parent product-function model before entering child work.
 9. Emit the visible node roadmap in chat before defining implementation work.
-10. Run focused node-level grill-me for the active leaf node.
+10. Run focused node-level self-interrogation for the active leaf node.
 11. Build or refresh the active leaf product-function model and derive tests or
    manual experiments from it.
 12. Run a lightweight self-check for the current continuation micro-step.
@@ -817,7 +817,7 @@ Repeat until complete or blocked:
 18. Run anti-rough-finish review before checkpoint.
 19. Run human-like inspection with product context and manual/product-style
     experiments before checkpoint.
-20. If inspection fails, grill the finding into a specific issue, grill the
+20. If inspection fails, interrogate the finding into a specific issue, interrogate the
     project manager on repair strategy, ask the project manager for the repair
     route decision, mutate the route, create a repair node, run repair
     process/product models, write repair evidence, and recheck with the same
@@ -832,13 +832,13 @@ Repeat until complete or blocked:
     `advance_allowed: true`, then write heartbeat or manual-resume evidence and
     checkpoint evidence after verified progress.
 
-FlowPilot uses three self-interrogation depths. Full grill-me is for formal
+FlowPilot uses three self-interrogation depths. Full self-interrogation is for formal
 boundaries: startup product-function architecture and contract freeze, route
 mutation or standard expansion, and completion review. Full rounds derive
 active layers and require at least 100 questions per active layer. Startup
-full grill-me also seeds the improvement candidate pool and initial validation
+full self-interrogation also seeds the improvement candidate pool and initial validation
 direction, and feeds the PM product-function architecture, instead of
-separate post-freeze interviews for those same topics. Focused grill-me is for phase,
+separate post-freeze interviews for those same topics. Focused self-interrogation is for phase,
 group, module, leaf-node, and child-skill entry and uses 20-40 questions by
 default, up to 50 for complex boundaries. Lightweight self-check is for
 continuation micro-steps and tiny reversible choices and uses 5-10 questions.
@@ -982,7 +982,7 @@ evidence; it only points the PM to source files that may need direct review.
 Human-like inspection is a route mechanism, not a comment. Inspectors load the
 contract, route, product model, child-skill evidence, screenshots/logs/output,
 and parent context; then they operate or inspect the product like a real
-reviewer. Blocking issues must be made specific through inspector grilling and
+reviewer. Blocking issues must be made specific through inspector interrogation and
 must mutate the route into repair work. A repair closes only after repair
 process/product models, repair evidence, and same-inspector recheck pass.
 Human-like inspection is reviewer-owned: the controller cannot substitute a

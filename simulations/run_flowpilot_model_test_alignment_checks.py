@@ -40,6 +40,7 @@ from flowpilot_model_test_alignment_diagnostics import (
     _finding_counts,
 )
 from flowpilot_packet_result_family_parity_model import build_report as build_packet_result_family_parity_report
+from flowpilot_similarity_convergence_model import build_report as build_similarity_convergence_report
 
 def _plan_report(entry: dict[str, Any]) -> dict[str, Any]:
     plan: ModelTestAlignmentPlan = entry["plan"]
@@ -123,6 +124,7 @@ def build_report() -> dict[str, Any]:
     ]
     full_diagnostic = build_full_model_test_code_diagnostic()
     packet_result_family_parity = build_packet_result_family_parity_report()
+    similarity_convergence = build_similarity_convergence_report()
     findings: list[dict[str, Any]] = []
     for plan in per_plan:
         for finding in plan["report"]["findings"]:
@@ -140,8 +142,9 @@ def build_report() -> dict[str, Any]:
     source_known_bad_ok = all(case["ok"] for case in source_known_bad)
     full_diagnostic_ok = full_diagnostic["ok"]
     packet_result_family_parity_ok = packet_result_family_parity["ok"]
+    similarity_convergence_ok = similarity_convergence["ok"]
     return {
-        "ok": alignment_ok and known_bad_ok and source_audit_ok and source_known_bad_ok and full_diagnostic_ok and packet_result_family_parity_ok,
+        "ok": alignment_ok and known_bad_ok and source_audit_ok and source_known_bad_ok and full_diagnostic_ok and packet_result_family_parity_ok and similarity_convergence_ok,
         "result_type": "flowpilot_model_test_alignment",
         "alignment_ok": alignment_ok,
         "known_bad_ok": known_bad_ok,
@@ -149,6 +152,7 @@ def build_report() -> dict[str, Any]:
         "source_known_bad_ok": source_known_bad_ok,
         "full_diagnostic_ok": full_diagnostic_ok,
         "packet_result_family_parity_ok": packet_result_family_parity_ok,
+        "similarity_convergence_ok": similarity_convergence_ok,
         "full_coverage_ok": full_diagnostic["full_coverage_ok"],
         "release_convergence_ok": full_diagnostic["release_convergence_ok"],
         "source_audit_boundary": SOURCE_AUDIT_BOUNDARY,
@@ -160,6 +164,7 @@ def build_report() -> dict[str, Any]:
         "per_plan": per_plan,
         "source_contract_plan": source_contract_plan,
         "packet_result_family_parity": packet_result_family_parity,
+        "similarity_convergence": similarity_convergence,
         "full_model_test_code_diagnostic": full_diagnostic,
         "known_bad_sanity_checks": known_bad,
         "source_known_bad_sanity_checks": source_known_bad,

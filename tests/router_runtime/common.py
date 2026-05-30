@@ -10,11 +10,12 @@ import subprocess
 import sys
 import tempfile
 import threading
-import time
 import unittest
 from datetime import datetime, timedelta, timezone
 from unittest import mock
 from pathlib import Path
+
+from .fs_helpers import read_json, unlink_with_windows_retry
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -43,23 +44,6 @@ USER_REQUEST = {
     "provenance": "explicit_user_request",
     "source": "activation_turn",
 }
-
-
-def read_json(path: Path) -> dict:
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def unlink_with_windows_retry(path: Path, *, attempts: int = 20, delay: float = 0.02) -> None:
-    for attempt in range(attempts):
-        try:
-            path.unlink()
-            return
-        except FileNotFoundError:
-            return
-        except PermissionError:
-            if attempt + 1 >= attempts:
-                raise
-            time.sleep(delay)
 
 
 class FlowPilotRouterRuntimeTestBase(unittest.TestCase):

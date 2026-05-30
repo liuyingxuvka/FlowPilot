@@ -189,7 +189,7 @@ REQUIRED_LABELS = (
     "node_human_manual_experiments_run",
     "node_reviewer_independent_probe_done",
     "human_inspection_found_blocking_issue",
-    "human_inspection_issue_grilled",
+    "human_inspection_issue_interrogated",
     "pm_repair_decision_interrogated",
     "route_updated_after_human_inspection_failure",
     "node_human_inspection_passed",
@@ -202,7 +202,7 @@ REQUIRED_LABELS = (
     "composite_backward_review_found_existing_child_gap",
     "composite_backward_review_found_missing_sibling",
     "composite_backward_review_found_subtree_mismatch",
-    "composite_backward_issue_grilled",
+    "composite_backward_issue_interrogated",
     "route_updated_to_rework_composite_child",
     "route_updated_to_add_composite_sibling",
     "route_updated_to_rebuild_composite_subtree",
@@ -499,8 +499,8 @@ def _state_id(state: model.State) -> str:
         f"{state.node_human_inspection_passed},"
         f"{state.node_human_review_reviewer_approved},"
         f"node_review_count={state.node_human_inspections_passed},"
-        f"{state.inspection_issue_grilled},"
-        f"pm_repair_grills={state.pm_repair_decision_interrogations},"
+        f"{state.inspection_issue_interrogated},"
+        f"pm_repair_interrogates={state.pm_repair_decision_interrogations},"
         f"inspection_repairs={state.human_inspection_repairs},"
         f"composite_review={state.composite_backward_context_loaded},"
         f"{state.composite_child_evidence_replayed},"
@@ -512,7 +512,7 @@ def _state_id(state: model.State) -> str:
         f"composite_review_count={state.composite_backward_reviews_passed},"
         f"pm_segment={state.composite_backward_pm_segment_decision_recorded},"
         f"{state.composite_backward_pm_segment_decisions_recorded},"
-        f"composite_issue={state.composite_issue_grilled},"
+        f"composite_issue={state.composite_issue_interrogated},"
         f"{state.composite_issue_strategy},"
         f"structural_repairs={state.composite_structural_route_repairs},"
         f"siblings={state.composite_new_sibling_nodes},"

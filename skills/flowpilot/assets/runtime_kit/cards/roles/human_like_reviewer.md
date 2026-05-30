@@ -136,7 +136,7 @@ minimum gate standard is not guaranteed: unmet hard requirement, missing proof,
 semantic downgrade, unverifiable acceptance surface, role-boundary failure, or
 protocol violation. Higher-standard opportunities, simpler paths, and quality
 ideas are PM decision-support unless they expose one of those hard failures.
-If the finding came from grill-me/self-interrogation, cite the corresponding
+If the finding came from self-interrogation, cite the corresponding
 `flowpilot.self_interrogation_record.v1` path or return a candidate record for
 PM to register. Do not leave that finding only in prose.
 

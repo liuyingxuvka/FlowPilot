@@ -10,7 +10,7 @@ else:
     import capability_model as _model
 
 _REQUIRED_MODEL_NAMES = (
-    "DEFAULT_FOCUSED_GRILLME_QUESTIONS",
+    "DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS",
     "FunctionResult",
     "Iterable",
     "State",
@@ -138,9 +138,9 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="child_skill_focused_interrogation_completed",
-            action="run 20-50 focused grill-me questions for invoked child-skill boundaries",
+            action="run 20-50 focused self-interrogation questions for invoked child-skill boundaries",
             child_skill_focused_interrogation_done=True,
-            child_skill_focused_interrogation_questions=DEFAULT_FOCUSED_GRILLME_QUESTIONS,
+            child_skill_focused_interrogation_questions=DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS,
             child_skill_focused_interrogation_scope_id="invoked-child-skills",
         )
         return
@@ -149,7 +149,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="node_self_interrogation_record_written",
-            action="write a durable current-node self-interrogation record before child-skill contract loading, acceptance planning, or worker packet dispatch can rely on the grill-me result",
+            action="write a durable current-node self-interrogation record before child-skill contract loading, acceptance planning, or worker packet dispatch can rely on the self-interrogation result",
             node_self_interrogation_record_written=True,
         )
         return
@@ -649,12 +649,12 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         return
 
     if state.capability_backward_issue_strategy != "none":
-        if not state.capability_backward_issue_grilled:
+        if not state.capability_backward_issue_interrogated:
             yield _step(
                 state,
-                label="capability_backward_issue_grilled",
-                action="grill the failed capability backward review into an affected child, sibling gap, or subtree rebuild target",
-                capability_backward_issue_grilled=True,
+                label="capability_backward_issue_interrogated",
+                action="interrogate the failed capability backward review into an affected child, sibling gap, or subtree rebuild target",
+                capability_backward_issue_interrogated=True,
             )
             return
         if (
@@ -664,7 +664,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="pm_repair_decision_interrogated",
-                action="grill the project manager on capability repair strategy before choosing child rework, sibling insertion, or subtree rebuild",
+                action="interrogate the project manager on capability repair strategy before choosing child rework, sibling insertion, or subtree rebuild",
                 pm_repair_decision_interrogations=(
                     state.pm_repair_decision_interrogations + 1
                 ),

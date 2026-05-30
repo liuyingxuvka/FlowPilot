@@ -10,7 +10,7 @@ else:
     import meta_model as _model
 
 _REQUIRED_MODEL_NAMES = (
-    "DEFAULT_FOCUSED_GRILLME_QUESTIONS",
+    "DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS",
     "DEFAULT_LIGHTWEIGHT_SELF_CHECK_QUESTIONS",
     "FunctionResult",
     "Iterable",
@@ -213,9 +213,9 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="parent_focused_interrogation_completed",
-                action="run 20-50 focused grill-me questions for the active parent scope before subtree FlowGuard review",
+                action="run 20-50 focused self-interrogation questions for the active parent scope before subtree FlowGuard review",
                 parent_focused_interrogation_done=True,
-                parent_focused_interrogation_questions=DEFAULT_FOCUSED_GRILLME_QUESTIONS,
+                parent_focused_interrogation_questions=DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS,
                 parent_focused_interrogation_scope_id="active-parent",
                 active_node="review_parent_subtree",
             )
@@ -252,9 +252,9 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="node_focused_interrogation_completed",
-                action="run 20-50 focused grill-me questions for the active leaf node before defining implementation work",
+                action="run 20-50 focused self-interrogation questions for the active leaf node before defining implementation work",
                 node_focused_interrogation_done=True,
-                node_focused_interrogation_questions=DEFAULT_FOCUSED_GRILLME_QUESTIONS,
+                node_focused_interrogation_questions=DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS,
                 node_focused_interrogation_scope_id="active-leaf-node",
                 active_node="check_node_product_function_model",
             )
@@ -263,7 +263,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="node_self_interrogation_record_written",
-                action="write a durable current-node self-interrogation record before node modeling, acceptance planning, or worker packet dispatch can rely on the grill-me result",
+                action="write a durable current-node self-interrogation record before node modeling, acceptance planning, or worker packet dispatch can rely on the self-interrogation result",
                 node_self_interrogation_record_written=True,
                 active_node="check_node_product_function_model",
             )
@@ -869,7 +869,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                     chunk_state="none",
                     verification_defined=False,
                     checkpoint_written=False,
-                    active_node="grill_human_inspection_issue",
+                    active_node="interrogate_human_inspection_issue",
                 )
                 return
             yield _step(

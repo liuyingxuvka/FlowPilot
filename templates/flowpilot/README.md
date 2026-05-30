@@ -35,7 +35,7 @@ for review.
    the route sign in chat as before.
 7. Emit `startup_banner.template.md` in chat only after the complete explicit
    answer set has been recorded.
-8. Run Grill-me style self-interrogation.
+8. Run FlowPilot's internal self-interrogation.
 9. Create a fresh fixed six-agent crew for the new formal FlowPilot task, write
    `crew_ledger.json`, and write a compact role memory packet for every
    required crew role. The default startup target is six live background
@@ -121,7 +121,7 @@ for review.
    disposition fields, while role authority stays distinct: reviewers block
    only minimum-standard failures, workers never block gates, and officer
    blockers require formal model-gate findings.
-   Grill-me/self-interrogation output is durable evidence, not disposable
+   Self-interrogation output is durable evidence, not disposable
    prose. PM writes `self_interrogation/*.json` records and registers them in
    `self_interrogation_index.json` for startup, product architecture, current
    node entry, repair, completion, and meaningful role-result findings. Hard or
@@ -322,7 +322,7 @@ for review.
 - `controller_break_glass_patch.template.json`: temporary compensation record
   for break-glass patches, validation, rollback notes, and permanent-fix
   disposition.
-- `self_interrogation_record.template.json`: durable record for grill-me or
+- `self_interrogation_record.template.json`: durable record for
   self-interrogation findings, PM disposition, downstream artifact bindings,
   and unresolved hard/current finding count.
 - `self_interrogation_index.template.json`: run-level index that lets Router

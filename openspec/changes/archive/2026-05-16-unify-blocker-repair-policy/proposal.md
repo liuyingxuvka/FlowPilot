@@ -20,7 +20,7 @@ for recheck.
   roll back to an earlier gate, add a supplemental node, create a repair node,
   mutate the route, quarantine stale evidence, record a bounded waiver, or stop
   for the user, but may not silently mark the blocked gate as passed.
-- Make self-interrogation/grill-me blockers first-class PM-recovery blockers:
+- Make self-interrogation blockers first-class PM-recovery blockers:
   missing or dirty records require PM to re-run/record interrogation, turn
   findings into repair work, record a justified waiver when allowed, or change
   the route.

@@ -714,7 +714,7 @@ All notable changes to FlowPilot will be documented in this file.
 - Moved PM-authored material-scan and current-node work packet dispatch from
   reviewer pre-approval to router direct-dispatch preflight; reviewers now
   stay on worker-result, stage-gate, and PM-decision review.
-- Promoted `grill-me` from optional companion to required FlowPilot dependency.
+- Replaced the external `grill-me` dependency wording with FlowPilot-owned self-interrogation gates.
 - Updated the recommended install path to
   `python scripts\install_flowpilot.py --install-missing --install-flowguard`.
 - Updated public release checks to validate GitHub-backed Python package
@@ -1112,7 +1112,7 @@ Initial public source release.
 - Added FlowGuard-backed simulations for process, capability, startup, and release-tooling checks.
 - Added install, smoke, public-release, lifecycle, heartbeat, watchdog, busy-lease, and user-flow helper scripts.
 - Added bilingual README positioning FlowPilot as FlowGuard-based finite-state project control.
-- Added companion skill source metadata for FlowGuard, `model-first-function-flow`, `grill-me`, and `frontend-design`.
+- Added companion skill source metadata for FlowGuard, `model-first-function-flow`, and `frontend-design`.
 - Added minimal example material under `examples/minimal/`.
 
 ### Release Notes

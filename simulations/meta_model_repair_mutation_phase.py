@@ -213,12 +213,12 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
         return
 
     if state.issue == "composite_backward_failure":
-        if not state.composite_issue_grilled:
+        if not state.composite_issue_interrogated:
             yield _step(
                 state,
-                label="composite_backward_issue_grilled",
-                action="grill the failed composite backward review until it names the affected child, sibling gap, or subtree rebuild target",
-                composite_issue_grilled=True,
+                label="composite_backward_issue_interrogated",
+                action="interrogate the failed composite backward review until it names the affected child, sibling gap, or subtree rebuild target",
+                composite_issue_interrogated=True,
                 active_node="route_mutation_from_composite_backward_issue",
             )
             return
@@ -242,7 +242,7 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="pm_repair_decision_interrogated",
-                action="grill the project manager on composite repair strategy before choosing existing-child rework, sibling insertion, subtree rebuild, or parent impact bubbling",
+                action="interrogate the project manager on composite repair strategy before choosing existing-child rework, sibling insertion, subtree rebuild, or parent impact bubbling",
                 pm_repair_decision_interrogations=(
                     state.pm_repair_decision_interrogations + 1
                 ),
@@ -357,12 +357,12 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
                 active_node="pm_inspection_repair_strategy_decision",
             )
             return
-        if not state.inspection_issue_grilled:
+        if not state.inspection_issue_interrogated:
             yield _step(
                 state,
-                label="human_inspection_issue_grilled",
-                action="grill the failed human-like inspection until it has evidence, severity, repair target, and recheck condition",
-                inspection_issue_grilled=True,
+                label="human_inspection_issue_interrogated",
+                action="interrogate the failed human-like inspection until it has evidence, severity, repair target, and recheck condition",
+                inspection_issue_interrogated=True,
                 active_node="route_mutation_from_inspection_issue",
             )
             return
@@ -386,7 +386,7 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="pm_repair_decision_interrogated",
-                action="grill the project manager on inspection-failure repair strategy before route mutation: affected level, reset/add/split/rebuild choice, stale evidence, and recheck condition",
+                action="interrogate the project manager on inspection-failure repair strategy before route mutation: affected level, reset/add/split/rebuild choice, stale evidence, and recheck condition",
                 pm_repair_decision_interrogations=(
                     state.pm_repair_decision_interrogations + 1
                 ),
@@ -602,7 +602,7 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
                     chunk_state="none",
                     verification_defined=False,
                     checkpoint_written=False,
-                    active_node="grill_composite_backward_issue",
+                    active_node="interrogate_composite_backward_issue",
                 )
                 yield _step(
                     state,
@@ -613,7 +613,7 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
                     chunk_state="none",
                     verification_defined=False,
                     checkpoint_written=False,
-                    active_node="grill_composite_backward_issue",
+                    active_node="interrogate_composite_backward_issue",
                 )
                 yield _step(
                     state,
@@ -624,7 +624,7 @@ def apply_repair_mutation_phase(self, state: State) -> Iterable[FunctionResult]:
                     chunk_state="none",
                     verification_defined=False,
                     checkpoint_written=False,
-                    active_node="grill_composite_backward_issue",
+                    active_node="interrogate_composite_backward_issue",
                 )
                 return
             yield _step(

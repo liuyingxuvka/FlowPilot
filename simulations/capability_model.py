@@ -1,7 +1,7 @@
 """FlowGuard model for flowpilot capability routing.
 
 This model checks the planned skill-composition layer for FlowPilot. FlowPilot
-starts only at showcase-grade scope, exposes its grill-me style
+starts only at showcase-grade scope, exposes its self-interrogation style
 self-interrogation, creates heartbeat continuity, uses FlowGuard as process
 designer before routing capabilities, and refuses completion while obvious
 high-value work remains.
@@ -25,10 +25,10 @@ MAX_UI_CHILD_SKILL_ITERATION_ROUNDS = 40
 # State-space bound for exploring repeat UI loop branches. This is not a
 # runtime limit; the child UI skill owns the actual iteration standard.
 MAX_UI_VISUAL_ITERATIONS = 2
-MIN_FULL_GRILLME_QUESTIONS_PER_LAYER = 100
-MIN_FOCUSED_GRILLME_QUESTIONS = 20
-MAX_FOCUSED_GRILLME_QUESTIONS = 50
-DEFAULT_FOCUSED_GRILLME_QUESTIONS = 30
+MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER = 100
+MIN_FOCUSED_SELF_INTERROGATION_QUESTIONS = 20
+MAX_FOCUSED_SELF_INTERROGATION_QUESTIONS = 50
+DEFAULT_FOCUSED_SELF_INTERROGATION_QUESTIONS = 30
 MODEL_DYNAMIC_LAYER_COUNT = 6
 LAYER_GOAL_ACCEPTANCE = 1 << 0
 LAYER_FUNCTIONAL_CAPABILITY = 1 << 1
@@ -369,7 +369,7 @@ class State:
     parent_backward_targets_count: int = TARGET_PARENT_NODES
     capability_backward_pm_segment_decision_recorded: bool = False
     capability_backward_pm_segment_decisions_recorded: int = 0
-    capability_backward_issue_grilled: bool = False
+    capability_backward_issue_interrogated: bool = False
     capability_backward_issue_strategy: str = "none"
     pm_repair_decision_interrogations: int = 0
     capability_structural_route_repairs: int = 0
@@ -564,7 +564,7 @@ def _reset_human_inspection_gates() -> dict[str, object]:
         "capability_backward_human_review_passed": False,
         "capability_backward_review_reviewer_approved": False,
         "capability_backward_pm_segment_decision_recorded": False,
-        "capability_backward_issue_grilled": False,
+        "capability_backward_issue_interrogated": False,
         "capability_backward_issue_strategy": "none",
         "final_product_function_model_replayed": False,
         "final_product_model_officer_adversarial_probe_done": False,
@@ -782,8 +782,8 @@ def _full_interrogation_ready(
 ) -> bool:
     return (
         layer_count > 0
-        and questions_per_layer >= MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
-        and total_questions >= layer_count * MIN_FULL_GRILLME_QUESTIONS_PER_LAYER
+        and questions_per_layer >= MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
+        and total_questions >= layer_count * MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER
         and _covers_required_risk_families(risk_family_mask)
     )
 
@@ -822,9 +822,9 @@ def _root_self_interrogation_gate_ready(state: State) -> bool:
 def _focused_interrogation_ready(*, total_questions: int, scope_id: str) -> bool:
     return (
         bool(scope_id)
-        and MIN_FOCUSED_GRILLME_QUESTIONS
+        and MIN_FOCUSED_SELF_INTERROGATION_QUESTIONS
         <= total_questions
-        <= MAX_FOCUSED_GRILLME_QUESTIONS
+        <= MAX_FOCUSED_SELF_INTERROGATION_QUESTIONS
     )
 
 
@@ -1950,7 +1950,7 @@ class CapabilityRouterStep:
         "capability_backward_review_reviewer_approved",
         "capability_backward_pm_segment_decision_recorded",
         "capability_backward_pm_segment_decisions_recorded",
-        "capability_backward_issue_grilled",
+        "capability_backward_issue_interrogated",
         "capability_backward_issue_strategy",
         "capability_structural_route_repairs",
         "capability_new_sibling_nodes",
@@ -2319,7 +2319,7 @@ class CapabilityRouterStep:
         "capability_backward_review_reviewer_approved",
         "capability_backward_pm_segment_decision_recorded",
         "capability_backward_pm_segment_decisions_recorded",
-        "capability_backward_issue_grilled",
+        "capability_backward_issue_interrogated",
         "capability_backward_issue_strategy",
         "capability_structural_route_repairs",
         "capability_new_sibling_nodes",
@@ -2853,7 +2853,7 @@ def child_skill_fidelity_before_capability_work(
         and state.strict_gate_obligation_review_model_checked
     ):
         return InvariantResult.fail(
-            "capability work started before PM-owned child-skill gate manifest extraction, approver assignment, reviewer/officer/PM approvals, focused child-skill grill-me, exact source, substitute rejection, original standard extraction, standard promotion into node contract, evidence-obligation binding, invocation policy, requirement mapping, evidence plan, visible child-skill mini-route, conformance model, and strict gate-obligation review model"
+            "capability work started before PM-owned child-skill gate manifest extraction, approver assignment, reviewer/officer/PM approvals, focused child-skill self-interrogation, exact source, substitute rejection, original standard extraction, standard promotion into node contract, evidence-obligation binding, invocation policy, requirement mapping, evidence plan, visible child-skill mini-route, conformance model, and strict gate-obligation review model"
         )
     node_child_skill_work_started = (
         state.child_node_sidecar_scan_done
@@ -3671,7 +3671,7 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
         state.completion_self_interrogation_done
         and state.high_value_work_review == "exhausted"
     ):
-        return InvariantResult.fail("completed before completion grill-me exhausted obvious high-value work")
+        return InvariantResult.fail("completed before completion self-interrogation exhausted obvious high-value work")
     if not _self_interrogation_index_final_ready(state):
         return InvariantResult.fail(
             "completed before self-interrogation records were collected into a clean final index"
@@ -4249,7 +4249,7 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
 INVARIANTS = (
     Invariant(
         name="self_interrogation_before_contract",
-        description="Freeze the contract only after showcase floor and visible grill-me style self-review evidence exist.",
+        description="Freeze the contract only after showcase floor and visible self-interrogation style self-review evidence exist.",
         predicate=self_interrogation_before_contract,
     ),
     Invariant(

@@ -296,7 +296,7 @@ def apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="product_function_architecture_pm_synthesized",
-            action="project manager synthesizes grilled ideas into a product-function architecture decision package before contract freeze",
+            action="project manager synthesizes interrogated ideas into a product-function architecture decision package before contract freeze",
             product_function_architecture_pm_synthesized=True,
             active_node="write_product_function_high_standard_posture",
         )

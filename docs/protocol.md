@@ -30,7 +30,7 @@ branches, heartbeat behavior, and any task-local behavior models.
    routes, agent IDs, screenshots, icons, or evidence may be referenced as
    read-only input only and must not become current control state.
 6. Commit the showcase-grade long-horizon floor.
-7. Run visible full grill-me style self-interrogation. In the same startup
+7. Run visible full self-interrogation style self-interrogation. In the same startup
    round, draft the intended floor, seed the improvement candidate pool, seed
    the initial validation direction, and surface product-function questions.
    Do not freeze the contract yet.
@@ -688,7 +688,7 @@ evidence is precheck only: it may note risks for PM, but it cannot open, close,
 or block the gate.
 
 If a required authority blocks a gate, FlowPilot does not advance on evidence
-existence. It records the block, grills the issue when needed, asks the project
+existence. It records the block, interrogates the issue when needed, asks the project
 manager for repair-strategy interrogation, mutates or blocks the route, and
 rewrites the execution frontier. If a required authority is missing on
 heartbeat resume, FlowPilot restores or replaces that role before work
@@ -814,16 +814,16 @@ requires explicit approval for hard gates.
 ## Self-Interrogation And Heartbeat
 
 Startup self-interrogation must be visible in chat and persisted as structured
-evidence. FlowPilot uses three depths instead of repeating a full grill-me at
+evidence. FlowPilot uses three depths instead of repeating a full self-interrogation at
 every scope:
 
-- full grill-me at formal boundaries: startup, route mutation or standard
+- full self-interrogation at formal boundaries: startup, route mutation or standard
   expansion, and completion review;
-- focused grill-me at bounded boundaries: phase, group, module, leaf node, and
+- focused self-interrogation at bounded boundaries: phase, group, module, leaf node, and
   child-skill entry;
 - lightweight self-check at continuation micro-steps and tiny reversible choices.
 
-Full grill-me derives the dynamic layer matrix and asks at least 100 questions
+Full self-interrogation derives the dynamic layer matrix and asks at least 100 questions
 per active layer. A 100-question total across many layers is not enough. The
 startup full round also seeds improvement candidates and initial validation
 direction; do not run separate post-freeze interviews for those same topics. A
@@ -846,11 +846,11 @@ The coverage requirement is layered. A formal round must explicitly cover:
 
 Focused node-level rounds emphasize the active node's domain but still record
 which cross-layer impacts are unchanged, which require local checks, and which
-must bubble to the parent route model. A UI node cannot claim a full grill-me
+must bubble to the parent route model. A UI node cannot claim a full self-interrogation
 gate if lower-level capability, state, implementation, validation, and delivery
 questions were skipped.
 
-Each major route node should run focused node-level grill-me before defining
+Each major route node should run focused node-level self-interrogation before defining
 the next chunk. Each continuation micro-step should run a lightweight self-check
 before execution when it starts new work.
 
@@ -1240,13 +1240,13 @@ gate or node in the execution frontier. Nonblocking notes may be kept as notes
 only after all current-gate obligations are clear. The project manager cannot
 close, checkpoint, or advance a gate that has a current-gate caveat.
 
-A blocking inspection issue must be grilled until it has evidence, expected
+A blocking inspection issue must be interrogated until it has evidence, expected
 result, actual result, severity, affected node, affected parent rollups,
 affected product model, repair target, and same-inspector recheck condition.
 Then it mutates the route:
 
 ```text
-inspection failure -> issue grill -> PM repair strategy grill
+inspection failure -> issue interrogate -> PM repair strategy interrogate
 -> PM repair route decision -> route mutation -> repair node
 -> repair process model -> repair product model -> repair evidence
 -> same-inspector recheck -> resume original route or parent rollup
@@ -1271,7 +1271,7 @@ specific follow-up repair target.
 
 A failed gate is a structural decision, not a soft note. FlowPilot marks the
 failed child/subnode and its evidence as failed, stale, or superseded, bumps
-the route version only after a project-manager repair-strategy grill. That PM
+the route version only after a project-manager repair-strategy interrogate. That PM
 interrogation must decide whether the original child can cover the issue,
 whether to reset the child, insert an adjacent repair or regeneration child,
 split missing responsibilities into focused children, rebuild the subtree, or
@@ -1312,8 +1312,8 @@ No formal chunk may start until its verification is defined.
 No formal chunk may start until host continuation mode is known, continuation
 readiness has been checked (automated heartbeat health or manual-resume
 freshness), focused
-parent-scope grill-me, parent-subtree FlowGuard review, focused node-level
-grill-me, and the lightweight continuation self-check are complete. No formal
+parent-scope self-interrogation, parent-subtree FlowGuard review, focused node-level
+self-interrogation, and the lightweight continuation self-check are complete. No formal
 chunk may start until the fresh current-node FlowPilot Route Sign and current
 node roadmap have been shown in chat or, when Cockpit is the primary surface,
 visibly confirmed in Cockpit.
@@ -1335,7 +1335,7 @@ Before formal execution, run the reusable quality package:
 
 ```text
 enter parent or node -> refresh and visibly display FlowPilot Route Sign
--> focused grill-me -> quality package
+-> focused self-interrogation -> quality package
 -> FlowGuard/route check -> execute chunk -> verify -> checkpoint
 ```
 
@@ -1389,7 +1389,7 @@ When entering a parent layer, FlowPilot treats the existing child plan as model
 input:
 
 ```text
-load child subtree -> emit subtree map -> focused parent grill-me ->
+load child subtree -> emit subtree map -> focused parent self-interrogation ->
 process officer checks parent process model ->
 product officer checks parent product model -> adjust or enter children
 ```

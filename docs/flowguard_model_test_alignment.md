@@ -54,6 +54,12 @@ StructureMesh deferrals. The current burn-down pass adds direct
 external-contract evidence for the remaining runtime owner modules and keeps
 oversized modules visible as deferred structure work rather than hiding them.
 
+The runner also consumes the FlowGuard similarity-convergence gate. That gate
+is not a runtime replay; it turns similar FlowPilot branches into explicit
+maintenance groups, sibling-impact rows, false-friend rationale, and
+architecture-reduction candidates so a fix in one branch cannot be treated as
+family-wide without the related tests and model evidence.
+
 Each full-diagnostic gap carries triage metadata so maintenance can be planned
 without rereading every large script. The key fields are:
 
@@ -102,6 +108,7 @@ when that is the supported command users run.
 | --- | --- | --- | --- | --- |
 | Startup | `run_flowpilot_startup_control_checks.py`, `run_flowpilot_deterministic_startup_bootstrap_checks.py` | Native startup intake boundary before work, prompt-isolated run state, reviewer facts, and PM startup activation. | Startup daemon/runtime tests for native intake result folding, prompt-isolated run creation, and activation blocking. | Does not run UI smoke or parent Meta/Capability graphs. |
 | Packet/card/ACK | Packet lifecycle, card envelope, and event-contract model checks. | Packet body separation, card/bundle ACK identity, and ACK/return wait preconsumption. | Packet runtime tests, card runtime tests, and ACK/return runtime tests. | ACK evidence stays mechanical; it is not semantic review or PM approval. |
+| Similarity convergence | `run_flowpilot_similarity_convergence_checks.py` | Similar packet-result, ACK-return, route-mutation, and reconciliation branches have maintenance groups, sibling impacts, false-friend boundaries, and fold-candidate dispositions. | Similarity-convergence tests and the underlying packet-result, ACK, route mutation, branch-pruning, StructureMesh, and alignment evidence. | Does not authorize production folding by itself; downstream Architecture Reduction, ModelMesh, StructureMesh, or replay still owns contraction. |
 | Route mutation | `run_flowpilot_route_mutation_activation_checks.py` | Mutation topology, process/product recheck, old packet supersession, sibling replacement, stale evidence, and route-sign projection. | Route-mutation parent contract tests, focused route-mutation runtime child suites, and user-flow diagram tests. | Covers ordinary route mutation behavior through split child-suite evidence; aggregate runtime evidence is historical, not the routine tier command. |
 | Terminal/closure/resume | Runtime closure, recursive closure reconciliation, and resume checks. | Final ledger, backward replay, dirty-ledger closure blocking, and current-run resume re-entry. | Terminal, closure, and resume runtime tests. | This is not a production replay adapter. |
 | Role/output contracts | Output contract and role-output runtime checks. | Registry-backed role outputs, current wait authority, packet output-contract binding, and wrong-recipient rejection. | Role-output runtime tests and output-contract tests. | Checks mechanics only; task semantic quality is outside this runner. |
@@ -129,6 +136,9 @@ The runner prints a JSON payload with:
   findings. This is intentionally separate from `ok`.
 - `release_convergence_ok`: true when remaining full-diagnostic findings are
   only explicit StructureMesh deferrals.
+- `similarity_convergence`: the FlowGuard model-similarity report, existing
+  model preflight, architecture-reduction candidate review, and known-bad
+  sanity checks for similar FlowPilot branches.
 - `full_model_test_code_diagnostic`: surface counts, gap counts, per-surface
   rows, actionable findings, deduplicated actionable summary, counts by
   severity/repair/release relevance, and full-diagnostic known-bad results.

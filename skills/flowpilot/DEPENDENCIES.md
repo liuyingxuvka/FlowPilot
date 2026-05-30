@@ -6,7 +6,6 @@ Required before a formal FlowPilot run:
 
 - `flowguard`: real Python package from `https://github.com/liuyingxuvka/FlowGuard`
 - `model-first-function-flow`: Codex skill from the FlowGuard repository
-- `grill-me`: Codex skill for startup and focused self-interrogation
 - `flowpilot`: this skill
 
 Recommended full-repository install:

@@ -48,11 +48,10 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
 
         self.assertEqual(
             policy["required"],
-            ["flowpilot", "flowguard", "model-first-function-flow", "grill-me"],
+            ["flowpilot", "flowguard", "model-first-function-flow"],
         )
         self.assertIn("flowguard", policy["required_python_packages"])
         self.assertIn("model-first-function-flow", policy["required_codex_skills"])
-        self.assertIn("grill-me", policy["required_codex_skills"])
         self.assertIn("frontend-design", policy["optional"])
         self.assertIn("design-iterator", policy["optional_codex_skills"])
         self.assertIn("--install-flowguard", policy["policy"])

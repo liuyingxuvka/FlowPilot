@@ -507,8 +507,8 @@
       "status": "selected",
       "status_summary_reports_blocked": false
     },
-    "run_id": "run-20260529-191802",
-    "run_root": ".flowpilot\\runs\\run-20260529-191802",
+    "run_id": "run-20260530-083407",
+    "run_root": ".flowpilot\\runs\\run-20260530-083407",
     "sealed_body_opened_by_mesh": false,
     "terminal_disposition": {
       "packet_authority_unchecked_disposed_by_terminal_state": false,

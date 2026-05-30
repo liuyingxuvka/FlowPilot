@@ -5,7 +5,6 @@ FlowPilot requires:
 - real `flowguard` Python package from
   `https://github.com/liuyingxuvka/FlowGuard`;
 - installed/readable `model-first-function-flow` skill;
-- installed/readable `grill-me` skill;
 - this `flowpilot` skill;
 - installer-readable dependency metadata in `flowpilot.dependencies.json`;
 - writable project workspace for `.flowpilot/`;

@@ -106,7 +106,7 @@
       "hard_stop_conditions": [
         "unresolved_hard_current_findings_require_repair_or_authorized_waiver"
       ],
-      "controller_boundary": "Controller delivers blocker metadata to PM; PM owns grill-me rerun and disposition."
+      "controller_boundary": "Controller delivers blocker metadata to PM; PM owns self-interrogation rerun and disposition."
     }
   ]
 }

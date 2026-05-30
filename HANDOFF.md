@@ -49,6 +49,16 @@ illegal duplicate authority inside one scope, including daemon writers, active
 packet holders, PM package dispositions, route replacement, material progress
 generation, ACK/output waits, and final closure evidence.
 
+The maintenance baseline also includes a FlowGuard similarity-convergence gate.
+It lives in `simulations/flowpilot_similarity_convergence_model.py`, is checked
+by `simulations/run_flowpilot_similarity_convergence_checks.py`, and records
+`simulations/flowpilot_similarity_convergence_results.json`. It uses FlowGuard
+0.39 model-similarity and plan-detail APIs to group similar packet-result,
+ACK-return, route-mutation, and reconciliation branches; derive sibling impact
+when one member changes; keep false friends such as route display versus route
+mutation separate; and classify branch-fold candidates before Architecture
+Reduction, Model-Test Alignment, ModelMesh, StructureMesh, or replay work.
+
 As of the new-only FlowPilot contract, the active maintenance baseline is
 recorded in `docs/flowpilot_maintenance_convergence_20260527.md` and the
 current new-only surface-removal change. Completed OpenSpec changes were archived,
@@ -148,7 +158,7 @@ and model-confidence overclaims must also fail.
 - Markdown files are English summaries derived from canonical state.
 - Routes are versioned. Old routes are retained and may be rolled back to only
   if their checkpoints remain valid.
-- `grill-me` style self-interrogation is a required early gate.
+- `self-interrogation` style self-interrogation is a required early gate.
 - Formal startup now has a material intake and PM material understanding gate
   after full self-interrogation and six-agent crew recovery, but before PM
   product-function architecture. It inventories user-provided and
@@ -201,7 +211,7 @@ and model-confidence overclaims must also fail.
 - Every meaningful FlowPilot scope now has two FlowGuard model gates: a
   development-process model and a product-function model.
 - Human-like inspection is now a route mechanism. Blocking inspection findings
-  must be grilled into specific repairable issues. Local defects go through a
+  must be interrogated into specific repairable issues. Local defects go through a
   local repair and same-inspector recheck; route-invalidating findings mutate
   the route into repair nodes and close only after repair evidence and
   same-inspector recheck.
@@ -687,6 +697,7 @@ python simulations/run_flowpilot_recursive_closure_reconciliation_checks.py --js
 python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json
 python simulations/run_flowpilot_singleton_identity_checks.py --json-out simulations/flowpilot_singleton_identity_results.json
 python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
+python simulations/run_flowpilot_similarity_convergence_checks.py --json-out simulations/flowpilot_similarity_convergence_results.json
 python simulations/run_flowpilot_model_maturation_checks.py --json-out simulations/flowpilot_model_maturation_results.json
 python scripts/check_install.py
 python scripts/smoke_autopilot.py

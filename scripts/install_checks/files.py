@@ -87,13 +87,18 @@ def run_checks(result: dict[str, object]) -> None:
     try:
         dependencies = json.loads((ROOT / "flowpilot.dependencies.json").read_text(encoding="utf-8"))
         by_name = {item.get("name"): item for item in dependencies.get("dependencies", [])}
+        required_codex_skills = {
+            item.get("name")
+            for item in dependencies.get("dependencies", [])
+            if item.get("type") == "codex_skill" and item.get("required") is True
+        }
         bootstrap_ok = (
             by_name.get("flowguard", {}).get("required") is True
             and by_name.get("flowguard", {}).get("source", {}).get("kind") == "github_python_package"
             and by_name.get("flowguard", {}).get("install", {}).get("requires_explicit_flag")
             == "--install-flowguard"
             and by_name.get("model-first-function-flow", {}).get("required") is True
-            and by_name.get("grill-me", {}).get("required") is True
+            and required_codex_skills == {"flowpilot", "model-first-function-flow"}
             and "Dependency Bootstrap" in (ROOT / "skills/flowpilot/SKILL.md").read_text(encoding="utf-8")
             and (ROOT / "skills/flowpilot/DEPENDENCIES.md").exists()
         )

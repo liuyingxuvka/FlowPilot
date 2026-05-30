@@ -7,7 +7,7 @@
       "evidence_path": ".flowpilot/runs/run-001/capabilities/self_interrogation-0001.json",
       "id": "self_interrogation",
       "required": true,
-      "source_skill": "grill-me",
+      "source_skill": "flowpilot",
       "evidence_required": true,
       "status": "planned"
     },

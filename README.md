@@ -137,7 +137,7 @@ Recommended human-facing path:
 ```text
 Install FlowPilot from https://github.com/liuyingxuvka/FlowPilot.
 Install and verify the required dependencies too:
-flowguard, model-first-function-flow, grill-me, and flowpilot itself.
+flowguard, model-first-function-flow, and flowpilot itself.
 ```
 
 3. Start actual project work with only:
@@ -366,7 +366,7 @@ FlowGuard counterexample 是设计反馈。如果模型显示某条 route 可以
 ```text
 Install FlowPilot from https://github.com/liuyingxuvka/FlowPilot.
 Install and verify the required dependencies too:
-flowguard, model-first-function-flow, grill-me, and flowpilot itself.
+flowguard, model-first-function-flow, and flowpilot itself.
 ```
 
 3. 真正开始项目时，只发送：

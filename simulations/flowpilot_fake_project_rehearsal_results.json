@@ -5654,7 +5654,7 @@
         }
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\normal_full_path"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\normal_full_path"
     },
     {
       "commands": [
@@ -10870,7 +10870,7 @@
         "wrong_role_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\wrong_role_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\wrong_role_recovery"
     },
     {
       "commands": [
@@ -12867,7 +12867,7 @@
         "route_node_count": 3
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\planning_chain_does_not_terminal"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\planning_chain_does_not_terminal"
     },
     {
       "commands": [
@@ -19091,7 +19091,7 @@
         "terminal": "terminal_complete"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\route_mutation_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\route_mutation_recovery"
     },
     {
       "commands": [
@@ -19203,7 +19203,7 @@
         "result_status": "result_blocked"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\missing_ack_block"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_ack_block"
     },
     {
       "commands": [
@@ -19330,7 +19330,7 @@
         "next_action": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\ack_only_wait"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\ack_only_wait"
     },
     {
       "commands": [
@@ -19521,7 +19521,7 @@
         "resume_decision": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\lifecycle_guard_resume_and_patrol"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\lifecycle_guard_resume_and_patrol"
     },
     {
       "commands": [
@@ -19885,7 +19885,7 @@
         "review_packet": "packet-0003"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\slow_reviewer_progress_preserved"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\slow_reviewer_progress_preserved"
     },
     {
       "commands": [
@@ -20323,7 +20323,7 @@
         "reassignment_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\accepted_packet_reassignment_rejected"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\accepted_packet_reassignment_rejected"
     },
     {
       "commands": [
@@ -20350,7 +20350,7 @@
         "complete_flowguard_invalid_choice": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_control_plane_duty\\retired_side_command"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\retired_side_command"
     }
   ],
   "target_plan": {
@@ -20577,5 +20577,5 @@
       }
     ]
   },
-  "work_root": "tmp\\flowpilot_fake_project_rehearsal_control_plane_duty"
+  "work_root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal"
 }

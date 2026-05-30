@@ -110,7 +110,7 @@ If any inspector fails the node:
 
 ```text
 inspection failure
-  -> grill the inspector result for specificity
+  -> interrogate the inspector result for specificity
   -> record blocking issue with evidence
   -> mutate the route by adding a repair node
   -> invalidate affected rollups/evidence
@@ -165,10 +165,10 @@ unreachable controls, text overlap or clipping, whitespace/density/crowding,
 hierarchy/readability, responsive fit, aesthetic verdict when visual quality is
 in scope, and repair suggestions for PM routing.
 
-## Inspector Grill
+## Inspector Interrogate
 
 When an inspector finds a blocking issue, the issue is not accepted as a vague
-complaint. The inspector result must be grilled until it becomes repairable.
+complaint. The inspector result must be interrogated until it becomes repairable.
 
 The issue record must include:
 
@@ -336,7 +336,7 @@ control-flow invariants such as:
 - no leaf close without human-like inspection;
 - no parent close without backward review;
 - no route completion while a blocking issue is open;
-- no issue closure without inspector grilling and same-inspector recheck;
+- no issue closure without inspector interrogation and same-inspector recheck;
 - no completion from screenshot existence alone;
 - no repair without its own process and product models;
 - no route mutation without route-version evidence and frontier update.

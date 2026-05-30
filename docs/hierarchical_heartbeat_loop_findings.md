@@ -27,7 +27,7 @@ The model uses a concrete route tree with:
 - 28 leaf nodes before completion review;
 - 29 leaf nodes if completion review raises the standard;
 - 3 FlowGuard model layers per leaf minimum;
-- tiered grill-me depth: full 100-per-active-layer rounds only at formal
+- tiered self-interrogation depth: full 100-per-active-layer rounds only at formal
   boundaries, focused 20-50 question rounds at phase/group/module/leaf and
   child-skill boundaries, and lightweight 5-10 question checks at heartbeat
   micro-steps.
@@ -41,7 +41,7 @@ Every leaf must pass this heartbeat sequence:
 
 1. Enter the leaf by heartbeat.
 2. Emit a micro-roadmap.
-3. Run focused leaf-node grill-me.
+3. Run focused leaf-node self-interrogation.
 4. Build a local FlowGuard stack.
 5. Check that local FlowGuard stack.
 6. Derive tests from the model.
@@ -61,7 +61,7 @@ The local FlowGuard stack is modeled as at least:
 Group and phase nodes are not just labels. They each require:
 
 - parent roadmap;
-- focused parent-scope grill-me;
+- focused parent-scope self-interrogation;
 - FlowGuard refinement against child outputs;
 - model-derived acceptance checks;
 - rollup evidence.
@@ -74,7 +74,7 @@ implementation node.
 Completion requires:
 
 - full route tree map;
-- full completion Grill-me;
+- full completion Self-interrogation;
 - conformance replay from child evidence to parent contracts;
 - high-value-work review;
 - final report;
@@ -102,7 +102,7 @@ Result:
 - non-terminating components: 0.
 
 The representative success trace contains 441 heartbeat steps, 28 leaf entries,
-28 leaf Grill-me rounds, 28 leaf FlowGuard stack checks, 14 group reviews, and
+28 leaf Self-interrogation rounds, 28 leaf FlowGuard stack checks, 14 group reviews, and
 6 phase reviews before route completion.
 
 Existing compatibility checks also passed:
@@ -118,7 +118,7 @@ The next protocol repair should not merely raise the question count. It should
 make the route tree itself the execution primitive:
 
 - a formal route is a hierarchy, not a flat list;
-- every leaf has local Grill-me, local FlowGuard, derived checks, and evidence;
+- every leaf has local Self-interrogation, local FlowGuard, derived checks, and evidence;
 - every parent node has a real review gate;
 - heartbeat is the transition mechanism between micro-stages;
 - completion can expand the route tree when the standard rises.

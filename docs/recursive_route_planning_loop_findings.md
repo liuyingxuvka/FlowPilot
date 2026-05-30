@@ -15,7 +15,7 @@ The modeled rule is that a route tree is never just a static plan:
   entering children;
 - if the child subtree needs adjustment, the route enters a formal mutation
   boundary, creates a new route version, and reruns the same parent review;
-- every leaf node still has its own local Grill-me, local FlowGuard model,
+- every leaf node still has its own local Self-interrogation, local FlowGuard model,
   model-derived checks, execution, validation, parent alignment, and evidence;
 - if work stops while the current leaf is unfinished, the next heartbeat
   resumes the same leaf and cannot advance to the next node.
@@ -42,7 +42,7 @@ Each parent node follows the same sequence:
 
 1. Load the existing child subtree.
 2. Emit the visible child-subtree map.
-3. Run focused parent-scope Grill-me.
+3. Run focused parent-scope Self-interrogation.
 4. Build the parent subtree FlowGuard model.
 5. Run parent subtree FlowGuard checks.
 6. Decide whether the child subtree needs adjustment.
@@ -60,7 +60,7 @@ mutation boundary:
 
 1. Enter the subtree mutation boundary.
 2. Emit the mutation roadmap.
-3. Run full mutation-level Grill-me.
+3. Run full mutation-level Self-interrogation.
 4. Analyze stale evidence, parent contracts, and resume scope.
 5. Check the mutation FlowGuard model.
 6. Write the route delta.
