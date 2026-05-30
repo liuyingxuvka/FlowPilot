@@ -42,6 +42,8 @@ Manual diagnostic/repair commands:
 
 ```powershell
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json status
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resume --reason manual_resume
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --agent-id <agent_id> --host-kind live
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json submit-result --lease-id <lease_id> --packet-id <packet_id> --body <sealed_result_summary>
@@ -57,7 +59,7 @@ Legacy `flowpilot_router.py next/apply/run-until-wait` commands are existing-old
 
 Use `run-until-wait` only before daemon takeover, for diagnostic, test, or explicit repair. In daemon mode, it is not the normal progress command after a row, wait, heartbeat, role response, or unclear next step; normal progress comes from daemon-owned status plus the Controller action ledger.
 
-Formal startup creates the new current-run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, and first high-standard pre-planning packet before returning the new runtime's public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI.
+Formal startup creates the new current-run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, first high-standard pre-planning packet, and a metadata-only lifecycle guard before returning the new runtime's public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI. Nonterminal status, patrol, resume, lease, ACK, and result commands keep `controller_stop_allowed: false`; only terminal closure with lifecycle guard decision `terminal_return` may end the Controller role.
 
 During formal runtime, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached. `next`, `apply`, and `run-until-wait` remain diagnostic, test, and explicit repair tools, not the normal metronome that keeps a run alive.
 

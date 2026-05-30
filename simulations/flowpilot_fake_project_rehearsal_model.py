@@ -36,6 +36,9 @@ class State:
     route_mutation_recovered: bool = False
     missing_ack_result_blocked: bool = False
     ack_only_wait_observed: bool = False
+    lifecycle_resume_rehydrated: bool = False
+    lifecycle_patrol_recovery_classified: bool = False
+    nonterminal_guard_stop_blocked: bool = False
     retired_side_command_rejected: bool = False
     scenario_report_written: bool = False
     internal_helper_only: bool = False
@@ -44,6 +47,9 @@ class State:
     wrong_role_lease_accepted: bool = False
     missing_ack_result_accepted: bool = False
     ack_only_terminal: bool = False
+    lifecycle_resume_from_chat: bool = False
+    lifecycle_patrol_allows_nonterminal_stop: bool = False
+    lifecycle_repeated_wait_not_recovered: bool = False
     pm_only_terminal: bool = False
     planning_chain_terminal: bool = False
     terminal_missing_route_node: bool = False
@@ -90,6 +96,9 @@ REQUIRED_SAFE_LABELS = (
     "observe_route_mutation_recovery",
     "observe_missing_ack_result_block",
     "observe_ack_only_wait_not_terminal",
+    "observe_lifecycle_resume_rehydration",
+    "observe_lifecycle_patrol_recovery",
+    "observe_lifecycle_guard_blocks_nonterminal_stop",
     "observe_retired_side_command_rejection",
     "write_rehearsal_report",
 )
@@ -178,6 +187,12 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("observe_missing_ack_result_block", replace(state, missing_ack_result_blocked=True)),)
     if not state.ack_only_wait_observed:
         return (Transition("observe_ack_only_wait_not_terminal", replace(state, ack_only_wait_observed=True)),)
+    if not state.lifecycle_resume_rehydrated:
+        return (Transition("observe_lifecycle_resume_rehydration", replace(state, lifecycle_resume_rehydrated=True)),)
+    if not state.lifecycle_patrol_recovery_classified:
+        return (Transition("observe_lifecycle_patrol_recovery", replace(state, lifecycle_patrol_recovery_classified=True)),)
+    if not state.nonterminal_guard_stop_blocked:
+        return (Transition("observe_lifecycle_guard_blocks_nonterminal_stop", replace(state, nonterminal_guard_stop_blocked=True)),)
     if not state.retired_side_command_rejected:
         return (Transition("observe_retired_side_command_rejection", replace(state, retired_side_command_rejected=True)),)
     if not state.scenario_report_written:
@@ -229,6 +244,9 @@ def invariant_failures(state: State) -> list[str]:
         and state.route_mutation_recovered
         and state.missing_ack_result_blocked
         and state.ack_only_wait_observed
+        and state.lifecycle_resume_rehydrated
+        and state.lifecycle_patrol_recovery_classified
+        and state.nonterminal_guard_stop_blocked
         and state.retired_side_command_rejected
     ):
         failures.append("Rehearsal report written before normal and error scenarios completed")
@@ -244,6 +262,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Missing-ACK result was accepted as authoritative")
     if state.ack_only_terminal:
         failures.append("ACK-only path reached terminal completion")
+    if state.lifecycle_resume_from_chat:
+        failures.append("Lifecycle resume used chat history instead of current-run ledger")
+    if state.lifecycle_patrol_allows_nonterminal_stop:
+        failures.append("Lifecycle patrol allowed nonterminal Controller stop")
+    if state.lifecycle_repeated_wait_not_recovered:
+        failures.append("Lifecycle patrol failed to classify repeated wait as recovery")
     if state.pm_only_terminal:
         failures.append("PM-only path reached terminal completion")
     if state.planning_chain_terminal:
@@ -293,6 +317,9 @@ def hazard_states() -> dict[str, State]:
         "wrong_role_lease_accepted": replace(target, wrong_role_lease_accepted=True),
         "missing_ack_result_accepted": replace(target, missing_ack_result_accepted=True),
         "ack_only_terminal": replace(target, ack_only_terminal=True),
+        "lifecycle_resume_from_chat": replace(target, lifecycle_resume_from_chat=True),
+        "lifecycle_patrol_allows_nonterminal_stop": replace(target, lifecycle_patrol_allows_nonterminal_stop=True),
+        "lifecycle_repeated_wait_not_recovered": replace(target, lifecycle_patrol_recovery_classified=False, lifecycle_repeated_wait_not_recovered=True),
         "pm_only_terminal": replace(target, pm_only_terminal=True),
         "planning_chain_terminal": replace(target, planning_chain_terminal=True),
         "terminal_missing_route_node": replace(target, route_node_3_complete=False, terminal_missing_route_node=True),

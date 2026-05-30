@@ -20,6 +20,9 @@
       "ack_only_terminal",
       "error_flow_unrecovered",
       "internal_helper_only",
+      "lifecycle_patrol_allows_nonterminal_stop",
+      "lifecycle_repeated_wait_not_recovered",
+      "lifecycle_resume_from_chat",
       "missing_ack_result_accepted",
       "planning_chain_terminal",
       "pm_only_terminal",
@@ -41,6 +44,16 @@
       ],
       "internal_helper_only": [
         "Rehearsal used an internal helper instead of the public CLI black box"
+      ],
+      "lifecycle_patrol_allows_nonterminal_stop": [
+        "Lifecycle patrol allowed nonterminal Controller stop"
+      ],
+      "lifecycle_repeated_wait_not_recovered": [
+        "Rehearsal report written before normal and error scenarios completed",
+        "Lifecycle patrol failed to classify repeated wait as recovery"
+      ],
+      "lifecycle_resume_from_chat": [
+        "Lifecycle resume used chat history instead of current-run ledger"
       ],
       "missing_ack_result_accepted": [
         "Missing-ACK result was accepted as authoritative"
@@ -4761,7 +4774,7 @@
         }
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\normal_full_path"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\normal_full_path"
     },
     {
       "commands": [
@@ -9121,7 +9134,7 @@
         "wrong_role_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\wrong_role_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\wrong_role_recovery"
     },
     {
       "commands": [
@@ -10769,7 +10782,7 @@
         "route_node_count": 3
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\planning_chain_does_not_terminal"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\planning_chain_does_not_terminal"
     },
     {
       "commands": [
@@ -15957,7 +15970,7 @@
         "terminal": "terminal_complete"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\route_mutation_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\route_mutation_recovery"
     },
     {
       "commands": [
@@ -16053,7 +16066,7 @@
         "result_status": "result_blocked"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_ack_block"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\missing_ack_block"
     },
     {
       "commands": [
@@ -16142,7 +16155,144 @@
         "next_action": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\ack_only_wait"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\ack_only_wait"
+    },
+    {
+      "commands": [
+        {
+          "args": [
+            "start",
+            "--run-id",
+            "run-fake-lifecycle-guard",
+            "--headless-startup-text",
+            "<sealed>"
+          ],
+          "payload": {
+            "mode": "rehearsal",
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm-guard",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "lease_id": "lease-0001",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "resume",
+            "--reason",
+            "fake_lifecycle_resume"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "patrol"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "patrol"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        }
+      ],
+      "name": "lifecycle_guard_resume_and_patrol",
+      "observations": {
+        "controller_stop_allowed": false,
+        "patrol_decision": "reissue_or_replace_lease",
+        "resume_decision": "wait_for_result"
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\lifecycle_guard_resume_and_patrol"
     },
     {
       "commands": [
@@ -16152,7 +16302,7 @@
           ],
           "returncode": 0,
           "stderr_excerpt": "",
-          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,status,lease-agent,ack,submit-result}\n                        ...\n\nFormal entrypoint for the new black-box FlowPilot runtime. This entrypoint\nstarts a new FlowPilot run from the native startup intake UI, "
+          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}\n                        ...\n\nFormal entrypoint for the new black-box FlowPilot runtime. This entrypoint\nstarts a new FlowPilot run from the native start"
         },
         {
           "args": [
@@ -16160,7 +16310,7 @@
             "complete-flowguard"
           ],
           "returncode": 2,
-          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,status,lease-agent,ack,submit-result}\n                        ...\nflowpilot_new.py: error: argument command: invalid choice: 'complete-flowguard' (choose from start, run-fake-e2e, status, lease-agent, ack",
+          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}\n                        ...\nflowpilot_new.py: error: argument command: invalid choice: 'complete-flowguard' (choose from start, run-fake-e2e, status, pa",
           "stdout_excerpt": ""
         }
       ],
@@ -16169,7 +16319,7 @@
         "complete_flowguard_invalid_choice": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\retired_side_command"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus\\retired_side_command"
     }
   ],
   "target_plan": {
@@ -16196,6 +16346,9 @@
       "observe_route_mutation_recovery",
       "observe_missing_ack_result_block",
       "observe_ack_only_wait_not_terminal",
+      "observe_lifecycle_resume_rehydration",
+      "observe_lifecycle_patrol_recovery",
+      "observe_lifecycle_guard_blocks_nonterminal_stop",
       "observe_retired_side_command_rejection",
       "write_rehearsal_report"
     ],
@@ -16210,8 +16363,14 @@
       "final_route_wide_ledger_built": true,
       "flowguard_packet_complete": true,
       "internal_helper_only": false,
+      "lifecycle_patrol_allows_nonterminal_stop": false,
+      "lifecycle_patrol_recovery_classified": true,
+      "lifecycle_repeated_wait_not_recovered": false,
+      "lifecycle_resume_from_chat": false,
+      "lifecycle_resume_rehydrated": true,
       "missing_ack_result_accepted": false,
       "missing_ack_result_blocked": true,
+      "nonterminal_guard_stop_blocked": true,
       "planning_chain_terminal": false,
       "pm_only_terminal": false,
       "pm_packet_complete": true,
@@ -16356,5 +16515,5 @@
       }
     ]
   },
-  "work_root": "tmp\\flowpilot_fake_project_rehearsal"
+  "work_root": "tmp\\flowpilot_fake_project_rehearsal_lifecycle_focus"
 }

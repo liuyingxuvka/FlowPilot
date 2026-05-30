@@ -176,6 +176,7 @@ def start_run(
             "body_text_included": startup_record["body_text_included"],
         },
         "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
         "status": cockpit.render_status(ledger),
     }
 
@@ -207,24 +208,34 @@ def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: st
         scope="current_run",
     )
     runtime.assign_packet(ledger, packet_id, lease_id)
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": True, "lease_id": lease_id, "next_action": router.router_next_action(ledger).to_json()}
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="lease_agent")
+    return {
+        "ok": True,
+        "lease_id": lease_id,
+        "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+    }
 
 
 def ack(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     runtime.ack_lease(ledger, lease_id, packet_id)
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": True, "next_action": router.router_next_action(ledger).to_json()}
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="ack")
+    return {"ok": True, "next_action": router.router_next_action(ledger).to_json(), "lifecycle_guard": ledger.get("lifecycle_guard", {})}
 
 
 def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
-    run_shell.save_run_ledger(shell, ledger)
-    return {"ok": True, "result_id": result_id, "next_action": router.router_next_action(ledger).to_json()}
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="submit_result")
+    return {
+        "ok": True,
+        "result_id": result_id,
+        "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+    }
 
 
 def run_fake_e2e(root: Path, *, run_id: str | None = None, startup_text: str) -> dict[str, Any]:
@@ -234,7 +245,42 @@ def run_fake_e2e(root: Path, *, run_id: str | None = None, startup_text: str) ->
 def status(root: Path) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
-    return {"ok": True, "run": shell.to_json(), "next_action": router.router_next_action(ledger).to_json(), "status": cockpit.render_status(ledger)}
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="status")
+    return {
+        "ok": True,
+        "run": shell.to_json(),
+        "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        "status": cockpit.render_status(ledger),
+    }
+
+
+def patrol(root: Path) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="patrol")
+    return {
+        "ok": True,
+        "run": shell.to_json(),
+        "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        "status": cockpit.render_status(ledger),
+    }
+
+
+def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    runtime.record_resume_request(ledger, reason)
+    guard = runtime.reconcile_resume_request(ledger, resume_source=reason)
+    run_shell.save_run_ledger(shell, ledger)
+    return {
+        "ok": True,
+        "run": shell.to_json(),
+        "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": guard,
+        "status": cockpit.render_status(ledger),
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -252,6 +298,9 @@ def main(argv: list[str] | None = None) -> int:
     fake.add_argument("--startup-text", required=True)
 
     sub.add_parser("status", help="Render public status for the current new FlowPilot run")
+    sub.add_parser("patrol", help="Refresh lifecycle guard status for the current run")
+    resume_parser = sub.add_parser("resume", help="Record manual resume and rehydrate lifecycle guard status")
+    resume_parser.add_argument("--reason", default="manual_resume")
 
     lease = sub.add_parser("lease-agent", help="Record a dynamic responsibility lease and assign a packet")
     lease.add_argument("--packet-id", required=True)
@@ -288,6 +337,10 @@ def main(argv: list[str] | None = None) -> int:
             payload = run_fake_e2e(root, run_id=args.run_id, startup_text=args.startup_text)
         elif args.command == "status":
             payload = status(root)
+        elif args.command == "patrol":
+            payload = patrol(root)
+        elif args.command == "resume":
+            payload = resume(root, reason=args.reason)
         elif args.command == "lease-agent":
             payload = lease_agent(
                 root,

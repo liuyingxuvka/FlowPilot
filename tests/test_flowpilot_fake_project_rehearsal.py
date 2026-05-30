@@ -25,6 +25,7 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
                 "route_mutation_recovery",
                 "missing_ack_block",
                 "ack_only_wait",
+                "lifecycle_guard_resume_and_patrol",
                 "retired_side_command",
             },
         )
@@ -34,6 +35,9 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
         self.assertIn("terminal_missing_route_node", result["hazard_detection"]["hazards"])
         self.assertIn("route_mutation_without_frontier_rewrite", result["hazard_detection"]["hazards"])
         self.assertIn("side_command_surface_available", result["hazard_detection"]["hazards"])
+        self.assertIn("lifecycle_resume_from_chat", result["hazard_detection"]["hazards"])
+        self.assertIn("lifecycle_patrol_allows_nonterminal_stop", result["hazard_detection"]["hazards"])
+        self.assertIn("lifecycle_repeated_wait_not_recovered", result["hazard_detection"]["hazards"])
         recursive_hazards = result["recursive_route_hazard_detection"]["hazards"]
         self.assertIn("missing_node_terminal_complete", recursive_hazards)
         self.assertIn("wrong_flowguard_target_accepted", recursive_hazards)

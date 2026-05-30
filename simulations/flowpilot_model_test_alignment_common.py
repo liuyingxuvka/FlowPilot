@@ -1121,6 +1121,8 @@ def _contract(
     implements: Sequence[str],
     external_inputs: Sequence[str] = (),
     external_outputs: Sequence[str] = ("return",),
+    state_reads: Sequence[str] = (),
+    state_writes: Sequence[str] = (),
     side_effects: Sequence[str] = (),
 ) -> CodeContract:
     return CodeContract(
@@ -1130,6 +1132,8 @@ def _contract(
         implements_obligations=tuple(implements),
         external_inputs=tuple(external_inputs),
         external_outputs=tuple(external_outputs),
+        state_reads=tuple(state_reads),
+        state_writes=tuple(state_writes),
         side_effects=tuple(side_effects),
     )
 

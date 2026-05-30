@@ -40,6 +40,7 @@ PREPLANNING_GATE_SCOPES = {
 
 EVENT_FAMILY_BY_TYPE = {
     "project_started": "lifecycle",
+    "lifecycle_guard_refreshed": "lifecycle",
     "startup_intake_recorded": "startup",
     "route_created": "route",
     "route_nodes_materialized": "route",
@@ -62,6 +63,7 @@ EVENT_FAMILY_BY_TYPE = {
     "lease_expired": "lease",
     "lease_superseded": "lease",
     "resume_requested": "lifecycle",
+    "resume_reconciled": "lifecycle",
     "responsibility_lease_created": "lease",
     "role_memory_seed_recorded": "lease",
     "task_packet_issued": "packet",
@@ -92,6 +94,17 @@ _DEFAULT_FLOWGUARD_ROUTES = {
     "model_hierarchy": "flowguard-model-mesh",
     "model_miss": "flowguard-model-miss-review",
     "architecture_reduction": "flowguard-architecture-reduction",
+}
+
+_GUARD_HISTORY_LIMIT = 50
+_GUARD_STUCK_TRIGGERS = {"patrol", "resume"}
+_STALE_RESULT_BLOCKERS = {
+    "closed_or_inactive_lease",
+    "quarantined_packet",
+    "stale_route_version",
+    "stale_evidence",
+    "wrong_lease_for_packet",
+    "duplicate_after_packet_accepted",
 }
 
 
@@ -193,6 +206,13 @@ def new_ledger(
         "startup_intake": None,
         "source_generation": 1,
         "lifecycle": {"state": "created"},
+        "lifecycle_guard": {
+            "schema_version": "black_box_flowpilot.lifecycle_guard.v1",
+            "decision": "not_refreshed",
+            "controller_stop_allowed": False,
+        },
+        "lifecycle_guard_history": [],
+        "lifecycle_guard_config": {"max_repeated_action_without_event": 3},
         "active_route_version": None,
         "route_mutations": [],
         "routes": {},
@@ -1541,8 +1561,15 @@ def submit_result(
         "accepted": False,
     }
     ledger["results"][result_id] = result
+    result["quarantined"] = bool(set(blockers).intersection(_STALE_RESULT_BLOCKERS))
     packet["result_ids"].append(result_id)
-    packet["status"] = "result_submitted" if not blockers else "result_blocked"
+    if not blockers:
+        packet["status"] = "result_submitted"
+    elif packet.get("status") == "quarantined_after_route_mutation" or "quarantined_packet" in blockers:
+        packet["status"] = "quarantined_after_route_mutation"
+        packet["latest_quarantined_result_id"] = result_id
+    else:
+        packet["status"] = "result_blocked"
     _event(
         ledger,
         "result_submitted",
@@ -2092,6 +2119,8 @@ def _result_mechanical_blockers(
         blockers.append("missing_ack")
     if packet.get("assigned_lease_id") != lease["lease_id"]:
         blockers.append("wrong_lease_for_packet")
+    if packet.get("status") == "quarantined_after_route_mutation":
+        blockers.append("quarantined_packet")
     if packet["envelope"]["route_version"] != ledger.get("active_route_version"):
         blockers.append("stale_route_version")
     if output_type != packet["envelope"]["required_output_type"] or not valid_shape:
@@ -2312,11 +2341,202 @@ def record_resume_request(ledger: dict[str, Any], reason: str = "manual_resume")
     _event(ledger, "resume_requested", reason=reason)
 
 
+def reconcile_resume_request(ledger: dict[str, Any], *, resume_source: str = "manual_resume") -> dict[str, Any]:
+    previous = dict(ledger.get("lifecycle") or {})
+    ledger["lifecycle"] = {
+        "state": "running",
+        "resume_source": resume_source,
+        "previous_state": previous.get("state", ""),
+        "reason": previous.get("reason", ""),
+        "reconciled_at": now_iso(),
+    }
+    _event(ledger, "resume_reconciled", resume_source=resume_source, previous_state=previous.get("state", ""))
+    return refresh_lifecycle_guard(ledger, trigger="resume", resume_source=resume_source)
+
+
 def record_completion_claim(ledger: dict[str, Any], *, source: str, claim: str, evidence_id: str = "") -> None:
     ledger.setdefault("completion_claims", []).append(
         {"source": source, "claim": claim, "evidence_id": evidence_id, "created_at": now_iso()}
     )
     _event(ledger, "completion_claim_recorded", source=source, evidence_id=evidence_id)
+
+
+def _guard_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
+    if not ledger.get("startup_intake"):
+        return RuntimeAction("open_startup_intake", "startup intake has not been recorded")
+    if (ledger.get("cutover_gate") or {}).get("decision") == "blocked":
+        return RuntimeAction("repair_cutover_gate", "cutover gate has blockers")
+    return router_next_action(ledger)
+
+
+def _non_guard_event_count(ledger: Mapping[str, Any]) -> int:
+    return sum(
+        1
+        for event in ledger.get("events", [])
+        if isinstance(event, Mapping) and event.get("event_type") != "lifecycle_guard_refreshed"
+    )
+
+
+def _guard_action_key(action: RuntimeAction) -> str:
+    return json.dumps(action.to_json(), sort_keys=True)
+
+
+def _latest_result_for_packet(ledger: Mapping[str, Any], packet_id: str) -> Mapping[str, Any] | None:
+    packet = ledger.get("packets", {}).get(packet_id)
+    if not isinstance(packet, Mapping):
+        return None
+    for result_id in reversed(list(packet.get("result_ids") or [])):
+        result = ledger.get("results", {}).get(result_id)
+        if isinstance(result, Mapping):
+            return result
+    return None
+
+
+def _stale_result_blockers_for_packet(ledger: Mapping[str, Any], packet_id: str) -> list[str]:
+    packet = ledger.get("packets", {}).get(packet_id)
+    blockers: set[str] = set()
+    if isinstance(packet, Mapping) and packet.get("status") == "quarantined_after_route_mutation":
+        blockers.add("quarantined_packet")
+    latest = _latest_result_for_packet(ledger, packet_id)
+    if isinstance(latest, Mapping):
+        blockers.update(str(item) for item in latest.get("mechanical_blockers", []) if item in _STALE_RESULT_BLOCKERS)
+    return sorted(blockers)
+
+
+def _guard_wait_subject(ledger: Mapping[str, Any], action: RuntimeAction) -> dict[str, Any]:
+    packet = ledger.get("packets", {}).get(action.subject_id)
+    if not isinstance(packet, Mapping):
+        return {"packet_id": action.subject_id, "packet_found": False}
+    lease_id = str(packet.get("assigned_lease_id") or "")
+    lease = ledger.get("leases", {}).get(lease_id)
+    lease_map = lease if isinstance(lease, Mapping) else {}
+    return {
+        "packet_id": action.subject_id,
+        "packet_found": True,
+        "packet_status": str(packet.get("status", "")),
+        "packet_kind": str((packet.get("envelope") or {}).get("packet_kind", "task")),
+        "route_version": (packet.get("envelope") or {}).get("route_version"),
+        "source_generation": (packet.get("envelope") or {}).get("source_generation"),
+        "lease_id": lease_id,
+        "lease_found": bool(lease_map),
+        "lease_status": str(lease_map.get("status", "")),
+        "ack_received": bool(lease_map.get("ack_received")),
+        "stale_result_blockers": _stale_result_blockers_for_packet(ledger, action.subject_id),
+    }
+
+
+def _guard_decision(
+    ledger: Mapping[str, Any],
+    action: RuntimeAction,
+    *,
+    trigger: str,
+    repeated_count: int,
+) -> tuple[str, str]:
+    threshold = int((ledger.get("lifecycle_guard_config") or {}).get("max_repeated_action_without_event", 3))
+    if action.action_type == "terminal_complete":
+        closure = ledger.get("closure") or {}
+        if isinstance(closure, Mapping) and closure.get("decision") == "complete":
+            return "terminal_return", "final closure is complete and Controller stop is allowed"
+        return "control_plane_stuck", "terminal action appeared without complete closure evidence"
+    if action.action_type == "wait_for_ack":
+        if trigger in _GUARD_STUCK_TRIGGERS and repeated_count >= threshold:
+            return "reissue_or_replace_lease", "ACK wait exceeded guard repeat threshold"
+        return "wait_for_ack", "assigned lease has not acknowledged"
+    if action.action_type == "wait_for_result":
+        if trigger in _GUARD_STUCK_TRIGGERS and repeated_count >= threshold:
+            return "reissue_or_replace_lease", "result wait exceeded guard repeat threshold"
+        return "wait_for_result", "ACK is liveness only and result is still required"
+    if action.action_type == "replace_lease":
+        return "reissue_or_replace_lease", "assigned lease is inactive"
+    if action.action_type == "repair_packet":
+        stale = _stale_result_blockers_for_packet(ledger, action.subject_id)
+        if stale:
+            return "quarantine_stale_result", ",".join(stale)
+        return "recover_packet", "packet result or review is blocked"
+    if action.action_type in {"wait_for_resume", "resume_reconcile"}:
+        return action.action_type, action.reason
+    if trigger in _GUARD_STUCK_TRIGGERS and repeated_count >= threshold:
+        return "control_plane_stuck", "same nonterminal next action repeated without current-run progress"
+    return "process_next_action", action.reason
+
+
+def preview_lifecycle_guard(ledger: Mapping[str, Any], *, trigger: str = "status") -> dict[str, Any]:
+    action = _guard_next_action(ledger)
+    action_key = _guard_action_key(action)
+    event_count = _non_guard_event_count(ledger)
+    history = list(ledger.get("lifecycle_guard_history") or [])
+    previous = history[-1] if history and isinstance(history[-1], Mapping) else {}
+    if previous.get("action_key") == action_key and previous.get("observed_event_count") == event_count:
+        repeated_count = int(previous.get("repeated_count", 1)) + 1
+    else:
+        repeated_count = 1
+    decision, reason = _guard_decision(ledger, action, trigger=trigger, repeated_count=repeated_count)
+    controller_stop_allowed = decision == "terminal_return"
+    wait_subject = _guard_wait_subject(ledger, action) if action.subject_id else {}
+    return {
+        "schema_version": "black_box_flowpilot.lifecycle_guard.v1",
+        "trigger": trigger,
+        "created_at": now_iso(),
+        "run_id": str(ledger.get("run_id", ledger.get("project_id", ""))),
+        "active_route_version": ledger.get("active_route_version"),
+        "source_generation": ledger.get("source_generation"),
+        "observed_event_count": event_count,
+        "action_key": action_key,
+        "next_action": action.to_json(),
+        "decision": decision,
+        "reason": reason,
+        "controller_stop_allowed": controller_stop_allowed,
+        "foreground_required_mode": "terminal_return" if controller_stop_allowed else "process_guard_action",
+        "repeated_count": repeated_count,
+        "wait_subject": wait_subject,
+        "sealed_bodies_visible": False,
+    }
+
+
+def refresh_lifecycle_guard(
+    ledger: dict[str, Any],
+    *,
+    trigger: str = "save",
+    resume_source: str = "",
+    record_history: bool = True,
+    record_event: bool = True,
+) -> dict[str, Any]:
+    snapshot = preview_lifecycle_guard(ledger, trigger=trigger)
+    if resume_source:
+        snapshot["resume_source"] = resume_source
+    history = ledger.setdefault("lifecycle_guard_history", [])
+    if record_history:
+        history.append(
+            {
+                "created_at": snapshot["created_at"],
+                "trigger": trigger,
+                "decision": snapshot["decision"],
+                "controller_stop_allowed": snapshot["controller_stop_allowed"],
+                "action_key": snapshot["action_key"],
+                "observed_event_count": snapshot["observed_event_count"],
+                "repeated_count": snapshot["repeated_count"],
+                "subject_id": snapshot["next_action"].get("subject_id", ""),
+            }
+        )
+        del history[:-_GUARD_HISTORY_LIMIT]
+        ledger["lifecycle_guard_history"] = history
+    ledger["lifecycle_guard"] = snapshot
+    if record_event:
+        _event(
+            ledger,
+            "lifecycle_guard_refreshed",
+            trigger=trigger,
+            decision=snapshot["decision"],
+            controller_stop_allowed=snapshot["controller_stop_allowed"],
+            subject_id=snapshot["next_action"].get("subject_id", ""),
+        )
+    return snapshot
+
+
+def assert_controller_stop_allowed(ledger: Mapping[str, Any]) -> None:
+    guard = ledger.get("lifecycle_guard")
+    if not isinstance(guard, Mapping) or guard.get("controller_stop_allowed") is not True:
+        raise BlackBoxRuntimeError("Controller cannot stop before lifecycle guard allows terminal return")
 
 
 def _closure_blockers(
@@ -2582,6 +2802,7 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "active_route_version": ledger.get("active_route_version"),
         "source_generation": ledger.get("source_generation"),
         "next_action": router_next_action(ledger).to_json(),
+        "lifecycle_guard": _copy_jsonable(ledger.get("lifecycle_guard") or preview_lifecycle_guard(ledger, trigger="render")),
         "sealed_bodies_visible": False,
         "packets": packet_rows,
         "leases": [

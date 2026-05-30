@@ -20087,6 +20087,74 @@ to identify compatibility-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## add-new-flowpilot-lifecycle-guard-20260530 - New FlowPilot lifecycle guard upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User required the rebuilt FlowPilot to preserve the old anti-exit and long-run control lessons without restoring old monitor UI, fixed-role topology, or compatibility surfaces.
+- Status: implemented, validated, installed, synced; local git commit pending at record time
+- Skill decision: predictive KB preflight + OpenSpec apply change + FlowGuard DevelopmentProcessFlow + FlowGuard Model-Test Alignment
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+- Recorded: 2026-05-30T08:06:24Z
+
+### Model Files
+- simulations/flowpilot_lifecycle_guard_model.py
+- simulations/run_flowpilot_lifecycle_guard_checks.py
+- simulations/flowpilot_lifecycle_guard_results.json
+- simulations/flowpilot_new_entrypoint_model.py
+- simulations/flowpilot_new_entrypoint_results.json
+- simulations/flowpilot_fake_project_rehearsal_model.py
+- simulations/flowpilot_fake_project_rehearsal_results.json
+- simulations/flowpilot_model_test_alignment_results.json
+- tmp/flowguard_background/run_meta_checks.meta.json
+- tmp/flowguard_background/run_capability_checks.meta.json
+
+### Commands
+- `python -m flowguard project-upgrade --root .` -> package record upgraded to 0.39.0.
+- `openspec validate --all --strict` -> 178 passed, 0 failed.
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py --json-out simulations/flowpilot_lifecycle_guard_results.json` -> passed.
+- `python simulations/run_flowpilot_new_entrypoint_checks.py --json-out simulations/flowpilot_new_entrypoint_results.json` -> passed.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations/flowpilot_fake_project_rehearsal_results.json --work-root tmp/flowpilot_fake_project_rehearsal_lifecycle_focus` -> passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> passed.
+- `python -m unittest tests.test_flowpilot_lifecycle_guard tests.test_flowpilot_new_entrypoint tests.test_flowpilot_fake_project_rehearsal tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_recursive_route_execution_runtime tests.test_ai_project_runtime tests.test_flowpilot_complete_system_runtime` -> 45 tests passed.
+- `python skills/flowpilot/assets/flowpilot_new.py --root . --json run-fake-e2e --run-id run-lifecycle-guard-post-save-fix-smoke --startup-text "Build a small but high quality fake project with lifecycle guard"` -> passed.
+- `python simulations/run_meta_checks.py` -> background artifact `tmp/flowguard_background/run_meta_checks`, exit 0, status passed, proof_reused false.
+- `python simulations/run_capability_checks.py` -> background artifact `tmp/flowguard_background/run_capability_checks`, exit 0, status passed, proof_reused false.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> passed.
+- `python scripts/audit_local_install_sync.py --json` -> passed.
+- `python scripts/check_install.py --json` -> 861 checks passed.
+- `python scripts/install_flowpilot.py --check --json` -> passed.
+
+### Findings
+- New runtime ledgers now include lifecycle guard state, patrol history, stop authority, and repeated-action configuration.
+- Nonterminal status, patrol, resume, lease, ACK, and result paths keep `controller_stop_allowed: false`.
+- Terminal fake closure reaches guard decision `terminal_return` with `controller_stop_allowed: true`.
+- Manual resume records current-run evidence and rehydrates waits from ledger state instead of chat memory.
+- Ordinary repeated saves refresh guard snapshots without appending fake lifecycle progress events.
+- Inactive-lease and route-mutated stale results are quarantined and cannot close packets.
+- Fake AI rehearsal covers lifecycle resume and patrol recovery through public CLI subprocesses.
+
+### Counterexamples
+- nonterminal_stop_allowed
+- terminal_without_lifecycle_guard
+- ack_only_terminal
+- inactive_lease_waits_forever
+- stale_result_accepted
+- repeated_action_ignored
+- lifecycle_resume_from_chat
+- lifecycle_patrol_allows_nonterminal_stop
+- lifecycle_repeated_wait_not_recovered
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or OpenSpec archive was performed.
+- Fake AI rehearsal is deterministic fake-host evidence; it is not claimed as live background-agent reliability.
+- No old monitor UI or fixed six-agent topology was restored.
+
+### Next Actions
+- Archive the OpenSpec change only if the user asks to finalize the spec lifecycle.
+- For release confidence, run release-scoped live-host gates separately.
+
+
 ## adopt-high-standard-flowpilot-control-flow-20260530 - High-standard FlowPilot control-flow upgrade
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -20902,6 +20970,44 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard package version recorded: 0.38.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-30T07:46:05+00:00
+- Ended: 2026-05-30T07:46:05+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.39.0
 - FlowGuard schema version recorded: 1.0
 
 ### Counterexamples

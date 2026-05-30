@@ -229,6 +229,9 @@ def complete_full_packet_chain(
     assert_public_projection_is_sealed(projection)
     ensure(projection.get("next_action", {}).get("action_type") == "terminal_complete", "public status is not terminal")
     ensure(projection.get("closure", {}).get("decision") == "complete", "closure did not complete")
+    guard = projection.get("lifecycle_guard", {})
+    ensure(guard.get("decision") == "terminal_return", f"terminal guard did not allow terminal return: {guard}")
+    ensure(guard.get("controller_stop_allowed") is True, f"terminal guard did not allow Controller stop: {guard}")
 
     packet_kinds = [packet.get("packet_kind") for packet in projection.get("packets", [])]
     route_nodes = projection.get("route_nodes", [])
@@ -354,6 +357,8 @@ def complete_planning_chain_only(
     )
     ensure(next_action.get("responsibility") == "pm", f"node acceptance plan is not PM-owned: {next_action}")
     ensure(projection.get("closure", {}).get("decision") != "complete", "planning chain reached terminal closure")
+    guard = projection.get("lifecycle_guard", {})
+    ensure(guard.get("controller_stop_allowed") is False, f"planning guard allowed Controller stop: {guard}")
     ensure(len(projection.get("route_nodes", [])) >= MIN_ACCEPTED_ROUTE_NODES, "planning chain did not materialize route nodes")
     return {
         "next_action": next_action,

@@ -1,0 +1,148 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=16 initial_states=1 traces=136",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "ack_only_terminal",
+      "chat_history_resume",
+      "inactive_lease_waits_forever",
+      "nonterminal_stop_allowed",
+      "old_monitor_ui_required",
+      "old_router_authority_used",
+      "repeated_action_ignored",
+      "sealed_body_leak",
+      "stale_result_accepted",
+      "terminal_without_closure"
+    ],
+    "hazards": {
+      "ack_only_terminal": [
+        "ACK-only wait reached terminal completion"
+      ],
+      "chat_history_resume": [
+        "resume used chat history as authority"
+      ],
+      "inactive_lease_waits_forever": [
+        "inactive lease was treated as healthy indefinite wait"
+      ],
+      "nonterminal_stop_allowed": [
+        "terminal stop allowed before final closure",
+        "nonterminal next action allowed Controller stop"
+      ],
+      "old_monitor_ui_required": [
+        "old monitor UI was required by the new guard"
+      ],
+      "old_router_authority_used": [
+        "old Router authority was used by the new guard"
+      ],
+      "repeated_action_ignored": [
+        "repeated unchanged next action was not classified as stuck"
+      ],
+      "sealed_body_leak": [
+        "guard leaked sealed body content"
+      ],
+      "stale_result_accepted": [
+        "stale or late result was accepted"
+      ],
+      "terminal_without_closure": [
+        "terminal stop allowed before final closure"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_new_lifecycle_guard",
+  "ok": true,
+  "result_type": "flowpilot_lifecycle_guard_checks",
+  "target_plan": {
+    "evidence_role": "lifecycle_guard_model_not_live_host_proof",
+    "failures": [],
+    "labels": [
+      "load_current_run_ledger",
+      "load_packet_lease_state",
+      "observe_nonterminal_next_action",
+      "write_guard_snapshot",
+      "block_controller_stop",
+      "request_manual_resume",
+      "rehydrate_resume_from_ledger",
+      "classify_wait_for_ack",
+      "keep_ack_wait_nonterminal",
+      "classify_wait_for_result",
+      "keep_result_wait_nonterminal",
+      "classify_inactive_lease_recovery",
+      "quarantine_stale_result",
+      "classify_repeated_action_stuck",
+      "complete_final_closure",
+      "authorize_terminal_stop"
+    ],
+    "ok": true,
+    "state": {
+      "ack_only_terminal": false,
+      "ack_wait_nonterminal": true,
+      "chat_history_resume_authority": false,
+      "controller_stop_blocked": true,
+      "current_run_ledger_loaded": true,
+      "final_closure_complete": true,
+      "guard_snapshot_written": true,
+      "inactive_lease_recovery_classified": true,
+      "inactive_lease_waits_forever": false,
+      "leases_loaded": true,
+      "manual_resume_requested": true,
+      "nonterminal_next_action_seen": true,
+      "nonterminal_stop_allowed": false,
+      "old_monitor_ui_required": false,
+      "old_router_authority_used": false,
+      "packet_ledger_loaded": true,
+      "repeated_action_ignored": false,
+      "repeated_action_stuck_classified": true,
+      "result_wait_nonterminal": true,
+      "resume_rehydrated_from_ledger": true,
+      "sealed_body_leaked_to_guard": false,
+      "stale_result_accepted": false,
+      "stale_result_quarantined": true,
+      "status": "complete",
+      "terminal_stop_allowed": true,
+      "wait_for_ack_classified": true,
+      "wait_for_result_classified": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_lifecycle_guard_model.py"
+        ],
+        "freshness": "current",
+        "id": "new_lifecycle_guard_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/add-new-flowpilot-lifecycle-guard/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "new_lifecycle_guard_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_lifecycle_guard_model.py"
+        ],
+        "freshness": "current",
+        "id": "new_lifecycle_guard_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

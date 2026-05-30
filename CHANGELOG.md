@@ -2,6 +2,26 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.24 - 2026-05-30
+
+### Added
+
+- Added the `add-new-flowpilot-lifecycle-guard` OpenSpec change.
+- Added a metadata-only lifecycle guard for the new formal runtime, including
+  current-run guard snapshots, stop authority, patrol history, resume
+  rehydration, repeated-action detection, and stale result quarantine.
+- Added public `patrol` and `resume` commands for the new runtime path.
+- Added lifecycle FlowGuard checks, model-test alignment rows, and focused
+  lifecycle guard tests.
+
+### Changed
+
+- Updated fake AI black-box rehearsal to cover lifecycle resume and patrol
+  recovery paths without restoring the old monitor UI or fixed-role topology.
+- Updated run-shell persistence so ordinary repeated saves refresh the latest
+  guard snapshot without appending fake lifecycle progress events.
+- Upgraded the project FlowGuard adoption record to package `0.39.0`.
+
 ## 0.9.23 - 2026-05-30
 
 ### Added

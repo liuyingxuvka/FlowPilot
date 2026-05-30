@@ -22,6 +22,8 @@ class State:
     new_ledger_authority: bool = False
     contract_frozen: bool = False
     route_created: bool = False
+    lifecycle_guard_snapshot_written: bool = False
+    nonterminal_controller_stop_blocked: bool = False
     dynamic_agent_lease_requested: bool = False
     host_kind_value_menu_presented: bool = False
     host_kind_selected_from_allowed_menu: bool = False
@@ -33,6 +35,7 @@ class State:
     independent_review_passed: bool = False
     validation_recorded: bool = False
     final_closure_complete: bool = False
+    terminal_controller_stop_allowed: bool = False
     old_router_authority: bool = False
     monitor_ui_required: bool = False
     fixed_six_required: bool = False
@@ -43,6 +46,8 @@ class State:
     host_kind_menu_missing: bool = False
     invented_host_kind_value: bool = False
     tracked_baseline_flowguard_evidence: bool = False
+    nonterminal_stop_allowed: bool = False
+    terminal_without_lifecycle_guard: bool = False
 
 
 @dataclass(frozen=True)
@@ -67,6 +72,8 @@ REQUIRED_SAFE_LABELS = (
     "write_sealed_intake_to_new_ledger",
     "freeze_contract",
     "create_new_route",
+    "write_lifecycle_guard_snapshot",
+    "block_nonterminal_controller_stop",
     "request_dynamic_agent_lease",
     "present_host_kind_value_menu",
     "select_host_kind_from_allowed_menu",
@@ -78,6 +85,7 @@ REQUIRED_SAFE_LABELS = (
     "record_independent_review",
     "record_validation_evidence",
     "complete_final_backward_closure",
+    "authorize_terminal_controller_stop",
 )
 
 
@@ -139,6 +147,10 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("freeze_contract", replace(state, contract_frozen=True)),)
     if not state.route_created:
         return (Transition("create_new_route", replace(state, route_created=True)),)
+    if not state.lifecycle_guard_snapshot_written:
+        return (Transition("write_lifecycle_guard_snapshot", replace(state, lifecycle_guard_snapshot_written=True)),)
+    if not state.nonterminal_controller_stop_blocked:
+        return (Transition("block_nonterminal_controller_stop", replace(state, nonterminal_controller_stop_blocked=True)),)
     if not state.dynamic_agent_lease_requested:
         return (Transition("request_dynamic_agent_lease", replace(state, dynamic_agent_lease_requested=True)),)
     if not state.host_kind_value_menu_presented:
@@ -160,7 +172,9 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
     if not state.validation_recorded:
         return (Transition("record_validation_evidence", replace(state, validation_recorded=True)),)
     if not state.final_closure_complete:
-        return (Transition("complete_final_backward_closure", replace(state, final_closure_complete=True, status="complete")),)
+        return (Transition("complete_final_backward_closure", replace(state, final_closure_complete=True)),)
+    if not state.terminal_controller_stop_allowed:
+        return (Transition("authorize_terminal_controller_stop", replace(state, terminal_controller_stop_allowed=True, status="complete")),)
     return ()
 
 
@@ -180,6 +194,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("route created before contract freeze")
     if state.dynamic_agent_lease_requested and not state.route_created:
         failures.append("dynamic agent requested before route creation")
+    if state.lifecycle_guard_snapshot_written and not state.route_created:
+        failures.append("lifecycle guard snapshot written before route creation")
+    if state.nonterminal_controller_stop_blocked and not state.lifecycle_guard_snapshot_written:
+        failures.append("Controller stop blocked before lifecycle guard snapshot")
+    if state.dynamic_agent_lease_requested and not state.nonterminal_controller_stop_blocked:
+        failures.append("dynamic agent requested before nonterminal Controller stop was blocked")
     if state.host_kind_value_menu_presented and not state.dynamic_agent_lease_requested:
         failures.append("host kind menu presented before router requested a dynamic agent")
     if state.host_kind_selected_from_allowed_menu and not state.host_kind_value_menu_presented:
@@ -200,6 +220,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("validation recorded before independent review")
     if state.final_closure_complete and not state.validation_recorded:
         failures.append("final closure completed before validation evidence")
+    if state.terminal_controller_stop_allowed and not state.final_closure_complete:
+        failures.append("terminal Controller stop allowed before final closure")
+    if state.terminal_controller_stop_allowed and not state.lifecycle_guard_snapshot_written:
+        failures.append("terminal Controller stop allowed without lifecycle guard")
     if state.old_router_authority:
         failures.append("old flowpilot_router authority was used by the new system")
     if state.monitor_ui_required:
@@ -220,11 +244,15 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("an unlisted host kind value was invented")
     if state.tracked_baseline_flowguard_evidence:
         failures.append("formal FlowGuard evidence wrote to a tracked simulation baseline")
+    if state.nonterminal_stop_allowed:
+        failures.append("nonterminal next action allowed Controller stop")
+    if state.terminal_without_lifecycle_guard:
+        failures.append("terminal completion skipped lifecycle guard stop authorization")
     return failures
 
 
 def is_success(state: State) -> bool:
-    return state.status == "complete" and state.final_closure_complete and not invariant_failures(state)
+    return state.status == "complete" and state.final_closure_complete and state.terminal_controller_stop_allowed and not invariant_failures(state)
 
 
 def terminal_predicate(_input_obj: Tick, state: State, _trace: object) -> bool:
@@ -261,6 +289,8 @@ def hazard_states() -> dict[str, State]:
         ),
         "invented_host_kind_value": replace(target_state(), invented_host_kind_value=True),
         "tracked_baseline_flowguard_evidence": replace(target_state(), tracked_baseline_flowguard_evidence=True),
+        "nonterminal_stop_allowed": replace(target_state(), final_closure_complete=False, terminal_controller_stop_allowed=True, nonterminal_stop_allowed=True),
+        "terminal_without_lifecycle_guard": replace(target_state(), terminal_controller_stop_allowed=False, terminal_without_lifecycle_guard=True),
         "flowguard_without_run_local_evidence": replace(target_state(), flowguard_evidence_run_local=False, flowguard_targeted=True),
         "route_before_ledger": replace(target_state(), new_ledger_authority=False, contract_frozen=True, route_created=True),
         "review_before_flowguard": replace(target_state(), flowguard_targeted=False, independent_review_passed=True),

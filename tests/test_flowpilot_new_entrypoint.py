@@ -324,7 +324,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             with contextlib.redirect_stdout(direct_help):
                 flowpilot_new.main(["--help"])
         self.assertEqual(help_exit.exception.code, 0)
-        self.assertIn("{start,run-fake-e2e,status,lease-agent,ack,submit-result}", direct_help.getvalue())
+        self.assertIn("{start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}", direct_help.getvalue())
 
         direct_error = io.StringIO()
         with self.assertRaises(SystemExit) as error_exit:
@@ -340,7 +340,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("{start,run-fake-e2e,status,lease-agent,ack,submit-result}", completed.stdout)
+        self.assertIn("{start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}", completed.stdout)
         for command in ("complete-flowguard", "record-validation"):
             self.assertNotIn(command, completed.stdout)
 
@@ -444,8 +444,11 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertIn("missing_host_kind_menu", result["hazard_detection"]["hazards"])
         self.assertIn("invented_host_kind_value", result["hazard_detection"]["hazards"])
         self.assertIn("tracked_baseline_flowguard_evidence", result["hazard_detection"]["hazards"])
+        self.assertIn("nonterminal_stop_allowed", result["hazard_detection"]["hazards"])
+        self.assertIn("terminal_without_lifecycle_guard", result["hazard_detection"]["hazards"])
         self.assertTrue(result["target_plan"]["state"]["host_kind_value_menu_presented"])
         self.assertTrue(result["target_plan"]["state"]["flowguard_evidence_run_local"])
+        self.assertTrue(result["target_plan"]["state"]["terminal_controller_stop_allowed"])
 
 
 if __name__ == "__main__":

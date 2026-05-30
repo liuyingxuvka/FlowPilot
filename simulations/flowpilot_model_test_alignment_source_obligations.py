@@ -97,6 +97,27 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             allow_shared_evidence=True,
         ),
         _source_obligation(
+            "new_entrypoint.lifecycle_guard_stop_authority",
+            obligation_type="invariant",
+            description="Source-audited new-runtime lifecycle guard boundary blocks nonterminal Controller stop and allows terminal return only after final closure.",
+            required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "new_entrypoint.lifecycle_guard_resume_patrol",
+            obligation_type="transition",
+            description="Source-audited lifecycle guard resume and patrol boundary rehydrates current-run state and classifies repeated waits without old monitor UI authority.",
+            required_test_kinds=(HAPPY, EDGE),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
+            "new_entrypoint.lifecycle_guard_stale_result_quarantine",
+            obligation_type="hazard",
+            description="Source-audited lifecycle guard result boundary rejects or quarantines inactive-lease, superseded-packet, stale-route, and stale-generation results.",
+            required_test_kinds=(NEGATIVE,),
+            allow_shared_evidence=True,
+        ),
+        _source_obligation(
             "packet.physical_body_boundary",
             obligation_type="contract",
             description="Source-audited Controller handoff boundary that keeps packet bodies out of Controller relay text.",

@@ -168,6 +168,8 @@ def scenario_missing_ack_block(work_root: Path) -> dict[str, Any]:
     blockers = projection.get("blockers", [])
     ensure(any("missing_ack" in str(blocker) for blocker in blockers), f"missing ACK blocker absent: {blockers}")
     ensure(projection.get("closure", {}).get("decision") != "complete", "missing ACK reached closure")
+    guard = projection.get("lifecycle_guard", {})
+    ensure(guard.get("controller_stop_allowed") is False, f"missing ACK guard allowed stop: {guard}")
     return {
         "name": "missing_ack_block",
         "ok": True,
@@ -205,6 +207,9 @@ def scenario_ack_only_wait(work_root: Path) -> dict[str, Any]:
     assert_public_projection_is_sealed(projection)
     ensure(projection.get("next_action", {}).get("action_type") == "wait_for_result", "ACK-only did not wait for result")
     ensure(projection.get("closure", {}).get("decision") != "complete", "ACK-only reached closure")
+    guard = projection.get("lifecycle_guard", {})
+    ensure(guard.get("decision") == "wait_for_result", f"ACK-only guard did not classify result wait: {guard}")
+    ensure(guard.get("controller_stop_allowed") is False, f"ACK-only guard allowed stop: {guard}")
     return {
         "name": "ack_only_wait",
         "ok": True,
@@ -217,12 +222,66 @@ def scenario_ack_only_wait(work_root: Path) -> dict[str, Any]:
     }
 
 
+def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "lifecycle_guard_resume_and_patrol")
+    start_payload = start_rehearsal(root, command_log, "run-fake-lifecycle-guard")
+    pm_packet = str(start_payload["next_action"]["subject_id"])
+
+    lease_payload = run_cli(
+        root,
+        command_log,
+        "lease-agent",
+        "--packet-id",
+        pm_packet,
+        "--responsibility",
+        "pm",
+        "--agent-id",
+        "fake-pm-guard",
+        "--host-kind",
+        "fake",
+    )
+    run_cli(root, command_log, "ack", "--lease-id", str(lease_payload["lease_id"]), "--packet-id", pm_packet)
+    resumed = run_cli(root, command_log, "resume", "--reason", "fake_lifecycle_resume")
+    ensure(resumed["next_action"]["action_type"] == "wait_for_result", f"resume did not rehydrate wait: {resumed}")
+    guard = resumed.get("lifecycle_guard", {})
+    ensure(guard.get("decision") == "wait_for_result", f"resume guard did not classify result wait: {guard}")
+    ensure(guard.get("controller_stop_allowed") is False, f"resume guard allowed nonterminal stop: {guard}")
+    ensure(guard.get("wait_subject", {}).get("packet_id") == pm_packet, f"resume guard lost packet id: {guard}")
+
+    run_cli(root, command_log, "patrol")
+    patrol = run_cli(root, command_log, "patrol")
+    patrol_guard = patrol.get("lifecycle_guard", {})
+    ensure(
+        patrol_guard.get("decision") == "reissue_or_replace_lease",
+        f"patrol did not classify repeated result wait for recovery: {patrol_guard}",
+    )
+    ensure(patrol_guard.get("controller_stop_allowed") is False, f"patrol guard allowed stop: {patrol_guard}")
+    projection = status_projection(root, command_log)
+    assert_public_projection_is_sealed(projection)
+    ensure(projection.get("closure", {}).get("decision") != "complete", "guard patrol reached terminal closure")
+    return {
+        "name": "lifecycle_guard_resume_and_patrol",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "resume_decision": guard.get("decision"),
+            "patrol_decision": patrol_guard.get("decision"),
+            "controller_stop_allowed": patrol_guard.get("controller_stop_allowed"),
+        },
+        "commands": command_log,
+    }
+
+
 def scenario_retired_side_command(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "retired_side_command")
     help_result = run_raw_cli(root, command_log, "--help")
     ensure(help_result.returncode == 0, f"help failed: {help_result.stderr}")
-    ensure("{start,run-fake-e2e,status,lease-agent,ack,submit-result}" in help_result.stdout, "formal command list changed")
+    ensure(
+        "{start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}" in help_result.stdout,
+        "formal command list changed",
+    )
     for retired in ("complete-flowguard", "record-validation", "close"):
         ensure(retired not in help_result.stdout, f"retired command appears in help: {retired}")
 
@@ -245,6 +304,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("route_mutation_recovery", scenario_route_mutation_recovery),
     ("missing_ack_block", scenario_missing_ack_block),
     ("ack_only_wait", scenario_ack_only_wait),
+    ("lifecycle_guard_resume_and_patrol", scenario_lifecycle_guard_resume_and_patrol),
     ("retired_side_command", scenario_retired_side_command),
 )
 

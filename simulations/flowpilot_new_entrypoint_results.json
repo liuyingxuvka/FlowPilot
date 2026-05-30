@@ -19,9 +19,11 @@
       "invented_host_kind_value",
       "missing_host_kind_menu",
       "monitor_ui_required",
+      "nonterminal_stop_allowed",
       "old_router_authority",
       "review_before_flowguard",
       "route_before_ledger",
+      "terminal_without_lifecycle_guard",
       "tracked_baseline_flowguard_evidence"
     ],
     "hazards": {
@@ -52,6 +54,10 @@
       "monitor_ui_required": [
         "non-startup monitoring UI was required"
       ],
+      "nonterminal_stop_allowed": [
+        "terminal Controller stop allowed before final closure",
+        "nonterminal next action allowed Controller stop"
+      ],
       "old_router_authority": [
         "old flowpilot_router authority was used by the new system"
       ],
@@ -60,6 +66,9 @@
       ],
       "route_before_ledger": [
         "contract frozen before new ledger authority"
+      ],
+      "terminal_without_lifecycle_guard": [
+        "terminal completion skipped lifecycle guard stop authorization"
       ],
       "tracked_baseline_flowguard_evidence": [
         "formal FlowGuard evidence wrote to a tracked simulation baseline"
@@ -80,6 +89,8 @@
       "write_sealed_intake_to_new_ledger",
       "freeze_contract",
       "create_new_route",
+      "write_lifecycle_guard_snapshot",
+      "block_nonterminal_controller_stop",
       "request_dynamic_agent_lease",
       "present_host_kind_value_menu",
       "select_host_kind_from_allowed_menu",
@@ -90,7 +101,8 @@
       "run_targeted_flowguard",
       "record_independent_review",
       "record_validation_evidence",
-      "complete_final_backward_closure"
+      "complete_final_backward_closure",
+      "authorize_terminal_controller_stop"
     ],
     "ok": true,
     "state": {
@@ -113,14 +125,19 @@
       "independent_review_passed": true,
       "interactive_startup_result": true,
       "invented_host_kind_value": false,
+      "lifecycle_guard_snapshot_written": true,
       "monitor_ui_required": false,
       "new_ledger_authority": true,
+      "nonterminal_controller_stop_blocked": true,
+      "nonterminal_stop_allowed": false,
       "old_router_authority": false,
       "old_startup_ui_opened": true,
       "result_submitted": true,
       "route_created": true,
       "sealed_intake_recorded": true,
       "status": "complete",
+      "terminal_controller_stop_allowed": true,
+      "terminal_without_lifecycle_guard": false,
       "tracked_baseline_flowguard_evidence": false,
       "validation_recorded": true
     }

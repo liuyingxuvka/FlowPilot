@@ -77,6 +77,7 @@ def create_run_shell(
         "evidence",
         "console",
         "closure",
+        "lifecycle",
         "imports",
     ):
         (run_root / relative).mkdir(parents=True, exist_ok=True)
@@ -115,7 +116,14 @@ def load_run_shell(root: Path, *, run_id: str | None = None) -> RunShell:
     return RunShell(root, flowpilot_root, run_id, run_root, run_root / "ledger.json", run_root / "events.jsonl")
 
 
-def save_run_ledger(shell: RunShell, ledger: dict[str, Any]) -> None:
+def save_run_ledger(shell: RunShell, ledger: dict[str, Any], *, guard_trigger: str = "save") -> None:
+    record_guard_progress = guard_trigger != "save"
+    runtime.refresh_lifecycle_guard(
+        ledger,
+        trigger=guard_trigger,
+        record_history=record_guard_progress,
+        record_event=record_guard_progress,
+    )
     runtime.save_ledger(ledger, shell.ledger_path)
     _write_events_jsonl(ledger, shell.events_path)
     materialize_run_artifacts(shell, ledger)
@@ -242,6 +250,10 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "closure" / "cutover_gate.json", ledger["cutover_gate"])
     if isinstance(ledger.get("closure"), dict):
         _write_json(shell.run_root / "closure" / "final_closure.json", ledger["closure"])
+    if isinstance(ledger.get("lifecycle_guard"), dict):
+        _write_json(shell.run_root / "lifecycle" / "guard.json", ledger["lifecycle_guard"])
+    if ledger.get("lifecycle_guard_history"):
+        _write_json(shell.run_root / "lifecycle" / "guard_history.json", ledger["lifecycle_guard_history"])
     if isinstance(ledger.get("final_route_wide_gate_ledger"), dict):
         _write_json(shell.run_root / "closure" / "final_route_wide_gate_ledger.json", ledger["final_route_wide_gate_ledger"])
     if isinstance(ledger.get("final_requirement_evidence_matrix"), dict):
