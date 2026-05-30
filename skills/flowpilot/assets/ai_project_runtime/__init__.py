@@ -23,12 +23,23 @@ from .run_shell import (
     record_startup_intake_result,
     save_run_ledger,
 )
+from .control_surface import (
+    CurrentRunResolution,
+    SafeReadResult,
+    audit_packet_contracts,
+    resolve_current_run,
+    safe_read_json,
+    safe_read_text,
+)
 
 __all__ = [
     "BlackBoxRuntimeError",
+    "CurrentRunResolution",
     "RunShell",
     "RuntimeAction",
+    "SafeReadResult",
     "attempt_final_closure",
+    "audit_packet_contracts",
     "create_flowguard_work_order",
     "create_route",
     "create_run_shell",
@@ -39,7 +50,10 @@ __all__ = [
     "new_ledger",
     "record_startup_intake_result",
     "render_console",
+    "resolve_current_run",
     "review_result",
+    "safe_read_json",
+    "safe_read_text",
     "router_next_action",
     "save_ledger",
     "save_run_ledger",

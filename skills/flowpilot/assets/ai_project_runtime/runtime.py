@@ -16,6 +16,11 @@ from pathlib import Path
 import re
 from typing import Any, Mapping
 
+try:  # pragma: no cover - direct module test fallback.
+    from . import control_surface
+except ImportError:  # pragma: no cover
+    import control_surface  # type: ignore
+
 
 SCHEMA_VERSION = "black_box_flowpilot_runtime.v1"
 DEFAULT_PROJECT_ID = "project-001"
@@ -2037,6 +2042,13 @@ def issue_task_packet(
         "body_visibility": "sealed",
         "source_generation": ledger["source_generation"],
     }
+    envelope["output_contract"] = control_surface.build_packet_output_contract(
+        packet_id=packet_id,
+        responsibility=responsibility,
+        packet_kind=packet_kind,
+        route_version=int(ledger["active_route_version"]),
+        source_generation=int(ledger["source_generation"]),
+    )
     ledger["packets"][packet_id] = {
         "packet_id": packet_id,
         "status": "open",
@@ -2143,6 +2155,8 @@ def submit_result(
             "body_hash": body_hash,
             "body_visibility": "sealed",
             "referenced_packet_body_hash": packet_body_hash or packet["envelope"]["body_hash"],
+            "output_contract": control_surface.build_result_output_contract(packet["envelope"]),
+            "ack_result_accepted_separate": True,
         },
         "body": body,
         "review_id": "",

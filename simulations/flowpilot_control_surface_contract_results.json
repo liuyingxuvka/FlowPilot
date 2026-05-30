@@ -1,0 +1,364 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=48",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "accepted_result_reassigned_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: accepted_result_reassigned",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: accepted_result_reassigned"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": true,
+          "accepted_packet_reassigned": true,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "accepted_result_reassigned",
+          "stale_generation_quarantined": true,
+          "status": "complete"
+        }
+      },
+      "ack_treated_as_result_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: ack_treated_as_result",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: ack_treated_as_result"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": false,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": false,
+          "scenario": "ack_treated_as_result",
+          "stale_generation_quarantined": true,
+          "status": "complete"
+        }
+      },
+      "fallback_scans_project_root_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: fallback_scans_project_root",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: fallback_scans_project_root"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": true,
+          "resolver_uses_explicit_run_root": false,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "fallback_scans_project_root",
+          "stale_generation_quarantined": true,
+          "status": "complete"
+        }
+      },
+      "invalid_utf8_crashes_audit_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: invalid_utf8_crashes_audit",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: invalid_utf8_crashes_audit"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": true,
+          "evidence_reader_returns_structured_error": false,
+          "invalid_utf8_observed": true,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "invalid_utf8_crashes_audit",
+          "stale_generation_quarantined": true,
+          "status": "complete"
+        }
+      },
+      "new_current_schema_ignored_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: new_current_schema_ignored",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: new_current_schema_ignored"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": false,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "new_current_schema_ignored",
+          "stale_generation_quarantined": true,
+          "status": "complete"
+        }
+      },
+      "old_generation_result_accepted_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: old_generation_result_accepted",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: old_generation_result_accepted"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 1,
+          "result_seen": true,
+          "scenario": "old_generation_result_accepted",
+          "stale_generation_quarantined": false,
+          "status": "complete"
+        }
+      },
+      "pm_only_packet_contract_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: pm_only_packet_contract",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: pm_only_packet_contract"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "pm_only_packet_contract",
+          "stale_generation_quarantined": true,
+          "status": "complete"
+        }
+      },
+      "success_overblocked": {
+        "detected": true,
+        "expected_failure": "safe control surface was blocked",
+        "failures": [
+          "safe control surface was blocked"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "legacy_current_fields_present": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator",
+            "validator",
+            "closure_officer"
+          ],
+          "resolver_accepts_legacy_fields": true,
+          "resolver_accepts_new_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "success",
+          "stale_generation_quarantined": true,
+          "status": "blocked"
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "safe_graph": {
+    "edge_count": 16,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 17
+  },
+  "scenario_matrix": {
+    "accepted_result_reassigned": "block_accepted_packet_mutated",
+    "ack_treated_as_result": "block_ack_result_acceptance_conflated",
+    "fallback_scans_project_root": "block_implicit_run_root_fallback",
+    "invalid_utf8_crashes_audit": "block_unreadable_evidence_crash",
+    "new_current_schema_ignored": "block_new_current_schema_ignored",
+    "old_generation_result_accepted": "block_old_generation_result_accepted",
+    "pm_only_packet_contract": "block_packet_contract_not_role_symmetric",
+    "success": "accept_control_surface_contract"
+  },
+  "skipped_checks": {}
+}

@@ -10,6 +10,7 @@ from pathlib import Path
 import shutil
 from typing import Any
 
+from . import control_surface
 from . import runtime
 
 
@@ -109,11 +110,17 @@ def create_run_shell(
 def load_run_shell(root: Path, *, run_id: str | None = None) -> RunShell:
     root = Path(root).resolve()
     flowpilot_root = root / ".flowpilot"
-    if run_id is None:
-        current = json.loads((flowpilot_root / "current.json").read_text(encoding="utf-8"))
-        run_id = current["run_id"]
-    run_root = flowpilot_root / "runs" / run_id
-    return RunShell(root, flowpilot_root, run_id, run_root, run_root / "ledger.json", run_root / "events.jsonl")
+    resolution = control_surface.resolve_current_run(root, run_id=run_id)
+    if not resolution.ok or not resolution.run_id or resolution.run_root is None:
+        raise runtime.BlackBoxRuntimeError(resolution.message or resolution.error_code or "cannot resolve current run")
+    return RunShell(
+        root,
+        flowpilot_root,
+        resolution.run_id,
+        resolution.run_root,
+        resolution.ledger_path or resolution.run_root / "ledger.json",
+        resolution.run_root / "events.jsonl",
+    )
 
 
 def save_run_ledger(shell: RunShell, ledger: dict[str, Any], *, guard_trigger: str = "save") -> None:

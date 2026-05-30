@@ -5,23 +5,27 @@ from __future__ import annotations
 import ast
 import hashlib
 import json
+import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+ASSETS_ROOT = Path(__file__).resolve().parents[1] / "skills" / "flowpilot" / "assets"
+if str(ASSETS_ROOT) not in sys.path:
+    sys.path.insert(0, str(ASSETS_ROOT))
+
+from ai_project_runtime import control_surface  # noqa: E402
 from flowpilot_control_plane_friction_model_hazards import _safe_base
 from flowpilot_control_plane_friction_model_invariants import invariant_failures
 from flowpilot_control_plane_friction_model_state import PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES
 
 
 def _read_json(path: Path) -> tuple[Any, str | None]:
-    try:
-        return json.loads(path.read_text(encoding="utf-8")), None
-    except FileNotFoundError:
-        return None, f"missing file: {path.as_posix()}"
-    except json.JSONDecodeError as exc:
-        return None, f"invalid JSON in {path.as_posix()}: {exc}"
+    result = control_surface.safe_read_json(path)
+    if result.ok:
+        return result.value, None
+    return None, result.message or result.error_code
 
 def _parse_time(value: object) -> datetime | None:
     if not isinstance(value, str) or not value:
@@ -2565,15 +2569,20 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     friction that the abstract state graph alone cannot see.
     """
 
-    root = Path(project_root)
+    root = Path(project_root).resolve()
+    resolution = control_surface.resolve_current_run(root)
     current_path = root / ".flowpilot" / "current.json"
     current, current_error = _read_json(current_path)
-    if current_error:
+    if not resolution.ok:
         return {
-            "ok": True,
-            "skipped": True,
-            "skip_reason": current_error,
-            "findings": [],
+            "ok": False,
+            "skipped": False,
+            "run_id": resolution.run_id,
+            "run_root": resolution.run_root.as_posix() if resolution.run_root else "",
+            "finding_count": 1,
+            "error_count": 1,
+            "warning_count": 0,
+            "findings": [resolution.finding()],
             "projected_invariant_failures": [],
         }
     if not isinstance(current, dict):
@@ -2592,17 +2601,56 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             "projected_invariant_failures": [],
         }
 
-    run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
-    run_root_rel = str(current.get("current_run_root") or current.get("active_run_root") or "")
-    run_root = root / run_root_rel
-    router_state, _router_error = _read_json(run_root / "router_state.json")
-    prompt_ledger, _prompt_error = _read_json(run_root / "prompt_delivery_ledger.json")
-    frontier, _frontier_error = _read_json(run_root / "execution_frontier.json")
-    snapshot, _snapshot_error = _read_json(run_root / "route_state_snapshot.json")
-    display_plan, _display_error = _read_json(run_root / "display_plan.json")
-    index, _index_error = _read_json(root / ".flowpilot" / "index.json")
-
+    run_id = resolution.run_id
+    run_root = resolution.run_root
+    assert run_root is not None
+    try:
+        run_root_rel = run_root.relative_to(root).as_posix()
+    except ValueError:
+        run_root_rel = run_root.as_posix()
     findings: list[dict[str, object]] = []
+    router_state, router_error = _read_json(run_root / "router_state.json")
+    prompt_ledger, prompt_error = _read_json(run_root / "prompt_delivery_ledger.json")
+    frontier, frontier_error = _read_json(run_root / "execution_frontier.json")
+    snapshot, snapshot_error = _read_json(run_root / "route_state_snapshot.json")
+    display_plan, display_error = _read_json(run_root / "display_plan.json")
+    index, index_error = _read_json(root / ".flowpilot" / "index.json")
+    runtime_ledger, runtime_ledger_error = _read_json(run_root / "ledger.json")
+    for evidence_name, evidence_path, read_error in (
+        ("router_state", run_root / "router_state.json", router_error),
+        ("prompt_delivery_ledger", run_root / "prompt_delivery_ledger.json", prompt_error),
+        ("execution_frontier", run_root / "execution_frontier.json", frontier_error),
+        ("route_state_snapshot", run_root / "route_state_snapshot.json", snapshot_error),
+        ("display_plan", run_root / "display_plan.json", display_error),
+        ("index", root / ".flowpilot" / "index.json", index_error),
+    ):
+        if read_error and not read_error.startswith("missing file:"):
+            _add_finding(
+                findings,
+                code="control_surface_evidence_unreadable",
+                severity="error",
+                summary=f"{evidence_name} could not be read as structured JSON",
+                invariant="evidence_reads_are_structured",
+                evidence={
+                    "evidence_name": evidence_name,
+                    "path": evidence_path.as_posix(),
+                    "read_error": read_error,
+                },
+            )
+    if isinstance(runtime_ledger, dict):
+        findings.extend(control_surface.audit_packet_contracts(runtime_ledger))
+    elif runtime_ledger_error:
+        _add_finding(
+            findings,
+            code="runtime_ledger_unreadable",
+            severity="error",
+            summary="current-run ledger could not be read as UTF-8 JSON",
+            invariant="role_packets_share_symmetric_control_surface_contract",
+            evidence={
+                "path": (run_root / "ledger.json").as_posix(),
+                "read_error": runtime_ledger_error,
+            },
+        )
     flags = _router_flags(router_state)
     prompt_deliveries = prompt_ledger.get("deliveries") if isinstance(prompt_ledger, dict) else []
     product_delivery = _latest_delivery(prompt_deliveries, "pm.product_architecture")
@@ -3715,6 +3763,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         "skipped": False,
         "run_id": run_id,
         "run_root": run_root_rel,
+        "finding_count": len(findings),
         "error_count": error_count,
         "warning_count": sum(1 for finding in findings if finding.get("severity") == "warning"),
         "findings": findings,
