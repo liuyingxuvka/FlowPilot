@@ -20087,6 +20087,70 @@ to identify compatibility-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## adopt-high-standard-flowpilot-control-flow-20260530 - High-standard FlowPilot control-flow upgrade
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: rebuilt FlowPilot must complete work through high-standard PM planning, node acceptance, repair, FlowGuard evidence, backward checks, final evidence matrix, fake AI rehearsal, local install sync, and local git closure.
+- Status: implemented_validated_installed_synced_local_git_pending
+- Skill route: predictive KB preflight, OpenSpec propose/apply, FlowGuard existing-model preflight, DevelopmentProcessFlow, Model-Test Alignment, StructureMesh
+- FlowGuard package: 0.38.0
+- FlowGuard schema: 1.0
+- Recorded: 2026-05-30T07:04:40+00:00
+
+### Model Files
+- simulations/flowpilot_recursive_route_execution_model.py
+- simulations/flowpilot_recursive_route_execution_results.json
+- simulations/flowpilot_fake_project_rehearsal_results.json
+- simulations/flowpilot_model_test_alignment_results.json
+- tmp/flowguard_background/run_meta_checks.meta.json
+- tmp/flowguard_background/run_capability_checks.meta.json
+
+### Runtime And Test Files
+- skills/flowpilot/assets/ai_project_runtime/runtime.py
+- skills/flowpilot/assets/ai_project_runtime/run_shell.py
+- skills/flowpilot/assets/ai_project_runtime/fake_e2e.py
+- skills/flowpilot/assets/flowpilot_new.py
+- skills/flowpilot/SKILL.md
+- tests/test_flowpilot_high_standard_control_flow.py
+- tests/test_flowpilot_new_entrypoint.py
+
+### Findings
+- Startup now enters PM-owned high-standard contract, discovery, and skill-standard packets before PM route planning can materialize nodes.
+- Node work now requires an accepted node acceptance plan, and final closure requires a clean final requirement-evidence matrix.
+- Same-node repair is the default response to quality gaps; structural route mutation remains possible and replacement nodes now receive acceptance-plan packets before worker work.
+- Parent/module acceptance requires backward replay or waiver.
+- Fake end-to-end rehearsal was split into ai_project_runtime.fake_e2e while keeping the public flowpilot_new.run_fake_e2e facade.
+- Public projections expose gate status, node acceptance plan ids, repair generation, parent replay ids, and matrix blockers without exposing sealed bodies.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> version 0.38.0.
+- `python -m flowguard project-audit --root .` -> pass.
+- `openspec validate adopt-high-standard-flowpilot-control-flow --strict` -> pass.
+- `openspec validate --all --strict` -> 177 passed, 0 failed.
+- `python simulations\run_flowpilot_recursive_route_execution_checks.py --json-out simulations\flowpilot_recursive_route_execution_results.json` -> ok, 190 traces, 12 expected hazards detected.
+- `python simulations\run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations\flowpilot_fake_project_rehearsal_results.json --work-root tmp\flowpilot_fake_project_rehearsal` -> ok, 528 traces, 7 scenarios.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` -> ok, zero findings, 905 covered surfaces.
+- `python -m unittest tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_recursive_route_execution_runtime tests.test_flowpilot_fake_project_rehearsal tests.test_ai_project_runtime tests.test_flowpilot_complete_system_runtime tests.test_flowpilot_new_entrypoint` -> 38 tests passed.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` -> installed skill synced, self-check ok.
+- `python scripts\audit_local_install_sync.py --json` -> repo-owned flowpilot skill fresh.
+- `python scripts\check_install.py --json` -> ok.
+- `python scripts\install_flowpilot.py --check --json` -> ok, no install actions required.
+
+### Background Checks
+- run_meta_checks: log root `tmp/flowguard_background`, exit 0, status passed, proof_reused false.
+- run_capability_checks: log root `tmp/flowguard_background`, exit 0, status passed, proof_reused false.
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or destructive cleanup was performed.
+- No live external AI project was claimed; fake-project rehearsal is deterministic fake AI evidence against the real public CLI.
+- No UI rewrite was done; startup intake UI remains the existing one.
+- OpenSpec archival remains separate because this task requested local implementation and sync, not archival.
+
+### Next Actions
+- For release confidence, run release-scoped live-host gates and archive the OpenSpec change only when release/finalization is requested.
+
+
 ## restore-recursive-route-execution-runtime - Restore recursive FlowPilot route execution
 
 - Project: FlowGuardProjectAutopilot_20260430

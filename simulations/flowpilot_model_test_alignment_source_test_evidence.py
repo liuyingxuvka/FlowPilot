@@ -64,7 +64,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             command="python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_fake_end_to_end_rehearsal_reaches_final_closure",
             test_kind=HAPPY,
             covers=("new_entrypoint.rehearsal_closure", "new_entrypoint.symmetric_role_packet_lifecycle"),
-            code_contracts=("flowpilot_new.run_fake_e2e",),
+            code_contracts=("flowpilot_new.run_fake_e2e", "fake_e2e.run_fake_e2e"),
         ),
         _evidence(
             "source.new_entrypoint.blackbox_rehearsal_happy",

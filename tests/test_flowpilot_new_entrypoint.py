@@ -101,7 +101,22 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(next(iter(ledger["reviews"].values()))["decision"], "accept")
             self.assertEqual(next(iter(ledger["flowguard_work_orders"].values()))["modeled_target"], "development_process")
             packet_kinds = [packet["envelope"].get("packet_kind", "task") for packet in ledger["packets"].values()]
-            self.assertEqual(packet_kinds, ["task", "flowguard_check", "review", "validation", "closure"])
+            route_scopes = [packet["envelope"].get("route_scope", "") for packet in ledger["packets"].values()]
+            for expected_scope in (
+                "high_standard_contract",
+                "discovery",
+                "skill_standard",
+                "planning",
+                "node_acceptance_plan",
+                "node",
+                "node_pm_disposition",
+            ):
+                self.assertIn(expected_scope, route_scopes)
+            for expected_kind in ("flowguard_check", "review", "validation", "closure", "pm_disposition"):
+                self.assertIn(expected_kind, packet_kinds)
+            self.assertEqual(packet_kinds.count("pm_disposition"), len(result["accepted_node_ids"]))
+            self.assertEqual(len(ledger["node_acceptance_plans"]), len(result["accepted_node_ids"]))
+            self.assertEqual(ledger["final_requirement_evidence_matrix"]["status"], "clean")
             self.assertTrue(all(lease["status"] == "closed" for lease in ledger["leases"].values()))
             self.assertTrue(all(lease["ack_received"] for lease in ledger["leases"].values()))
             self.assertTrue(all(lease["packet_id"] for lease in ledger["leases"].values()))

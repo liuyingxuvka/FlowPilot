@@ -5,21 +5,34 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=18 initial_states=1 traces=171",
+    "summary": "sequences=19 initial_states=1 traces=190",
     "violation_count": 0
   },
   "hazard_detection": {
     "expected": [
       "dead_lease_advances_node",
+      "final_without_requirement_matrix",
+      "manifest_only_skill_evidence",
       "missing_node_terminal_complete",
       "mutation_without_frontier_rewrite",
+      "node_task_without_acceptance_plan",
+      "parent_without_backward_replay_accepted",
+      "planning_without_high_standard_gates",
       "pm_plan_terminal_complete",
+      "quality_gap_mutated_route_by_default",
       "stale_node_evidence_accepted",
       "wrong_flowguard_target_accepted"
     ],
     "hazards": {
       "dead_lease_advances_node": [
         "dead or inactive lease advanced a node"
+      ],
+      "final_without_requirement_matrix": [
+        "terminal closure completed before final requirement-evidence matrix",
+        "final closure passed without requirement-evidence matrix"
+      ],
+      "manifest_only_skill_evidence": [
+        "manifest-only child skill evidence accepted"
       ],
       "missing_node_terminal_complete": [
         "final route-wide ledger built before all node dispositions",
@@ -28,8 +41,22 @@
       "mutation_without_frontier_rewrite": [
         "route mutation did not rewrite execution frontier"
       ],
+      "node_task_without_acceptance_plan": [
+        "node 2 task started before acceptance plan",
+        "node task packet issued without accepted node acceptance plan"
+      ],
+      "parent_without_backward_replay_accepted": [
+        "parent/module node accepted without backward replay"
+      ],
+      "planning_without_high_standard_gates": [
+        "PM planning accepted before high-standard preplanning gates",
+        "route planning proceeded without high-standard preplanning gates"
+      ],
       "pm_plan_terminal_complete": [
         "PM planning packet chain reached terminal completion"
+      ],
+      "quality_gap_mutated_route_by_default": [
+        "ordinary quality gap mutated route instead of same-node repair"
       ],
       "stale_node_evidence_accepted": [
         "stale node evidence was accepted after route/source change"
@@ -47,36 +74,57 @@
     "failures": [],
     "labels": [
       "record_startup_intake",
+      "accept_high_standard_contract",
+      "accept_current_discovery",
+      "accept_skill_standard_contract",
       "accept_pm_planning_packet",
       "materialize_route_nodes",
       "initialize_execution_frontier",
+      "accept_node_1_acceptance_plan",
       "complete_node_1_packet_loop",
       "record_node_1_pm_disposition",
+      "accept_node_2_acceptance_plan",
       "complete_node_2_packet_loop",
       "record_node_2_pm_disposition",
+      "accept_node_3_acceptance_plan",
       "complete_node_3_packet_loop",
       "record_node_3_pm_disposition",
       "build_final_route_wide_ledger",
+      "build_final_requirement_evidence_matrix",
       "complete_terminal_closure"
     ],
     "ok": true,
     "state": {
       "dead_lease_advances_node": false,
+      "discovery_accepted": true,
+      "final_requirement_evidence_matrix_built": true,
       "final_route_wide_ledger_built": true,
+      "final_without_requirement_matrix": false,
       "frontier_ready": true,
+      "high_standard_contract_accepted": true,
+      "manifest_only_skill_evidence": false,
       "missing_node_terminal_complete": false,
       "mutation_without_frontier_rewrite": false,
+      "node_1_acceptance_plan": true,
       "node_1_packet_loop_closed": true,
       "node_1_pm_disposition": true,
+      "node_2_acceptance_plan": true,
       "node_2_packet_loop_closed": true,
       "node_2_pm_disposition": true,
+      "node_3_acceptance_plan": true,
       "node_3_packet_loop_closed": true,
       "node_3_pm_disposition": true,
+      "node_task_without_acceptance_plan": false,
+      "parent_without_backward_replay_accepted": false,
+      "planning_without_high_standard_gates": false,
       "pm_plan_terminal_complete": false,
       "pm_planning_packet_accepted": true,
+      "quality_gap_mutated_route_by_default": false,
       "repair_boundary_observed": false,
       "route_materialized": true,
       "route_mutation_rewrites_frontier": false,
+      "same_node_repair_keeps_frontier": false,
+      "skill_standard_contract_accepted": true,
       "stale_node_evidence_accepted": false,
       "startup_recorded": true,
       "status": "complete",

@@ -75,6 +75,17 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             ),
             external_inputs=("root", "run_id", "startup_text"),
             external_outputs=("return",),
+        ),
+        _contract(
+            "fake_e2e.run_fake_e2e",
+            path="skills/flowpilot/assets/ai_project_runtime/fake_e2e.py",
+            symbol="run_fake_e2e",
+            implements=(
+                "new_entrypoint.rehearsal_closure",
+                "new_entrypoint.symmetric_role_packet_lifecycle",
+            ),
+            external_inputs=("root", "run_id", "startup_text"),
+            external_outputs=("return",),
             side_effects=("save_run_ledger",),
         ),
         _contract(

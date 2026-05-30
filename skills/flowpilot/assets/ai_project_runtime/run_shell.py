@@ -66,7 +66,10 @@ def create_run_shell(
         "leases",
         "role_memory",
         "frontier",
+        "preplanning",
         "route_nodes",
+        "node_acceptance_plans",
+        "parent_backward_replays",
         "flowguard/work_orders",
         "flowguard/work_orders/envelopes",
         "flowguard/work_orders/reports",
@@ -196,6 +199,16 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "routes" / f"route-v{route_version}.json", route)
     for node_id, node in ledger.get("route_nodes", {}).items():
         _write_json(shell.run_root / "route_nodes" / f"{node_id}.json", node)
+    if isinstance(ledger.get("high_standard_contract"), dict):
+        _write_json(shell.run_root / "preplanning" / "high_standard_contract.json", ledger["high_standard_contract"])
+    if isinstance(ledger.get("preplanning_discovery"), dict):
+        _write_json(shell.run_root / "preplanning" / "discovery.json", ledger["preplanning_discovery"])
+    if isinstance(ledger.get("skill_standard_contract"), dict):
+        _write_json(shell.run_root / "preplanning" / "skill_standard_contract.json", ledger["skill_standard_contract"])
+    for plan_id, plan in ledger.get("node_acceptance_plans", {}).items():
+        _write_json(shell.run_root / "node_acceptance_plans" / f"{plan_id}.json", plan)
+    for replay_id, replay in ledger.get("parent_backward_replays", {}).items():
+        _write_json(shell.run_root / "parent_backward_replays" / f"{replay_id}.json", replay)
     if isinstance(ledger.get("execution_frontier"), dict):
         _write_json(shell.run_root / "frontier" / "execution_frontier.json", ledger["execution_frontier"])
     for result_id, result in ledger.get("results", {}).items():
@@ -231,6 +244,8 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "closure" / "final_closure.json", ledger["closure"])
     if isinstance(ledger.get("final_route_wide_gate_ledger"), dict):
         _write_json(shell.run_root / "closure" / "final_route_wide_gate_ledger.json", ledger["final_route_wide_gate_ledger"])
+    if isinstance(ledger.get("final_requirement_evidence_matrix"), dict):
+        _write_json(shell.run_root / "closure" / "final_requirement_evidence_matrix.json", ledger["final_requirement_evidence_matrix"])
     _write_json(shell.run_root / "console" / "status.json", runtime.render_console(ledger))
 
 

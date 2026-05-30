@@ -2,6 +2,29 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.23 - 2026-05-30
+
+### Added
+
+- Added the `adopt-high-standard-flowpilot-control-flow` OpenSpec change.
+- Added high-standard pre-planning gates for PM outcome contracts, current
+  material discovery, local skill inventory, and selected skill obligations.
+- Added node acceptance plans, same-node repair generations, parent backward
+  replay, and final requirement-evidence matrix support to the new formal
+  runtime.
+- Added focused high-standard runtime tests and recursive FlowGuard hazards for
+  planning before gates, node work before acceptance planning, manifest-only
+  skill evidence, default route mutation on quality gaps, missing parent replay,
+  and final closure without requirement evidence.
+
+### Changed
+
+- Updated the fake-host rehearsal so it drives the new high-standard gate chain
+  before traversing route nodes.
+- Updated run-shell projections and public status output to expose
+  high-standard gate status, repair generation, parent replay, and final matrix
+  metadata without exposing sealed bodies.
+
 ## 0.9.22 - 2026-05-29
 
 ### Added

@@ -32,6 +32,12 @@ RESPONSIBILITIES = {
     "ui_qa",
 }
 
+PREPLANNING_GATE_SCOPES = {
+    "high_standard_contract",
+    "discovery",
+    "skill_standard",
+}
+
 EVENT_FAMILY_BY_TYPE = {
     "project_started": "lifecycle",
     "startup_intake_recorded": "startup",
@@ -39,6 +45,13 @@ EVENT_FAMILY_BY_TYPE = {
     "route_nodes_materialized": "route",
     "execution_frontier_updated": "route",
     "route_node_accepted": "route",
+    "high_standard_contract_accepted": "planning",
+    "discovery_record_accepted": "planning",
+    "skill_standard_contract_accepted": "planning",
+    "node_acceptance_plan_accepted": "route",
+    "same_node_repair_prepared": "route",
+    "parent_backward_replay_accepted": "route",
+    "final_requirement_evidence_matrix_built": "closure",
     "pm_disposition_recorded": "route",
     "final_route_wide_gate_ledger_built": "closure",
     "source_generation_changed": "route",
@@ -185,6 +198,13 @@ def new_ledger(
         "routes": {},
         "route_nodes": {},
         "execution_frontier": None,
+        "high_standard_control_flow_required": False,
+        "high_standard_contract": None,
+        "preplanning_discovery": None,
+        "skill_standard_contract": None,
+        "node_acceptance_plans": {},
+        "parent_backward_replays": {},
+        "final_requirement_evidence_matrix": None,
         "pm_dispositions": {},
         "node_closures": {},
         "final_route_wide_gate_ledger": None,
@@ -312,6 +332,256 @@ def recursive_route_required(ledger: Mapping[str, Any]) -> bool:
     return bool(ledger.get("recursive_route_execution_required"))
 
 
+def high_standard_flow_required(ledger: Mapping[str, Any]) -> bool:
+    return bool(ledger.get("high_standard_control_flow_required"))
+
+
+def _gate_accepted(ledger: Mapping[str, Any], key: str) -> bool:
+    record = ledger.get(key)
+    return isinstance(record, dict) and record.get("status") == "accepted"
+
+
+def preplanning_gates_accepted(ledger: Mapping[str, Any]) -> bool:
+    if not high_standard_flow_required(ledger):
+        return True
+    return (
+        _gate_accepted(ledger, "high_standard_contract")
+        and _gate_accepted(ledger, "preplanning_discovery")
+        and _gate_accepted(ledger, "skill_standard_contract")
+    )
+
+
+def _blocking_high_standard_requirements(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
+    contract = ledger.get("high_standard_contract")
+    if not isinstance(contract, dict):
+        return []
+    rows = contract.get("requirements")
+    if not isinstance(rows, list):
+        return []
+    blocking = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        if row.get("closure_blocking", True):
+            blocking.append(row)
+    return blocking
+
+
+def _required_skill_obligations(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
+    contract = ledger.get("skill_standard_contract")
+    if not isinstance(contract, dict):
+        return []
+    rows = contract.get("obligations")
+    if not isinstance(rows, list):
+        return []
+    return [row for row in rows if isinstance(row, dict) and row.get("closure_blocking", True)]
+
+
+def _find_live_scope_packet(
+    ledger: Mapping[str, Any],
+    route_scope: str,
+    *,
+    route_node_id: str = "",
+    packet_kind: str = "task",
+) -> dict[str, Any] | None:
+    for packet in ledger.get("packets", {}).values():
+        envelope = packet.get("envelope", {})
+        if envelope.get("packet_kind", "task") != packet_kind:
+            continue
+        if envelope.get("route_scope") != route_scope:
+            continue
+        if route_node_id and envelope.get("route_node_id") != route_node_id:
+            continue
+        if packet.get("status") not in {"accepted", "quarantined_after_route_mutation", "result_blocked", "review_blocked"}:
+            return packet
+    return None
+
+
+def _accepted_task_packet_for_scope(
+    ledger: Mapping[str, Any],
+    route_scope: str,
+    *,
+    route_node_id: str = "",
+) -> dict[str, Any] | None:
+    for packet in ledger.get("packets", {}).values():
+        envelope = packet.get("envelope", {})
+        if envelope.get("packet_kind", "task") != "task":
+            continue
+        if envelope.get("route_scope") != route_scope:
+            continue
+        if route_node_id and envelope.get("route_node_id") != route_node_id:
+            continue
+        if packet.get("status") == "accepted" and packet.get("accepted_result_id"):
+            return packet
+    return None
+
+
+def ensure_preplanning_gate_packet(ledger: dict[str, Any]) -> str:
+    if not high_standard_flow_required(ledger):
+        return ""
+    if not _gate_accepted(ledger, "high_standard_contract"):
+        return _ensure_high_standard_contract_packet(ledger)
+    if not _gate_accepted(ledger, "preplanning_discovery"):
+        return _ensure_discovery_packet(ledger)
+    if not _gate_accepted(ledger, "skill_standard_contract"):
+        return _ensure_skill_standard_packet(ledger)
+    return _ensure_planning_packet(ledger)
+
+
+def _ensure_high_standard_contract_packet(ledger: dict[str, Any]) -> str:
+    existing = _find_live_scope_packet(ledger, "high_standard_contract")
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "pm",
+        "Write PM high-standard completion contract",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.high_standard_contract_packet.v1",
+                "instruction": (
+                    "Turn the sealed startup request into the highest reasonable current-run completion "
+                    "standard. Classify each row as hard_current, high_standard_current, optional_current, "
+                    "future_suggestion, or rejected_expansion."
+                ),
+                "required_output": {
+                    "requirements": [
+                        {
+                            "requirement_id": "hsr-001",
+                            "classification": "hard_current",
+                            "summary": "Current run must complete the user's actual requested outcome.",
+                            "closure_blocking": True,
+                        }
+                    ]
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="development_process",
+        route_scope="high_standard_contract",
+        acceptance_criteria=[
+            "Hard/current requirements are explicit.",
+            "Optional and future improvements do not silently become hard blockers.",
+        ],
+    )
+
+
+def _ensure_discovery_packet(ledger: dict[str, Any]) -> str:
+    existing = _find_live_scope_packet(ledger, "discovery")
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "pm",
+        "Record current material and local skill discovery",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.discovery_packet.v1",
+                "instruction": (
+                    "Record current-run material discovery and local skill inventory before route planning. "
+                    "Skill inventory is candidate-only; material summaries are navigation, not acceptance proof."
+                ),
+                "required_sections": [
+                    "material_sources",
+                    "material_sufficiency",
+                    "local_skill_inventory",
+                    "candidate_only_skill_policy",
+                ],
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="development_process",
+        route_scope="discovery",
+        acceptance_criteria=[
+            "Material sufficiency is stated from current-run sources.",
+            "Local skill inventory is candidate-only and not route authority.",
+        ],
+    )
+
+
+def _ensure_skill_standard_packet(ledger: dict[str, Any]) -> str:
+    existing = _find_live_scope_packet(ledger, "skill_standard")
+    if existing:
+        return str(existing["packet_id"])
+    return issue_task_packet(
+        ledger,
+        "pm",
+        "Select skills and write skill standard obligations",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.skill_standard_packet.v1",
+                "instruction": (
+                    "Select only required or conditional child/process-support skills and convert each selected "
+                    "skill into reviewer-checkable evidence obligations."
+                ),
+                "default_required_obligation": {
+                    "obligation_id": "skill-std-001",
+                    "skill": "flowguard-development-process-flow",
+                    "role_use": "pm_or_flowguard_operator",
+                    "use_context": "planning_validation_or_repair",
+                    "evidence_required": "current-run FlowGuard work order/report evidence",
+                    "closure_blocking": True,
+                },
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="development_process",
+        route_scope="skill_standard",
+        acceptance_criteria=[
+            "Selected skills have explicit evidence obligations.",
+            "Rejected or deferred skills have reasons when material to the route.",
+        ],
+    )
+
+
+def _ensure_planning_packet(ledger: dict[str, Any]) -> str:
+    existing = _find_live_scope_packet(ledger, "planning")
+    if existing:
+        return str(existing["packet_id"])
+    if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
+        raise BlackBoxRuntimeError("PM planning packet requires accepted high-standard preplanning gates")
+    body = json.dumps(
+        {
+            "schema_version": "black_box_flowpilot.pm_startup_packet.v1",
+            "instruction": "Open the sealed startup body through the current-run packet boundary and plan the project route.",
+            "startup_intake_ref": _startup_body_ref_from_ledger(ledger),
+            "high_standard_contract_id": (ledger.get("high_standard_contract") or {}).get("contract_id", ""),
+            "discovery_id": (ledger.get("preplanning_discovery") or {}).get("discovery_id", ""),
+            "skill_standard_contract_id": (ledger.get("skill_standard_contract") or {}).get("contract_id", ""),
+            "old_runtime_authority": "forbidden",
+        },
+        indent=2,
+        sort_keys=True,
+    )
+    return issue_task_packet(
+        ledger,
+        "pm",
+        "Plan and execute the sealed startup request with the new FlowPilot runtime",
+        body,
+        required_output_type="artifact",
+        required_flowguard_target="development_process",
+        route_scope="planning",
+        acceptance_criteria=[
+            "PM route plan uses the accepted high-standard contract and discovery records.",
+            "PM route plan is reviewed and then materialized into route nodes.",
+            "Project closure is blocked until every effective route node is accepted.",
+        ],
+    )
+
+
+def _startup_body_ref_from_ledger(ledger: Mapping[str, Any]) -> dict[str, str]:
+    intake = ledger.get("startup_intake") or {}
+    run_paths = intake.get("run_paths") if isinstance(intake, dict) else {}
+    return {
+        "body_path": str((run_paths or {}).get("body", "")),
+        "body_hash": str(intake.get("body_hash", "")) if isinstance(intake, dict) else "",
+        "visibility": "sealed_pm_only",
+    }
+
+
 def materialize_route_from_planning_result(
     ledger: dict[str, Any],
     planning_result_id: str,
@@ -322,6 +592,8 @@ def materialize_route_from_planning_result(
 
     if ledger.get("active_route_version") is None:
         raise BlackBoxRuntimeError("cannot materialize route nodes without an active route")
+    if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
+        raise BlackBoxRuntimeError("cannot materialize route nodes before high-standard preplanning gates")
     route_version = int(ledger["active_route_version"])
     plan_result = ledger.get("results", {}).get(planning_result_id, {})
     plan_text = str(plan_result.get("body", ""))
@@ -349,13 +621,20 @@ def materialize_route_from_planning_result(
             "modeled_target": _normalize_modeled_target(str(spec.get("modeled_target") or ""), title),
             "acceptance_criteria": [str(item) for item in criteria],
             "status": "pending",
+            "repair_generation": 0,
             "packet_ids": [],
             "accepted_result_id": "",
+            "accepted_repair_generation": None,
             "flowguard_order_ids": [],
             "review_ids": [],
             "validation_evidence_ids": [],
             "closure_id": "",
             "pm_disposition_id": "",
+            "node_acceptance_plan_id": "",
+            "parent_backward_replay_id": "",
+            "parent_backward_waiver": "",
+            "high_standard_requirement_ids": [],
+            "skill_standard_obligation_ids": [],
             "superseded_by": "",
             "stale_evidence": [],
             "created_from_result_id": planning_result_id,
@@ -395,6 +674,8 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
     if node.get("status") in {"accepted", "superseded", "waived"}:
         raise BlackBoxRuntimeError(f"route node is not executable: {node_id}")
+    if high_standard_flow_required(ledger) and not _node_acceptance_plan_accepted(ledger, node_id):
+        raise BlackBoxRuntimeError(f"route node requires accepted node acceptance plan before task packet: {node_id}")
     existing = _open_or_live_node_task_packet(ledger, node_id)
     if existing:
         return str(existing["packet_id"])
@@ -409,6 +690,10 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
                 "title": node["title"],
                 "modeled_target": node["modeled_target"],
                 "acceptance_criteria": node["acceptance_criteria"],
+                "node_acceptance_plan_id": node.get("node_acceptance_plan_id", ""),
+                "repair_generation": int(node.get("repair_generation", 0)),
+                "high_standard_requirement_ids": list(node.get("high_standard_requirement_ids") or []),
+                "skill_standard_obligation_ids": list(node.get("skill_standard_obligation_ids") or []),
                 "instruction": "Complete this bounded route node. Return concrete current-run evidence.",
             },
             indent=2,
@@ -426,6 +711,109 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
     frontier["updated_at"] = now_iso()
     _event(ledger, "execution_frontier_updated", status="node_execution", active_node_id=node_id)
     return packet_id
+
+
+def _node_acceptance_plan_accepted(ledger: Mapping[str, Any], node_id: str) -> bool:
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    plan_id = str(node.get("node_acceptance_plan_id") or "") if isinstance(node, dict) else ""
+    if not plan_id:
+        return False
+    plan = ledger.get("node_acceptance_plans", {}).get(plan_id, {})
+    return isinstance(plan, dict) and plan.get("status") == "accepted" and plan.get("node_id") == node_id
+
+
+def ensure_node_acceptance_plan_packet(ledger: dict[str, Any], node_id: str) -> str:
+    if _node_acceptance_plan_accepted(ledger, node_id):
+        return ""
+    existing = _find_live_scope_packet(ledger, "node_acceptance_plan", route_node_id=node_id)
+    if existing:
+        return str(existing["packet_id"])
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    return issue_task_packet(
+        ledger,
+        "pm",
+        f"Write node acceptance plan for {node_id}",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.node_acceptance_plan_packet.v1",
+                "route_node_id": node_id,
+                "title": node.get("title", ""),
+                "acceptance_criteria": list(node.get("acceptance_criteria") or []),
+                "high_standard_requirement_ids": [
+                    str(row.get("requirement_id", ""))
+                    for row in _blocking_high_standard_requirements(ledger)
+                    if row.get("requirement_id")
+                ],
+                "skill_standard_obligation_ids": [
+                    str(row.get("obligation_id", ""))
+                    for row in _required_skill_obligations(ledger)
+                    if row.get("obligation_id")
+                ],
+                "instruction": (
+                    "Define this node's proof obligations, low-quality-success risks, selected skill evidence, "
+                    "and repair policy before any worker task packet is issued."
+                ),
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="development_process",
+        route_scope="node_acceptance_plan",
+        route_node_id=node_id,
+        acceptance_criteria=[
+            "Node proof obligations are explicit.",
+            "Same-node repair is the default for ordinary quality, evidence, test, or skill-use gaps.",
+        ],
+    )
+
+
+def _node_requires_parent_backward_replay(node: Mapping[str, Any]) -> bool:
+    return bool(node.get("child_node_ids")) or str(node.get("node_kind") or "") in {"parent", "module"}
+
+
+def _parent_backward_replay_accepted(ledger: Mapping[str, Any], node_id: str) -> bool:
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    if isinstance(node, dict) and node.get("parent_backward_waiver"):
+        return True
+    replay_id = str(node.get("parent_backward_replay_id") or "") if isinstance(node, dict) else ""
+    if not replay_id:
+        return False
+    replay = ledger.get("parent_backward_replays", {}).get(replay_id, {})
+    return isinstance(replay, dict) and replay.get("status") == "accepted" and replay.get("node_id") == node_id
+
+
+def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -> str:
+    if _parent_backward_replay_accepted(ledger, node_id):
+        return ""
+    existing = _find_live_scope_packet(ledger, "parent_backward_replay", route_node_id=node_id)
+    if existing:
+        return str(existing["packet_id"])
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    return issue_task_packet(
+        ledger,
+        "reviewer",
+        f"Replay parent/module node {node_id} backward from child outcomes",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.parent_backward_replay_packet.v1",
+                "route_node_id": node_id,
+                "child_node_ids": list(node.get("child_node_ids") or []),
+                "instruction": (
+                    "Check whether the accepted children compose into the parent goal. "
+                    "Do not pass from child existence alone."
+                ),
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        required_flowguard_target="development_process",
+        route_scope="parent_backward_replay",
+        route_node_id=node_id,
+        acceptance_criteria=[
+            "Effective children compose into the parent/module goal.",
+            "Missing child classes, stale evidence, or thin child outputs are reported.",
+        ],
+    )
 
 
 def record_pm_disposition(
@@ -450,19 +838,54 @@ def record_pm_disposition(
     }
     node["pm_disposition_id"] = disposition_id
     if normalized == "accept":
+        if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
+            node["status"] = "awaiting_parent_backward_replay"
+            _frontier_update(ledger, node_id, "awaiting_parent_backward_replay", "parent_backward_replay_required")
+            ensure_parent_backward_replay_packet(ledger, node_id)
+            _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
+            return disposition_id
         node["status"] = "accepted"
         _advance_frontier_after_node_acceptance(ledger, node_id)
         _event(ledger, "route_node_accepted", node_id=node_id, disposition_id=disposition_id)
     elif normalized == "mutate_route":
         _mutate_route_for_node(ledger, node_id, disposition_id=disposition_id, reason=reason or "pm_disposition_mutate_route")
     elif normalized == "repair":
-        node["status"] = "repair_required"
-        _frontier_update(ledger, node_id, "repair_required", reason or "pm_disposition_repair")
+        _prepare_same_node_repair(ledger, node_id, disposition_id=disposition_id, reason=reason or "pm_disposition_repair")
     else:
         node["status"] = "blocked" if normalized == "block" else "stopped"
         _frontier_update(ledger, node_id, node["status"], reason or f"pm_disposition_{normalized}")
     _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
     return disposition_id
+
+
+def _prepare_same_node_repair(ledger: dict[str, Any], node_id: str, *, disposition_id: str, reason: str) -> None:
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    previous_evidence = [
+        str(item)
+        for item in (
+            list(node.get("packet_ids") or [])
+            + list(node.get("flowguard_order_ids") or [])
+            + list(node.get("review_ids") or [])
+            + list(node.get("validation_evidence_ids") or [])
+            + ([node.get("accepted_result_id")] if node.get("accepted_result_id") else [])
+        )
+        if item
+    ]
+    node["repair_generation"] = int(node.get("repair_generation", 0)) + 1
+    node["status"] = "repair_required"
+    node["accepted_result_id"] = ""
+    node["accepted_repair_generation"] = None
+    node["closure_id"] = ""
+    node.setdefault("stale_evidence", []).extend([disposition_id, *previous_evidence])
+    _frontier_update(ledger, node_id, "repair_required", reason)
+    _event(
+        ledger,
+        "same_node_repair_prepared",
+        node_id=node_id,
+        repair_generation=node["repair_generation"],
+        stale_evidence=previous_evidence,
+    )
+    ensure_next_node_task_packet(ledger)
 
 
 def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]:
@@ -499,6 +922,161 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
     ledger["final_route_wide_gate_ledger"] = ledger_record
     _event(ledger, "final_route_wide_gate_ledger_built", unresolved_count=ledger_record["unresolved_count"])
     return ledger_record
+
+
+def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    unresolved: list[str] = []
+
+    def add_row(row_id: str, kind: str, status: str, evidence_ids: list[str], summary: str) -> None:
+        rows.append(
+            {
+                "row_id": row_id,
+                "kind": kind,
+                "status": status,
+                "evidence_ids": evidence_ids,
+                "summary": summary,
+            }
+        )
+        if status != "covered":
+            unresolved.append(f"{kind}:{row_id}:{status}")
+
+    if high_standard_flow_required(ledger):
+        contract = ledger.get("high_standard_contract")
+        if not _gate_accepted(ledger, "high_standard_contract"):
+            add_row("high-standard-contract", "preplanning_gate", "missing", [], "PM high-standard contract is required")
+        else:
+            add_row(
+                "high-standard-contract",
+                "preplanning_gate",
+                "covered",
+                [str(contract.get("source_result_id", ""))],
+                "PM high-standard contract accepted",
+            )
+        discovery = ledger.get("preplanning_discovery")
+        if not _gate_accepted(ledger, "preplanning_discovery"):
+            add_row("preplanning-discovery", "preplanning_gate", "missing", [], "Material and skill discovery is required")
+        else:
+            add_row(
+                "preplanning-discovery",
+                "preplanning_gate",
+                "covered",
+                [str(discovery.get("source_result_id", ""))],
+                "Material discovery and candidate-only skill inventory accepted",
+            )
+        skill_contract = ledger.get("skill_standard_contract")
+        if not _gate_accepted(ledger, "skill_standard_contract"):
+            add_row("skill-standard-contract", "preplanning_gate", "missing", [], "Skill standard contract is required")
+        else:
+            add_row(
+                "skill-standard-contract",
+                "preplanning_gate",
+                "covered",
+                [str(skill_contract.get("source_result_id", ""))],
+                "Selected skill standards accepted",
+            )
+        for requirement in _blocking_high_standard_requirements(ledger):
+            requirement_id = str(requirement.get("requirement_id") or "unknown")
+            covered_nodes = [
+                str(node.get("node_id", ""))
+                for node in ledger.get("route_nodes", {}).values()
+                if requirement_id in list(node.get("high_standard_requirement_ids") or [])
+                and node.get("status") in {"accepted", "waived"}
+            ]
+            add_row(
+                requirement_id,
+                "high_standard_requirement",
+                "covered" if covered_nodes else "missing",
+                covered_nodes,
+                str(requirement.get("summary") or requirement_id),
+            )
+        for obligation in _required_skill_obligations(ledger):
+            obligation_id = str(obligation.get("obligation_id") or "unknown")
+            covered_nodes = [
+                str(node.get("node_id", ""))
+                for node in ledger.get("route_nodes", {}).values()
+                if obligation_id in list(node.get("skill_standard_obligation_ids") or [])
+                and node.get("status") in {"accepted", "waived"}
+            ]
+            add_row(
+                obligation_id,
+                "skill_standard_obligation",
+                "covered" if covered_nodes else "missing",
+                covered_nodes,
+                str(obligation.get("skill") or obligation_id),
+            )
+
+    for node in ledger.get("route_nodes", {}).values():
+        if node.get("status") == "superseded":
+            continue
+        node_id = str(node.get("node_id", ""))
+        add_row(
+            f"{node_id}:node-status",
+            "route_node",
+            "covered" if node.get("status") in {"accepted", "waived"} else "missing",
+            [str(node.get("accepted_result_id", ""))] if node.get("accepted_result_id") else [],
+            f"Node {node_id} accepted or waived",
+        )
+        if high_standard_flow_required(ledger):
+            plan_id = str(node.get("node_acceptance_plan_id") or "")
+            add_row(
+                f"{node_id}:acceptance-plan",
+                "node_acceptance_plan",
+                "covered" if plan_id and _node_acceptance_plan_accepted(ledger, node_id) else "missing",
+                [plan_id] if plan_id else [],
+                f"Node {node_id} has accepted acceptance plan",
+            )
+            if _node_requires_parent_backward_replay(node):
+                replay_id = str(node.get("parent_backward_replay_id") or node.get("parent_backward_waiver") or "")
+                add_row(
+                    f"{node_id}:parent-replay",
+                    "parent_backward_replay",
+                    "covered" if _parent_backward_replay_accepted(ledger, node_id) else "missing",
+                    [replay_id] if replay_id else [],
+                    f"Parent/module node {node_id} has backward replay or waiver",
+                )
+        add_row(
+            f"{node_id}:pm-disposition",
+            "pm_disposition",
+            "covered" if node.get("pm_disposition_id") else "missing",
+            [str(node.get("pm_disposition_id", ""))] if node.get("pm_disposition_id") else [],
+            f"Node {node_id} has PM disposition",
+        )
+        add_row(
+            f"{node_id}:flowguard",
+            "flowguard",
+            "covered" if node.get("flowguard_order_ids") else "missing",
+            [str(item) for item in node.get("flowguard_order_ids") or []],
+            f"Node {node_id} has FlowGuard evidence",
+        )
+        add_row(
+            f"{node_id}:review",
+            "review",
+            "covered" if node.get("review_ids") else "missing",
+            [str(item) for item in node.get("review_ids") or []],
+            f"Node {node_id} has independent review evidence",
+        )
+        add_row(
+            f"{node_id}:validation",
+            "validation",
+            "covered" if node.get("validation_evidence_ids") else "missing",
+            [str(item) for item in node.get("validation_evidence_ids") or []],
+            f"Node {node_id} has validation evidence",
+        )
+
+    matrix = {
+        "schema_version": "black_box_flowpilot.final_requirement_evidence_matrix.v1",
+        "status": "clean" if not unresolved else "blocked",
+        "route_version": ledger.get("active_route_version"),
+        "row_count": len(rows),
+        "rows": rows,
+        "unresolved": sorted(set(unresolved)),
+        "unresolved_count": len(set(unresolved)),
+        "created_at": now_iso(),
+    }
+    ledger["final_requirement_evidence_matrix"] = matrix
+    _event(ledger, "final_requirement_evidence_matrix_built", unresolved_count=matrix["unresolved_count"])
+    return matrix
 
 
 def _extract_route_nodes(plan_text: str) -> list[dict[str, Any]]:
@@ -667,7 +1245,10 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
     ledger["execution_frontier"] = frontier
     _event(ledger, "execution_frontier_updated", status=frontier["status"], active_node_id=next_node)
     if next_node:
-        ensure_next_node_task_packet(ledger)
+        if high_standard_flow_required(ledger):
+            ensure_node_acceptance_plan_packet(ledger, next_node)
+        else:
+            ensure_next_node_task_packet(ledger)
     else:
         build_final_route_wide_gate_ledger(ledger)
         attempt_final_closure(ledger, str(ledger.get("latest_validation_evidence_id") or "route-wide-validation"))
@@ -710,6 +1291,9 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
             "validation_evidence_ids": [],
             "closure_id": "",
             "pm_disposition_id": "",
+            "node_acceptance_plan_id": "",
+            "parent_backward_replay_id": "",
+            "parent_backward_waiver": "",
             "superseded_by": "",
             "stale_evidence": [],
             "created_at": now_iso(),
@@ -753,7 +1337,10 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
     }
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
     _event(ledger, "execution_frontier_updated", status="node_execution", active_node_id=replacement_id)
-    ensure_next_node_task_packet(ledger)
+    if high_standard_flow_required(ledger):
+        ensure_node_acceptance_plan_packet(ledger, replacement_id)
+    else:
+        ensure_next_node_task_packet(ledger)
 
 
 def lease_agent(
@@ -1026,16 +1613,226 @@ def _apply_closure_result_side_effect(
     subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet, dict) else {}
     route_scope = str(subject_envelope.get("route_scope") or "")
     node_id = str(subject_envelope.get("route_node_id") or packet["envelope"].get("route_node_id") or "")
+    if high_standard_flow_required(ledger) and route_scope in PREPLANNING_GATE_SCOPES:
+        _record_preplanning_gate_closure(ledger, route_scope, subject_packet)
+        ensure_preplanning_gate_packet(ledger)
+        return
+    if high_standard_flow_required(ledger) and route_scope == "node_acceptance_plan" and node_id:
+        _record_node_acceptance_plan_closure(ledger, node_id, subject_packet)
+        ensure_next_node_task_packet(ledger)
+        return
+    if high_standard_flow_required(ledger) and route_scope == "parent_backward_replay" and node_id:
+        _record_parent_backward_replay_closure(ledger, node_id, subject_packet)
+        _ensure_pm_disposition_packet_for_node(ledger, node_id, str(subject_envelope.get("subject_id") or subject_packet_id))
+        return
     if recursive_route_required(ledger) and route_scope == "planning":
         materialize_route_from_planning_result(ledger, str(subject_packet.get("accepted_result_id") or packet["envelope"].get("target_result_id") or ""))
-        ensure_next_node_task_packet(ledger)
+        frontier = ledger.get("execution_frontier") or {}
+        active_node = str(frontier.get("active_node_id") or "")
+        if high_standard_flow_required(ledger) and active_node:
+            ensure_node_acceptance_plan_packet(ledger, active_node)
+        elif active_node:
+            ensure_next_node_task_packet(ledger)
         return
     if recursive_route_required(ledger) and node_id:
         _record_node_closure(ledger, node_id, str(result["result_id"]))
+        node = ledger.get("route_nodes", {}).get(node_id, {})
+        if high_standard_flow_required(ledger) and isinstance(node, dict) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
+            ensure_parent_backward_replay_packet(ledger, node_id)
+            return
         _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
         return
     evidence_id = str(ledger.get("latest_validation_evidence_id") or f"validation-{result['result_id']}")
     attempt_final_closure(ledger, evidence_id)
+
+
+def _record_preplanning_gate_closure(
+    ledger: dict[str, Any],
+    route_scope: str,
+    subject_packet: Mapping[str, Any],
+) -> None:
+    result_id = str(subject_packet.get("accepted_result_id") or "")
+    result = ledger.get("results", {}).get(result_id, {})
+    body = str(result.get("body", ""))
+    if route_scope == "high_standard_contract":
+        requirements = _parse_high_standard_requirements(body)
+        contract_id = _next_id(ledger, "high_standard_contract")
+        ledger["high_standard_contract"] = {
+            "contract_id": contract_id,
+            "status": "accepted",
+            "source_packet_id": subject_packet.get("packet_id", ""),
+            "source_result_id": result_id,
+            "requirements": requirements,
+            "created_at": now_iso(),
+        }
+        _event(ledger, "high_standard_contract_accepted", contract_id=contract_id, requirement_count=len(requirements))
+        return
+    if route_scope == "discovery":
+        discovery_id = _next_id(ledger, "discovery")
+        ledger["preplanning_discovery"] = {
+            "discovery_id": discovery_id,
+            "status": "accepted",
+            "source_packet_id": subject_packet.get("packet_id", ""),
+            "source_result_id": result_id,
+            "material_current": True,
+            "skill_inventory_candidate_only": True,
+            "created_at": now_iso(),
+        }
+        _event(ledger, "discovery_record_accepted", discovery_id=discovery_id)
+        return
+    if route_scope == "skill_standard":
+        obligations = _parse_skill_obligations(body)
+        contract_id = _next_id(ledger, "skill_standard")
+        ledger["skill_standard_contract"] = {
+            "contract_id": contract_id,
+            "status": "accepted",
+            "source_packet_id": subject_packet.get("packet_id", ""),
+            "source_result_id": result_id,
+            "obligations": obligations,
+            "raw_inventory_authority": "candidate_only",
+            "created_at": now_iso(),
+        }
+        _event(ledger, "skill_standard_contract_accepted", contract_id=contract_id, obligation_count=len(obligations))
+        return
+    raise BlackBoxRuntimeError(f"unknown preplanning gate scope: {route_scope}")
+
+
+def _parse_json_object(text: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(text)
+    except json.JSONDecodeError:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _parse_high_standard_requirements(body: str) -> list[dict[str, Any]]:
+    payload = _parse_json_object(body)
+    rows = payload.get("requirements")
+    if not isinstance(rows, list) or not rows:
+        rows = [
+            {
+                "requirement_id": "hsr-001",
+                "classification": "hard_current",
+                "summary": "Complete the user's requested outcome to the highest reasonable current-run standard.",
+            }
+        ]
+    normalized: list[dict[str, Any]] = []
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            continue
+        classification = str(row.get("classification") or "hard_current")
+        closure_blocking = classification in {"hard_current", "high_standard_current"} and not bool(row.get("waived", False))
+        normalized.append(
+            {
+                "requirement_id": str(row.get("requirement_id") or f"hsr-{index:03d}"),
+                "classification": classification,
+                "summary": str(row.get("summary") or row.get("requirement") or f"High-standard requirement {index}"),
+                "closure_blocking": bool(row.get("closure_blocking", closure_blocking)),
+                "evidence_rule": str(row.get("evidence_rule") or "must be traced through route node evidence"),
+            }
+        )
+    return normalized or [
+        {
+            "requirement_id": "hsr-001",
+            "classification": "hard_current",
+            "summary": "Complete the user's requested outcome to the highest reasonable current-run standard.",
+            "closure_blocking": True,
+            "evidence_rule": "must be traced through route node evidence",
+        }
+    ]
+
+
+def _parse_skill_obligations(body: str) -> list[dict[str, Any]]:
+    payload = _parse_json_object(body)
+    rows = payload.get("obligations") or payload.get("selected_skills")
+    if not isinstance(rows, list) or not rows:
+        rows = [
+            {
+                "obligation_id": "skill-std-001",
+                "skill": "flowguard-development-process-flow",
+                "role_use": "pm_or_flowguard_operator",
+                "use_context": "planning_validation_or_repair",
+                "evidence_required": "current-run FlowGuard work order/report evidence",
+                "closure_blocking": True,
+            }
+        ]
+    normalized: list[dict[str, Any]] = []
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, dict):
+            continue
+        status = str(row.get("classification") or row.get("status") or "required")
+        blocking = status in {"required", "conditional"} and not bool(row.get("waived", False))
+        normalized.append(
+            {
+                "obligation_id": str(row.get("obligation_id") or row.get("skill_standard_id") or f"skill-std-{index:03d}"),
+                "skill": str(row.get("skill") or row.get("name") or "unspecified-skill"),
+                "classification": status,
+                "role_use": str(row.get("role_use") or "worker_or_formal_role"),
+                "use_context": str(row.get("use_context") or "execution_or_review"),
+                "evidence_required": str(row.get("evidence_required") or "current-run role skill use evidence"),
+                "closure_blocking": bool(row.get("closure_blocking", blocking)),
+            }
+        )
+    return normalized
+
+
+def _record_node_acceptance_plan_closure(
+    ledger: dict[str, Any],
+    node_id: str,
+    subject_packet: Mapping[str, Any],
+) -> str:
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    result_id = str(subject_packet.get("accepted_result_id") or "")
+    plan_id = _next_id(ledger, "node_plan")
+    requirement_ids = [
+        str(row.get("requirement_id", ""))
+        for row in _blocking_high_standard_requirements(ledger)
+        if row.get("requirement_id")
+    ]
+    obligation_ids = [
+        str(row.get("obligation_id", ""))
+        for row in _required_skill_obligations(ledger)
+        if row.get("obligation_id")
+    ]
+    ledger.setdefault("node_acceptance_plans", {})[plan_id] = {
+        "plan_id": plan_id,
+        "status": "accepted",
+        "node_id": node_id,
+        "source_packet_id": subject_packet.get("packet_id", ""),
+        "source_result_id": result_id,
+        "repair_policy": "same_node_repair_default",
+        "high_standard_requirement_ids": requirement_ids,
+        "skill_standard_obligation_ids": obligation_ids,
+        "created_at": now_iso(),
+    }
+    node["node_acceptance_plan_id"] = plan_id
+    node["high_standard_requirement_ids"] = requirement_ids
+    node["skill_standard_obligation_ids"] = obligation_ids
+    _event(ledger, "node_acceptance_plan_accepted", node_id=node_id, plan_id=plan_id)
+    return plan_id
+
+
+def _record_parent_backward_replay_closure(
+    ledger: dict[str, Any],
+    node_id: str,
+    subject_packet: Mapping[str, Any],
+) -> str:
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    result_id = str(subject_packet.get("accepted_result_id") or "")
+    replay_id = _next_id(ledger, "parent_replay")
+    ledger.setdefault("parent_backward_replays", {})[replay_id] = {
+        "replay_id": replay_id,
+        "status": "accepted",
+        "node_id": node_id,
+        "source_packet_id": subject_packet.get("packet_id", ""),
+        "source_result_id": result_id,
+        "child_node_ids": list(node.get("child_node_ids") or []),
+        "created_at": now_iso(),
+    }
+    node["parent_backward_replay_id"] = replay_id
+    node["status"] = "awaiting_pm_disposition"
+    _event(ledger, "parent_backward_replay_accepted", node_id=node_id, replay_id=replay_id)
+    return replay_id
 
 
 def _accept_packet_result(
@@ -1211,10 +2008,15 @@ def _record_review_from_packet_result(
     review["review_packet_id"] = packet["packet_id"]
     review["review_packet_result_id"] = result["result_id"]
     review["subject_packet_id"] = subject_id
-    node_id = str((ledger.get("packets", {}).get(subject_id, {}).get("envelope", {}) or {}).get("route_node_id") or "")
+    subject_envelope = ledger.get("packets", {}).get(subject_id, {}).get("envelope", {}) or {}
+    node_id = str(subject_envelope.get("route_node_id") or "")
     if node_id and node_id in ledger.get("route_nodes", {}):
         ledger["route_nodes"][node_id].setdefault("review_ids", []).append(review_id)
-        ledger["route_nodes"][node_id]["accepted_result_id"] = target_result_id
+        if subject_envelope.get("route_scope") == "node":
+            ledger["route_nodes"][node_id]["accepted_result_id"] = target_result_id
+            ledger["route_nodes"][node_id]["accepted_repair_generation"] = int(
+                ledger["route_nodes"][node_id].get("repair_generation", 0)
+            )
     return review_id
 
 
@@ -1476,6 +2278,8 @@ def attempt_final_closure(
 ) -> dict[str, Any]:
     if recursive_route_required(ledger):
         build_final_route_wide_gate_ledger(ledger)
+    if high_standard_flow_required(ledger):
+        build_final_requirement_evidence_matrix(ledger)
     blockers = _closure_blockers(
         ledger,
         validation_evidence_id=validation_evidence_id,
@@ -1544,6 +2348,15 @@ def _closure_blockers(
         frontier = ledger.get("execution_frontier") or {}
         if frontier.get("active_node_id"):
             blockers.append(f"frontier_has_active_node:{frontier.get('active_node_id')}")
+    if high_standard_flow_required(ledger):
+        matrix = ledger.get("final_requirement_evidence_matrix")
+        if not isinstance(matrix, dict):
+            blockers.append("missing_final_requirement_evidence_matrix")
+        else:
+            for item in matrix.get("unresolved", []):
+                blockers.append(str(item))
+            if int(matrix.get("unresolved_count", 0)) != 0:
+                blockers.append("final_requirement_evidence_matrix_unresolved")
     active_route = ledger.get("active_route_version")
     if active_route is None:
         blockers.append("missing_active_route")
@@ -1650,6 +2463,8 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         if packet["envelope"]["route_version"] == active_route
     ]
     if not active_packets:
+        if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
+            return RuntimeAction("issue_preplanning_gate_packet", "preplanning high-standard gates are required", responsibility="pm")
         return RuntimeAction("issue_task_packet", "active route has no task packets", responsibility="worker")
 
     for packet in active_packets:
@@ -1696,6 +2511,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             if _has_matching_flowguard_report(ledger, packet["packet_id"], required_target) and not has_review_packet:
                 return RuntimeAction("issue_review_packet", "result needs a Reviewer work packet", packet["packet_id"], "reviewer")
 
+    if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
+        return RuntimeAction("issue_preplanning_gate_packet", "preplanning high-standard gates are required", responsibility="pm")
+
     if recursive_route_required(ledger):
         frontier = ledger.get("execution_frontier") or {}
         node_id = str(frontier.get("active_node_id") or "")
@@ -1703,6 +2521,22 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             return RuntimeAction("materialize_route_nodes", "PM planning chain must materialize route nodes before closure")
         if node_id:
             node = ledger.get("route_nodes", {}).get(node_id, {})
+            if high_standard_flow_required(ledger) and not _node_acceptance_plan_accepted(ledger, node_id):
+                return RuntimeAction(
+                    "issue_node_acceptance_plan_packet",
+                    "frontier node requires accepted node acceptance plan",
+                    node_id,
+                    "pm",
+                    "development_process",
+                )
+            if high_standard_flow_required(ledger) and node.get("status") == "awaiting_parent_backward_replay":
+                return RuntimeAction(
+                    "issue_parent_backward_replay_packet",
+                    "parent/module node requires backward replay before PM disposition",
+                    node_id,
+                    "reviewer",
+                    "development_process",
+                )
             if node.get("status") == "awaiting_pm_disposition":
                 return RuntimeAction("issue_pm_disposition_packet", "node awaits PM disposition", node_id, "pm")
             if node.get("status") not in {"accepted", "superseded", "waived"}:
@@ -1789,14 +2623,26 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "status": node.get("status", ""),
                 "responsibility": node.get("responsibility", ""),
                 "modeled_target": node.get("modeled_target", ""),
+                "repair_generation": node.get("repair_generation", 0),
                 "packet_ids": list(node.get("packet_ids", [])),
+                "node_acceptance_plan_id": node.get("node_acceptance_plan_id", ""),
+                "parent_backward_replay_id": node.get("parent_backward_replay_id", ""),
                 "pm_disposition_id": node.get("pm_disposition_id", ""),
                 "sealed_bodies_visible": False,
             }
             for node in ledger.get("route_nodes", {}).values()
         ],
+        "high_standard_control_flow": {
+            "required": high_standard_flow_required(ledger),
+            "high_standard_contract_status": (ledger.get("high_standard_contract") or {}).get("status", "missing"),
+            "discovery_status": (ledger.get("preplanning_discovery") or {}).get("status", "missing"),
+            "skill_standard_status": (ledger.get("skill_standard_contract") or {}).get("status", "missing"),
+            "node_acceptance_plan_count": len(ledger.get("node_acceptance_plans", {})),
+            "parent_backward_replay_count": len(ledger.get("parent_backward_replays", {})),
+        },
         "execution_frontier": _copy_jsonable(ledger.get("execution_frontier") or {}),
         "final_route_wide_gate_ledger": _copy_jsonable(ledger.get("final_route_wide_gate_ledger") or {"decision": "not_built"}),
+        "final_requirement_evidence_matrix": _copy_jsonable(ledger.get("final_requirement_evidence_matrix") or {"decision": "not_built"}),
         "cutover_gate": _copy_jsonable(ledger.get("cutover_gate") or {"decision": "not_evaluated"}),
         "display_surface": _copy_jsonable(ledger.get("display_surface") or {}),
         "closure": _copy_jsonable(ledger.get("closure") or {"decision": "not_attempted"}),
@@ -1810,6 +2656,8 @@ def _route_stage(ledger: Mapping[str, Any]) -> str:
         return "contract_freeze"
     if ledger.get("active_route_version") is None:
         return "route_planning"
+    if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
+        return "high_standard_preplanning"
     if recursive_route_required(ledger):
         frontier = ledger.get("execution_frontier") or {}
         if not ledger.get("route_nodes"):

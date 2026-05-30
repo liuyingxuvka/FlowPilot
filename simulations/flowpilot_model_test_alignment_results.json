@@ -3753,7 +3753,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 415,
+        "line_count": 321,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": null,
@@ -21532,17 +21532,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "complete",
+              "meta_status": "passed",
               "name": "run_capability_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "capability_full",
@@ -21672,17 +21670,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "complete",
+              "meta_status": "passed",
               "name": "run_meta_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "meta_full",
@@ -39085,6 +39081,30 @@
           "path": "skills/flowpilot/assets/flowpilot_new.py",
           "required": true,
           "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "run_fake_e2e"
+        },
+        {
+          "code_contract_id": "fake_e2e.run_fake_e2e",
+          "error_paths": [],
+          "external_inputs": [
+            "root",
+            "run_id",
+            "startup_text"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.rehearsal_closure",
+            "new_entrypoint.symmetric_role_packet_lifecycle"
+          ],
+          "path": "skills/flowpilot/assets/ai_project_runtime/fake_e2e.py",
+          "required": true,
+          "role": "owner",
           "side_effects": [
             "save_run_ledger"
           ],
@@ -45851,7 +45871,8 @@
           "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_fake_end_to_end_rehearsal_reaches_final_closure",
           "covered_code_contracts": [
-            "flowpilot_new.run_fake_e2e"
+            "flowpilot_new.run_fake_e2e",
+            "fake_e2e.run_fake_e2e"
           ],
           "covered_obligations": [
             "new_entrypoint.rehearsal_closure",
@@ -48685,6 +48706,41 @@
         },
         {
           "calls": [
+            "fake_e2e.run_fake_e2e"
+          ],
+          "code_contract_id": "flowpilot_new.run_fake_e2e",
+          "found": true,
+          "parameters": [
+            "root",
+            "run_id",
+            "startup_text"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [
+            "run_fake_e2e"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "dict",
+            "fake_e2e",
+            "root",
+            "run_fake_e2e",
+            "run_id",
+            "start_run",
+            "startup_text",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "run_fake_e2e"
+        },
+        {
+          "calls": [
+            "_body_for_packet",
             "action.to_json",
             "cockpit.render_status",
             "complete_open_packet",
@@ -48693,8 +48749,6 @@
             "host.lease_responsibility",
             "host.submit_host_result",
             "items",
-            "join",
-            "json.dumps",
             "ledger.get",
             "node.get",
             "range",
@@ -48707,20 +48761,24 @@
             "runtime.assign_packet",
             "runtime.attempt_final_closure",
             "runtime.ensure_next_node_task_packet",
+            "runtime.ensure_node_acceptance_plan_packet",
+            "runtime.ensure_parent_backward_replay_packet",
+            "runtime.ensure_preplanning_gate_packet",
             "shell.to_json",
             "start_run",
             "str",
             "to_json"
           ],
-          "code_contract_id": "flowpilot_new.run_fake_e2e",
+          "code_contract_id": "fake_e2e.run_fake_e2e",
           "found": true,
           "parameters": [
             "root",
             "run_id",
+            "start_run",
             "startup_text"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "path": "skills/flowpilot/assets/ai_project_runtime/fake_e2e.py",
           "raised_errors": [
             "BlackBoxRuntimeError"
           ],
@@ -48733,6 +48791,8 @@
             "Any",
             "BlackBoxRuntimeError",
             "Path",
+            "StartRun",
+            "_body_for_packet",
             "ack_lease",
             "action",
             "action_type",
@@ -48747,15 +48807,15 @@
             "completed_packets",
             "decision",
             "dict",
-            "dumps",
             "ensure_next_node_task_packet",
+            "ensure_node_acceptance_plan_packet",
+            "ensure_parent_backward_replay_packet",
+            "ensure_preplanning_gate_packet",
             "envelope",
             "get",
             "host",
             "index",
             "items",
-            "join",
-            "json",
             "kind",
             "lease_id",
             "lease_responsibility",
@@ -48780,7 +48840,6 @@
             "run_shell",
             "runtime",
             "save_run_ledger",
-            "scope",
             "shell",
             "start_result",
             "start_run",
@@ -48793,7 +48852,6 @@
           ],
           "state_writes": [
             "action",
-            "body",
             "closure",
             "completed_packets",
             "kind",
@@ -48803,7 +48861,6 @@
             "packet_id",
             "responsibility",
             "result_id",
-            "scope",
             "shell",
             "start_result"
           ],
@@ -63211,9 +63268,10 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 11,
+          "assert_count": 15,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
+            "fake_e2e.run_fake_e2e",
             "flowpilot_new.run_fake_e2e"
           ],
           "calls": [
@@ -63223,12 +63281,15 @@
             "get",
             "iter",
             "json.loads",
+            "len",
             "next",
+            "packet_kinds.count",
             "read_text",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "self.assertEqual",
             "self.assertFalse",
+            "self.assertIn",
             "self.assertTrue",
             "tempfile.TemporaryDirectory",
             "values"

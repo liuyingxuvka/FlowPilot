@@ -260,15 +260,18 @@ def complete_planning_chain_only(
     command_log: list[dict[str, Any]],
     current_payload: dict[str, Any],
 ) -> dict[str, Any]:
-    for step_index, (expected_kind, responsibility) in enumerate(PLANNING_CHAIN):
+    for step_index in range(40):
         action = current_payload.get("next_action")
-        ensure(isinstance(action, dict), f"missing planning next action before {expected_kind}")
+        ensure(isinstance(action, dict), "missing planning next action")
         ensure(action.get("action_type") == "lease_agent", f"expected planning lease action: {action}")
-        ensure(action.get("responsibility") == responsibility, f"wrong planning responsibility: {action}")
+        responsibility = str(action.get("responsibility", ""))
         packet_id = str(action.get("subject_id", ""))
         projection = status_projection(root, command_log)
         packet = packet_row(projection, packet_id)
-        ensure(packet.get("packet_kind") == expected_kind, f"wrong planning packet kind: {packet}")
+        packet_kind = str(packet.get("packet_kind", ""))
+        route_scope = str(packet.get("route_scope", ""))
+        ensure(packet_kind in {"task", "flowguard_check", "review", "validation", "closure"}, f"wrong planning packet kind: {packet}")
+        ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
         lease_payload = run_cli(
             root,
             command_log,
@@ -278,13 +281,44 @@ def complete_planning_chain_only(
             "--responsibility",
             responsibility,
             "--agent-id",
-            f"fake-planning-{expected_kind}-{step_index}",
+            f"fake-planning-{packet_kind}-{step_index}",
             "--host-kind",
             "fake",
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
-        if expected_kind == "task":
+        if packet_kind == "task" and route_scope == "high_standard_contract":
+            body = json.dumps(
+                {
+                    "requirements": [
+                        {
+                            "requirement_id": "hsr-001",
+                            "classification": "hard_current",
+                            "summary": "Complete the fake project to a high standard.",
+                        }
+                    ]
+                }
+            )
+        elif packet_kind == "task" and route_scope == "discovery":
+            body = json.dumps(
+                {
+                    "material_sources": ["startup"],
+                    "local_skill_inventory": ["flowguard-development-process-flow"],
+                }
+            )
+        elif packet_kind == "task" and route_scope == "skill_standard":
+            body = json.dumps(
+                {
+                    "obligations": [
+                        {
+                            "obligation_id": "skill-std-001",
+                            "skill": "flowguard-development-process-flow",
+                            "classification": "required",
+                        }
+                    ]
+                }
+            )
+        elif packet_kind == "task" and route_scope == "planning":
             body = "\n".join(
                 [
                     "1. Plan architecture and acceptance contracts",
@@ -293,7 +327,7 @@ def complete_planning_chain_only(
                 ]
             )
         else:
-            body = f"SEALED_RESULT_BODY: fake planning {expected_kind}"
+            body = f"SEALED_RESULT_BODY: fake planning {packet_kind}"
         current_payload = run_cli(
             root,
             command_log,
@@ -305,17 +339,25 @@ def complete_planning_chain_only(
             "--body",
             body,
         )
+        if packet_kind == "closure" and route_scope == "planning":
+            break
+    else:
+        raise RehearsalFailure("planning chain exceeded high-standard gate budget")
     projection = status_projection(root, command_log)
     assert_public_projection_is_sealed(projection)
-    ensure(projection.get("next_action", {}).get("action_type") == "lease_agent", "planning chain did not continue to node work")
+    next_action = projection.get("next_action", {})
+    ensure(next_action.get("action_type") == "lease_agent", "planning chain did not continue to node planning")
+    next_packet = packet_row(projection, str(next_action.get("subject_id", "")))
     ensure(
-        projection.get("next_action", {}).get("responsibility") in {"worker", "ui_qa", "research_worker", "reviewer"},
-        "planning chain did not lease a node role",
+        next_packet.get("route_scope") == "node_acceptance_plan",
+        f"planning chain did not stop at node acceptance planning: {next_packet}",
     )
+    ensure(next_action.get("responsibility") == "pm", f"node acceptance plan is not PM-owned: {next_action}")
     ensure(projection.get("closure", {}).get("decision") != "complete", "planning chain reached terminal closure")
     ensure(len(projection.get("route_nodes", [])) >= MIN_ACCEPTED_ROUTE_NODES, "planning chain did not materialize route nodes")
     return {
-        "next_action": projection.get("next_action", {}),
+        "next_action": next_action,
+        "next_route_scope": next_packet.get("route_scope"),
         "route_nodes": projection.get("route_nodes", []),
         "closure": projection.get("closure", {}),
     }
