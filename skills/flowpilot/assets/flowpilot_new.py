@@ -126,6 +126,18 @@ def _runtime_state(ledger: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _run_until_wait_and_save(
+    shell: run_shell.RunShell,
+    ledger: dict[str, Any],
+    *,
+    guard_trigger: str,
+    max_steps: int = runtime.RUN_UNTIL_WAIT_MAX_STEPS,
+) -> dict[str, Any]:
+    folded = runtime.run_until_wait(ledger, max_steps=max_steps)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger=guard_trigger)
+    return folded
+
+
 def _bootstrap_new_runtime(shell: run_shell.RunShell) -> dict[str, Any]:
     ledger = run_shell.load_run_ledger(shell)
     ledger["recursive_route_execution_required"] = True
@@ -163,6 +175,7 @@ def _bootstrap_new_runtime(shell: run_shell.RunShell) -> dict[str, Any]:
     ]
     if not active_packets:
         runtime.ensure_preplanning_gate_packet(ledger)
+    runtime.run_until_wait(ledger)
     run_shell.save_run_ledger(shell, ledger)
     return ledger
 
@@ -251,10 +264,11 @@ def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> di
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
-    run_shell.save_run_ledger(shell, ledger, guard_trigger="submit_result")
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="submit_result")
     return {
         "ok": True,
         "result_id": result_id,
+        "run_until_wait": folded,
         **_runtime_state(ledger),
     }
 
@@ -266,7 +280,6 @@ def run_fake_e2e(root: Path, *, run_id: str | None = None, startup_text: str) ->
 def status(root: Path) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
-    run_shell.save_run_ledger(shell, ledger, guard_trigger="status")
     return {
         "ok": True,
         "run": shell.to_json(),
@@ -280,10 +293,11 @@ def patrol(root: Path, *, sleep_seconds: int = 0) -> dict[str, Any]:
         time.sleep(sleep_seconds)
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
-    run_shell.save_run_ledger(shell, ledger, guard_trigger="patrol")
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="patrol")
     return {
         "ok": True,
         "run": shell.to_json(),
+        "run_until_wait": folded,
         **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
@@ -293,15 +307,13 @@ def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     runtime.record_resume_request(ledger, reason)
-    guard = runtime.reconcile_resume_request(ledger, resume_source=reason)
-    run_shell.save_run_ledger(shell, ledger)
+    runtime.reconcile_resume_request(ledger, resume_source=reason)
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="resume")
     return {
         "ok": True,
         "run": shell.to_json(),
-        "lifecycle_guard": guard,
-        "foreground_duty": ledger.get("foreground_duty", {}),
-        "final_return_preflight": runtime.final_return_preflight(ledger, guard=guard),
-        "next_action": router.router_next_action(ledger).to_json(),
+        "run_until_wait": folded,
+        **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
 
@@ -326,10 +338,24 @@ def repair_accepted_packet(root: Path, *, packet_id: str) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     repair = runtime.repair_accepted_packet_assignment(ledger, packet_id)
-    run_shell.save_run_ledger(shell, ledger, guard_trigger="repair_accepted_packet")
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="repair_accepted_packet")
     return {
         "ok": True,
         "repair": repair,
+        "run_until_wait": folded,
+        **_runtime_state(ledger),
+        "status": cockpit.render_status(ledger),
+    }
+
+
+def run_until_wait(root: Path, *, max_steps: int = runtime.RUN_UNTIL_WAIT_MAX_STEPS) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="run_until_wait", max_steps=max_steps)
+    return {
+        "ok": True,
+        "run": shell.to_json(),
+        "run_until_wait": folded,
         **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
@@ -349,6 +375,8 @@ def main(argv: list[str] | None = None) -> int:
     fake.add_argument("--run-id", default=None)
     fake.add_argument("--startup-text", required=True)
 
+    run_wait = sub.add_parser("run-until-wait", help="Fold safe black-box mechanics until the next foreground boundary")
+    run_wait.add_argument("--max-steps", type=int, default=runtime.RUN_UNTIL_WAIT_MAX_STEPS)
     sub.add_parser("status", help="Render public status for the current new FlowPilot run")
     patrol_parser = sub.add_parser("patrol", help="Refresh lifecycle guard and foreground duty status for the current run")
     patrol_parser.add_argument("--sleep-seconds", type=int, default=0, help="Optional foreground duty delay before refreshing")
@@ -397,6 +425,8 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "run-fake-e2e":
             payload = run_fake_e2e(root, run_id=args.run_id, startup_text=args.startup_text)
+        elif args.command == "run-until-wait":
+            payload = run_until_wait(root, max_steps=args.max_steps)
         elif args.command == "status":
             payload = status(root)
         elif args.command == "patrol":

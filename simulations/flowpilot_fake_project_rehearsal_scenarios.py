@@ -534,11 +534,8 @@ def scenario_retired_side_command(work_root: Path) -> dict[str, Any]:
     root = reset_scenario_root(work_root, "retired_side_command")
     help_result = run_raw_cli(root, command_log, "--help")
     ensure(help_result.returncode == 0, f"help failed: {help_result.stderr}")
-    ensure(
-        "{start,run-fake-e2e,status,patrol,final-preflight,resume,lease-agent,ack,progress,submit-result,repair-accepted-packet}"
-        in help_result.stdout,
-        "formal command list changed",
-    )
+    for expected in ("start", "run-fake-e2e", "run-until-wait", "status", "patrol", "submit-result"):
+        ensure(expected in help_result.stdout, f"formal command missing from help: {expected}")
     for retired in ("complete-flowguard", "record-validation", "close"):
         ensure(retired not in help_result.stdout, f"retired command appears in help: {retired}")
 

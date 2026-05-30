@@ -123,28 +123,17 @@ def run_fake_e2e(
         return lease_id, result_id
 
     completed_packets: list[dict[str, str]] = []
+    folded_boundaries: list[dict[str, Any]] = []
     for index in range(80):
-        action = router.router_next_action(ledger)
-        if action.action_type == "terminal_complete":
+        boundary = runtime.run_until_wait(ledger)
+        folded_boundaries.append(boundary)
+        action_json = boundary["next_action"]
+        action_type = str(action_json.get("action_type") or "")
+        if action_type == "terminal_complete":
             break
-        if action.action_type == "issue_node_task_packet":
-            runtime.ensure_next_node_task_packet(ledger)
-            continue
-        if action.action_type == "issue_node_acceptance_plan_packet":
-            runtime.ensure_node_acceptance_plan_packet(ledger, action.subject_id)
-            continue
-        if action.action_type == "issue_parent_backward_replay_packet":
-            runtime.ensure_parent_backward_replay_packet(ledger, action.subject_id)
-            continue
-        if action.action_type == "issue_preplanning_gate_packet":
-            runtime.ensure_preplanning_gate_packet(ledger)
-            continue
-        if action.action_type == "close_project":
-            runtime.attempt_final_closure(ledger, str(ledger.get("latest_validation_evidence_id") or "fake-validation"))
-            continue
-        if action.action_type != "lease_agent":
-            raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action.to_json()}")
-        packet_id = action.subject_id
+        if action_type != "lease_agent":
+            raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action_json}")
+        packet_id = str(action_json.get("subject_id") or "")
         packet = ledger["packets"][packet_id]
         kind = packet["envelope"].get("packet_kind", "task")
         lease_id, result_id = complete_open_packet(
@@ -163,6 +152,7 @@ def run_fake_e2e(
         "mode": "rehearsal",
         "run": shell.to_json(),
         "completed_packets": completed_packets,
+        "folded_boundaries": folded_boundaries,
         "accepted_node_ids": [
             node_id for node_id, node in ledger.get("route_nodes", {}).items() if node.get("status") == "accepted"
         ],

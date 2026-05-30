@@ -82,6 +82,7 @@ EVENT_FAMILY_BY_TYPE = {
     "semantic_blocker_recorded": "repair",
     "semantic_blocker_cleared": "repair",
     "pm_repair_decision_recorded": "repair",
+    "pm_repair_decision_blocked": "repair",
     "repair_reissue_packet_issued": "repair",
     "flowguard_work_order_created": "flowguard",
     "flowguard_work_order_completed": "flowguard",
@@ -147,6 +148,29 @@ _STALE_RESULT_BLOCKERS = {
     "duplicate_after_packet_accepted",
 }
 
+ROUTER_INTERNAL_ACTION_TYPES = {
+    "freeze_contract",
+    "activate_route",
+    "issue_task_packet",
+    "issue_preplanning_gate_packet",
+    "materialize_route_nodes",
+    "issue_node_acceptance_plan_packet",
+    "issue_node_task_packet",
+    "issue_parent_backward_replay_packet",
+    "issue_flowguard_packet",
+    "issue_review_packet",
+    "issue_validation_packet",
+    "issue_pm_repair_decision_packet",
+    "issue_pm_disposition_packet",
+    "close_project",
+}
+ROLE_DISPATCH_ACTION_TYPES = {"lease_agent"}
+ROLE_WAIT_ACTION_TYPES = {"wait_for_ack", "wait_for_result"}
+RECOVERY_ACTION_TYPES = {"replace_lease", "repair_accepted_packet", "repair_packet"}
+USER_REQUIRED_ACTION_TYPES = {"open_startup_intake", "wait_for_resume", "resume_reconcile", "repair_cutover_gate"}
+TERMINAL_ACTION_TYPES = {"terminal_complete"}
+RUN_UNTIL_WAIT_MAX_STEPS = 50
+
 
 class BlackBoxRuntimeError(ValueError):
     """Raised when a caller asks for an impossible runtime transition."""
@@ -164,6 +188,28 @@ class RuntimeAction:
 
     def to_json(self) -> dict[str, str]:
         return asdict(self)
+
+
+def classify_runtime_action(action: RuntimeAction | Mapping[str, Any]) -> str:
+    """Return the foreground boundary class for a runtime action."""
+
+    if isinstance(action, RuntimeAction):
+        action_type = action.action_type
+    else:
+        action_type = str(action.get("action_type") or "")
+    if action_type in ROUTER_INTERNAL_ACTION_TYPES:
+        return "router_internal"
+    if action_type in ROLE_DISPATCH_ACTION_TYPES:
+        return "role_dispatch"
+    if action_type in ROLE_WAIT_ACTION_TYPES:
+        return "role_wait"
+    if action_type in RECOVERY_ACTION_TYPES:
+        return "recovery"
+    if action_type in USER_REQUIRED_ACTION_TYPES:
+        return "user_required"
+    if action_type in TERMINAL_ACTION_TYPES:
+        return "terminal"
+    return "controller_external"
 
 
 def now_iso() -> str:
@@ -1344,9 +1390,11 @@ _PM_REPAIR_ALIASES = {
     "route_mutation": "mutate_route",
     "quarantine": "quarantine_evidence",
     "waive": "waive_with_authority",
-    "stop": "stop_for_user",
-    "block": "stop_for_user",
 }
+_PM_REPAIR_DECISION_FIELD_RE = re.compile(
+    r"(?:^|[\n;])\s*(decision|repair_decision|recovery_option)\s*[:=]\s*([A-Za-z0-9_-]+)\b",
+    re.IGNORECASE,
+)
 
 
 def _json_payload_from_body(body: str) -> dict[str, Any] | None:
@@ -1419,7 +1467,7 @@ def _parse_packet_outcome(packet: Mapping[str, Any], result: Mapping[str, Any]) 
     token = _payload_outcome_token(payload, packet_kind) if payload else ""
     if not token and payload and isinstance(payload.get("contract_self_check"), Mapping):
         token = "pass"
-    match = _NONPASS_TEXT_RE.search(body)
+    match = None if packet_kind == "pm_repair_decision" else _NONPASS_TEXT_RE.search(body)
     if not token and match:
         token = _normalize_outcome_token(match.group(0))
     if token in _PASSING_OUTCOME_DECISIONS:
@@ -1507,6 +1555,14 @@ def _active_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, An
         blocker
         for blocker in ledger.get("active_blockers", {}).values()
         if isinstance(blocker, Mapping) and blocker.get("status") in {"active", "repairing", "awaiting_recheck"}
+    ]
+
+
+def _stopped_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [
+        blocker
+        for blocker in ledger.get("active_blockers", {}).values()
+        if isinstance(blocker, Mapping) and blocker.get("status") == "stopped"
     ]
 
 
@@ -1625,6 +1681,10 @@ def _clear_semantic_blockers_for_pass(
 
 def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocker_id: str) -> str:
     blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
+    if blocker.get("status") not in {"active", "repairing", "awaiting_recheck"}:
+        raise BlackBoxRuntimeError(
+            f"cannot issue PM repair decision packet for blocker {blocker_id} in status {blocker.get('status')}"
+        )
     existing = _find_packet(ledger, packet_kind="pm_repair_decision", subject_id=blocker_id)
     if existing:
         blocker["pm_repair_packet_id"] = str(existing["packet_id"])
@@ -1664,17 +1724,12 @@ def _parse_pm_repair_decision_body(body: str) -> tuple[str, str]:
         raw = _normalize_outcome_token(payload.get("decision") or payload.get("repair_decision") or payload.get("recovery_option"))
         reason = str(payload.get("reason") or payload.get("summary") or payload.get("recommended_resolution") or "")
     else:
-        raw = ""
+        match = _PM_REPAIR_DECISION_FIELD_RE.search(body)
+        raw = _normalize_outcome_token(match.group(2)) if match else ""
         reason = body.strip()[:500]
     decision = _PM_REPAIR_ALIASES.get(raw, raw)
     if decision not in _PM_REPAIR_DECISIONS:
-        lowered = body.lower()
-        for candidate in sorted(_PM_REPAIR_DECISIONS | set(_PM_REPAIR_ALIASES)):
-            if candidate in lowered:
-                decision = _PM_REPAIR_ALIASES.get(candidate, candidate)
-                break
-    if decision not in _PM_REPAIR_DECISIONS:
-        decision = "sender_reissue"
+        raise BlackBoxRuntimeError("PM repair decision requires a structured allowed decision field")
     return decision, reason
 
 
@@ -1682,10 +1737,16 @@ def _record_pm_repair_decision_from_packet_result(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
     result: Mapping[str, Any],
+    *,
+    decision: str | None = None,
+    reason: str | None = None,
 ) -> str:
     blocker_id = str(packet["envelope"].get("subject_id") or "")
     blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
-    decision, reason = _parse_pm_repair_decision_body(str(result.get("body", "")))
+    if decision is None:
+        decision, reason = _parse_pm_repair_decision_body(str(result.get("body", "")))
+    decision = str(decision)
+    reason = str(reason or "")
     decision_id = _next_id(ledger, "pm_repair_decision")
     row = {
         "decision_id": decision_id,
@@ -2192,6 +2253,47 @@ def _apply_valid_packet_result(
     lease: dict[str, Any],
 ) -> None:
     packet_kind = packet["envelope"].get("packet_kind", "task")
+    if packet_kind == "pm_repair_decision":
+        try:
+            repair_decision, repair_reason = _parse_pm_repair_decision_body(str(result.get("body", "")))
+        except BlackBoxRuntimeError as exc:
+            result["status"] = "pm_repair_decision_blocked"
+            result["accepted"] = False
+            result.setdefault("mechanical_blockers", []).append("pm_repair_decision_payload_contract")
+            result["quarantine_reason"] = str(exc)
+            packet["status"] = "result_blocked"
+            close_lease(ledger, lease["lease_id"], "pm_repair_decision_payload_blocked")
+            _event(
+                ledger,
+                "pm_repair_decision_blocked",
+                packet_id=packet["packet_id"],
+                result_id=result["result_id"],
+                reason=str(exc),
+            )
+            return
+        outcome = {
+            "decision": "pass",
+            "blocking": False,
+            "blocker_class": "pm_repair_decision",
+            "recommended_resolution": repair_decision,
+            "evidence_refs": [],
+            "reason": repair_reason,
+            "raw_token": repair_decision,
+            "schema_version": "",
+        }
+        outcome_id = _record_packet_outcome(ledger, packet, result, outcome)
+        result["semantic_decision"] = "pass"
+        result["packet_outcome_id"] = outcome_id
+        _accept_packet_result(ledger, packet, result, lease, reason="pm_repair_decision_submitted")
+        _record_pm_repair_decision_from_packet_result(
+            ledger,
+            packet,
+            result,
+            decision=repair_decision,
+            reason=repair_reason,
+        )
+        return
+
     outcome = _parse_packet_outcome(packet, result)
     outcome_id = _record_packet_outcome(ledger, packet, result, outcome)
     result["semantic_decision"] = outcome["decision"]
@@ -2298,10 +2400,6 @@ def _apply_valid_packet_result(
             raise BlackBoxRuntimeError("PM disposition packet is missing route_node_id")
         decision, reason = _decision_from_pm_body(str(result.get("body", "")))
         record_pm_disposition(ledger, node_id, result["result_id"], decision=decision, reason=reason)
-        return
-    if packet_kind == "pm_repair_decision":
-        _accept_packet_result(ledger, packet, result, lease, reason="pm_repair_decision_submitted")
-        _record_pm_repair_decision_from_packet_result(ledger, packet, result)
         return
     raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
 
@@ -3050,6 +3148,131 @@ def record_completion_claim(ledger: dict[str, Any], *, source: str, claim: str, 
     _event(ledger, "completion_claim_recorded", source=source, evidence_id=evidence_id)
 
 
+def _latest_route_draft(ledger: Mapping[str, Any]) -> Mapping[str, Any] | None:
+    drafts = ledger.get("route_drafts")
+    if not isinstance(drafts, Mapping):
+        return None
+    for draft in reversed(list(drafts.values())):
+        if isinstance(draft, Mapping) and draft.get("status") == "draft":
+            return draft
+    return None
+
+
+def _latest_accepted_planning_result_id(ledger: Mapping[str, Any]) -> str:
+    for packet in reversed(list(ledger.get("packets", {}).values())):
+        if not isinstance(packet, Mapping):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if envelope.get("packet_kind", "task") != "task" or envelope.get("route_scope") != "planning":
+            continue
+        result_id = str(packet.get("accepted_result_id") or "")
+        if result_id:
+            return result_id
+    return ""
+
+
+def _latest_node_subject_packet_id(ledger: Mapping[str, Any], node_id: str) -> str:
+    node = ledger.get("route_nodes", {}).get(node_id)
+    if not isinstance(node, Mapping):
+        return ""
+    for packet_id in reversed(list(node.get("packet_ids") or [])):
+        packet = ledger.get("packets", {}).get(str(packet_id))
+        if isinstance(packet, Mapping):
+            return str(packet_id)
+    return ""
+
+
+def _apply_router_internal_action(ledger: dict[str, Any], action: RuntimeAction) -> dict[str, Any]:
+    action_type = action.action_type
+    if action_type not in ROUTER_INTERNAL_ACTION_TYPES:
+        raise BlackBoxRuntimeError(f"action is not router-internal: {action_type}")
+    result: dict[str, Any] = {"action_type": action_type, "subject_id": action.subject_id}
+    if action_type == "freeze_contract":
+        freeze_contract(ledger)
+    elif action_type == "activate_route":
+        draft = _latest_route_draft(ledger)
+        if not draft:
+            raise BlackBoxRuntimeError("activate_route requires a route draft")
+        create_route(
+            ledger,
+            str(draft.get("summary") or "Activated FlowPilot route"),
+            [str(step) for step in draft.get("steps") or []],
+        )
+        if isinstance(draft, dict):
+            draft["status"] = "activated"
+            draft["activated_at"] = now_iso()
+    elif action_type == "issue_task_packet":
+        result["packet_id"] = _ensure_planning_packet(ledger)
+    elif action_type == "issue_preplanning_gate_packet":
+        result["packet_id"] = ensure_preplanning_gate_packet(ledger)
+    elif action_type == "materialize_route_nodes":
+        planning_result_id = _latest_accepted_planning_result_id(ledger)
+        if not planning_result_id:
+            raise BlackBoxRuntimeError("materialize_route_nodes requires an accepted planning result")
+        result["node_ids"] = materialize_route_from_planning_result(ledger, planning_result_id)
+    elif action_type == "issue_node_acceptance_plan_packet":
+        result["packet_id"] = ensure_node_acceptance_plan_packet(ledger, action.subject_id)
+    elif action_type == "issue_node_task_packet":
+        result["packet_id"] = ensure_next_node_task_packet(ledger)
+    elif action_type == "issue_parent_backward_replay_packet":
+        result["packet_id"] = ensure_parent_backward_replay_packet(ledger, action.subject_id)
+    elif action_type == "issue_flowguard_packet":
+        result["packet_id"] = _ensure_flowguard_packet_for_task_result(ledger, action.subject_id)
+    elif action_type == "issue_review_packet":
+        result["packet_id"] = _ensure_review_packet_for_task_result(ledger, action.subject_id)
+    elif action_type == "issue_validation_packet":
+        result["packet_id"] = _ensure_validation_packet_for_task(ledger, action.subject_id)
+    elif action_type == "issue_pm_repair_decision_packet":
+        result["packet_id"] = _ensure_pm_repair_decision_packet_for_blocker(ledger, action.subject_id)
+    elif action_type == "issue_pm_disposition_packet":
+        subject_packet_id = _latest_node_subject_packet_id(ledger, action.subject_id)
+        if not subject_packet_id:
+            raise BlackBoxRuntimeError("PM disposition packet requires a node subject packet")
+        result["packet_id"] = _ensure_pm_disposition_packet_for_node(ledger, action.subject_id, subject_packet_id)
+    elif action_type == "close_project":
+        evidence_id = str(ledger.get("latest_validation_evidence_id") or "")
+        if not evidence_id:
+            raise BlackBoxRuntimeError("close_project requires validation evidence")
+        result["closure"] = attempt_final_closure(ledger, evidence_id)
+    else:  # pragma: no cover - protected by allowlist above.
+        raise BlackBoxRuntimeError(f"unsupported router-internal action: {action_type}")
+    return result
+
+
+def run_until_wait(ledger: dict[str, Any], *, max_steps: int = RUN_UNTIL_WAIT_MAX_STEPS) -> dict[str, Any]:
+    """Fold safe internal mechanics until the next durable foreground boundary."""
+
+    if max_steps < 1:
+        raise BlackBoxRuntimeError("run_until_wait requires max_steps >= 1")
+    folded: list[dict[str, Any]] = []
+    for _ in range(max_steps):
+        action = _guard_next_action(ledger)
+        action_class = classify_runtime_action(action)
+        if action_class != "router_internal":
+            return {
+                "ok": True,
+                "command": "run-until-wait",
+                "boundary_class": action_class,
+                "next_action": action.to_json(),
+                "folded_applied_count": len(folded),
+                "folded_applied_actions": folded,
+            }
+        applied = _apply_router_internal_action(ledger, action)
+        folded.append(applied)
+    action = _guard_next_action(ledger)
+    raise BlackBoxRuntimeError(
+        "run_until_wait exceeded max_steps before a foreground boundary: "
+        + json.dumps(
+            {
+                "max_steps": max_steps,
+                "next_action": action.to_json(),
+                "folded_applied_count": len(folded),
+            },
+            sort_keys=True,
+        )
+    )
+
+
 def _guard_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     if not ledger.get("startup_intake"):
         return RuntimeAction("open_startup_intake", "startup intake has not been recorded")
@@ -3380,7 +3603,11 @@ def _guard_decision(
         return "recover_packet", "packet result or review is blocked"
     if action.action_type in {"wait_for_resume", "resume_reconcile"}:
         return action.action_type, action.reason
-    if trigger in _GUARD_STUCK_TRIGGERS and repeated_count >= threshold:
+    if (
+        trigger in _GUARD_STUCK_TRIGGERS
+        and repeated_count >= threshold
+        and classify_runtime_action(action) != "router_internal"
+    ):
         return "control_plane_stuck", "same nonterminal next action repeated without current-run progress"
     return "process_next_action", action.reason
 
@@ -3415,6 +3642,7 @@ def preview_lifecycle_guard(ledger: Mapping[str, Any], *, trigger: str = "status
         "observed_event_count": event_count,
         "action_key": action_key,
         "next_action": action.to_json(),
+        "next_action_class": classify_runtime_action(action),
         "decision": decision,
         "reason": reason,
         "controller_stop_allowed": controller_stop_allowed,
@@ -3763,6 +3991,11 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         if not ledger.get("route_drafts"):
             return RuntimeAction("draft_route", "no active route exists")
         return RuntimeAction("activate_route", "route draft needs activation")
+
+    stopped_blockers = _stopped_semantic_blockers(ledger)
+    if stopped_blockers:
+        blocker_id = str(stopped_blockers[0].get("blocker_id") or "")
+        return RuntimeAction("wait_for_resume", "PM stopped a semantic blocker for user decision", blocker_id)
 
     active_route = ledger["active_route_version"]
     active_packets = [

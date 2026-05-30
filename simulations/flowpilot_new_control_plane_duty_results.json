@@ -1,0 +1,75 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=13 initial_states=1 traces=91",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "external_wait_uses_internal_tick",
+      "hostile_prose_controls_decision",
+      "internal_action_exposed_to_controller",
+      "status_mutates_ledger",
+      "stopped_blocker_route_continues",
+      "wrong_role_wait_patrol_seconds"
+    ],
+    "hazards": {
+      "external_wait_uses_internal_tick": [
+        "external role wait reused the 1 second internal tick"
+      ],
+      "hostile_prose_controls_decision": [
+        "PM repair decision can still be controlled by prose"
+      ],
+      "internal_action_exposed_to_controller": [
+        "router-internal action leaked to Controller instead of folding to a boundary"
+      ],
+      "status_mutates_ledger": [
+        "status projection still mutates the ledger"
+      ],
+      "stopped_blocker_route_continues": [
+        "stopped PM blocker still allows route progress"
+      ],
+      "wrong_role_wait_patrol_seconds": [
+        "role wait patrol cadence changed away from 60 seconds",
+        "completion claimed before all repair obligations were satisfied"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_new_control_plane_duty",
+  "ok": true,
+  "result_type": "flowpilot_new_control_plane_duty_checks",
+  "source_contract": {
+    "checks": {
+      "action_classifier_present": true,
+      "entrypoint_tests_cover_status": true,
+      "fake_e2e_public_fold": true,
+      "hostile_aliases_removed": true,
+      "pm_stop_blocks_route": true,
+      "router_internal_whitelist_present": true,
+      "run_until_wait_present": true,
+      "runtime_tests_cover_parser_and_fold": true,
+      "status_read_only": true,
+      "structured_pm_parser_present": true
+    },
+    "failed": [],
+    "ok": true
+  },
+  "target": {
+    "failures": [],
+    "ok": true,
+    "state": {
+      "internal_actions_folded_to_boundary": true,
+      "internal_tick_seconds": 1,
+      "pm_stop_blocks_route": true,
+      "role_wait_patrol_seconds": 60,
+      "status": "complete",
+      "status_is_read_only": true,
+      "structured_pm_decision_required": true
+    }
+  }
+}

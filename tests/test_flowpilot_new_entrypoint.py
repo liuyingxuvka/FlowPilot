@@ -116,6 +116,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 self.assertIn(expected_kind, packet_kinds)
             self.assertEqual(packet_kinds.count("pm_disposition"), len(result["accepted_node_ids"]))
             self.assertEqual(len(ledger["node_acceptance_plans"]), len(result["accepted_node_ids"]))
+            self.assertTrue(result["folded_boundaries"])
+            self.assertTrue(all(boundary["command"] == "run-until-wait" for boundary in result["folded_boundaries"]))
+            self.assertFalse(
+                [
+                    boundary
+                    for boundary in result["folded_boundaries"]
+                    if boundary["boundary_class"] not in {"role_dispatch", "terminal"}
+                ]
+            )
             self.assertEqual(ledger["final_requirement_evidence_matrix"]["status"], "clean")
             self.assertTrue(all(lease["status"] == "closed" for lease in ledger["leases"].values()))
             self.assertTrue(all(lease["ack_received"] for lease in ledger["leases"].values()))
@@ -314,6 +323,31 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertTrue(ledger["leases"][reviewer_lease]["ack_received"])
             self.assertEqual(self._open_packet_by_kind(ledger, "validation"), after_review["next_action"]["subject_id"])
 
+    def test_status_is_read_only_but_patrol_refreshes_current_run_duty(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-status-readonly",
+                headless_startup_text="Exercise status read-only behavior.",
+                require_formal_ui=False,
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-status-readonly")
+            before = run_shell.load_run_ledger(shell)
+            before_history = len(before.get("lifecycle_guard_history") or [])
+            before_events = len(before.get("events") or [])
+
+            flowpilot_new.status(root)
+            flowpilot_new.status(root)
+            after_status = run_shell.load_run_ledger(shell)
+
+            self.assertEqual(len(after_status.get("lifecycle_guard_history") or []), before_history)
+            self.assertEqual(len(after_status.get("events") or []), before_events)
+
+            flowpilot_new.patrol(root, sleep_seconds=0)
+            after_patrol = run_shell.load_run_ledger(shell)
+            self.assertGreater(len(after_patrol.get("lifecycle_guard_history") or []), before_history)
+
     def test_formal_public_surface_omits_retired_side_command_paths(self) -> None:
         retired_functions = ("complete_flowguard", "review", "record_validation", "close")
         for name in retired_functions:
@@ -324,10 +358,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             with contextlib.redirect_stdout(direct_help):
                 flowpilot_new.main(["--help"])
         self.assertEqual(help_exit.exception.code, 0)
-        self.assertIn(
-            "{start,run-fake-e2e,status,patrol,final-preflight,resume,lease-agent,ack,progress,submit-result,repair-accepted-packet}",
-            direct_help.getvalue(),
-        )
+        self.assertIn("run-until-wait", direct_help.getvalue())
+        self.assertIn("repair-accepted-packet", direct_help.getvalue())
 
         direct_error = io.StringIO()
         with self.assertRaises(SystemExit) as error_exit:
@@ -343,10 +375,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn(
-            "{start,run-fake-e2e,status,patrol,final-preflight,resume,lease-agent,ack,progress,submit-result,repair-accepted-packet}",
-            completed.stdout,
-        )
+        self.assertIn("run-until-wait", completed.stdout)
+        self.assertIn("repair-accepted-packet", completed.stdout)
         for command in ("complete-flowguard", "record-validation"):
             self.assertNotIn(command, completed.stdout)
 

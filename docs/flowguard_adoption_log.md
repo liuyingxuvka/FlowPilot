@@ -3728,7 +3728,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The repeated display failure had three causes: the concrete node-entry sequence did not call the route-sign display gate, the model allowed stale first-node display evidence to survive into later nodes, and the diagram path resolver did not understand active-run fields such as `active_run_id`, `route_id`, and `current_node`.
-- Node entry now requires refreshing and visibly displaying the current-node FlowPilot Route Sign before focused grill-me, quality package work, node acceptance planning, child-skill execution, implementation, or checkpoint.
+- Node entry now requires refreshing and visibly displaying the current-node FlowPilot Route Sign before focused self-interrogation, quality package work, node acceptance planning, child-skill execution, implementation, or checkpoint.
 - The meta model now tracks `user_flow_diagram_fresh_for_current_node`; a later node cannot write its node acceptance plan using a stale route sign from an earlier node.
 - The active-run alias fix was verified against the current `.flowpilot/current.json` layout and produced a route sign for `route-001` / `N2_CONCEPT` instead of `unknown`.
 
@@ -8060,7 +8060,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `python -m pytest tests\test_flowguard_result_proof.py -q`.
 
 ### Findings
-- The dependency manifest now makes `flowguard`, `model-first-function-flow`, and `grill-me` required; UI-oriented companion skills remain optional.
+- The dependency manifest now makes `flowguard`, `model-first-function-flow`, and `self-interrogation` required; UI-oriented companion skills remain optional.
 - The installer prints required/optional tiers before actions, installs required Codex skills with `--install-missing`, and installs FlowGuard from `https://github.com/liuyingxuvka/FlowGuard` only when `--install-flowguard` explicitly authorizes Python environment changes.
 - `skills/flowpilot/DEPENDENCIES.md` and `SKILL.md` now give installing AIs a small startup reminder before FlowPilot runs.
 - Public release checks now understand `github_python_package` dependencies and probe FlowGuard's `pyproject.toml`.
@@ -21205,3 +21205,173 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Use `foreground_duty` and `final-preflight` as Controller stop authority in fresh FlowPilot runs.
 - Archive the OpenSpec change only when the user asks to close the spec lifecycle.
 - Run release-scoped live-host gates separately before any public release claim.
+
+## remove-legacy-external-questioning-dependency-20260530 - New-only FlowPilot dependency cleanup
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to remove the unused legacy external questioning skill dependency and avoid compatibility traces in the new FlowPilot surface.
+- Status: implemented_validated_installed_synced
+- Recorded: 2026-05-30T12:05:05Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok, version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project audit passed.
+- `python -m json.tool flowpilot.dependencies.json` - ok.
+- `python -m unittest tests.test_flowpilot_installer_dependencies` - ok, 5 tests passed.
+- `python scripts/check_install.py` - ok.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok, installed FlowPilot skill synced from repository.
+- `python scripts/install_flowpilot.py --check --json` - ok; required dependencies are now `flowpilot`, `flowguard`, and `model-first-function-flow`.
+- `rg --hidden ...` active-surface search - ok, no legacy external questioning skill name or source URL matches outside backup snapshots.
+- Background `python simulations/run_meta_checks.py` - ok via `tmp/flowguard_background/run_meta_checks.*`, exit 0, status complete, `proof_reuse=false`.
+- Background `python simulations/run_capability_checks.py` - ok via `tmp/flowguard_background/run_capability_checks.*`, exit 0, status complete, `proof_reuse=false`.
+
+### Findings
+- The new runtime did not import or call the legacy external questioning skill.
+- The required dependency manifest, installer contract, skill bootstrap text, dependency docs, templates, role cards, OpenSpec specs, and model wording now describe self-interrogation as FlowPilot-owned behavior.
+- Local installed FlowPilot content is source-fresh after sync.
+
+### Skipped Steps
+- Backup snapshots were not rewritten; they are preserved historical archives and are not active FlowPilot surfaces.
+- No GitHub push, tag, release, deploy, or OpenSpec archive was performed.
+
+## enforce-new-flowpilot-semantic-gate-outcomes-20260530 - Semantic gate outcome handling
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked whether reviewer or validator failure currently stops the new FlowPilot workflow, how the older FlowPilot handled pass/reject decisions, and how to borrow that experience for the from-scratch FlowPilot process.
+- Status: implemented_validated_installed_synced
+- Recorded: 2026-05-30T13:32:33Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_semantic_gate_outcome_model.py`
+- `simulations/run_flowpilot_semantic_gate_outcome_checks.py`
+- `simulations/flowpilot_semantic_gate_outcome_results.json`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok, version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project audit passed.
+- `openspec validate enforce-new-flowpilot-semantic-gate-outcomes --strict` - ok, OpenSpec change valid.
+- `python -m pytest tests/test_flowpilot_high_standard_control_flow.py -q` - ok, 9 tests passed.
+- `python simulations/run_flowpilot_semantic_gate_outcome_checks.py` - ok, 210 traces, known-bad hazards detected, model-test alignment passed.
+- `python -m pytest tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_lifecycle_guard.py -q` - ok, 30 tests passed before the final PM-rerun-validation test was added.
+- `python -m pytest tests/test_ai_project_runtime.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_lifecycle_guard.py -q` - ok, 38 tests and 20 subtests passed before the final PM-rerun-validation test was added.
+- `python simulations/run_flowpilot_new_entrypoint_checks.py` - ok.
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py` - ok.
+- `python simulations/run_new_only_runtime_checks.py` - ok.
+- `python simulations/run_ai_project_runtime_development_checks.py` - ok.
+- `python simulations/run_ai_project_runtime_checks.py` - ok; routine gate passed, with release rows separately verified by background/install evidence.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok, installed FlowPilot skill synced from repository.
+- `python scripts/audit_local_install_sync.py --json` - ok after sequential rerun.
+- `python scripts/install_flowpilot.py --check --json` - ok, source_fresh true.
+- `python scripts/check_install.py` - ok.
+- Background `python simulations/run_meta_checks.py` - ok via `tmp/flowguard_background/run_meta_checks.*`, exit 0, status complete, `proof_reused=false`.
+- Background `python simulations/run_capability_checks.py` - ok via `tmp/flowguard_background/run_capability_checks.*`, exit 0, status complete, `proof_reused=false`.
+
+### Findings
+- Packet result bodies now create public `packet_outcomes` before side effects, so a mechanically valid response can still be semantically blocking.
+- Reviewer block, validator fail, FlowGuard fail, worker blocked/needs-PM, and closure block create `active_blockers` and PM repair-decision packets instead of silently advancing downstream.
+- PM repair decisions are separate from reviewer or validator decisions; PM chooses the repair path and cannot impersonate a reviewer/validator pass.
+- Repair transactions preserve stale evidence IDs as context and require a fresh same-gate/same-role pass before a blocker clears.
+- Validator failed evidence remains recorded as failed and does not open closure until a fresh validator pass clears the blocker.
+- Router and console projection surface active blockers and repair packets without exposing sealed result bodies.
+
+### Counterexamples
+- `semantic_block_treated_as_pass`
+- `validation_fail_issued_closure`
+- `pm_impersonated_reviewer_pass`
+- `stale_failed_evidence_used_as_pass`
+- `blocker_without_pm_repair`
+- `wrong_role_recheck_cleared_blocker`
+
+### Friction Points
+- `install_flowpilot.py --sync-repo-owned` and `audit_local_install_sync.py` should not be run in parallel; the audit can read while sync is still overwriting the installed skill and report a false stale digest.
+
+### Skipped Steps
+- No OpenSpec archive was performed; the change remains available for review.
+- No GitHub push, tag, release, or deploy was performed.
+- Live external-agent reliability is not claimed from these checks; the runtime now records ambiguous/non-pass outputs structurally instead of treating body presence as enough.
+
+### Next Actions
+- Archive the OpenSpec change only after review/approval of this behavior contract.
+- Use `packet_outcomes`, `active_blockers`, `pm_repair_decisions`, and `repair_transactions` as required FlowPilot process nodes in the new UI/route surface.
+
+## harden-new-flowpilot-control-plane-duty-20260530 - New FlowPilot control-plane duty loop
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User observed that the new controller could stop after emitting a closure-office packet and asked to borrow old FlowPilot logic rather than inventing a fresh mechanism.
+- Status: implemented_validated_installed_synced
+- Recorded: 2026-05-30T14:42:47Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+- OpenSpec change: `harden-new-flowpilot-control-plane-duty`
+
+### Model Files
+- `simulations/flowpilot_new_control_plane_duty_model.py`
+- `simulations/run_flowpilot_new_control_plane_duty_checks.py`
+- `simulations/flowpilot_new_control_plane_duty_results.json`
+- `simulations/flowpilot_fake_project_rehearsal_results.json`
+- `simulations/ai_project_runtime_results.json`
+- `simulations/ai_project_protocol_stress_results.json`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Commands
+- `python -c "import flowguard, importlib.metadata as m; print(flowguard.SCHEMA_VERSION); print(m.version('flowguard'))"` - ok, schema 1.0 and version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project record audit passed.
+- `openspec validate harden-new-flowpilot-control-plane-duty --strict` - ok.
+- `python simulations/run_flowpilot_new_control_plane_duty_checks.py --json-out simulations/flowpilot_new_control_plane_duty_results.json` - ok; FlowGuard explored 91 traces with zero violations.
+- `python -m pytest tests/test_ai_project_runtime.py tests/test_flowpilot_new_entrypoint.py -q` - ok; 27 tests and 20 subtests passed.
+- `python simulations/run_ai_project_runtime_checks.py --release-evidence --install-ok` - ok; release runtime gate passed.
+- `python simulations/run_ai_project_protocol_stress_checks.py --release-evidence --background-dir tmp/flowguard_background --install-ok --json` - ok; release stress gate passed.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --work-root tmp/flowpilot_fake_project_rehearsal_control_plane_duty --json-out simulations/flowpilot_fake_project_rehearsal_results.json` - ok; 10 fake-project scenarios, 528 FlowGuard traces, no failed scenarios.
+- `python -m pytest tests/test_flowpilot_fake_project_rehearsal.py -q` - ok; 1 black-box rehearsal test passed in 275.73 seconds.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot skill digest matched repository source digest `a4f63643890a5a20504c49ac9cea77f64eb29301db9e0a8d1d9b788111edfb5f`.
+- `python scripts/audit_local_install_sync.py --json` - ok; repo-owned installed skill fresh.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/check_install.py --json` - ok.
+- `python scripts/run_test_tier.py --background-child --name run_meta_checks --command-json '["python","simulations/run_meta_checks.py"]' --background-dir tmp/flowguard_background` - ok; exit 0, status passed, `proof_reused=false`.
+- `python scripts/run_test_tier.py --background-child --name run_capability_checks --command-json '["python","simulations/run_capability_checks.py"]' --background-dir tmp/flowguard_background` - ok; exit 0, status passed, `proof_reused=false`.
+
+### Findings
+- Old FlowPilot already had the right timing split: fast 1-second controller/daemon internal checks and 60-second external role patrols.
+- The new runtime now classifies next actions into router-internal, role-dispatch, role-wait, recovery, user-required, terminal, and controller-external classes.
+- `run-until-wait` folds only allowlisted router-internal mechanics and stops at a durable foreground boundary.
+- Fake E2E now uses the public fold path instead of direct internal helper calls.
+- PM repair decisions require structured fields; prose that merely mentions stop or block no longer controls the route.
+- Stopped semantic blockers pause the route through `wait_for_resume` instead of continuing repair.
+- `status` is read-only; patrol, resume, submit-result, repair-accepted-packet, and run-until-wait are the stateful refresh points.
+
+### Counterexamples
+- `internal_action_exposed_to_foreground`
+- `status_mutates_ledger`
+- `hostile_pm_prose_controls_decision`
+- `stopped_blocker_continues_repair`
+- `external_worker_wait_uses_internal_tick`
+- `internal_blackbox_operation_uses_patrol_wait`
+
+### Friction Points
+- The previous fake rehearsal missed this class because it called internal helpers directly. The rehearsal now goes through the public `run-until-wait` path.
+- Adding a public command changed the CLI help text. The side-command rehearsal now checks required commands and retired-command absence instead of freezing the exact command-list string.
+
+### Skipped Steps
+- No OpenSpec archive was performed; the change remains reviewable.
+- No GitHub push, tag, release, deploy, or public-release claim was performed.
+- Deterministic fake-host evidence does not prove live external-agent reliability; it proves public CLI and router-ledger behavior under fake AI packets.
+
+### Next Actions
+- Use `run-until-wait` as the foreground controller duty step whenever the controller asks the black box for the next action.
+- Keep external role waits on the 60-second patrol cadence and internal router mechanics on the fast fold path.
+- Archive the OpenSpec change only after review/approval of this behavior contract.

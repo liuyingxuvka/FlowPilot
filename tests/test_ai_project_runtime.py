@@ -42,6 +42,10 @@ development_runner = load_module(
     "ai_project_runtime_development_runner_under_test",
     ROOT / "simulations" / "run_ai_project_runtime_development_checks.py",
 )
+control_plane_duty_runner = load_module(
+    "flowpilot_new_control_plane_duty_runner_under_test",
+    ROOT / "simulations" / "run_flowpilot_new_control_plane_duty_checks.py",
+)
 control_plane_audit = load_module(
     "flowpilot_control_plane_friction_model_audit_under_test",
     ROOT / "simulations" / "flowpilot_control_plane_friction_model_audit.py",
@@ -142,6 +146,13 @@ class AIProjectRuntimeTests(unittest.TestCase):
         self.assertTrue(report["target_plan"]["ok"])
         self.assertTrue(report["hazard_detection"]["ok"])
         self.assertIn("fixed_six_roles_reintroduced", report["hazard_detection"]["hazards"])
+
+    def test_flowguard_control_plane_duty_model_matches_runtime_repairs(self) -> None:
+        report = control_plane_duty_runner.run_checks()
+        self.assertTrue(report["ok"], report)
+        self.assertTrue(report["flowguard"]["ok"])
+        self.assertTrue(report["source_contract"]["ok"])
+        self.assertIn("status_mutates_ledger", report["hazard_detection"]["hazards"])
 
     def test_current_run_resolver_accepts_new_schema_and_rejects_project_root_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -286,6 +297,79 @@ class AIProjectRuntimeTests(unittest.TestCase):
         self.assertTrue(result["envelope"]["ack_result_accepted_separate"])
         self.assertEqual(result["envelope"]["output_contract"]["packet_id"], packet_id)
         self.assertEqual(control_surface.audit_packet_contracts(ledger), [])
+
+    def test_run_until_wait_folds_internal_action_to_role_boundary(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Do work"])
+
+        boundary = runtime.run_until_wait(ledger)
+
+        self.assertEqual(boundary["boundary_class"], "role_dispatch")
+        self.assertEqual(boundary["next_action"]["action_type"], "lease_agent")
+        self.assertEqual(boundary["folded_applied_count"], 1)
+        self.assertEqual(boundary["folded_applied_actions"][0]["action_type"], "issue_task_packet")
+
+    def test_pm_repair_decision_ignores_hostile_prose_when_structured_decision_is_present(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            json.dumps({"decision": "block", "blocking": True, "recommended_resolution": "needs repair"}),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-a", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            "decision=same_node_repair\nReason: this prose mentions stop_for_user and block, but they are not the decision.",
+        )
+
+        decision = next(iter(ledger["pm_repair_decisions"].values()))
+        self.assertEqual(decision["decision"], "same_node_repair")
+        self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "awaiting_recheck")
+
+    def test_pm_repair_decision_requires_structured_field_and_stop_pauses_route(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            json.dumps({"decision": "block", "blocking": True, "recommended_resolution": "needs PM"}),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        bad_pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-bad", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, bad_pm_lease)
+        runtime.ack_lease(ledger, bad_pm_lease, pm_packet)
+
+        bad_result = runtime.submit_result(
+            ledger,
+            bad_pm_lease,
+            pm_packet,
+            "This body says block and stop_for_user, but it has no structured decision field.",
+        )
+
+        self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
+        self.assertFalse(ledger["pm_repair_decisions"])
+
+        ledger["packets"][pm_packet]["status"] = "open"
+        ledger["packets"][pm_packet]["assigned_lease_id"] = ""
+        good_pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-good", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, good_pm_lease)
+        runtime.ack_lease(ledger, good_pm_lease, pm_packet)
+        runtime.submit_result(ledger, good_pm_lease, pm_packet, json.dumps({"decision": "stop_for_user"}))
+
+        self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "stopped")
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "wait_for_resume")
 
 
 if __name__ == "__main__":
