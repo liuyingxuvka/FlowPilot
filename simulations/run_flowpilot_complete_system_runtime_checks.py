@@ -95,13 +95,6 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         agent_id="reviewer-complete-system",
         body="SEALED_RESULT_BODY: complete-system reviewer accepted evidence",
     )
-    closure_packet = _open_packet_by_kind(ledger, "closure")
-    _complete_open_packet(
-        ledger,
-        closure_packet,
-        agent_id="closure-complete-system",
-        body="SEALED_RESULT_BODY: complete-system closure confirmed",
-    )
     return result_id
 
 

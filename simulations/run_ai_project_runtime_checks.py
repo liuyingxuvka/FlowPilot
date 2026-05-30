@@ -88,13 +88,6 @@ def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) ->
         agent_id="reviewer-a",
         body="SEALED_RESULT_BODY: reviewer accepted the runtime result",
     )
-    closure_packet = _open_packet_by_kind(ledger, "closure")
-    _complete_open_packet(
-        ledger,
-        closure_packet,
-        agent_id="closure-a",
-        body="SEALED_RESULT_BODY: closure confirms backward chain",
-    )
     return result_id
 
 

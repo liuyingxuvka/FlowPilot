@@ -125,8 +125,8 @@ class AIProjectRuntimeTests(unittest.TestCase):
             "task",
             "flowguard_check",
             "review",
-            "closure",
         ])
+        self.assertTrue(ledger["system_closures"])
         self.assertFalse([lease for lease in ledger["leases"].values() if lease["status"] == "active"])
 
     def test_runtime_testmesh_does_not_overclaim_release_evidence(self) -> None:
@@ -241,8 +241,6 @@ class AIProjectRuntimeTests(unittest.TestCase):
             "worker",
             "flowguard_operator",
             "reviewer",
-            "validator",
-            "closure_officer",
         }
         ledger = runtime.new_ledger("Goal", "Contract")
         runtime.create_route(ledger, "Route", ["Do work"])

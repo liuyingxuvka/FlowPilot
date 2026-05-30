@@ -112,8 +112,11 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 "node_pm_disposition",
             ):
                 self.assertIn(expected_scope, route_scopes)
-            for expected_kind in ("flowguard_check", "review", "validation", "closure", "pm_disposition"):
+            for expected_kind in ("flowguard_check", "review", "pm_disposition"):
                 self.assertIn(expected_kind, packet_kinds)
+            self.assertNotIn("validation", packet_kinds)
+            self.assertNotIn("closure", packet_kinds)
+            self.assertTrue(ledger["system_closures"])
             self.assertEqual(packet_kinds.count("pm_disposition"), len(result["accepted_node_ids"]))
             self.assertEqual(len(ledger["node_acceptance_plans"]), len(result["accepted_node_ids"]))
             self.assertTrue(result["folded_boundaries"])
@@ -288,14 +291,13 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
 
             before_ack = flowpilot_new.status(root)["status"]
             reviewer_rows = [row for row in before_ack["leases"] if row["lease_id"] == reviewer_lease]
-            self.assertEqual(reviewer_rows, [{
-                "lease_id": reviewer_lease,
-                "agent_id": "reviewer-agent",
-                "responsibility": "reviewer",
-                "status": "active",
-                "ack_received": False,
-                "packet_id": review_packet,
-            }])
+            self.assertEqual(len(reviewer_rows), 1)
+            self.assertEqual(reviewer_rows[0]["lease_id"], reviewer_lease)
+            self.assertEqual(reviewer_rows[0]["agent_id"], "reviewer-agent")
+            self.assertEqual(reviewer_rows[0]["responsibility"], "reviewer")
+            self.assertEqual(reviewer_rows[0]["status"], "active")
+            self.assertFalse(reviewer_rows[0]["ack_received"])
+            self.assertEqual(reviewer_rows[0]["packet_id"], review_packet)
 
             flowpilot_new.ack(root, lease_id=reviewer_lease, packet_id=review_packet)
             after_ack = flowpilot_new.status(root)["status"]
@@ -321,7 +323,11 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(ledger["packets"][review_packet]["status"], "accepted")
             self.assertEqual(ledger["leases"][reviewer_lease]["status"], "closed")
             self.assertTrue(ledger["leases"][reviewer_lease]["ack_received"])
-            self.assertEqual(self._open_packet_by_kind(ledger, "validation"), after_review["next_action"]["subject_id"])
+            packet_kinds = [packet["envelope"].get("packet_kind", "task") for packet in ledger["packets"].values()]
+            self.assertNotIn("validation", packet_kinds)
+            self.assertNotIn("closure", packet_kinds)
+            self.assertTrue(ledger["system_closures"])
+            self.assertNotEqual(after_review["next_action"].get("responsibility"), "validator")
 
     def test_status_is_read_only_but_patrol_refreshes_current_run_duty(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

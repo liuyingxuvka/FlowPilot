@@ -8,11 +8,14 @@ from .runtime import (
     create_route,
     load_ledger,
     new_ledger,
+    record_host_liveness,
+    record_terminal_lifecycle,
     render_console,
     review_result,
     router_next_action,
     save_ledger,
     submit_result,
+    terminal_lifecycle_status,
 )
 from .run_shell import (
     RunShell,
@@ -48,7 +51,9 @@ __all__ = [
     "load_run_shell",
     "materialize_run_artifacts",
     "new_ledger",
+    "record_host_liveness",
     "record_startup_intake_result",
+    "record_terminal_lifecycle",
     "render_console",
     "resolve_current_run",
     "review_result",
@@ -58,4 +63,5 @@ __all__ = [
     "save_ledger",
     "save_run_ledger",
     "submit_result",
+    "terminal_lifecycle_status",
 ]

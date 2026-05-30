@@ -1,4 +1,4 @@
-"""Run FlowGuard checks for FlowPilot validation automation and PM gates."""
+"""Run FlowGuard checks for stop/cancel, host liveness, and orphan evidence recovery."""
 
 from __future__ import annotations
 
@@ -10,14 +10,13 @@ from typing import Any
 from flowguard import Explorer
 
 try:  # pragma: no cover
-    from . import flowpilot_validation_pm_gate_model as model
+    from . import flowpilot_stop_host_orphan_recovery_model as model
 except ImportError:  # pragma: no cover
-    import flowpilot_validation_pm_gate_model as model
+    import flowpilot_stop_host_orphan_recovery_model as model
 
 
 ROOT = Path(__file__).resolve().parent
-REPO_ROOT = ROOT.parent
-RESULTS_PATH = ROOT / "flowpilot_validation_pm_gate_results.json"
+RESULTS_PATH = ROOT / "flowpilot_stop_host_orphan_recovery_results.json"
 
 
 def _flowguard_report() -> dict[str, Any]:
@@ -47,7 +46,7 @@ def _target_plan_report() -> dict[str, Any]:
     failures = model.invariant_failures(state)
     return {
         "ok": not failures and model.is_success(state),
-        "evidence_role": "validation_pm_gate_model_not_live_host_proof",
+        "evidence_role": "model_target_plan_not_live_host_proof",
         "failures": failures,
         "state": model.state_summary(state),
         "labels": list(model.REQUIRED_SAFE_LABELS),
@@ -67,79 +66,40 @@ def _hazard_report() -> dict[str, Any]:
     }
 
 
-def _model_test_alignment_report() -> dict[str, Any]:
-    high_standard_test = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
-    runtime = REPO_ROOT / "skills" / "flowpilot" / "assets" / "ai_project_runtime" / "runtime.py"
-    test_text = high_standard_test.read_text(encoding="utf-8")
-    runtime_text = runtime.read_text(encoding="utf-8")
-    obligations = {
-        "system_validation_helper": "_record_system_validation_for_packet" in runtime_text,
-        "system_closure_helper": "_auto_close_packet_after_system_validation" in runtime_text,
-        "system_closure_ledger": "system_closures" in runtime_text,
-        "reviewer_pass_no_closure_officer_packet": "test_reviewer_pass_auto_closes_without_closure_officer_packet" in test_text,
-        "system_validation_failure_routes_pm": "test_system_validation_failure_routes_to_pm_repair" in test_text,
-        "old_validator_closure_roles_removed": "test_validator_and_closure_officer_are_not_runtime_roles" in test_text,
-        "old_validation_closure_packets_rejected": "test_validation_and_closure_packet_kinds_are_rejected" in test_text,
-        "pm_decision_gate_ledger": "pm_decision_gates" in runtime_text,
-        "high_risk_pm_repair_staged": "test_pm_mutate_route_repair_is_gated_before_application" in test_text,
-        "low_risk_pm_repair_direct": "test_pm_sender_reissue_repair_remains_direct" in test_text,
-        "high_risk_pm_disposition_staged": "test_pm_mutate_route_disposition_is_gated_before_application" in test_text,
-    }
-    missing = [name for name, ok in obligations.items() if not ok]
-    return {
-        "ok": not missing,
-        "obligations": obligations,
-        "missing": missing,
-        "evidence": [
-            "skills/flowpilot/assets/ai_project_runtime/runtime.py",
-            "tests/test_flowpilot_high_standard_control_flow.py",
-        ],
-    }
-
-
 def run_checks() -> dict[str, Any]:
     flowguard = _flowguard_report()
     target_plan = _target_plan_report()
     hazards = _hazard_report()
-    alignment = _model_test_alignment_report()
     rows = [
         {
-            "id": "validation_pm_gate_flowguard_model",
+            "id": "stop_host_orphan_flowguard_model",
             "status": "passed" if flowguard["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["simulations/flowpilot_validation_pm_gate_model.py"],
+            "evidence": ["simulations/flowpilot_stop_host_orphan_recovery_model.py"],
         },
         {
-            "id": "validation_pm_gate_target_plan",
+            "id": "stop_host_orphan_target_plan",
             "status": "passed" if target_plan["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["openspec/changes/auto-close-after-system-validation/tasks.md"],
+            "evidence": ["openspec/changes/harden-new-flowpilot-stop-host-orphan-recovery/tasks.md"],
         },
         {
-            "id": "validation_pm_gate_hazard_replay",
+            "id": "stop_host_orphan_hazard_replay",
             "status": "passed" if hazards["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["simulations/flowpilot_validation_pm_gate_model.py"],
-        },
-        {
-            "id": "validation_pm_gate_model_test_alignment",
-            "status": "passed" if alignment["ok"] else "failed",
-            "freshness": "current",
-            "scope": "routine",
-            "evidence": alignment["evidence"],
+            "evidence": ["simulations/flowpilot_stop_host_orphan_recovery_model.py"],
         },
     ]
     return {
-        "result_type": "flowpilot_validation_pm_gate_checks",
+        "result_type": "flowpilot_stop_host_orphan_recovery_checks",
         "model_id": model.MODEL_ID,
-        "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"] and alignment["ok"],
+        "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"],
         "flowguard": flowguard,
         "target_plan": target_plan,
         "hazard_detection": hazards,
-        "model_test_alignment": alignment,
         "test_mesh": {
             "rows": rows,
             "routine_gate": {"ok": all(row["status"] == "passed" for row in rows)},

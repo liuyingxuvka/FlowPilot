@@ -19,8 +19,6 @@ PLANNING_CHAIN = (
     ("task", "pm"),
     ("flowguard_check", "flowguard_operator"),
     ("review", "reviewer"),
-    ("validation", "validator"),
-    ("closure", "closure_officer"),
 )
 
 
@@ -256,6 +254,9 @@ def complete_full_packet_chain(
         projection.get("validation_evidence") and projection["validation_evidence"][0].get("status") == "passed",
         "validation evidence missing",
     )
+    ensure(projection.get("system_closures"), "system closure evidence missing")
+    ensure("validation" not in packet_kinds, f"ordinary path still issued validator packets: {packet_kinds}")
+    ensure("closure" not in packet_kinds, f"ordinary path still issued closure packets: {packet_kinds}")
     ensure(not projection.get("blockers"), f"terminal public status has blockers: {projection.get('blockers')}")
     return {
         "terminal_action": final_action,
@@ -282,7 +283,7 @@ def complete_planning_chain_only(
         packet = packet_row(projection, packet_id)
         packet_kind = str(packet.get("packet_kind", ""))
         route_scope = str(packet.get("route_scope", ""))
-        ensure(packet_kind in {"task", "flowguard_check", "review", "validation", "closure"}, f"wrong planning packet kind: {packet}")
+        ensure(packet_kind in {"task", "flowguard_check", "review"}, f"wrong planning packet kind: {packet}")
         ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
         lease_payload = run_cli(
             root,
@@ -351,7 +352,7 @@ def complete_planning_chain_only(
             "--body",
             body,
         )
-        if packet_kind == "closure" and route_scope == "planning":
+        if packet_kind == "review" and route_scope == "planning":
             break
     else:
         raise RehearsalFailure("planning chain exceeded high-standard gate budget")

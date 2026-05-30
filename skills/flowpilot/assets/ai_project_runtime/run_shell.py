@@ -101,6 +101,10 @@ def create_run_shell(
         "run_root": str(run_root),
         "ledger_path": str(ledger_path),
         "authority": "current_run_ledger",
+        "lifecycle_state": str((ledger.get("lifecycle") or {}).get("state", "")),
+        "terminal_lifecycle_status": runtime.terminal_lifecycle_status(ledger),
+        "controller_stop_allowed": bool((ledger.get("lifecycle_guard") or {}).get("controller_stop_allowed") is True),
+        "updated_at": runtime.now_iso(),
     }
     (flowpilot_root / "current.json").write_text(json.dumps(current, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     _append_index(flowpilot_root / "index.json", current)
@@ -141,6 +145,7 @@ def save_run_ledger(
     runtime.save_ledger(ledger, shell.ledger_path)
     _write_events_jsonl(ledger, shell.events_path)
     materialize_run_artifacts(shell, ledger)
+    _refresh_current_pointer_status(shell, ledger)
 
 
 def load_run_ledger(shell: RunShell) -> dict[str, Any]:
@@ -266,6 +271,8 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "closure" / "final_closure.json", ledger["closure"])
     if isinstance(ledger.get("lifecycle_guard"), dict):
         _write_json(shell.run_root / "lifecycle" / "guard.json", ledger["lifecycle_guard"])
+    if isinstance(ledger.get("terminal_lifecycle"), dict):
+        _write_json(shell.run_root / "lifecycle" / "terminal_lifecycle.json", ledger["terminal_lifecycle"])
     if ledger.get("lifecycle_guard_history"):
         _write_json(shell.run_root / "lifecycle" / "guard_history.json", ledger["lifecycle_guard_history"])
     if isinstance(ledger.get("foreground_duty"), dict):
@@ -276,10 +283,12 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "closure" / "final_route_wide_gate_ledger.json", ledger["final_route_wide_gate_ledger"])
     if isinstance(ledger.get("final_requirement_evidence_matrix"), dict):
         _write_json(shell.run_root / "closure" / "final_requirement_evidence_matrix.json", ledger["final_requirement_evidence_matrix"])
+    if ledger.get("orphan_evidence"):
+        _write_json(shell.run_root / "evidence" / "orphan_evidence.json", ledger["orphan_evidence"])
     _write_json(shell.run_root / "console" / "status.json", runtime.render_console(ledger))
 
 
-def _append_index(index_path: Path, current: dict[str, str]) -> None:
+def _append_index(index_path: Path, current: dict[str, Any]) -> None:
     if index_path.exists():
         payload = json.loads(index_path.read_text(encoding="utf-8"))
     else:
@@ -288,6 +297,29 @@ def _append_index(index_path: Path, current: dict[str, str]) -> None:
     runs.append(current)
     payload["runs"] = runs
     index_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def _refresh_current_pointer_status(shell: RunShell, ledger: dict[str, Any]) -> None:
+    current_path = shell.flowpilot_root / "current.json"
+    if not current_path.exists():
+        return
+    try:
+        current = json.loads(current_path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    if not isinstance(current, dict) or current.get("run_id") != shell.run_id:
+        return
+    guard = ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), dict) else {}
+    current.update(
+        {
+            "lifecycle_state": str((ledger.get("lifecycle") or {}).get("state", "")),
+            "terminal_lifecycle_status": runtime.terminal_lifecycle_status(ledger),
+            "controller_stop_allowed": bool(guard.get("controller_stop_allowed") is True),
+            "updated_at": runtime.now_iso(),
+        }
+    )
+    _write_json(current_path, current)
+    _append_index(shell.flowpilot_root / "index.json", current)
 
 
 def _write_events_jsonl(ledger: dict[str, Any], events_path: Path) -> None:

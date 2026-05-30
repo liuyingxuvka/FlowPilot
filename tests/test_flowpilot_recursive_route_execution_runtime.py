@@ -71,7 +71,7 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
             ]
         ),
     )
-    for kind in ("flowguard_check", "review", "validation", "closure"):
+    for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
         _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: {kind}")
 
@@ -80,11 +80,15 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
     node_id = ledger["execution_frontier"]["active_node_id"]
     task_packet = _open_packets(ledger, "task")[0]
     _complete_open_packet(ledger, task_packet, f"SEALED_RESULT_BODY: completed {node_id}")
-    for kind in ("flowguard_check", "review", "validation", "closure"):
+    for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
         _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: {kind} for {node_id}")
     pm_packet = _open_packets(ledger, "pm_disposition")[0]
     _complete_open_packet(ledger, pm_packet, json.dumps({"decision": disposition, "reason": f"{disposition} {node_id}"}))
+    if disposition == "mutate_route":
+        for kind in ("flowguard_check", "review"):
+            packet_id = _open_packets(ledger, kind)[0]
+            _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: PM disposition gate {kind} for {node_id}")
     return node_id
 
 

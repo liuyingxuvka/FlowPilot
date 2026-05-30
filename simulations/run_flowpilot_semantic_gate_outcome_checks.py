@@ -77,7 +77,7 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "active_blocker_ledger": "active_blockers" in runtime_text,
         "pm_repair_decision_packet": "pm_repair_decision" in runtime_text,
         "reviewer_block_no_validation": "test_reviewer_block_routes_to_pm_repair_and_requires_recheck" in test_text,
-        "validator_fail_no_closure": "test_legacy_validator_fail_records_failed_evidence_and_routes_pm_repair" in test_text,
+        "system_validation_failure_routes_pm": "test_system_validation_failure_routes_to_pm_repair" in test_text,
         "worker_block_no_flowguard": "test_worker_blocked_result_routes_pm_repair_without_flowguard_pass" in test_text,
         "same_class_recheck": "required_recheck_role" in test_text and "\"cleared\"" in test_text,
     }

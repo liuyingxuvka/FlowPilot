@@ -95,6 +95,21 @@ def _model_test_alignment_report() -> dict[str, Any]:
             and "cannot assign accepted packet" in fake_text
         ),
         "accepted_packet_race_repair": "test_repair_accepted_packet_assignment_race_restores_original_result" in lifecycle_text,
+        "terminal_lifecycle_stop_cancel": (
+            "test_user_stop_terminal_fence_allows_exit_without_closure" in lifecycle_text
+            and "test_user_cancel_terminal_fence_blocks_new_work" in lifecycle_text
+            and "stop_terminal_fence" in fake_text
+        ),
+        "host_liveness_bridge": (
+            "test_host_liveness_not_found_overrides_prior_progress" in lifecycle_text
+            and "host_liveness_bridge_recovery" in fake_text
+            and "host-liveness" in fake_text
+        ),
+        "orphan_evidence_recovery": (
+            "test_orphan_runner_summary_routes_recovery_without_accepting_packet" in lifecycle_text
+            and "orphan_runner_summary_recovery" in fake_text
+            and "recover_orphan_evidence" in fake_text
+        ),
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {

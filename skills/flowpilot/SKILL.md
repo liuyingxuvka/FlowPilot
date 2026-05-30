@@ -65,7 +65,7 @@ The new runtime has five foreground duty actions:
 - `control_plane_blocker`: report the blocker instead of silently waiting or claiming completion.
 - `terminal_return`: final return is allowed only after terminal closure and final-return preflight pass.
 
-Nonterminal status, patrol, resume, lease, ACK, result, and scoped-closure commands keep `controller_stop_allowed: false` and `final_return_preflight.allowed: false`. Knowing the next action is not completion. A packet, phase, or closure-officer packet may close a scope; it does not close the whole project unless the runtime returns `terminal_return`.
+Nonterminal status, patrol, resume, lease, ACK, result, and scoped-closure commands keep `controller_stop_allowed: false` and `final_return_preflight.allowed: false`. Knowing the next action is not completion. A packet, phase, or system-recorded scope closure may close a scope; it does not close the whole project unless the runtime returns `terminal_return`.
 
 If `foreground_duty.action=wait_patrol`, do not final-answer. Run the duty's `refresh_command` or `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60`, wait for output, then follow the next `foreground_duty`. Starting one timer, seeing no new work, or observing a live role is not completion evidence.
 
@@ -85,9 +85,9 @@ After startup, the new runtime materializes the first PM-bound high-standard con
 
 When the new runtime returns `lease_agent`, spawn only the requested responsibility, record the real host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort.
 
-All new formal runtime roles are packet roles. PM, FlowGuard operator, reviewer, validator, closure officer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. Do not complete FlowGuard, review, validation, or closure through side-command shortcuts.
+All new formal runtime roles are packet roles, but not every gate is a dispatched role. PM, FlowGuard operator, reviewer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are router-owned ledger facts after accepted review evidence; do not spawn validator or Closure Officer workers, and do not complete FlowGuard or review through side-command shortcuts.
 
-After PM planning closes, the runtime materializes executable route nodes, requires accepted node acceptance plans, issues each node as its own packet chain, runs FlowGuard/review/validation/closure and PM disposition per node, uses same-node repair for ordinary quality gaps, runs parent backward replay where needed, then builds a final route-wide gate ledger plus requirement-evidence matrix before terminal completion.
+After PM planning closes, the runtime materializes executable route nodes, requires accepted node acceptance plans, issues each node as its own packet chain, runs FlowGuard and review packets, records system validation and system closure, applies PM disposition per node, uses same-node repair for ordinary quality gaps, runs parent backward replay where needed, then builds a final route-wide gate ledger plus requirement-evidence matrix before terminal completion.
 
 When the issued packet is a FlowGuard operator packet, write formal-run evidence under the packet's `evidence_output_policy.run_local_evidence_root`. For Meta or Capability runners, use the packet's `recommended_runner_commands` or the same `--json-out <run-local-path>` pattern. Do not write formal-run evidence to tracked `simulations/*_results.json` baselines unless the packet explicitly asks for a repository baseline update.
 

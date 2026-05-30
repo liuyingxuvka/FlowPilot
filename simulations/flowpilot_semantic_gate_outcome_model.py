@@ -91,7 +91,7 @@ class SemanticGateOutcomeStep:
     )
     input_description = "Input x State: one packet result or repair transition"
     output_description = "Set(Output x State): pass progression, blocker repair, or rejected hazard"
-    idempotency = "PM repair decisions do not clear reviewer/validator/FlowGuard blockers without same-class recheck"
+    idempotency = "PM repair decisions do not clear reviewer/system-validation/FlowGuard blockers without same-class recheck"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         del input_obj

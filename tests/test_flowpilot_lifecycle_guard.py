@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import json
 import sys
 import tempfile
 import unittest
@@ -214,6 +215,170 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(patrol["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
             self.assertTrue(patrol["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
             self.assertEqual(patrol["foreground_duty"]["action"], "recover_or_reissue")
+
+    def test_host_liveness_not_found_overrides_prior_progress(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-host-liveness-not-found",
+                headless_startup_text="Exercise real host liveness bridge.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+            lease_id = flowpilot_new.lease_agent(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="fake-pm-liveness-bridge",
+                host_kind="fake",
+            )["lease_id"]
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
+
+            bridge = flowpilot_new.host_liveness(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                status="not_found",
+                source="unit_test_host_probe",
+            )
+
+            self.assertEqual(bridge["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
+            self.assertEqual(bridge["lifecycle_guard"]["wait_recovery"]["last_liveness_status"], "not_found")
+            self.assertTrue(bridge["lifecycle_guard"]["wait_recovery"]["replacement_eligible"])
+            self.assertEqual(bridge["foreground_duty"]["action"], "recover_or_reissue")
+
+    def test_completed_without_result_is_recovery_not_terminal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-host-completed-without-result",
+                headless_startup_text="Exercise completed-without-result bridge.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+            lease_id = flowpilot_new.lease_agent(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="fake-pm-completed-without-result",
+                host_kind="fake",
+            )["lease_id"]
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+
+            bridge = flowpilot_new.host_liveness(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                status="completed_without_result",
+                source="unit_test_host_probe",
+            )
+
+            self.assertEqual(bridge["next_action"]["action_type"], "wait_for_result")
+            self.assertEqual(bridge["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
+            self.assertEqual(bridge["foreground_duty"]["action"], "recover_or_reissue")
+            self.assertFalse(bridge["final_return_preflight"]["allowed"])
+
+    def test_user_stop_terminal_fence_allows_exit_without_closure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-user-stop-terminal",
+                headless_startup_text="Exercise explicit stop.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+            lease_id = flowpilot_new.lease_agent(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="fake-pm-stop",
+                host_kind="fake",
+            )["lease_id"]
+
+            stopped = flowpilot_new.stop_run(root, reason="unit test stop")
+
+            self.assertEqual(stopped["next_action"]["action_type"], "terminal_lifecycle")
+            self.assertEqual(stopped["lifecycle_guard"]["decision"], "terminal_return")
+            self.assertTrue(stopped["final_return_preflight"]["allowed"])
+            self.assertEqual(stopped["final_return_preflight"]["terminal_lifecycle_status"], "stopped_by_user")
+            shell = run_shell.load_run_shell(root, run_id="run-user-stop-terminal")
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(ledger["leases"][lease_id]["status"], "closed")
+            self.assertEqual(ledger["packets"][packet_id]["status"], "stopped_by_user")
+            self.assertTrue((shell.run_root / "lifecycle" / "terminal_lifecycle.json").exists())
+            with self.assertRaisesRegex(Exception, "run is terminal"):
+                flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+
+    def test_user_cancel_terminal_fence_blocks_new_work(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-user-cancel-terminal",
+                headless_startup_text="Exercise explicit cancel.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+
+            cancelled = flowpilot_new.cancel_run(root, reason="unit test cancel")
+
+            self.assertEqual(cancelled["next_action"]["action_type"], "terminal_lifecycle")
+            self.assertTrue(cancelled["final_return_preflight"]["allowed"])
+            with self.assertRaisesRegex(Exception, "run is terminal"):
+                flowpilot_new.lease_agent(
+                    root,
+                    packet_id=packet_id,
+                    responsibility="pm",
+                    agent_id="fake-pm-after-cancel",
+                    host_kind="fake",
+                )
+
+    def test_orphan_runner_summary_routes_recovery_without_accepting_packet(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-orphan-runner-summary",
+                headless_startup_text="Exercise orphan evidence recovery.",
+                require_formal_ui=False,
+            )
+            packet_id = started["next_action"]["subject_id"]
+            lease_id = flowpilot_new.lease_agent(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                agent_id="fake-pm-orphan",
+                host_kind="fake",
+            )["lease_id"]
+            flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+            shell = run_shell.load_run_shell(root, run_id="run-orphan-runner-summary")
+            summary_path = shell.run_root / "evidence" / "flowguard" / packet_id / "runner_summary.json"
+            summary_path.parent.mkdir(parents=True, exist_ok=True)
+            summary_path.write_text(
+                json.dumps(
+                    {
+                        "status": "completed",
+                        "runners": [{"name": "fake-check", "exit_code": 0}],
+                    },
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+
+            patrol = flowpilot_new.patrol(root)
+
+            self.assertEqual(patrol["lifecycle_guard"]["decision"], "recover_orphan_evidence")
+            self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "orphan_evidence")
+            self.assertEqual(patrol["foreground_duty"]["action"], "recover_or_reissue")
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertIn(packet_id, ledger["orphan_evidence"])
+            self.assertEqual(ledger["packets"][packet_id]["status"], "acknowledged")
+            self.assertFalse(ledger["packets"][packet_id]["accepted_result_id"])
 
     def test_accepted_packet_rejects_reassignment_and_ack_regression(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

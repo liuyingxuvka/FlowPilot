@@ -23,8 +23,8 @@ class State:
     pm_packet_complete: bool = False
     flowguard_packet_complete: bool = False
     review_packet_complete: bool = False
-    validation_packet_complete: bool = False
-    closure_packet_complete: bool = False
+    system_validation_recorded: bool = False
+    system_closure_recorded: bool = False
     route_nodes_materialized: bool = False
     route_node_1_complete: bool = False
     route_node_2_complete: bool = False
@@ -92,8 +92,8 @@ REQUIRED_SAFE_LABELS = (
     "complete_pm_packet_via_cli",
     "complete_flowguard_packet_via_cli",
     "complete_review_packet_via_cli",
-    "complete_validation_packet_via_cli",
-    "complete_closure_packet_via_cli",
+    "record_system_validation_after_review",
+    "record_system_closure_after_system_validation",
     "materialize_route_nodes_from_pm_plan",
     "complete_route_node_1_via_cli",
     "complete_route_node_2_via_cli",
@@ -174,10 +174,10 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("complete_flowguard_packet_via_cli", replace(state, flowguard_packet_complete=True)),)
     if not state.review_packet_complete:
         return (Transition("complete_review_packet_via_cli", replace(state, review_packet_complete=True)),)
-    if not state.validation_packet_complete:
-        return (Transition("complete_validation_packet_via_cli", replace(state, validation_packet_complete=True)),)
-    if not state.closure_packet_complete:
-        return (Transition("complete_closure_packet_via_cli", replace(state, closure_packet_complete=True)),)
+    if not state.system_validation_recorded:
+        return (Transition("record_system_validation_after_review", replace(state, system_validation_recorded=True)),)
+    if not state.system_closure_recorded:
+        return (Transition("record_system_closure_after_system_validation", replace(state, system_closure_recorded=True)),)
     if not state.route_nodes_materialized:
         return (Transition("materialize_route_nodes_from_pm_plan", replace(state, route_nodes_materialized=True)),)
     if not state.route_node_1_complete:
@@ -247,14 +247,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("FlowGuard packet completed before PM packet")
     if state.review_packet_complete and not state.flowguard_packet_complete:
         failures.append("Reviewer packet completed before FlowGuard packet")
-    if state.validation_packet_complete and not state.review_packet_complete:
-        failures.append("Validation packet completed before review packet")
-    if state.closure_packet_complete and not state.validation_packet_complete:
-        failures.append("Closure packet completed before validation packet")
-    if state.terminal_status_checked and not state.closure_packet_complete:
-        failures.append("Terminal status checked before closure packet")
-    if state.route_nodes_materialized and not state.closure_packet_complete:
-        failures.append("Route nodes materialized before PM planning packet closure")
+    if state.system_validation_recorded and not state.review_packet_complete:
+        failures.append("System validation recorded before review packet")
+    if state.system_closure_recorded and not state.system_validation_recorded:
+        failures.append("System closure recorded before system validation")
+    if state.terminal_status_checked and not state.system_closure_recorded:
+        failures.append("Terminal status checked before system closure")
+    if state.route_nodes_materialized and not state.system_closure_recorded:
+        failures.append("Route nodes materialized before PM planning system closure")
     if state.route_node_1_complete and not state.route_nodes_materialized:
         failures.append("Route node 1 completed before route materialization")
     if state.route_node_2_complete and not state.route_node_1_complete:

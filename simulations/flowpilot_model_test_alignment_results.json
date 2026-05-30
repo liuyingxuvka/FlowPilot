@@ -12,26 +12,455 @@
     "test tiering/slow-test contracts",
     "meta/capability parents"
   ],
-  "finding_counts": {},
-  "findings": [],
-  "full_coverage_ok": true,
+  "finding_counts": {
+    "source_contract_missing_side_effect": 4
+  },
+  "findings": [
+    {
+      "code": "source_contract_missing_side_effect",
+      "code_contract_id": "flowpilot_new.submit_result",
+      "evidence_id": "",
+      "layer": "python_source_contract_audit",
+      "message": "source for flowpilot_new.submit_result is missing declared side effects",
+      "metadata": {
+        "contract": {
+          "code_contract_id": "flowpilot_new.submit_result",
+          "error_paths": [],
+          "external_inputs": [
+            "root",
+            "lease_id",
+            "packet_id",
+            "body"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle",
+            "new_entrypoint.flowguard_run_local_evidence",
+            "new_entrypoint.lifecycle_guard_stale_result_quarantine"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "submit_host_result",
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "submit_result"
+        },
+        "evidence": {
+          "calls": [
+            "_run_until_wait_and_save",
+            "_runtime_state",
+            "host.submit_host_result",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell"
+          ],
+          "code_contract_id": "flowpilot_new.submit_result",
+          "found": true,
+          "parameters": [
+            "body",
+            "lease_id",
+            "packet_id",
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "submit_host_result"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "_run_until_wait_and_save",
+            "_runtime_state",
+            "body",
+            "dict",
+            "folded",
+            "host",
+            "lease_id",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "packet_id",
+            "result_id",
+            "root",
+            "run_shell",
+            "shell",
+            "str",
+            "submit_host_result"
+          ],
+          "state_writes": [
+            "folded",
+            "ledger",
+            "result_id",
+            "shell"
+          ],
+          "symbol": "submit_result"
+        },
+        "missing": [
+          "save_run_ledger"
+        ]
+      },
+      "path": "skills/flowpilot/assets/flowpilot_new.py",
+      "severity": "blocker"
+    },
+    {
+      "code": "source_contract_missing_side_effect",
+      "code_contract_id": "flowpilot_new.status",
+      "evidence_id": "",
+      "layer": "python_source_contract_audit",
+      "message": "source for flowpilot_new.status is missing declared side effects",
+      "metadata": {
+        "contract": {
+          "code_contract_id": "flowpilot_new.status",
+          "error_paths": [],
+          "external_inputs": [
+            "root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.symmetric_role_packet_lifecycle",
+            "new_entrypoint.lifecycle_guard_stop_authority"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "status"
+        },
+        "evidence": {
+          "calls": [
+            "_runtime_state",
+            "cockpit.render_status",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "shell.to_json"
+          ],
+          "code_contract_id": "flowpilot_new.status",
+          "found": true,
+          "parameters": [
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "_runtime_state",
+            "cockpit",
+            "dict",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "render_status",
+            "root",
+            "run_shell",
+            "shell",
+            "str",
+            "to_json"
+          ],
+          "state_writes": [
+            "ledger",
+            "shell"
+          ],
+          "symbol": "status"
+        },
+        "missing": [
+          "save_run_ledger"
+        ]
+      },
+      "path": "skills/flowpilot/assets/flowpilot_new.py",
+      "severity": "blocker"
+    },
+    {
+      "code": "source_contract_missing_side_effect",
+      "code_contract_id": "flowpilot_new.patrol",
+      "evidence_id": "",
+      "layer": "python_source_contract_audit",
+      "message": "source for flowpilot_new.patrol is missing declared side effects",
+      "metadata": {
+        "contract": {
+          "code_contract_id": "flowpilot_new.patrol",
+          "error_paths": [],
+          "external_inputs": [
+            "root"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.lifecycle_guard_stop_authority",
+            "new_entrypoint.lifecycle_guard_resume_patrol"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "patrol"
+        },
+        "evidence": {
+          "calls": [
+            "_run_until_wait_and_save",
+            "_runtime_state",
+            "cockpit.render_status",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "shell.to_json",
+            "time.sleep"
+          ],
+          "code_contract_id": "flowpilot_new.patrol",
+          "found": true,
+          "parameters": [
+            "root",
+            "sleep_seconds"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "Path",
+            "_run_until_wait_and_save",
+            "_runtime_state",
+            "cockpit",
+            "dict",
+            "folded",
+            "int",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "render_status",
+            "root",
+            "run_shell",
+            "shell",
+            "sleep",
+            "sleep_seconds",
+            "str",
+            "time",
+            "to_json"
+          ],
+          "state_writes": [
+            "folded",
+            "ledger",
+            "shell"
+          ],
+          "symbol": "patrol"
+        },
+        "missing": [
+          "save_run_ledger"
+        ]
+      },
+      "path": "skills/flowpilot/assets/flowpilot_new.py",
+      "severity": "blocker"
+    },
+    {
+      "code": "source_contract_missing_side_effect",
+      "code_contract_id": "flowpilot_new.resume",
+      "evidence_id": "",
+      "layer": "python_source_contract_audit",
+      "message": "source for flowpilot_new.resume is missing declared side effects",
+      "metadata": {
+        "contract": {
+          "code_contract_id": "flowpilot_new.resume",
+          "error_paths": [],
+          "external_inputs": [
+            "root",
+            "reason"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "new_entrypoint.lifecycle_guard_resume_patrol"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "record_resume_request",
+            "reconcile_resume_request",
+            "save_run_ledger"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "resume"
+        },
+        "evidence": {
+          "calls": [
+            "_run_until_wait_and_save",
+            "_runtime_state",
+            "cockpit.render_status",
+            "run_shell.load_run_ledger",
+            "run_shell.load_run_shell",
+            "runtime.reconcile_resume_request",
+            "runtime.record_resume_request",
+            "shell.to_json"
+          ],
+          "code_contract_id": "flowpilot_new.resume",
+          "found": true,
+          "parameters": [
+            "reason",
+            "root"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "reconcile_resume_request",
+            "record_resume_request"
+          ],
+          "state_reads": [
+            "Any",
+            "Path",
+            "_run_until_wait_and_save",
+            "_runtime_state",
+            "cockpit",
+            "dict",
+            "folded",
+            "ledger",
+            "load_run_ledger",
+            "load_run_shell",
+            "reason",
+            "reconcile_resume_request",
+            "record_resume_request",
+            "render_status",
+            "root",
+            "run_shell",
+            "runtime",
+            "shell",
+            "str",
+            "to_json"
+          ],
+          "state_writes": [
+            "folded",
+            "ledger",
+            "shell"
+          ],
+          "symbol": "resume"
+        },
+        "missing": [
+          "save_run_ledger"
+        ]
+      },
+      "path": "skills/flowpilot/assets/flowpilot_new.py",
+      "severity": "blocker"
+    }
+  ],
+  "full_coverage_ok": false,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [],
-    "actionable_summary": [],
-    "covered_surface_count": 907,
-    "deferred_structure_split_count": 0,
+    "actionable_findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_new has 473 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_new",
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_new",
+        "surface_owner": "flowpilot_new"
+      }
+    ],
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_new has 473 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_new"
+        ],
+        "surface_owner": "flowpilot_new"
+      }
+    ],
+    "covered_surface_count": 909,
+    "deferred_structure_split_count": 1,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
     "explicitly_skipped_structure_split_surfaces": [],
-    "findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
-    "gap_counts_by_release_relevance": {},
-    "gap_counts_by_repair_type": {},
-    "gap_counts_by_severity": {},
-    "gap_surface_count": 0,
+    "findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+        "kind": "owner_module",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_new has 473 lines, above the 450 line diagnostic threshold",
+        "name": "flowpilot_new",
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_new",
+        "surface_owner": "flowpilot_new"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 1
+    },
+    "gap_counts_by_release_relevance": {
+      "runtime_contract": 1
+    },
+    "gap_counts_by_repair_type": {
+      "defer_structure_split": 1
+    },
+    "gap_counts_by_severity": {
+      "medium": 1
+    },
+    "gap_surface_count": 1,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -223,9 +652,9 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 907,
+    "surface_count": 910,
     "surface_counts": {
-      "model_check_runner": 126,
+      "model_check_runner": 129,
       "model_check_runner_helper": 19,
       "owner_module": 274,
       "public_facade": 112,
@@ -695,6 +1124,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_control_plane_state_consistency_checks",
         "surface_owner": "model-check:run_flowpilot_control_plane_state_consistency_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 192,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_control_surface_contract_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_control_surface_contract_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_control_surface_contract_checks",
+        "surface_owner": "model-check:run_flowpilot_control_surface_contract_checks"
       },
       {
         "covered": true,
@@ -1234,7 +1685,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 193,
+        "line_count": 203,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_fake_project_rehearsal_checks",
@@ -1388,7 +1839,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 160,
+        "line_count": 176,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_lifecycle_guard_checks",
@@ -1553,6 +2004,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_modeling_coverage_checks",
         "surface_owner": "model-check:run_flowpilot_modeling_coverage_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 120,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_new_control_plane_duty_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_new_control_plane_duty_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_new_control_plane_duty_checks",
+        "surface_owner": "model-check:run_flowpilot_new_control_plane_duty_checks"
       },
       {
         "covered": true,
@@ -2367,6 +2840,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_runtime_gateway_adoption_checks",
         "surface_owner": "model-check:run_flowpilot_runtime_gateway_adoption_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 161,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_semantic_gate_outcome_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_semantic_gate_outcome_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_semantic_gate_outcome_checks",
+        "surface_owner": "model-check:run_flowpilot_semantic_gate_outcome_checks"
       },
       {
         "covered": true,
@@ -3789,28 +4284,44 @@
         "top_level_function_count": 8
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 409,
+        "line_count": 473,
         "local_import_count": 0,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": null,
         "name": "flowpilot_new",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 450,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_new",
         "surface_owner": "flowpilot_new",
         "top_level_class_count": 0,
-        "top_level_function_count": 21
+        "top_level_function_count": 25
       },
       {
         "covered": true,
@@ -21576,17 +22087,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
-              "meta_status": "complete",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "passed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -21716,17 +22225,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
-              "meta_status": "complete",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "passed",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "meta_full",
@@ -28546,7 +29053,7 @@
       }
     }
   ],
-  "ok": true,
+  "ok": false,
   "packet_result_family_parity": {
     "analogous_scan_ok": true,
     "analogous_scan_report": {
@@ -41391,7 +41898,7 @@
   },
   "similarity_convergence_ok": true,
   "source_audit_boundary": "Source-contract alignment is a conservative AST-supported subset of critical externally visible Python surfaces. It proves that selected tests directly call the declared code contract symbols and assert their external boundary. It does not replace the broader declaration alignment, runtime conformance replay, or long FlowGuard regressions.",
-  "source_audit_ok": true,
+  "source_audit_ok": false,
   "source_contract_plan": {
     "alignment_report": {
       "decision": "model_test_alignment_green",
@@ -41408,11 +41915,373 @@
       "ok": true,
       "summary": "OK: code_boundary_conformance boundaries=2 observations=5 findings=0"
     },
-    "finding_count": 0,
-    "finding_counts": {},
-    "findings": [],
+    "finding_count": 4,
+    "finding_counts": {
+      "blocker": 4
+    },
+    "findings": [
+      {
+        "code": "source_contract_missing_side_effect",
+        "code_contract_id": "flowpilot_new.submit_result",
+        "evidence_id": "",
+        "layer": "python_source_contract_audit",
+        "message": "source for flowpilot_new.submit_result is missing declared side effects",
+        "metadata": {
+          "contract": {
+            "code_contract_id": "flowpilot_new.submit_result",
+            "error_paths": [],
+            "external_inputs": [
+              "root",
+              "lease_id",
+              "packet_id",
+              "body"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "new_entrypoint.symmetric_role_packet_lifecycle",
+              "new_entrypoint.flowguard_run_local_evidence",
+              "new_entrypoint.lifecycle_guard_stale_result_quarantine"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "submit_host_result",
+              "save_run_ledger"
+            ],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "submit_result"
+          },
+          "evidence": {
+            "calls": [
+              "_run_until_wait_and_save",
+              "_runtime_state",
+              "host.submit_host_result",
+              "run_shell.load_run_ledger",
+              "run_shell.load_run_shell"
+            ],
+            "code_contract_id": "flowpilot_new.submit_result",
+            "found": true,
+            "parameters": [
+              "body",
+              "lease_id",
+              "packet_id",
+              "root"
+            ],
+            "parse_error": "",
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "raised_errors": [],
+            "return_values": [],
+            "returns_value": true,
+            "side_effects": [
+              "submit_host_result"
+            ],
+            "state_reads": [
+              "Any",
+              "Path",
+              "_run_until_wait_and_save",
+              "_runtime_state",
+              "body",
+              "dict",
+              "folded",
+              "host",
+              "lease_id",
+              "ledger",
+              "load_run_ledger",
+              "load_run_shell",
+              "packet_id",
+              "result_id",
+              "root",
+              "run_shell",
+              "shell",
+              "str",
+              "submit_host_result"
+            ],
+            "state_writes": [
+              "folded",
+              "ledger",
+              "result_id",
+              "shell"
+            ],
+            "symbol": "submit_result"
+          },
+          "missing": [
+            "save_run_ledger"
+          ]
+        },
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "severity": "blocker"
+      },
+      {
+        "code": "source_contract_missing_side_effect",
+        "code_contract_id": "flowpilot_new.status",
+        "evidence_id": "",
+        "layer": "python_source_contract_audit",
+        "message": "source for flowpilot_new.status is missing declared side effects",
+        "metadata": {
+          "contract": {
+            "code_contract_id": "flowpilot_new.status",
+            "error_paths": [],
+            "external_inputs": [
+              "root"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "new_entrypoint.symmetric_role_packet_lifecycle",
+              "new_entrypoint.lifecycle_guard_stop_authority"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "save_run_ledger"
+            ],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "status"
+          },
+          "evidence": {
+            "calls": [
+              "_runtime_state",
+              "cockpit.render_status",
+              "run_shell.load_run_ledger",
+              "run_shell.load_run_shell",
+              "shell.to_json"
+            ],
+            "code_contract_id": "flowpilot_new.status",
+            "found": true,
+            "parameters": [
+              "root"
+            ],
+            "parse_error": "",
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "raised_errors": [],
+            "return_values": [],
+            "returns_value": true,
+            "side_effects": [],
+            "state_reads": [
+              "Any",
+              "Path",
+              "_runtime_state",
+              "cockpit",
+              "dict",
+              "ledger",
+              "load_run_ledger",
+              "load_run_shell",
+              "render_status",
+              "root",
+              "run_shell",
+              "shell",
+              "str",
+              "to_json"
+            ],
+            "state_writes": [
+              "ledger",
+              "shell"
+            ],
+            "symbol": "status"
+          },
+          "missing": [
+            "save_run_ledger"
+          ]
+        },
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "severity": "blocker"
+      },
+      {
+        "code": "source_contract_missing_side_effect",
+        "code_contract_id": "flowpilot_new.patrol",
+        "evidence_id": "",
+        "layer": "python_source_contract_audit",
+        "message": "source for flowpilot_new.patrol is missing declared side effects",
+        "metadata": {
+          "contract": {
+            "code_contract_id": "flowpilot_new.patrol",
+            "error_paths": [],
+            "external_inputs": [
+              "root"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "new_entrypoint.lifecycle_guard_stop_authority",
+              "new_entrypoint.lifecycle_guard_resume_patrol"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "save_run_ledger"
+            ],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "patrol"
+          },
+          "evidence": {
+            "calls": [
+              "_run_until_wait_and_save",
+              "_runtime_state",
+              "cockpit.render_status",
+              "run_shell.load_run_ledger",
+              "run_shell.load_run_shell",
+              "shell.to_json",
+              "time.sleep"
+            ],
+            "code_contract_id": "flowpilot_new.patrol",
+            "found": true,
+            "parameters": [
+              "root",
+              "sleep_seconds"
+            ],
+            "parse_error": "",
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "raised_errors": [],
+            "return_values": [],
+            "returns_value": true,
+            "side_effects": [],
+            "state_reads": [
+              "Any",
+              "Path",
+              "_run_until_wait_and_save",
+              "_runtime_state",
+              "cockpit",
+              "dict",
+              "folded",
+              "int",
+              "ledger",
+              "load_run_ledger",
+              "load_run_shell",
+              "render_status",
+              "root",
+              "run_shell",
+              "shell",
+              "sleep",
+              "sleep_seconds",
+              "str",
+              "time",
+              "to_json"
+            ],
+            "state_writes": [
+              "folded",
+              "ledger",
+              "shell"
+            ],
+            "symbol": "patrol"
+          },
+          "missing": [
+            "save_run_ledger"
+          ]
+        },
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "severity": "blocker"
+      },
+      {
+        "code": "source_contract_missing_side_effect",
+        "code_contract_id": "flowpilot_new.resume",
+        "evidence_id": "",
+        "layer": "python_source_contract_audit",
+        "message": "source for flowpilot_new.resume is missing declared side effects",
+        "metadata": {
+          "contract": {
+            "code_contract_id": "flowpilot_new.resume",
+            "error_paths": [],
+            "external_inputs": [
+              "root",
+              "reason"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "new_entrypoint.lifecycle_guard_resume_patrol"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "record_resume_request",
+              "reconcile_resume_request",
+              "save_run_ledger"
+            ],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "resume"
+          },
+          "evidence": {
+            "calls": [
+              "_run_until_wait_and_save",
+              "_runtime_state",
+              "cockpit.render_status",
+              "run_shell.load_run_ledger",
+              "run_shell.load_run_shell",
+              "runtime.reconcile_resume_request",
+              "runtime.record_resume_request",
+              "shell.to_json"
+            ],
+            "code_contract_id": "flowpilot_new.resume",
+            "found": true,
+            "parameters": [
+              "reason",
+              "root"
+            ],
+            "parse_error": "",
+            "path": "skills/flowpilot/assets/flowpilot_new.py",
+            "raised_errors": [],
+            "return_values": [],
+            "returns_value": true,
+            "side_effects": [
+              "reconcile_resume_request",
+              "record_resume_request"
+            ],
+            "state_reads": [
+              "Any",
+              "Path",
+              "_run_until_wait_and_save",
+              "_runtime_state",
+              "cockpit",
+              "dict",
+              "folded",
+              "ledger",
+              "load_run_ledger",
+              "load_run_shell",
+              "reason",
+              "reconcile_resume_request",
+              "record_resume_request",
+              "render_status",
+              "root",
+              "run_shell",
+              "runtime",
+              "shell",
+              "str",
+              "to_json"
+            ],
+            "state_writes": [
+              "folded",
+              "ledger",
+              "shell"
+            ],
+            "symbol": "resume"
+          },
+          "missing": [
+            "save_run_ledger"
+          ]
+        },
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "severity": "blocker"
+      }
+    ],
     "model_id": "model_test_code_source_contracts",
-    "ok": true,
+    "ok": false,
     "plan": {
       "allow_orphan_code_contracts": false,
       "allow_orphan_tests": false,
@@ -51685,10 +52554,11 @@
         {
           "calls": [
             "_body_for_packet",
-            "action.to_json",
+            "action_json.get",
             "cockpit.render_status",
             "complete_open_packet",
             "completed_packets.append",
+            "folded_boundaries.append",
             "get",
             "host.lease_responsibility",
             "host.submit_host_result",
@@ -51704,12 +52574,8 @@
             "runtime.BlackBoxRuntimeError",
             "runtime.ack_lease",
             "runtime.assign_packet",
-            "runtime.attempt_final_closure",
-            "runtime.ensure_next_node_task_packet",
-            "runtime.ensure_node_acceptance_plan_packet",
-            "runtime.ensure_parent_backward_replay_packet",
-            "runtime.ensure_preplanning_gate_packet",
             "runtime.final_return_preflight",
+            "runtime.run_until_wait",
             "shell.to_json",
             "start_run",
             "str",
@@ -51740,25 +52606,22 @@
             "StartRun",
             "_body_for_packet",
             "ack_lease",
-            "action",
+            "action_json",
             "action_type",
             "agent_id",
             "append",
             "assign_packet",
-            "attempt_final_closure",
             "body",
+            "boundary",
             "closure",
             "cockpit",
             "complete_open_packet",
             "completed_packets",
             "decision",
             "dict",
-            "ensure_next_node_task_packet",
-            "ensure_node_acceptance_plan_packet",
-            "ensure_parent_backward_replay_packet",
-            "ensure_preplanning_gate_packet",
             "envelope",
             "final_return_preflight",
+            "folded_boundaries",
             "get",
             "host",
             "index",
@@ -51771,6 +52634,7 @@
             "list",
             "load_run_ledger",
             "load_run_shell",
+            "next_action",
             "node",
             "node_id",
             "packet",
@@ -51786,6 +52650,7 @@
             "run",
             "run_id",
             "run_shell",
+            "run_until_wait",
             "runtime",
             "save_run_ledger",
             "shell",
@@ -51793,15 +52658,17 @@
             "start_run",
             "startup_text",
             "str",
-            "subject_id",
             "submit_host_result",
             "to_json",
             "tuple"
           ],
           "state_writes": [
-            "action",
+            "action_json",
+            "action_type",
+            "boundary",
             "closure",
             "completed_packets",
+            "folded_boundaries",
             "kind",
             "lease_id",
             "ledger",
@@ -51922,11 +52789,11 @@
         },
         {
           "calls": [
+            "_run_until_wait_and_save",
             "_runtime_state",
             "host.submit_host_result",
             "run_shell.load_run_ledger",
-            "run_shell.load_run_shell",
-            "run_shell.save_run_ledger"
+            "run_shell.load_run_shell"
           ],
           "code_contract_id": "flowpilot_new.submit_result",
           "found": true,
@@ -51942,15 +52809,16 @@
           "return_values": [],
           "returns_value": true,
           "side_effects": [
-            "save_run_ledger",
             "submit_host_result"
           ],
           "state_reads": [
             "Any",
             "Path",
+            "_run_until_wait_and_save",
             "_runtime_state",
             "body",
             "dict",
+            "folded",
             "host",
             "lease_id",
             "ledger",
@@ -51960,12 +52828,12 @@
             "result_id",
             "root",
             "run_shell",
-            "save_run_ledger",
             "shell",
             "str",
             "submit_host_result"
           ],
           "state_writes": [
+            "folded",
             "ledger",
             "result_id",
             "shell"
@@ -51978,7 +52846,6 @@
             "cockpit.render_status",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
-            "run_shell.save_run_ledger",
             "shell.to_json"
           ],
           "code_contract_id": "flowpilot_new.status",
@@ -51991,9 +52858,7 @@
           "raised_errors": [],
           "return_values": [],
           "returns_value": true,
-          "side_effects": [
-            "save_run_ledger"
-          ],
+          "side_effects": [],
           "state_reads": [
             "Any",
             "Path",
@@ -52006,7 +52871,6 @@
             "render_status",
             "root",
             "run_shell",
-            "save_run_ledger",
             "shell",
             "str",
             "to_json"
@@ -52019,11 +52883,11 @@
         },
         {
           "calls": [
+            "_run_until_wait_and_save",
             "_runtime_state",
             "cockpit.render_status",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
-            "run_shell.save_run_ledger",
             "shell.to_json",
             "time.sleep"
           ],
@@ -52038,15 +52902,15 @@
           "raised_errors": [],
           "return_values": [],
           "returns_value": true,
-          "side_effects": [
-            "save_run_ledger"
-          ],
+          "side_effects": [],
           "state_reads": [
             "Any",
             "Path",
+            "_run_until_wait_and_save",
             "_runtime_state",
             "cockpit",
             "dict",
+            "folded",
             "int",
             "ledger",
             "load_run_ledger",
@@ -52054,7 +52918,6 @@
             "render_status",
             "root",
             "run_shell",
-            "save_run_ledger",
             "shell",
             "sleep",
             "sleep_seconds",
@@ -52063,6 +52926,7 @@
             "to_json"
           ],
           "state_writes": [
+            "folded",
             "ledger",
             "shell"
           ],
@@ -52070,17 +52934,14 @@
         },
         {
           "calls": [
+            "_run_until_wait_and_save",
+            "_runtime_state",
             "cockpit.render_status",
-            "ledger.get",
-            "router.router_next_action",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
-            "run_shell.save_run_ledger",
-            "runtime.final_return_preflight",
             "runtime.reconcile_resume_request",
             "runtime.record_resume_request",
-            "shell.to_json",
-            "to_json"
+            "shell.to_json"
           ],
           "code_contract_id": "flowpilot_new.resume",
           "found": true,
@@ -52095,17 +52956,16 @@
           "returns_value": true,
           "side_effects": [
             "reconcile_resume_request",
-            "record_resume_request",
-            "save_run_ledger"
+            "record_resume_request"
           ],
           "state_reads": [
             "Any",
             "Path",
+            "_run_until_wait_and_save",
+            "_runtime_state",
             "cockpit",
             "dict",
-            "final_return_preflight",
-            "get",
-            "guard",
+            "folded",
             "ledger",
             "load_run_ledger",
             "load_run_shell",
@@ -52114,17 +52974,14 @@
             "record_resume_request",
             "render_status",
             "root",
-            "router",
-            "router_next_action",
             "run_shell",
             "runtime",
-            "save_run_ledger",
             "shell",
             "str",
             "to_json"
           ],
           "state_writes": [
-            "guard",
+            "folded",
             "ledger",
             "shell"
           ],
@@ -52250,9 +53107,15 @@
             "patrol_parser.add_argument",
             "payload.get",
             "print",
+            "progress",
+            "progress_parser.add_argument",
+            "repair_accepted_packet",
+            "repair_parser.add_argument",
             "resume",
             "resume_parser.add_argument",
             "run_fake_e2e",
+            "run_until_wait",
+            "run_wait.add_argument",
             "runtime.BlackBoxRuntimeError",
             "sorted",
             "start.add_argument",
@@ -52282,6 +53145,7 @@
             "HOST_KINDS",
             "HOST_KIND_HELP",
             "Path",
+            "RUN_UNTIL_WAIT_MAX_STEPS",
             "__doc__",
             "_print",
             "ack",
@@ -52310,6 +53174,7 @@
             "lease_agent",
             "lease_id",
             "list",
+            "max_steps",
             "packet_id",
             "parse_args",
             "parser",
@@ -52317,7 +53182,11 @@
             "patrol_parser",
             "payload",
             "print",
+            "progress",
+            "progress_parser",
             "reason",
+            "repair_accepted_packet",
+            "repair_parser",
             "resolve",
             "responsibility",
             "resume",
@@ -52325,6 +53194,8 @@
             "root",
             "run_fake_e2e",
             "run_id",
+            "run_until_wait",
+            "run_wait",
             "runtime",
             "sleep_seconds",
             "sorted",
@@ -52347,8 +53218,11 @@
             "parser",
             "patrol_parser",
             "payload",
+            "progress_parser",
+            "repair_parser",
             "resume_parser",
             "root",
+            "run_wait",
             "start",
             "sub",
             "submit"
@@ -66277,10 +67151,366 @@
           "symbol": "main"
         }
       ],
-      "decision": "python_contract_source_audit_green",
-      "findings": [],
-      "ok": true,
-      "summary": "OK: decision=python_contract_source_audit_green findings=0",
+      "decision": "source_contract_missing_side_effect",
+      "findings": [
+        {
+          "code": "source_contract_missing_side_effect",
+          "code_contract_id": "flowpilot_new.submit_result",
+          "evidence_id": "",
+          "message": "source for flowpilot_new.submit_result is missing declared side effects",
+          "metadata": {
+            "contract": {
+              "code_contract_id": "flowpilot_new.submit_result",
+              "error_paths": [],
+              "external_inputs": [
+                "root",
+                "lease_id",
+                "packet_id",
+                "body"
+              ],
+              "external_outputs": [
+                "return"
+              ],
+              "implements_obligations": [
+                "new_entrypoint.symmetric_role_packet_lifecycle",
+                "new_entrypoint.flowguard_run_local_evidence",
+                "new_entrypoint.lifecycle_guard_stale_result_quarantine"
+              ],
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "required": true,
+              "role": "owner",
+              "side_effects": [
+                "submit_host_result",
+                "save_run_ledger"
+              ],
+              "state_reads": [],
+              "state_writes": [],
+              "surface_type": "function",
+              "symbol": "submit_result"
+            },
+            "evidence": {
+              "calls": [
+                "_run_until_wait_and_save",
+                "_runtime_state",
+                "host.submit_host_result",
+                "run_shell.load_run_ledger",
+                "run_shell.load_run_shell"
+              ],
+              "code_contract_id": "flowpilot_new.submit_result",
+              "found": true,
+              "parameters": [
+                "body",
+                "lease_id",
+                "packet_id",
+                "root"
+              ],
+              "parse_error": "",
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "raised_errors": [],
+              "return_values": [],
+              "returns_value": true,
+              "side_effects": [
+                "submit_host_result"
+              ],
+              "state_reads": [
+                "Any",
+                "Path",
+                "_run_until_wait_and_save",
+                "_runtime_state",
+                "body",
+                "dict",
+                "folded",
+                "host",
+                "lease_id",
+                "ledger",
+                "load_run_ledger",
+                "load_run_shell",
+                "packet_id",
+                "result_id",
+                "root",
+                "run_shell",
+                "shell",
+                "str",
+                "submit_host_result"
+              ],
+              "state_writes": [
+                "folded",
+                "ledger",
+                "result_id",
+                "shell"
+              ],
+              "symbol": "submit_result"
+            },
+            "missing": [
+              "save_run_ledger"
+            ]
+          },
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "severity": "blocker"
+        },
+        {
+          "code": "source_contract_missing_side_effect",
+          "code_contract_id": "flowpilot_new.status",
+          "evidence_id": "",
+          "message": "source for flowpilot_new.status is missing declared side effects",
+          "metadata": {
+            "contract": {
+              "code_contract_id": "flowpilot_new.status",
+              "error_paths": [],
+              "external_inputs": [
+                "root"
+              ],
+              "external_outputs": [
+                "return"
+              ],
+              "implements_obligations": [
+                "new_entrypoint.symmetric_role_packet_lifecycle",
+                "new_entrypoint.lifecycle_guard_stop_authority"
+              ],
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "required": true,
+              "role": "owner",
+              "side_effects": [
+                "save_run_ledger"
+              ],
+              "state_reads": [],
+              "state_writes": [],
+              "surface_type": "function",
+              "symbol": "status"
+            },
+            "evidence": {
+              "calls": [
+                "_runtime_state",
+                "cockpit.render_status",
+                "run_shell.load_run_ledger",
+                "run_shell.load_run_shell",
+                "shell.to_json"
+              ],
+              "code_contract_id": "flowpilot_new.status",
+              "found": true,
+              "parameters": [
+                "root"
+              ],
+              "parse_error": "",
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "raised_errors": [],
+              "return_values": [],
+              "returns_value": true,
+              "side_effects": [],
+              "state_reads": [
+                "Any",
+                "Path",
+                "_runtime_state",
+                "cockpit",
+                "dict",
+                "ledger",
+                "load_run_ledger",
+                "load_run_shell",
+                "render_status",
+                "root",
+                "run_shell",
+                "shell",
+                "str",
+                "to_json"
+              ],
+              "state_writes": [
+                "ledger",
+                "shell"
+              ],
+              "symbol": "status"
+            },
+            "missing": [
+              "save_run_ledger"
+            ]
+          },
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "severity": "blocker"
+        },
+        {
+          "code": "source_contract_missing_side_effect",
+          "code_contract_id": "flowpilot_new.patrol",
+          "evidence_id": "",
+          "message": "source for flowpilot_new.patrol is missing declared side effects",
+          "metadata": {
+            "contract": {
+              "code_contract_id": "flowpilot_new.patrol",
+              "error_paths": [],
+              "external_inputs": [
+                "root"
+              ],
+              "external_outputs": [
+                "return"
+              ],
+              "implements_obligations": [
+                "new_entrypoint.lifecycle_guard_stop_authority",
+                "new_entrypoint.lifecycle_guard_resume_patrol"
+              ],
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "required": true,
+              "role": "owner",
+              "side_effects": [
+                "save_run_ledger"
+              ],
+              "state_reads": [],
+              "state_writes": [],
+              "surface_type": "function",
+              "symbol": "patrol"
+            },
+            "evidence": {
+              "calls": [
+                "_run_until_wait_and_save",
+                "_runtime_state",
+                "cockpit.render_status",
+                "run_shell.load_run_ledger",
+                "run_shell.load_run_shell",
+                "shell.to_json",
+                "time.sleep"
+              ],
+              "code_contract_id": "flowpilot_new.patrol",
+              "found": true,
+              "parameters": [
+                "root",
+                "sleep_seconds"
+              ],
+              "parse_error": "",
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "raised_errors": [],
+              "return_values": [],
+              "returns_value": true,
+              "side_effects": [],
+              "state_reads": [
+                "Any",
+                "Path",
+                "_run_until_wait_and_save",
+                "_runtime_state",
+                "cockpit",
+                "dict",
+                "folded",
+                "int",
+                "ledger",
+                "load_run_ledger",
+                "load_run_shell",
+                "render_status",
+                "root",
+                "run_shell",
+                "shell",
+                "sleep",
+                "sleep_seconds",
+                "str",
+                "time",
+                "to_json"
+              ],
+              "state_writes": [
+                "folded",
+                "ledger",
+                "shell"
+              ],
+              "symbol": "patrol"
+            },
+            "missing": [
+              "save_run_ledger"
+            ]
+          },
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "severity": "blocker"
+        },
+        {
+          "code": "source_contract_missing_side_effect",
+          "code_contract_id": "flowpilot_new.resume",
+          "evidence_id": "",
+          "message": "source for flowpilot_new.resume is missing declared side effects",
+          "metadata": {
+            "contract": {
+              "code_contract_id": "flowpilot_new.resume",
+              "error_paths": [],
+              "external_inputs": [
+                "root",
+                "reason"
+              ],
+              "external_outputs": [
+                "return"
+              ],
+              "implements_obligations": [
+                "new_entrypoint.lifecycle_guard_resume_patrol"
+              ],
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "required": true,
+              "role": "owner",
+              "side_effects": [
+                "record_resume_request",
+                "reconcile_resume_request",
+                "save_run_ledger"
+              ],
+              "state_reads": [],
+              "state_writes": [],
+              "surface_type": "function",
+              "symbol": "resume"
+            },
+            "evidence": {
+              "calls": [
+                "_run_until_wait_and_save",
+                "_runtime_state",
+                "cockpit.render_status",
+                "run_shell.load_run_ledger",
+                "run_shell.load_run_shell",
+                "runtime.reconcile_resume_request",
+                "runtime.record_resume_request",
+                "shell.to_json"
+              ],
+              "code_contract_id": "flowpilot_new.resume",
+              "found": true,
+              "parameters": [
+                "reason",
+                "root"
+              ],
+              "parse_error": "",
+              "path": "skills/flowpilot/assets/flowpilot_new.py",
+              "raised_errors": [],
+              "return_values": [],
+              "returns_value": true,
+              "side_effects": [
+                "reconcile_resume_request",
+                "record_resume_request"
+              ],
+              "state_reads": [
+                "Any",
+                "Path",
+                "_run_until_wait_and_save",
+                "_runtime_state",
+                "cockpit",
+                "dict",
+                "folded",
+                "ledger",
+                "load_run_ledger",
+                "load_run_shell",
+                "reason",
+                "reconcile_resume_request",
+                "record_resume_request",
+                "render_status",
+                "root",
+                "run_shell",
+                "runtime",
+                "shell",
+                "str",
+                "to_json"
+              ],
+              "state_writes": [
+                "folded",
+                "ledger",
+                "shell"
+              ],
+              "symbol": "resume"
+            },
+            "missing": [
+              "save_run_ledger"
+            ]
+          },
+          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "severity": "blocker"
+        }
+      ],
+      "ok": false,
+      "summary": "BLOCKED: decision=source_contract_missing_side_effect findings=4",
       "test_evidence": [
         {
           "assert_count": 30,
@@ -66437,7 +67667,7 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 15,
+          "assert_count": 18,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "fake_e2e.run_fake_e2e",
@@ -66470,7 +67700,7 @@
           "test_name": "test_fake_end_to_end_rehearsal_reaches_final_closure"
         },
         {
-          "assert_count": 22,
+          "assert_count": 24,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_fake_project_rehearsal.run_checks"
@@ -66489,7 +67719,7 @@
           "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
         },
         {
-          "assert_count": 22,
+          "assert_count": 24,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_fake_project_rehearsal.run_checks"
@@ -66508,7 +67738,7 @@
           "test_name": "test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows"
         },
         {
-          "assert_count": 22,
+          "assert_count": 24,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_fake_project_rehearsal.run_checks"
@@ -66664,7 +67894,7 @@
           "test_name": "test_reviewer_packet_lease_projection_is_clean_before_and_after_review"
         },
         {
-          "assert_count": 16,
+          "assert_count": 18,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"
@@ -66694,7 +67924,7 @@
           "test_name": "test_formal_public_surface_omits_retired_side_command_paths"
         },
         {
-          "assert_count": 16,
+          "assert_count": 18,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"

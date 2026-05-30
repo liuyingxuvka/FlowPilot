@@ -143,6 +143,21 @@ def _run_checks_in_root(work_root: Path) -> dict[str, Any]:
             scenario_by_name["accepted_packet_reassignment_rejected"]["ok"],
             ["skills/flowpilot/assets/flowpilot_new.py"],
         ),
+        _row(
+            "fake_project_blackbox_cli_stop_terminal_fence",
+            scenario_by_name["stop_terminal_fence"]["ok"],
+            ["skills/flowpilot/assets/flowpilot_new.py"],
+        ),
+        _row(
+            "fake_project_blackbox_cli_host_liveness_bridge",
+            scenario_by_name["host_liveness_bridge_recovery"]["ok"],
+            ["skills/flowpilot/assets/flowpilot_new.py"],
+        ),
+        _row(
+            "fake_project_blackbox_cli_orphan_runner_summary",
+            scenario_by_name["orphan_runner_summary_recovery"]["ok"],
+            ["skills/flowpilot/assets/flowpilot_new.py"],
+        ),
         _row("fake_project_hazard_replay", hazards["ok"], ["simulations/flowpilot_fake_project_rehearsal_model.py"]),
         _row("fake_project_recursive_route_bad_case_replay", recursive_hazards["ok"], ["simulations/flowpilot_recursive_route_execution_model.py"]),
         *recursive_bad_case_rows,

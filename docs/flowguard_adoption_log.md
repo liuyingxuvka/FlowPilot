@@ -21466,3 +21466,113 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - No OpenSpec archive was performed; the change remains reviewable.
 - No GitHub push, tag, release, deploy, or public-release claim was performed.
 - Pre-existing dirty result files were preserved and will not be staged as part of this scoped change.
+
+## harden-new-flowpilot-stop-host-orphan-recovery-20260530 - Stop, host liveness, and orphan evidence recovery
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User-approved repair after control-plane audits showed the new FlowPilot still needed a hard terminal stop fence, host liveness that could override stale progress, and recovery for successful worker artifacts that were written without a normal accepted packet path.
+- Status: implemented_validated_installed_synced_local_git_ready
+- Recorded: 2026-05-30T16:57:23Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_stop_host_orphan_recovery_model.py`
+- `simulations/run_flowpilot_stop_host_orphan_recovery_checks.py`
+- `simulations/run_flowpilot_lifecycle_guard_checks.py`
+- `simulations/run_flowpilot_fake_project_rehearsal_checks.py`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/ai_project_runtime/runtime.py`
+- `skills/flowpilot/assets/ai_project_runtime/host.py`
+- `skills/flowpilot/assets/ai_project_runtime/run_shell.py`
+- `skills/flowpilot/assets/flowpilot_new.py`
+- `tests/test_flowpilot_lifecycle_guard.py`
+- `tests/test_flowpilot_fake_project_rehearsal.py`
+- `tests/test_flowpilot_stop_host_orphan_recovery_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok, version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project record audit passed.
+- `openspec validate harden-new-flowpilot-stop-host-orphan-recovery --strict` - ok.
+- `python simulations/run_flowpilot_stop_host_orphan_recovery_checks.py --no-write-results` - ok; 136 traces and known-bad hazards detected.
+- `python -m pytest tests/test_flowpilot_stop_host_orphan_recovery_model.py -q` - ok; 1 test passed.
+- `python -m pytest tests/test_flowpilot_lifecycle_guard.py -q` - ok; 18 tests passed.
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py --no-write-results` - ok; 465 traces and model-test alignment passed.
+- `python -m pytest tests/test_flowpilot_fake_project_rehearsal.py -q` - ok; public fake AI rehearsal passed after the route-mutation accepted-packet preservation fix.
+- `python scripts/run_test_tier.py --background-child --name run_meta_checks --command-json '["python","simulations/run_meta_checks.py"]' --background-dir tmp/flowguard_background` - ok; exit 0, status passed, `proof_reused=false`.
+- `python scripts/run_test_tier.py --background-child --name run_capability_checks --command-json '["python","simulations/run_capability_checks.py"]' --background-dir tmp/flowguard_background` - ok; exit 0, status passed, `proof_reused=false`.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot skill synced.
+- `python scripts/audit_local_install_sync.py --json` - ok; repo-owned installed skill fresh.
+
+### Findings
+- `stop` and `cancel` are now terminal lifecycle events; after either one, new route, packet, lease, ack, progress, and result mutations are rejected.
+- Host liveness reports are durable runtime records; recent host failure or no-output reports can override stale progress and route the foreground to recovery instead of killing useful work too early.
+- Runner summary artifacts can be recovered as orphan evidence without pretending that the original packet was accepted.
+- The fake AI rehearsal now covers stop, host loss, no-output, and orphan evidence paths through the public runtime surface.
+- A route mutation bug was found by the fake rehearsal and fixed: already accepted packets now stay accepted during route mutation instead of being quarantined.
+- The installed local FlowPilot skill was synced after validation. An import-created `__pycache__` digest mismatch was removed and the install audit was rerun sequentially.
+
+### Counterexamples
+- `new_work_after_stop`
+- `cancel_then_submit_result`
+- `stale_progress_beats_host_loss`
+- `completed_without_result_treated_as_success`
+- `orphan_summary_accepted_as_packet`
+- `accepted_packet_quarantined_during_route_mutation`
+
+### Skipped Steps
+- No OpenSpec archive was performed; the change remains reviewable.
+- No GitHub push, tag, release, deploy, or public-release claim was performed.
+- Background meta/capability checks support routine confidence only; release confidence still requires the full release evidence path.
+
+## auto-close-after-system-validation-20260530 - System-owned closure integration
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Parallel validated work removed redundant Validator and Closure Officer packets from the ordinary path; because it touched the same runtime file as the stop/host/orphan repair, the integrated local version was validated and committed together instead of leaving interleaved uncommitted edits.
+- Status: implemented_validated_installed_synced_local_git_ready
+- Recorded: 2026-05-30T16:57:23Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_validation_pm_gate_model.py`
+- `simulations/run_flowpilot_validation_pm_gate_checks.py`
+- `simulations/run_ai_project_runtime_checks.py`
+- `simulations/run_flowpilot_complete_system_runtime_checks.py`
+- `simulations/run_flowpilot_semantic_gate_outcome_checks.py`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/ai_project_runtime/runtime.py`
+- `tests/test_ai_project_runtime.py`
+- `tests/test_flowpilot_high_standard_control_flow.py`
+- `tests/test_flowpilot_new_entrypoint.py`
+- `tests/test_flowpilot_recursive_route_execution_runtime.py`
+
+### Commands
+- `openspec validate auto-close-after-system-validation --strict` - ok.
+- `python simulations/run_flowpilot_validation_pm_gate_checks.py --no-write-results` - ok; 253 traces and model-test alignment passed.
+- `python -m pytest tests/test_ai_project_runtime.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_recursive_route_execution_runtime.py -q` - ok; 46 tests and 24 subtests passed.
+- `python simulations/run_ai_project_runtime_checks.py --no-write-results` - ok; routine gate passed.
+- `python simulations/run_flowpilot_complete_system_runtime_checks.py --no-write-results` - ok; routine gate passed.
+- `python simulations/run_flowpilot_semantic_gate_outcome_checks.py --no-write-results` - ok; 210 traces and semantic gate alignment passed.
+- `python scripts/run_test_tier.py --background-child --name run_meta_checks --command-json '["python","simulations/run_meta_checks.py"]' --background-dir tmp/flowguard_background` - ok; exit 0, status passed, `proof_reused=false`.
+- `python scripts/run_test_tier.py --background-child --name run_capability_checks --command-json '["python","simulations/run_capability_checks.py"]' --background-dir tmp/flowguard_background` - ok; exit 0, status passed, `proof_reused=false`.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot skill synced.
+- `python scripts/audit_local_install_sync.py --json` - ok; repo-owned installed skill fresh.
+
+### Findings
+- Ordinary reviewer pass now records system validation and system closure evidence without issuing Validator or Closure Officer work packets.
+- Failed system validation still creates a PM repair blocker, so removing the old roles does not remove the repair route.
+- High-risk PM decisions remain staged behind FlowGuard, reviewer, system-validation, and closure evidence.
+- The console projection exposes system closure, PM decision gates, host liveness, and orphan evidence without opening sealed packet bodies.
+
+### Skipped Steps
+- No OpenSpec archive was performed; the change remains reviewable.
+- No GitHub push, tag, release, deploy, or public-release claim was performed.
+- The integrated commit is intentionally local-only unless the user separately asks for a remote push or release.

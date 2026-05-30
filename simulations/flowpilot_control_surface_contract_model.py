@@ -36,8 +36,6 @@ ROLE_SET = (
     "worker",
     "reviewer",
     "flowguard_operator",
-    "validator",
-    "closure_officer",
 )
 
 

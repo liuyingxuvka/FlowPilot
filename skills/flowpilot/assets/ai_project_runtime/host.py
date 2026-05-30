@@ -15,10 +15,6 @@ RESPONSIBILITY_ALIASES = {
     "process_flowguard_officer": "flowguard_operator",
     "product_flowguard_officer": "flowguard_operator",
     "flowguard_operator": "flowguard_operator",
-    "validator": "validator",
-    "validation": "validator",
-    "closure_officer": "closure_officer",
-    "closure": "closure_officer",
     "worker": "worker",
     "research_worker": "research_worker",
     "ui_qa": "ui_qa",
@@ -97,6 +93,25 @@ def submit_host_result(
     **kwargs: Any,
 ) -> str:
     return runtime.submit_result(ledger, lease_id, packet_id, body, **kwargs)
+
+
+def record_liveness(
+    ledger: dict[str, Any],
+    lease_id: str,
+    packet_id: str,
+    status: str,
+    *,
+    source: str = "host_report",
+    detail: str = "",
+) -> dict[str, Any]:
+    return runtime.record_host_liveness(
+        ledger,
+        lease_id,
+        packet_id,
+        status,
+        source=source,
+        detail=detail,
+    )
 
 
 def host_confidence_boundary(ledger: dict[str, Any]) -> dict[str, Any]:

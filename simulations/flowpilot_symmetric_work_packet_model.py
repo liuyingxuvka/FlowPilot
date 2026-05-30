@@ -31,21 +31,14 @@ class State:
     reviewer_ack: bool = False
     reviewer_result: bool = False
     review_recorded: bool = False
-    validation_packet_issued: bool = False
-    validation_leased: bool = False
-    validation_ack: bool = False
-    validation_result: bool = False
-    validation_recorded: bool = False
-    closure_packet_issued: bool = False
-    closure_leased: bool = False
-    closure_ack: bool = False
-    closure_result: bool = False
+    system_validation_recorded: bool = False
+    system_closure_recorded: bool = False
     final_closure_complete: bool = False
     nonpacket_role_lease: bool = False
     side_command_flowguard: bool = False
     side_command_review: bool = False
-    side_command_validation: bool = False
-    side_command_closure: bool = False
+    old_validator_packet_accepted: bool = False
+    old_closure_packet_accepted: bool = False
     dirty_reviewer_projection: bool = False
     dirty_flowguard_projection: bool = False
     ack_only_completed: bool = False
@@ -84,15 +77,8 @@ REQUIRED_SAFE_LABELS = (
     "ack_reviewer_packet",
     "submit_reviewer_result",
     "record_review_from_packet",
-    "issue_validation_packet",
-    "lease_validation_packet",
-    "ack_validation_packet",
-    "submit_validation_result",
-    "record_validation_from_packet",
-    "issue_closure_packet",
-    "lease_closure_packet",
-    "ack_closure_packet",
-    "submit_closure_result_and_close",
+    "record_system_validation_after_review",
+    "record_system_closure_after_system_validation",
 )
 
 
@@ -110,8 +96,8 @@ class SymmetricPacketStep:
         "result_state",
         "flowguard_state",
         "review_state",
-        "validation_state",
-        "closure_state",
+        "system_validation_state",
+        "system_closure_state",
     )
     writes = (
         "packets",
@@ -120,8 +106,8 @@ class SymmetricPacketStep:
         "results",
         "flowguard_orders",
         "reviews",
-        "validation",
-        "closure",
+        "system_validation",
+        "system_closure",
     )
     input_description = "Input x State: one requested FlowPilot lifecycle transition"
     output_description = "Set(Output x State): next legal symmetric packet lifecycle state"
@@ -169,27 +155,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("submit_reviewer_result", replace(state, reviewer_result=True)),)
     if not state.review_recorded:
         return (Transition("record_review_from_packet", replace(state, review_recorded=True)),)
-    if not state.validation_packet_issued:
-        return (Transition("issue_validation_packet", replace(state, validation_packet_issued=True)),)
-    if not state.validation_leased:
-        return (Transition("lease_validation_packet", replace(state, validation_leased=True)),)
-    if not state.validation_ack:
-        return (Transition("ack_validation_packet", replace(state, validation_ack=True)),)
-    if not state.validation_result:
-        return (Transition("submit_validation_result", replace(state, validation_result=True)),)
-    if not state.validation_recorded:
-        return (Transition("record_validation_from_packet", replace(state, validation_recorded=True)),)
-    if not state.closure_packet_issued:
-        return (Transition("issue_closure_packet", replace(state, closure_packet_issued=True)),)
-    if not state.closure_leased:
-        return (Transition("lease_closure_packet", replace(state, closure_leased=True)),)
-    if not state.closure_ack:
-        return (Transition("ack_closure_packet", replace(state, closure_ack=True)),)
-    if not state.closure_result or not state.final_closure_complete:
+    if not state.system_validation_recorded:
+        return (Transition("record_system_validation_after_review", replace(state, system_validation_recorded=True)),)
+    if not state.system_closure_recorded or not state.final_closure_complete:
         return (
             Transition(
-                "submit_closure_result_and_close",
-                replace(state, closure_result=True, final_closure_complete=True, status="complete"),
+                "record_system_closure_after_system_validation",
+                replace(state, system_closure_recorded=True, final_closure_complete=True, status="complete"),
             ),
         )
     return ()
@@ -225,28 +197,22 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Reviewer result without ACK")
     if state.review_recorded and not state.reviewer_result:
         failures.append("Review recorded without reviewer packet result")
-    if state.validation_packet_issued and not state.review_recorded:
-        failures.append("Validation packet issued before review packet result")
-    if state.validation_result and not state.validation_ack:
-        failures.append("Validation result without ACK")
-    if state.validation_recorded and not state.validation_result:
-        failures.append("Validation evidence recorded without validation packet result")
-    if state.closure_packet_issued and not state.validation_recorded:
-        failures.append("Closure packet issued before validation packet result")
-    if state.closure_result and not state.closure_ack:
-        failures.append("Closure result without ACK")
-    if state.final_closure_complete and not state.closure_result:
-        failures.append("Final closure completed without closure packet result")
+    if state.system_validation_recorded and not state.review_recorded:
+        failures.append("System validation recorded before review packet result")
+    if state.system_closure_recorded and not state.system_validation_recorded:
+        failures.append("System closure recorded before system validation")
+    if state.final_closure_complete and not state.system_closure_recorded:
+        failures.append("Final closure completed without system closure")
     if state.nonpacket_role_lease:
         failures.append("non-PM role was leased without an issued packet")
     if state.side_command_flowguard:
         failures.append("FlowGuard was completed through a side command instead of a packet result")
     if state.side_command_review:
         failures.append("Review was completed through a side command instead of a reviewer packet result")
-    if state.side_command_validation:
-        failures.append("Validation was recorded through a side command instead of a validation packet result")
-    if state.side_command_closure:
-        failures.append("Closure was completed through a side command instead of a closure packet result")
+    if state.old_validator_packet_accepted:
+        failures.append("old validator packet was accepted in the clean runtime")
+    if state.old_closure_packet_accepted:
+        failures.append("old closure packet was accepted in the clean runtime")
     if state.dirty_reviewer_projection:
         failures.append("Reviewer lease projection remained active or missing packet ACK after review")
     if state.dirty_flowguard_projection:
@@ -254,7 +220,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.ack_only_completed:
         failures.append("ACK-only packet was treated as completed work")
     if state.pm_only_terminal:
-        failures.append("PM-only result reached terminal closure without check/review/validation/closure packets")
+        failures.append("PM-only result reached terminal closure without check, review, system validation, and system closure")
     if state.lingering_active_lease_after_completion:
         failures.append("completed packet left an active lease projection")
     return failures
@@ -287,15 +253,16 @@ def hazard_states() -> dict[str, State]:
         "nonpacket_flowguard_lease": replace(target, nonpacket_role_lease=True),
         "flowguard_side_command_completion": replace(target, side_command_flowguard=True),
         "review_side_command_completion": replace(target, side_command_review=True),
-        "validation_side_command_completion": replace(target, side_command_validation=True),
-        "closure_side_command_completion": replace(target, side_command_closure=True),
+        "old_validator_packet_accepted": replace(target, old_validator_packet_accepted=True),
+        "old_closure_packet_accepted": replace(target, old_closure_packet_accepted=True),
         "dirty_reviewer_projection": replace(target, dirty_reviewer_projection=True),
         "dirty_flowguard_projection": replace(target, dirty_flowguard_projection=True),
         "ack_only_completion": replace(target, ack_only_completed=True),
         "pm_only_terminal": replace(target, pm_only_terminal=True),
         "lingering_active_lease_after_completion": replace(target, lingering_active_lease_after_completion=True),
         "review_without_packet": replace(target, reviewer_packet_issued=False, reviewer_leased=True, reviewer_ack=True, reviewer_result=True),
-        "closure_before_validation_packet": replace(target, validation_packet_issued=False, validation_recorded=False, closure_packet_issued=True, closure_result=True, final_closure_complete=True),
+        "system_validation_before_review": replace(target, review_recorded=False, system_validation_recorded=True),
+        "system_closure_before_validation": replace(target, system_validation_recorded=False, system_closure_recorded=True, final_closure_complete=True),
     }
 
 
@@ -314,7 +281,7 @@ def _invariant(state: State, trace: object) -> InvariantResult:
 INVARIANTS = (
     Invariant(
         "symmetric_work_packet_lifecycle",
-        "Every new FlowPilot backend role must be represented by an issued packet, packet lease, ACK, result, and packet-owned side effect.",
+        "Dispatchable FlowPilot roles use issued packets, leases, ACKs, results, and packet-owned side effects; system validation and system closure are router-owned facts, not worker packets.",
         _invariant,
     ),
 )

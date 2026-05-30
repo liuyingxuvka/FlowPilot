@@ -261,6 +261,57 @@ def progress(root: Path, *, lease_id: str, packet_id: str, status: str) -> dict[
     return {"ok": True, **_runtime_state(ledger)}
 
 
+def host_liveness(
+    root: Path,
+    *,
+    lease_id: str,
+    packet_id: str,
+    status: str,
+    source: str = "host_report",
+    detail: str = "",
+) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    report = host.record_liveness(
+        ledger,
+        lease_id,
+        packet_id,
+        status,
+        source=source,
+        detail=detail,
+    )
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="host_liveness")
+    return {"ok": True, "host_liveness": report, **_runtime_state(ledger)}
+
+
+def stop_run(root: Path, *, reason: str = "manual_stop") -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    terminal = runtime.record_terminal_lifecycle(ledger, "stopped_by_user", reason=reason, actor="controller")
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="stop")
+    return {
+        "ok": True,
+        "terminal_lifecycle": terminal,
+        "run": shell.to_json(),
+        **_runtime_state(ledger),
+        "status": cockpit.render_status(ledger),
+    }
+
+
+def cancel_run(root: Path, *, reason: str = "manual_cancel") -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    terminal = runtime.record_terminal_lifecycle(ledger, "cancelled_by_user", reason=reason, actor="controller")
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="cancel")
+    return {
+        "ok": True,
+        "terminal_lifecycle": terminal,
+        "run": shell.to_json(),
+        **_runtime_state(ledger),
+        "status": cockpit.render_status(ledger),
+    }
+
+
 def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
@@ -406,6 +457,18 @@ def main(argv: list[str] | None = None) -> int:
     progress_parser.add_argument("--packet-id", required=True)
     progress_parser.add_argument("--status", required=True)
 
+    liveness_parser = sub.add_parser("host-liveness", help="Record current host liveness for an assigned packet")
+    liveness_parser.add_argument("--lease-id", required=True)
+    liveness_parser.add_argument("--packet-id", required=True)
+    liveness_parser.add_argument("--status", required=True)
+    liveness_parser.add_argument("--source", default="host_report")
+    liveness_parser.add_argument("--detail", default="")
+
+    stop_parser = sub.add_parser("stop", help="Stop the current run as an explicit terminal lifecycle event")
+    stop_parser.add_argument("--reason", default="manual_stop")
+    cancel_parser = sub.add_parser("cancel", help="Cancel the current run as an explicit terminal lifecycle event")
+    cancel_parser.add_argument("--reason", default="manual_cancel")
+
     submit = sub.add_parser("submit-result", help="Submit a sealed result body for a packet")
     submit.add_argument("--lease-id", required=True)
     submit.add_argument("--packet-id", required=True)
@@ -448,6 +511,19 @@ def main(argv: list[str] | None = None) -> int:
             payload = ack(root, lease_id=args.lease_id, packet_id=args.packet_id)
         elif args.command == "progress":
             payload = progress(root, lease_id=args.lease_id, packet_id=args.packet_id, status=args.status)
+        elif args.command == "host-liveness":
+            payload = host_liveness(
+                root,
+                lease_id=args.lease_id,
+                packet_id=args.packet_id,
+                status=args.status,
+                source=args.source,
+                detail=args.detail,
+            )
+        elif args.command == "stop":
+            payload = stop_run(root, reason=args.reason)
+        elif args.command == "cancel":
+            payload = cancel_run(root, reason=args.reason)
         elif args.command == "submit-result":
             payload = submit_result(root, lease_id=args.lease_id, packet_id=args.packet_id, body=args.body)
         elif args.command == "repair-accepted-packet":

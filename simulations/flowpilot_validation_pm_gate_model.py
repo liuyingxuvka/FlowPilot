@@ -9,7 +9,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 MODEL_ID = "flowpilot_validation_automation_pm_gates"
-MAX_SEQUENCE_LENGTH = 18
+MAX_SEQUENCE_LENGTH = 22
 
 
 @dataclass(frozen=True)
@@ -19,8 +19,10 @@ class State:
     flowguard_passed: bool = False
     reviewer_passed: bool = False
     system_validation_recorded: bool = False
-    closure_packet_issued: bool = False
-    closure_result_accepted: bool = False
+    system_closure_recorded: bool = False
+    system_closure_applied: bool = False
+    failed_system_validation_recorded: bool = False
+    failed_system_validation_routed_to_pm: bool = False
     low_risk_pm_decision_recorded: bool = False
     low_risk_pm_decision_applied: bool = False
     high_risk_pm_decision_recorded: bool = False
@@ -28,18 +30,22 @@ class State:
     pm_gate_flowguard_passed: bool = False
     pm_gate_reviewer_passed: bool = False
     pm_gate_system_validation_recorded: bool = False
-    pm_gate_closure_accepted: bool = False
+    pm_gate_system_closure_recorded: bool = False
     staged_pm_decision_applied: bool = False
-    legacy_validation_fail_blocked: bool = False
+    old_packet_roles_rejected: bool = False
     validator_ai_required_on_ordinary_path: bool = False
+    closure_officer_required_on_ordinary_path: bool = False
+    old_validator_packet_accepted: bool = False
+    old_closure_packet_accepted: bool = False
     system_validation_treated_as_terminal: bool = False
     closure_before_system_validation: bool = False
+    system_validation_failure_not_routed_to_pm: bool = False
+    system_validation_failure_auto_closed: bool = False
     high_risk_pm_applied_before_gate: bool = False
     pm_waiver_applied_before_gate: bool = False
     pm_mutation_without_flowguard: bool = False
     pm_decision_reviewer_missing: bool = False
     low_risk_repair_forced_through_gate: bool = False
-    legacy_validation_fail_issued_closure: bool = False
 
 
 @dataclass(frozen=True)
@@ -62,8 +68,10 @@ REQUIRED_SAFE_LABELS = (
     "record_flowguard_pass",
     "record_reviewer_pass",
     "record_system_validation",
-    "issue_closure_packet_after_system_validation",
-    "accept_closure_after_system_validation",
+    "record_system_closure_after_system_validation",
+    "advance_after_system_closure",
+    "record_failed_system_validation",
+    "route_failed_system_validation_to_pm",
     "record_low_risk_pm_decision",
     "apply_low_risk_pm_decision_directly",
     "record_high_risk_pm_decision",
@@ -71,9 +79,9 @@ REQUIRED_SAFE_LABELS = (
     "pass_pm_decision_flowguard_gate",
     "pass_pm_decision_reviewer_gate",
     "record_pm_decision_system_validation",
-    "accept_pm_decision_gate_closure",
-    "apply_staged_pm_decision_after_gate",
-    "block_legacy_validation_failure",
+    "record_pm_decision_system_closure",
+    "apply_staged_pm_decision_after_system_closure",
+    "reject_old_validator_and_closure_packets",
 )
 
 
@@ -89,20 +97,21 @@ class ValidationAutomationPmGateStep:
         "flowguard_work_orders",
         "reviews",
         "validation_evidence",
+        "system_closures",
         "pm_repair_decisions",
         "pm_dispositions",
         "pm_decision_gates",
     )
     writes = (
         "validation_evidence",
-        "closure_packets",
+        "system_closures",
         "pm_decision_gates",
         "route_state",
         "active_blockers",
     )
     input_description = "Input x State: one packet result, system validation action, or PM decision gate action"
-    output_description = "Set(Output x State): ordinary release, low-risk PM repair, high-risk PM gated application"
-    idempotency = "System validation is evidence only; high-risk PM decisions apply only after gate closure"
+    output_description = "Set(Output x State): ordinary system closure, failed-validation PM repair, low-risk PM repair, high-risk PM gated application"
+    idempotency = "System closure is recorded once per passed validation; high-risk PM decisions apply only after system closure"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         del input_obj
@@ -124,18 +133,32 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("record_reviewer_pass", replace(state, reviewer_passed=True)),)
     if not state.system_validation_recorded:
         return (Transition("record_system_validation", replace(state, system_validation_recorded=True)),)
-    if not state.closure_packet_issued:
+    if not state.system_closure_recorded:
         return (
             Transition(
-                "issue_closure_packet_after_system_validation",
-                replace(state, closure_packet_issued=True),
+                "record_system_closure_after_system_validation",
+                replace(state, system_closure_recorded=True),
             ),
         )
-    if not state.closure_result_accepted:
+    if not state.system_closure_applied:
         return (
             Transition(
-                "accept_closure_after_system_validation",
-                replace(state, closure_result_accepted=True),
+                "advance_after_system_closure",
+                replace(state, system_closure_applied=True),
+            ),
+        )
+    if not state.failed_system_validation_recorded:
+        return (
+            Transition(
+                "record_failed_system_validation",
+                replace(state, failed_system_validation_recorded=True),
+            ),
+        )
+    if not state.failed_system_validation_routed_to_pm:
+        return (
+            Transition(
+                "route_failed_system_validation_to_pm",
+                replace(state, failed_system_validation_routed_to_pm=True),
             ),
         )
     if not state.low_risk_pm_decision_recorded:
@@ -162,25 +185,25 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, pm_gate_system_validation_recorded=True),
             ),
         )
-    if not state.pm_gate_closure_accepted:
+    if not state.pm_gate_system_closure_recorded:
         return (
             Transition(
-                "accept_pm_decision_gate_closure",
-                replace(state, pm_gate_closure_accepted=True),
+                "record_pm_decision_system_closure",
+                replace(state, pm_gate_system_closure_recorded=True),
             ),
         )
     if not state.staged_pm_decision_applied:
         return (
             Transition(
-                "apply_staged_pm_decision_after_gate",
+                "apply_staged_pm_decision_after_system_closure",
                 replace(state, staged_pm_decision_applied=True),
             ),
         )
-    if not state.legacy_validation_fail_blocked:
+    if not state.old_packet_roles_rejected:
         return (
             Transition(
-                "block_legacy_validation_failure",
-                replace(state, legacy_validation_fail_blocked=True, status="complete"),
+                "reject_old_validator_and_closure_packets",
+                replace(state, old_packet_roles_rejected=True, status="complete"),
             ),
         )
     return ()
@@ -194,10 +217,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("reviewer passed before FlowGuard")
     if state.system_validation_recorded and not state.reviewer_passed:
         failures.append("system validation recorded before reviewer pass")
-    if state.closure_packet_issued and not state.system_validation_recorded:
-        failures.append("closure issued before system validation")
-    if state.closure_result_accepted and not state.closure_packet_issued:
-        failures.append("closure accepted before closure packet")
+    if state.system_closure_recorded and not state.system_validation_recorded:
+        failures.append("system closure recorded before system validation")
+    if state.system_closure_applied and not state.system_closure_recorded:
+        failures.append("system closure applied before system closure record")
+    if state.failed_system_validation_routed_to_pm and not state.failed_system_validation_recorded:
+        failures.append("failed system validation routed before failed evidence")
     if state.low_risk_pm_decision_applied and not state.low_risk_pm_decision_recorded:
         failures.append("low-risk PM decision applied before record")
     if state.high_risk_pm_decision_staged and not state.high_risk_pm_decision_recorded:
@@ -208,16 +233,26 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM gate reviewer passed before FlowGuard")
     if state.pm_gate_system_validation_recorded and not state.pm_gate_reviewer_passed:
         failures.append("PM gate system validation before reviewer")
-    if state.pm_gate_closure_accepted and not state.pm_gate_system_validation_recorded:
-        failures.append("PM gate closure before system validation")
-    if state.staged_pm_decision_applied and not state.pm_gate_closure_accepted:
-        failures.append("staged PM decision applied before gate closure")
+    if state.pm_gate_system_closure_recorded and not state.pm_gate_system_validation_recorded:
+        failures.append("PM gate system closure before system validation")
+    if state.staged_pm_decision_applied and not state.pm_gate_system_closure_recorded:
+        failures.append("staged PM decision applied before system closure")
     if state.validator_ai_required_on_ordinary_path:
         failures.append("ordinary path still required validator AI")
+    if state.closure_officer_required_on_ordinary_path:
+        failures.append("ordinary path still required Closure Officer AI")
+    if state.old_validator_packet_accepted:
+        failures.append("old validator packet was accepted")
+    if state.old_closure_packet_accepted:
+        failures.append("old closure packet was accepted")
     if state.system_validation_treated_as_terminal:
         failures.append("system validation treated as terminal completion")
     if state.closure_before_system_validation:
         failures.append("closure before system validation")
+    if state.system_validation_failure_not_routed_to_pm:
+        failures.append("system validation failure was not routed to PM repair")
+    if state.system_validation_failure_auto_closed:
+        failures.append("failed system validation auto-closed the subject")
     if state.high_risk_pm_applied_before_gate:
         failures.append("high-risk PM decision applied before gate")
     if state.pm_waiver_applied_before_gate:
@@ -228,8 +263,6 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM decision gate lacked reviewer pass")
     if state.low_risk_repair_forced_through_gate:
         failures.append("low-risk PM repair was forced through high-risk gate")
-    if state.legacy_validation_fail_issued_closure:
-        failures.append("legacy validation fail issued closure")
     return failures
 
 
@@ -245,12 +278,13 @@ def is_success(state: State) -> bool:
     return (
         state.status == "complete"
         and state.system_validation_recorded
-        and state.closure_result_accepted
+        and state.system_closure_applied
+        and state.failed_system_validation_routed_to_pm
         and state.low_risk_pm_decision_applied
         and state.high_risk_pm_decision_staged
-        and state.pm_gate_closure_accepted
+        and state.pm_gate_system_closure_recorded
         and state.staged_pm_decision_applied
-        and state.legacy_validation_fail_blocked
+        and state.old_packet_roles_rejected
     )
 
 
@@ -272,14 +306,18 @@ def hazard_states() -> dict[str, State]:
     base = target_state()
     return {
         "validator_ai_required_on_ordinary_path": replace(base, validator_ai_required_on_ordinary_path=True),
+        "closure_officer_required_on_ordinary_path": replace(base, closure_officer_required_on_ordinary_path=True),
+        "old_validator_packet_accepted": replace(base, old_validator_packet_accepted=True),
+        "old_closure_packet_accepted": replace(base, old_closure_packet_accepted=True),
         "system_validation_treated_as_terminal": replace(base, system_validation_treated_as_terminal=True),
         "closure_before_system_validation": replace(base, closure_before_system_validation=True),
+        "system_validation_failure_not_routed_to_pm": replace(base, system_validation_failure_not_routed_to_pm=True),
+        "system_validation_failure_auto_closed": replace(base, system_validation_failure_auto_closed=True),
         "high_risk_pm_applied_before_gate": replace(base, high_risk_pm_applied_before_gate=True),
         "pm_waiver_applied_before_gate": replace(base, pm_waiver_applied_before_gate=True),
         "pm_mutation_without_flowguard": replace(base, pm_mutation_without_flowguard=True),
         "pm_decision_reviewer_missing": replace(base, pm_decision_reviewer_missing=True),
         "low_risk_repair_forced_through_gate": replace(base, low_risk_repair_forced_through_gate=True),
-        "legacy_validation_fail_issued_closure": replace(base, legacy_validation_fail_issued_closure=True),
     }
 
 
@@ -287,14 +325,16 @@ def state_summary(state: State) -> dict[str, object]:
     return {
         "status": state.status,
         "system_validation_recorded": state.system_validation_recorded,
-        "closure_result_accepted": state.closure_result_accepted,
+        "system_closure_recorded": state.system_closure_recorded,
+        "system_closure_applied": state.system_closure_applied,
+        "failed_system_validation_routed_to_pm": state.failed_system_validation_routed_to_pm,
         "low_risk_pm_decision_applied": state.low_risk_pm_decision_applied,
         "high_risk_pm_decision_staged": state.high_risk_pm_decision_staged,
         "pm_gate_flowguard_passed": state.pm_gate_flowguard_passed,
         "pm_gate_reviewer_passed": state.pm_gate_reviewer_passed,
-        "pm_gate_closure_accepted": state.pm_gate_closure_accepted,
+        "pm_gate_system_closure_recorded": state.pm_gate_system_closure_recorded,
         "staged_pm_decision_applied": state.staged_pm_decision_applied,
-        "legacy_validation_fail_blocked": state.legacy_validation_fail_blocked,
+        "old_packet_roles_rejected": state.old_packet_roles_rejected,
     }
 
 
@@ -306,7 +346,7 @@ EXTERNAL_INPUTS = (Tick(),)
 INVARIANTS = (
     Invariant(
         "validation_automation_and_pm_decision_gate_order",
-        "System validation replaces ordinary validator AI, and high-risk PM decisions apply only after gated closure.",
+        "System validation replaces ordinary validator AI, system closure replaces ordinary Closure Officer AI, and high-risk PM decisions apply only after gated system closure.",
         validation_pm_gate_invariant,
     ),
 )

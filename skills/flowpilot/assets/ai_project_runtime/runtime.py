@@ -32,9 +32,14 @@ RESPONSIBILITIES = {
     "research_worker",
     "reviewer",
     "flowguard_operator",
-    "validator",
-    "closure_officer",
     "ui_qa",
+}
+PACKET_KINDS = {
+    "task",
+    "flowguard_check",
+    "review",
+    "pm_repair_decision",
+    "pm_disposition",
 }
 
 PREPLANNING_GATE_SCOPES = {
@@ -69,8 +74,12 @@ EVENT_FAMILY_BY_TYPE = {
     "lease_superseded": "lease",
     "resume_requested": "lifecycle",
     "resume_reconciled": "lifecycle",
+    "run_stopped_by_user": "lifecycle",
+    "run_cancelled_by_user": "lifecycle",
     "responsibility_lease_created": "lease",
     "role_memory_seed_recorded": "lease",
+    "host_liveness_recorded": "lease",
+    "orphan_evidence_detected": "validation",
     "task_packet_issued": "packet",
     "packet_assigned": "packet",
     "sealed_packet_body_opened": "packet",
@@ -124,10 +133,12 @@ _RECOVERY_DUTY_DECISIONS = {
     "quarantine_stale_result",
     "recover_packet",
     "repair_assignment_race",
+    "recover_orphan_evidence",
 }
 _WAIT_LIVENESS_FAILURE_STATUSES = {
     "missing",
     "cancelled",
+    "not_found",
     "unknown",
     "unresponsive",
     "blocked",
@@ -139,8 +150,21 @@ _WAIT_NO_OUTPUT_STATUSES = {
     "alive_no_output",
     "not_working_no_output",
     "completed",
+    "completed_without_result",
     "completed_without_expected_event",
 }
+_HOST_LIVENESS_STATUSES = (
+    _WAIT_LIVENESS_FAILURE_STATUSES
+    | _WAIT_NO_OUTPUT_STATUSES
+    | {
+        "active",
+        "still_working",
+        "working",
+        "progressing",
+        "acknowledged",
+    }
+)
+TERMINAL_LIFECYCLE_STATUSES = {"stopped_by_user", "cancelled_by_user"}
 _STALE_RESULT_BLOCKERS = {
     "closed_or_inactive_lease",
     "quarantined_packet",
@@ -161,7 +185,6 @@ ROUTER_INTERNAL_ACTION_TYPES = {
     "issue_parent_backward_replay_packet",
     "issue_flowguard_packet",
     "issue_review_packet",
-    "issue_validation_packet",
     "issue_pm_repair_decision_packet",
     "issue_pm_disposition_packet",
     "close_project",
@@ -170,7 +193,7 @@ ROLE_DISPATCH_ACTION_TYPES = {"lease_agent"}
 ROLE_WAIT_ACTION_TYPES = {"wait_for_ack", "wait_for_result"}
 RECOVERY_ACTION_TYPES = {"replace_lease", "repair_accepted_packet", "repair_packet"}
 USER_REQUIRED_ACTION_TYPES = {"open_startup_intake", "wait_for_resume", "resume_reconcile", "repair_cutover_gate"}
-TERMINAL_ACTION_TYPES = {"terminal_complete"}
+TERMINAL_ACTION_TYPES = {"terminal_complete", "terminal_lifecycle"}
 RUN_UNTIL_WAIT_MAX_STEPS = 50
 
 
@@ -341,8 +364,12 @@ def new_ledger(
         "reviews": {},
         "flowguard_work_orders": {},
         "validation_evidence": {},
+        "system_closures": {},
         "host_driver_state": {},
         "host_evidence": {},
+        "host_liveness_reports": {},
+        "orphan_evidence": {},
+        "terminal_lifecycle": None,
         "imported_evidence": {},
         "cutover_gate": None,
         "user_events": [],
@@ -379,7 +406,87 @@ def load_ledger(path: Path) -> dict[str, Any]:
     return payload
 
 
+def terminal_lifecycle_status(ledger: Mapping[str, Any]) -> str:
+    lifecycle = ledger.get("lifecycle") if isinstance(ledger.get("lifecycle"), Mapping) else {}
+    status = str(lifecycle.get("status") or lifecycle.get("state") or "")
+    if status in TERMINAL_LIFECYCLE_STATUSES:
+        return status
+    terminal = ledger.get("terminal_lifecycle") if isinstance(ledger.get("terminal_lifecycle"), Mapping) else {}
+    status = str(terminal.get("status") or terminal.get("state") or "")
+    return status if status in TERMINAL_LIFECYCLE_STATUSES else ""
+
+
+def _is_terminal_lifecycle(ledger: Mapping[str, Any]) -> bool:
+    return bool(terminal_lifecycle_status(ledger))
+
+
+def _assert_not_terminal_lifecycle(ledger: Mapping[str, Any]) -> None:
+    status = terminal_lifecycle_status(ledger)
+    if status:
+        raise BlackBoxRuntimeError(f"run is terminal ({status}); new work is not allowed")
+
+
+def record_terminal_lifecycle(
+    ledger: dict[str, Any],
+    status: str,
+    *,
+    reason: str = "",
+    actor: str = "controller",
+) -> dict[str, Any]:
+    if status not in TERMINAL_LIFECYCLE_STATUSES:
+        raise BlackBoxRuntimeError(f"unsupported terminal lifecycle status: {status}")
+    recorded_at = now_iso()
+    record = {
+        "schema_version": "black_box_flowpilot.terminal_lifecycle.v1",
+        "state": status,
+        "status": status,
+        "terminal": True,
+        "reason": reason,
+        "actor": actor,
+        "recorded_at": recorded_at,
+        "controller_stop_allowed": True,
+        "closure_required": False,
+    }
+    ledger["lifecycle"] = dict(record)
+    ledger["terminal_lifecycle"] = dict(record)
+
+    for lease_id, lease in list(ledger.get("leases", {}).items()):
+        if isinstance(lease, Mapping) and lease.get("status") == "active":
+            close_lease(ledger, str(lease_id), status)
+
+    for packet in ledger.get("packets", {}).values():
+        if not isinstance(packet, dict):
+            continue
+        if packet.get("accepted_result_id"):
+            continue
+        if packet.get("status") in {
+            "open",
+            "assigned",
+            "acknowledged",
+            "result_submitted",
+            "result_blocked",
+            "review_blocked",
+            "system_validation_blocked",
+            "flowguard_blocked",
+        }:
+            packet["status"] = status
+            packet["terminal_lifecycle_status"] = status
+            packet["terminal_lifecycle_reason"] = reason
+
+    frontier = ledger.get("execution_frontier")
+    if isinstance(frontier, dict):
+        frontier["status"] = status
+        frontier["terminal"] = True
+        frontier["terminal_reason"] = reason
+        frontier["updated_at"] = recorded_at
+
+    event_type = "run_stopped_by_user" if status == "stopped_by_user" else "run_cancelled_by_user"
+    _event(ledger, event_type, status=status, reason=reason, actor=actor)
+    return record
+
+
 def create_route(ledger: dict[str, Any], summary: str, steps: list[str]) -> str:
+    _assert_not_terminal_lifecycle(ledger)
     if not summary.strip():
         raise BlackBoxRuntimeError("route summary is required")
     if not steps:
@@ -1259,7 +1366,7 @@ def _responsibility_for_title(title: str) -> str:
 
 
 def _normalize_node_responsibility(responsibility: str) -> str:
-    if responsibility in RESPONSIBILITIES and responsibility not in {"planner", "closure_officer", "validator", "flowguard_operator"}:
+    if responsibility in RESPONSIBILITIES and responsibility not in {"planner", "flowguard_operator"}:
         return responsibility
     return "worker"
 
@@ -1375,7 +1482,6 @@ _PM_REPAIR_DECISIONS = {
     "same_node_repair",
     "sender_reissue",
     "collect_more_evidence",
-    "rerun_validation",
     "mutate_route",
     "quarantine_evidence",
     "waive_with_authority",
@@ -1391,7 +1497,6 @@ _PM_REPAIR_ALIASES = {
     "request_sender_reissue": "sender_reissue",
     "more_evidence": "collect_more_evidence",
     "collect_evidence": "collect_more_evidence",
-    "validation_rerun": "rerun_validation",
     "route_mutation": "mutate_route",
     "quarantine": "quarantine_evidence",
     "waive": "waive_with_authority",
@@ -1444,14 +1549,10 @@ def _payload_outcome_token(payload: Mapping[str, Any], packet_kind: str) -> str:
         token = _normalize_outcome_token(payload.get(key))
         if token:
             return token
-    if packet_kind == "validation" and isinstance(payload.get("valid"), bool):
-        return "pass" if payload["valid"] else "fail"
     return ""
 
 
 def _default_blocker_class(packet_kind: str, owner_role: str, token: str) -> str:
-    if owner_role == "validator" or packet_kind == "validation":
-        return "validation_failure"
     if owner_role == "flowguard_operator" or packet_kind == "flowguard_check":
         return "flowguard_failure"
     if token in {"needs_more_evidence", "more_evidence_required"}:
@@ -1574,8 +1675,6 @@ def _stopped_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, A
 def _required_recheck_role(packet_kind: str, owner_role: str) -> str:
     if packet_kind == "review":
         return "reviewer"
-    if packet_kind == "validation":
-        return "validator"
     if packet_kind == "flowguard_check":
         return "flowguard_operator"
     return owner_role or "pm"
@@ -1707,7 +1806,7 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "gate_kind": blocker["gate_kind"],
                 "required_recheck_role": blocker["required_recheck_role"],
                 "allowed_decisions": sorted(_PM_REPAIR_DECISIONS),
-                "instruction": "Return a PM repair decision. PM chooses the repair route; PM does not impersonate the blocked reviewer, validator, or FlowGuard pass.",
+                "instruction": "Return a PM repair decision. PM chooses the repair route; PM does not impersonate the blocked reviewer, system validation check, or FlowGuard pass.",
             },
             indent=2,
             sort_keys=True,
@@ -1818,8 +1917,7 @@ def _stage_pm_decision_gate(
         "flowguard_order_id": "",
         "review_id": "",
         "validation_evidence_id": "",
-        "closure_packet_id": "",
-        "closure_result_id": "",
+        "system_closure_id": "",
         "created_at": now_iso(),
     }
     ledger.setdefault("pm_decision_gates", {})[gate_id] = row
@@ -1887,7 +1985,7 @@ def _mark_pm_decision_gate_validation(
     if not gate:
         return
     gate["validation_evidence_id"] = evidence_id
-    gate["status"] = "awaiting_closure"
+    gate["status"] = "awaiting_system_closure"
     gate["updated_at"] = now_iso()
 
 
@@ -1895,8 +1993,7 @@ def _apply_staged_pm_decision_gate(
     ledger: dict[str, Any],
     gate: dict[str, Any],
     *,
-    closure_packet_id: str,
-    closure_result_id: str,
+    system_closure_id: str,
 ) -> None:
     if gate.get("status") == "applied":
         return
@@ -1911,15 +2008,14 @@ def _apply_staged_pm_decision_gate(
         record_pm_disposition(
             ledger,
             str(gate.get("node_id") or ""),
-            str(gate.get("source_result_id") or closure_result_id),
+            str(gate.get("source_result_id") or system_closure_id),
             decision=str(gate.get("decision") or "accept"),
             reason=str(gate.get("reason") or "pm_decision_gate_applied"),
         )
     else:
         raise BlackBoxRuntimeError(f"unknown PM decision gate kind: {gate_kind}")
     gate["status"] = "applied"
-    gate["closure_packet_id"] = closure_packet_id
-    gate["closure_result_id"] = closure_result_id
+    gate["system_closure_id"] = system_closure_id
     gate["applied_at"] = now_iso()
     _event(
         ledger,
@@ -2019,10 +2115,6 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
         _issue_sender_repair_packet(ledger, blocker, decision_id)
         blocker["status"] = "awaiting_recheck"
         return
-    if decision == "rerun_validation":
-        _issue_sender_repair_packet(ledger, blocker, decision_id, responsibility="validator", packet_kind="validation")
-        blocker["status"] = "awaiting_recheck"
-        return
     if decision == "mutate_route" and route_node_id and route_node_id in ledger.get("route_nodes", {}):
         _mutate_route_for_node(ledger, route_node_id, disposition_id=decision_id, reason=reason)
         blocker["status"] = "awaiting_recheck"
@@ -2088,7 +2180,12 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
     replacement_id = f"{node_id}-repair-v{new_version}"
     affected_packets: list[str] = []
     for packet in ledger.get("packets", {}).values():
-        if packet.get("envelope", {}).get("route_node_id") == node_id and packet.get("status") != "accepted":
+        if packet.get("envelope", {}).get("route_node_id") != node_id:
+            continue
+        if packet.get("accepted_result_id"):
+            packet["status"] = "accepted"
+            continue
+        if packet.get("status") != "accepted":
             packet["status"] = "quarantined_after_route_mutation"
             packet["old_route_disposition"] = "quarantined"
             affected_packets.append(packet["packet_id"])
@@ -2169,6 +2266,7 @@ def lease_agent(
     agent_id: str | None = None,
     packet_id: str = "",
 ) -> str:
+    _assert_not_terminal_lifecycle(ledger)
     if responsibility not in RESPONSIBILITIES:
         raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
     lease_id = _next_id(ledger, "lease")
@@ -2182,6 +2280,10 @@ def lease_agent(
         "ack_received_at": "",
         "progress_count": 0,
         "last_progress_at": "",
+        "last_liveness_status": "",
+        "liveness_status": "",
+        "liveness_checked_at": "",
+        "host_liveness_history": [],
         "created_at": now_iso(),
         "closed_at": None,
         "close_reason": "",
@@ -2236,10 +2338,13 @@ def issue_task_packet(
     route_scope: str = "",
     acceptance_criteria: list[str] | None = None,
 ) -> str:
+    _assert_not_terminal_lifecycle(ledger)
     if ledger.get("active_route_version") is None:
         raise BlackBoxRuntimeError("cannot issue a packet without an active route")
     if responsibility not in RESPONSIBILITIES:
         raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
+    if packet_kind not in PACKET_KINDS:
+        raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
     packet_id = preassigned_packet_id or _next_id(ledger, "packet")
     body_hash = hash_text(body)
     envelope = {
@@ -2283,6 +2388,7 @@ def issue_task_packet(
 
 
 def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None:
+    _assert_not_terminal_lifecycle(ledger)
     packet = _require(ledger["packets"], packet_id, "packet")
     lease = _require(ledger["leases"], lease_id, "lease")
     if packet.get("accepted_result_id"):
@@ -2298,6 +2404,7 @@ def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None
 
 
 def ack_lease(ledger: dict[str, Any], lease_id: str, packet_id: str) -> None:
+    _assert_not_terminal_lifecycle(ledger)
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
     if packet.get("accepted_result_id"):
@@ -2313,6 +2420,7 @@ def ack_lease(ledger: dict[str, Any], lease_id: str, packet_id: str) -> None:
 
 
 def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, status: str) -> None:
+    _assert_not_terminal_lifecycle(ledger)
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
     if lease.get("status") != "active":
@@ -2324,7 +2432,69 @@ def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, statu
     lease["progress_count"] = int(lease.get("progress_count", 0)) + 1
     lease["last_progress_status"] = status
     lease["last_progress_at"] = now_iso()
+    lease["last_liveness_status"] = status
     _event(ledger, "lease_progress", lease_id=lease_id, packet_id=packet_id, status=status)
+
+
+def record_host_liveness(
+    ledger: dict[str, Any],
+    lease_id: str,
+    packet_id: str,
+    status: str,
+    *,
+    source: str = "host_report",
+    detail: str = "",
+) -> dict[str, Any]:
+    _assert_not_terminal_lifecycle(ledger)
+    normalized = status.strip()
+    if normalized not in _HOST_LIVENESS_STATUSES:
+        raise BlackBoxRuntimeError(f"unknown host liveness status: {status}")
+    lease = _require(ledger["leases"], lease_id, "lease")
+    packet = _require(ledger["packets"], packet_id, "packet")
+    if lease.get("packet_id") != packet_id:
+        raise BlackBoxRuntimeError("host liveness packet mismatch")
+    if packet.get("accepted_result_id"):
+        raise BlackBoxRuntimeError("accepted packet cannot record host liveness")
+    checked_at = now_iso()
+    report_id = _next_id(ledger, "host_liveness")
+    report = {
+        "schema_version": "black_box_flowpilot.host_liveness_report.v1",
+        "report_id": report_id,
+        "lease_id": lease_id,
+        "packet_id": packet_id,
+        "status": normalized,
+        "source": source,
+        "detail": detail,
+        "checked_at": checked_at,
+        "current_run_only": True,
+    }
+    ledger.setdefault("host_liveness_reports", {})[report_id] = report
+    lease["liveness_status"] = normalized
+    lease["last_liveness_status"] = normalized
+    lease["liveness_checked_at"] = checked_at
+    lease["liveness_source"] = source
+    lease["liveness_detail"] = detail
+    history = lease.setdefault("host_liveness_history", [])
+    if isinstance(history, list):
+        history.append(
+            {
+                "report_id": report_id,
+                "status": normalized,
+                "source": source,
+                "checked_at": checked_at,
+            }
+        )
+        del history[:-20]
+    _event(
+        ledger,
+        "host_liveness_recorded",
+        report_id=report_id,
+        lease_id=lease_id,
+        packet_id=packet_id,
+        status=normalized,
+        source=source,
+    )
+    return report
 
 
 def submit_result(
@@ -2339,6 +2509,7 @@ def submit_result(
     valid_shape: bool = True,
     packet_body_hash: str | None = None,
 ) -> str:
+    _assert_not_terminal_lifecycle(ledger)
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
     result_id = _next_id(ledger, "result")
@@ -2476,33 +2647,6 @@ def _apply_valid_packet_result(
             _accept_packet_result(ledger, packet, result, lease, reason="review_block_result_submitted")
             _record_semantic_blocker(ledger, packet, result, outcome_id)
             return
-        if packet_kind == "validation":
-            _accept_packet_result(ledger, packet, result, lease, reason="validation_failed_result_submitted")
-            evidence_id = f"validation-{result['result_id']}"
-            record_validation_evidence(
-                ledger,
-                evidence_id,
-                status="failed",
-                subject_packet_id=str(packet["envelope"].get("subject_id") or ""),
-                source_packet_id=str(packet.get("packet_id") or ""),
-                source_result_id=str(result.get("result_id") or ""),
-                evidence_kind="legacy_validator_packet",
-                owner_role="validator",
-                blockers=[str(outcome.get("reason") or outcome.get("recommended_resolution") or "validation_failed")],
-            )
-            result["validation_evidence_id"] = evidence_id
-            subject_packet = ledger.get("packets", {}).get(packet["envelope"].get("subject_id", ""), {})
-            if isinstance(subject_packet, dict):
-                subject_packet["status"] = "validation_blocked"
-            _record_semantic_blocker(ledger, packet, result, outcome_id)
-            return
-        if packet_kind == "closure":
-            result["status"] = "closure_blocked"
-            result["accepted"] = False
-            packet["status"] = "closure_blocked"
-            close_lease(ledger, lease["lease_id"], "closure_result_blocked")
-            _record_semantic_blocker(ledger, packet, result, outcome_id)
-            return
     if packet_kind == "task":
         close_lease(ledger, lease["lease_id"], "result_submitted")
         _clear_semantic_blockers_for_pass(
@@ -2544,38 +2688,25 @@ def _apply_valid_packet_result(
             review_id=review_id,
         )
         if ledger["validation_evidence"][evidence_id]["status"] == "passed":
-            _ensure_closure_packet_for_task(ledger, packet["envelope"]["subject_id"])
-        return
-    if packet_kind == "validation":
-        _accept_packet_result(ledger, packet, result, lease, reason="validation_result_submitted")
-        evidence_id = f"validation-{result['result_id']}"
-        record_validation_evidence(
-            ledger,
-            evidence_id,
-            subject_packet_id=str(packet["envelope"].get("subject_id") or ""),
-            source_packet_id=str(packet.get("packet_id") or ""),
-            source_result_id=str(result.get("result_id") or ""),
-            evidence_kind="legacy_validator_packet",
-            owner_role="validator",
-        )
-        result["validation_evidence_id"] = evidence_id
-        ledger["latest_validation_evidence_id"] = evidence_id
-        subject_packet = ledger.get("packets", {}).get(packet["envelope"].get("subject_id", ""), {})
-        node_id = str((subject_packet.get("envelope", {}) if isinstance(subject_packet, dict) else {}).get("route_node_id") or "")
-        if node_id and node_id in ledger.get("route_nodes", {}):
-            ledger["route_nodes"][node_id].setdefault("validation_evidence_ids", []).append(evidence_id)
-        _clear_semantic_blockers_for_pass(
-            ledger,
-            subject_packet_id=str(packet["envelope"]["subject_id"]),
-            gate_kind="validation",
-            recheck_role="validator",
-            outcome_id=outcome_id,
-        )
-        _ensure_closure_packet_for_task(ledger, packet["envelope"]["subject_id"])
-        return
-    if packet_kind == "closure":
-        _accept_packet_result(ledger, packet, result, lease, reason="closure_result_submitted")
-        _apply_closure_result_side_effect(ledger, packet, result)
+            _clear_system_validation_blockers_for_pass(
+                ledger,
+                subject_packet_id=str(packet["envelope"]["subject_id"]),
+                validation_evidence_id=evidence_id,
+            )
+            _auto_close_packet_after_system_validation(
+                ledger,
+                str(packet["envelope"]["subject_id"]),
+                validation_evidence_id=evidence_id,
+                source_result_id=str(result["result_id"]),
+            )
+        else:
+            _record_system_validation_blocker(
+                ledger,
+                str(packet["envelope"]["subject_id"]),
+                validation_evidence_id=evidence_id,
+                source_packet_id=str(packet["packet_id"]),
+                source_result_id=str(result["result_id"]),
+            )
         return
     if packet_kind == "pm_disposition":
         _accept_packet_result(ledger, packet, result, lease, reason="pm_disposition_submitted")
@@ -2599,23 +2730,24 @@ def _apply_valid_packet_result(
     raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
 
 
-def _apply_closure_result_side_effect(
+def _apply_closure_side_effect_for_subject(
     ledger: dict[str, Any],
-    packet: Mapping[str, Any],
-    result: Mapping[str, Any],
+    subject_packet_id: str,
+    *,
+    system_closure_id: str = "",
+    validation_evidence_id: str = "",
+    route_node_id_hint: str = "",
 ) -> None:
-    subject_packet_id = str(packet["envelope"].get("subject_id") or "")
     subject_packet = ledger.get("packets", {}).get(subject_packet_id, {})
     subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet, dict) else {}
     route_scope = str(subject_envelope.get("route_scope") or "")
-    node_id = str(subject_envelope.get("route_node_id") or packet["envelope"].get("route_node_id") or "")
+    node_id = str(subject_envelope.get("route_node_id") or route_node_id_hint or "")
     pm_gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
     if pm_gate:
         _apply_staged_pm_decision_gate(
             ledger,
             pm_gate,
-            closure_packet_id=str(packet.get("packet_id") or ""),
-            closure_result_id=str(result.get("result_id") or ""),
+            system_closure_id=system_closure_id,
         )
         return
     if high_standard_flow_required(ledger) and route_scope in PREPLANNING_GATE_SCOPES:
@@ -2631,7 +2763,10 @@ def _apply_closure_result_side_effect(
         _ensure_pm_disposition_packet_for_node(ledger, node_id, str(subject_envelope.get("subject_id") or subject_packet_id))
         return
     if recursive_route_required(ledger) and route_scope == "planning":
-        materialize_route_from_planning_result(ledger, str(subject_packet.get("accepted_result_id") or packet["envelope"].get("target_result_id") or ""))
+        materialize_route_from_planning_result(
+            ledger,
+            str(subject_packet.get("accepted_result_id") or subject_envelope.get("target_result_id") or ""),
+        )
         frontier = ledger.get("execution_frontier") or {}
         active_node = str(frontier.get("active_node_id") or "")
         if high_standard_flow_required(ledger) and active_node:
@@ -2640,15 +2775,78 @@ def _apply_closure_result_side_effect(
             ensure_next_node_task_packet(ledger)
         return
     if recursive_route_required(ledger) and node_id:
-        _record_node_closure(ledger, node_id, str(result["result_id"]))
+        _record_node_closure(ledger, node_id, system_closure_id)
         node = ledger.get("route_nodes", {}).get(node_id, {})
         if high_standard_flow_required(ledger) and isinstance(node, dict) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
             ensure_parent_backward_replay_packet(ledger, node_id)
             return
         _ensure_pm_disposition_packet_for_node(ledger, node_id, subject_packet_id)
         return
-    evidence_id = str(ledger.get("latest_validation_evidence_id") or f"validation-{result['result_id']}")
+    evidence_id = str(validation_evidence_id or ledger.get("latest_validation_evidence_id") or f"validation-{system_closure_id}")
     attempt_final_closure(ledger, evidence_id)
+
+
+def _record_system_closure(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    *,
+    validation_evidence_id: str,
+    source_result_id: str,
+) -> str:
+    for existing_id, existing in ledger.setdefault("system_closures", {}).items():
+        if not isinstance(existing, Mapping):
+            continue
+        if existing.get("subject_packet_id") == subject_packet_id and existing.get("validation_evidence_id") == validation_evidence_id:
+            return str(existing_id)
+    subject_packet = _require(ledger["packets"], subject_packet_id, "packet")
+    envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet.get("envelope"), Mapping) else {}
+    closure_id = _next_id(ledger, "system_closure")
+    row = {
+        "closure_id": closure_id,
+        "status": "closed",
+        "subject_packet_id": subject_packet_id,
+        "validation_evidence_id": validation_evidence_id,
+        "source_result_id": source_result_id,
+        "route_version": envelope.get("route_version"),
+        "route_scope": str(envelope.get("route_scope") or ""),
+        "route_node_id": str(envelope.get("route_node_id") or ""),
+        "created_at": now_iso(),
+    }
+    ledger.setdefault("system_closures", {})[closure_id] = row
+    ledger["latest_system_closure_id"] = closure_id
+    _event(
+        ledger,
+        "system_closure_recorded",
+        closure_id=closure_id,
+        subject_packet_id=subject_packet_id,
+        validation_evidence_id=validation_evidence_id,
+    )
+    return closure_id
+
+
+def _auto_close_packet_after_system_validation(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    *,
+    validation_evidence_id: str,
+    source_result_id: str,
+) -> str:
+    evidence = _require(ledger.setdefault("validation_evidence", {}), validation_evidence_id, "validation evidence")
+    if evidence.get("status") != "passed":
+        raise BlackBoxRuntimeError("system closure requires passing validation evidence")
+    closure_id = _record_system_closure(
+        ledger,
+        subject_packet_id,
+        validation_evidence_id=validation_evidence_id,
+        source_result_id=source_result_id,
+    )
+    _apply_closure_side_effect_for_subject(
+        ledger,
+        subject_packet_id,
+        system_closure_id=closure_id,
+        validation_evidence_id=validation_evidence_id,
+    )
+    return closure_id
 
 
 def _record_preplanning_gate_closure(
@@ -3041,61 +3239,6 @@ def _record_review_from_packet_result(
     return review_id
 
 
-def _ensure_validation_packet_for_task(ledger: dict[str, Any], subject_id: str) -> str:
-    subject_packet = _require(ledger["packets"], subject_id, "packet")
-    existing = _find_packet(ledger, packet_kind="validation", subject_id=subject_id)
-    if existing:
-        return str(existing["packet_id"])
-    return issue_task_packet(
-        ledger,
-        "validator",
-        f"Record validation evidence for {subject_id}",
-        json.dumps(
-            {
-                "schema_version": "black_box_flowpilot.validation_packet.v1",
-                "subject_packet_id": subject_id,
-                "instruction": "Record current validation evidence for the accepted subject packet.",
-            },
-            indent=2,
-            sort_keys=True,
-        ),
-        required_flowguard_target="",
-        packet_kind="validation",
-        subject_id=subject_id,
-        route_node_id=str(subject_packet["envelope"].get("route_node_id") or ""),
-        route_scope=str(subject_packet["envelope"].get("route_scope") or ""),
-        acceptance_criteria=list(subject_packet["envelope"].get("acceptance_criteria") or []),
-    )
-
-
-def _ensure_closure_packet_for_task(ledger: dict[str, Any], subject_id: str) -> str:
-    subject_packet = _require(ledger["packets"], subject_id, "packet")
-    existing = _find_packet(ledger, packet_kind="closure", subject_id=subject_id)
-    if existing:
-        return str(existing["packet_id"])
-    return issue_task_packet(
-        ledger,
-        "closure_officer",
-        f"Perform final backward closure for {subject_id}",
-        json.dumps(
-            {
-                "schema_version": "black_box_flowpilot.closure_packet.v1",
-                "subject_packet_id": subject_id,
-                "validation_evidence_id": ledger.get("latest_validation_evidence_id", ""),
-                "instruction": "Confirm final backward chain and close only if all required packet evidence is current.",
-            },
-            indent=2,
-            sort_keys=True,
-        ),
-        required_flowguard_target="",
-        packet_kind="closure",
-        subject_id=subject_id,
-        route_node_id=str(subject_packet["envelope"].get("route_node_id") or ""),
-        route_scope=str(subject_packet["envelope"].get("route_scope") or ""),
-        acceptance_criteria=list(subject_packet["envelope"].get("acceptance_criteria") or []),
-    )
-
-
 def _result_mechanical_blockers(
     ledger: Mapping[str, Any],
     *,
@@ -3286,8 +3429,8 @@ def record_validation_evidence(
     subject_packet_id: str = "",
     source_packet_id: str = "",
     source_result_id: str = "",
-    evidence_kind: str = "validator_packet",
-    owner_role: str = "validator",
+    evidence_kind: str = "system_validation",
+    owner_role: str = "system",
     review_id: str = "",
     flowguard_order_ids: list[str] | None = None,
     gate_id: str = "",
@@ -3388,8 +3531,113 @@ def _record_system_validation_for_packet(
         and subject_envelope.get("route_scope") in {"node", "planning", "node_acceptance_plan", "parent_backward_replay"}
     ):
         ledger["route_nodes"][node_id].setdefault("validation_evidence_ids", []).append(evidence_id)
-    _mark_pm_decision_gate_validation(ledger, subject_packet_id, evidence_id)
+    if blockers:
+        gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+        if gate:
+            gate["validation_evidence_id"] = evidence_id
+            gate["status"] = "system_validation_blocked"
+            gate["updated_at"] = now_iso()
+    else:
+        _mark_pm_decision_gate_validation(ledger, subject_packet_id, evidence_id)
     return evidence_id
+
+
+def _record_system_validation_blocker(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    *,
+    validation_evidence_id: str,
+    source_packet_id: str,
+    source_result_id: str,
+) -> str:
+    for blocker_id, blocker in ledger.setdefault("active_blockers", {}).items():
+        if not isinstance(blocker, Mapping):
+            continue
+        if blocker.get("gate_kind") != "system_validation":
+            continue
+        if blocker.get("subject_packet_id") != subject_packet_id:
+            continue
+        if blocker.get("status") in {"active", "repairing", "awaiting_recheck"}:
+            return str(blocker_id)
+    subject_packet = _require(ledger["packets"], subject_packet_id, "packet")
+    subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet.get("envelope"), Mapping) else {}
+    evidence = _require(ledger.setdefault("validation_evidence", {}), validation_evidence_id, "validation evidence")
+    blockers = [str(item) for item in evidence.get("blockers") or ["system_validation_failed"]]
+    blocker_id = _next_id(ledger, "blocker")
+    route_node_id = str(subject_envelope.get("route_node_id") or "")
+    repair_generation = 0
+    if route_node_id and route_node_id in ledger.get("route_nodes", {}):
+        repair_generation = int(ledger["route_nodes"][route_node_id].get("repair_generation", 0))
+    row = {
+        "blocker_id": blocker_id,
+        "status": "active",
+        "outcome_id": "",
+        "packet_id": source_packet_id,
+        "packet_kind": "system_validation",
+        "subject_packet_id": subject_packet_id,
+        "repair_target_packet_id": subject_packet_id,
+        "target_result_id": str(subject_packet.get("accepted_result_id") or subject_envelope.get("target_result_id") or ""),
+        "result_id": source_result_id,
+        "owner_role": "system",
+        "required_recheck_role": "system",
+        "gate_kind": "system_validation",
+        "blocker_class": "system_validation_failure",
+        "recommended_resolution": "; ".join(blockers),
+        "route_version": subject_envelope.get("route_version"),
+        "route_node_id": route_node_id,
+        "route_scope": str(subject_envelope.get("route_scope") or ""),
+        "repair_generation": repair_generation,
+        "stale_evidence_ids": [validation_evidence_id, source_result_id],
+        "created_at": now_iso(),
+        "pm_repair_packet_id": "",
+        "pm_repair_decision_id": "",
+        "cleared_by_outcome_id": "",
+    }
+    ledger.setdefault("active_blockers", {})[blocker_id] = row
+    if isinstance(subject_packet, dict):
+        subject_packet["active_blocker_id"] = blocker_id
+        subject_packet["status"] = "system_validation_blocked"
+    _event(
+        ledger,
+        "system_validation_blocker_recorded",
+        blocker_id=blocker_id,
+        subject_packet_id=subject_packet_id,
+        validation_evidence_id=validation_evidence_id,
+    )
+    _ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
+    return blocker_id
+
+
+def _clear_system_validation_blockers_for_pass(
+    ledger: dict[str, Any],
+    *,
+    subject_packet_id: str,
+    validation_evidence_id: str,
+) -> None:
+    repair_blocker_id = _packet_repair_blocker_id(ledger, subject_packet_id)
+    for blocker in ledger.setdefault("active_blockers", {}).values():
+        if not isinstance(blocker, dict):
+            continue
+        if blocker.get("status") not in {"active", "repairing", "awaiting_recheck"}:
+            continue
+        if blocker.get("gate_kind") != "system_validation":
+            continue
+        same_subject = blocker.get("subject_packet_id") == subject_packet_id
+        same_repair_chain = repair_blocker_id and blocker.get("blocker_id") == repair_blocker_id
+        if not (same_subject or same_repair_chain):
+            continue
+        blocker["status"] = "cleared"
+        blocker["cleared_by_outcome_id"] = validation_evidence_id
+        blocker["cleared_at"] = now_iso()
+        subject = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
+        if isinstance(subject, dict) and subject.get("active_blocker_id") == blocker.get("blocker_id"):
+            subject["active_blocker_id"] = ""
+        _event(
+            ledger,
+            "system_validation_blocker_cleared",
+            blocker_id=str(blocker.get("blocker_id") or ""),
+            validation_evidence_id=validation_evidence_id,
+        )
 
 
 def attempt_final_closure(
@@ -3526,8 +3774,6 @@ def _apply_router_internal_action(ledger: dict[str, Any], action: RuntimeAction)
         result["packet_id"] = _ensure_flowguard_packet_for_task_result(ledger, action.subject_id)
     elif action_type == "issue_review_packet":
         result["packet_id"] = _ensure_review_packet_for_task_result(ledger, action.subject_id)
-    elif action_type == "issue_validation_packet":
-        result["packet_id"] = _ensure_validation_packet_for_task(ledger, action.subject_id)
     elif action_type == "issue_pm_repair_decision_packet":
         result["packet_id"] = _ensure_pm_repair_decision_packet_for_blocker(ledger, action.subject_id)
     elif action_type == "issue_pm_disposition_packet":
@@ -3580,6 +3826,9 @@ def run_until_wait(ledger: dict[str, Any], *, max_steps: int = RUN_UNTIL_WAIT_MA
 
 
 def _guard_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
+    status = terminal_lifecycle_status(ledger)
+    if status:
+        return RuntimeAction("terminal_lifecycle", f"run lifecycle is {status}", status)
     if not ledger.get("startup_intake"):
         return RuntimeAction("open_startup_intake", "startup intake has not been recorded")
     if (ledger.get("cutover_gate") or {}).get("decision") == "blocked":
@@ -3641,6 +3890,119 @@ def _elapsed_seconds_since(raw: object) -> int | None:
     if parsed is None:
         return None
     return max(0, int((datetime.now(timezone.utc) - parsed).total_seconds()))
+
+
+def _runner_summary_candidate_paths(ledger: Mapping[str, Any], packet_id: str) -> list[Path]:
+    raw_run_root = str(ledger.get("run_root") or "")
+    if not raw_run_root:
+        return []
+    run_root = Path(raw_run_root)
+    return [
+        run_root / "evidence" / "flowguard" / packet_id / "runner_summary.json",
+        run_root / "flowguard" / "evidence" / packet_id / "runner_summary.json",
+        run_root / "evidence" / packet_id / "runner_summary.json",
+    ]
+
+
+def _walk_exit_codes(value: Any) -> list[int]:
+    codes: list[int] = []
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if str(key) in {"exit_code", "returncode", "return_code"}:
+                try:
+                    codes.append(int(item))
+                except (TypeError, ValueError):
+                    pass
+            else:
+                codes.extend(_walk_exit_codes(item))
+    elif isinstance(value, list):
+        for item in value:
+            codes.extend(_walk_exit_codes(item))
+    return codes
+
+
+def _walk_status_tokens(value: Any) -> set[str]:
+    tokens: set[str] = set()
+    if isinstance(value, Mapping):
+        for key, item in value.items():
+            if str(key) in {"status", "state", "decision"} and isinstance(item, str):
+                tokens.add(item.lower())
+            else:
+                tokens.update(_walk_status_tokens(item))
+    elif isinstance(value, list):
+        for item in value:
+            tokens.update(_walk_status_tokens(item))
+    return tokens
+
+
+def _runner_summary_success(payload: Mapping[str, Any]) -> tuple[bool, list[int], set[str]]:
+    exit_codes = _walk_exit_codes(payload)
+    status_tokens = _walk_status_tokens(payload)
+    if status_tokens.intersection({"running", "in_progress", "pending", "failed", "error", "cancelled"}):
+        return False, exit_codes, status_tokens
+    if exit_codes and all(code == 0 for code in exit_codes):
+        return True, exit_codes, status_tokens
+    if payload.get("ok") is True or payload.get("success") is True:
+        return True, exit_codes, status_tokens
+    return False, exit_codes, status_tokens
+
+
+def _orphan_evidence_for_packet(ledger: Mapping[str, Any], packet_id: str) -> dict[str, Any] | None:
+    packet = ledger.get("packets", {}).get(packet_id)
+    if not isinstance(packet, Mapping) or packet.get("accepted_result_id"):
+        return None
+    for path in _runner_summary_candidate_paths(ledger, packet_id):
+        if not path.exists():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+            payload = json.loads(text)
+        except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+            continue
+        if not isinstance(payload, Mapping):
+            continue
+        ok, exit_codes, status_tokens = _runner_summary_success(payload)
+        if not ok:
+            continue
+        return {
+            "schema_version": "black_box_flowpilot.orphan_evidence.v1",
+            "packet_id": packet_id,
+            "path": str(path),
+            "summary_hash": hash_text(text),
+            "detected_at": now_iso(),
+            "status": "completed_without_formal_result",
+            "exit_codes": exit_codes,
+            "status_tokens": sorted(status_tokens),
+            "formal_result_present": bool(packet.get("result_ids")),
+            "accepted_result_id": str(packet.get("accepted_result_id") or ""),
+            "recovery_action": "recover_or_resubmit_formal_result",
+        }
+    return None
+
+
+def _persist_orphan_evidence_from_guard(ledger: dict[str, Any], guard: Mapping[str, Any]) -> None:
+    wait_recovery = guard.get("wait_recovery") if isinstance(guard.get("wait_recovery"), Mapping) else {}
+    evidence = wait_recovery.get("orphan_evidence") if isinstance(wait_recovery, Mapping) else None
+    if not isinstance(evidence, Mapping):
+        return
+    packet_id = str(evidence.get("packet_id") or "")
+    summary_hash = str(evidence.get("summary_hash") or "")
+    if not packet_id or not summary_hash:
+        return
+    records = ledger.setdefault("orphan_evidence", {})
+    existing = records.get(packet_id) if isinstance(records, dict) else None
+    if isinstance(existing, Mapping) and existing.get("summary_hash") == summary_hash:
+        return
+    record = dict(evidence)
+    record["recorded_at"] = now_iso()
+    records[packet_id] = record
+    _event(
+        ledger,
+        "orphan_evidence_detected",
+        packet_id=packet_id,
+        path=str(record.get("path", "")),
+        summary_hash=summary_hash,
+    )
 
 
 def _guard_config_int(ledger: Mapping[str, Any], key: str, default: int) -> int:
@@ -3762,14 +4124,25 @@ def _guard_wait_recovery(
 
     progress_count = int(lease_map.get("progress_count", 0) or 0)
     last_progress_status = str(lease_map.get("last_progress_status") or "")
-    last_liveness_status = str(lease_map.get("liveness_status") or last_progress_status)
+    last_liveness_status = str(lease_map.get("liveness_status") or lease_map.get("last_liveness_status") or last_progress_status)
     last_progress_elapsed = _elapsed_seconds_since(lease_map.get("last_progress_at"))
+    last_liveness_elapsed = _elapsed_seconds_since(lease_map.get("liveness_checked_at"))
     progress_grace_seconds = _guard_config_int(ledger, "progress_grace_seconds", _WAIT_PROGRESS_GRACE_SECONDS)
-    progress_recent = bool(
-        progress_count
+    positive_liveness_recent = bool(
+        last_liveness_status
         and last_liveness_status not in _WAIT_LIVENESS_FAILURE_STATUSES
         and last_liveness_status not in _WAIT_NO_OUTPUT_STATUSES
-        and (last_progress_elapsed is None or last_progress_elapsed <= progress_grace_seconds)
+        and (
+            last_liveness_elapsed is not None
+            and last_liveness_elapsed <= progress_grace_seconds
+            or last_liveness_elapsed is None
+            and last_progress_elapsed is not None
+            and last_progress_elapsed <= progress_grace_seconds
+        )
+    )
+    progress_recent = bool(
+        (progress_count or lease_map.get("liveness_checked_at"))
+        and positive_liveness_recent
     )
     base = {
         "state": "waiting",
@@ -3779,6 +4152,9 @@ def _guard_wait_recovery(
         "progress_count": progress_count,
         "last_progress_status": last_progress_status,
         "last_progress_elapsed_seconds": last_progress_elapsed,
+        "last_liveness_status": last_liveness_status,
+        "last_liveness_checked_at": str(lease_map.get("liveness_checked_at") or ""),
+        "last_liveness_elapsed_seconds": last_liveness_elapsed,
         "progress_grace_seconds": progress_grace_seconds,
         "trigger": trigger,
         "repeated_count": repeated_count,
@@ -3792,6 +4168,17 @@ def _guard_wait_recovery(
             "reason": "assigned lease is inactive",
             "replacement_eligible": True,
         }
+    if action.action_type == "wait_for_result":
+        orphan_evidence = _orphan_evidence_for_packet(ledger, action.subject_id)
+        if orphan_evidence:
+            return {
+                **base,
+                "state": "orphan_evidence",
+                "decision_override": "recover_orphan_evidence",
+                "reason": "completed runner evidence exists without a formal accepted result",
+                "replacement_eligible": False,
+                "orphan_evidence": orphan_evidence,
+            }
     if last_liveness_status in _WAIT_LIVENESS_FAILURE_STATUSES or last_liveness_status in _WAIT_NO_OUTPUT_STATUSES:
         return {
             **base,
@@ -3872,6 +4259,11 @@ def _guard_wait_subject(ledger: Mapping[str, Any], action: RuntimeAction) -> dic
         "progress_count": int(lease_map.get("progress_count", 0) or 0),
         "last_progress_status": str(lease_map.get("last_progress_status", "")),
         "last_progress_at": str(lease_map.get("last_progress_at", "")),
+        "last_liveness_status": str(
+            lease_map.get("liveness_status") or lease_map.get("last_liveness_status") or lease_map.get("last_progress_status", "")
+        ),
+        "liveness_checked_at": str(lease_map.get("liveness_checked_at", "")),
+        "liveness_source": str(lease_map.get("liveness_source", "")),
         "stale_result_blockers": _stale_result_blockers_for_packet(ledger, action.subject_id),
     }
 
@@ -3894,6 +4286,11 @@ def _guard_decision(
         if isinstance(closure, Mapping) and closure.get("decision") == "complete":
             return "terminal_return", "final closure is complete and Controller stop is allowed"
         return "control_plane_stuck", "terminal action appeared without complete closure evidence"
+    if action.action_type == "terminal_lifecycle":
+        status = terminal_lifecycle_status(ledger)
+        if status:
+            return "terminal_return", f"run lifecycle is {status}; Controller stop is allowed"
+        return "control_plane_stuck", "terminal lifecycle action appeared without terminal lifecycle evidence"
     if action.action_type == "wait_for_ack":
         return "wait_for_ack", str(wait_recovery_map.get("reason") or "assigned lease has not acknowledged")
     if action.action_type == "wait_for_result":
@@ -3970,15 +4367,20 @@ def final_return_preflight(
     guard_map = guard if isinstance(guard, Mapping) else preview_lifecycle_guard(ledger, trigger="final_preflight_preview")
     next_action = guard_map.get("next_action") if isinstance(guard_map.get("next_action"), Mapping) else {}
     closure = ledger.get("closure") if isinstance(ledger.get("closure"), Mapping) else {}
+    terminal_status = terminal_lifecycle_status(ledger)
     blockers: list[str] = []
     if guard_map.get("controller_stop_allowed") is not True:
         blockers.append("lifecycle_guard_disallows_stop")
     if guard_map.get("decision") != "terminal_return":
         blockers.append(f"guard_decision:{guard_map.get('decision', 'unknown')}")
-    if next_action.get("action_type") != "terminal_complete":
-        blockers.append(f"next_action:{next_action.get('action_type', 'unknown')}")
-    if closure.get("decision") != "complete":
-        blockers.append(f"closure:{closure.get('decision', 'not_attempted')}")
+    if terminal_status:
+        if next_action.get("action_type") != "terminal_lifecycle":
+            blockers.append(f"next_action:{next_action.get('action_type', 'unknown')}")
+    else:
+        if next_action.get("action_type") != "terminal_complete":
+            blockers.append(f"next_action:{next_action.get('action_type', 'unknown')}")
+        if closure.get("decision") != "complete":
+            blockers.append(f"closure:{closure.get('decision', 'not_attempted')}")
     return {
         "schema_version": "black_box_flowpilot.final_return_preflight.v1",
         "checked_at": now_iso(),
@@ -3988,6 +4390,7 @@ def final_return_preflight(
         "guard_decision": str(guard_map.get("decision", "")),
         "next_action_type": str(next_action.get("action_type", "")),
         "closure_decision": str(closure.get("decision", "not_attempted")),
+        "terminal_lifecycle_status": terminal_status,
         "sealed_bodies_visible": False,
     }
 
@@ -4134,6 +4537,7 @@ def refresh_lifecycle_guard(
         del history[:-_GUARD_HISTORY_LIMIT]
         ledger["lifecycle_guard_history"] = history
     ledger["lifecycle_guard"] = snapshot
+    _persist_orphan_evidence_from_guard(ledger, snapshot)
     refresh_foreground_duty(
         ledger,
         guard=snapshot,
@@ -4286,6 +4690,9 @@ def _backward_chain(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
 
 
 def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
+    terminal_status = terminal_lifecycle_status(ledger)
+    if terminal_status:
+        return RuntimeAction("terminal_lifecycle", f"run lifecycle is {terminal_status}", terminal_status)
     lifecycle = ledger.get("lifecycle") or {}
     if lifecycle.get("state") == "paused":
         return RuntimeAction("wait_for_resume", "run is paused by user")
@@ -4339,7 +4746,7 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                 return RuntimeAction("wait_for_result", "ACK is liveness only", packet["packet_id"])
 
     for packet in active_packets:
-        if packet["status"] in {"result_blocked", "review_blocked", "validation_blocked", "flowguard_blocked", "closure_blocked"}:
+        if packet["status"] in {"result_blocked", "review_blocked", "system_validation_blocked", "flowguard_blocked"}:
             return RuntimeAction("repair_packet", "packet result or review is blocked", packet["packet_id"])
         if packet["status"] == "result_submitted" and packet["envelope"].get("packet_kind", "task") == "task":
             required_target = packet["envelope"]["required_flowguard_target"]
@@ -4468,6 +4875,8 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "status": lease["status"],
                 "ack_received": lease["ack_received"],
                 "packet_id": lease.get("packet_id", ""),
+                "liveness_status": lease.get("liveness_status", ""),
+                "liveness_checked_at": lease.get("liveness_checked_at", ""),
             }
             for lease in ledger.get("leases", {}).values()
         ],
@@ -4489,6 +4898,15 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "source_generation": evidence["source_generation"],
             }
             for evidence in ledger.get("validation_evidence", {}).values()
+        ],
+        "system_closures": [
+            {
+                "closure_id": closure.get("closure_id", ""),
+                "status": closure.get("status", ""),
+                "subject_packet_id": closure.get("subject_packet_id", ""),
+                "validation_evidence_id": closure.get("validation_evidence_id", ""),
+            }
+            for closure in ledger.get("system_closures", {}).values()
         ],
         "packet_outcomes": [
             {
@@ -4528,10 +4946,13 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "flowguard_order_id": gate.get("flowguard_order_id", ""),
                 "review_id": gate.get("review_id", ""),
                 "validation_evidence_id": gate.get("validation_evidence_id", ""),
+                "system_closure_id": gate.get("system_closure_id", ""),
             }
             for gate in ledger.get("pm_decision_gates", {}).values()
         ],
         "host_evidence": list(ledger.get("host_evidence", {}).values()),
+        "host_liveness_reports": list(ledger.get("host_liveness_reports", {}).values()),
+        "orphan_evidence": list(ledger.get("orphan_evidence", {}).values()),
         "route_nodes": [
             {
                 "node_id": node.get("node_id", ""),
@@ -4567,6 +4988,9 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _route_stage(ledger: Mapping[str, Any]) -> str:
+    terminal_status = terminal_lifecycle_status(ledger)
+    if terminal_status:
+        return terminal_status
     if not ledger.get("startup_intake"):
         return "startup_intake"
     if not ledger.get("contract_frozen"):

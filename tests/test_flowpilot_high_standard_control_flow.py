@@ -58,7 +58,7 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str = "SEALED_RESU
 
 def _complete_task_chain(ledger: dict, packet_id: str, body: str = "SEALED_RESULT_BODY") -> None:
     _complete_open_packet(ledger, packet_id, body)
-    for kind in ("flowguard_check", "review", "closure"):
+    for kind in ("flowguard_check", "review"):
         _complete_open_packet(ledger, _open_packets(ledger, kind=kind)[0], f"SEALED_RESULT_BODY: {kind}")
 
 
@@ -123,7 +123,7 @@ def _complete_active_node_packet_loop(ledger: dict) -> str:
 
 
 class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
-    def test_reviewer_pass_records_system_validation_without_validator_packet(self) -> None:
+    def test_reviewer_pass_auto_closes_without_closure_officer_packet(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
         _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
@@ -131,6 +131,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
 
         self.assertFalse(_open_packets(ledger, kind="validation"))
+        self.assertFalse(_open_packets(ledger, kind="closure"))
         evidence = list(ledger["validation_evidence"].values())
         self.assertEqual(len(evidence), 1)
         self.assertEqual(evidence[0]["status"], "passed")
@@ -138,7 +139,30 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(evidence[0]["evidence_kind"], "system_review_validation")
         self.assertEqual(evidence[0]["subject_packet_id"], packet_id)
         self.assertTrue(evidence[0]["flowguard_order_ids"])
-        self.assertTrue(_open_packets(ledger, kind="closure"))
+        closures = list(ledger["system_closures"].values())
+        self.assertEqual(len(closures), 1)
+        self.assertEqual(closures[0]["subject_packet_id"], packet_id)
+        self.assertEqual(closures[0]["validation_evidence_id"], evidence[0]["evidence_id"])
+        self.assertEqual((ledger.get("high_standard_contract") or {}).get("status"), "accepted")
+
+    def test_system_validation_failure_routes_to_pm_repair(self) -> None:
+        ledger = _ledger()
+        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
+        _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
+        runtime._ensure_review_packet_for_task_result(ledger, packet_id)
+
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
+
+        self.assertFalse(_open_packets(ledger, kind="closure"))
+        self.assertFalse(ledger["system_closures"])
+        failed = [row for row in ledger["validation_evidence"].values() if row["status"] == "failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertIn("missing_matching_flowguard_report", failed[0]["blockers"])
+        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
+        self.assertEqual(len(active), 1)
+        self.assertEqual(active[0]["gate_kind"], "system_validation")
+        self.assertEqual(active[0]["required_recheck_role"], "system")
+        self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
 
     def test_preplanning_gates_run_before_pm_planning(self) -> None:
         ledger = _ledger()
@@ -235,77 +259,33 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         self.assertEqual(ledger["active_blockers"][active[0]["blocker_id"]]["status"], "cleared")
         self.assertFalse(_open_packets(ledger, kind="validation"))
-        self.assertTrue(_open_packets(ledger, kind="closure"))
+        self.assertFalse(_open_packets(ledger, kind="closure"))
+        self.assertTrue(ledger["system_closures"])
 
-    def test_legacy_validator_fail_records_failed_evidence_and_routes_pm_repair(self) -> None:
+    def test_validator_and_closure_officer_are_not_runtime_roles(self) -> None:
         ledger = _ledger()
-        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
-        _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
+        for responsibility in ("validator", "closure_officer"):
+            with self.subTest(responsibility=responsibility):
+                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "unknown responsibility"):
+                    runtime.issue_task_packet(
+                        ledger,
+                        responsibility,
+                        "Forbidden old role",
+                        "SEALED_OLD_ROLE_BODY",
+                    )
 
-        runtime._ensure_validation_packet_for_task(ledger, packet_id)
-        validation_packet = _open_packets(ledger, kind="validation")[0]
-        _complete_open_packet(
-            ledger,
-            validation_packet,
-            json.dumps(
-                {
-                    "schema_version": "black_box_flowpilot.packet_outcome.v1",
-                    "status": "failed",
-                    "blocker_class": "validation_failure",
-                    "recommended_resolution": "Rerun validation after repaired evidence.",
-                }
-            ),
-        )
-
-        self.assertEqual(ledger["packets"][packet_id]["status"], "validation_blocked")
-        self.assertFalse(_open_packets(ledger, kind="closure"))
-        failed = [row for row in ledger["validation_evidence"].values() if row["status"] == "failed"]
-        self.assertEqual(len(failed), 1)
-        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
-        self.assertEqual(len(active), 1)
-        self.assertEqual(active[0]["required_recheck_role"], "validator")
-        self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
-
-    def test_pm_rerun_validation_requires_fresh_validator_pass(self) -> None:
+    def test_validation_and_closure_packet_kinds_are_rejected(self) -> None:
         ledger = _ledger()
-        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
-        _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
-
-        runtime._ensure_validation_packet_for_task(ledger, packet_id)
-        _complete_open_packet(
-            ledger,
-            _open_packets(ledger, kind="validation")[0],
-            json.dumps({"status": "failed", "blocker_class": "validation_failure"}),
-        )
-
-        blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
-        self.assertEqual(ledger["packets"][packet_id]["status"], "validation_blocked")
-        self.assertFalse(_open_packets(ledger, kind="closure"))
-
-        _complete_open_packet(
-            ledger,
-            _open_packets(ledger, kind="pm_repair_decision")[0],
-            json.dumps({"decision": "rerun_validation", "reason": "validator must recheck repaired evidence"}),
-        )
-
-        validation_rechecks = [
-            recheck_packet_id
-            for recheck_packet_id, packet in ledger["packets"].items()
-            if packet.get("repair_blocker_id") == blocker["blocker_id"]
-            and packet["status"] == "open"
-            and packet["envelope"].get("packet_kind") == "validation"
-        ]
-        self.assertEqual(len(validation_rechecks), 1)
-        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_recheck")
-        self.assertFalse(_open_packets(ledger, kind="closure"))
-
-        _complete_open_packet(ledger, validation_rechecks[0], json.dumps({"passed": True}))
-
-        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "cleared")
-        self.assertEqual([row["status"] for row in ledger["validation_evidence"].values()], ["failed", "passed"])
-        self.assertTrue(_open_packets(ledger, kind="closure"))
+        for packet_kind in ("validation", "closure"):
+            with self.subTest(packet_kind=packet_kind):
+                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "unknown packet kind"):
+                    runtime.issue_task_packet(
+                        ledger,
+                        "worker",
+                        "Forbidden old packet kind",
+                        "SEALED_OLD_PACKET_KIND_BODY",
+                        packet_kind=packet_kind,
+                    )
 
     def test_pm_sender_reissue_repair_remains_direct(self) -> None:
         ledger = _ledger()
@@ -361,15 +341,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
-        self.assertEqual(ledger["active_route_version"], old_route_version)
-        self.assertEqual(gate["status"], "awaiting_closure")
-
-        _complete_open_packet(ledger, _open_packets(ledger, kind="closure")[0], json.dumps({"passed": True}))
-
         self.assertEqual(gate["status"], "applied")
         self.assertEqual(ledger["active_route_version"], old_route_version + 1)
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
         self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_recheck")
+        self.assertFalse(_open_packets(ledger, kind="closure"))
 
     def test_pm_mutate_route_disposition_is_gated_before_application(self) -> None:
         ledger = _ledger()
@@ -393,12 +369,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
-        self.assertEqual(ledger["active_route_version"], old_route_version)
-        _complete_open_packet(ledger, _open_packets(ledger, kind="closure")[0], json.dumps({"passed": True}))
 
         self.assertEqual(gate["status"], "applied")
         self.assertEqual(ledger["active_route_version"], old_route_version + 1)
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
+        self.assertFalse(_open_packets(ledger, kind="closure"))
 
     def test_worker_blocked_result_routes_pm_repair_without_flowguard_pass(self) -> None:
         ledger = _ledger()

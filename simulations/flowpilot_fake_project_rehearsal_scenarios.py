@@ -529,6 +529,156 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
     }
 
 
+def scenario_stop_terminal_fence(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "stop_terminal_fence")
+    current_payload = start_rehearsal(root, command_log, "run-fake-stop-terminal")
+    pm_packet = str(current_payload["next_action"]["subject_id"])
+    lease_payload = run_cli(
+        root,
+        command_log,
+        "lease-agent",
+        "--packet-id",
+        pm_packet,
+        "--responsibility",
+        "pm",
+        "--agent-id",
+        "fake-pm-stop-terminal",
+        "--host-kind",
+        "fake",
+    )
+    stopped = run_cli(root, command_log, "stop", "--reason", "fake user stop")
+    ensure(stopped.get("next_action", {}).get("action_type") == "terminal_lifecycle", f"stop did not terminalize: {stopped}")
+    ensure(stopped.get("final_return_preflight", {}).get("allowed") is True, f"stop preflight did not allow exit: {stopped}")
+    rejected = run_cli(
+        root,
+        command_log,
+        "ack",
+        "--lease-id",
+        str(lease_payload["lease_id"]),
+        "--packet-id",
+        pm_packet,
+        expect_ok=False,
+    )
+    ensure(rejected.get("ok") is False, f"stopped run accepted new work: {rejected}")
+    ensure("run is terminal" in str(rejected.get("error", "")), f"wrong stopped-run error: {rejected}")
+    projection = status_projection(root, command_log)
+    assert_public_projection_is_sealed(projection)
+    ensure(projection.get("next_action", {}).get("action_type") == "terminal_lifecycle", "stop status lost terminal action")
+    return {
+        "name": "stop_terminal_fence",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "terminal_lifecycle": stopped.get("final_return_preflight", {}).get("terminal_lifecycle_status"),
+            "post_stop_work_rejected": True,
+        },
+        "commands": command_log,
+    }
+
+
+def scenario_host_liveness_bridge_recovery(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "host_liveness_bridge_recovery")
+    current_payload = start_rehearsal(root, command_log, "run-fake-host-liveness")
+    pm_packet = str(current_payload["next_action"]["subject_id"])
+    lease_payload = run_cli(
+        root,
+        command_log,
+        "lease-agent",
+        "--packet-id",
+        pm_packet,
+        "--responsibility",
+        "pm",
+        "--agent-id",
+        "fake-pm-host-liveness",
+        "--host-kind",
+        "fake",
+    )
+    lease_id = str(lease_payload["lease_id"])
+    run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", pm_packet)
+    run_cli(root, command_log, "progress", "--lease-id", lease_id, "--packet-id", pm_packet, "--status", "still_working")
+    liveness = run_cli(
+        root,
+        command_log,
+        "host-liveness",
+        "--lease-id",
+        lease_id,
+        "--packet-id",
+        pm_packet,
+        "--status",
+        "not_found",
+        "--source",
+        "fake_host_probe",
+    )
+    guard = liveness.get("lifecycle_guard", {})
+    ensure(guard.get("decision") == "reissue_or_replace_lease", f"host not_found did not force recovery: {guard}")
+    ensure(
+        guard.get("wait_recovery", {}).get("last_liveness_status") == "not_found",
+        f"host liveness status not visible in guard: {guard}",
+    )
+    ensure(liveness.get("foreground_duty", {}).get("action") == "recover_or_reissue", f"host liveness lost duty: {liveness}")
+    return {
+        "name": "host_liveness_bridge_recovery",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "decision": guard.get("decision"),
+            "liveness_status": guard.get("wait_recovery", {}).get("last_liveness_status"),
+        },
+        "commands": command_log,
+    }
+
+
+def scenario_orphan_runner_summary_recovery(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "orphan_runner_summary_recovery")
+    current_payload = start_rehearsal(root, command_log, "run-fake-orphan-summary")
+    pm_packet = str(current_payload["next_action"]["subject_id"])
+    lease_payload = run_cli(
+        root,
+        command_log,
+        "lease-agent",
+        "--packet-id",
+        pm_packet,
+        "--responsibility",
+        "pm",
+        "--agent-id",
+        "fake-pm-orphan-summary",
+        "--host-kind",
+        "fake",
+    )
+    run_cli(root, command_log, "ack", "--lease-id", str(lease_payload["lease_id"]), "--packet-id", pm_packet)
+    current = json.loads((root / ".flowpilot" / "current.json").read_text(encoding="utf-8"))
+    runner_summary = Path(str(current["run_root"])) / "evidence" / "flowguard" / pm_packet / "runner_summary.json"
+    runner_summary.parent.mkdir(parents=True, exist_ok=True)
+    runner_summary.write_text(
+        json.dumps({"status": "completed", "runners": [{"name": "fake-runner", "exit_code": 0}]}, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
+    )
+    patrol = run_cli(root, command_log, "patrol")
+    guard = patrol.get("lifecycle_guard", {})
+    ensure(guard.get("decision") == "recover_orphan_evidence", f"orphan evidence did not route recovery: {guard}")
+    ensure(patrol.get("foreground_duty", {}).get("action") == "recover_or_reissue", f"orphan evidence lost duty: {patrol}")
+    projection = status_projection(root, command_log)
+    packet = packet_row(projection, pm_packet)
+    ensure(packet.get("status") == "acknowledged", f"orphan evidence auto-mutated packet: {packet}")
+    ensure(not packet.get("accepted_result_id"), f"orphan evidence auto-accepted packet: {packet}")
+    ensure(projection.get("orphan_evidence"), f"orphan evidence not projected: {projection}")
+    return {
+        "name": "orphan_runner_summary_recovery",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "decision": guard.get("decision"),
+            "packet_status": packet.get("status"),
+            "orphan_count": len(projection.get("orphan_evidence", [])),
+        },
+        "commands": command_log,
+    }
+
+
 def scenario_retired_side_command(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "retired_side_command")
@@ -561,6 +711,9 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("lifecycle_guard_resume_and_patrol", scenario_lifecycle_guard_resume_and_patrol),
     ("slow_reviewer_progress_preserved", scenario_slow_reviewer_progress_preserved),
     ("accepted_packet_reassignment_rejected", scenario_accepted_packet_reassignment_rejected),
+    ("stop_terminal_fence", scenario_stop_terminal_fence),
+    ("host_liveness_bridge_recovery", scenario_host_liveness_bridge_recovery),
+    ("orphan_runner_summary_recovery", scenario_orphan_runner_summary_recovery),
     ("retired_side_command", scenario_retired_side_command),
 )
 
