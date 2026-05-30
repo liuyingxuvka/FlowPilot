@@ -169,5 +169,11 @@ def run_fake_e2e(
         "final_route_wide_gate_ledger": ledger.get("final_route_wide_gate_ledger"),
         "closure": closure,
         "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        "foreground_duty": ledger.get("foreground_duty", {}),
+        "final_return_preflight": runtime.final_return_preflight(
+            ledger,
+            guard=ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), dict) else None,
+        ),
         "status": cockpit.render_status(ledger),
     }

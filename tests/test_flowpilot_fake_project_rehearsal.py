@@ -26,6 +26,8 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
                 "missing_ack_block",
                 "ack_only_wait",
                 "lifecycle_guard_resume_and_patrol",
+                "slow_reviewer_progress_preserved",
+                "accepted_packet_reassignment_rejected",
                 "retired_side_command",
             },
         )
@@ -38,6 +40,11 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
         self.assertIn("lifecycle_resume_from_chat", result["hazard_detection"]["hazards"])
         self.assertIn("lifecycle_patrol_allows_nonterminal_stop", result["hazard_detection"]["hazards"])
         self.assertIn("lifecycle_repeated_wait_not_recovered", result["hazard_detection"]["hazards"])
+        self.assertIn("slow_live_reviewer_replaced", result["hazard_detection"]["hazards"])
+        self.assertIn("accepted_packet_reassignment_allowed", result["hazard_detection"]["hazards"])
+        self.assertIn("foreground_final_preflight_missing", result["hazard_detection"]["hazards"])
+        self.assertIn("passive_wait_completed", result["hazard_detection"]["hazards"])
+        self.assertIn("scoped_closure_final_return_allowed", result["hazard_detection"]["hazards"])
         recursive_hazards = result["recursive_route_hazard_detection"]["hazards"]
         self.assertIn("missing_node_terminal_complete", recursive_hazards)
         self.assertIn("wrong_flowguard_target_accepted", recursive_hazards)

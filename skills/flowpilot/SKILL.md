@@ -32,88 +32,77 @@ If only the skill directory is available, read `DEPENDENCIES.md` in this skill f
 
 ## Required Launcher Behavior
 
-Before the daemon is started or attached, the assistant is only the FlowPilot bootloader. A user request to "start FlowPilot" or "use FlowPilot" is always a fresh formal invocation: create a new run even if `.flowpilot/current.json` points at an old or still-running run. Existing runs are independent background/parallel runs; do not attach, stop, merge, supersede, import, or deliver cards to them unless the user explicitly asks to resume, continue, stop, inspect, or target that existing run. The bootloader may manually run the router only for minimal pre-daemon startup actions: create the run shell, write the current pointer, update the run index, and start or attach the Router daemon for the newly created run. After `start_router_daemon` succeeds, do not keep progress alive by manually looping back to Router commands; attach to daemon-owned status and the Controller action ledger, process exposed Controller rows, write receipts, and otherwise stay in standby.
+The assistant is only the FlowPilot bootloader until a new `flowpilot_new.py` run has been created. A user request to "start FlowPilot" or "use FlowPilot" is always a fresh formal invocation, even if `.flowpilot/current.json` points at an old or still-running run.
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
-Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. `start` is the only current entrypoint for a new formal FlowPilot invocation. It reuses the native startup intake UI and then records the result into the new current-run ledger. The legacy `flowpilot_router.py start` command is diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. It reuses the native startup intake UI and records the result into the new current-run ledger. Legacy `flowpilot_router.py` commands are diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
 
 Manual diagnostic/repair commands:
 
 ```powershell
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json status
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resume --reason manual_resume
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --agent-id <agent_id> --host-kind live
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json progress --lease-id <lease_id> --packet-id <packet_id> --status still_working
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json submit-result --lease-id <lease_id> --packet-id <packet_id> --body <sealed_result_summary>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json repair-accepted-packet --packet-id <packet_id>
 ```
 
-Fixed value menus for manual commands:
+Copy exact fixed values from the returned `next_action`: `--host-kind` is `live`, `fake`, or `dry_run`; `--responsibility` is the exact packet role or node role returned by the runtime. If no listed value fits, stop and report the value-menu mismatch.
 
-- `--host-kind`: use `live` for a real Codex, multi-agent, or background host; use `fake` only for deterministic fake AI or rehearsal wrappers; use `dry_run` only for diagnostic no-agent placeholders. Do not use or invent unlisted values such as `codex_subagent`.
-- `--responsibility`: copy the exact value from the runtime `next_action.responsibility`. Current formal packet responsibilities include packet officers such as `pm`, `flowguard_operator`, `reviewer`, `validator`, and `closure_officer`, plus route-node worker responsibilities such as `worker`, `ui_qa`, or `research_worker` when the PM plan materializes executable nodes.
-- If no listed value fits a fixed-value field, stop and report the value-menu mismatch instead of guessing.
+Formal startup creates the run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, first high-standard pre-planning packet, lifecycle guard, and foreground duty before returning a public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI.
 
-Legacy `flowpilot_router.py next/apply/run-until-wait` commands are existing-old-run diagnostic, test, explicit repair, or explicit resume tools. They are not the normal command for a fresh user request to start FlowPilot, because `.flowpilot/current.json` is only UI focus/default-target metadata and parallel running runs are valid.
+## Foreground Duty
 
-Use `run-until-wait` only before daemon takeover, for diagnostic, test, or explicit repair. In daemon mode, it is not the normal progress command after a row, wait, heartbeat, role response, or unclear next step; normal progress comes from daemon-owned status plus the Controller action ledger.
+The new runtime has five foreground duty actions:
 
-Formal startup creates the new current-run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, first high-standard pre-planning packet, and a metadata-only lifecycle guard before returning the new runtime's public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI. Nonterminal status, patrol, resume, lease, ACK, and result commands keep `controller_stop_allowed: false`; only terminal closure with lifecycle guard decision `terminal_return` may end the Controller role.
+- `process_next_action`: perform the returned runtime action.
+- `wait_patrol`: waiting is an active duty; run patrol, wait the requested interval, then refresh guard and duty.
+- `recover_or_reissue`: handle stale, inactive, overdue, or replacement conditions before waiting again.
+- `control_plane_blocker`: report the blocker instead of silently waiting or claiming completion.
+- `terminal_return`: final return is allowed only after terminal closure and final-return preflight pass.
 
-During formal runtime, Router owns ordinary waiting through `runtime/router_daemon_status.json` and `runtime/controller_action_ledger.json`; Controller clears that ledger with `controller-receipt` and stays attached. `next`, `apply`, and `run-until-wait` remain diagnostic, test, and explicit repair tools, not the normal metronome that keeps a run alive.
+Nonterminal status, patrol, resume, lease, ACK, result, and scoped-closure commands keep `controller_stop_allowed: false` and `final_return_preflight.allowed: false`. Knowing the next action is not completion. A packet, phase, or closure-officer packet may close a scope; it does not close the whole project unless the runtime returns `terminal_return`.
 
-Router-ready state preempts foreground waits. After Controller relays or observes router-authored work, scan daemon status and the Controller action ledger before waiting on any role or subagent. Use `controller-standby` semantics to consume Router-ready Controller rows before any foreground role wait. During a nonterminal active run, the foreground Controller does not end: `foreground_required_mode=process_controller_action` means do the queued Controller work, and `foreground_required_mode=watch_router_daemon` means keep the `continuous_controller_standby` row in progress, sync the visible Codex plan from the ledger, and run `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60`. This patrol exists to prevent accidental foreground exit while FlowPilot is still running; it is a quiet standby loop, not a user-message loop. Wait for the command output; if it returns `continue_patrol`, immediately run the same command again and wait for the next output without sending a user-visible update. Starting or restarting the command is not completion. One poll, a live target role, or diagnostic `timeout_still_waiting` does not complete standby. `foreground_turn_return_allowed` and `user_status_update_allowed` mean "you may report status or handle a nonterminal duty"; they are never Controller stop permission, and routine receipts, ledger cleanup, relay bookkeeping, process-only asides, and quiet patrol results remain silent unless the user asks for status or a real user-facing state change occurs. If Router exposes `send_wait_target_reminder`, send only the Router-authored `reminder_text` to the named waiting role, do not edit it or read sealed bodies, and write the Controller receipt with the matching reminder hash and liveness fields. Only terminal status with `controller_stop_allowed: true` may end the Controller role.
+If `foreground_duty.action=wait_patrol`, do not final-answer. Run the duty's `refresh_command` or `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60`, wait for output, then follow the next `foreground_duty`. Starting one timer, seeing no new work, or observing a live role is not completion evidence.
 
-A Controller receipt is local Controller evidence only; Router must reconcile it into Router-owned workflow facts before progress is counted. For mail delivery, progress is counted only after Router folds the receipt into the mail ledger and the packet runtime ledger shows the packet released to the addressed role with a controller relay signature.
+Before any final answer, done claim, or Controller shutdown for a new runtime run, run:
 
-When `flowpilot_new.py start` opens the native startup intake UI, formal startup must use the interactive native UI result produced by that window. Do not satisfy formal startup with headless auto-confirmation, scripted result synthesis, chat-text substitution, direct JSON creation, or any other non-interactive intake. If the UI cannot be opened or does not return an interactive result, stop and report the startup UI failure instead of continuing. Do not paste the user's work request into chat, do not include body text in the router payload, and do not continue if the UI result status is `cancelled`.
+```powershell
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
+```
 
-The UI result replaces the old chat three-question startup boundary. The router maps the UI toggles to canonical startup answer enum fields and seals the work request body behind a path/hash record. The startup UI record is the authority for activation; reviewer live review checks `startup_intake/startup_intake_record.json`, its receipt/envelope/hash evidence, and independently observable startup facts requested by the router, not private chat authenticity or chat history.
+Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end the Controller role. Status projection is display-only and never authorizes Controller stop. Legacy `flowpilot_router.py` daemon files, controller ledgers, patrol timers, monitor wording, and stale summaries are old-run diagnostics, not fresh-run authority.
 
-Startup progress uses the same two-table rule as later runtime work: Controller checks off simple ledger rows, while Router owns order, barriers, scope reconciliation, and ACK joins. Router may dispatch independent startup PM prep cards before Reviewer live review, but Reviewer startup fact review starts only after current startup-scope rows, receipts, required postconditions, and pre-review card ACKs are clear; PM startup activation then uses the ordinary same-role `pm.startup_activation` ACK rule, not a second all-startup join.
+## Startup And Packet Work
 
-The startup banner and FlowPilot Route Sign are user-facing display text. When a direct pending action returns `display_text`, paste that exact text into chat before applying that direct pending action. When the same display work appears as a Controller ledger row, paste the text into chat before writing the row's `controller-receipt`, and put the display confirmation in the receipt payload. Do not add display-gate, evidence, source-health, confirmation, or controller/audit metadata to the user-visible body; those details belong in packets, ledgers, and action payloads. Generated files, paths, flags, and state records do not count.
+When `flowpilot_new.py start` opens the native startup intake UI, formal startup must use the interactive native UI result. Do not satisfy formal startup with headless auto-confirmation, scripted result synthesis, chat-text substitution, direct JSON creation, or cancelled UI output. The UI record is the authority for activation; the router seals the body behind a path/hash record.
 
-When no Cockpit/UI surface is open, show the router's public route sign together with the current status summary. Use only `current_status_summary.json` and public route-display text for that summary; do not show evidence tables, source fields, hashes, or sealed packet/result body details. Treat the status summary as display-only: it can explain what the user sees, but it never authorizes Controller stop and stale `next_step` projection never overrides Router daemon status plus `runtime/controller_action_ledger.json`. When the Cockpit/UI surface is open, let the UI render the same status summary and keep chat updates short.
+After startup, the new runtime materializes the first PM-bound high-standard contract packet. PM route planning is not legal until the high-standard contract, current discovery, and selected skill standard gates are accepted.
 
-After the native startup intake result is recorded, the new runtime materializes the sealed UI record into the run and creates the first PM-bound high-standard contract packet. PM route planning is not legal until the high-standard contract, current discovery, and selected skill standard gates are accepted. Do not provide chat-body startup text; startup authority comes from the sealed native UI record.
+When the new runtime returns `lease_agent`, spawn only the requested responsibility, record the real host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort.
 
-When the new runtime returns a `lease_agent` next action, spawn only the requested responsibility, then record the real host `agent_id` with `flowpilot_new.py lease-agent`. Do not require a fixed six-agent startup. Every spawned background role agent must be explicitly requested with the strongest available host model and highest available reasoning effort. Do not treat empty role slots, prior-route agent IDs, or unrelated later subagents as startup success.
+All new formal runtime roles are packet roles. PM, FlowGuard operator, reviewer, validator, closure officer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. Do not complete FlowGuard, review, validation, or closure through side-command shortcuts.
 
-All new formal runtime roles are packet roles. PM, FlowGuard operator, reviewer, validator, and closure officer all follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. Do not complete FlowGuard, review, validation, or final closure through side-command shortcuts; wait for the runtime to issue the matching role packet, then use `lease-agent`, `ack`, and `submit-result` for that packet.
-
-After the PM planning packet chain closes, the new runtime does not treat the project as done. It materializes the PM route plan into executable route nodes, requires an accepted node acceptance plan before each node task packet, issues each node as its own packet chain, requires FlowGuard/review/validation/closure and a PM disposition for each node, defaults ordinary quality gaps to same-node repair, requires parent backward replay for parent/module nodes with children, then builds a final route-wide gate ledger plus a requirement-evidence matrix before terminal completion.
+After PM planning closes, the runtime materializes executable route nodes, requires accepted node acceptance plans, issues each node as its own packet chain, runs FlowGuard/review/validation/closure and PM disposition per node, uses same-node repair for ordinary quality gaps, runs parent backward replay where needed, then builds a final route-wide gate ledger plus requirement-evidence matrix before terminal completion.
 
 When the issued packet is a FlowGuard operator packet, write formal-run evidence under the packet's `evidence_output_policy.run_local_evidence_root`. For Meta or Capability runners, use the packet's `recommended_runner_commands` or the same `--json-out <run-local-path>` pattern. Do not write formal-run evidence to tracked `simulations/*_results.json` baselines unless the packet explicitly asks for a repository baseline update.
 
-When a heartbeat or manual mid-run wakeup occurs, always record `heartbeat_or_manual_resume_requested`, then attach to daemon status, daemon lock evidence, and the Controller action ledger for the current run. If the daemon is live, process only exposed Controller rows or stay in standby; if it is missing or stale, use the explicit daemon repair/restart path. Treat any supplied `work_chain_status` as diagnostic only; never use `alive`, `active`, or a `wait_agent` timeout to skip `load_resume_state`.
-
-When the router returns `rehydrate_role_agents` with `requires_host_spawn: true`, perform the six-role liveness preflight named by the action, then restore or spawn all six role agents before completing it. Direct pending actions still use apply. Controller ledger row completions use `controller-receipt` with the rehydration evidence in the receipt payload. Every restored or replacement background role agent must be explicitly requested with the strongest available host model and the highest available reasoning effort; do not rely on inheriting the foreground/Controller model during heartbeat, manual resume, liveness recovery, or missing-agent replacement. Give each role its listed core prompt and current-run memory/context; PM must receive the PM resume context. Echo `model_policy: strongest_available`, `reasoning_effort_policy: highest_available`, memory/core hashes, resume tick, host liveness status, liveness decision, bounded wait result, and the timeout-not-active receipt in `rehydrated_role_agents`. If an agent is missing, cancelled, unknown, or `timeout_unknown`, spawn a replacement from current-run memory instead of continuing to wait on that old agent.
-
-When the router returns `create_heartbeat_automation`, create the requested Codex heartbeat with the router-provided name, prompt, schedule, and thread destination before completing it. Direct pending actions still use apply. Controller ledger rows use `controller-receipt` with the real `host_automation_id`, `host_automation_verified: true`, `route_heartbeat_interval_minutes: 1`, and a `host_automation_proof` receipt bound to the current `run_id`; never mark scheduled continuation active from a file, name guess, or self-attested status.
+On heartbeat or manual mid-run wakeup, use `flowpilot_new.py resume --reason <reason>` and then follow the returned `foreground_duty`. Treat supplied `work_chain_status` as diagnostic only; never use `alive`, `active`, or a wait timeout to skip current-run ledger, lifecycle guard, and foreground duty rehydration.
 
 When the router returns a `payload_contract`, satisfy it exactly or return to the named role/user for missing fields. Do not guess missing payload fields or repair a rejected payload in Controller.
 
 ## Controller Boundary
 
-After the router loads Controller core, the main assistant is Controller only. Controller may check the prompt manifest, check the packet ledger, deliver system cards, relay Router-authorized packet/result/role-output envelope metadata, update status, scan the Router daemon status and Controller action ledger, wait through `controller-patrol-timer`, and write Controller receipts. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit repair/recovery; normal progress comes from the daemon-owned status and ledger.
+After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit old-run repair/recovery.
 
-Controller must not:
+Controller must not implement product work, write project evidence for a worker node, approve gates, mark route nodes complete, mutate the route from its own judgement, read sealed packet/result bodies, or receive/submit formal role outputs. Role outputs go directly to Router through the runtime command named by the packet.
 
-- implement product work;
-- write project evidence for a worker node;
-- approve gates;
-- mark route nodes complete;
-- mutate the route from its own judgement;
-- read, summarize, execute, edit, or repair sealed packet/result bodies.
-- receive, write, relay as the return receiver, or submit system-card ACKs, active-holder packet ACKs, active-holder packet completions, or formal role outputs.
-
-When the router returns a control blocker, Controller may deliver only the public blocker id plus sealed repair packet path/hash to the target role. Controller must not read, restate, or patch sealed repair details.
-
-When the user asks to stop or cancel the active run, record `user_requests_run_stop` or `user_requests_run_cancel`, then follow the terminal lifecycle action. Do not continue route work after that.
-
-All system cards are `from: system`, `issued_by: router`, and `delivered_by: controller`. Their ACKs go directly from the addressed role to Router through the card check-in command; Controller does not receive or relay those ACKs. Current packet completions go directly to Router through the active-holder lease, and formal file-backed role outputs go through `flowpilot_runtime.py submit-output-to-router`. Fixed-router-event role outputs are never complete after a local `submit-output` receipt; the Router-directed command must record the Router event before the wait can close. Controller follows Router daemon status and the Controller action ledger, then relays only Router-authorized metadata. Role-to-role work uses packet/mail ledgers, not shared prompt context.
+When the router returns a control blocker, Controller may deliver only the public blocker id plus sealed repair packet path/hash to the target role. When the user asks to stop or cancel the active run, record the requested terminal event and follow the lifecycle action; do not continue route work after that.
 
 ## Runtime Kit
 

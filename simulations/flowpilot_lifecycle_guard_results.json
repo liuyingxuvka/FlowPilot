@@ -5,33 +5,54 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=16 initial_states=1 traces=136",
+    "summary": "sequences=30 initial_states=1 traces=465",
     "violation_count": 0
   },
   "hazard_detection": {
     "expected": [
+      "accepted_packet_reassigned",
+      "accepted_packet_status_regressed",
       "ack_only_terminal",
       "chat_history_resume",
+      "foreground_exit_without_preflight",
       "inactive_lease_waits_forever",
       "nonterminal_stop_allowed",
       "old_monitor_ui_required",
       "old_router_authority_used",
+      "original_result_lost_race",
+      "passive_wait_treated_as_complete",
       "repeated_action_ignored",
+      "replacement_without_liveness_failure",
+      "scoped_closure_treated_as_terminal",
       "sealed_body_leak",
+      "slow_live_replaced",
       "stale_result_accepted",
+      "status_projection_stop_authority",
       "terminal_without_closure"
     ],
     "hazards": {
+      "accepted_packet_reassigned": [
+        "original-result race was repaired before accepted-packet reassignment was blocked",
+        "packet with accepted_result_id was reassigned"
+      ],
+      "accepted_packet_status_regressed": [
+        "original-result race was repaired before accepted-packet reassignment was blocked",
+        "accepted packet status regressed to assigned or acknowledged"
+      ],
       "ack_only_terminal": [
         "ACK-only wait reached terminal completion"
       ],
       "chat_history_resume": [
         "resume used chat history as authority"
       ],
+      "foreground_exit_without_preflight": [
+        "foreground exited without final-return preflight"
+      ],
       "inactive_lease_waits_forever": [
         "inactive lease was treated as healthy indefinite wait"
       ],
       "nonterminal_stop_allowed": [
+        "terminal foreground duty was derived before final closure",
         "terminal stop allowed before final closure",
         "nonterminal next action allowed Controller stop"
       ],
@@ -41,22 +62,65 @@
       "old_router_authority_used": [
         "old Router authority was used by the new guard"
       ],
+      "original_result_lost_race": [
+        "accepted original result lost replacement race"
+      ],
+      "passive_wait_treated_as_complete": [
+        "wait liveness ladder was modeled before wait patrol duty existed",
+        "scoped closure duty reentry was claimed before wait/process duty coverage",
+        "passive wait was treated as completion instead of timed patrol duty"
+      ],
       "repeated_action_ignored": [
         "repeated unchanged next action was not classified as stuck"
+      ],
+      "replacement_without_liveness_failure": [
+        "accepted packet reassignment was blocked before replacement evidence rule",
+        "replacement was allowed without current liveness failure evidence"
+      ],
+      "scoped_closure_treated_as_terminal": [
+        "scoped closure was treated as project terminal"
       ],
       "sealed_body_leak": [
         "guard leaked sealed body content"
       ],
+      "slow_live_replaced": [
+        "replacement failure evidence rule was claimed before slow-live progress handling",
+        "slow but live role was replaced before failure evidence"
+      ],
       "stale_result_accepted": [
         "stale or late result was accepted"
       ],
+      "status_projection_stop_authority": [
+        "status projection was treated as stop authority"
+      ],
       "terminal_without_closure": [
+        "terminal foreground duty was derived before final closure",
         "terminal stop allowed before final closure"
       ]
     },
     "ok": true
   },
   "model_id": "flowpilot_new_lifecycle_guard",
+  "model_test_alignment": {
+    "evidence": [
+      "tests/test_flowpilot_lifecycle_guard.py",
+      "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+    ],
+    "missing": [],
+    "obligations": {
+      "accepted_packet_race_repair": true,
+      "accepted_packet_reassignment_rejected": true,
+      "final_preflight_blocks_open_packet": true,
+      "liveness_failure_required_before_replacement": true,
+      "nonterminal_foreground_duty": true,
+      "recovery_or_blocker_duty": true,
+      "scoped_closure_fake_rehearsal_boundary": true,
+      "slow_live_progress_preserved": true,
+      "terminal_preflight_allows_return": true,
+      "wait_patrol_duty": true
+    },
+    "ok": true
+  },
   "ok": true,
   "result_type": "flowpilot_lifecycle_guard_checks",
   "target_plan": {
@@ -68,26 +132,42 @@
       "observe_nonterminal_next_action",
       "write_guard_snapshot",
       "block_controller_stop",
+      "derive_nonterminal_foreground_duty",
+      "block_final_return_preflight",
       "request_manual_resume",
       "rehydrate_resume_from_ledger",
       "classify_wait_for_ack",
       "keep_ack_wait_nonterminal",
       "classify_wait_for_result",
       "keep_result_wait_nonterminal",
+      "convert_wait_to_patrol_duty",
+      "model_wait_liveness_ladder",
+      "preserve_slow_live_progress",
+      "require_failure_evidence_before_replacement",
+      "block_accepted_packet_reassignment",
+      "repair_original_result_replacement_race",
       "classify_inactive_lease_recovery",
       "quarantine_stale_result",
       "classify_repeated_action_stuck",
+      "reenter_duty_after_scoped_closure",
       "complete_final_closure",
+      "derive_terminal_foreground_duty",
       "authorize_terminal_stop"
     ],
     "ok": true,
     "state": {
+      "accepted_packet_reassigned": false,
+      "accepted_packet_reassignment_blocked": true,
+      "accepted_packet_status_regressed": false,
       "ack_only_terminal": false,
       "ack_wait_nonterminal": true,
       "chat_history_resume_authority": false,
       "controller_stop_blocked": true,
       "current_run_ledger_loaded": true,
       "final_closure_complete": true,
+      "final_return_preflight_blocked": true,
+      "foreground_duty_written": true,
+      "foreground_exit_without_preflight": false,
       "guard_snapshot_written": true,
       "inactive_lease_recovery_classified": true,
       "inactive_lease_waits_forever": false,
@@ -97,18 +177,31 @@
       "nonterminal_stop_allowed": false,
       "old_monitor_ui_required": false,
       "old_router_authority_used": false,
+      "original_result_lost_race": false,
+      "original_result_race_repaired": true,
       "packet_ledger_loaded": true,
+      "passive_wait_treated_as_complete": false,
       "repeated_action_ignored": false,
       "repeated_action_stuck_classified": true,
+      "replacement_requires_failure_evidence": true,
+      "replacement_without_liveness_failure": false,
       "result_wait_nonterminal": true,
       "resume_rehydrated_from_ledger": true,
+      "scoped_closure_reentered_duty": true,
+      "scoped_closure_treated_as_terminal": false,
       "sealed_body_leaked_to_guard": false,
+      "slow_live_progress_preserved": true,
+      "slow_live_replaced": false,
       "stale_result_accepted": false,
       "stale_result_quarantined": true,
       "status": "complete",
+      "status_projection_stop_authority": false,
+      "terminal_foreground_duty_return": true,
       "terminal_stop_allowed": true,
       "wait_for_ack_classified": true,
-      "wait_for_result_classified": true
+      "wait_for_result_classified": true,
+      "wait_liveness_ladder_modeled": true,
+      "wait_patrol_duty_created": true
     }
   },
   "test_mesh": {
@@ -127,7 +220,7 @@
       },
       {
         "evidence": [
-          "openspec/changes/add-new-flowpilot-lifecycle-guard/tasks.md"
+          "openspec/changes/harden-new-flowpilot-liveness-recovery/tasks.md"
         ],
         "freshness": "current",
         "id": "new_lifecycle_guard_target_plan",
@@ -140,6 +233,16 @@
         ],
         "freshness": "current",
         "id": "new_lifecycle_guard_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "tests/test_flowpilot_lifecycle_guard.py",
+          "simulations/flowpilot_fake_project_rehearsal_scenarios.py"
+        ],
+        "freshness": "current",
+        "id": "new_foreground_duty_model_test_alignment",
         "scope": "routine",
         "status": "passed"
       }

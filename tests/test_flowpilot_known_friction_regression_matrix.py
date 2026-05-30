@@ -37,7 +37,7 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
         self.assertEqual({row["friction_id"] for row in report["rows"]}, matrix.REQUIRED_FRICTION_IDS)
         self.assertEqual({row["source_class"] for row in report["rows"]}, matrix.REQUIRED_SOURCE_CLASSES)
         self.assertEqual(report["row_count"], report["required_friction_count"])
-        self.assertEqual(report["rows_by_priority"]["P0"], 11)
+        self.assertEqual(report["rows_by_priority"]["P0"], 12)
         self.assertIn("historically recurring FlowPilot", report["coverage_boundary"])
         self.assertIn("defect-family gate", report["coverage_boundary"])
         self.assertIn("do not prove arbitrary live AI semantic quality", report["coverage_boundary"])
@@ -83,7 +83,7 @@ class FlowPilotKnownFrictionRegressionMatrixTests(unittest.TestCase):
     def test_p0_rows_require_current_transcript_regression(self) -> None:
         p0_rows = [row for row in matrix.build_rows() if row["priority"] == "P0"]
 
-        self.assertEqual(len(p0_rows), 11)
+        self.assertEqual(len(p0_rows), 12)
         for row in p0_rows:
             with self.subTest(friction_id=row["friction_id"]):
                 self.assertIn("current_transcript_regression", row["global_gates"])

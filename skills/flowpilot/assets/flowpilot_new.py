@@ -12,6 +12,7 @@ import json
 from pathlib import Path
 import subprocess
 import sys
+import time
 from typing import Any
 
 
@@ -110,6 +111,21 @@ def _startup_body_ref(ledger: dict[str, Any]) -> dict[str, str]:
     }
 
 
+def _runtime_state(ledger: dict[str, Any]) -> dict[str, Any]:
+    guard = ledger.get("lifecycle_guard")
+    if not isinstance(guard, dict):
+        guard = runtime.preview_lifecycle_guard(ledger, trigger="runtime_state")
+    duty = ledger.get("foreground_duty")
+    if not isinstance(duty, dict):
+        duty = runtime.preview_foreground_duty(ledger, guard=guard, trigger="runtime_state")
+    return {
+        "next_action": router.router_next_action(ledger).to_json(),
+        "lifecycle_guard": guard,
+        "foreground_duty": duty,
+        "final_return_preflight": duty.get("final_return_preflight", runtime.final_return_preflight(ledger, guard=guard)),
+    }
+
+
 def _bootstrap_new_runtime(shell: run_shell.RunShell) -> dict[str, Any]:
     ledger = run_shell.load_run_ledger(shell)
     ledger["recursive_route_execution_required"] = True
@@ -175,8 +191,7 @@ def start_run(
             "controller_may_read_body": startup_record["controller_may_read_body"],
             "body_text_included": startup_record["body_text_included"],
         },
-        "next_action": router.router_next_action(ledger).to_json(),
-        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
 
@@ -212,8 +227,7 @@ def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: st
     return {
         "ok": True,
         "lease_id": lease_id,
-        "next_action": router.router_next_action(ledger).to_json(),
-        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        **_runtime_state(ledger),
     }
 
 
@@ -222,7 +236,15 @@ def ack(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     ledger = run_shell.load_run_ledger(shell)
     runtime.ack_lease(ledger, lease_id, packet_id)
     run_shell.save_run_ledger(shell, ledger, guard_trigger="ack")
-    return {"ok": True, "next_action": router.router_next_action(ledger).to_json(), "lifecycle_guard": ledger.get("lifecycle_guard", {})}
+    return {"ok": True, **_runtime_state(ledger)}
+
+
+def progress(root: Path, *, lease_id: str, packet_id: str, status: str) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    runtime.record_progress(ledger, lease_id, packet_id, status)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="progress")
+    return {"ok": True, **_runtime_state(ledger)}
 
 
 def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> dict[str, Any]:
@@ -233,8 +255,7 @@ def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> di
     return {
         "ok": True,
         "result_id": result_id,
-        "next_action": router.router_next_action(ledger).to_json(),
-        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        **_runtime_state(ledger),
     }
 
 
@@ -249,21 +270,21 @@ def status(root: Path) -> dict[str, Any]:
     return {
         "ok": True,
         "run": shell.to_json(),
-        "next_action": router.router_next_action(ledger).to_json(),
-        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
 
 
-def patrol(root: Path) -> dict[str, Any]:
+def patrol(root: Path, *, sleep_seconds: int = 0) -> dict[str, Any]:
+    if sleep_seconds > 0:
+        time.sleep(sleep_seconds)
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     run_shell.save_run_ledger(shell, ledger, guard_trigger="patrol")
     return {
         "ok": True,
         "run": shell.to_json(),
-        "next_action": router.router_next_action(ledger).to_json(),
-        "lifecycle_guard": ledger.get("lifecycle_guard", {}),
+        **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
 
@@ -277,8 +298,39 @@ def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
     return {
         "ok": True,
         "run": shell.to_json(),
-        "next_action": router.router_next_action(ledger).to_json(),
         "lifecycle_guard": guard,
+        "foreground_duty": ledger.get("foreground_duty", {}),
+        "final_return_preflight": runtime.final_return_preflight(ledger, guard=guard),
+        "next_action": router.router_next_action(ledger).to_json(),
+        "status": cockpit.render_status(ledger),
+    }
+
+
+def final_preflight(root: Path) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="final_preflight")
+    state = _runtime_state(ledger)
+    preflight = state["final_return_preflight"]
+    payload = {
+        "ok": bool(preflight.get("allowed") is True),
+        "run": shell.to_json(),
+        **state,
+    }
+    if payload["ok"] is not True:
+        payload["error"] = "final foreground return is not allowed"
+    return payload
+
+
+def repair_accepted_packet(root: Path, *, packet_id: str) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    repair = runtime.repair_accepted_packet_assignment(ledger, packet_id)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="repair_accepted_packet")
+    return {
+        "ok": True,
+        "repair": repair,
+        **_runtime_state(ledger),
         "status": cockpit.render_status(ledger),
     }
 
@@ -298,7 +350,9 @@ def main(argv: list[str] | None = None) -> int:
     fake.add_argument("--startup-text", required=True)
 
     sub.add_parser("status", help="Render public status for the current new FlowPilot run")
-    sub.add_parser("patrol", help="Refresh lifecycle guard status for the current run")
+    patrol_parser = sub.add_parser("patrol", help="Refresh lifecycle guard and foreground duty status for the current run")
+    patrol_parser.add_argument("--sleep-seconds", type=int, default=0, help="Optional foreground duty delay before refreshing")
+    sub.add_parser("final-preflight", help="Fail unless current foreground duty allows terminal return")
     resume_parser = sub.add_parser("resume", help="Record manual resume and rehydrate lifecycle guard status")
     resume_parser.add_argument("--reason", default="manual_resume")
 
@@ -318,10 +372,18 @@ def main(argv: list[str] | None = None) -> int:
     ack_parser.add_argument("--lease-id", required=True)
     ack_parser.add_argument("--packet-id", required=True)
 
+    progress_parser = sub.add_parser("progress", help="Record current-run lease progress without completing the packet")
+    progress_parser.add_argument("--lease-id", required=True)
+    progress_parser.add_argument("--packet-id", required=True)
+    progress_parser.add_argument("--status", required=True)
+
     submit = sub.add_parser("submit-result", help="Submit a sealed result body for a packet")
     submit.add_argument("--lease-id", required=True)
     submit.add_argument("--packet-id", required=True)
     submit.add_argument("--body", required=True)
+
+    repair_parser = sub.add_parser("repair-accepted-packet", help="Repair accepted packet assignment race state")
+    repair_parser.add_argument("--packet-id", required=True)
 
     args = parser.parse_args(argv)
     root = args.root.resolve()
@@ -338,7 +400,9 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "status":
             payload = status(root)
         elif args.command == "patrol":
-            payload = patrol(root)
+            payload = patrol(root, sleep_seconds=args.sleep_seconds)
+        elif args.command == "final-preflight":
+            payload = final_preflight(root)
         elif args.command == "resume":
             payload = resume(root, reason=args.reason)
         elif args.command == "lease-agent":
@@ -351,8 +415,12 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "ack":
             payload = ack(root, lease_id=args.lease_id, packet_id=args.packet_id)
+        elif args.command == "progress":
+            payload = progress(root, lease_id=args.lease_id, packet_id=args.packet_id, status=args.status)
         elif args.command == "submit-result":
             payload = submit_result(root, lease_id=args.lease_id, packet_id=args.packet_id, body=args.body)
+        elif args.command == "repair-accepted-packet":
+            payload = repair_accepted_packet(root, packet_id=args.packet_id)
         else:  # pragma: no cover
             raise runtime.BlackBoxRuntimeError(f"unsupported command: {args.command}")
     except runtime.BlackBoxRuntimeError as exc:

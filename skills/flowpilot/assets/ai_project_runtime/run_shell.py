@@ -254,6 +254,10 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "lifecycle" / "guard.json", ledger["lifecycle_guard"])
     if ledger.get("lifecycle_guard_history"):
         _write_json(shell.run_root / "lifecycle" / "guard_history.json", ledger["lifecycle_guard_history"])
+    if isinstance(ledger.get("foreground_duty"), dict):
+        _write_json(shell.run_root / "lifecycle" / "foreground_duty.json", ledger["foreground_duty"])
+    if ledger.get("foreground_duty_history"):
+        _write_json(shell.run_root / "lifecycle" / "foreground_duty_history.json", ledger["foreground_duty_history"])
     if isinstance(ledger.get("final_route_wide_gate_ledger"), dict):
         _write_json(shell.run_root / "closure" / "final_route_wide_gate_ledger.json", ledger["final_route_wide_gate_ledger"])
     if isinstance(ledger.get("final_requirement_evidence_matrix"), dict):

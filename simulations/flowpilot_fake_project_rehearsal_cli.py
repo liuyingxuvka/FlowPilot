@@ -59,6 +59,12 @@ def payload_summary(payload: dict[str, Any] | None) -> dict[str, Any]:
         summary["lease_id"] = payload["lease_id"]
     if "result_id" in payload:
         summary["result_id"] = payload["result_id"]
+    duty = payload.get("foreground_duty")
+    if isinstance(duty, dict):
+        summary["foreground_duty"] = {
+            "action": duty.get("action", ""),
+            "final_return_allowed": (duty.get("final_return_preflight") or {}).get("allowed", False),
+        }
     action = payload.get("next_action")
     if isinstance(action, dict):
         summary["next_action"] = {
@@ -232,6 +238,9 @@ def complete_full_packet_chain(
     guard = projection.get("lifecycle_guard", {})
     ensure(guard.get("decision") == "terminal_return", f"terminal guard did not allow terminal return: {guard}")
     ensure(guard.get("controller_stop_allowed") is True, f"terminal guard did not allow Controller stop: {guard}")
+    duty = projection.get("foreground_duty", {})
+    ensure(duty.get("action") == "terminal_return", f"terminal foreground duty did not allow return: {duty}")
+    ensure(duty.get("final_return_preflight", {}).get("allowed") is True, f"terminal final preflight failed: {duty}")
 
     packet_kinds = [packet.get("packet_kind") for packet in projection.get("packets", [])]
     route_nodes = projection.get("route_nodes", [])
@@ -359,6 +368,10 @@ def complete_planning_chain_only(
     ensure(projection.get("closure", {}).get("decision") != "complete", "planning chain reached terminal closure")
     guard = projection.get("lifecycle_guard", {})
     ensure(guard.get("controller_stop_allowed") is False, f"planning guard allowed Controller stop: {guard}")
+    duty = projection.get("foreground_duty", {})
+    ensure(duty.get("action") == "process_next_action", f"planning duty did not continue: {duty}")
+    ensure(duty.get("subject_id") == str(next_action.get("subject_id", "")), f"planning duty lost next packet: {duty}")
+    ensure(duty.get("final_return_preflight", {}).get("allowed") is False, f"planning duty allowed final return: {duty}")
     ensure(len(projection.get("route_nodes", [])) >= MIN_ACCEPTED_ROUTE_NODES, "planning chain did not materialize route nodes")
     return {
         "next_action": next_action,
@@ -384,4 +397,7 @@ def start_rehearsal(root: Path, command_log: list[dict[str, Any]], run_id: str) 
     projection = payload.get("status", {})
     ensure(isinstance(projection, dict), "startup did not include public status")
     assert_public_projection_is_sealed(projection)
+    duty = projection.get("foreground_duty", {})
+    ensure(duty.get("action") == "process_next_action", f"startup foreground duty did not process next action: {duty}")
+    ensure(duty.get("final_return_preflight", {}).get("allowed") is False, f"startup allowed final return: {duty}")
     return payload

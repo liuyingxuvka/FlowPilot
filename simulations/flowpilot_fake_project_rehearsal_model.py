@@ -36,9 +36,13 @@ class State:
     route_mutation_recovered: bool = False
     missing_ack_result_blocked: bool = False
     ack_only_wait_observed: bool = False
+    foreground_wait_patrol_observed: bool = False
     lifecycle_resume_rehydrated: bool = False
     lifecycle_patrol_recovery_classified: bool = False
+    slow_live_reviewer_progress_preserved: bool = False
+    accepted_packet_reassignment_rejected: bool = False
     nonterminal_guard_stop_blocked: bool = False
+    scoped_closure_final_preflight_blocked: bool = False
     retired_side_command_rejected: bool = False
     scenario_report_written: bool = False
     internal_helper_only: bool = False
@@ -50,6 +54,11 @@ class State:
     lifecycle_resume_from_chat: bool = False
     lifecycle_patrol_allows_nonterminal_stop: bool = False
     lifecycle_repeated_wait_not_recovered: bool = False
+    slow_live_reviewer_replaced: bool = False
+    accepted_packet_reassignment_allowed: bool = False
+    foreground_final_preflight_missing: bool = False
+    passive_wait_completed: bool = False
+    scoped_closure_final_return_allowed: bool = False
     pm_only_terminal: bool = False
     planning_chain_terminal: bool = False
     terminal_missing_route_node: bool = False
@@ -96,9 +105,13 @@ REQUIRED_SAFE_LABELS = (
     "observe_route_mutation_recovery",
     "observe_missing_ack_result_block",
     "observe_ack_only_wait_not_terminal",
+    "observe_foreground_wait_patrol_duty",
     "observe_lifecycle_resume_rehydration",
     "observe_lifecycle_patrol_recovery",
+    "observe_slow_live_reviewer_progress_preserved",
+    "observe_accepted_packet_reassignment_rejection",
     "observe_lifecycle_guard_blocks_nonterminal_stop",
+    "observe_scoped_closure_final_preflight_block",
     "observe_retired_side_command_rejection",
     "write_rehearsal_report",
 )
@@ -187,12 +200,30 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("observe_missing_ack_result_block", replace(state, missing_ack_result_blocked=True)),)
     if not state.ack_only_wait_observed:
         return (Transition("observe_ack_only_wait_not_terminal", replace(state, ack_only_wait_observed=True)),)
+    if not state.foreground_wait_patrol_observed:
+        return (Transition("observe_foreground_wait_patrol_duty", replace(state, foreground_wait_patrol_observed=True)),)
     if not state.lifecycle_resume_rehydrated:
         return (Transition("observe_lifecycle_resume_rehydration", replace(state, lifecycle_resume_rehydrated=True)),)
     if not state.lifecycle_patrol_recovery_classified:
         return (Transition("observe_lifecycle_patrol_recovery", replace(state, lifecycle_patrol_recovery_classified=True)),)
+    if not state.slow_live_reviewer_progress_preserved:
+        return (
+            Transition(
+                "observe_slow_live_reviewer_progress_preserved",
+                replace(state, slow_live_reviewer_progress_preserved=True),
+            ),
+        )
+    if not state.accepted_packet_reassignment_rejected:
+        return (
+            Transition(
+                "observe_accepted_packet_reassignment_rejection",
+                replace(state, accepted_packet_reassignment_rejected=True),
+            ),
+        )
     if not state.nonterminal_guard_stop_blocked:
         return (Transition("observe_lifecycle_guard_blocks_nonterminal_stop", replace(state, nonterminal_guard_stop_blocked=True)),)
+    if not state.scoped_closure_final_preflight_blocked:
+        return (Transition("observe_scoped_closure_final_preflight_block", replace(state, scoped_closure_final_preflight_blocked=True)),)
     if not state.retired_side_command_rejected:
         return (Transition("observe_retired_side_command_rejection", replace(state, retired_side_command_rejected=True)),)
     if not state.scenario_report_written:
@@ -244,9 +275,13 @@ def invariant_failures(state: State) -> list[str]:
         and state.route_mutation_recovered
         and state.missing_ack_result_blocked
         and state.ack_only_wait_observed
+        and state.foreground_wait_patrol_observed
         and state.lifecycle_resume_rehydrated
         and state.lifecycle_patrol_recovery_classified
+        and state.slow_live_reviewer_progress_preserved
+        and state.accepted_packet_reassignment_rejected
         and state.nonterminal_guard_stop_blocked
+        and state.scoped_closure_final_preflight_blocked
         and state.retired_side_command_rejected
     ):
         failures.append("Rehearsal report written before normal and error scenarios completed")
@@ -262,12 +297,24 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Missing-ACK result was accepted as authoritative")
     if state.ack_only_terminal:
         failures.append("ACK-only path reached terminal completion")
+    if state.foreground_wait_patrol_observed and not state.ack_only_wait_observed:
+        failures.append("Foreground wait patrol was observed before ACK-only wait")
     if state.lifecycle_resume_from_chat:
         failures.append("Lifecycle resume used chat history instead of current-run ledger")
     if state.lifecycle_patrol_allows_nonterminal_stop:
         failures.append("Lifecycle patrol allowed nonterminal Controller stop")
     if state.lifecycle_repeated_wait_not_recovered:
         failures.append("Lifecycle patrol failed to classify repeated wait as recovery")
+    if state.slow_live_reviewer_replaced:
+        failures.append("Slow live reviewer progress caused replacement instead of patrol wait")
+    if state.accepted_packet_reassignment_allowed:
+        failures.append("Accepted packet reassignment was allowed")
+    if state.foreground_final_preflight_missing:
+        failures.append("Foreground final-return preflight was missing from rehearsal")
+    if state.passive_wait_completed:
+        failures.append("Passive wait was treated as completion instead of foreground duty")
+    if state.scoped_closure_final_return_allowed:
+        failures.append("Scoped closure allowed final return while later work remained")
     if state.pm_only_terminal:
         failures.append("PM-only path reached terminal completion")
     if state.planning_chain_terminal:
@@ -320,6 +367,11 @@ def hazard_states() -> dict[str, State]:
         "lifecycle_resume_from_chat": replace(target, lifecycle_resume_from_chat=True),
         "lifecycle_patrol_allows_nonterminal_stop": replace(target, lifecycle_patrol_allows_nonterminal_stop=True),
         "lifecycle_repeated_wait_not_recovered": replace(target, lifecycle_patrol_recovery_classified=False, lifecycle_repeated_wait_not_recovered=True),
+        "slow_live_reviewer_replaced": replace(target, slow_live_reviewer_progress_preserved=False, slow_live_reviewer_replaced=True),
+        "accepted_packet_reassignment_allowed": replace(target, accepted_packet_reassignment_rejected=False, accepted_packet_reassignment_allowed=True),
+        "foreground_final_preflight_missing": replace(target, foreground_final_preflight_missing=True),
+        "passive_wait_completed": replace(target, foreground_wait_patrol_observed=False, passive_wait_completed=True),
+        "scoped_closure_final_return_allowed": replace(target, scoped_closure_final_preflight_blocked=False, scoped_closure_final_return_allowed=True),
         "pm_only_terminal": replace(target, pm_only_terminal=True),
         "planning_chain_terminal": replace(target, planning_chain_terminal=True),
         "terminal_missing_route_node": replace(target, route_node_3_complete=False, terminal_missing_route_node=True),

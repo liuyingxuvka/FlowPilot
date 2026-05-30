@@ -91,6 +91,12 @@ def scenario_planning_chain_does_not_terminal(work_root: Path) -> dict[str, Any]
     root = reset_scenario_root(work_root, "planning_chain_does_not_terminal")
     start_payload = start_rehearsal(root, command_log, "run-fake-planning-only")
     observation = complete_planning_chain_only(root, command_log, start_payload)
+    final_preflight = run_cli(root, command_log, "final-preflight", expect_ok=False)
+    ensure(final_preflight.get("ok") is False, f"planning final-preflight unexpectedly passed: {final_preflight}")
+    ensure(
+        final_preflight.get("foreground_duty", {}).get("action") == "process_next_action",
+        f"planning final-preflight did not preserve continuation duty: {final_preflight}",
+    )
     return {
         "name": "planning_chain_does_not_terminal",
         "ok": True,
@@ -100,6 +106,7 @@ def scenario_planning_chain_does_not_terminal(work_root: Path) -> dict[str, Any]
             "next_responsibility": observation["next_action"].get("responsibility"),
             "route_node_count": len(observation["route_nodes"]),
             "closure": observation["closure"].get("decision"),
+            "final_preflight_allowed": final_preflight.get("final_return_preflight", {}).get("allowed"),
         },
         "commands": command_log,
     }
@@ -210,6 +217,12 @@ def scenario_ack_only_wait(work_root: Path) -> dict[str, Any]:
     guard = projection.get("lifecycle_guard", {})
     ensure(guard.get("decision") == "wait_for_result", f"ACK-only guard did not classify result wait: {guard}")
     ensure(guard.get("controller_stop_allowed") is False, f"ACK-only guard allowed stop: {guard}")
+    duty = projection.get("foreground_duty", {})
+    ensure(duty.get("action") == "wait_patrol", f"ACK-only foreground duty was not a patrol: {duty}")
+    ensure(duty.get("wait_patrol", {}).get("seconds") == 60, f"ACK-only patrol did not carry 60-second duty: {duty}")
+    ensure(duty.get("final_return_preflight", {}).get("allowed") is False, f"ACK-only duty allowed final return: {duty}")
+    final_preflight = run_cli(root, command_log, "final-preflight", expect_ok=False)
+    ensure(final_preflight.get("ok") is False, f"ACK-only final-preflight unexpectedly passed: {final_preflight}")
     return {
         "name": "ack_only_wait",
         "ok": True,
@@ -217,6 +230,8 @@ def scenario_ack_only_wait(work_root: Path) -> dict[str, Any]:
         "observations": {
             "next_action": projection.get("next_action", {}).get("action_type"),
             "closure": projection.get("closure", {}).get("decision"),
+            "foreground_duty": duty.get("action"),
+            "final_preflight_allowed": final_preflight.get("final_return_preflight", {}).get("allowed"),
         },
         "commands": command_log,
     }
@@ -248,15 +263,39 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
     ensure(guard.get("decision") == "wait_for_result", f"resume guard did not classify result wait: {guard}")
     ensure(guard.get("controller_stop_allowed") is False, f"resume guard allowed nonterminal stop: {guard}")
     ensure(guard.get("wait_subject", {}).get("packet_id") == pm_packet, f"resume guard lost packet id: {guard}")
+    resume_duty = resumed.get("foreground_duty", {})
+    ensure(resume_duty.get("action") == "wait_patrol", f"resume did not expose wait patrol duty: {resume_duty}")
 
     run_cli(root, command_log, "patrol")
     patrol = run_cli(root, command_log, "patrol")
     patrol_guard = patrol.get("lifecycle_guard", {})
     ensure(
-        patrol_guard.get("decision") == "reissue_or_replace_lease",
-        f"patrol did not classify repeated result wait for recovery: {patrol_guard}",
+        patrol_guard.get("decision") == "wait_for_result",
+        f"patrol replaced a result wait without liveness failure evidence: {patrol_guard}",
     )
     ensure(patrol_guard.get("controller_stop_allowed") is False, f"patrol guard allowed stop: {patrol_guard}")
+    ensure(patrol.get("foreground_duty", {}).get("action") == "wait_patrol", f"patrol did not preserve wait duty: {patrol}")
+
+    failed_liveness = run_cli(
+        root,
+        command_log,
+        "progress",
+        "--lease-id",
+        str(lease_payload["lease_id"]),
+        "--packet-id",
+        pm_packet,
+        "--status",
+        "no_output",
+    )
+    failed_guard = failed_liveness.get("lifecycle_guard", {})
+    ensure(
+        failed_guard.get("decision") == "reissue_or_replace_lease",
+        f"liveness failure did not classify for recovery: {failed_guard}",
+    )
+    ensure(
+        failed_liveness.get("foreground_duty", {}).get("action") == "recover_or_reissue",
+        f"liveness failure did not expose recovery duty: {failed_liveness}",
+    )
     projection = status_projection(root, command_log)
     assert_public_projection_is_sealed(projection)
     ensure(projection.get("closure", {}).get("decision") != "complete", "guard patrol reached terminal closure")
@@ -267,7 +306,224 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
         "observations": {
             "resume_decision": guard.get("decision"),
             "patrol_decision": patrol_guard.get("decision"),
-            "controller_stop_allowed": patrol_guard.get("controller_stop_allowed"),
+            "liveness_failure_decision": failed_guard.get("decision"),
+            "controller_stop_allowed": failed_guard.get("controller_stop_allowed"),
+        },
+        "commands": command_log,
+    }
+
+
+def _planning_body_for(packet_kind: str, route_scope: str) -> str:
+    if packet_kind == "task" and route_scope == "high_standard_contract":
+        return json.dumps(
+            {
+                "requirements": [
+                    {
+                        "requirement_id": "hsr-001",
+                        "classification": "hard_current",
+                        "summary": "Complete the fake project to a high standard.",
+                    }
+                ]
+            }
+        )
+    if packet_kind == "task" and route_scope == "discovery":
+        return json.dumps(
+            {
+                "material_sources": ["startup"],
+                "local_skill_inventory": ["flowguard-development-process-flow"],
+            }
+        )
+    if packet_kind == "task" and route_scope == "skill_standard":
+        return json.dumps(
+            {
+                "obligations": [
+                    {
+                        "obligation_id": "skill-std-001",
+                        "skill": "flowguard-development-process-flow",
+                        "classification": "required",
+                    }
+                ]
+            }
+        )
+    if packet_kind == "task" and route_scope == "planning":
+        return "\n".join(
+            [
+                "1. Plan architecture and acceptance contracts",
+                "2. Implement the fake calculator CLI behavior",
+                "3. Validate tests, evidence, and route-wide closure",
+            ]
+        )
+    return f"SEALED_RESULT_BODY: fake planning {packet_kind}"
+
+
+def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "slow_reviewer_progress_preserved")
+    current_payload = start_rehearsal(root, command_log, "run-fake-slow-reviewer")
+
+    for step_index in range(40):
+        action = current_payload.get("next_action")
+        ensure(isinstance(action, dict), f"missing next action before reviewer step: {current_payload}")
+        ensure(action.get("action_type") == "lease_agent", f"unexpected action before reviewer step: {action}")
+        responsibility = str(action.get("responsibility", ""))
+        packet_id = str(action.get("subject_id", ""))
+        projection = status_projection(root, command_log)
+        packet = packet_row(projection, packet_id)
+        packet_kind = str(packet.get("packet_kind", ""))
+        route_scope = str(packet.get("route_scope", ""))
+
+        lease_payload = run_cli(
+            root,
+            command_log,
+            "lease-agent",
+            "--packet-id",
+            packet_id,
+            "--responsibility",
+            responsibility,
+            "--agent-id",
+            f"fake-slow-reviewer-{step_index}",
+            "--host-kind",
+            "fake",
+        )
+        lease_id = str(lease_payload["lease_id"])
+        run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
+
+        if responsibility == "reviewer" or packet_kind == "review":
+            progress_payload = run_cli(
+                root,
+                command_log,
+                "progress",
+                "--lease-id",
+                lease_id,
+                "--packet-id",
+                packet_id,
+                "--status",
+                "still_working",
+            )
+            progress_guard = progress_payload.get("lifecycle_guard", {})
+            ensure(progress_guard.get("decision") == "wait_for_result", f"reviewer progress did not keep wait: {progress_guard}")
+            ensure(
+                progress_payload.get("foreground_duty", {}).get("action") == "wait_patrol",
+                f"reviewer progress did not keep patrol duty: {progress_payload}",
+            )
+            patrol_payload = run_cli(root, command_log, "patrol")
+            patrol_guard = patrol_payload.get("lifecycle_guard", {})
+            ensure(
+                patrol_guard.get("decision") == "wait_for_result",
+                f"slow live reviewer was reissued instead of preserved: {patrol_guard}",
+            )
+            ensure(
+                patrol_payload.get("foreground_duty", {}).get("action") == "wait_patrol",
+                f"slow live reviewer lost patrol duty: {patrol_payload}",
+            )
+            final_preflight = run_cli(root, command_log, "final-preflight", expect_ok=False)
+            ensure(final_preflight.get("ok") is False, f"slow reviewer final-preflight unexpectedly passed: {final_preflight}")
+            return {
+                "name": "slow_reviewer_progress_preserved",
+                "ok": True,
+                "root": str(root),
+                "observations": {
+                    "review_packet": packet_id,
+                    "progress_decision": progress_guard.get("decision"),
+                    "patrol_decision": patrol_guard.get("decision"),
+                    "foreground_duty": patrol_payload.get("foreground_duty", {}).get("action"),
+                    "final_preflight_allowed": final_preflight.get("final_return_preflight", {}).get("allowed"),
+                },
+                "commands": command_log,
+            }
+
+        current_payload = run_cli(
+            root,
+            command_log,
+            "submit-result",
+            "--lease-id",
+            lease_id,
+            "--packet-id",
+            packet_id,
+            "--body",
+            _planning_body_for(packet_kind, route_scope),
+        )
+
+    raise RehearsalFailure("slow reviewer scenario never reached a reviewer packet")
+
+
+def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "accepted_packet_reassignment_rejected")
+    current_payload = start_rehearsal(root, command_log, "run-fake-accepted-reassign")
+    pm_packet = str(current_payload["next_action"]["subject_id"])
+    projection = status_projection(root, command_log)
+    packet = packet_row(projection, pm_packet)
+
+    for step_index in range(20):
+        action = current_payload.get("next_action")
+        ensure(isinstance(action, dict), f"missing next action before accepted packet: {current_payload}")
+        ensure(action.get("action_type") == "lease_agent", f"unexpected action before accepted packet: {action}")
+        packet_id = str(action.get("subject_id", ""))
+        responsibility = str(action.get("responsibility", ""))
+        projection = status_projection(root, command_log)
+        current_packet = packet_row(projection, packet_id)
+        lease_payload = run_cli(
+            root,
+            command_log,
+            "lease-agent",
+            "--packet-id",
+            packet_id,
+            "--responsibility",
+            responsibility,
+            "--agent-id",
+            f"fake-accepted-reassign-{step_index}",
+            "--host-kind",
+            "fake",
+        )
+        lease_id = str(lease_payload["lease_id"])
+        run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
+        current_payload = run_cli(
+            root,
+            command_log,
+            "submit-result",
+            "--lease-id",
+            lease_id,
+            "--packet-id",
+            packet_id,
+            "--body",
+            _planning_body_for(str(current_packet.get("packet_kind", "")), str(current_packet.get("route_scope", ""))),
+        )
+        projection = status_projection(root, command_log)
+        packet = packet_row(projection, pm_packet)
+        if packet.get("status") == "accepted":
+            break
+    else:
+        raise RehearsalFailure(f"first PM packet never reached accepted state: {packet}")
+
+    reassignment = run_cli(
+        root,
+        command_log,
+        "lease-agent",
+        "--packet-id",
+        pm_packet,
+        "--responsibility",
+        "pm",
+        "--agent-id",
+        "fake-pm-replacement",
+        "--host-kind",
+        "fake",
+        expect_ok=False,
+    )
+    ensure(reassignment.get("ok") is False, f"accepted packet reassignment unexpectedly passed: {reassignment}")
+    ensure("cannot assign accepted packet" in str(reassignment.get("error", "")), f"wrong reassignment error: {reassignment}")
+    projection = status_projection(root, command_log)
+    assert_public_projection_is_sealed(projection)
+    accepted_packet = packet_row(projection, pm_packet)
+    ensure(accepted_packet.get("status") == "accepted", f"accepted packet regressed after rejected reassignment: {accepted_packet}")
+    return {
+        "name": "accepted_packet_reassignment_rejected",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "accepted_packet": pm_packet,
+            "reassignment_rejected": True,
+            "next_action": projection.get("next_action", {}).get("action_type"),
         },
         "commands": command_log,
     }
@@ -279,7 +535,8 @@ def scenario_retired_side_command(work_root: Path) -> dict[str, Any]:
     help_result = run_raw_cli(root, command_log, "--help")
     ensure(help_result.returncode == 0, f"help failed: {help_result.stderr}")
     ensure(
-        "{start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}" in help_result.stdout,
+        "{start,run-fake-e2e,status,patrol,final-preflight,resume,lease-agent,ack,progress,submit-result,repair-accepted-packet}"
+        in help_result.stdout,
         "formal command list changed",
     )
     for retired in ("complete-flowguard", "record-validation", "close"):
@@ -305,6 +562,8 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("missing_ack_block", scenario_missing_ack_block),
     ("ack_only_wait", scenario_ack_only_wait),
     ("lifecycle_guard_resume_and_patrol", scenario_lifecycle_guard_resume_and_patrol),
+    ("slow_reviewer_progress_preserved", scenario_slow_reviewer_progress_preserved),
+    ("accepted_packet_reassignment_rejected", scenario_accepted_packet_reassignment_rejected),
     ("retired_side_command", scenario_retired_side_command),
 )
 

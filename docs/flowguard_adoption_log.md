@@ -20087,6 +20087,63 @@ to identify compatibility-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## enforce-new-flowpilot-foreground-duty-20260530 - New FlowPilot foreground duty and final-return preflight
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user observed that the fresh runtime could still let the foreground Controller stop after issuing a scoped closure packet, so passive waits had to become executable duties instead of prompt-only expectations.
+- Status: implemented, validated, installed, synced locally; git/release boundary pending.
+- OpenSpec change: `enforce-new-flowpilot-foreground-duty`
+- FlowGuard package: 0.39.0
+- FlowGuard schema: 1.0
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - OK, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - OK, version 0.39.0.
+- `python -m flowguard project-audit --root .` - OK.
+- `openspec validate --changes "enforce-new-flowpilot-foreground-duty"` - OK.
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py --json-out tmp/foreground_lifecycle_guard_results.json` - OK.
+- `python -m unittest tests.test_flowpilot_lifecycle_guard` - OK, 8 tests.
+- `python -m unittest tests.test_flowpilot_complete_system_runtime` - OK, 10 tests.
+- `python -m unittest tests.test_ai_project_runtime tests.test_flowpilot_complete_system_runtime tests.test_flowpilot_cli_entrypoints` - OK, 21 tests.
+- `python -m unittest tests.test_flowpilot_asset_surface_contracts tests.test_flowpilot_script_surface_contracts tests.test_flowpilot_installer_dependencies` - OK, 10 tests.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out tmp/foreground_fake_rehearsal_results.json --work-root tmp/foreground_fake_rehearsal` - OK, deterministic fake AI black-box rehearsal passed through the real public CLI.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out tmp/foreground_fake_rehearsal_final_results.json --work-root tmp/foreground_fake_rehearsal_final` - OK after final `flowpilot_new.py` hardening; background log `tmp/flowguard_background/run_foreground_fake_rehearsal_final.*`, exit 0, 8 scenarios, 12 TestMesh rows, 528 FlowGuard traces.
+- `python scripts/check_install.py --json` - OK.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - OK.
+- `python scripts/audit_local_install_sync.py --json` - OK.
+- `python scripts/install_flowpilot.py --check --json` - OK.
+- `python simulations/run_meta_checks.py` - OK through `tmp/flowguard_background/run_meta_checks.*`, exit 0, status complete, proof reuse not reported.
+- `python simulations/run_capability_checks.py` - OK through `tmp/flowguard_background/run_capability_checks.*`, exit 0, status complete, proof reuse not reported.
+
+### Findings
+- Fresh runtime ledgers now persist `foreground_duty`, `foreground_duty_history`, and a 60-second default wait patrol configuration.
+- ACK/result quiet waits now produce `foreground_duty.action=wait_patrol`; waiting is an active event with a refresh command, not a reason for Controller to stop.
+- Scoped closure and planning-chain closure are blocked by `final_return_preflight` until the whole route reaches `terminal_return`.
+- `flowpilot_new.py final-preflight` is now the public final-stop gate.
+- Status projection is display-only; old `flowpilot_router.py` daemon and monitor files remain legacy diagnostics, not fresh-runtime stop authority.
+- The fake AI rehearsal now covers startup, scoped planning closure, ACK-only wait patrol, patrol recovery, and terminal return through public CLI subprocesses.
+- The final rerun after the last state-boundary hardening used public CLI subprocesses and the startup UI script, not the internal e2e helper.
+- The installed local FlowPilot skill was synced to repository digest `156eccd9bc21cb1db1dba917c5261bd606653d4133a32f962c6c05d7c7b2c758`.
+
+### Counterexamples
+- `foreground_exit_without_preflight`
+- `passive_wait_treated_as_complete`
+- `scoped_closure_treated_as_terminal`
+- `status_projection_stop_authority`
+- `foreground_final_preflight_missing`
+- `passive_wait_completed`
+- `scoped_closure_final_return_allowed`
+
+### Skipped Steps
+- No old monitoring UI, fixed six-agent startup, or old compatibility surface was restored.
+- No GitHub push, tag, release, deploy, or OpenSpec archive was performed.
+- Fake AI rehearsal is deterministic fake-host evidence against the real public CLI; it is not claimed as live external-agent reliability.
+
+### Next Actions
+- Use `final-preflight` as the Controller's final stop gate in every fresh FlowPilot run.
+- Run release-scoped live-host gates separately if release confidence is requested.
+
+
 ## add-new-flowpilot-lifecycle-guard-20260530 - New FlowPilot lifecycle guard upgrade
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -21024,3 +21081,127 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+## flowpilot-similarity-convergence-maintenance-20260530 - FlowPilot similarity-convergence maintenance gate
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to use updated FlowGuard to inspect and maintain existing FlowPilot, including similar branch folding, model detailing, added checks, and detecting fixes applied to one analogous branch but not another.
+- Status: implemented_validated_partial_smoke
+- Skill decision: used FlowGuard existing-model preflight, Plan Detailing Compiler, Architecture Reduction, Model-Test Alignment, and DevelopmentProcessFlow.
+- Recorded: 2026-05-30T10:21:31Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_similarity_convergence_model.py`
+- `simulations/run_flowpilot_similarity_convergence_checks.py`
+- `simulations/flowpilot_similarity_convergence_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok, version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project record audit passed.
+- `python simulations/run_flowpilot_similarity_convergence_checks.py --json-out simulations/flowpilot_similarity_convergence_results.json` - ok, 4 maintenance groups, 9 relations, known-bad checks passed.
+- `python -m unittest tests.test_flowpilot_model_test_alignment tests.test_flowpilot_similarity_convergence` - ok, 20 tests passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - ok, similarity_convergence_ok true, full_coverage_ok true, release_convergence_ok true, 907 covered surfaces.
+- `python scripts/check_install.py` - ok.
+- `python scripts/smoke_autopilot.py --fast` split probe - partial: first eight commands passed, then the existing persistent router daemon check exceeded a 180 second foreground probe at 80 percent progress. Existing daemon result remains ok and fresher than its runner/facade, but full smoke is not claimed as rerun.
+
+### Findings
+- Added a FlowGuard similarity-convergence gate for four FlowPilot maintenance families: packet result return reconciliation, ACK return reconciliation, route mutation replacement, and router reconciliation result cases.
+- The gate records sibling-impact obligations so a fix in one analogous branch cannot be treated as family-wide without related model and test evidence.
+- Route display refresh is explicitly quarantined as a false friend of route mutation replacement: it can project derived route evidence but must not gain route-write authority.
+- Architecture-reduction candidates are classified as risky_keep or safe_by_public_facade; state-writing branch folding remains future work requiring downstream replay, ModelMesh, StructureMesh, or Model-Test Alignment evidence.
+- Model-test alignment now consumes the similarity-convergence report and fails overall if the gate fails.
+- Install checks and the smoke command list now include the new similarity-convergence artifact and runner.
+
+### Counterexamples
+- `missing_maintenance_test_path`
+- `stale_model_signature_evidence`
+- `missing_current_similarity_evidence`
+- `unsafe_branch_fold_without_replay`
+
+### Friction Points
+- The existing persistent router daemon smoke check explores about 1,304,586 traces and can exceed foreground smoke time budgets. It should be put under TestMesh/proof-reuse policy before release-level smoke confidence is claimed.
+- No production branch fold was performed in this pass because state-writing contraction still needs downstream Architecture Reduction, ModelMesh, StructureMesh, or conformance replay evidence.
+
+### Skipped Steps
+- No FlowPilot runtime protocol behavior was changed; this pass added a maintenance model, checks, documentation, and validation wiring.
+- Full `smoke_autopilot --fast` is not claimed as passed in this turn.
+- No GitHub push, tag, release, deploy, local install sync, or OpenSpec archive was performed.
+
+### Next Actions
+- If production branch folding is desired, start from the new similarity-convergence report and run Architecture Reduction plus StructureMesh/conformance replay on the specific candidate.
+- Before release confidence, add or enforce a TestMesh freshness policy for the slow persistent daemon check instead of relying on a monolithic smoke timeout.
+
+## harden-new-flowpilot-liveness-recovery-20260530 - New FlowPilot liveness/reassignment hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to finish all planned new FlowPilot liveness/recovery repairs with OpenSpec and FlowGuard, repair the active run, sync the installed skill, and run the required regressions.
+- Status: implemented_validated_installed_synced_local_git_pending
+- Skill decision: used OpenSpec proposal/apply, FlowGuard DevelopmentProcessFlow, ModelMissReview, and Model-Test Alignment.
+- Recorded: 2026-05-30T11:41:26Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+- OpenSpec change: `harden-new-flowpilot-liveness-recovery`
+
+### Model Files
+- `simulations/flowpilot_lifecycle_guard_model.py`
+- `simulations/run_flowpilot_lifecycle_guard_checks.py`
+- `simulations/flowpilot_lifecycle_guard_results.json`
+- `simulations/flowpilot_fake_project_rehearsal_model.py`
+- `simulations/flowpilot_fake_project_rehearsal_results.json`
+- `simulations/flowpilot_known_friction_regression_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Commands
+- `python -c "import flowguard, importlib.metadata as m; print(flowguard.SCHEMA_VERSION); print(m.version('flowguard'))"` - ok, schema 1.0, version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project audit passed.
+- `openspec validate harden-new-flowpilot-liveness-recovery --strict` - ok.
+- `python -m pytest tests/test_flowpilot_lifecycle_guard.py tests/test_flowpilot_new_entrypoint.py -q` - ok, 22 tests passed.
+- `python -m pytest tests/test_flowpilot_fake_project_rehearsal.py -q` - ok, black-box fake project rehearsal passed.
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py` - ok, 465 FlowGuard traces and new liveness/accepted-packet hazards covered.
+- `python simulations/run_flowpilot_new_entrypoint_checks.py` - ok.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py` - ok, 10 fake-AI public CLI scenarios, no failures.
+- `python simulations/flowpilot_known_friction_regression_matrix.py --json-out simulations/flowpilot_known_friction_regression_results.json` - ok.
+- `python -m pytest tests/test_flowpilot_known_friction_regression_matrix.py -q` - ok, 12 tests and 68 subtests passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` - ok, `alignment_ok=true`.
+- `python skills/flowpilot/assets/flowpilot_new.py --root . --json repair-accepted-packet --packet-id packet-0003` - ok, active run repaired.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok, installed `flowpilot` overwritten from repository.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/check_install.py --json` - ok.
+- Background `python simulations/run_meta_checks.py` - ok via `tmp/flowguard_background/run_meta_checks.*`, exit 0, status passed, `proof_reused=false`.
+- Background `python simulations/run_capability_checks.py` - ok via `tmp/flowguard_background/run_capability_checks.*`, exit 0, status passed, `proof_reused=false`.
+
+### Findings
+- The new lifecycle guard now distinguishes ordinary patrol wait, ACK reminder/blocker, result liveness-check due, grace wait for still-working roles, explicit no-output/inactive failure, and accepted-packet assignment-race repair.
+- Repeated result waits no longer replace a live role by repetition alone; replacement requires current liveness failure evidence.
+- Packets with `accepted_result_id` cannot be assigned to a new lease, ACK-regressed, or progress-regressed.
+- `repair-accepted-packet` closes mistaken replacement leases and restores the original accepted result.
+- Public `progress` records lease liveness without completing a packet and refreshes foreground duty from the current-run ledger.
+- Active run `run-20260530-102304` was repaired: `packet-0003` is accepted on `result-0003`, `lease-0004` is closed, and `packet-0004` is the next validator lease action.
+- Fake AI black-box rehearsal now covers slow reviewer progress preservation and accepted-packet reassignment rejection through public `flowpilot_new.py` CLI subprocesses.
+- Known friction matrix now includes `known_friction.accepted_packet_reassignment_race` as a P0 recurring defect family.
+
+### Counterexamples
+- `slow_live_replaced`
+- `replacement_without_liveness_failure`
+- `accepted_packet_reassigned`
+- `accepted_packet_status_regressed`
+- `original_result_lost_race`
+- `lifecycle_repeated_wait_not_recovered`
+- `accepted_packet_reassignment_allowed`
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or OpenSpec archive was performed.
+- No old monitor UI, fixed six-agent topology, or old compatibility surface was restored.
+- Fake AI rehearsal is deterministic fake-host evidence against the real public CLI; it is not claimed as live external-agent reliability.
+
+### Next Actions
+- Use `foreground_duty` and `final-preflight` as Controller stop authority in fresh FlowPilot runs.
+- Archive the OpenSpec change only when the user asks to close the spec lifecycle.
+- Run release-scoped live-host gates separately before any public release claim.

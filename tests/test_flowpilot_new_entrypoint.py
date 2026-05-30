@@ -324,7 +324,10 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             with contextlib.redirect_stdout(direct_help):
                 flowpilot_new.main(["--help"])
         self.assertEqual(help_exit.exception.code, 0)
-        self.assertIn("{start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}", direct_help.getvalue())
+        self.assertIn(
+            "{start,run-fake-e2e,status,patrol,final-preflight,resume,lease-agent,ack,progress,submit-result,repair-accepted-packet}",
+            direct_help.getvalue(),
+        )
 
         direct_error = io.StringIO()
         with self.assertRaises(SystemExit) as error_exit:
@@ -340,7 +343,10 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             check=False,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
-        self.assertIn("{start,run-fake-e2e,status,patrol,resume,lease-agent,ack,submit-result}", completed.stdout)
+        self.assertIn(
+            "{start,run-fake-e2e,status,patrol,final-preflight,resume,lease-agent,ack,progress,submit-result,repair-accepted-packet}",
+            completed.stdout,
+        )
         for command in ("complete-flowguard", "record-validation"):
             self.assertNotIn(command, completed.stdout)
 

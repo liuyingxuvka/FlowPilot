@@ -56,6 +56,8 @@ SCRIPT_RESULT_PATHS = {
     "run_flowpilot_controller_break_glass_checks.py": "simulations/flowpilot_controller_break_glass_results.json",
     "run_flowpilot_daemon_liveness_checks.py": "simulations/flowpilot_daemon_liveness_results.json",
     "run_flowpilot_daemon_terminal_projection_checks.py": "simulations/flowpilot_daemon_terminal_projection_results.json",
+    "run_flowpilot_lifecycle_guard_checks.py": "simulations/flowpilot_lifecycle_guard_results.json",
+    "run_flowpilot_fake_project_rehearsal_checks.py": "simulations/flowpilot_fake_project_rehearsal_results.json",
 }
 
 REQUIRED_FRICTION_IDS = {
@@ -72,6 +74,7 @@ REQUIRED_FRICTION_IDS = {
     "known_friction.protocol_dead_end_reopened_by_resume",
     "known_friction.break_glass_patch_limbo",
     "known_friction.heartbeat_diagnostic_only_resume",
+    "known_friction.accepted_packet_reassignment_race",
 }
 
 REQUIRED_SOURCE_CLASSES = {
@@ -88,6 +91,7 @@ REQUIRED_SOURCE_CLASSES = {
     "protocol_dead_end_resume_reactivation",
     "break_glass_unvalidated_patch_closure",
     "heartbeat_resume_diagnostic_only_loop",
+    "new_runtime_wait_reassignment_race",
 }
 
 REQUIRED_GLOBAL_GATES = {
@@ -560,6 +564,42 @@ KNOWN_FRICTION_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_current": True,
         "evidence_role": PRIMARY_ROLE,
         "full_confidence_boundary": "Covers stale-heartbeat attach/recover authority and status projection boundaries; does not prove host scheduler delivery under all Codex desktop failures.",
+        "live_ai_semantic_quality_proven": False,
+    },
+    {
+        "friction_id": "known_friction.accepted_packet_reassignment_race",
+        "priority": "P0",
+        "source_class": "new_runtime_wait_reassignment_race",
+        "historical_bad_case": "run-20260530-102304 accepted reviewer result-0003, then a repeated wait created replacement lease-0004 and regressed packet-0003 to acknowledged while the original result should have remained authoritative.",
+        "trigger_state": "New FlowPilot foreground duty is waiting on an active packet lease, the role may be slow but live, and a later lifecycle pass is tempted to replace or reassign the same packet without current liveness failure evidence.",
+        "expected_safe_behavior": "Patrol keeps Controller on timed wait while progress/liveness is healthy; replacement requires current failure evidence; packets with accepted_result_id cannot be reassigned or ACK-regressed; accepted-result races are repaired by closing mistaken replacement leases and restoring the original accepted result.",
+        "model_obligation": "new_lifecycle_guard.slow_live_progress_preserved + new_lifecycle_guard.accepted_packet_reassignment_rejected + new_lifecycle_guard.accepted_packet_race_repair",
+        "model_check": "python simulations/run_flowpilot_lifecycle_guard_checks.py && python simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+        "runtime_surface": "flowpilot_new.py foreground duty, progress, lifecycle guard, packet assignment, ACK, and repair-accepted-packet command",
+        "runtime_test": "tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_progress_keeps_slow_live_result_wait_in_patrol; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_liveness_failure_allows_replacement_duty; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accepted_packet_rejects_reassignment_and_ack_regression; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_repair_accepted_packet_assignment_race_restores_original_result; tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows",
+        "replay_fixture": "current_transcript.run-20260530-102304.packet-0003.accepted_result_reassignment_race",
+        "child_evidence_ids": [
+            "historical_live_run_replay_matrix",
+            "new_lifecycle_guard_flowguard_model",
+            "new_foreground_duty_model_test_alignment",
+            "fake_project_blackbox_cli_slow_reviewer_progress",
+            "fake_project_blackbox_cli_accepted_packet_reassignment",
+        ],
+        "global_gates": [
+            "repo_source_to_installed_skill_sync",
+            "background_final_artifact_contract",
+            "current_transcript_regression",
+            "scoped_confidence_disclosure",
+        ],
+        "forbidden_shortcuts": [
+            "replace_role_on_repeated_wait_without_current_liveness_failure",
+            "assign_packet_after_accepted_result_id_exists",
+            "let_foreground_return_while_wait_or_repair_duty_is_open",
+        ],
+        "evidence_status": "passed",
+        "evidence_current": True,
+        "evidence_role": PRIMARY_ROLE,
+        "full_confidence_boundary": "Covers the new black-box runtime liveness ladder, accepted-packet hard gates, repair helper, and public fake-AI rehearsals; it does not prove external host delivery quality outside the current-run ledger contract.",
         "live_ai_semantic_quality_proven": False,
     },
 )

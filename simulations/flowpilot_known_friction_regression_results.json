@@ -1,0 +1,4049 @@
+{
+  "coverage_boundary": "Rows prove that historically recurring FlowPilot control-plane failures are represented as parent gates over child fake-AI, historical replay, runtime, install-sync, current-transcript, and background-evidence checks. Each row is also promoted to a FlowGuard defect-family gate consumed by the final risk ledger. They do not prove arbitrary live AI semantic quality or unbounded production stress.",
+  "defect_family_gate_ok": true,
+  "defect_family_gate_report": {
+    "defect_family_ids": [
+      "defect_family:worker_self_check_failure",
+      "defect_family:pm_repair_atomicity",
+      "defect_family:package_disposition_conflict_replay",
+      "defect_family:packet_reissue_continuation",
+      "defect_family:status_projection_stale",
+      "defect_family:ack_false_blocker",
+      "defect_family:controlled_stop_reconciliation",
+      "defect_family:local_fixed_router_event_receipt_only",
+      "defect_family:resume_rehydration_postcondition_replay_miss",
+      "defect_family:control_blocker_same_family_storm",
+      "defect_family:protocol_dead_end_reopened_by_resume",
+      "defect_family:break_glass_patch_limbo",
+      "defect_family:heartbeat_diagnostic_only_resume",
+      "defect_family:accepted_packet_reassignment_race"
+    ],
+    "gate_plan": {
+      "gate_count": 14,
+      "plan_id": "flowpilot_known_friction_defect_families",
+      "proof_evidence_count": 14
+    },
+    "gate_report": {
+      "blocked_gate_ids": [],
+      "confidence": "full",
+      "decision": "defect_family_gate_full_confidence",
+      "findings": [],
+      "ok": true,
+      "passed_gate_ids": [
+        "defect_family:worker_self_check_failure",
+        "defect_family:pm_repair_atomicity",
+        "defect_family:package_disposition_conflict_replay",
+        "defect_family:packet_reissue_continuation",
+        "defect_family:status_projection_stale",
+        "defect_family:ack_false_blocker",
+        "defect_family:controlled_stop_reconciliation",
+        "defect_family:local_fixed_router_event_receipt_only",
+        "defect_family:resume_rehydration_postcondition_replay_miss",
+        "defect_family:control_blocker_same_family_storm",
+        "defect_family:protocol_dead_end_reopened_by_resume",
+        "defect_family:break_glass_patch_limbo",
+        "defect_family:heartbeat_diagnostic_only_resume",
+        "defect_family:accepted_packet_reassignment_race"
+      ],
+      "plan_id": "flowpilot_known_friction_defect_families",
+      "scoped_gate_ids": [],
+      "summary": "OK: plan=flowpilot_known_friction_defect_families decision=defect_family_gate_full_confidence findings=0"
+    },
+    "ok": true,
+    "risk_ledger_plan": {
+      "ledger_id": "flowpilot_known_friction_risk_ledger",
+      "proof_evidence_count": 14,
+      "row_count": 14
+    },
+    "risk_ledger_report": {
+      "confidence": "full",
+      "decision": "risk_evidence_full_confidence",
+      "findings": [],
+      "ledger_id": "flowpilot_known_friction_risk_ledger",
+      "ok": true,
+      "summary": "OK: ledger=flowpilot_known_friction_risk_ledger decision=risk_evidence_full_confidence findings=0"
+    }
+  },
+  "defect_family_known_bad_cases": [
+    {
+      "expected_codes": [
+        "defect_family_not_promoted",
+        "recurring_miss_not_promoted"
+      ],
+      "name": "missing_family_promotion",
+      "report": {
+        "defect_family_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "gate_plan": {
+          "gate_count": 1,
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "proof_evidence_count": 1
+        },
+        "gate_report": {
+          "blocked_gate_ids": [
+            "defect_family:worker_self_check_failure"
+          ],
+          "confidence": "blocked",
+          "decision": "recurring_miss_not_promoted",
+          "findings": [
+            {
+              "code": "recurring_miss_not_promoted",
+              "evidence_id": "",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "recurring or high-risk same-class model miss has not been promoted to a defect-family gate",
+              "metadata": {
+                "high_risk": true,
+                "recurrence_count": 2
+              },
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "passed_gate_ids": [],
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "scoped_gate_ids": [],
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=recurring_miss_not_promoted findings=1"
+        },
+        "ok": false,
+        "risk_ledger_plan": {
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "proof_evidence_count": 1,
+          "row_count": 1
+        },
+        "risk_ledger_report": {
+          "confidence": "blocked",
+          "decision": "defect_family_gate_not_current",
+          "findings": [
+            {
+              "code": "defect_family_gate_not_current",
+              "evidence_id": "",
+              "message": "required defect-family gate evidence is stale or has not been rerun",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_gate_blocked",
+              "evidence_id": "",
+              "message": "required defect-family gate is blocked",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            }
+          ],
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "ok": false,
+          "summary": "BLOCKED: ledger=flowpilot_known_friction_risk_ledger decision=defect_family_gate_not_current findings=2"
+        }
+      },
+      "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.accepted_packet_reassignment_race",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.ack_false_blocker",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.break_glass_patch_limbo",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.control_blocker_same_family_storm",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.local_fixed_router_event_receipt_only",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.package_disposition_conflict_replay",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.packet_reissue_continuation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.pm_repair_atomicity",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.status_projection_stale",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "ack_completion_conflation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "break_glass_unvalidated_patch_closure"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "heartbeat_resume_diagnostic_only_loop"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "local_role_output_receipt_without_router_event"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "new_runtime_wait_reassignment_race"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_package_disposition_replay_conflict"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "protocol_dead_end_resume_reactivation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "resume_rehydration_postcondition_replay"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "same_family_control_blocker_repetition"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "user_visible_status_projection"
+        },
+        {
+          "code": "defect_family_not_promoted",
+          "friction_id": "known_friction.worker_self_check_failure",
+          "message": "recurring known-friction rows must be explicitly promoted to a defect-family gate"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "invalid_evidence_status"
+      ],
+      "name": "progress_only_defect_family_proof",
+      "report": {
+        "defect_family_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "gate_plan": {
+          "gate_count": 1,
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "proof_evidence_count": 1
+        },
+        "gate_report": {
+          "blocked_gate_ids": [
+            "defect_family:worker_self_check_failure"
+          ],
+          "confidence": "blocked",
+          "decision": "defect_family_proof_not_passing",
+          "findings": [
+            {
+              "code": "defect_family_proof_not_passing",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family proof evidence status is progress_only",
+              "metadata": {},
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_proof_artifact_not_passing",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "proof artifact status is progress_only",
+              "metadata": {
+                "evidence": {
+                  "assertion_scope": "external_contract",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "current": true,
+                  "evidence_id": "proof:defect_family:worker_self_check_failure",
+                  "metadata": {
+                    "child_evidence_ids": [
+                      "historical_live_run_replay_matrix",
+                      "hard_gate_red_team_matrix",
+                      "pm_package_disposition_semantics"
+                    ],
+                    "friction_id": "known_friction.worker_self_check_failure",
+                    "global_gates": [
+                      "repo_source_to_installed_skill_sync",
+                      "copied_runtime_kit_freshness",
+                      "historical_live_run_replay",
+                      "current_transcript_regression",
+                      "scoped_confidence_disclosure"
+                    ]
+                  },
+                  "producer_route": "known_friction_regression_matrix",
+                  "proof_artifact": {
+                    "artifact_fingerprints": {
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:2388952b689776c7631f4c095bf020726d0256af717108b1ded5583a236fb014"
+                    },
+                    "artifact_id": "artifact:defect_family:worker_self_check_failure",
+                    "assertion_scope": "external_contract",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "covered_obligation_ids": [
+                      "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+                      "proof:defect_family:worker_self_check_failure",
+                      "known_friction.worker_self_check_failure"
+                    ],
+                    "current": true,
+                    "exit_code": 1,
+                    "finished_at": "",
+                    "metadata": {
+                      "friction_id": "known_friction.worker_self_check_failure",
+                      "result_paths": [
+                        "simulations/flowpilot_control_plane_friction_results.json"
+                      ]
+                    },
+                    "producer_route": "known_friction_regression_matrix",
+                    "progress_only": false,
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+                    "result_status": "progress_only",
+                    "route_evidence_current": true,
+                    "route_gap_codes": [],
+                    "stale_reasons": [],
+                    "started_at": ""
+                  },
+                  "result_status": "progress_only",
+                  "route_evidence_current": true,
+                  "route_gap_codes": [],
+                  "stale_reasons": [],
+                  "summary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality."
+                }
+              },
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_proof_artifact_nonzero_exit",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "proof artifact exit code is 1",
+              "metadata": {
+                "evidence": {
+                  "assertion_scope": "external_contract",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "current": true,
+                  "evidence_id": "proof:defect_family:worker_self_check_failure",
+                  "metadata": {
+                    "child_evidence_ids": [
+                      "historical_live_run_replay_matrix",
+                      "hard_gate_red_team_matrix",
+                      "pm_package_disposition_semantics"
+                    ],
+                    "friction_id": "known_friction.worker_self_check_failure",
+                    "global_gates": [
+                      "repo_source_to_installed_skill_sync",
+                      "copied_runtime_kit_freshness",
+                      "historical_live_run_replay",
+                      "current_transcript_regression",
+                      "scoped_confidence_disclosure"
+                    ]
+                  },
+                  "producer_route": "known_friction_regression_matrix",
+                  "proof_artifact": {
+                    "artifact_fingerprints": {
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:2388952b689776c7631f4c095bf020726d0256af717108b1ded5583a236fb014"
+                    },
+                    "artifact_id": "artifact:defect_family:worker_self_check_failure",
+                    "assertion_scope": "external_contract",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "covered_obligation_ids": [
+                      "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+                      "proof:defect_family:worker_self_check_failure",
+                      "known_friction.worker_self_check_failure"
+                    ],
+                    "current": true,
+                    "exit_code": 1,
+                    "finished_at": "",
+                    "metadata": {
+                      "friction_id": "known_friction.worker_self_check_failure",
+                      "result_paths": [
+                        "simulations/flowpilot_control_plane_friction_results.json"
+                      ]
+                    },
+                    "producer_route": "known_friction_regression_matrix",
+                    "progress_only": false,
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+                    "result_status": "progress_only",
+                    "route_evidence_current": true,
+                    "route_gap_codes": [],
+                    "stale_reasons": [],
+                    "started_at": ""
+                  },
+                  "result_status": "progress_only",
+                  "route_evidence_current": true,
+                  "route_gap_codes": [],
+                  "stale_reasons": [],
+                  "summary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality."
+                }
+              },
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_defect_family_proof",
+              "evidence_id": "",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family gate has no current passing proof evidence",
+              "metadata": {},
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "passed_gate_ids": [],
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "scoped_gate_ids": [],
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=defect_family_proof_not_passing findings=4"
+        },
+        "ok": false,
+        "risk_ledger_plan": {
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "proof_evidence_count": 1,
+          "row_count": 1
+        },
+        "risk_ledger_report": {
+          "confidence": "blocked",
+          "decision": "defect_family_gate_not_current",
+          "findings": [
+            {
+              "code": "defect_family_gate_not_current",
+              "evidence_id": "",
+              "message": "required defect-family gate evidence is stale or has not been rerun",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_gate_blocked",
+              "evidence_id": "",
+              "message": "required defect-family gate is blocked",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "proof_evidence_not_passing",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof evidence status is progress_only",
+              "metadata": {},
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "proof_evidence_artifact_not_passing",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof artifact status is progress_only",
+              "metadata": {
+                "proof": {
+                  "assertion_scope": "external_contract",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "current": true,
+                  "evidence_id": "proof:defect_family:worker_self_check_failure",
+                  "metadata": {},
+                  "producer_route": "known_friction_regression_matrix",
+                  "proof_artifact": {
+                    "artifact_fingerprints": {
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:2388952b689776c7631f4c095bf020726d0256af717108b1ded5583a236fb014"
+                    },
+                    "artifact_id": "artifact:defect_family:worker_self_check_failure",
+                    "assertion_scope": "external_contract",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "covered_obligation_ids": [
+                      "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+                      "proof:defect_family:worker_self_check_failure",
+                      "known_friction.worker_self_check_failure"
+                    ],
+                    "current": true,
+                    "exit_code": 1,
+                    "finished_at": "",
+                    "metadata": {
+                      "friction_id": "known_friction.worker_self_check_failure",
+                      "result_paths": [
+                        "simulations/flowpilot_control_plane_friction_results.json"
+                      ]
+                    },
+                    "producer_route": "known_friction_regression_matrix",
+                    "progress_only": false,
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+                    "result_status": "progress_only",
+                    "route_evidence_current": true,
+                    "route_gap_codes": [],
+                    "stale_reasons": [],
+                    "started_at": ""
+                  },
+                  "proof_kind": "known_friction_regression",
+                  "result_status": "progress_only",
+                  "route_evidence_current": true,
+                  "route_gap_codes": [],
+                  "stale_reasons": [],
+                  "summary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality."
+                }
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "proof_evidence_artifact_nonzero_exit",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof artifact exit code is 1",
+              "metadata": {
+                "proof": {
+                  "assertion_scope": "external_contract",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "current": true,
+                  "evidence_id": "proof:defect_family:worker_self_check_failure",
+                  "metadata": {},
+                  "producer_route": "known_friction_regression_matrix",
+                  "proof_artifact": {
+                    "artifact_fingerprints": {
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:2388952b689776c7631f4c095bf020726d0256af717108b1ded5583a236fb014"
+                    },
+                    "artifact_id": "artifact:defect_family:worker_self_check_failure",
+                    "assertion_scope": "external_contract",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "covered_obligation_ids": [
+                      "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+                      "proof:defect_family:worker_self_check_failure",
+                      "known_friction.worker_self_check_failure"
+                    ],
+                    "current": true,
+                    "exit_code": 1,
+                    "finished_at": "",
+                    "metadata": {
+                      "friction_id": "known_friction.worker_self_check_failure",
+                      "result_paths": [
+                        "simulations/flowpilot_control_plane_friction_results.json"
+                      ]
+                    },
+                    "producer_route": "known_friction_regression_matrix",
+                    "progress_only": false,
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+                    "result_status": "progress_only",
+                    "route_evidence_current": true,
+                    "route_gap_codes": [],
+                    "stale_reasons": [],
+                    "started_at": ""
+                  },
+                  "proof_kind": "known_friction_regression",
+                  "result_status": "progress_only",
+                  "route_evidence_current": true,
+                  "route_gap_codes": [],
+                  "stale_reasons": [],
+                  "summary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality."
+                }
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_passing_proof",
+              "evidence_id": "",
+              "message": "required risk has no current passing proof evidence",
+              "metadata": {},
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            }
+          ],
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "ok": false,
+          "summary": "BLOCKED: ledger=flowpilot_known_friction_risk_ledger decision=defect_family_gate_not_current findings=6"
+        }
+      },
+      "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.accepted_packet_reassignment_race",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.ack_false_blocker",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.break_glass_patch_limbo",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.control_blocker_same_family_storm",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.local_fixed_router_event_receipt_only",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.package_disposition_conflict_replay",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.packet_reissue_continuation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.pm_repair_atomicity",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.status_projection_stale",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "ack_completion_conflation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "break_glass_unvalidated_patch_closure"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "heartbeat_resume_diagnostic_only_loop"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "local_role_output_receipt_without_router_event"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "new_runtime_wait_reassignment_race"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_package_disposition_replay_conflict"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "protocol_dead_end_resume_reactivation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "resume_rehydration_postcondition_replay"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "same_family_control_blocker_repetition"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "user_visible_status_projection"
+        },
+        {
+          "code": "invalid_evidence_status",
+          "friction_id": "known_friction.worker_self_check_failure",
+          "message": "known-friction evidence must be passed before parent confidence can pass"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "stale_evidence"
+      ],
+      "name": "stale_defect_family_proof",
+      "report": {
+        "defect_family_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "gate_plan": {
+          "gate_count": 1,
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "proof_evidence_count": 1
+        },
+        "gate_report": {
+          "blocked_gate_ids": [
+            "defect_family:worker_self_check_failure"
+          ],
+          "confidence": "blocked",
+          "decision": "stale_defect_family_proof",
+          "findings": [
+            {
+              "code": "stale_defect_family_proof",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family proof evidence is stale or its route evidence is stale",
+              "metadata": {
+                "stale_reasons": []
+              },
+              "severity": "blocker"
+            },
+            {
+              "code": "stale_defect_family_proof_artifact",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "proof artifact or its route evidence is stale",
+              "metadata": {
+                "evidence": {
+                  "assertion_scope": "external_contract",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "current": false,
+                  "evidence_id": "proof:defect_family:worker_self_check_failure",
+                  "metadata": {
+                    "child_evidence_ids": [
+                      "historical_live_run_replay_matrix",
+                      "hard_gate_red_team_matrix",
+                      "pm_package_disposition_semantics"
+                    ],
+                    "friction_id": "known_friction.worker_self_check_failure",
+                    "global_gates": [
+                      "repo_source_to_installed_skill_sync",
+                      "copied_runtime_kit_freshness",
+                      "historical_live_run_replay",
+                      "current_transcript_regression",
+                      "scoped_confidence_disclosure"
+                    ]
+                  },
+                  "producer_route": "known_friction_regression_matrix",
+                  "proof_artifact": {
+                    "artifact_fingerprints": {
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:2388952b689776c7631f4c095bf020726d0256af717108b1ded5583a236fb014"
+                    },
+                    "artifact_id": "artifact:defect_family:worker_self_check_failure",
+                    "assertion_scope": "external_contract",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "covered_obligation_ids": [
+                      "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+                      "proof:defect_family:worker_self_check_failure",
+                      "known_friction.worker_self_check_failure"
+                    ],
+                    "current": false,
+                    "exit_code": 0,
+                    "finished_at": "",
+                    "metadata": {
+                      "friction_id": "known_friction.worker_self_check_failure",
+                      "result_paths": [
+                        "simulations/flowpilot_control_plane_friction_results.json"
+                      ]
+                    },
+                    "producer_route": "known_friction_regression_matrix",
+                    "progress_only": false,
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+                    "result_status": "passed",
+                    "route_evidence_current": false,
+                    "route_gap_codes": [],
+                    "stale_reasons": [],
+                    "started_at": ""
+                  },
+                  "result_status": "passed",
+                  "route_evidence_current": true,
+                  "route_gap_codes": [],
+                  "stale_reasons": [],
+                  "summary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality."
+                }
+              },
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_defect_family_proof",
+              "evidence_id": "",
+              "gate_id": "defect_family:worker_self_check_failure",
+              "message": "defect-family gate has no current passing proof evidence",
+              "metadata": {},
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "passed_gate_ids": [],
+          "plan_id": "flowpilot_known_friction_defect_families",
+          "scoped_gate_ids": [],
+          "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=stale_defect_family_proof findings=3"
+        },
+        "ok": false,
+        "risk_ledger_plan": {
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "proof_evidence_count": 1,
+          "row_count": 1
+        },
+        "risk_ledger_report": {
+          "confidence": "blocked",
+          "decision": "defect_family_gate_not_current",
+          "findings": [
+            {
+              "code": "defect_family_gate_not_current",
+              "evidence_id": "",
+              "message": "required defect-family gate evidence is stale or has not been rerun",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "defect_family_gate_blocked",
+              "evidence_id": "",
+              "message": "required defect-family gate is blocked",
+              "metadata": {
+                "defect_family_id": "defect_family:worker_self_check_failure"
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "stale_proof_evidence",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof evidence is stale or its route evidence is stale",
+              "metadata": {
+                "stale_reasons": []
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "stale_proof_evidence_artifact",
+              "evidence_id": "proof:defect_family:worker_self_check_failure",
+              "message": "proof artifact or its route evidence is stale",
+              "metadata": {
+                "proof": {
+                  "assertion_scope": "external_contract",
+                  "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                  "current": false,
+                  "evidence_id": "proof:defect_family:worker_self_check_failure",
+                  "metadata": {},
+                  "producer_route": "known_friction_regression_matrix",
+                  "proof_artifact": {
+                    "artifact_fingerprints": {
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:2388952b689776c7631f4c095bf020726d0256af717108b1ded5583a236fb014"
+                    },
+                    "artifact_id": "artifact:defect_family:worker_self_check_failure",
+                    "assertion_scope": "external_contract",
+                    "command": "python simulations/run_flowpilot_control_plane_friction_checks.py; tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+                    "covered_obligation_ids": [
+                      "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+                      "proof:defect_family:worker_self_check_failure",
+                      "known_friction.worker_self_check_failure"
+                    ],
+                    "current": false,
+                    "exit_code": 0,
+                    "finished_at": "",
+                    "metadata": {
+                      "friction_id": "known_friction.worker_self_check_failure",
+                      "result_paths": [
+                        "simulations/flowpilot_control_plane_friction_results.json"
+                      ]
+                    },
+                    "producer_route": "known_friction_regression_matrix",
+                    "progress_only": false,
+                    "result_path": "simulations/flowpilot_control_plane_friction_results.json",
+                    "result_status": "passed",
+                    "route_evidence_current": false,
+                    "route_gap_codes": [],
+                    "stale_reasons": [],
+                    "started_at": ""
+                  },
+                  "proof_kind": "known_friction_regression",
+                  "result_status": "passed",
+                  "route_evidence_current": true,
+                  "route_gap_codes": [],
+                  "stale_reasons": [],
+                  "summary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality."
+                }
+              },
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            },
+            {
+              "code": "missing_current_passing_proof",
+              "evidence_id": "",
+              "message": "required risk has no current passing proof evidence",
+              "metadata": {},
+              "risk_id": "known_friction.worker_self_check_failure",
+              "severity": "blocker"
+            }
+          ],
+          "ledger_id": "flowpilot_known_friction_risk_ledger",
+          "ok": false,
+          "summary": "BLOCKED: ledger=flowpilot_known_friction_risk_ledger decision=defect_family_gate_not_current findings=5"
+        }
+      },
+      "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.accepted_packet_reassignment_race",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.ack_false_blocker",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.break_glass_patch_limbo",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.control_blocker_same_family_storm",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.controlled_stop_reconciliation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.local_fixed_router_event_receipt_only",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.package_disposition_conflict_replay",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.packet_reissue_continuation",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.pm_repair_atomicity",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.status_projection_stale",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "ack_completion_conflation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "break_glass_unvalidated_patch_closure"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "daemon_lifecycle_stop_boundary"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "heartbeat_resume_diagnostic_only_loop"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "local_role_output_receipt_without_router_event"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "new_runtime_wait_reassignment_race"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_package_disposition_replay_conflict"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "pm_repair_transaction_interleaving"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "protocol_dead_end_resume_reactivation"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "resume_rehydration_postcondition_replay"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "same_family_control_blocker_repetition"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "user_visible_status_projection"
+        },
+        {
+          "code": "stale_evidence",
+          "friction_id": "known_friction.worker_self_check_failure",
+          "message": "known-friction evidence must be current"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "defect_family_proof_internal_path_only"
+      ],
+      "name": "internal_only_defect_family_proof",
+      "report": {
+        "blocked_gate_ids": [
+          "defect_family:worker_self_check_failure"
+        ],
+        "confidence": "blocked",
+        "decision": "defect_family_proof_internal_path_only",
+        "findings": [
+          {
+            "code": "defect_family_proof_internal_path_only",
+            "evidence_id": "",
+            "gate_id": "defect_family:worker_self_check_failure",
+            "message": "passing defect-family proof does not exercise the external authority boundary",
+            "metadata": {},
+            "severity": "blocker"
+          }
+        ],
+        "ok": false,
+        "passed_gate_ids": [],
+        "plan_id": "flowpilot_known_friction_defect_families",
+        "scoped_gate_ids": [],
+        "summary": "BLOCKED: plan=flowpilot_known_friction_defect_families decision=defect_family_proof_internal_path_only findings=1"
+      },
+      "row_findings": []
+    }
+  ],
+  "findings": [],
+  "known_bad_cases": [
+    {
+      "expected_codes": [
+        "missing_required_friction",
+        "missing_source_class"
+      ],
+      "name": "missing_required_friction",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "historical_live_run_replay_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": true,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "passed",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known_friction.worker_self_check_failure",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "current_transcript_regression",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": false,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "role_output_runtime",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "invalid_evidence_status",
+        "missing_required_friction"
+      ],
+      "name": "progress_only_evidence",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "historical_live_run_replay_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": true,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "progress_only",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known.bad",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "current_transcript_regression",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": false,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "role_output_runtime",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "stale_evidence",
+        "missing_required_friction"
+      ],
+      "name": "stale_evidence",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "historical_live_run_replay_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": false,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "passed",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known.bad",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "current_transcript_regression",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": false,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "role_output_runtime",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "model_only_surface",
+        "missing_required_friction"
+      ],
+      "name": "model_only_surface",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "historical_live_run_replay_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": true,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "passed",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known.bad",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "current_transcript_regression",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": false,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "model_check_only",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "missing_historical_replay_child",
+        "missing_required_friction"
+      ],
+      "name": "missing_historical_child",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "hard_gate_red_team_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": true,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "passed",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known.bad",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "current_transcript_regression",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": false,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "role_output_runtime",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "live_ai_semantic_overclaim",
+        "missing_required_friction"
+      ],
+      "name": "live_ai_semantic_overclaim",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "historical_live_run_replay_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": true,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "passed",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known.bad",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "current_transcript_regression",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": true,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "role_output_runtime",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    },
+    {
+      "expected_codes": [
+        "p0_missing_current_transcript_gate",
+        "missing_required_friction"
+      ],
+      "name": "p0_missing_current_transcript",
+      "rows": [
+        {
+          "child_evidence_ids": [
+            "historical_live_run_replay_matrix"
+          ],
+          "defect_family_authority_boundary": "role_output_runtime",
+          "defect_family_gate_required": true,
+          "defect_family_high_risk": true,
+          "defect_family_id": "defect_family:known.bad",
+          "defect_family_promoted": true,
+          "defect_family_recurrence_count": 2,
+          "evidence_current": true,
+          "evidence_role": "primary_known_friction_gate",
+          "evidence_status": "passed",
+          "expected_safe_behavior": "blocked_until_repair",
+          "forbidden_shortcuts": [
+            "shortcut_one",
+            "shortcut_two"
+          ],
+          "friction_id": "known.bad",
+          "full_confidence_boundary": "known bad evidence; does not prove live AI semantic quality",
+          "global_gates": [
+            "historical_live_run_replay",
+            "scoped_confidence_disclosure"
+          ],
+          "historical_bad_case": "known bad fixture",
+          "live_ai_semantic_quality_proven": false,
+          "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+          "model_obligation": "known_bad.model_obligation",
+          "priority": "P0",
+          "replay_fixture": "known_bad.fixture",
+          "runtime_surface": "role_output_runtime",
+          "runtime_test": "tests.known_bad.KnownBad.test_case",
+          "source_class": "worker_output_contract_failure",
+          "trigger_state": "known bad state"
+        }
+      ]
+    }
+  ],
+  "missing_global_gates": [],
+  "observed_global_gates": [
+    "background_final_artifact_contract",
+    "copied_runtime_kit_freshness",
+    "current_transcript_regression",
+    "historical_live_run_replay",
+    "repo_source_to_installed_skill_sync",
+    "scoped_confidence_disclosure"
+  ],
+  "ok": true,
+  "packet_result_family_parity": {
+    "analogous_scan_ok": true,
+    "analogous_scan_report": {
+      "candidates": [
+        {
+          "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+          "description": "material_scan sibling scan for durable-envelope event fold.",
+          "disposition": "covered_current",
+          "disposition_reason": "Covered by the packet-result family runtime suite and parity evidence.",
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
+          ],
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "material_scan",
+          "metadata": {},
+          "radius": "must_scan",
+          "source": "explicit_sibling_review"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+          "description": "current_node sibling scan for durable-envelope event fold.",
+          "disposition": "covered_current",
+          "disposition_reason": "Covered by the packet-result family runtime suite and parity evidence.",
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.current_node.full_durable_envelope_event_fold"
+          ],
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "metadata": {},
+          "radius": "must_scan",
+          "source": "explicit_sibling_review"
+        },
+        {
+          "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+          "description": "pm_role_work sibling scan for durable-envelope event fold.",
+          "disposition": "covered_current",
+          "disposition_reason": "Covered by the packet-result family runtime suite and parity evidence.",
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.pm_role_work.full_durable_envelope_event_fold"
+          ],
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "pm_role_work",
+          "metadata": {},
+          "radius": "must_scan",
+          "source": "explicit_sibling_review"
+        }
+      ],
+      "confidence": "full",
+      "decision": "analogous_defect_scan_complete",
+      "derived_bad_cases": [
+        {
+          "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
+          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+          "expected_status": "must_fail_before_repair",
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "material_scan",
+          "metadata": {
+            "observed_date": "2026-05-28",
+            "seed_id": "research_joined_without_return_event"
+          },
+          "source_case_id": "openspec.reconcile-research-batch-results",
+          "source_member_id": "research"
+        },
+        {
+          "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+          "expected_status": "must_fail_before_repair",
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "metadata": {
+            "observed_date": "2026-05-28",
+            "seed_id": "research_joined_without_return_event"
+          },
+          "source_case_id": "openspec.reconcile-research-batch-results",
+          "source_member_id": "research"
+        },
+        {
+          "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+          "expected_status": "must_fail_before_repair",
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "pm_role_work",
+          "metadata": {
+            "observed_date": "2026-05-28",
+            "seed_id": "research_joined_without_return_event"
+          },
+          "source_case_id": "openspec.reconcile-research-batch-results",
+          "source_member_id": "research"
+        }
+      ],
+      "findings": [],
+      "ok": true,
+      "seed": {
+        "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+        "exclude_member_ids": [],
+        "failure_mode": "durable_result_joined_but_router_event_absent",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "full_durable_envelope_event_fold",
+        "metadata": {
+          "observed_date": "2026-05-28"
+        },
+        "seed_id": "research_joined_without_return_event",
+        "source_case_id": "openspec.reconcile-research-batch-results",
+        "source_member_id": "research"
+      },
+      "summary": "OK: decision=analogous_defect_scan_complete findings=0 candidates=3"
+    },
+    "evidence": [
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_existing_results_reconcile_before_stale_wait",
+        "covered_obligations": [
+          "packet_result_family.material_scan.durable_event_fold",
+          "packet_result_family.material_scan.partial_wait",
+          "packet_result_family.material_scan.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "full_durable_envelope_event_fold",
+        "member_id": "material_scan",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "material_scan covers full_durable_envelope_event_fold through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+        "covered_obligations": [
+          "packet_result_family.material_scan.durable_event_fold",
+          "packet_result_family.material_scan.partial_wait",
+          "packet_result_family.material_scan.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "partial_member_wait_projection",
+        "member_id": "material_scan",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "material_scan covers partial_member_wait_projection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+        "covered_obligations": [
+          "packet_result_family.material_scan.durable_event_fold",
+          "packet_result_family.material_scan.partial_wait",
+          "packet_result_family.material_scan.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "stale_reminder_suppression",
+        "member_id": "material_scan",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "material_scan covers stale_reminder_suppression through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.material_scan.durable_event_fold",
+          "packet_result_family.material_scan.partial_wait",
+          "packet_result_family.material_scan.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "wrong_recipient_rejection",
+        "member_id": "material_scan",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "material_scan covers wrong_recipient_rejection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_material_scan_result_receipt_folds_batch_lifecycle",
+        "covered_obligations": [
+          "packet_result_family.material_scan.durable_event_fold",
+          "packet_result_family.material_scan.partial_wait",
+          "packet_result_family.material_scan.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "sealed_body_provenance",
+        "member_id": "material_scan",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "material_scan covers sealed_body_provenance through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.research.durable_event_fold",
+          "packet_result_family.research.partial_wait",
+          "packet_result_family.research.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "full_durable_envelope_event_fold",
+        "member_id": "research",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "research covers full_durable_envelope_event_fold through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.research.durable_event_fold",
+          "packet_result_family.research.partial_wait",
+          "packet_result_family.research.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.research.partial_member_wait_projection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "partial_member_wait_projection",
+        "member_id": "research",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "research covers partial_member_wait_projection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.research.durable_event_fold",
+          "packet_result_family.research.partial_wait",
+          "packet_result_family.research.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.research.stale_reminder_suppression",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "stale_reminder_suppression",
+        "member_id": "research",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "research covers stale_reminder_suppression through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.research.durable_event_fold",
+          "packet_result_family.research.partial_wait",
+          "packet_result_family.research.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.research.wrong_recipient_rejection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "wrong_recipient_rejection",
+        "member_id": "research",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "research covers wrong_recipient_rejection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.research.durable_event_fold",
+          "packet_result_family.research.partial_wait",
+          "packet_result_family.research.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.research.sealed_body_provenance",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "sealed_body_provenance",
+        "member_id": "research",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "research covers sealed_body_provenance through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.current_node.durable_event_fold",
+          "packet_result_family.current_node.partial_wait",
+          "packet_result_family.current_node.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.current_node.full_durable_envelope_event_fold",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "full_durable_envelope_event_fold",
+        "member_id": "current_node",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "current_node covers full_durable_envelope_event_fold through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.current_node.durable_event_fold",
+          "packet_result_family.current_node.partial_wait",
+          "packet_result_family.current_node.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.current_node.partial_member_wait_projection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "partial_member_wait_projection",
+        "member_id": "current_node",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "current_node covers partial_member_wait_projection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.current_node.durable_event_fold",
+          "packet_result_family.current_node.partial_wait",
+          "packet_result_family.current_node.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.current_node.stale_reminder_suppression",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "stale_reminder_suppression",
+        "member_id": "current_node",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "current_node covers stale_reminder_suppression through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.current_node.durable_event_fold",
+          "packet_result_family.current_node.partial_wait",
+          "packet_result_family.current_node.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.current_node.wrong_recipient_rejection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "wrong_recipient_rejection",
+        "member_id": "current_node",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "current_node covers wrong_recipient_rejection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.current_node.durable_event_fold",
+          "packet_result_family.current_node.partial_wait",
+          "packet_result_family.current_node.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.current_node.sealed_body_provenance",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "sealed_body_provenance",
+        "member_id": "current_node",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "current_node covers sealed_body_provenance through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.pm_role_work.durable_event_fold",
+          "packet_result_family.pm_role_work.partial_wait",
+          "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.full_durable_envelope_event_fold",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "full_durable_envelope_event_fold",
+        "member_id": "pm_role_work",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "pm_role_work covers full_durable_envelope_event_fold through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.pm_role_work.durable_event_fold",
+          "packet_result_family.pm_role_work.partial_wait",
+          "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.partial_member_wait_projection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "partial_member_wait_projection",
+        "member_id": "pm_role_work",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "pm_role_work covers partial_member_wait_projection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.pm_role_work.durable_event_fold",
+          "packet_result_family.pm_role_work.partial_wait",
+          "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.stale_reminder_suppression",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "stale_reminder_suppression",
+        "member_id": "pm_role_work",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "pm_role_work covers stale_reminder_suppression through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.pm_role_work.PmRoleWorkRuntimeTests.test_strict_pm_role_work_result_rejects_wrong_next_recipient",
+        "covered_obligations": [
+          "packet_result_family.pm_role_work.durable_event_fold",
+          "packet_result_family.pm_role_work.partial_wait",
+          "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "wrong_recipient_rejection",
+        "member_id": "pm_role_work",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "pm_role_work covers wrong_recipient_rejection through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family",
+        "covered_obligations": [
+          "packet_result_family.pm_role_work.durable_event_fold",
+          "packet_result_family.pm_role_work.partial_wait",
+          "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.sealed_body_provenance",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "sealed_body_provenance",
+        "member_id": "pm_role_work",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "pm_role_work covers sealed_body_provenance through packet-result family tests."
+      },
+      {
+        "assertion_scope": "external_contract",
+        "command": "python -m unittest tests.router_runtime.packet_result_family.PacketResultFamilyRuntimeTests.test_research_full_batch_reconciles_from_durable_results_without_manual_event",
+        "covered_obligations": [
+          "packet_result_family.research.durable_event_fold",
+          "packet_result_family.research.partial_wait",
+          "packet_result_family.research.recipient_and_sealed_boundary"
+        ],
+        "current": true,
+        "evidence_id": "flowpilot.packet_result_return_reconciliation.research.observed_regression",
+        "family_id": "flowpilot.packet_result_return_reconciliation",
+        "mechanism_id": "full_durable_envelope_event_fold",
+        "member_id": "research",
+        "metadata": {},
+        "proof_artifact": null,
+        "provenance": "runtime_test",
+        "result_status": "passed",
+        "stale_reasons": [],
+        "summary": "Observed research durable-join miss is covered as a current regression."
+      }
+    ],
+    "family": {
+      "allow_scoped_confidence": false,
+      "allowed_provenance": [
+        "runtime_test",
+        "flowguard_model"
+      ],
+      "description": "Every Router-owned packet-result family must reconcile durable result envelopes into existing result-return control-plane events before waits/reminders or broad confidence claims.",
+      "family_id": "flowpilot.packet_result_return_reconciliation",
+      "members": [
+        {
+          "allowed_provenance": [],
+          "description": "FlowPilot packet-result reconciliation member: material_scan",
+          "exception_reason": "",
+          "member_id": "material_scan",
+          "obligation_ids": [
+            "packet_result_family.material_scan.durable_event_fold",
+            "packet_result_family.material_scan.partial_wait",
+            "packet_result_family.material_scan.recipient_and_sealed_boundary"
+          ],
+          "required": true,
+          "required_mechanisms": []
+        },
+        {
+          "allowed_provenance": [],
+          "description": "FlowPilot packet-result reconciliation member: research",
+          "exception_reason": "",
+          "member_id": "research",
+          "obligation_ids": [
+            "packet_result_family.research.durable_event_fold",
+            "packet_result_family.research.partial_wait",
+            "packet_result_family.research.recipient_and_sealed_boundary"
+          ],
+          "required": true,
+          "required_mechanisms": []
+        },
+        {
+          "allowed_provenance": [],
+          "description": "FlowPilot packet-result reconciliation member: current_node",
+          "exception_reason": "",
+          "member_id": "current_node",
+          "obligation_ids": [
+            "packet_result_family.current_node.durable_event_fold",
+            "packet_result_family.current_node.partial_wait",
+            "packet_result_family.current_node.recipient_and_sealed_boundary"
+          ],
+          "required": true,
+          "required_mechanisms": []
+        },
+        {
+          "allowed_provenance": [],
+          "description": "FlowPilot packet-result reconciliation member: pm_role_work",
+          "exception_reason": "",
+          "member_id": "pm_role_work",
+          "obligation_ids": [
+            "packet_result_family.pm_role_work.durable_event_fold",
+            "packet_result_family.pm_role_work.partial_wait",
+            "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+          ],
+          "required": true,
+          "required_mechanisms": []
+        }
+      ],
+      "metadata": {
+        "controller_visibility": "metadata_only",
+        "owner_boundary": "Router durable wait reconciliation"
+      },
+      "require_external_evidence": true,
+      "require_proof_artifacts": false,
+      "required": true,
+      "required_mechanisms": [
+        "full_durable_envelope_event_fold",
+        "partial_member_wait_projection",
+        "stale_reminder_suppression",
+        "wrong_recipient_rejection",
+        "sealed_body_provenance"
+      ]
+    },
+    "family_id": "flowpilot.packet_result_return_reconciliation",
+    "known_bad_cases": [
+      {
+        "expected_codes": [
+          "missing_family_member_mechanism_evidence"
+        ],
+        "finding_codes": [
+          "missing_family_member_mechanism_evidence"
+        ],
+        "name": "missing_sibling_mechanism_evidence",
+        "ok": true,
+        "report": {
+          "confidence": "blocked",
+          "coverage_matrix": [
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+                "flowpilot.packet_result_return_reconciliation.research.observed_regression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [],
+              "evidence_ids": [],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "scoped_reasons": [
+                "missing_family_member_mechanism_evidence"
+              ],
+              "status": "missing"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            }
+          ],
+          "decision": "obligation_family_parity_blocked",
+          "derived_bad_cases": [],
+          "findings": [
+            {
+              "code": "missing_family_member_mechanism_evidence",
+              "evidence_id": "",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "message": "required family member has no current passing evidence for the mechanism",
+              "metadata": {},
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=20"
+        }
+      },
+      {
+        "expected_codes": [
+          "stale_family_evidence"
+        ],
+        "finding_codes": [
+          "stale_family_evidence"
+        ],
+        "name": "stale_sibling_mechanism_evidence",
+        "ok": true,
+        "report": {
+          "confidence": "blocked",
+          "coverage_matrix": [
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+                "flowpilot.packet_result_return_reconciliation.research.observed_regression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "research",
+              "scoped_reasons": [
+                "stale_family_evidence"
+              ],
+              "status": "not_current"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            }
+          ],
+          "decision": "obligation_family_parity_blocked",
+          "derived_bad_cases": [],
+          "findings": [
+            {
+              "code": "stale_family_evidence",
+              "evidence_id": "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "research",
+              "message": "family evidence is not current",
+              "metadata": {
+                "stale_reasons": []
+              },
+              "severity": "blocker"
+            },
+            {
+              "code": "stale_family_evidence",
+              "evidence_id": "flowpilot.packet_result_return_reconciliation.research.observed_regression",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "research",
+              "message": "family evidence is not current",
+              "metadata": {
+                "stale_reasons": []
+              },
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=2 cells=20"
+        }
+      },
+      {
+        "expected_codes": [
+          "invalid_family_evidence_provenance"
+        ],
+        "finding_codes": [
+          "invalid_family_evidence_provenance"
+        ],
+        "name": "wrong_family_evidence_provenance",
+        "ok": true,
+        "report": {
+          "confidence": "blocked",
+          "coverage_matrix": [
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "material_scan",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+                "flowpilot.packet_result_return_reconciliation.research.observed_regression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.research.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "research",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.current_node.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "current_node",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.full_durable_envelope_event_fold"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.partial_member_wait_projection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "partial_member_wait_projection",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.stale_reminder_suppression"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "stale_reminder_suppression",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            },
+            {
+              "accepted_provenance": [],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [
+                "invalid_family_evidence_provenance"
+              ],
+              "status": "invalid_provenance"
+            },
+            {
+              "accepted_provenance": [
+                "runtime_test"
+              ],
+              "evidence_ids": [
+                "flowpilot.packet_result_return_reconciliation.pm_role_work.sealed_body_provenance"
+              ],
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "sealed_body_provenance",
+              "member_id": "pm_role_work",
+              "scoped_reasons": [],
+              "status": "covered"
+            }
+          ],
+          "decision": "obligation_family_parity_blocked",
+          "derived_bad_cases": [],
+          "findings": [
+            {
+              "code": "invalid_family_evidence_provenance",
+              "evidence_id": "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "wrong_recipient_rejection",
+              "member_id": "pm_role_work",
+              "message": "family evidence provenance does not prove the required mechanism",
+              "metadata": {
+                "actual_provenance": "internal_note",
+                "allowed_provenance": [
+                  "runtime_test",
+                  "flowguard_model"
+                ]
+              },
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "summary": "BLOCKED: decision=obligation_family_parity_blocked findings=1 cells=20"
+        }
+      },
+      {
+        "expected_codes": [
+          "unreviewed_analogous_defect_candidate"
+        ],
+        "finding_codes": [
+          "unreviewed_analogous_defect_candidate"
+        ],
+        "name": "unreviewed_analogous_sibling_candidates",
+        "ok": true,
+        "report": {
+          "candidates": [
+            {
+              "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+              "disposition": "unreviewed",
+              "disposition_reason": "",
+              "evidence_ids": [],
+              "failure_mode": "durable_result_joined_but_router_event_absent",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "material_scan",
+              "metadata": {
+                "observed_date": "2026-05-28",
+                "seed_id": "research_joined_without_return_event",
+                "source_case_id": "openspec.reconcile-research-batch-results"
+              },
+              "radius": "must_scan",
+              "source": "derived_same_class_bad_case"
+            },
+            {
+              "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+              "disposition": "unreviewed",
+              "disposition_reason": "",
+              "evidence_ids": [],
+              "failure_mode": "durable_result_joined_but_router_event_absent",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "metadata": {
+                "observed_date": "2026-05-28",
+                "seed_id": "research_joined_without_return_event",
+                "source_case_id": "openspec.reconcile-research-batch-results"
+              },
+              "radius": "must_scan",
+              "source": "derived_same_class_bad_case"
+            },
+            {
+              "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+              "disposition": "unreviewed",
+              "disposition_reason": "",
+              "evidence_ids": [],
+              "failure_mode": "durable_result_joined_but_router_event_absent",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "pm_role_work",
+              "metadata": {
+                "observed_date": "2026-05-28",
+                "seed_id": "research_joined_without_return_event",
+                "source_case_id": "openspec.reconcile-research-batch-results"
+              },
+              "radius": "must_scan",
+              "source": "derived_same_class_bad_case"
+            }
+          ],
+          "confidence": "blocked",
+          "decision": "analogous_defect_scan_blocked",
+          "derived_bad_cases": [
+            {
+              "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
+              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+              "expected_status": "must_fail_before_repair",
+              "failure_mode": "durable_result_joined_but_router_event_absent",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "material_scan",
+              "metadata": {
+                "observed_date": "2026-05-28",
+                "seed_id": "research_joined_without_return_event"
+              },
+              "source_case_id": "openspec.reconcile-research-batch-results",
+              "source_member_id": "research"
+            },
+            {
+              "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+              "expected_status": "must_fail_before_repair",
+              "failure_mode": "durable_result_joined_but_router_event_absent",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "metadata": {
+                "observed_date": "2026-05-28",
+                "seed_id": "research_joined_without_return_event"
+              },
+              "source_case_id": "openspec.reconcile-research-batch-results",
+              "source_member_id": "research"
+            },
+            {
+              "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+              "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+              "expected_status": "must_fail_before_repair",
+              "failure_mode": "durable_result_joined_but_router_event_absent",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "pm_role_work",
+              "metadata": {
+                "observed_date": "2026-05-28",
+                "seed_id": "research_joined_without_return_event"
+              },
+              "source_case_id": "openspec.reconcile-research-batch-results",
+              "source_member_id": "research"
+            }
+          ],
+          "findings": [
+            {
+              "candidate_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold:scan",
+              "code": "unreviewed_analogous_defect_candidate",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "material_scan",
+              "message": "analogous defect candidate has not been reviewed or dispositioned",
+              "metadata": {},
+              "severity": "blocker"
+            },
+            {
+              "candidate_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold:scan",
+              "code": "unreviewed_analogous_defect_candidate",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "current_node",
+              "message": "analogous defect candidate has not been reviewed or dispositioned",
+              "metadata": {},
+              "severity": "blocker"
+            },
+            {
+              "candidate_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold:scan",
+              "code": "unreviewed_analogous_defect_candidate",
+              "family_id": "flowpilot.packet_result_return_reconciliation",
+              "mechanism_id": "full_durable_envelope_event_fold",
+              "member_id": "pm_role_work",
+              "message": "analogous defect candidate has not been reviewed or dispositioned",
+              "metadata": {},
+              "severity": "blocker"
+            }
+          ],
+          "ok": false,
+          "seed": {
+            "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+            "exclude_member_ids": [],
+            "failure_mode": "durable_result_joined_but_router_event_absent",
+            "family_id": "flowpilot.packet_result_return_reconciliation",
+            "mechanism_id": "full_durable_envelope_event_fold",
+            "metadata": {
+              "observed_date": "2026-05-28"
+            },
+            "seed_id": "research_joined_without_return_event",
+            "source_case_id": "openspec.reconcile-research-batch-results",
+            "source_member_id": "research"
+          },
+          "summary": "BLOCKED: decision=analogous_defect_scan_blocked findings=3 candidates=3"
+        }
+      }
+    ],
+    "known_bad_ok": true,
+    "members": [
+      "material_scan",
+      "research",
+      "current_node",
+      "pm_role_work"
+    ],
+    "model_command": "python simulations/run_flowpilot_packet_result_family_parity_checks.py --json-out simulations/flowpilot_packet_result_family_parity_results.json",
+    "ok": true,
+    "parity_ok": true,
+    "parity_report": {
+      "confidence": "full",
+      "coverage_matrix": [
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.material_scan.full_durable_envelope_event_fold"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "material_scan",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.material_scan.partial_member_wait_projection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "partial_member_wait_projection",
+          "member_id": "material_scan",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.material_scan.stale_reminder_suppression"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "stale_reminder_suppression",
+          "member_id": "material_scan",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.material_scan.wrong_recipient_rejection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "wrong_recipient_rejection",
+          "member_id": "material_scan",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.material_scan.sealed_body_provenance"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "sealed_body_provenance",
+          "member_id": "material_scan",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.research.full_durable_envelope_event_fold",
+            "flowpilot.packet_result_return_reconciliation.research.observed_regression"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "research",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.research.partial_member_wait_projection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "partial_member_wait_projection",
+          "member_id": "research",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.research.stale_reminder_suppression"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "stale_reminder_suppression",
+          "member_id": "research",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.research.wrong_recipient_rejection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "wrong_recipient_rejection",
+          "member_id": "research",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.research.sealed_body_provenance"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "sealed_body_provenance",
+          "member_id": "research",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.current_node.full_durable_envelope_event_fold"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.current_node.partial_member_wait_projection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "partial_member_wait_projection",
+          "member_id": "current_node",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.current_node.stale_reminder_suppression"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "stale_reminder_suppression",
+          "member_id": "current_node",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.current_node.wrong_recipient_rejection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "wrong_recipient_rejection",
+          "member_id": "current_node",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.current_node.sealed_body_provenance"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "sealed_body_provenance",
+          "member_id": "current_node",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.pm_role_work.full_durable_envelope_event_fold"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "pm_role_work",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.pm_role_work.partial_member_wait_projection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "partial_member_wait_projection",
+          "member_id": "pm_role_work",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.pm_role_work.stale_reminder_suppression"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "stale_reminder_suppression",
+          "member_id": "pm_role_work",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.pm_role_work.wrong_recipient_rejection"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "wrong_recipient_rejection",
+          "member_id": "pm_role_work",
+          "scoped_reasons": [],
+          "status": "covered"
+        },
+        {
+          "accepted_provenance": [
+            "runtime_test"
+          ],
+          "evidence_ids": [
+            "flowpilot.packet_result_return_reconciliation.pm_role_work.sealed_body_provenance"
+          ],
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "sealed_body_provenance",
+          "member_id": "pm_role_work",
+          "scoped_reasons": [],
+          "status": "covered"
+        }
+      ],
+      "decision": "obligation_family_parity_full_confidence",
+      "derived_bad_cases": [
+        {
+          "case_id": "research_joined_without_return_event:material_scan:full_durable_envelope_event_fold",
+          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+          "expected_status": "must_fail_before_repair",
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "material_scan",
+          "metadata": {
+            "observed_date": "2026-05-28",
+            "seed_id": "research_joined_without_return_event"
+          },
+          "source_case_id": "openspec.reconcile-research-batch-results",
+          "source_member_id": "research"
+        },
+        {
+          "case_id": "research_joined_without_return_event:current_node:full_durable_envelope_event_fold",
+          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+          "expected_status": "must_fail_before_repair",
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "current_node",
+          "metadata": {
+            "observed_date": "2026-05-28",
+            "seed_id": "research_joined_without_return_event"
+          },
+          "source_case_id": "openspec.reconcile-research-batch-results",
+          "source_member_id": "research"
+        },
+        {
+          "case_id": "research_joined_without_return_event:pm_role_work:full_durable_envelope_event_fold",
+          "description": "A research packet batch had durable joined results, but Router did not fold them into worker_research_report_returned before waiting/reminding.",
+          "expected_status": "must_fail_before_repair",
+          "failure_mode": "durable_result_joined_but_router_event_absent",
+          "family_id": "flowpilot.packet_result_return_reconciliation",
+          "mechanism_id": "full_durable_envelope_event_fold",
+          "member_id": "pm_role_work",
+          "metadata": {
+            "observed_date": "2026-05-28",
+            "seed_id": "research_joined_without_return_event"
+          },
+          "source_case_id": "openspec.reconcile-research-batch-results",
+          "source_member_id": "research"
+        }
+      ],
+      "findings": [],
+      "ok": true,
+      "summary": "OK: decision=obligation_family_parity_full_confidence findings=0 cells=20"
+    },
+    "required_mechanisms": [
+      "full_durable_envelope_event_fold",
+      "partial_member_wait_projection",
+      "stale_reminder_suppression",
+      "wrong_recipient_rejection",
+      "sealed_body_provenance"
+    ],
+    "result_type": "flowpilot_packet_result_family_parity",
+    "runtime_command": "python -m unittest tests.router_runtime.packet_result_family"
+  },
+  "packet_result_family_parity_ok": true,
+  "required_friction_count": 14,
+  "required_global_gates": [
+    "background_final_artifact_contract",
+    "copied_runtime_kit_freshness",
+    "current_transcript_regression",
+    "historical_live_run_replay",
+    "repo_source_to_installed_skill_sync",
+    "scoped_confidence_disclosure"
+  ],
+  "result_type": "flowpilot_known_friction_regression_matrix",
+  "row_count": 14,
+  "rows": [
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "hard_gate_red_team_matrix",
+        "pm_package_disposition_semantics"
+      ],
+      "defect_family_authority_boundary": "role_output_runtime + packet_runtime + material_scan PM disposition writer",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:worker_self_check_failure",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "PM disposition records rework without reviewer release, status names the failed self-check, and repair continues through fresh packet generation.",
+      "forbidden_shortcuts": [
+        "treat_contract_self_check_heading_as_pass",
+        "release_reviewer_gate_without_formal_pm_package"
+      ],
+      "friction_id": "known_friction.worker_self_check_failure",
+      "full_confidence_boundary": "Covers missing mechanical self-check fields and PM package disposition behavior; does not judge live AI semantic quality.",
+      "global_gates": [
+        "repo_source_to_installed_skill_sync",
+        "copied_runtime_kit_freshness",
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "Worker material-scan result body has a Contract Self-Check heading but misses required machine fields.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+      "model_obligation": "control_plane_friction.pm_package_disposition_packet_outcomes_missing",
+      "priority": "P0",
+      "replay_fixture": "historical_live_run.semantic.contract.missing_standard_matrix_or_waiver",
+      "runtime_surface": "role_output_runtime + packet_runtime + material_scan PM disposition writer",
+      "runtime_test": "tests.test_flowpilot_output_contracts.FlowPilotOutputContractTests.test_contract_self_check_metadata_reports_live_worker_missing_fields",
+      "source_class": "worker_output_contract_failure",
+      "trigger_state": "material_scan batch is results_relayed_to_pm and PM must decide whether every worker result satisfies the source output contract."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "control_plane_failure_canary_matrix",
+        "e2e_synthetic_chaos_matrix",
+        "real_router_dry_run_rehearsal_matrix"
+      ],
+      "defect_family_authority_boundary": "control_blocker PM repair decision handler + persistent router daemon status projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:pm_repair_atomicity",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Repair transaction, blocker index, decision flag, and daemon-visible next action are committed as one post-decision boundary.",
+      "forbidden_shortcuts": [
+        "relax_required_pm_repair_flag",
+        "count_model_only_daemon_projection_as_live_evidence"
+      ],
+      "friction_id": "known_friction.pm_repair_atomicity",
+      "full_confidence_boundary": "Covers executable repair waits and daemon-visible state for selected interleavings; does not prove an unbounded daemon soak.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "background_final_artifact_contract",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "PM repair decision writes allowed follow-up events before daemon-visible state can see the PM repair decision flag.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_repair_transaction_checks.py",
+      "model_obligation": "repair_transactions.pm_decision_flag_atomicity",
+      "priority": "P0",
+      "replay_fixture": "known_friction.pm_repair_decision_enables_material_recheck",
+      "runtime_surface": "control_blocker PM repair decision handler + persistent router daemon status projection",
+      "runtime_test": "tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
+      "source_class": "pm_repair_transaction_interleaving",
+      "trigger_state": "control blocker requires PM repair and Router commits a follow-up wait or recheck event."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "pm_package_disposition_semantics",
+        "daemon_replay_restart_matrix"
+      ],
+      "defect_family_authority_boundary": "scoped event identity replay + role-output ledger reconciliation + daemon durable-wait reconciliation",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:package_disposition_conflict_replay",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router classifies the stale conflict, preserves the legal wait or canonical package body, writes audit evidence, never accepts the stale body as success, and keeps the daemon live.",
+      "forbidden_shortcuts": [
+        "treat_conflicting_body_hash_as_idempotent_replay",
+        "clear_pm_or_control_blocker_wait_from_stale_conflict",
+        "let_stale_role_output_replay_overwrite_canonical_package_body",
+        "create_duplicate_blocker_for_repair_owned_replay",
+        "count_scoped_model_pass_as_live_daemon_evidence"
+      ],
+      "friction_id": "known_friction.package_disposition_conflict_replay",
+      "full_confidence_boundary": "Covers known repair-owned and stale-unowned package-disposition body_hash replay branches, including the foreground/daemon interleaving that previously recurred; does not prove unbounded daemon soak or live AI semantic quality without fresh historical replay and daemon artifacts.",
+      "global_gates": [
+        "repo_source_to_installed_skill_sync",
+        "copied_runtime_kit_freshness",
+        "historical_live_run_replay",
+        "background_final_artifact_contract",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "A daemon role-output ledger replay sees the same PM package disposition identity with a different body_hash after either a blocker/PM repair owns the conflict or a newer foreground PM body is already canonical.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_event_idempotency_checks.py && python simulations/run_flowpilot_control_plane_friction_checks.py",
+      "model_obligation": "event_idempotency.package_conflict_repair_owned_replay + event_idempotency.package_conflict_stale_unowned_replay + control_plane_friction.pm_package_repair_owned_conflict_replay + control_plane_friction.pm_package_stale_unowned_conflict_replay",
+      "priority": "P0",
+      "replay_fixture": "current_transcript.package_disposition_same_identity_different_body_hash_daemon_replay",
+      "runtime_surface": "scoped event identity replay + role-output ledger reconciliation + daemon durable-wait reconciliation",
+      "runtime_test": "tests.test_flowpilot_control_plane_contracts.FlowPilotControlPlaneContractTests.test_pm_package_disposition_conflict_classifier_marks_repair_owned_replay; tests.test_flowpilot_role_output_reconciliation.RoleOutputReconciliationTests.test_repair_owned_package_disposition_conflict_replay_is_quarantined_without_daemon_error; tests.test_flowpilot_role_output_reconciliation.RoleOutputReconciliationTests.test_stale_unowned_package_disposition_replay_preserves_canonical_body; tests.test_flowpilot_role_output_reconciliation.RoleOutputReconciliationTests.test_daemon_tick_quarantines_stale_unowned_package_replay_without_reverting_body",
+      "source_class": "pm_package_disposition_replay_conflict",
+      "trigger_state": "A PM package disposition for the same batch/generation is already recorded, a stale conflicting role-output envelope remains replayable, and authority already points at either a blocker/repair owner or the current canonical package artifact."
+    },
+    {
+      "child_evidence_ids": [
+        "e2e_synthetic_chaos_matrix",
+        "real_router_dry_run_rehearsal_matrix",
+        "historical_live_run_replay_matrix"
+      ],
+      "defect_family_authority_boundary": "material packet generation registry + Router next-action projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:packet_reissue_continuation",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router exposes fresh producer evidence and only relays or waits on current-generation material work.",
+      "forbidden_shortcuts": [
+        "reuse_old_worker_result_flags",
+        "wait_for_role_event_without_current_producer"
+      ],
+      "friction_id": "known_friction.packet_reissue_continuation",
+      "full_confidence_boundary": "Covers current-generation producer proof and stale-result rejection for bounded repair paths; does not prove every packet family.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "A packet_reissue repair leaves stale PM decision wording or waits for an event without a fresh packet producer.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_repair_transaction_checks.py",
+      "model_obligation": "repair_transactions.material_rework_requires_fresh_producer",
+      "priority": "P0",
+      "replay_fixture": "e2e_synthetic_chaos.stale_worker_result_flags_then_packet_reissue",
+      "runtime_surface": "material packet generation registry + Router next-action projection",
+      "runtime_test": "tests.router_runtime.material_modeling.MaterialModelingRuntimeTests.test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
+      "source_class": "material_packet_generation_reissue",
+      "trigger_state": "material repair requires reissuing worker packets after a rejected or rework-requested result."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "control_plane_failure_canary_matrix"
+      ],
+      "defect_family_authority_boundary": "current status summary + route frontier display projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": false,
+      "defect_family_id": "defect_family:status_projection_stale",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "User-visible status derives from current Router facts and explicitly treats display as projection, not authority.",
+      "forbidden_shortcuts": [
+        "trust_chat_display_as_router_state",
+        "skip_current_pointer_check"
+      ],
+      "friction_id": "known_friction.status_projection_stale",
+      "full_confidence_boundary": "Covers stale projection and current-pointer authority; does not prove every UI rendering path.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "Current status or display projection says a stale blocker, old ACK wait, or terminal-looking state while Router facts disagree.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_model_test_alignment_checks.py",
+      "model_obligation": "router_loop.historical_live_run_replay_package_suite",
+      "priority": "P1",
+      "replay_fixture": "historical.snapshot.stale_pending_terminal_display",
+      "runtime_surface": "current status summary + route frontier display projection",
+      "runtime_test": "tests.test_flowpilot_historical_live_run_replay.FlowPilotHistoricalLiveRunReplayTests.test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence",
+      "source_class": "user_visible_status_projection",
+      "trigger_state": "Router has resolved ACK or PM repair facts but status summary is regenerated from old projection state."
+    },
+    {
+      "child_evidence_ids": [
+        "packet/card/ack",
+        "historical_live_run_replay_matrix"
+      ],
+      "defect_family_authority_boundary": "card ACK return ledger + Router ACK/return preconsumption",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:ack_false_blocker",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "ACK wait settlement and output-work completion remain separate obligations with separate status text and replay evidence.",
+      "forbidden_shortcuts": [
+        "treat_ack_as_role_output_completion",
+        "reopen_ack_blocker_after_valid_receipt"
+      ],
+      "friction_id": "known_friction.ack_false_blocker",
+      "full_confidence_boundary": "Covers ACK/return separation for known receipt paths; does not complete semantic role work.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "ACK-only receipt clearance reappears as a missing ACK blocker or is mistaken for semantic role output completion.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_card_envelope_checks.py",
+      "model_obligation": "ack.return_wait_preconsumption",
+      "priority": "P0",
+      "replay_fixture": "known_friction.ack_only_card_resolved_role_output_pending",
+      "runtime_surface": "card ACK return ledger + Router ACK/return preconsumption",
+      "runtime_test": "tests.router_runtime.ack_return.AckReturnRuntimeTests.test_record_external_event_preconsumes_valid_card_ack_before_blocking",
+      "source_class": "ack_completion_conflation",
+      "trigger_state": "Controller/Router return ledger has a valid ACK while the semantic role-output obligation remains pending."
+    },
+    {
+      "child_evidence_ids": [
+        "control_plane_failure_canary_matrix",
+        "shadow_launcher_chaos_matrix",
+        "historical_live_run_replay_matrix"
+      ],
+      "defect_family_authority_boundary": "lifecycle stop request + daemon status + current pointer reconciliation",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": false,
+      "defect_family_id": "defect_family:controlled_stop_reconciliation",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Stop reconciles current pointer, run lifecycle, daemon status, heartbeat/manual-resume, pending Controller actions, and role continuation authority together.",
+      "forbidden_shortcuts": [
+        "resume_stopped_run_without_recovery_decision",
+        "treat_released_daemon_lock_as_active"
+      ],
+      "friction_id": "known_friction.controlled_stop_reconciliation",
+      "full_confidence_boundary": "Covers controlled stop reconciliation for current pointer, daemon, and pending work authority; does not prove external scheduler delivery.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "A controlled stop releases daemon state but current pointer, pending Controller action, heartbeat, or role continuation still looks active.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_runtime_closure_checks.py",
+      "model_obligation": "terminal.final_ledger_and_backward_replay",
+      "priority": "P1",
+      "replay_fixture": "historical_live_run.daemon_lifecycle.user_stop_boundary",
+      "runtime_surface": "lifecycle stop request + daemon status + current pointer reconciliation",
+      "runtime_test": "tests.router_runtime.terminal.TerminalRuntimeTests.test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
+      "source_class": "daemon_lifecycle_stop_boundary",
+      "trigger_state": "User stop/cancel or daemon release races current-run lifecycle projection and resume logic."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "role_output_runtime_matrix"
+      ],
+      "defect_family_authority_boundary": "role_output_runtime submit-output / submit-output-to-router boundary + Router event recorder",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:local_fixed_router_event_receipt_only",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Local-only submission is rejected for fixed-event outputs; the role must use the Router-directed runtime path that records both receipt and Router event evidence before any blocker can close.",
+      "forbidden_shortcuts": [
+        "treat_local_receipt_as_router_event",
+        "close_control_blocker_before_fixed_router_event_records"
+      ],
+      "friction_id": "known_friction.local_fixed_router_event_receipt_only",
+      "full_confidence_boundary": "Covers fixed Router-event output transaction boundaries and local-only rejection; does not prove semantic correctness of the PM decision body.",
+      "global_gates": [
+        "repo_source_to_installed_skill_sync",
+        "copied_runtime_kit_freshness",
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 recorded repeated PM control-blocker repair receipts through the local submit-output entrypoint, but the fixed Router event was not recorded as the authoritative state transition.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_role_output_runtime_checks.py",
+      "model_obligation": "role_output_runtime.accepted_outputs_submit_directly_to_router",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.pm_control_blocker_repair_receipt_without_router_event",
+      "runtime_surface": "role_output_runtime submit-output / submit-output-to-router boundary + Router event recorder",
+      "runtime_test": "tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_fixed_router_event_output_requires_router_directed_submission",
+      "source_class": "local_role_output_receipt_without_router_event",
+      "trigger_state": "A formal role-output contract has a fixed Router event and the role tries to close the obligation through a local receipt path."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "resume_rehydration_replay"
+      ],
+      "defect_family_authority_boundary": "startup resume binding reports + Controller scheduler receipt reconciliation",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:resume_rehydration_postcondition_replay_miss",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router validates the current-run crew rehydration report, reclaims the resume postcondition idempotently, and only opens a blocker when current-run evidence is absent or invalid.",
+      "forbidden_shortcuts": [
+        "ignore_current_run_crew_rehydration_report",
+        "open_rehydrate_blocker_before_replay_scan"
+      ],
+      "friction_id": "known_friction.resume_rehydration_postcondition_replay_miss",
+      "full_confidence_boundary": "Covers current-run six-role report replay and invalid-report blocking; does not prove host agents stay alive forever after rehydration.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 had a valid six-role rehydration report, but a later receipt replay did not restore resume_roles_restored and reopened a mechanical control blocker.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_resume_checks.py",
+      "model_obligation": "resume.resume_rehydration_obligations_replayed_mechanically",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.crew_rehydration_report_ready_but_resume_flags_false",
+      "runtime_surface": "startup resume binding reports + Controller scheduler receipt reconciliation",
+      "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
+      "source_class": "resume_rehydration_postcondition_replay",
+      "trigger_state": "Heartbeat/manual resume sees a done rehydrate_role_agents receipt or report while run-state flags are stale or incomplete."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "control_blocker_family_runtime"
+      ],
+      "defect_family_authority_boundary": "control blocker write path, active index summaries, PM repair decision terminal disposition",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:control_blocker_same_family_storm",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router computes a same-family key before writing, reuses active or PM-pending family records, and still materializes distinct blockers for distinct causes.",
+      "forbidden_shortcuts": [
+        "write_new_blocker_for_same_family_pending_pm",
+        "swallow_distinct_blocker_with_old_family_record"
+      ],
+      "friction_id": "known_friction.control_blocker_same_family_storm",
+      "full_confidence_boundary": "Covers same-family blocker coalescing and distinct-cause materialization for the audited control paths; does not prove every future blocker schema has a perfect family key.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 accumulated hundreds of blockers with the same mechanical_control_plane_reissue family key instead of preserving one active PM/control repair state.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py",
+      "model_obligation": "control_plane_friction.control_blocker_action_identity_bound_to_artifact + control_blocker.family_key_coalescing",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.repeated_mechanical_control_plane_reissue_family",
+      "runtime_surface": "control blocker write path, active index summaries, PM repair decision terminal disposition",
+      "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
+      "source_class": "same_family_control_blocker_repetition",
+      "trigger_state": "The same responsible role, action type, stage, postcondition, and error class fails repeatedly during heartbeat/manual resume."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "terminal_state_monotonicity"
+      ],
+      "defect_family_authority_boundary": "PM repair decision handler + control blocker family lookup + daemon terminal projection",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:protocol_dead_end_reopened_by_resume",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Router writes durable protocol-dead-end lifecycle evidence, marks the run state terminal/protocol-dead-end, and suppresses same-family reopen during resume.",
+      "forbidden_shortcuts": [
+        "reopen_protocol_dead_end_family_on_resume",
+        "report_terminal_protocol_state_as_live_work"
+      ],
+      "friction_id": "known_friction.protocol_dead_end_reopened_by_resume",
+      "full_confidence_boundary": "Covers same-family protocol-dead-end suppression and terminal status projection; does not prove the PM chose the right protocol-dead-end disposition semantically.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 recorded PM protocol-dead-end / terminal-stop decisions, but heartbeat/manual resume could still reopen the same blocker family instead of surfacing the terminal protocol boundary.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_control_plane_friction_checks.py && python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+      "model_obligation": "control_plane_friction.control_blocker_done_receipt_applies_delivery_postcondition + control_blocker.protocol_dead_end_terminal_disposition",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.protocol_dead_end_decision_reopened_by_heartbeat",
+      "runtime_surface": "PM repair decision handler + control blocker family lookup + daemon terminal projection",
+      "runtime_test": "tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+      "source_class": "protocol_dead_end_resume_reactivation",
+      "trigger_state": "A same-family control blocker already has a terminal protocol-dead-end disposition and a resume tick replays the old failure."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "controller_break_glass_model"
+      ],
+      "defect_family_authority_boundary": "controller_break_glass incident index + recovery transaction + patch validation/finalization",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:break_glass_patch_limbo",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Break-glass closure requires normal-lane exclusion, incident/recovery linkage, validation evidence for permanent fixes, or an explicit blocked/quarantined disposition that keeps permanent_fix_needed visible.",
+      "forbidden_shortcuts": [
+        "close_permanent_fix_with_not_run_validation",
+        "hide_open_break_glass_incident_as_normal_standby"
+      ],
+      "friction_id": "known_friction.break_glass_patch_limbo",
+      "full_confidence_boundary": "Covers break-glass patch validation, quarantine, blocked, and recovery-link closure paths; does not authorize Controller to perform target-project work.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 left a break-glass incident open with a patch listed as validation not_run and no durable recovery transaction or blocked/quarantined closure path.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_controller_break_glass_checks.py",
+      "model_obligation": "flowpilot_controller_break_glass.patch_validation_before_return_to_normal",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.break_glass_open_patch_validation_not_run",
+      "runtime_surface": "controller_break_glass incident index + recovery transaction + patch validation/finalization",
+      "runtime_test": "tests.test_flowpilot_controller_break_glass.FlowPilotControllerBreakGlassTests.test_break_glass_close_rejects_unvalidated_permanent_patch",
+      "source_class": "break_glass_unvalidated_patch_closure",
+      "trigger_state": "Controller uses the break-glass lane for a FlowPilot control-plane defect and records a patch or recovery transaction."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "current_transcript_regression",
+        "daemon_liveness_model"
+      ],
+      "defect_family_authority_boundary": "router daemon status control_projection + heartbeat/manual resume attach/recover path",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:heartbeat_diagnostic_only_resume",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Heartbeat records the wake, then Controller checks current daemon process/lock/status and action ledger, attaches or restores only after that check, and never claims work-chain liveness from old route state or wait-agent timeout.",
+      "forbidden_shortcuts": [
+        "treat_wait_agent_timeout_as_live_agent",
+        "start_second_router_writer_while_live_lock_exists"
+      ],
+      "friction_id": "known_friction.heartbeat_diagnostic_only_resume",
+      "full_confidence_boundary": "Covers stale-heartbeat attach/recover authority and status projection boundaries; does not prove host scheduler delivery under all Codex desktop failures.",
+      "global_gates": [
+        "historical_live_run_replay",
+        "current_transcript_regression",
+        "background_final_artifact_contract",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260527-212331 heartbeat wakes recorded diagnostic or launcher work but did not stay attached to current daemon/action-ledger evidence long enough to expose real Controller work or a terminal boundary.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_daemon_liveness_checks.py && python simulations/run_flowpilot_daemon_terminal_projection_checks.py",
+      "model_obligation": "daemon_liveness.controller_checks_delayed_heartbeat + resume.resume_wake_recorded_to_router",
+      "priority": "P0",
+      "replay_fixture": "run-20260527-212331.heartbeat_wake_without_current_daemon_authority",
+      "runtime_surface": "router daemon status control_projection + heartbeat/manual resume attach/recover path",
+      "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
+      "source_class": "heartbeat_resume_diagnostic_only_loop",
+      "trigger_state": "Heartbeat/manual resume fires after daemon heartbeat is stale, old chat state still looks active, or wait-agent timeout is tempting to treat as liveness."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "new_lifecycle_guard_flowguard_model",
+        "new_foreground_duty_model_test_alignment",
+        "fake_project_blackbox_cli_slow_reviewer_progress",
+        "fake_project_blackbox_cli_accepted_packet_reassignment"
+      ],
+      "defect_family_authority_boundary": "flowpilot_new.py foreground duty, progress, lifecycle guard, packet assignment, ACK, and repair-accepted-packet command",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:accepted_packet_reassignment_race",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Patrol keeps Controller on timed wait while progress/liveness is healthy; replacement requires current failure evidence; packets with accepted_result_id cannot be reassigned or ACK-regressed; accepted-result races are repaired by closing mistaken replacement leases and restoring the original accepted result.",
+      "forbidden_shortcuts": [
+        "replace_role_on_repeated_wait_without_current_liveness_failure",
+        "assign_packet_after_accepted_result_id_exists",
+        "let_foreground_return_while_wait_or_repair_duty_is_open"
+      ],
+      "friction_id": "known_friction.accepted_packet_reassignment_race",
+      "full_confidence_boundary": "Covers the new black-box runtime liveness ladder, accepted-packet hard gates, repair helper, and public fake-AI rehearsals; it does not prove external host delivery quality outside the current-run ledger contract.",
+      "global_gates": [
+        "repo_source_to_installed_skill_sync",
+        "background_final_artifact_contract",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260530-102304 accepted reviewer result-0003, then a repeated wait created replacement lease-0004 and regressed packet-0003 to acknowledged while the original result should have remained authoritative.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_lifecycle_guard_checks.py && python simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+      "model_obligation": "new_lifecycle_guard.slow_live_progress_preserved + new_lifecycle_guard.accepted_packet_reassignment_rejected + new_lifecycle_guard.accepted_packet_race_repair",
+      "priority": "P0",
+      "replay_fixture": "current_transcript.run-20260530-102304.packet-0003.accepted_result_reassignment_race",
+      "runtime_surface": "flowpilot_new.py foreground duty, progress, lifecycle guard, packet assignment, ACK, and repair-accepted-packet command",
+      "runtime_test": "tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_progress_keeps_slow_live_result_wait_in_patrol; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_liveness_failure_allows_replacement_duty; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accepted_packet_rejects_reassignment_and_ack_regression; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_repair_accepted_packet_assignment_race_restores_original_result; tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows",
+      "source_class": "new_runtime_wait_reassignment_race",
+      "trigger_state": "New FlowPilot foreground duty is waiting on an active packet lease, the role may be slow but live, and a later lifecycle pass is tempted to replace or reassign the same packet without current liveness failure evidence."
+    }
+  ],
+  "rows_by_priority": {
+    "P0": 12,
+    "P1": 2
+  }
+}

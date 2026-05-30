@@ -71,6 +71,7 @@ EVENT_FAMILY_BY_TYPE = {
     "sealed_packet_body_opened": "packet",
     "lease_ack": "lease",
     "lease_progress": "lease",
+    "accepted_packet_assignment_repaired": "packet",
     "result_submitted": "packet",
     "flowguard_work_order_created": "flowguard",
     "flowguard_work_order_completed": "flowguard",
@@ -98,6 +99,35 @@ _DEFAULT_FLOWGUARD_ROUTES = {
 
 _GUARD_HISTORY_LIMIT = 50
 _GUARD_STUCK_TRIGGERS = {"patrol", "resume"}
+_FOREGROUND_DUTY_HISTORY_LIMIT = 50
+_DEFAULT_WAIT_PATROL_SECONDS = 60
+_WAIT_ACK_REMINDER_SECONDS = 180
+_WAIT_ACK_BLOCKER_SECONDS = 600
+_WAIT_RESULT_LIVENESS_SECONDS = 600
+_WAIT_PROGRESS_GRACE_SECONDS = 600
+_WAIT_PATROL_DECISIONS = {"wait_for_ack", "wait_for_result"}
+_RECOVERY_DUTY_DECISIONS = {
+    "reissue_or_replace_lease",
+    "quarantine_stale_result",
+    "recover_packet",
+    "repair_assignment_race",
+}
+_WAIT_LIVENESS_FAILURE_STATUSES = {
+    "missing",
+    "cancelled",
+    "unknown",
+    "unresponsive",
+    "blocked",
+    "lost",
+    "timeout_unknown",
+}
+_WAIT_NO_OUTPUT_STATUSES = {
+    "no_output",
+    "alive_no_output",
+    "not_working_no_output",
+    "completed",
+    "completed_without_expected_event",
+}
 _STALE_RESULT_BLOCKERS = {
     "closed_or_inactive_lease",
     "quarantined_packet",
@@ -212,7 +242,20 @@ def new_ledger(
             "controller_stop_allowed": False,
         },
         "lifecycle_guard_history": [],
-        "lifecycle_guard_config": {"max_repeated_action_without_event": 3},
+        "lifecycle_guard_config": {
+            "max_repeated_action_without_event": 3,
+            "ack_reminder_seconds": _WAIT_ACK_REMINDER_SECONDS,
+            "ack_blocker_seconds": _WAIT_ACK_BLOCKER_SECONDS,
+            "result_liveness_seconds": _WAIT_RESULT_LIVENESS_SECONDS,
+            "progress_grace_seconds": _WAIT_PROGRESS_GRACE_SECONDS,
+        },
+        "foreground_duty": {
+            "schema_version": "black_box_flowpilot.foreground_duty.v1",
+            "action": "not_refreshed",
+            "final_return_preflight": {"allowed": False, "blockers": ["not_refreshed"]},
+        },
+        "foreground_duty_history": [],
+        "foreground_duty_config": {"wait_patrol_seconds": _DEFAULT_WAIT_PATROL_SECONDS},
         "active_route_version": None,
         "route_mutations": [],
         "routes": {},
@@ -1380,7 +1423,9 @@ def lease_agent(
         "status": "active",
         "packet_id": packet_id,
         "ack_received": False,
+        "ack_received_at": "",
         "progress_count": 0,
+        "last_progress_at": "",
         "created_at": now_iso(),
         "closed_at": None,
         "close_reason": "",
@@ -1477,6 +1522,8 @@ def issue_task_packet(
 def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None:
     packet = _require(ledger["packets"], packet_id, "packet")
     lease = _require(ledger["leases"], lease_id, "lease")
+    if packet.get("accepted_result_id"):
+        raise BlackBoxRuntimeError("cannot assign accepted packet to a new lease")
     if lease["status"] != "active":
         raise BlackBoxRuntimeError("cannot assign packet to inactive lease")
     if lease["responsibility"] != packet["envelope"]["responsibility"]:
@@ -1490,21 +1537,30 @@ def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None
 def ack_lease(ledger: dict[str, Any], lease_id: str, packet_id: str) -> None:
     lease = _require(ledger["leases"], lease_id, "lease")
     packet = _require(ledger["packets"], packet_id, "packet")
+    if packet.get("accepted_result_id"):
+        raise BlackBoxRuntimeError("cannot ACK an accepted packet")
     if lease["status"] != "active":
         raise BlackBoxRuntimeError("inactive lease cannot ACK")
     if packet["assigned_lease_id"] != lease_id:
         raise BlackBoxRuntimeError("lease is not assigned to packet")
     lease["ack_received"] = True
+    lease["ack_received_at"] = now_iso()
     packet["status"] = "acknowledged"
     _event(ledger, "lease_ack", lease_id=lease_id, packet_id=packet_id)
 
 
 def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, status: str) -> None:
     lease = _require(ledger["leases"], lease_id, "lease")
+    packet = _require(ledger["packets"], packet_id, "packet")
+    if lease.get("status") != "active":
+        raise BlackBoxRuntimeError("inactive lease cannot record progress")
     if lease.get("packet_id") != packet_id:
         raise BlackBoxRuntimeError("progress packet mismatch")
+    if packet.get("accepted_result_id"):
+        raise BlackBoxRuntimeError("accepted packet cannot record progress")
     lease["progress_count"] = int(lease.get("progress_count", 0)) + 1
     lease["last_progress_status"] = status
+    lease["last_progress_at"] = now_iso()
     _event(ledger, "lease_progress", lease_id=lease_id, packet_id=packet_id, status=status)
 
 
@@ -2403,6 +2459,235 @@ def _stale_result_blockers_for_packet(ledger: Mapping[str, Any], packet_id: str)
     return sorted(blockers)
 
 
+def _parse_utc_timestamp(raw: object) -> datetime | None:
+    if not isinstance(raw, str) or not raw.strip():
+        return None
+    text = raw.strip()
+    if text.endswith("Z"):
+        text = f"{text[:-1]}+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _elapsed_seconds_since(raw: object) -> int | None:
+    parsed = _parse_utc_timestamp(raw)
+    if parsed is None:
+        return None
+    return max(0, int((datetime.now(timezone.utc) - parsed).total_seconds()))
+
+
+def _guard_config_int(ledger: Mapping[str, Any], key: str, default: int) -> int:
+    config = ledger.get("lifecycle_guard_config") if isinstance(ledger.get("lifecycle_guard_config"), Mapping) else {}
+    try:
+        value = int(config.get(key, default))
+    except (TypeError, ValueError):
+        value = default
+    return max(0, value)
+
+
+def _accepted_packet_repair_details(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> dict[str, Any]:
+    packet_id = str(packet.get("packet_id", ""))
+    accepted_result_id = str(packet.get("accepted_result_id") or "")
+    result = ledger.get("results", {}).get(accepted_result_id)
+    result_map = result if isinstance(result, Mapping) else {}
+    original_lease_id = str(result_map.get("producer_lease_id") or "")
+    active_replacement_lease_ids = [
+        str(lease_id)
+        for lease_id, lease in ledger.get("leases", {}).items()
+        if isinstance(lease, Mapping)
+        and str(lease.get("packet_id") or "") == packet_id
+        and str(lease.get("status") or "") == "active"
+        and str(lease_id) != original_lease_id
+    ]
+    assigned_lease_id = str(packet.get("assigned_lease_id") or "")
+    return {
+        "packet_id": packet_id,
+        "accepted_result_id": accepted_result_id,
+        "original_lease_id": original_lease_id,
+        "assigned_lease_id": assigned_lease_id,
+        "active_replacement_lease_ids": active_replacement_lease_ids,
+        "needs_repair": bool(
+            accepted_result_id
+            and (
+                packet.get("status") != "accepted"
+                or bool(active_replacement_lease_ids)
+                or bool(original_lease_id and assigned_lease_id and assigned_lease_id != original_lease_id)
+            )
+        ),
+    }
+
+
+def _accepted_packet_repair_needed(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> bool:
+    return bool(_accepted_packet_repair_details(ledger, packet).get("needs_repair"))
+
+
+def repair_accepted_packet_assignment(
+    ledger: dict[str, Any],
+    packet_id: str,
+    *,
+    reason: str = "accepted_packet_assignment_race",
+) -> dict[str, Any]:
+    packet = _require(ledger["packets"], packet_id, "packet")
+    details = _accepted_packet_repair_details(ledger, packet)
+    accepted_result_id = str(details.get("accepted_result_id") or "")
+    if not accepted_result_id:
+        raise BlackBoxRuntimeError("accepted packet repair requires accepted_result_id")
+    original_lease_id = str(details.get("original_lease_id") or "")
+    closed_replacement_lease_ids: list[str] = []
+    for lease_id in list(details.get("active_replacement_lease_ids") or []):
+        close_lease(ledger, str(lease_id), reason)
+        closed_replacement_lease_ids.append(str(lease_id))
+    packet["status"] = "accepted"
+    if original_lease_id and original_lease_id in ledger.get("leases", {}):
+        packet["assigned_lease_id"] = original_lease_id
+    _event(
+        ledger,
+        "accepted_packet_assignment_repaired",
+        packet_id=packet_id,
+        accepted_result_id=accepted_result_id,
+        original_lease_id=original_lease_id,
+        closed_replacement_lease_ids=closed_replacement_lease_ids,
+        reason=reason,
+    )
+    return {
+        "packet_id": packet_id,
+        "accepted_result_id": accepted_result_id,
+        "original_lease_id": original_lease_id,
+        "closed_replacement_lease_ids": closed_replacement_lease_ids,
+        "status": packet["status"],
+        "assigned_lease_id": packet.get("assigned_lease_id", ""),
+    }
+
+
+def _guard_wait_recovery(
+    ledger: Mapping[str, Any],
+    action: RuntimeAction,
+    *,
+    trigger: str,
+    repeated_count: int,
+) -> dict[str, Any]:
+    packet = ledger.get("packets", {}).get(action.subject_id)
+    if not isinstance(packet, Mapping):
+        return {"state": "not_applicable", "replacement_eligible": False}
+    repair_details = _accepted_packet_repair_details(ledger, packet)
+    if repair_details.get("needs_repair"):
+        return {
+            "state": "repair_assignment_race",
+            "decision_override": "repair_assignment_race",
+            "reason": "accepted packet has stale assignment or active replacement lease",
+            "replacement_eligible": False,
+            "repair": repair_details,
+        }
+    if action.action_type not in {"wait_for_ack", "wait_for_result"}:
+        return {"state": "not_applicable", "replacement_eligible": False}
+
+    lease_id = str(packet.get("assigned_lease_id") or "")
+    lease = ledger.get("leases", {}).get(lease_id)
+    lease_map = lease if isinstance(lease, Mapping) else {}
+    if not lease_map:
+        return {
+            "state": "missing_lease",
+            "decision_override": "reissue_or_replace_lease",
+            "reason": "wait packet has no assigned lease record",
+            "replacement_eligible": True,
+            "lease_id": lease_id,
+        }
+
+    progress_count = int(lease_map.get("progress_count", 0) or 0)
+    last_progress_status = str(lease_map.get("last_progress_status") or "")
+    last_liveness_status = str(lease_map.get("liveness_status") or last_progress_status)
+    last_progress_elapsed = _elapsed_seconds_since(lease_map.get("last_progress_at"))
+    progress_grace_seconds = _guard_config_int(ledger, "progress_grace_seconds", _WAIT_PROGRESS_GRACE_SECONDS)
+    progress_recent = bool(
+        progress_count
+        and last_liveness_status not in _WAIT_LIVENESS_FAILURE_STATUSES
+        and last_liveness_status not in _WAIT_NO_OUTPUT_STATUSES
+        and (last_progress_elapsed is None or last_progress_elapsed <= progress_grace_seconds)
+    )
+    base = {
+        "state": "waiting",
+        "replacement_eligible": False,
+        "lease_id": lease_id,
+        "lease_status": str(lease_map.get("status") or ""),
+        "progress_count": progress_count,
+        "last_progress_status": last_progress_status,
+        "last_progress_elapsed_seconds": last_progress_elapsed,
+        "progress_grace_seconds": progress_grace_seconds,
+        "trigger": trigger,
+        "repeated_count": repeated_count,
+        "old_router_authority_used": False,
+    }
+    if lease_map.get("status") != "active":
+        return {
+            **base,
+            "state": "inactive_lease",
+            "decision_override": "reissue_or_replace_lease",
+            "reason": "assigned lease is inactive",
+            "replacement_eligible": True,
+        }
+    if last_liveness_status in _WAIT_LIVENESS_FAILURE_STATUSES or last_liveness_status in _WAIT_NO_OUTPUT_STATUSES:
+        return {
+            **base,
+            "state": "current_liveness_failure",
+            "decision_override": "reissue_or_replace_lease",
+            "reason": f"current liveness status is {last_liveness_status}",
+            "replacement_eligible": True,
+        }
+    if action.action_type == "wait_for_ack":
+        elapsed = _elapsed_seconds_since(lease_map.get("created_at"))
+        ack_reminder_seconds = _guard_config_int(ledger, "ack_reminder_seconds", _WAIT_ACK_REMINDER_SECONDS)
+        ack_blocker_seconds = _guard_config_int(ledger, "ack_blocker_seconds", _WAIT_ACK_BLOCKER_SECONDS)
+        if elapsed is not None and elapsed >= ack_blocker_seconds:
+            return {
+                **base,
+                "state": "ack_blocker_due",
+                "decision_override": "reissue_or_replace_lease",
+                "reason": "ACK wait exceeded blocker threshold",
+                "replacement_eligible": True,
+                "elapsed_seconds": elapsed,
+                "ack_reminder_seconds": ack_reminder_seconds,
+                "ack_blocker_seconds": ack_blocker_seconds,
+            }
+        state = "wait_reminder_due" if elapsed is not None and elapsed >= ack_reminder_seconds else "wait_patrol"
+        return {
+            **base,
+            "state": state,
+            "reason": "assigned lease has not acknowledged",
+            "elapsed_seconds": elapsed,
+            "ack_reminder_seconds": ack_reminder_seconds,
+            "ack_blocker_seconds": ack_blocker_seconds,
+        }
+
+    elapsed = _elapsed_seconds_since(lease_map.get("ack_received_at") or lease_map.get("created_at"))
+    result_liveness_seconds = _guard_config_int(ledger, "result_liveness_seconds", _WAIT_RESULT_LIVENESS_SECONDS)
+    if progress_recent:
+        return {
+            **base,
+            "state": "grace_wait",
+            "reason": "active lease recorded current-run progress",
+            "elapsed_seconds": elapsed,
+            "result_liveness_seconds": result_liveness_seconds,
+        }
+    state = "liveness_check_due" if elapsed is not None and elapsed >= result_liveness_seconds else "wait_patrol"
+    reason = (
+        "result wait reached liveness-check threshold; replacement still needs current failure evidence"
+        if state == "liveness_check_due"
+        else "ACK is liveness only and result is still required"
+    )
+    return {
+        **base,
+        "state": state,
+        "reason": reason,
+        "elapsed_seconds": elapsed,
+        "result_liveness_seconds": result_liveness_seconds,
+    }
+
+
 def _guard_wait_subject(ledger: Mapping[str, Any], action: RuntimeAction) -> dict[str, Any]:
     packet = ledger.get("packets", {}).get(action.subject_id)
     if not isinstance(packet, Mapping):
@@ -2421,6 +2706,10 @@ def _guard_wait_subject(ledger: Mapping[str, Any], action: RuntimeAction) -> dic
         "lease_found": bool(lease_map),
         "lease_status": str(lease_map.get("status", "")),
         "ack_received": bool(lease_map.get("ack_received")),
+        "accepted_result_id": str(packet.get("accepted_result_id") or ""),
+        "progress_count": int(lease_map.get("progress_count", 0) or 0),
+        "last_progress_status": str(lease_map.get("last_progress_status", "")),
+        "last_progress_at": str(lease_map.get("last_progress_at", "")),
         "stale_result_blockers": _stale_result_blockers_for_packet(ledger, action.subject_id),
     }
 
@@ -2431,23 +2720,26 @@ def _guard_decision(
     *,
     trigger: str,
     repeated_count: int,
+    wait_recovery: Mapping[str, Any] | None = None,
 ) -> tuple[str, str]:
     threshold = int((ledger.get("lifecycle_guard_config") or {}).get("max_repeated_action_without_event", 3))
+    wait_recovery_map = wait_recovery if isinstance(wait_recovery, Mapping) else {}
+    override = str(wait_recovery_map.get("decision_override") or "")
+    if override:
+        return override, str(wait_recovery_map.get("reason") or action.reason)
     if action.action_type == "terminal_complete":
         closure = ledger.get("closure") or {}
         if isinstance(closure, Mapping) and closure.get("decision") == "complete":
             return "terminal_return", "final closure is complete and Controller stop is allowed"
         return "control_plane_stuck", "terminal action appeared without complete closure evidence"
     if action.action_type == "wait_for_ack":
-        if trigger in _GUARD_STUCK_TRIGGERS and repeated_count >= threshold:
-            return "reissue_or_replace_lease", "ACK wait exceeded guard repeat threshold"
-        return "wait_for_ack", "assigned lease has not acknowledged"
+        return "wait_for_ack", str(wait_recovery_map.get("reason") or "assigned lease has not acknowledged")
     if action.action_type == "wait_for_result":
-        if trigger in _GUARD_STUCK_TRIGGERS and repeated_count >= threshold:
-            return "reissue_or_replace_lease", "result wait exceeded guard repeat threshold"
-        return "wait_for_result", "ACK is liveness only and result is still required"
+        return "wait_for_result", str(wait_recovery_map.get("reason") or "ACK is liveness only and result is still required")
     if action.action_type == "replace_lease":
         return "reissue_or_replace_lease", "assigned lease is inactive"
+    if action.action_type == "repair_accepted_packet":
+        return "repair_assignment_race", "accepted packet has stale assignment or active replacement lease"
     if action.action_type == "repair_packet":
         stale = _stale_result_blockers_for_packet(ledger, action.subject_id)
         if stale:
@@ -2470,7 +2762,14 @@ def preview_lifecycle_guard(ledger: Mapping[str, Any], *, trigger: str = "status
         repeated_count = int(previous.get("repeated_count", 1)) + 1
     else:
         repeated_count = 1
-    decision, reason = _guard_decision(ledger, action, trigger=trigger, repeated_count=repeated_count)
+    wait_recovery = _guard_wait_recovery(ledger, action, trigger=trigger, repeated_count=repeated_count)
+    decision, reason = _guard_decision(
+        ledger,
+        action,
+        trigger=trigger,
+        repeated_count=repeated_count,
+        wait_recovery=wait_recovery,
+    )
     controller_stop_allowed = decision == "terminal_return"
     wait_subject = _guard_wait_subject(ledger, action) if action.subject_id else {}
     return {
@@ -2489,8 +2788,155 @@ def preview_lifecycle_guard(ledger: Mapping[str, Any], *, trigger: str = "status
         "foreground_required_mode": "terminal_return" if controller_stop_allowed else "process_guard_action",
         "repeated_count": repeated_count,
         "wait_subject": wait_subject,
+        "wait_recovery": wait_recovery,
         "sealed_bodies_visible": False,
     }
+
+
+def final_return_preflight(
+    ledger: Mapping[str, Any],
+    *,
+    guard: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Return current-state evidence for whether foreground Controller may exit."""
+
+    guard_map = guard if isinstance(guard, Mapping) else preview_lifecycle_guard(ledger, trigger="final_preflight_preview")
+    next_action = guard_map.get("next_action") if isinstance(guard_map.get("next_action"), Mapping) else {}
+    closure = ledger.get("closure") if isinstance(ledger.get("closure"), Mapping) else {}
+    blockers: list[str] = []
+    if guard_map.get("controller_stop_allowed") is not True:
+        blockers.append("lifecycle_guard_disallows_stop")
+    if guard_map.get("decision") != "terminal_return":
+        blockers.append(f"guard_decision:{guard_map.get('decision', 'unknown')}")
+    if next_action.get("action_type") != "terminal_complete":
+        blockers.append(f"next_action:{next_action.get('action_type', 'unknown')}")
+    if closure.get("decision") != "complete":
+        blockers.append(f"closure:{closure.get('decision', 'not_attempted')}")
+    return {
+        "schema_version": "black_box_flowpilot.final_return_preflight.v1",
+        "checked_at": now_iso(),
+        "allowed": not blockers,
+        "blockers": sorted(set(blockers)),
+        "controller_stop_allowed": bool(guard_map.get("controller_stop_allowed") is True),
+        "guard_decision": str(guard_map.get("decision", "")),
+        "next_action_type": str(next_action.get("action_type", "")),
+        "closure_decision": str(closure.get("decision", "not_attempted")),
+        "sealed_bodies_visible": False,
+    }
+
+
+def _foreground_duty_action(guard: Mapping[str, Any]) -> str:
+    decision = str(guard.get("decision", ""))
+    if guard.get("controller_stop_allowed") is True and decision == "terminal_return":
+        return "terminal_return"
+    if decision in _WAIT_PATROL_DECISIONS:
+        return "wait_patrol"
+    if decision in _RECOVERY_DUTY_DECISIONS:
+        return "recover_or_reissue"
+    if decision == "control_plane_stuck":
+        return "control_plane_blocker"
+    return "process_next_action"
+
+
+def _foreground_wait_patrol(
+    ledger: Mapping[str, Any],
+    guard: Mapping[str, Any],
+) -> dict[str, Any]:
+    config = ledger.get("foreground_duty_config") if isinstance(ledger.get("foreground_duty_config"), Mapping) else {}
+    seconds = int(config.get("wait_patrol_seconds", _DEFAULT_WAIT_PATROL_SECONDS))
+    wait_subject = guard.get("wait_subject") if isinstance(guard.get("wait_subject"), Mapping) else {}
+    wait_recovery = guard.get("wait_recovery") if isinstance(guard.get("wait_recovery"), Mapping) else {}
+    return {
+        "active": True,
+        "kind": "timed_patrol",
+        "seconds": seconds,
+        "subject_id": str((guard.get("next_action") or {}).get("subject_id", "")) if isinstance(guard.get("next_action"), Mapping) else "",
+        "waiting_for": str(guard.get("decision", "")),
+        "reason": str(guard.get("reason", "")),
+        "packet_id": str(wait_subject.get("packet_id", "")),
+        "wait_recovery": _copy_jsonable(wait_recovery),
+        "after_wait": "refresh_lifecycle_guard_and_foreground_duty",
+        "refresh_command": (
+            "python skills\\flowpilot\\assets\\flowpilot_new.py "
+            f"--root <project-root> --json patrol --sleep-seconds {seconds}"
+        ),
+    }
+
+
+def preview_foreground_duty(
+    ledger: Mapping[str, Any],
+    *,
+    guard: Mapping[str, Any] | None = None,
+    trigger: str = "status",
+) -> dict[str, Any]:
+    guard_map = guard if isinstance(guard, Mapping) else preview_lifecycle_guard(ledger, trigger=trigger)
+    next_action = guard_map.get("next_action") if isinstance(guard_map.get("next_action"), Mapping) else {}
+    action = _foreground_duty_action(guard_map)
+    preflight = final_return_preflight(ledger, guard=guard_map)
+    duty = {
+        "schema_version": "black_box_flowpilot.foreground_duty.v1",
+        "trigger": trigger,
+        "created_at": now_iso(),
+        "run_id": str(ledger.get("run_id", ledger.get("project_id", ""))),
+        "action": action,
+        "reason": str(guard_map.get("reason", "")),
+        "subject_id": str(next_action.get("subject_id", "")),
+        "next_action": _copy_jsonable(next_action),
+        "lifecycle_guard_decision": str(guard_map.get("decision", "")),
+        "controller_stop_allowed": bool(guard_map.get("controller_stop_allowed") is True),
+        "final_return_preflight": preflight,
+        "legacy_monitor_required": False,
+        "status_projection_stop_authority": False,
+        "sealed_bodies_visible": False,
+    }
+    if action == "wait_patrol":
+        duty["wait_patrol"] = _foreground_wait_patrol(ledger, guard_map)
+    elif action == "recover_or_reissue":
+        duty["recovery"] = {
+            "required": True,
+            "decision": str(guard_map.get("decision", "")),
+            "reason": str(guard_map.get("reason", "")),
+            "subject_id": str(next_action.get("subject_id", "")),
+            "wait_recovery": _copy_jsonable(
+                guard_map.get("wait_recovery") if isinstance(guard_map.get("wait_recovery"), Mapping) else {}
+            ),
+        }
+    elif action == "control_plane_blocker":
+        duty["blocker"] = {
+            "required": True,
+            "decision": str(guard_map.get("decision", "")),
+            "reason": str(guard_map.get("reason", "")),
+            "action_key": str(guard_map.get("action_key", "")),
+            "repeated_count": int(guard_map.get("repeated_count", 0) or 0),
+        }
+    return duty
+
+
+def refresh_foreground_duty(
+    ledger: dict[str, Any],
+    *,
+    guard: Mapping[str, Any] | None = None,
+    trigger: str = "save",
+    record_history: bool = True,
+) -> dict[str, Any]:
+    duty = preview_foreground_duty(ledger, guard=guard, trigger=trigger)
+    ledger["foreground_duty"] = duty
+    if record_history:
+        history = ledger.setdefault("foreground_duty_history", [])
+        history.append(
+            {
+                "created_at": duty["created_at"],
+                "trigger": trigger,
+                "action": duty["action"],
+                "subject_id": duty.get("subject_id", ""),
+                "lifecycle_guard_decision": duty.get("lifecycle_guard_decision", ""),
+                "final_return_allowed": duty.get("final_return_preflight", {}).get("allowed", False),
+                "wait_seconds": duty.get("wait_patrol", {}).get("seconds", 0),
+            }
+        )
+        del history[:-_FOREGROUND_DUTY_HISTORY_LIMIT]
+        ledger["foreground_duty_history"] = history
+    return duty
 
 
 def refresh_lifecycle_guard(
@@ -2521,6 +2967,12 @@ def refresh_lifecycle_guard(
         del history[:-_GUARD_HISTORY_LIMIT]
         ledger["lifecycle_guard_history"] = history
     ledger["lifecycle_guard"] = snapshot
+    refresh_foreground_duty(
+        ledger,
+        guard=snapshot,
+        trigger=trigger,
+        record_history=record_history,
+    )
     if record_event:
         _event(
             ledger,
@@ -2534,9 +2986,10 @@ def refresh_lifecycle_guard(
 
 
 def assert_controller_stop_allowed(ledger: Mapping[str, Any]) -> None:
-    guard = ledger.get("lifecycle_guard")
-    if not isinstance(guard, Mapping) or guard.get("controller_stop_allowed") is not True:
-        raise BlackBoxRuntimeError("Controller cannot stop before lifecycle guard allows terminal return")
+    preflight = final_return_preflight(ledger)
+    if preflight.get("allowed") is not True:
+        blockers = ", ".join(str(item) for item in preflight.get("blockers", []))
+        raise BlackBoxRuntimeError(f"Controller cannot stop before final-return preflight passes: {blockers}")
 
 
 def _closure_blockers(
@@ -2688,6 +3141,12 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         return RuntimeAction("issue_task_packet", "active route has no task packets", responsibility="worker")
 
     for packet in active_packets:
+        if packet.get("accepted_result_id") and _accepted_packet_repair_needed(ledger, packet):
+            return RuntimeAction(
+                "repair_accepted_packet",
+                "accepted packet has stale assignment or active replacement lease",
+                packet["packet_id"],
+            )
         if packet["status"] == "open":
             return RuntimeAction(
                 "lease_agent",
@@ -2803,6 +3262,17 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "source_generation": ledger.get("source_generation"),
         "next_action": router_next_action(ledger).to_json(),
         "lifecycle_guard": _copy_jsonable(ledger.get("lifecycle_guard") or preview_lifecycle_guard(ledger, trigger="render")),
+        "foreground_duty": _copy_jsonable(
+            ledger.get("foreground_duty")
+            or preview_foreground_duty(
+                ledger,
+                guard=ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), Mapping) else None,
+                trigger="render",
+            )
+        ),
+        "status_projection_authority": "display_only",
+        "runtime_authority": "current_run_ledger_lifecycle_guard_foreground_duty",
+        "legacy_monitor_required": False,
         "sealed_bodies_visible": False,
         "packets": packet_rows,
         "leases": [

@@ -16,6 +16,7 @@ except ImportError:  # pragma: no cover
 
 
 ROOT = Path(__file__).resolve().parent
+REPO_ROOT = ROOT.parent
 RESULTS_PATH = ROOT / "flowpilot_lifecycle_guard_results.json"
 
 
@@ -66,10 +67,52 @@ def _hazard_report() -> dict[str, Any]:
     }
 
 
+def _model_test_alignment_report() -> dict[str, Any]:
+    lifecycle_test = REPO_ROOT / "tests" / "test_flowpilot_lifecycle_guard.py"
+    fake_scenarios = ROOT / "flowpilot_fake_project_rehearsal_scenarios.py"
+    lifecycle_text = lifecycle_test.read_text(encoding="utf-8")
+    fake_text = fake_scenarios.read_text(encoding="utf-8")
+    obligations = {
+        "nonterminal_foreground_duty": "foreground_duty" in lifecycle_text and "process_next_action" in lifecycle_text,
+        "wait_patrol_duty": "wait_patrol" in lifecycle_text and "wait_patrol" in fake_text,
+        "final_preflight_blocks_open_packet": "test_final_preflight_rejects_open_packet" in lifecycle_text,
+        "terminal_preflight_allows_return": "terminal_return" in lifecycle_text,
+        "scoped_closure_fake_rehearsal_boundary": "final-preflight" in fake_text and "planning_chain_does_not_terminal" in fake_text,
+        "recovery_or_blocker_duty": "recover_or_reissue" in fake_text and "control_plane_stuck" in lifecycle_text,
+        "slow_live_progress_preserved": (
+            "test_progress_keeps_slow_live_result_wait_in_patrol" in lifecycle_text
+            and "slow_reviewer_progress_preserved" in fake_text
+            and "still_working" in fake_text
+        ),
+        "liveness_failure_required_before_replacement": (
+            "test_liveness_check_due_does_not_replace_without_failure_evidence" in lifecycle_text
+            and "test_current_liveness_failure_allows_replacement_duty" in lifecycle_text
+            and "no_output" in fake_text
+        ),
+        "accepted_packet_reassignment_rejected": (
+            "test_accepted_packet_rejects_reassignment_and_ack_regression" in lifecycle_text
+            and "accepted_packet_reassignment_rejected" in fake_text
+            and "cannot assign accepted packet" in fake_text
+        ),
+        "accepted_packet_race_repair": "test_repair_accepted_packet_assignment_race_restores_original_result" in lifecycle_text,
+    }
+    missing = [name for name, ok in obligations.items() if not ok]
+    return {
+        "ok": not missing,
+        "obligations": obligations,
+        "missing": missing,
+        "evidence": [
+            "tests/test_flowpilot_lifecycle_guard.py",
+            "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+        ],
+    }
+
+
 def run_checks() -> dict[str, Any]:
     flowguard = _flowguard_report()
     target_plan = _target_plan_report()
     hazards = _hazard_report()
+    alignment = _model_test_alignment_report()
     rows = [
         {
             "id": "new_lifecycle_guard_flowguard_model",
@@ -83,7 +126,7 @@ def run_checks() -> dict[str, Any]:
             "status": "passed" if target_plan["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["openspec/changes/add-new-flowpilot-lifecycle-guard/tasks.md"],
+            "evidence": ["openspec/changes/harden-new-flowpilot-liveness-recovery/tasks.md"],
         },
         {
             "id": "new_lifecycle_guard_hazard_replay",
@@ -92,14 +135,22 @@ def run_checks() -> dict[str, Any]:
             "scope": "routine",
             "evidence": ["simulations/flowpilot_lifecycle_guard_model.py"],
         },
+        {
+            "id": "new_foreground_duty_model_test_alignment",
+            "status": "passed" if alignment["ok"] else "failed",
+            "freshness": "current",
+            "scope": "routine",
+            "evidence": alignment["evidence"],
+        },
     ]
     return {
         "result_type": "flowpilot_lifecycle_guard_checks",
         "model_id": model.MODEL_ID,
-        "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"],
+        "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"] and alignment["ok"],
         "flowguard": flowguard,
         "target_plan": target_plan,
         "hazard_detection": hazards,
+        "model_test_alignment": alignment,
         "test_mesh": {
             "rows": rows,
             "routine_gate": {"ok": all(row["status"] == "passed" for row in rows)},
