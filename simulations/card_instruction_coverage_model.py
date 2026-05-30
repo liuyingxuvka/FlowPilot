@@ -199,6 +199,18 @@ PM_CONTROL_BLOCKER_REPAIR_CARD_IDS = frozenset(
         "pm.review_repair",
     }
 )
+PROJECT_TOPOLOGY_REQUIRED_CARD_IDS = frozenset(
+    {
+        "pm.core",
+        "pm.product_architecture",
+        "pm.route_skeleton",
+        "pm.node_acceptance_plan",
+        "pm.closure",
+        "process_officer.core",
+        "product_officer.core",
+        "reviewer.core",
+    }
+)
 
 ACTION_TERMS_BY_ROLE: dict[str, tuple[str, ...]] = {
     "bootloader": ("display", "return", "router", "do not infer"),
@@ -256,6 +268,7 @@ class CardFacts:
     output_contract_guidance: bool
     pm_note_guidance: bool
     pm_control_blocker_repair_guidance: bool
+    project_topology_guidance: bool
 
 
 @dataclass(frozen=True)
@@ -409,6 +422,37 @@ def _has_pm_control_blocker_repair_guidance(card_id: str, role: str, text: str) 
         "repair transaction",
     )
     return all(term in lower for term in required_terms)
+
+
+def _has_project_topology_guidance(card_id: str, text: str) -> bool:
+    if card_id not in PROJECT_TOPOLOGY_REQUIRED_CARD_IDS:
+        return True
+    lower = re.sub(r"\s+", " ", text.lower())
+    names_topology = "docs/flowguard_project_topology.md" in lower
+    treats_as_background = "background architecture" in lower or "orientation" in lower
+    forbids_report_overclaim = (
+        "not a flowguard report" in lower
+        or "do not treat topology as a flowguard report" in lower
+    )
+    forbids_evidence_overclaim = (
+        ("gate evidence" in lower and ("not" in lower or "cannot" in lower))
+        or "not validation evidence" in lower
+        or "cannot support a reviewer pass by itself" in lower
+        or "cannot close a flowguard or validation gap" in lower
+    )
+    maintains_freshness = (
+        "rebuild and check" in lower
+        or "rebuilt and checked" in lower
+        or "topology must be rebuilt and checked" in lower
+        or "stale topology" in lower
+    )
+    return (
+        names_topology
+        and treats_as_background
+        and forbids_report_overclaim
+        and forbids_evidence_overclaim
+        and maintains_freshness
+    )
 
 
 def _has_envelope_only_return(identity: dict[str, str], text: str) -> bool:
@@ -685,6 +729,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 output_contract_guidance=_has_output_contract_guidance(card_id, text),
                 pm_note_guidance=_has_pm_note_guidance(card_id, text),
                 pm_control_blocker_repair_guidance=_has_pm_control_blocker_repair_guidance(card_id, expected_role, text),
+                project_topology_guidance=_has_project_topology_guidance(card_id, text),
             )
         )
 
@@ -743,6 +788,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 output_contract_guidance=_has_output_contract_guidance(f"unmanifested:{rel}", text),
                 pm_note_guidance=_has_pm_note_guidance(f"unmanifested:{rel}", text),
                 pm_control_blocker_repair_guidance=_has_pm_control_blocker_repair_guidance(f"unmanifested:{rel}", role, text),
+                project_topology_guidance=_has_project_topology_guidance(f"unmanifested:{rel}", text),
             )
         )
     return tuple(sorted(facts, key=lambda card: card.card_id))
@@ -831,6 +877,8 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
         failures.append(f"{card.card_id}: missing worker/officer PM Note soft guidance")
     if not card.pm_control_blocker_repair_guidance:
         failures.append(f"{card.card_id}: missing PM control-blocker repair guidance for fatal and repair-decision lanes")
+    if not card.project_topology_guidance:
+        failures.append(f"{card.card_id}: missing project topology background and evidence-boundary guidance")
     return tuple(failures)
 
 
@@ -955,6 +1003,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         output_contract_guidance=True,
         pm_note_guidance=True,
         pm_control_blocker_repair_guidance=True,
+        project_topology_guidance=True,
     )
     return {
         "missing_identity_boundary": replace(good, identity_boundary=False),
@@ -1018,6 +1067,11 @@ def hazard_cards() -> dict[str, CardFacts]:
             good,
             card_id="pm.review_repair",
             pm_control_blocker_repair_guidance=False,
+        ),
+        "missing_project_topology_guidance": replace(
+            good,
+            card_id="pm.core",
+            project_topology_guidance=False,
         ),
     }
 

@@ -119,6 +119,14 @@ MAINTENANCE_SURFACES: tuple[MaintenanceSurface, ...] = (
         evidence_family="coverage_sweep_runner",
     ),
     MaintenanceSurface(
+        surface_id="script-entrypoint:flowguard-project-topology",
+        path="scripts/flowguard_project_topology.py",
+        kind="script_entrypoint",
+        owner="project_topology_orientation",
+        public_role="project_topology_cli",
+        evidence_family="project_topology_orientation",
+    ),
+    MaintenanceSurface(
         surface_id="script-entrypoint:flowpilot-maintenance-map",
         path="scripts/flowpilot_maintenance_map.py",
         kind="script_entrypoint",
@@ -165,6 +173,14 @@ MAINTENANCE_SURFACES: tuple[MaintenanceSurface, ...] = (
         owner="flowpilot_model_test_alignment",
         public_role="source_contract_alignment_entrypoint",
         evidence_family="model_test_alignment_checks",
+    ),
+    MaintenanceSurface(
+        surface_id="model-facade:project-topology-orientation",
+        path="simulations/flowpilot_project_topology_orientation_model.py",
+        kind="model_facade",
+        owner="project_topology_orientation",
+        public_role="project_topology_orientation_model_entrypoint",
+        evidence_family="project_topology_orientation_checks",
     ),
 )
 

@@ -19,6 +19,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial route, decomposition, process, validation, repair-return, child-skill conformance, or closure-readiness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
+- In mature FlowGuard projects, read `docs/flowguard_project_topology.md` as background architecture before route decomposition. It guides relevant model/test/code/evidence inspection, but it is not a FlowGuard Report and is not gate evidence. If this phase changes topology sources, rebuild and check the topology before claiming done.
 
 
 Draft the route from reviewed material and product understanding.

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 
 from .common import ROOT, REQUIRED_FILES, STARTUP_INTAKE_PS1_SOURCE_FILES, UTF8_BOM
@@ -48,6 +49,34 @@ def run_checks(result: dict[str, object]) -> None:
         )
         if not ok:
             result["ok"] = False
+
+    try:
+        topology_path = ROOT / "scripts" / "flowguard_project_topology.py"
+        spec = importlib.util.spec_from_file_location(
+            "flowguard_project_topology_install_check",
+            topology_path,
+        )
+        if spec is None or spec.loader is None:
+            raise ImportError(f"cannot load {topology_path}")
+        flowguard_project_topology = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(flowguard_project_topology)
+
+        topology_result = flowguard_project_topology.check_topology(ROOT)
+        result["checks"].append(
+            {
+                "name": "flowguard_project_topology_check",
+                "ok": bool(topology_result["ok"]),
+                "finding_count": len(topology_result["findings"]),
+                "findings": topology_result["findings"][:20],
+            }
+        )
+        if not topology_result["ok"]:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {"name": "flowguard_project_topology_check", "ok": False, "error": repr(exc)}
+        )
 
     skill_path = ROOT / "skills/flowpilot/SKILL.md"
     if skill_path.exists():

@@ -342,6 +342,18 @@ SCRIPT_SURFACE_CONTRACT_TEST_MARKER = "SCRIPT_SURFACE_CONTRACT_TEST_PATH"
 TEST_TIER_COMMAND_CONTRACT_TEST_MARKER = "test_all_tier_commands_have_external_command_contracts"
 
 STRUCTURE_SPLIT_REPAIR_PLAN = {
+    "flowguard_project_topology": {
+        "split_status": "deferred_split",
+        "split_reason": "new project topology CLI is externally contracted before any structure split",
+        "deferred_split_reason": (
+            "orientation_artifact_contract_current | "
+            "requires_dedicated_structuremesh_claim_before_cli_split"
+        ),
+        "peer_safety_status": "do_not_edit_without_claim",
+        "safe_split_class": "project_topology_cli",
+        "recommended_next_action": "split_topology_generator_after_contract_parity_tests",
+        "structure_split_status": "deferred",
+    },
     "flowpilot_router": {
         "split_status": "completed_split",
         "split_reason": "router_import_alias_surface_extracted_without_changing_entrypoint_contracts",

@@ -87,6 +87,14 @@ FlowGuard evidence can support this gate. The report body stays in
 run-scoped artifacts; do not paste sealed findings, commands, risks, or
 recommendations in chat.
 
+If the review package cites `docs/flowguard_project_topology.md`, read it only
+as project background. The topology may help you choose which model families,
+tests, code surfaces, evidence summaries, and known-bad signals to challenge,
+but it is not a FlowGuard Report and cannot support a reviewer pass by itself.
+A stale topology is an orientation-maintenance gap for PM to disposition; it is
+not a substitute for current FlowGuard Reports, ordinary test evidence, install
+checks, or release evidence.
+
 ## Handoff-Aware Review
 
 When the router envelope or PM request gives you an upstream handoff letter,

@@ -536,6 +536,45 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("skipped", text)
                 self.assertIn("undispositioned", text)
 
+    def test_flowguard_project_topology_guidance_is_role_scoped(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        required_cards = _card_paths_by_id(
+            "pm.core",
+            "pm.product_architecture",
+            "pm.route_skeleton",
+            "pm.node_acceptance_plan",
+            "pm.closure",
+            "process_officer.core",
+            "product_officer.core",
+            "reviewer.core",
+        )
+        for path in required_cards:
+            with self.subTest(path=path.name):
+                text = normalized(path)
+                self.assertIn("docs/flowguard_project_topology.md", text)
+                self.assertTrue("background architecture" in text or "orientation" in text)
+                self.assertTrue(
+                    "not a flowguard report" in text
+                    or "do not treat topology as a flowguard report" in text
+                )
+                self.assertTrue(
+                    ("gate evidence" in text and ("not" in text or "cannot" in text))
+                    or "cannot support a reviewer pass by itself" in text
+                    or "cannot close a flowguard or validation gap" in text
+                )
+
+        pm_core = normalized(_card_path_by_id("pm.core"))
+        self.assertIn("rebuild and check the topology", pm_core)
+        self.assertIn("model families, tests, code surfaces, evidence summaries, and known-bad signals", pm_core)
+
+        agents_text = normalized(ROOT / "AGENTS.md")
+        self.assertIn("flowguard project topology", agents_text)
+        self.assertIn("orientation only", agents_text)
+        self.assertIn("python scripts/flowguard_project_topology.py build", agents_text)
+        self.assertIn("python scripts/flowguard_project_topology.py check", agents_text)
+
 
 if __name__ == "__main__":
     unittest.main()

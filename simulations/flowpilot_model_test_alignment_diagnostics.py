@@ -752,6 +752,9 @@ def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]
         has_model = bool(model_binding) or _surface_mentions(model_text, rel_path, stem)
         has_test = aggregate_script_contract_test_exists or _surface_mentions(test_text, rel_path, stem)
         has_external_contract = aggregate_script_contract_test_exists or (stem in SCRIPT_CLI_EXTERNAL_CONTRACT_STEMS and has_test)
+        split_repair = dict(STRUCTURE_SPLIT_REPAIR_PLAN.get(stem, {}))
+        if split_repair:
+            split_repair.setdefault("structure_split_status", "deferred")
         surfaces.append(
             _finalize_surface(
                 {
@@ -769,6 +772,7 @@ def _script_surfaces(*, model_text: str, test_text: str) -> list[dict[str, Any]]
                     "split_threshold": _surface_threshold("script_entrypoint"),
                     "has_main": summary["has_main"],
                     "parse_error": summary["parse_error"],
+                    **split_repair,
                 }
             )
         )

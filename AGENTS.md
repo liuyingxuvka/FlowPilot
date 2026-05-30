@@ -18,6 +18,32 @@ Before implementation work, read:
 
 Use real FlowGuard. Do not create a fake mini-framework.
 
+## FlowGuard Project Topology
+
+This mature FlowGuard project maintains an automatically generated project
+topology map:
+
+- Machine artifact: `docs/flowguard_project_topology.json`
+- Human artifact: `docs/flowguard_project_topology.md`
+- Generator/checker: `python scripts/flowguard_project_topology.py build`
+  and `python scripts/flowguard_project_topology.py check`
+
+Before non-trivial planning, proposal, coding, prompt/card, model, test,
+release, install, or validation work, read the topology Markdown after the
+standard FlowGuard package/project audit. Use it as background architecture for
+which model families, tests, code surfaces, evidence summaries, and known-bad
+signals to inspect next.
+
+The topology is orientation only. It is not a FlowGuard Report, not child model
+evidence, not test evidence, and not a release or install pass. Completion
+claims still need the owning executable checks, result artifacts, install
+audits, and freshness evidence.
+
+When FlowGuard models, runners, result paths, tests, code ownership surfaces,
+prompt/card boundaries, AGENTS rules, or readiness checks change, rebuild and
+check the topology before claiming done, or explicitly report why it is left
+stale.
+
 Long-running FlowGuard checks in this repository use a stable background log
 contract. Default to `tmp/flowguard_background/` and use the command base name
 for these artifacts:

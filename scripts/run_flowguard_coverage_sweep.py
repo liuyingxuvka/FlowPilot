@@ -100,6 +100,7 @@ SUPPORTING_COVERAGE = {
     "flowpilot_pm_suggestion_disposition",
     "flowpilot_process_liveness",
     "flowpilot_prompt_boundary",
+    "flowpilot_project_topology_orientation",
     "flowpilot_recursive_closure_reconciliation",
     "flowpilot_recursive_decomposition",
     "flowpilot_recovery_supervisor",

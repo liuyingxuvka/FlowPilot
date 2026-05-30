@@ -19,6 +19,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial closure, lifecycle, model-coverage, validation, evidence-freshness, or final-user outcome judgement, cite FlowGuard Work Order and FlowGuard Report ids with freshness and PM acceptance, or record a scoped `flowguard_not_required_reason`.
+- In mature FlowGuard projects, read `docs/flowguard_project_topology.md` as background architecture before terminal closure and confirm it was rebuilt and checked after any topology-affecting model, test, code, prompt/card, install, or readiness change. It is not a FlowGuard Report, is not gate evidence, and cannot close a FlowGuard or validation gap.
 
 
 Close only after final ledger and backward replay pass.

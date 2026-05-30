@@ -235,6 +235,15 @@ FAST_COMMANDS = (
         description="FlowGuard Model-Test Alignment checks for model obligations and ordinary test evidence.",
     ),
     TierCommand(
+        name="flowguard_project_topology_orientation",
+        command=_py(
+            "simulations/run_flowpilot_project_topology_orientation_checks.py",
+            "--json-out",
+            "simulations/flowpilot_project_topology_orientation_results.json",
+        ),
+        description="FlowGuard checks for project topology orientation, freshness, role boundaries, and evidence overclaim hazards.",
+    ),
+    TierCommand(
         name="synthetic_agent_coverage_matrix",
         command=_py(
             "simulations/flowpilot_synthetic_agent_coverage_matrix.py",
@@ -314,6 +323,21 @@ FAST_COMMANDS = (
             "simulations/flowpilot_controller_break_glass_results.json",
         ),
         description="FlowGuard checks for Controller emergency break-glass eligibility and forbidden powers.",
+    ),
+    TierCommand(
+        name="flowguard_project_topology_build",
+        command=_py("scripts/flowguard_project_topology.py", "build"),
+        description="Regenerate FlowGuard project topology orientation artifacts from current model, test, code, and evidence sources.",
+    ),
+    TierCommand(
+        name="flowguard_project_topology_check",
+        command=_py("scripts/flowguard_project_topology.py", "check"),
+        description="Check FlowGuard project topology artifacts for freshness, required layers, and orientation-only boundary text.",
+    ),
+    _pytest(
+        "project_topology_tests",
+        "tests/test_flowguard_project_topology.py",
+        description="Focused tests for FlowGuard project topology generation, stale detection, and required layers.",
     ),
     _pytest(
         "test_tier_runner",

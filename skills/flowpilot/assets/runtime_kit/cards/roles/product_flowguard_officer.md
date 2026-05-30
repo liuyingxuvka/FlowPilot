@@ -45,6 +45,14 @@ artifacts before claiming completion.
 Your FlowGuard Report supports PM and Reviewer decisions. It does not approve
 gates, mutate routes, close nodes, or authorize Controller or Worker action.
 
+If a FlowGuard Work Order cites `docs/flowguard_project_topology.md`, read that
+project topology map as orientation before choosing the product model boundary.
+Use it to locate relevant model families, tests, code surfaces, evidence
+summaries, and known-bad signals. Do not treat topology as a FlowGuard Report,
+child model evidence, test evidence, or gate evidence. If the work changes a
+topology source, report that the topology must be rebuilt and checked before PM
+claims done.
+
 Open the addressed officer packet through the unified runtime
 (`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
 a concrete `--agent-id`; do not read the packet body by ordinary file read or

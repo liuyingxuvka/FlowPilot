@@ -69,6 +69,11 @@ Nonterminal status, patrol, resume, lease, ACK, result, and scoped-closure comma
 
 If `foreground_duty.action=wait_patrol`, do not final-answer. Run the duty's `refresh_command` or `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60`, wait for output, then follow the next `foreground_duty`. Starting one timer, seeing no new work, or observing a live role is not completion evidence.
 
+Router-ready state preempts foreground waits. Before waiting on role chat or a
+timer, scan daemon status and the Controller action; if Router has work ready,
+use the returned action or `controller-standby` path instead of continuing the
+foreground wait.
+
 Before any final answer, done claim, or Controller shutdown for a new runtime run, run:
 
 ```powershell
@@ -117,3 +122,13 @@ The active prompt content lives in the copied runtime kit and prompt manifest, n
 - `assets/role_output_runtime.py`
 
 Old long-form protocol material is source-history material only. Formal FlowPilot runs receive prompt content through the router and manifest.
+
+## Mature FlowGuard Project Topology
+
+When a formal FlowPilot run is operating inside a mature FlowGuard repository
+and the router-delivered packet or card names `docs/flowguard_project_topology.md`,
+roles may read that map as project background only. The topology can guide which
+models, tests, code areas, evidence summaries, and known-bad signals to inspect
+next, but it is not a FlowGuard Report, not validation evidence, and not
+authority for Controller, PM, Officers, or Reviewer to approve gates, mutate
+routes, close nodes, or claim completion.

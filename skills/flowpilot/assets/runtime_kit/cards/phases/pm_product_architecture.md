@@ -20,6 +20,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial product, acceptance, validation, or evidence-freshness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
+- In mature FlowGuard projects, read `docs/flowguard_project_topology.md` as background architecture before product modeling decisions. It guides relevant model/test/code/evidence inspection, but it is not a FlowGuard Report and is not gate evidence. If this phase changes topology sources, rebuild and check the topology before claiming done.
 
 
 Write `.flowpilot/runs/<run-id>/product_function_architecture.json` from

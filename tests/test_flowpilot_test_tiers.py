@@ -227,9 +227,15 @@ class FlowPilotTestTierTests(unittest.TestCase):
             self.assertEqual(local["proof_scope"], "local_only")
 
     def test_fast_tier_excludes_release_coverage_and_full_regression(self) -> None:
+        command_names = [command.name for command in run_test_tier.commands_for_tier("fast")]
         text = self.command_text("fast")
         self.assertIn("run_flowpilot_slow_test_contract_checks.py", text)
         self.assertIn("run_flowpilot_model_test_alignment_checks.py", text)
+        self.assertIn("run_flowpilot_project_topology_orientation_checks.py", text)
+        self.assertIn("scripts/flowguard_project_topology.py", text)
+        self.assertIn("tests/test_flowguard_project_topology.py", text)
+        self.assertIn("flowguard_project_topology_build", command_names)
+        self.assertIn("flowguard_project_topology_check", command_names)
         self.assertIn("flowpilot_hard_gate_red_team_matrix.py", text)
         self.assertIn("flowpilot_e2e_synthetic_chaos_matrix.py", text)
         self.assertIn("flowpilot_real_router_dry_run_rehearsal_matrix.py", text)
@@ -353,6 +359,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_packets_current_node_result_audit", command_names)
         self.assertIn("router_packets_current_node_result_decision", command_names)
         self.assertIn("router_packets_batch_and_grants", command_names)
+        self.assertIn("router_packet_result_family", command_names)
         self.assertIn("router_cards", command_names)
         self.assertIn("router_ack_return", command_names)
         self.assertIn("router_boundaries", command_names)
@@ -450,6 +457,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_packets_current_node_result_audit",
                 "router_packets_current_node_result_decision",
                 "router_packets_batch_and_grants",
+                "router_packet_result_family",
                 "router_cards",
                 "router_ack_return",
             ],

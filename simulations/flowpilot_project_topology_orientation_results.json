@@ -1,0 +1,449 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=10 initial_states=1 traces=55",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "controller_interprets_topology": {
+        "detected": true,
+        "expected_failure": "Controller interpreted topology as a FlowGuard report",
+        "failures": [
+          "Controller interpreted topology as a FlowGuard report"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": true,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "missing_code_layer": {
+        "detected": true,
+        "expected_failure": "Topology missing code layer",
+        "failures": [
+          "Topology missing code layer"
+        ],
+        "state": {
+          "code_layer_present": false,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "missing_evidence_layer": {
+        "detected": true,
+        "expected_failure": "Topology missing evidence layer",
+        "failures": [
+          "Topology missing evidence layer"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": false,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "missing_known_bad_layer": {
+        "detected": true,
+        "expected_failure": "Topology missing known-bad/risk layer",
+        "failures": [
+          "Topology missing known-bad/risk layer"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": false,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "missing_model_layer": {
+        "detected": true,
+        "expected_failure": "Topology missing model layer",
+        "failures": [
+          "Topology missing model layer"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": false,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "missing_owning_validation": {
+        "detected": true,
+        "expected_failure": "Topology orientation completed without separate owning validation evidence",
+        "failures": [
+          "Topology orientation completed without separate owning validation evidence"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": false,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "missing_test_layer": {
+        "detected": true,
+        "expected_failure": "Topology missing test layer",
+        "failures": [
+          "Topology missing test layer"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": false,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "pm_route_mutation_from_topology": {
+        "detected": true,
+        "expected_failure": "PM mutated route from topology alone",
+        "failures": [
+          "PM mutated route from topology alone"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": true,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "reviewer_gate_from_topology": {
+        "detected": true,
+        "expected_failure": "Reviewer approved a gate from topology",
+        "failures": [
+          "Reviewer approved a gate from topology"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": true,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "skipped_topology_intake": {
+        "detected": true,
+        "expected_failure": "Mature FlowGuard project completed non-trivial work without topology intake",
+        "failures": [
+          "Mature FlowGuard project completed non-trivial work without topology intake"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": false,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "source_change_without_refresh": {
+        "detected": true,
+        "expected_failure": "Topology source changed without rebuild/check",
+        "failures": [
+          "Topology source changed without rebuild/check"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": false,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "stale_topology": {
+        "detected": true,
+        "expected_failure": "Stale topology was accepted for mature FlowGuard work",
+        "failures": [
+          "Stale topology was accepted for mature FlowGuard work"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": false,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": false
+        }
+      },
+      "topology_as_validation": {
+        "detected": true,
+        "expected_failure": "Topology was used as validation evidence",
+        "failures": [
+          "Topology was used as validation evidence"
+        ],
+        "state": {
+          "code_layer_present": true,
+          "controller_interpreted_topology_as_report": false,
+          "downstream_route_selected_after_orientation": true,
+          "evidence_layer_present": true,
+          "known_bad_layer_present": true,
+          "mature_flowguard_project": true,
+          "model_layer_present": true,
+          "nontrivial_work": true,
+          "officer_treated_topology_as_background": true,
+          "owning_validation_evidence_present": true,
+          "pm_considered_topology": true,
+          "pm_mutated_route_from_topology_alone": false,
+          "reviewer_approved_gate_from_topology": false,
+          "reviewer_treated_topology_as_background": true,
+          "status": "complete",
+          "test_layer_present": true,
+          "topology_artifacts_present": true,
+          "topology_current": true,
+          "topology_read_before_work": true,
+          "topology_refreshed_after_source_change": true,
+          "topology_used_as_validation_evidence": true
+        }
+      }
+    },
+    "ok": true
+  },
+  "ok": true,
+  "progress": {
+    "initial_can_reach_success": true,
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": [],
+    "success_state_count": 1
+  },
+  "safe_graph": {
+    "edge_count": 9,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 10,
+    "target_plan_failures": []
+  },
+  "target_project_topology_orientation": {
+    "failures": [],
+    "ok": true,
+    "state": {
+      "code_layer_present": true,
+      "controller_interpreted_topology_as_report": false,
+      "downstream_route_selected_after_orientation": true,
+      "evidence_layer_present": true,
+      "known_bad_layer_present": true,
+      "mature_flowguard_project": true,
+      "model_layer_present": true,
+      "nontrivial_work": true,
+      "officer_treated_topology_as_background": true,
+      "owning_validation_evidence_present": true,
+      "pm_considered_topology": true,
+      "pm_mutated_route_from_topology_alone": false,
+      "reviewer_approved_gate_from_topology": false,
+      "reviewer_treated_topology_as_background": true,
+      "status": "complete",
+      "test_layer_present": true,
+      "topology_artifacts_present": true,
+      "topology_current": true,
+      "topology_read_before_work": true,
+      "topology_refreshed_after_source_change": true,
+      "topology_used_as_validation_evidence": false
+    }
+  }
+}

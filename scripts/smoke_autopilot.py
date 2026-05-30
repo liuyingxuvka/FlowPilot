@@ -104,6 +104,14 @@ def main(argv: list[str] | None = None) -> int:
         "--json-out",
         "simulations/flowpilot_model_test_alignment_results.json",
     ]
+    project_topology_orientation_check = [
+        sys.executable,
+        "simulations/run_flowpilot_project_topology_orientation_checks.py",
+        "--json-out",
+        "simulations/flowpilot_project_topology_orientation_results.json",
+    ]
+    project_topology_build = [sys.executable, "scripts/flowguard_project_topology.py", "build"]
+    project_topology_check = [sys.executable, "scripts/flowguard_project_topology.py", "check"]
     control_transaction_registry_check = [
         sys.executable,
         "simulations/run_flowpilot_control_transaction_registry_checks.py",
@@ -139,6 +147,9 @@ def main(argv: list[str] | None = None) -> int:
         router_facade_split_check,
         similarity_convergence_check,
         model_test_alignment_check,
+        project_topology_orientation_check,
+        project_topology_build,
+        project_topology_check,
     ]
     ok = True
     for command in checks:

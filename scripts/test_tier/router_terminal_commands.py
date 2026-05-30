@@ -77,6 +77,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_resume_rehydration",
         "tests.router_runtime.resume",
         patterns=(
+            "test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker",
             "test_incomplete_stateful_rehydrate_receipt_becomes_control_blocker",
             "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence",
             "test_resume_rehydration_reissues_missing_obligations_before_pm",
@@ -134,13 +135,17 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_control_blockers_pm_repair_decisions",
         "tests.router_runtime.control_blockers",
         patterns=(
+            "test_distinct_pm_control_blocker_causes_create_distinct_families",
             "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
             "test_pm_repair_decision_can_repeat_for_new_control_blocker",
             "test_pm_repair_decision_rejects_retired_event_replay_plan_kind",
             "test_pm_repair_decision_rejects_registered_but_not_receivable_rerun_target",
             "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
+            "test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+            "test_same_family_delivered_pm_control_blocker_reuses_existing_artifact",
+            "test_same_family_pending_pm_control_blocker_reuses_existing_artifact",
         ),
-        description="Control-blocker PM repair-decision validation slice.",
+        description="Control-blocker PM repair-decision and PM blocker-family validation slice.",
     ),
     _unittest_k(
         "router_control_blockers_protocol_transactions",

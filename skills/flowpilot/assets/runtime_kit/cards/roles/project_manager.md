@@ -52,6 +52,17 @@ work order, repairs the evidence chain, defers to a named node, waives with
 authority, or stops for the user. FlowGuard reports support PM decisions; they
 do not mutate routes, approve gates, close nodes, or replace PM judgement.
 
+When the project provides `docs/flowguard_project_topology.md`, read it before
+non-trivial product, route, node, repair, validation, prompt/card, install, or
+closure decisions. Treat the project topology map as background architecture
+only: it can guide which model families, tests, code surfaces, evidence
+summaries, and known-bad signals PM should inspect, but it is not a FlowGuard
+Report, child model evidence, test evidence, or gate evidence. If PM changes a
+model, runner, result path, test registry, code ownership surface,
+prompt/card boundary, or readiness check represented by the topology, PM must
+rebuild and check the topology before claiming done or record the stale-map
+blocker explicitly.
+
 When a router-authorized phase lets PM issue work, prefer one explicit
 `batch_id` with `packets[]` or `requests[]` for all work that can start now.
 Simultaneous registration means PM asserts the packets are independent enough

@@ -21612,3 +21612,62 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Skipped Steps
 - The concurrently present project-topology OpenSpec/code changes were not merged into this scoped closeout commit; they remain separate working-tree changes.
 - No OpenSpec archive, remote push, tag, release, deploy, or public-release claim was performed.
+
+## flowguard-project-topology-map-20260530 - Project topology orientation map
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The user wanted mature FlowGuard-heavy projects to give AI a first-pass project structure map before non-trivial work, without treating that map as a replacement for model reports, tests, or gate evidence.
+- Status: implemented_validated_installed_synced_local_git_ready
+- Recorded: 2026-05-30T18:20:47Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_project_topology_orientation_model.py`
+- `simulations/run_flowpilot_project_topology_orientation_checks.py`
+- `simulations/flowpilot_project_topology_orientation_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Runtime And Prompt Files
+- `scripts/flowguard_project_topology.py`
+- `AGENTS.md`
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok.
+- `python scripts/flowguard_project_topology.py build` - ok; generated 132 model rows, 922 code surfaces, 350 test commands, 2277 known-bad/risk signals, and 933 source records.
+- `python scripts/flowguard_project_topology.py check --json` - ok.
+- `python -m unittest tests.test_flowguard_project_topology tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_maintenance_tools` - ok; 30 tests passed.
+- `python simulations/run_flowpilot_project_topology_orientation_checks.py --json-out simulations/flowpilot_project_topology_orientation_results.json` - ok; FlowGuard explorer traces=55 and known-bad hazards detected.
+- `python simulations/run_card_instruction_coverage_checks.py` - ok.
+- `python scripts/check_install.py --json` - ok.
+- `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 60 --json-out simulations/flowpilot_full_model_coverage_sweep_results.json` - completed with existing boundary findings; topology runner was not the failing item.
+- `python simulations/run_meta_checks.py` via `tmp/flowguard_background/run_meta_checks.*` - ok; exit 0, status passed, latest artifact update 2026-05-30T20:17:08+02:00, no valid proof reuse claimed.
+- `python simulations/run_capability_checks.py` via `tmp/flowguard_background/run_capability_checks.*` - ok; exit 0, status passed, latest artifact update 2026-05-30T20:17:08+02:00, valid proof reuse metadata detected.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot skill digest matched repository source.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+
+### Findings
+- The topology map is an orientation artifact for mature FlowGuard projects. It names model, test, code, evidence, and known-bad/risk surfaces before work starts.
+- PM, Process Officer, Product Officer, and Reviewer cards now say the topology can guide inspection but cannot approve gates, mutate routes, close nodes, or replace FlowGuard/test evidence.
+- The model rejects skipped topology intake, stale maps, missing model/test/code/evidence/known-bad layers, topology-as-validation overclaim, PM route mutation from topology alone, Reviewer gate approval from topology alone, and Controller interpretation of topology as a FlowGuard Report.
+- A prompt/source regression was caught while validating: `skills/flowpilot/SKILL.md` was missing Router-ready preemption guidance. The guidance was restored and `flowpilot_role_output_runtime` plus Meta checks passed afterward.
+
+### Skipped Or Partial Steps
+- `python scripts/smoke_autopilot.py --fast` did not complete: the foreground run timed out, the background run stalled at FlowGuard 90% with no CPU/log progress, and it was recorded as `terminated_after_stall` with exit 124 under `tmp/flowguard_background/smoke_autopilot_fast.*`.
+- The coverage sweep still exits 1 because of existing boundary items: `flowpilot_final_confidence_gate`, `flowpilot_process_liveness` without an active current run root, and a missing old `flowpilot_stop_host_orphan_recovery_results.json` baseline. These were not introduced by the topology model.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
