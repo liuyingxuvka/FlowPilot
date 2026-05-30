@@ -44,7 +44,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_intake_ui_completed",
-            action="open the native startup intake UI for background-agent, continuation, and display-surface options",
+            action="open the native startup intake UI for runtime role assistance, continuation, and display-surface options",
             startup_intake_ui_completed=True,
             active_node="await_startup_intake_result",
         )
@@ -64,7 +64,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_background_agent_option_recorded",
-            action="record the startup intake background-agent option for six background subagents versus single-agent continuity",
+            action="record the startup intake runtime role-assistance option for host-supported role bindings versus single-agent continuity",
             startup_background_agent_option_recorded=True,
             active_node="record_startup_continuation_option",
         )
@@ -283,7 +283,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="six_agent_crew_policy_written",
-            action="write fixed six-agent crew policy: project manager, reviewer, process FlowGuard officer, product FlowGuard officer, worker A, worker B",
+            action="write runtime role-binding authority policy for project manager, reviewer, process FlowGuard officer, product FlowGuard officer, worker A, and worker B responsibilities",
             crew_policy_written=True,
             active_node="spawn_project_manager",
         )
@@ -429,7 +429,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="crew_memory_packets_written",
-            action="write compact role memory packets for all six roles before route work",
+            action="write compact role memory packets for runtime-required roles before route work",
             crew_memory_policy_written=True,
             crew_memory_packets_written=CREW_SIZE,
             active_node="bootstrap_continuation",

@@ -12,10 +12,10 @@
     "hazards": {
       "controller_loaded_before_roles": {
         "detected": true,
-        "expected_failure": "Controller loaded before run shell and six-role startup receipts existed",
+        "expected_failure": "Controller loaded before run shell and role-binding startup receipts existed",
         "failures": [
           "heartbeat lacked current-run one-minute verified host proof",
-          "Controller loaded before run shell and six-role startup receipts existed"
+          "Controller loaded before run shell and role-binding startup receipts existed"
         ],
         "state": {
           "card_pending_return_ledger_used": true,
@@ -127,9 +127,9 @@
       },
       "fewer_than_six_roles": {
         "detected": true,
-        "expected_failure": "roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts",
+        "expected_failure": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
         "failures": [
-          "roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts"
+          "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts"
         ],
         "state": {
           "card_pending_return_ledger_used": true,
@@ -927,9 +927,9 @@
       },
       "roles_ready_without_core_receipts": {
         "detected": true,
-        "expected_failure": "roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts",
+        "expected_failure": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
         "failures": [
-          "roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts"
+          "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts"
         ],
         "state": {
           "card_pending_return_ledger_used": true,

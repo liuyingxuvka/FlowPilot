@@ -43,9 +43,9 @@ Before approving, verify that the reviewer report covers:
 
 - three startup answers from the router-accepted startup task contract;
 - current run pointer and index authority;
-- six current role slots or an explicit fallback path;
+- coverage for runtime-requested role bindings or an explicit fallback path;
 - continuation mode evidence bound to the user's startup answer;
-- fresh current-task role slots or same-task memory rehydration evidence;
+- fresh current-task role-binding evidence or same-task memory rehydration evidence;
 - display-surface evidence;
 - old-state and old-asset quarantine.
 

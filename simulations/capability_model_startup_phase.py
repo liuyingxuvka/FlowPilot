@@ -42,7 +42,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_intake_ui_completed",
-            action="open the native startup intake UI for background-agent, continuation, and display-surface options",
+            action="open the native startup intake UI for runtime role assistance, continuation, and display-surface options",
             startup_intake_ui_completed=True,
         )
         return
@@ -60,7 +60,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_background_agent_option_recorded",
-            action="record the startup intake background-agent option for live background agents versus single-agent continuity",
+            action="record the startup intake runtime role-assistance option for host-supported role bindings versus single-agent continuity",
             startup_background_agent_option_recorded=True,
         )
         return
@@ -260,7 +260,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="six_agent_crew_policy_written",
-            action="write fixed six-agent crew policy for capability routing",
+            action="write runtime role-binding authority policy for capability routing",
             crew_policy_written=True,
         )
         return
@@ -392,7 +392,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="crew_memory_packets_written",
-            action="write compact role memory packets for all six capability-routing roles before PM ratification",
+            action="write compact role memory packets for runtime-required capability-routing roles before PM ratification",
             crew_memory_policy_written=True,
             crew_memory_packets_written=CREW_SIZE,
         )

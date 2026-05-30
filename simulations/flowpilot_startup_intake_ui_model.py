@@ -416,7 +416,7 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         if state.display_surface not in STARTUP_ENUMS["display_surface"]:
             return InvariantResult.fail("display surface toggle did not map to a startup answer enum")
     if state.background_agents == "single-agent" and state.roles_started:
-        return InvariantResult.fail("background agents started despite UI single-agent choice")
+        return InvariantResult.fail("runtime role assistance started despite UI single-agent choice")
     if state.scheduled_continuation == "manual" and state.heartbeat_created:
         return InvariantResult.fail("heartbeat created despite UI manual continuation choice")
     if state.display_surface == "chat" and state.cockpit_opened:

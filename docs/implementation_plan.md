@@ -15,8 +15,8 @@ Status: implemented.
 
 - Complete `skills/flowpilot/SKILL.md`.
 - Document trigger conditions.
-- Document that run modes are retired; startup asks only background-agent,
-  scheduled-continuation, and display-surface questions.
+- Document that run modes are retired; startup asks only runtime role
+  assistance, scheduled-continuation, and display-surface questions.
 - Document that formal FlowPilot routes start at showcase-grade scope and do
   not have a lower default tier.
 - Document visible self-interrogation, host-probed continuation with

@@ -121,7 +121,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="crew_rehydration_report_written",
-            action="write the six-role rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
+            action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
             crew_rehydration_report_written=True,
         )
         return

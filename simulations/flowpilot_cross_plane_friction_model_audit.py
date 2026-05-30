@@ -902,7 +902,7 @@ def _audit_role_liveness(*, router_state: Any) -> list[dict[str, object]]:
         _finding(
             code="six_role_liveness_unproven",
             severity="error",
-            summary="Standard six-role support was requested without readiness proof or an early blocker.",
+            summary="Standard role-binding support was requested without readiness proof or an early blocker.",
             matched_invariant="standard_six_roles_have_liveness_gate",
             evidence={"requested": requested, "ready": ready, "blocked": blocked},
             minimal_fix=(

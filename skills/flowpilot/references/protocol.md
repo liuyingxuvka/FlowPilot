@@ -18,8 +18,9 @@ long-form public explanation lives in `docs/protocol.md`.
    rows top-to-bottom and checks them off; it does not own Router dependency
    metadata.
 4. When the daemon-scheduled row is `open_startup_intake_ui`, open the native
-   startup intake UI. The UI records background-agent, scheduled-continuation,
-   display-surface, and work-request answers as path/hash evidence. Do not
+   startup intake UI. The UI records runtime role-assistance,
+   scheduled-continuation, display-surface, and work-request answers as
+   path/hash evidence. Do not
    paste the sealed work request body into chat or router payloads. If the UI
    result is `cancelled`, startup terminates after the daemon-first shell and
    does not start roles, heartbeat, Controller core, or route work.
@@ -50,7 +51,7 @@ long-form public explanation lives in `docs/protocol.md`.
    becomes active only when the runtime asks for that responsibility and the
    host returns an addressable current-run binding. IDs from prior routes, old
    crew ledgers, or older role-memory packets are audit history only and must
-   not be resumed, relabeled, or counted as current live-agent evidence.
+   not be resumed, relabeled, or counted as current role-binding evidence.
 9. Ask the project manager to ratify the startup self-interrogation and own
    material understanding, product-function architecture, route,
    heartbeat-resume, repair, and completion decisions from this point forward.
@@ -164,7 +165,7 @@ long-form public explanation lives in `docs/protocol.md`.
     router-authored card, bundle, packet, result envelope, status packet,
     resolved direct ACK, or `controller_next_action_notice.json`, Controller
     clears pending ledger actions and writes Controller receipts before
-    waiting on role chat or role-agent foreground completion. Ordinary
+    waiting on role chat or role-binding foreground completion. Ordinary
     `await_card_return_event`, `await_card_bundle_return_event`, and
     `await_role_decision` are controlled wait records under daemon ownership,
     not reasons to stop the Controller role. The foreground Controller must
@@ -257,9 +258,9 @@ long-form public explanation lives in `docs/protocol.md`.
     route heartbeat automation at one minute when scheduled continuation is
     allowed, manual-resume evidence when manual continuation is selected,
     residual route state, and shadow-route evidence. It must bind the
-    role-agent answer to actual role-binding state: if the user allowed role
-    agents, verify each runtime-required binding was opened for this FlowPilot
-    task after that user decision and after current route allocation, and
+    runtime role-assistance answer to actual role-binding state: if the user
+    allowed role assistance, verify each runtime-required binding was opened for
+    this FlowPilot task after that user decision and after current route allocation, and
     verify none of its `agent_id` values comes from prior route ledgers or
     older role-memory packets. If the user chose fallback continuity, verify
     the explicit fallback authorization and do not claim live role bindings. The reviewer writes a report only; the reviewer
@@ -297,10 +298,10 @@ long-form public explanation lives in `docs/protocol.md`.
     implement, install, edit, test, approve, or advance from its own evidence.
     If the reminder is missing, the controller requests a corrected PM decision
     instead of dispatching work.
-    Every controller-to-sub-agent message must also include a role reminder for
-    that recipient, and every sub-agent response must echo both the controller
-    boundary and its own role boundary. Missing reminders are blockers, not
-    cosmetic omissions.
+    Every controller-to-recipient-role message must also include a role reminder
+    for that recipient, and every recipient-role response must echo both the
+    controller boundary and its own role boundary. Missing reminders are
+    blockers, not cosmetic omissions.
     On heartbeat or manual resume, the controller reloads the packet ledger and
     resumes from the packet holder. If an active-holder lease is open, Controller
     waits for the packet-specific Router next-action notice instead of treating
@@ -754,11 +755,11 @@ Repeat until complete or blocked:
    Stored agent ids may be resumed only when they belong to the same active
    FlowPilot task-born cohort and a bounded host liveness preflight confirms
    them. A new formal FlowPilot task must create fresh
-   live role bindings instead of resuming prior-route IDs. If live agents are
+   live role bindings instead of resuming prior-route IDs. If host role bindings are
    missing, cancelled, unknown, or timeout-unknown, ask for the missing
    startup/fallback decision when needed before replacing roles from memory.
    Record resumed, replaced, seeded, blocked, liveness status, and
-   unavailable roles in a crew rehydration report covering project manager,
+   unavailable roles in a role rehydration report covering project manager and
    the runtime-required role bindings. Do not lazily rehydrate a required role
    only when it is first needed. Role continuity through persisted memory is
    allowed only after explicit fallback approval.

@@ -3,7 +3,7 @@
 Risk intent brief:
 - Evaluate speed-oriented protocol proposals before any runtime or prompt-card
   change lands.
-- Protect harms: losing six live roles, silently introducing light mode,
+- Protect harms: losing required live role bindings, silently introducing light mode,
   letting Controller read bodies or originate evidence, replacing PM/reviewer/
   officer judgement with router proofs, advancing after partial parallel gates,
   freezing merged artifacts too early, or closing terminal lifecycle before the
@@ -325,7 +325,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.status == "new":
         return failures
     if state.lazy_spawn_used or state.light_mode_used or not state.six_roles_live:
-        failures.append("formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles")
+        failures.append("formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings")
     if not (
         state.pm_ownership_kept
         and state.reviewer_judgement_kept
@@ -447,7 +447,7 @@ INVARIANTS = (
         name="flowpilot_optimization_preserves_full_strength",
         description=(
             "Control-plane optimization may reduce handoffs only when it "
-            "preserves six-role authority, sealed-body isolation, independent "
+            "preserves runtime role-binding authority, sealed-body isolation, independent "
             "semantic review, packet receipts, and final closure gates."
         ),
         predicate=proposal_invariant,

@@ -109,7 +109,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="heartbeat_rehydrated_six_agent_crew",
-                action="continuation turn records full six-role rehydration status before asking the PM",
+                action="continuation turn records full role-binding rehydration status before asking the PM",
                 heartbeat_rehydrated_crew=True,
                 active_node="write_crew_rehydration_report",
             )
@@ -127,7 +127,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="crew_rehydration_report_written",
-                action="write the six-role rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
+                action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
                 crew_rehydration_report_written=True,
                 active_node="heartbeat_ask_project_manager",
             )

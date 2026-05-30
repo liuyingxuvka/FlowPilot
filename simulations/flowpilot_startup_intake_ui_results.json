@@ -724,9 +724,9 @@
       },
       "single_agent_starts_roles": {
         "detected": true,
-        "expected_failure": "background agents started despite UI single-agent choice",
+        "expected_failure": "runtime role assistance started despite UI single-agent choice",
         "failures": [
-          "background agents started despite UI single-agent choice"
+          "runtime role assistance started despite UI single-agent choice"
         ],
         "state": {
           "artifact_encoding_contract_verified": true,

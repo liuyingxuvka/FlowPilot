@@ -1,4 +1,4 @@
-"""Resume role-agent record normalization for startup resume binding."""
+"""Resume role-binding record normalization for startup resume binding."""
 
 from __future__ import annotations
 

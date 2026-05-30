@@ -145,7 +145,7 @@ The FlowGuard models for FlowPilot found or guard against:
 - high-risk gate overlap with active work;
 - stale route continuing after model gap;
 - stale implementation reused after a completion review raised the standard;
-- sidecar role-agent work returned but not merged;
+- sidecar role-binding work returned but not merged;
 - parent/module-level sidecar scan treated as permission to assign work;
 - sidecar role agent assigned ownership of a child node, checkpoint, route advancement,
   or completion decision;
@@ -307,20 +307,20 @@ Keep these failure modes in the model and tests.
   product, and the PM has approved the clean ledger.
 - Child-node sidecar scan is the only formal sidecar opportunity gate. Parent
   or module review may not directly open role agents or transfer node ownership.
-- Sidecar scope checking must be separate from reuse-or-spawn assignment.
+- Sidecar scope checking must be separate from reuse-or-open role-binding assignment.
 - `sidecar_report_returned` is not completion evidence; authorized integration/review and
   verification are required.
 - Formal routes keep persistent role authority and current-run role memory.
   The project manager owns route, heartbeat-resume,
   completion-runway, PM stop, repair, and completion decisions; workers are
   sidecars only.
-- Heartbeat recovery loads the crew ledger and role memory packets,
+- Heartbeat recovery loads the role-binding ledger and role memory packets,
   restores/replaces the crew from that memory, asks the project manager for a
   completion-oriented runway, syncs that runway into the visible plan, executes
   at least the current gate when executable, then continues until a PM stop
   signal, hard gate, blocker, route mutation, or real execution limit stops
   progress.
-- Completion must archive the crew ledger and role memory packets after
+- Completion must archive the role-binding ledger and role memory packets after
   lifecycle reconciliation.
 - Idle role agents are a reusable pool, not proof that the current child node has
   already been scanned.

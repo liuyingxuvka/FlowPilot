@@ -18,7 +18,7 @@ Risk intent brief:
 - Hard invariants: stable launcher only; Controller is relay-only; PM decisions
   happen after heartbeat/manual wake records re-entry to the router, one-minute
   heartbeat evidence when automated, current-run state, visible plan
-  restoration, six-role liveness checking, lifecycle reconciliation, and crew
+  restoration, role-binding liveness checking, lifecycle reconciliation, and crew
   rehydration;
   prompt/mail delivery is ledger gated; route progress can only come from
   reviewed packet evidence.
@@ -920,9 +920,9 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("resume inferred route progress or PM decision from chat history")
 
     if state.all_six_role_liveness_checked and not state.controller_relay_boundary_confirmed:
-        failures.append("six-role liveness checked before Controller loaded current-run resume state")
+        failures.append("role-binding liveness checked before Controller loaded current-run resume state")
     if state.serial_liveness_wait_used:
-        failures.append("six-role liveness was not checked as a concurrent batch")
+        failures.append("role-binding liveness was not checked as a concurrent batch")
     if (
         state.all_six_role_liveness_checked
         or state.host_role_rehydrate_requested
@@ -936,9 +936,9 @@ def invariant_failures(state: State) -> list[str]:
         and state.all_six_liveness_probes_started_before_wait
         and state.liveness_probe_batch_id_consistent
     ):
-        failures.append("six-role liveness was not checked as a concurrent batch")
+        failures.append("role-binding liveness was not checked as a concurrent batch")
     if state.host_role_rehydrate_requested and not state.all_six_role_liveness_checked:
-        failures.append("host role rehydration requested before all six role liveness was checked")
+        failures.append("host role rehydration requested before all runtime role liveness was checked")
     if state.timeout_unknown_treated_as_active:
         failures.append("timeout_unknown was treated as an active role")
     if state.missing_role_treated_as_waiting:
@@ -1060,7 +1060,7 @@ def invariant_failures(state: State) -> list[str]:
         and state.resume_obligation_replay_scanned
         and state.resume_obligation_replay_pm_escalation_required
     ):
-        failures.append("PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation")
+        failures.append("PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation")
     if state.pm_decision_prompt_delivered and not state.pm_controller_reminder_included:
         failures.append("PM decision card omitted the Controller relay-only reminder")
     if (

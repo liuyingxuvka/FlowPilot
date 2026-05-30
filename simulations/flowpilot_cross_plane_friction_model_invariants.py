@@ -121,7 +121,7 @@ def install_policy_matches_first_class_sources(state: State, _trace: object) -> 
 
 def standard_six_roles_have_liveness_gate(state: State, _trace: object) -> InvariantResult:
     if state.standard_six_roles_requested and not state.role_liveness_ready_or_blocked:
-        return _fail("standard six roles have neither readiness proof nor an early blocker")
+        return _fail("runtime-requested role bindings have neither readiness proof nor an early blocker")
     return _ok()
 
 
@@ -185,7 +185,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="standard_six_roles_have_liveness_gate",
-        description="Standard six-role runs prove readiness or stop at an early blocker.",
+        description="Standard role-binding runs prove readiness or stop at an early blocker.",
         predicate=standard_six_roles_have_liveness_gate,
     ),
     Invariant(

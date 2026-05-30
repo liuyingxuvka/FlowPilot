@@ -78,7 +78,7 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("roles started before copied kit, placeholders, and mailbox were ready")
     if state.roles_started and not state.fresh_role_agents_started:
-        failures.append("roles were marked started without fresh live role-agent evidence")
+        failures.append("roles were marked started without fresh current-run role-binding evidence")
     if state.startup_fact_reported and not state.reviewer_startup_fact_check_card_delivered:
         failures.append("reviewer startup fact report was accepted before startup fact-check card delivery")
     if state.startup_activation_approved and not (

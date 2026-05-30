@@ -45,7 +45,7 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "small_task_enters_formal_flowpilot": "formal FlowPilot was started for a small or nonformal task",
-    "formal_flowpilot_without_six_roles": "formal FlowPilot started without the standard six-role crew",
+    "formal_flowpilot_without_six_roles": "formal FlowPilot started without required runtime role-binding authority",
     "startup_text_invalidated_without_side_effect": "startup boundary treated side-effect-free explanatory text as a protocol violation",
     "startup_side_effects_before_answers": "startup wait boundary allowed startup side effects before answers",
     "completion_without_quality_decision": "completion recorded before mandatory quality-risk decision",

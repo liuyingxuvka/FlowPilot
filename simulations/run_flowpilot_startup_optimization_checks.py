@@ -16,14 +16,14 @@ RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_startup_optimization
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "roles_ready_without_core_receipts": "roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts",
+    "roles_ready_without_core_receipts": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
     "later_core_injection_required": "optimized startup still required a delayed role-core injection gate",
-    "fewer_than_six_roles": "roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts",
+    "fewer_than_six_roles": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
     "heartbeat_before_run_or_roles": "heartbeat was created before current run and role ledger existed",
     "heartbeat_after_reviewer_dispatch": "reviewer startup fact card was dispatched before early heartbeat binding",
     "heartbeat_wrong_cadence": "heartbeat lacked current-run one-minute verified host proof",
     "heartbeat_missing_host_proof": "heartbeat lacked current-run one-minute verified host proof",
-    "controller_loaded_before_roles": "Controller loaded before run shell and six-role startup receipts existed",
+    "controller_loaded_before_roles": "Controller loaded before run shell and role-binding startup receipts existed",
     "controller_reads_sealed_body": "Controller read sealed role body during startup optimization",
     "self_attested_proof": "self-attested startup claim was used as proof",
     "reviewer_without_mechanical_proof": "reviewer startup fact card lacked current mechanical proof or display evidence",

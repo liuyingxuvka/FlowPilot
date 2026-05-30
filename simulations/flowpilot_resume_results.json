@@ -2323,7 +2323,7 @@
         "failures": [
           "visible plan restored before execution frontier",
           "Controller relay boundary confirmed before loading current-run state",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation",
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation",
           "prompt delivered before prompt ledger was loaded",
           "mail delivered without verified packet recipient identity boundary",
           "mail delivered before packet ledger was loaded"
@@ -2693,7 +2693,7 @@
         "failures": [
           "mechanical resume replay still asked PM for a default resume decision",
           "PM resume decision requested without replay escalation",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -3786,7 +3786,7 @@
       "pm_decision_before_crew_recovery": {
         "detected": true,
         "failures": [
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -4030,7 +4030,7 @@
         "detected": true,
         "failures": [
           "PM resume or closure proceeded before live role rehydration, memory injection, report, lifecycle reconciliation, and resume obligation replay",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -4273,10 +4273,10 @@
       "pm_decision_before_six_role_liveness": {
         "detected": true,
         "failures": [
-          "host role rehydration requested before all six role liveness was checked",
+          "host role rehydration requested before all runtime role liveness was checked",
           "crew roles became ready without host rehydration, current-run binding, and restore or memory-seeded replacement",
           "PM resume or closure proceeded before live role rehydration, memory injection, report, lifecycle reconciliation, and resume obligation replay",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -4398,7 +4398,7 @@
         "detected": true,
         "failures": [
           "Controller relay boundary confirmed before loading current-run state",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -4642,7 +4642,7 @@
         "failures": [
           "ambiguous resume state did not block for PM recovery",
           "PM decision was requested while resume state was ambiguous",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -5008,7 +5008,7 @@
           "PM resume or closure proceeded before live role rehydration, memory injection, report, lifecycle reconciliation, and resume obligation replay",
           "resume proceeded past role rehydration without Router obligation replay",
           "PM resume decision requested without replay escalation",
-          "PM decision requested before wake/router entry, state load, visible plan, six-role liveness, lifecycle reconciliation, relay boundary, crew recovery, ambiguity clearance, and replay escalation"
+          "PM decision requested before wake/router entry, state load, visible plan, role-binding liveness, lifecycle reconciliation, relay boundary, role recovery, ambiguity clearance, and replay escalation"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -6715,7 +6715,7 @@
       "six_role_liveness_batch_id_mismatch": {
         "detected": true,
         "failures": [
-          "six-role liveness was not checked as a concurrent batch"
+          "role-binding liveness was not checked as a concurrent batch"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -6836,7 +6836,7 @@
       "six_role_liveness_serial_wait": {
         "detected": true,
         "failures": [
-          "six-role liveness was not checked as a concurrent batch"
+          "role-binding liveness was not checked as a concurrent batch"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -6957,7 +6957,7 @@
       "six_role_liveness_waits_before_all_probe_starts": {
         "detected": true,
         "failures": [
-          "six-role liveness was not checked as a concurrent batch"
+          "role-binding liveness was not checked as a concurrent batch"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,
@@ -7078,7 +7078,7 @@
       "six_role_liveness_without_probe_batch": {
         "detected": true,
         "failures": [
-          "six-role liveness was not checked as a concurrent batch"
+          "role-binding liveness was not checked as a concurrent batch"
         ],
         "state": {
           "active_control_blocker_deferred_until_resume_ready": false,

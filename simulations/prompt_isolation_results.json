@@ -10701,7 +10701,7 @@
           "startup banner was marked emitted without user-visible display text",
           "startup banner was marked emitted without user dialog display confirmation",
           "roles started before copied kit, placeholders, and mailbox were ready",
-          "roles were marked started without fresh live role-agent evidence"
+          "roles were marked started without fresh current-run role-binding evidence"
         ],
         "state": {
           "banner_emitted": true,
@@ -10894,7 +10894,7 @@
         "detected": true,
         "failures": [
           "startup banner was marked emitted without user dialog display confirmation",
-          "roles were marked started without fresh live role-agent evidence"
+          "roles were marked started without fresh current-run role-binding evidence"
         ],
         "state": {
           "banner_emitted": true,

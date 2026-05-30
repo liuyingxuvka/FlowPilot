@@ -8,13 +8,13 @@ Risk intent brief:
   facts, hidden display evidence, PM activation before reviewer report
   acceptance, and
   Controller proof/body boundary violations.
-- Modeled state and side effects: startup answers, run shell, six-role ledger,
+- Modeled state and side effects: startup answers, run shell, role-binding ledger,
   role-core delivery, heartbeat host proof, Controller boundary confirmation,
   mechanical audit, display receipt, reviewer startup fact card, PM prep cards,
   common Controller/card ledgers, reviewer report acceptance, pre-review
   startup ACK join, PM activation, and route work release.
 - Hard invariants: optimizations may reduce handoffs only when current-run
-  heartbeat, six-role authority, role core receipts, reviewer external-fact
+  heartbeat, role-binding authority, role core receipts, reviewer external-fact
   review, common ledger ACK clearance, PM activation, and Controller
   envelope-only boundaries remain intact.
 - Blindspot: this is a control-plane model. Host-specific subagent spawn and
@@ -335,7 +335,7 @@ def invariant_failures(state: State) -> list[str]:
             and state.role_io_protocol_receipts_current
         )
     ):
-        failures.append("roles became ready without six current-run role slots, core prompt hashes, and role I/O receipts")
+        failures.append("roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts")
     if state.later_core_injection_required:
         failures.append("optimized startup still required a delayed role-core injection gate")
     if state.heartbeat_created_before_run_or_roles:
@@ -354,7 +354,7 @@ def invariant_failures(state: State) -> list[str]:
     if state.controller_loaded and not (
         state.run_shell_created and state.six_roles_started
     ):
-        failures.append("Controller loaded before run shell and six-role startup receipts existed")
+        failures.append("Controller loaded before run shell and role-binding startup receipts existed")
     if state.controller_read_sealed_body:
         failures.append("Controller read sealed role body during startup optimization")
     if state.self_attested_claim_used_as_proof:

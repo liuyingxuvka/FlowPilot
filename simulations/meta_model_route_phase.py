@@ -402,7 +402,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="live_subagent_start_authorized",
-            action="ask for and record user authorization to start the six live FlowPilot background agents",
+            action="ask for and record user authorization to request runtime FlowPilot role assistance from the host",
             live_subagent_decision_recorded=True,
             active_node="start_live_subagents",
         )
@@ -424,7 +424,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="fresh_six_live_subagents_started",
-            action="start all six live FlowPilot background agents as fresh current-task subagents and record nonreuse evidence",
+            action="open runtime-requested FlowPilot role bindings as fresh current-task bindings and record nonreuse evidence",
             live_subagents_started=True,
             live_subagents_current_task_fresh=True,
             fresh_agents_spawned_after_startup_answers=True,
@@ -451,7 +451,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_preflight_reviewer_fact_report_blocked",
-            action="human-like reviewer independently checks startup facts including run isolation, prior-work boundary, and current-task live-agent freshness, then reports blockers to PM without opening the start gate",
+            action="human-like reviewer independently checks startup facts including run isolation, prior-work boundary, and current-task role-binding freshness, then reports blockers to PM without opening the start gate",
             startup_preflight_review_report_written=True,
             startup_preflight_review_blocking_findings=True,
             startup_reviewer_fact_evidence_checked=True,
@@ -551,7 +551,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_pm_independent_gate_audit_done",
-            action="PM independently audits startup run isolation, prior-work boundary, live-agent freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
+            action="PM independently audits startup run isolation, prior-work boundary, role-binding freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
             startup_pm_independent_gate_audit_done=True,
             startup_pm_capability_resolution_recorded=True,
             active_node="pm_start_gate_decision",

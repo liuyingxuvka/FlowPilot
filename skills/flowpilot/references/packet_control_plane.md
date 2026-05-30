@@ -165,7 +165,7 @@ PM responses:
 - include `controller_reminder` in every PM response to the controller:
   `Controller: relay and coordinate only. Do not implement, install, edit,
   test, approve, or advance from your own evidence.`
-- require every sub-agent response to repeat a controller-boundary reminder
+- require every recipient-role response to repeat a controller-boundary reminder
   and its own role boundary.
 - require the controller to include a `ROLE_REMINDER` whenever it sends a
   packet or review request to PM, reviewer, worker, simulator/officer, or
@@ -272,7 +272,7 @@ PM_DECISION:
 If `controller_reminder` is missing, the controller must not dispatch work and
 must request a corrected PM decision.
 
-Every controller-to-sub-agent message must include:
+Every controller-to-recipient-role message must include:
 
 ```text
 ROLE_REMINDER:
@@ -284,7 +284,7 @@ ROLE_REMINDER:
   ack_returns_directly_to_router: true
 ```
 
-Every sub-agent-to-controller response must include:
+Every recipient-role-to-controller response must include:
 
 ```text
 ROLE_ECHO:

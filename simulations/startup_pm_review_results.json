@@ -2509,7 +2509,7 @@
           "reviewer wrote a clean startup report without independently checking required facts",
           "PM opened startup without a current clean factual reviewer report, verified startup facts, and independent PM audit",
           "single-agent role continuity was authorized without the user's single-agent answer",
-          "PM recorded single-agent fallback without reviewer-verified background-agent capability evidence"
+          "PM recorded single-agent fallback without reviewer-verified role-binding capability evidence"
         ],
         "state": {
           "actual_heartbeat_automation_checked": true,
@@ -2716,7 +2716,7 @@
       "reviewer_clean_accepts_reused_historical_agent_ids": {
         "detected": true,
         "failures": [
-          "reviewer accepted live-agent startup without current-task fresh agent ids"
+          "reviewer accepted role-binding startup without current-task fresh agent ids"
         ],
         "state": {
           "actual_heartbeat_automation_checked": true,
@@ -2924,7 +2924,7 @@
       "reviewer_clean_accepts_underfilled_live_subagents": {
         "detected": true,
         "failures": [
-          "reviewer accepted live-agent startup without six active subagents"
+          "reviewer accepted live role-binding startup without full requested-role coverage"
         ],
         "state": {
           "actual_heartbeat_automation_checked": true,
@@ -3131,7 +3131,7 @@
         "detected": true,
         "failures": [
           "reviewer wrote a clean startup report without independently checking required facts",
-          "reviewer wrote a clean startup report without checking live-agent freshness and historical id reuse"
+          "reviewer wrote a clean startup report without checking role-binding freshness and historical id reuse"
         ],
         "state": {
           "actual_heartbeat_automation_checked": true,
@@ -3753,7 +3753,7 @@
           "reviewer wrote a clean startup report without independently checking required facts",
           "PM opened startup without a current clean factual reviewer report, verified startup facts, and independent PM audit",
           "single-agent role continuity was authorized without the user's single-agent answer",
-          "PM recorded single-agent fallback without reviewer-verified background-agent capability evidence"
+          "PM recorded single-agent fallback without reviewer-verified role-binding capability evidence"
         ],
         "state": {
           "actual_heartbeat_automation_checked": true,

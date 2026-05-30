@@ -15,7 +15,7 @@ review or can be satisfied by reading worker/PM summaries.
    That path is removed. Startup now has only a human-like reviewer factual
    report and a PM-owned startup opening decision. The reviewer must check real
    state/frontier/route, crew, role memory, heartbeat or manual-resume
-   evidence, role-agent user decision versus actual role-binding state, current
+   evidence, runtime role-assistance user decision versus actual role-binding state, current
    binding coverage plus current-task freshness or explicit fallback
    authorization, and cleanup boundary. PM may open only from a clean factual
    report.
@@ -25,7 +25,7 @@ review or can be satisfied by reading worker/PM summaries.
    the current startup answers and current route allocation. Historical
    `agent_id` values from prior crew ledgers or older role-memory packets are
    audit history only and must be listed as reused-ID blockers if they appear
-   in current live-agent evidence.
+   in current role-binding evidence.
 3. Human-like implementation inspection already requires context loading,
    neutral observation, real product/output inspection, and same-inspector
    recheck after repair. This is factual review, not report-only review.

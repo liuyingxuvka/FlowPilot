@@ -108,11 +108,11 @@ REPAIR_ACTIONS = {
         ),
     },
     "six_role_readiness_gate": {
-        "title": "Standard six-role readiness gate",
+        "title": "Standard role-binding readiness gate",
         "fixes": ["six_role_liveness_unproven"],
         "scope": "Startup/resume readiness record or early blocker only.",
         "proof_obligation": (
-            "A six-role run cannot begin route work until all standard roles are "
+            "A role-binding run cannot begin route work until all standard roles are "
             "ready or a router-visible blocker stops it."
         ),
     },

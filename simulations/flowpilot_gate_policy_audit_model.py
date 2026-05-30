@@ -432,7 +432,7 @@ def formal_flowpilot_only_for_complex_tasks(state: State, trace) -> InvariantRes
     if state.formal_flowpilot_started and state.task_scale != TASK_COMPLEX:
         return InvariantResult.fail("formal FlowPilot was started for a small or nonformal task")
     if state.formal_flowpilot_started and not state.six_role_crew_started:
-        return InvariantResult.fail("formal FlowPilot started without the standard six-role crew")
+        return InvariantResult.fail("formal FlowPilot started without required runtime role-binding authority")
     return InvariantResult.pass_()
 
 
@@ -531,7 +531,7 @@ def state_updates_are_transactional(state: State, trace) -> InvariantResult:
 INVARIANTS = (
     Invariant(
         name="formal_flowpilot_only_for_complex_tasks",
-        description="Small or nonformal tasks must not enter formal six-role FlowPilot.",
+        description="Small or nonformal tasks must not enter formal role-binding FlowPilot.",
         predicate=formal_flowpilot_only_for_complex_tasks,
     ),
     Invariant(

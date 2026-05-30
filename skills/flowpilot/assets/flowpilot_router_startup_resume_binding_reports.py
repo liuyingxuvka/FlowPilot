@@ -1,4 +1,4 @@
-"""Resume role-agent report and continuation binding writes."""
+"""Resume role-binding report and continuation binding writes."""
 
 from __future__ import annotations
 

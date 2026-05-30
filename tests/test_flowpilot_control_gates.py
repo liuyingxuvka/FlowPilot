@@ -267,7 +267,7 @@ class FlowPilotControlGateTests(unittest.TestCase):
         result = meta_model.crew_memory_rehydration_required(state, trace=())
 
         self.assertFalse(result.ok)
-        self.assertIn("six-role memory rehydration", result.message)
+        self.assertIn("role-binding memory rehydration", result.message)
 
     def test_capability_reviewer_cannot_start_before_pm_release(self) -> None:
         state = capability_model.State(

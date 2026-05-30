@@ -21,8 +21,8 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "lazy_six_roles": "formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles",
-    "small_task_light_mode": "formal FlowPilot optimization used lazy roles, light mode, or fewer than six live roles",
+    "lazy_six_roles": "formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings",
+    "small_task_light_mode": "formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings",
     "controller_reads_sealed_body": "Controller read sealed body or originated project evidence",
     "router_reset_missing_policy_hash": "router-owned controller receipt lacked core delivery, policy hash, role confirmation, or startup reviewer fact check",
     "router_reset_without_startup_fact_review": "router-owned controller receipt lacked core delivery, policy hash, role confirmation, or startup reviewer fact check",

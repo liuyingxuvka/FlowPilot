@@ -50,6 +50,31 @@ def run_checks(result: dict[str, object]) -> None:
         if not ok:
             result["ok"] = False
 
+        text = path.read_text(encoding="utf-8-sig") if exists else ""
+        forbidden_copy_terms = (
+            "Background agents",
+            "six-role crew",
+            "\u540e\u53f0\u667a\u80fd\u4f53",
+            "\u516d\u89d2\u8272\u56e2\u961f",
+        )
+        required_copy_terms = (
+            "Runtime role assistance",
+            "\u8fd0\u884c\u65f6\u89d2\u8272\u534f\u4f5c",
+        )
+        forbidden_present = [term for term in forbidden_copy_terms if term in text]
+        missing_required = [term for term in required_copy_terms if term not in text]
+        copy_ok = exists and not forbidden_present and not missing_required
+        result["checks"].append(
+            {
+                "name": f"startup_intake_runtime_role_copy:{relpath}",
+                "ok": copy_ok,
+                "forbidden_present": forbidden_present,
+                "missing_required": missing_required,
+            }
+        )
+        if not copy_ok:
+            result["ok"] = False
+
     try:
         topology_path = ROOT / "scripts" / "flowguard_project_topology.py"
         spec = importlib.util.spec_from_file_location(

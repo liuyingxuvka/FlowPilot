@@ -16,9 +16,10 @@ model-backed autopilot:
 7. execute bounded chunks;
 8. verify each chunk before moving on;
 9. update the model and route when new facts invalidate the current route;
-10. create a fresh six-agent crew for each new formal FlowPilot task, with a
-  project manager as route-decision and completion-runway authority and worker
-  agents limited to bounded sidecar tasks;
+10. open or restore runtime-required role bindings for each new formal
+  FlowPilot task, with a project manager as route-decision and
+  completion-runway authority and worker roles limited to bounded sidecar
+  tasks;
 11. finish only after evidence proves the frozen contract is met.
 
 ## Current Maintenance Gate
@@ -160,7 +161,7 @@ and model-confidence overclaims must also fail.
   if their checkpoints remain valid.
 - `self-interrogation` style self-interrogation is a required early gate.
 - Formal startup now has a material intake and PM material understanding gate
-  after full self-interrogation and six-agent crew recovery, but before PM
+  after full self-interrogation and runtime role-binding readiness, but before PM
   product-function architecture. It inventories user-provided and
   repository-local materials, records source summaries, authority, freshness,
   contradictions, local skills and host capabilities as candidate-only
@@ -203,11 +204,12 @@ and model-confidence overclaims must also fail.
   `design-iterator`, `design-implementation-reviewer`, image generation when
   needed, and geometry/screenshot QA. The older `concept-led-ui-redesign` skill
   is no longer a FlowPilot dependency.
-- Formal FlowPilot routes now use a persistent six-agent crew: project
-  manager, human-like reviewer, process FlowGuard officer, product FlowGuard
-  officer, worker A, and worker B. The project manager owns route,
-  heartbeat-resume completion runways, PM stop signals, repair, and completion
-  decisions; workers remain bounded sidecars, not route or node owners.
+- Formal FlowPilot routes now use persistent runtime-required role bindings for
+  project manager, human-like reviewer, process FlowGuard officer, product
+  FlowGuard officer, worker A, and worker B when those responsibilities are
+  requested by the runtime. The project manager owns route, heartbeat-resume
+  completion runways, PM stop signals, repair, and completion decisions;
+  workers remain bounded sidecars, not route or node owners.
 - Every meaningful FlowPilot scope now has two FlowGuard model gates: a
   development-process model and a product-function model.
 - Human-like inspection is now a route mechanism. Blocking inspection findings
@@ -257,31 +259,31 @@ and model-confidence overclaims must also fail.
 - Pause, restart, and terminal cleanup now require unified lifecycle
   reconciliation across Codex heartbeat automations, local state, execution
   frontier, and heartbeat/manual-resume evidence.
-- Heartbeat recovery now restores or replaces the six-agent crew before asking
-  the project manager for a completion-oriented runway from the current
-  position to project completion. The controller no longer decides route
+- Heartbeat recovery now restores or replaces runtime-required role bindings
+  before asking the project manager for a completion-oriented runway from the
+  current position to project completion. The controller no longer decides route
   advancement directly from the frontier, and it must replace the visible plan
   projection from each PM runway instead of working from a one-step gate.
-- The six-agent crew is persistent as roles, but each new formal FlowPilot task
-  must receive a fresh live background-agent cohort when the user authorizes
-  background agents. FlowPilot writes compact per-role memory packets under
-  `.flowpilot/runs/<run-id>/crew_memory/`; heartbeat and manual resume may load
-  and resume stored agent ids only when they belong to the same active
-  task-born cohort.
+- Runtime-required roles are persistent as role responsibilities, but each new
+  formal FlowPilot task must receive fresh current-run role-binding evidence
+  when the user authorizes host-supported role assistance. FlowPilot writes
+  compact per-role memory packets under `.flowpilot/runs/<run-id>/crew_memory/`;
+  heartbeat and manual resume may load and resume stored agent ids only when
+  they belong to the same active task-born cohort.
   Prior-route or earlier-task `agent_id` values are audit history only, not
   startup evidence. Replacement from memory is allowed only inside same-task
   continuation or after explicit user fallback approval. The project manager is
-  asked for a runway only after crew memory rehydration and the
-  live-subagent/fallback startup decision are recorded.
+  asked for a runway only after role memory rehydration and the
+  requested-role/fallback startup decision are recorded.
 - Public invocation text should explicitly say: use FlowPilot full protocol,
-  including permission to start the standard six background subagents where the
-  host and current tool policy permit them, heartbeat/manual-resume
-  continuation, and the startup hard gate. If live subagents are unavailable or
-  not yet authorized, FlowPilot pauses and asks. It continues with
-  single-agent six-role continuity only after explicit fallback approval; it
-  blocks when neither live agents nor user-authorized fallback are recorded,
-  when a required role cannot be recovered, or when a hard gate cannot be
-  satisfied.
+  including permission for FlowPilot to request additional runtime role
+  assistance where the host and current tool policy support it,
+  heartbeat/manual-resume continuation, and the startup hard gate. If requested
+  host role bindings are unavailable or not yet authorized, FlowPilot pauses and
+  asks. It continues with explicit fallback continuity only after user approval;
+  it blocks when neither requested role bindings nor user-authorized fallback
+  are recorded, when a required role cannot be recovered, or when a hard gate
+  cannot be satisfied.
 - Role authority is now an explicit protocol gate. Startup self-interrogation,
   product-function architecture synthesis, route advancement, heartbeat
   resume, repair strategy, route mutation, and completion require
@@ -381,8 +383,8 @@ and model-confidence overclaims must also fail.
 - Formal startup now has a PM-owned startup activation gate. Before any child
   skill, imagegen, implementation, route chunk, or completion work, the
   human-like reviewer must personally check real state/frontier/route,
-  six-role crew ledger, role memory packets, live-agent freshness for the
-  current task, continuation, heartbeat/manual-resume lifecycle, and
+  runtime role-binding ledger, role memory packets, role-binding freshness for
+  the current task, continuation, heartbeat/manual-resume lifecycle, and
   cleanup evidence, current run pointer/index evidence, and prior-work import
   boundary when continuing, then write
   `.flowpilot/runs/<run-id>/startup_review/latest.json` as a factual report.
@@ -392,13 +394,13 @@ and model-confidence overclaims must also fail.
   runtime startup-check script. Route-local artifacts without that canonical match
   are shadow routes to quarantine or supersede.
 - Formal startup now begins with a three-question pre-banner gate. On
-  `Use FlowPilot` / `使用开始`, the assistant asks for background-agent
+  `Use FlowPilot` / `使用开始`, the assistant asks for runtime role assistance
   permission, scheduled-continuation permission, and whether to open Cockpit UI
   or use chat route signs, then the assistant response must stop immediately and
   wait for the user's reply. The startup banner, route writes, Cockpit launch,
-  child skills, subagents, heartbeat probes, imagegen, and implementation are
-  blocked until a later user reply explicitly answers all three questions and
-  `startup_activation.startup_questions` records both the stop-and-wait
+  child skills, role bindings, heartbeat probes, imagegen, and implementation
+  are blocked until a later user reply explicitly answers all three questions
+  and `startup_activation.startup_questions` records both the stop-and-wait
   evidence and banner-after-answers evidence.
 - Long operations no longer carry a FlowPilot stale-heartbeat wrapper; use
   ordinary checkpoints, logs, and host tool status for bounded-operation
@@ -425,11 +427,11 @@ FlowGuard caught and fixed these design issues:
 1. High-risk gates must not overlap active formal chunks.
 2. `sidecar report returned` is not enough for completion; the controller must
    merge and verify the result.
-3. Subagent opportunity checks belong at child-node entry. Parent/module review
-   may identify likely helper work but must not spawn subagents or transfer node
-   ownership.
-4. Sidecar scope checking must be separate from reuse-or-spawn assignment, and a
-   suitable idle subagent must be reused before spawning a new one.
+3. Sidecar opportunity checks belong at child-node entry. Parent/module review
+   may identify likely helper work but must not open role bindings or transfer
+   node ownership.
+4. Sidecar scope checking must be separate from reuse-or-open assignment, and a
+   suitable idle role binding must be reused before opening a new one.
 5. Completion checks must use historical gate evidence, not only a helper that
    applies to `running` state.
 6. Technical evidence such as screenshot existence, app launch, or test pass
@@ -495,11 +497,11 @@ FlowGuard caught and fixed these design issues:
     output or explicitly superseded, quarantined, or discarded with reason in
     the final ledger before completion can claim zero unresolved work.
 20. A new formal FlowPilot task cannot treat historical role `agent_id` values
-    as the current six live background agents. The reviewer must check that the
-    six live role-bearing subagents, when authorized, were freshly spawned
+    as current role-binding evidence. The reviewer must check that every
+    runtime-requested role binding, when authorized, was opened or rehydrated
     after the current startup answers and current route allocation. Counting
-    six role records is insufficient if any ID was resumed from a prior route
-    or older task.
+    role records is insufficient if any ID was resumed from a prior route or
+    older task.
 21. A new formal FlowPilot invocation must create a new target-project run
     directory under `.flowpilot/runs/<run-id>/`. Top-level `.flowpilot`
     control files are forbidden except `current.json` and `index.json`.

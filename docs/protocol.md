@@ -7,7 +7,7 @@ branches, heartbeat behavior, and any task-local behavior models.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask native startup intake options: role-agent permission,
+2. Ask native startup intake options: runtime role assistance permission,
    scheduled-continuation permission, and whether to open Cockpit UI. End the assistant response immediately
    after these questions. Do not inspect files, start tools, create route state,
    open role bindings, probe heartbeat, or show the banner in the same response.
@@ -212,9 +212,9 @@ branches, heartbeat behavior, and any task-local behavior models.
     allowed, manual-resume evidence when manual continuation is selected or
     reviewer-verified scheduler unavailability is PM-downgraded,
     residual route state, and shadow-route evidence. It must bind the
-    role-agent answer to actual role-binding state: if the user allowed role
-    agents, verify each runtime-required binding was opened for this FlowPilot
-    task after that user decision and after current route allocation, and
+    runtime role-assistance answer to actual role-binding state: if the user
+    allowed role assistance, verify each runtime-required binding was opened for
+    this FlowPilot task after that user decision and after current route allocation, and
     verify none of its `agent_id` values comes from prior route ledgers or
     older role-memory packets. If role bindings are unavailable or damaged, the reviewer must
     directly probe and say so; PM may then record single-agent continuity as a
@@ -947,9 +947,9 @@ FlowPilot to resolve `.flowpilot/current.json`, then load
 `.flowpilot/runs/<run-id>/crew_memory/`,
 `.flowpilot/runs/<run-id>/packet_ledger.json`, lifecycle evidence, and latest
 heartbeat or manual-resume evidence. It then
-rehydrates the fixed crew by resuming stored agent ids when possible. If live
-agents are unavailable, it records the block and asks before replacing roles
-from memory packets. After live startup or explicit fallback authorization is
+rehydrates runtime-required role bindings by resuming stored agent ids when
+possible. If host role bindings are unavailable, it records the block and asks
+before replacing roles from memory packets. After requested-role startup or explicit fallback authorization is
 recorded, it records the rehydration status and asks the project manager for
 the current `PM_DECISION` and next completion-oriented runway.
 The resolver order is mandatory on heartbeat and manual resume:
@@ -1676,7 +1676,7 @@ Completion requires:
 - route checked;
 - current summaries synced;
 - required capability evidence present;
-- role-agent work merged;
+- role-binding work merged;
 - final verification passed;
 - anti-rough-finish review passed;
 - every completed node has product-function model evidence, human-like

@@ -170,7 +170,7 @@ cannot enter child-skill execution, image generation, implementation, or route
 chunks until this block and the matching frontier block show:
 
 - `hard_gate_required: true`;
-- `startup_questions` records explicit user answers for background-agent
+- `startup_questions` records explicit user answers for runtime role-assistance
   permission, scheduled-continuation permission, and display surface;
 - `startup_questions.dialog_stopped_for_user_answers: true`;
 - `startup_questions.banner_emitted_after_answers: true`;
@@ -242,7 +242,7 @@ runtime startup-check script writes it. It must include:
 - `blocking_findings`;
 - scope flags for user authorization, route consistency, cleanup boundary,
   continuation evidence, real Codex heartbeat automation or manual-resume
-  evidence, role-agent decisions, user role-agent decision versus
+  evidence, role-binding decisions, user runtime role-assistance decision versus
   actual role-binding state, current binding coverage or explicit fallback
   authorization, and shadow/residual state;
 - required facts for route heartbeat interval 1 minute and route heartbeat

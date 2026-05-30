@@ -28,8 +28,8 @@ active project, FlowPilot may record continuity state, but it should not claim a
 full formal route unless the showcase-grade gates ran.
 
 The first user-facing startup gate is the three-question prompt:
-background-agent permission, scheduled-continuation permission, and display
-surface preference. The
+runtime role assistance permission, scheduled-continuation permission, and
+display surface preference. The
 assistant must stop immediately after asking and wait for the user's later
 reply before banner display, route writes, child skills, role bindings, heartbeat
 probes, image generation, or implementation.

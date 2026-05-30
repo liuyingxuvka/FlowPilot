@@ -5,7 +5,7 @@ Risk intent brief:
   recovery or mid-run role liveness fault must enter the same recovery engine
   before normal route work, waits, gates, packets, or active blockers proceed.
 - The engine prefers targeted repair: restore the old role first, then spawn a
-  targeted replacement, then reconcile slots, then recycle the full six-role
+  targeted replacement, then reconcile slots, then recycle the full role-binding
   crew only when targeted repair cannot succeed.
 - Recovered agents are not usable until current-run memory and packet context
   have been injected. Router then settles or reissues the recovered role's

@@ -29,7 +29,7 @@ HAZARD_EXPECTED_FAILURES = {
     "body_bom_leaks_to_pm_packet": "PM intake packet leaked leading UTF-8 BOM marker",
     "bom_repair_bypasses_body_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
     "invalid_toggle_value": "background agent toggle did not map to a startup answer enum",
-    "single_agent_starts_roles": "background agents started despite UI single-agent choice",
+    "single_agent_starts_roles": "runtime role assistance started despite UI single-agent choice",
     "manual_creates_heartbeat": "heartbeat created despite UI manual continuation choice",
     "chat_opens_cockpit": "Cockpit opened despite UI chat display choice",
     "reviewer_uses_chat": "reviewer startup pass relied on chat instead of UI record/receipt/envelope",

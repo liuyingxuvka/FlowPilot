@@ -859,16 +859,16 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("single-agent role continuity was authorized without the user's single-agent answer")
     if state.live_subagents_started and state.background_agents_answer != "allow":
-        failures.append("live subagents were started without the user's live-agent answer")
+        failures.append("live role bindings were opened without the user's runtime role-assistance answer")
     if state.live_agents_active and state.background_agents_answer != "allow":
-        failures.append("active live subagents exist without the user's live-agent answer")
+        failures.append("active live role bindings exist without the user's runtime role-assistance answer")
     if (
         state.startup_review_status == "clean"
         and state.background_agents_answer == "allow"
         and state.background_agents_capability_status == "available"
         and state.live_agents_active < REQUIRED_ROLE_MEMORY_PACKETS
     ):
-        failures.append("reviewer accepted live-agent startup without six active subagents")
+        failures.append("reviewer accepted live role-binding startup without full requested-role coverage")
     if (
         state.startup_review_status == "clean"
         and state.background_agents_answer == "allow"
@@ -881,7 +881,7 @@ def invariant_failures(state: State) -> list[str]:
             and not state.reused_historical_agent_ids
         )
     ):
-        failures.append("reviewer accepted live-agent startup without current-task fresh agent ids")
+        failures.append("reviewer accepted role-binding startup without current-task fresh agent ids")
     if (
         state.startup_review_status == "clean"
         and state.background_agents_answer == "allow"
@@ -891,9 +891,9 @@ def invariant_failures(state: State) -> list[str]:
             and state.reviewer_checked_no_historical_agent_reuse
         )
     ):
-        failures.append("reviewer wrote a clean startup report without checking live-agent freshness and historical id reuse")
+        failures.append("reviewer wrote a clean startup report without checking role-binding freshness and historical id reuse")
     if state.pm_start_gate_decision == "open" and state.reused_historical_agent_ids:
-        failures.append("PM opened startup while current live-agent evidence reused historical agent ids")
+        failures.append("PM opened startup while current role-binding evidence reused historical agent ids")
     if (
         state.manual_resume_ready
         and state.scheduled_continuation_answer != "manual"
@@ -934,7 +934,7 @@ def invariant_failures(state: State) -> list[str]:
         state.reviewer_probed_background_agent_capability
         and state.reviewer_verified_background_agent_fallback_needed
     ):
-        failures.append("PM recorded single-agent fallback without reviewer-verified background-agent capability evidence")
+        failures.append("PM recorded single-agent fallback without reviewer-verified role-binding capability evidence")
     if state.pm_recorded_scheduled_continuation_fallback and not (
         state.reviewer_probed_scheduled_continuation_capability
         and state.reviewer_verified_scheduled_continuation_fallback_needed

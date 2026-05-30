@@ -587,8 +587,8 @@ $Xaml = @"
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="AgentsTitle" Text="Background agents" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock x:Name="AgentsBody" Text="Allow the six-role crew when the host supports it." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
+                    <TextBlock x:Name="AgentsTitle" Text="Runtime role assistance" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to request additional role bindings when the current task needs them and the host supports it." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
                   </StackPanel>
                   <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
                 </Grid>
@@ -665,8 +665,8 @@ $Copy = @{
         Title = "FlowPilot"
         RequestLabel = "Work request"
         Placeholder = "Write the instructions you want the AI to follow."
-        AgentsTitle = "Background agents"
-        AgentsBody = "Allow the six-role crew when the host supports it."
+        AgentsTitle = "Runtime role assistance"
+        AgentsBody = "Allow FlowPilot to request additional role bindings when the current task needs them and the host supports it."
         ContinuationTitle = "Scheduled continuation"
         ContinuationBody = "Allow heartbeat or manual-resume setup for long work."
         CockpitTitle = "Cockpit UI"
@@ -679,8 +679,8 @@ $Copy = @{
         Title = "FlowPilot"
         RequestLabel = "工作要求"
         Placeholder = "请写下给 AI 的工作目标和具体命令。"
-        AgentsTitle = "后台智能体"
-        AgentsBody = "宿主支持时允许启用六角色团队。"
+        AgentsTitle = "运行时角色协作"
+        AgentsBody = "宿主支持时，允许 FlowPilot 按当前任务需要请求额外角色协作。"
         ContinuationTitle = "定时继续"
         ContinuationBody = "允许为长任务设置心跳或手动恢复。"
         CockpitTitle = "Cockpit UI"

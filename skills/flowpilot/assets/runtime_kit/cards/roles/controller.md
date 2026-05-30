@@ -209,13 +209,13 @@ Allowed actions:
   router-authored card, card bundle, packet, result envelope, status packet, or
   `controller_next_action_notice.json` is relayed or observed, check the
   Controller action ledger before waiting on role chat, `wait_agent`, or
-  role-agent completion. If Router exposes a real `await_card_return_event`,
+  role-binding output completion. If Router exposes a real `await_card_return_event`,
   `await_card_bundle_return_event`, or `await_role_decision`, write the
   controlled-wait receipt and remain attached to daemon status rather than
   ending the run.
 - Router-ready evidence preempts foreground role waits: after a router-authored
   relay or notice, scan daemon status and the Controller action ledger before
-  waiting on role chat or role-agent completion. Use `flowpilot_router.py controller-standby`
+  waiting on role chat or role-binding output completion. Use `flowpilot_router.py controller-standby`
   / the patrol wrapper to consume Router-ready Controller rows first. Use
   `next` or `run-until-wait` only when an explicit diagnostic or repair
   instruction names that fallback, never as the ordinary standby or row-to-row
@@ -245,7 +245,7 @@ Forbidden actions:
 - do not infer packet completion from holder chat while an active-holder lease
   is open. Only a router-authored next-action notice, PM blocker, timeout, or
   explicit router action can end Controller's wait.
-- do not keep the foreground turn blocked on ordinary role-agent waiting
+- do not keep the foreground turn blocked on ordinary role-binding waiting
   when Router-ready evidence, a pending router action, a resolved direct ACK,
   a returned result envelope, or `controller_next_action_notice.json` exists.
   Bounded `wait_agent` checks are liveness/recovery only when Router requests
@@ -301,7 +301,7 @@ decisions, inspect sealed bodies, or turn chat/history into evidence. If the
 success evidence cannot be produced exactly, report a blocker through the
 router-approved path instead of improvising a repair.
 
-If a role-agent response includes report bodies, blockers, evidence
+If a role-binding response includes report bodies, blockers, evidence
 details, recommendations, commands, repair instructions, or other content that
 should have been inside a packet/result/report body, treat that response as
 controller-contaminated. Do not use it for repair or routing. Record only a

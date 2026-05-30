@@ -1915,7 +1915,7 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         and state.crew_archived
     ):
         return InvariantResult.fail(
-            "final report emitted before six-agent crew ledger, PM route decision, and terminal crew archive"
+            "final report emitted before runtime role-binding ledger, PM route decision, and terminal role archive"
         )
     if not (state.heartbeat_active or state.status == "complete"):
         return InvariantResult.fail("final report emitted without heartbeat continuity")
@@ -2115,7 +2115,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         and _continuation_lifecycle_valid(state)
     ):
         return InvariantResult.fail(
-            "route version created before six-agent crew, fresh run isolation, PM route decision, product-function architecture, frozen contract, dependency plan, and host continuation decision"
+            "route version created before runtime role-binding authority, fresh run isolation, PM route decision, product-function architecture, frozen contract, dependency plan, and host continuation decision"
         )
     if formal_route_or_work_started and not (
         state.flowguard_process_design_done
@@ -2163,7 +2163,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         )
     ):
         return InvariantResult.fail(
-            "startup reviewer report counted live subagents without checking current-task freshness and historical id reuse"
+            "startup reviewer report counted live role bindings without checking current-task freshness and historical id reuse"
         )
     if state.pm_start_gate_opened and not (
         state.startup_preflight_review_report_written
@@ -2220,11 +2220,11 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         )
     if state.work_beyond_startup_allowed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(
-            "PM allowed work beyond startup before fresh current-task live subagents or explicit single-agent fallback were resolved"
+            "PM allowed work beyond startup before fresh current-task role bindings or explicit single-agent fallback were resolved"
         )
     if state.work_beyond_startup_allowed and state.reused_historical_agent_ids:
         return InvariantResult.fail(
-            "PM allowed work beyond startup while live-agent evidence reused historical agent ids"
+            "PM allowed work beyond startup while role-binding evidence reused historical agent ids"
         )
     if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
         return InvariantResult.fail(
@@ -2921,7 +2921,7 @@ def actor_authority_gates_require_correct_role(
         )
     if state.startup_self_interrogation_pm_ratified and not _crew_ready(state):
         return InvariantResult.fail(
-            "startup self-interrogation was ratified before the six-agent crew was ready"
+            "startup self-interrogation was ratified before runtime role-binding authority was ready"
         )
     if (
         state.material_reviewer_sufficiency_approved
@@ -3228,7 +3228,7 @@ def crew_memory_rehydration_required(state: State, trace) -> InvariantResult:
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "PM resume was requested before current-run state, packet ledger, live six-role memory rehydration, and memory injection completed"
+            "PM resume was requested before current-run state, packet ledger, live role-binding memory rehydration, and memory injection completed"
         )
     if state.pm_resume_decision_recorded and not (
         state.heartbeat_pm_controller_reminder_checked

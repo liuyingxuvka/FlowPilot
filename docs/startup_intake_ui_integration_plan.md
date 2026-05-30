@@ -75,7 +75,7 @@ the script can run.
 | H3 | Router or Controller-visible envelope leaks user body text. | Fail if body text appears in bootstrap state, startup answers, user request envelope, or Controller handoff. |
 | H4 | UI result is accepted without receipt, envelope, body path, or matching body hash. | Fail if any required artifact or hash check is missing. |
 | H5 | Toggle values drift from existing startup answer enums. | Fail if toggle mapping is missing or produces non-enum values. |
-| H6 | Background agents or heartbeat are started against UI OFF choices. | Fail if `single-agent` still spawns live roles or `manual` still creates heartbeat. |
+| H6 | Runtime role assistance or heartbeat are started against UI OFF choices. | Fail if `single-agent` still opens live role bindings or `manual` still creates heartbeat. |
 | H7 | Cockpit UI is assumed open when UI choice is chat or Cockpit launch fails. | Fail if display status ignores UI choice or lacks fallback. |
 | H8 | Reviewer startup or live review relies on chat text instead of UI result/receipt/envelope evidence. | Fail if reviewer pass does not reference UI record, receipt, and hash evidence. |
 | H9 | Existing old three-question payload path remains the only legal startup path. | Fail if UI-confirmed startup cannot advance through reused post-answer boot actions. |

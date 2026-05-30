@@ -54,7 +54,7 @@ HAZARD_EXPECTED_FAILURES = {
     "node_completion_idempotency_global_only": "node completion idempotency is not scoped to the active node",
     "install_audit_layout_policy_conflict": "install audit still rejects first-class flowpilot_cockpit source",
     "installed_skill_source_drift": "installed FlowPilot skill source differs from repository source",
-    "six_role_liveness_unproven": "standard six roles have neither readiness proof nor an early blocker",
+    "six_role_liveness_unproven": "runtime-requested role bindings have neither readiness proof nor an early blocker",
     "active_history_visible_by_default": "completed, abandoned, or stale history is visible by default",
     "current_pointer_used_as_daemon_authority": "current pointer is not limited to UI focus/default target",
     "active_task_set_missing_explicit_authority": "active UI task set lacks explicit run-index authority",

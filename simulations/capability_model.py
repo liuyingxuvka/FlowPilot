@@ -2703,7 +2703,7 @@ def dependency_plan_before_route_or_implementation(
         and state.flowguard_process_design_done
     ):
         return InvariantResult.fail(
-            "capability route or implementation started before six-agent crew, fresh run isolation, PM capability decision, product-function architecture, frozen contract, dependency plan, host continuation decision, and FlowGuard process design"
+            "capability route or implementation started before runtime role-binding authority, fresh run isolation, PM capability decision, product-function architecture, frozen contract, dependency plan, host continuation decision, and FlowGuard process design"
         )
     if work_beyond_startup_started and not state.work_beyond_startup_allowed:
         return InvariantResult.fail(
@@ -2729,7 +2729,7 @@ def dependency_plan_before_route_or_implementation(
         )
     ):
         return InvariantResult.fail(
-            "capability startup reviewer report counted live subagents without checking current-task freshness and historical id reuse"
+            "capability startup reviewer report counted live role bindings without checking current-task freshness and historical id reuse"
         )
     if state.pm_start_gate_opened and not (
         state.startup_preflight_review_report_written
@@ -2786,11 +2786,11 @@ def dependency_plan_before_route_or_implementation(
         )
     if state.work_beyond_startup_allowed and not _live_subagent_startup_resolved(state):
         return InvariantResult.fail(
-            "PM allowed capability work before fresh current-task live subagents or explicit single-agent fallback were resolved"
+            "PM allowed capability work before fresh current-task role bindings or explicit single-agent fallback were resolved"
         )
     if state.work_beyond_startup_allowed and state.reused_historical_agent_ids:
         return InvariantResult.fail(
-            "PM allowed capability work while live-agent evidence reused historical agent ids"
+            "PM allowed capability work while role-binding evidence reused historical agent ids"
         )
     if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
         return InvariantResult.fail(
@@ -3595,7 +3595,7 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
         and state.crew_archived
     ):
         return InvariantResult.fail(
-            "completed before six-agent crew, PM decisions, role memory archive, and terminal crew archive"
+            "completed before runtime role-binding authority, PM decisions, role memory archive, and terminal role archive"
         )
     if not state.final_verification_done:
         return InvariantResult.fail("completed before final verification")
@@ -3869,7 +3869,7 @@ def actor_authority_gates_require_correct_role(
     del trace
     if state.self_interrogation_pm_ratified and not _crew_ready(state):
         return InvariantResult.fail(
-            "capability startup self-interrogation was ratified before six-agent crew readiness"
+            "capability startup self-interrogation was ratified before runtime role-binding readiness"
         )
     any_role_approval = (
         state.self_interrogation_pm_ratified
