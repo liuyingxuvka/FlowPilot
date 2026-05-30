@@ -2,6 +2,36 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.9.25 - 2026-05-30
+
+### Added
+
+- Added the `add-flowguard-project-topology-map` OpenSpec change.
+- Added an automatically generated FlowGuard project topology map at
+  `docs/flowguard_project_topology.md` and
+  `docs/flowguard_project_topology.json`, covering model runners, model-test
+  alignment families, code surfaces, test commands, evidence summaries, and
+  known-bad/risk signals.
+- Added `scripts/flowguard_project_topology.py` with `build` and `check`
+  commands plus focused unit tests for freshness, required layers, and
+  machine-readable findings.
+- Added a dedicated FlowGuard project-topology orientation model with
+  known-bad coverage for skipped topology intake, stale topology, missing
+  layers, topology-as-validation overclaim, source changes without refresh,
+  and PM/Reviewer/Controller role-authority misuse.
+
+### Changed
+
+- Updated FlowPilot PM, Process Officer, Product Officer, Reviewer, and phase
+  cards so mature FlowGuard projects read the topology map as background
+  architecture before non-trivial work.
+- Clarified that topology is orientation only: it can guide which models,
+  tests, code areas, evidence summaries, and known-bad signals to inspect, but
+  it cannot replace FlowGuard Reports, tests, validation evidence, gate
+  evidence, route mutation authority, or completion evidence.
+- Wired topology generation/checks into smoke, fast-tier, install-readiness,
+  coverage-sweep, and maintenance registry surfaces.
+
 ## 0.9.24 - 2026-05-30
 
 ### Added
