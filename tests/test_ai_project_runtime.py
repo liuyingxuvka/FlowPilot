@@ -125,7 +125,6 @@ class AIProjectRuntimeTests(unittest.TestCase):
             "task",
             "flowguard_check",
             "review",
-            "validation",
             "closure",
         ])
         self.assertFalse([lease for lease in ledger["leases"].values() if lease["status"] == "active"])

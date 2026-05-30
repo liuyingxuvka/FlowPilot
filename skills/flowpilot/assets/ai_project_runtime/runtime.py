@@ -83,6 +83,8 @@ EVENT_FAMILY_BY_TYPE = {
     "semantic_blocker_cleared": "repair",
     "pm_repair_decision_recorded": "repair",
     "pm_repair_decision_blocked": "repair",
+    "pm_decision_gate_staged": "repair",
+    "pm_decision_gate_applied": "repair",
     "repair_reissue_packet_issued": "repair",
     "flowguard_work_order_created": "flowguard",
     "flowguard_work_order_completed": "flowguard",
@@ -334,6 +336,7 @@ def new_ledger(
         "packet_outcomes": {},
         "active_blockers": {},
         "pm_repair_decisions": {},
+        "pm_decision_gates": {},
         "repair_transactions": {},
         "reviews": {},
         "flowguard_work_orders": {},
@@ -1324,7 +1327,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
             sort_keys=True,
         ),
         packet_kind="pm_disposition",
-        required_flowguard_target="",
+        required_flowguard_target=REQUIRED_FLOWGUARD_TARGET,
         subject_id=subject_packet_id,
         route_node_id=node_id,
         route_scope="node_pm_disposition",
@@ -1378,6 +1381,8 @@ _PM_REPAIR_DECISIONS = {
     "waive_with_authority",
     "stop_for_user",
 }
+_HIGH_RISK_PM_REPAIR_DECISIONS = {"mutate_route", "waive_with_authority"}
+_HIGH_RISK_PM_DISPOSITION_DECISIONS = {"mutate_route"}
 _PM_REPAIR_ALIASES = {
     "repair": "same_node_repair",
     "local_repair": "same_node_repair",
@@ -1707,7 +1712,7 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
             indent=2,
             sort_keys=True,
         ),
-        required_flowguard_target="",
+        required_flowguard_target=REQUIRED_FLOWGUARD_TARGET,
         packet_kind="pm_repair_decision",
         subject_id=blocker_id,
         target_result_id=str(blocker.get("outcome_id") or ""),
@@ -1768,8 +1773,161 @@ def _record_pm_repair_decision_from_packet_result(
         blocker_id=blocker_id,
         decision=decision,
     )
+    if decision in _HIGH_RISK_PM_REPAIR_DECISIONS:
+        blocker["status"] = "awaiting_pm_decision_gate"
+        _stage_pm_decision_gate(
+            ledger,
+            gate_kind="pm_repair_decision",
+            packet=packet,
+            result=result,
+            decision=decision,
+            reason=reason,
+            decision_id=decision_id,
+            blocker_id=blocker_id,
+            node_id=str(blocker.get("route_node_id") or ""),
+        )
+        return decision_id
     _apply_pm_repair_decision(ledger, blocker_id, decision_id)
     return decision_id
+
+
+def _stage_pm_decision_gate(
+    ledger: dict[str, Any],
+    *,
+    gate_kind: str,
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+    decision: str,
+    reason: str,
+    decision_id: str = "",
+    blocker_id: str = "",
+    node_id: str = "",
+) -> str:
+    gate_id = _next_id(ledger, "pm_decision_gate")
+    row = {
+        "gate_id": gate_id,
+        "gate_kind": gate_kind,
+        "status": "awaiting_flowguard",
+        "source_packet_id": str(packet.get("packet_id") or ""),
+        "source_result_id": str(result.get("result_id") or ""),
+        "decision_id": decision_id,
+        "blocker_id": blocker_id,
+        "node_id": node_id,
+        "decision": decision,
+        "reason": reason,
+        "flowguard_order_id": "",
+        "review_id": "",
+        "validation_evidence_id": "",
+        "closure_packet_id": "",
+        "closure_result_id": "",
+        "created_at": now_iso(),
+    }
+    ledger.setdefault("pm_decision_gates", {})[gate_id] = row
+    result["pm_decision_gate_id"] = gate_id
+    _event(
+        ledger,
+        "pm_decision_gate_staged",
+        gate_id=gate_id,
+        gate_kind=gate_kind,
+        decision=decision,
+        source_packet_id=row["source_packet_id"],
+    )
+    _ensure_flowguard_packet_for_task_result(ledger, packet, result)
+    return gate_id
+
+
+def _pending_pm_decision_gate_for_subject(
+    ledger: Mapping[str, Any],
+    subject_packet_id: str,
+) -> dict[str, Any] | None:
+    terminal_statuses = {"applied", "rejected", "cancelled"}
+    for gate in ledger.get("pm_decision_gates", {}).values():
+        if not isinstance(gate, dict):
+            continue
+        if gate.get("source_packet_id") != subject_packet_id:
+            continue
+        if gate.get("status") in terminal_statuses:
+            continue
+        return gate
+    return None
+
+
+def _mark_pm_decision_gate_flowguard(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    order_id: str,
+) -> None:
+    gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+    if not gate:
+        return
+    gate["flowguard_order_id"] = order_id
+    gate["status"] = "awaiting_review"
+    gate["updated_at"] = now_iso()
+
+
+def _mark_pm_decision_gate_review(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    review_id: str,
+) -> None:
+    gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+    if not gate:
+        return
+    gate["review_id"] = review_id
+    gate["status"] = "awaiting_system_validation"
+    gate["updated_at"] = now_iso()
+
+
+def _mark_pm_decision_gate_validation(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    evidence_id: str,
+) -> None:
+    gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+    if not gate:
+        return
+    gate["validation_evidence_id"] = evidence_id
+    gate["status"] = "awaiting_closure"
+    gate["updated_at"] = now_iso()
+
+
+def _apply_staged_pm_decision_gate(
+    ledger: dict[str, Any],
+    gate: dict[str, Any],
+    *,
+    closure_packet_id: str,
+    closure_result_id: str,
+) -> None:
+    if gate.get("status") == "applied":
+        return
+    gate_kind = str(gate.get("gate_kind") or "")
+    if gate_kind == "pm_repair_decision":
+        _apply_pm_repair_decision(
+            ledger,
+            str(gate.get("blocker_id") or ""),
+            str(gate.get("decision_id") or ""),
+        )
+    elif gate_kind == "pm_disposition":
+        record_pm_disposition(
+            ledger,
+            str(gate.get("node_id") or ""),
+            str(gate.get("source_result_id") or closure_result_id),
+            decision=str(gate.get("decision") or "accept"),
+            reason=str(gate.get("reason") or "pm_decision_gate_applied"),
+        )
+    else:
+        raise BlackBoxRuntimeError(f"unknown PM decision gate kind: {gate_kind}")
+    gate["status"] = "applied"
+    gate["closure_packet_id"] = closure_packet_id
+    gate["closure_result_id"] = closure_result_id
+    gate["applied_at"] = now_iso()
+    _event(
+        ledger,
+        "pm_decision_gate_applied",
+        gate_id=str(gate.get("gate_id") or ""),
+        gate_kind=gate_kind,
+        decision=str(gate.get("decision") or ""),
+    )
 
 
 def _latest_open_packet_for_repair(ledger: Mapping[str, Any], *, route_node_id: str, before_ids: set[str]) -> str:
@@ -2321,7 +2479,17 @@ def _apply_valid_packet_result(
         if packet_kind == "validation":
             _accept_packet_result(ledger, packet, result, lease, reason="validation_failed_result_submitted")
             evidence_id = f"validation-{result['result_id']}"
-            record_validation_evidence(ledger, evidence_id, status="failed")
+            record_validation_evidence(
+                ledger,
+                evidence_id,
+                status="failed",
+                subject_packet_id=str(packet["envelope"].get("subject_id") or ""),
+                source_packet_id=str(packet.get("packet_id") or ""),
+                source_result_id=str(result.get("result_id") or ""),
+                evidence_kind="legacy_validator_packet",
+                owner_role="validator",
+                blockers=[str(outcome.get("reason") or outcome.get("recommended_resolution") or "validation_failed")],
+            )
             result["validation_evidence_id"] = evidence_id
             subject_packet = ledger.get("packets", {}).get(packet["envelope"].get("subject_id", ""), {})
             if isinstance(subject_packet, dict):
@@ -2359,7 +2527,7 @@ def _apply_valid_packet_result(
         _ensure_review_packet_for_task_result(ledger, packet["envelope"]["subject_id"])
         return
     if packet_kind == "review":
-        _record_review_from_packet_result(ledger, packet, result, outcome=outcome, outcome_id=outcome_id)
+        review_id = _record_review_from_packet_result(ledger, packet, result, outcome=outcome, outcome_id=outcome_id)
         _accept_packet_result(ledger, packet, result, lease, reason="review_result_submitted")
         _clear_semantic_blockers_for_pass(
             ledger,
@@ -2368,12 +2536,28 @@ def _apply_valid_packet_result(
             recheck_role="reviewer",
             outcome_id=outcome_id,
         )
-        _ensure_validation_packet_for_task(ledger, packet["envelope"]["subject_id"])
+        evidence_id = _record_system_validation_for_packet(
+            ledger,
+            str(packet["envelope"]["subject_id"]),
+            source_packet_id=str(packet["packet_id"]),
+            source_result_id=str(result["result_id"]),
+            review_id=review_id,
+        )
+        if ledger["validation_evidence"][evidence_id]["status"] == "passed":
+            _ensure_closure_packet_for_task(ledger, packet["envelope"]["subject_id"])
         return
     if packet_kind == "validation":
         _accept_packet_result(ledger, packet, result, lease, reason="validation_result_submitted")
         evidence_id = f"validation-{result['result_id']}"
-        record_validation_evidence(ledger, evidence_id)
+        record_validation_evidence(
+            ledger,
+            evidence_id,
+            subject_packet_id=str(packet["envelope"].get("subject_id") or ""),
+            source_packet_id=str(packet.get("packet_id") or ""),
+            source_result_id=str(result.get("result_id") or ""),
+            evidence_kind="legacy_validator_packet",
+            owner_role="validator",
+        )
         result["validation_evidence_id"] = evidence_id
         ledger["latest_validation_evidence_id"] = evidence_id
         subject_packet = ledger.get("packets", {}).get(packet["envelope"].get("subject_id", ""), {})
@@ -2399,6 +2583,17 @@ def _apply_valid_packet_result(
         if not node_id:
             raise BlackBoxRuntimeError("PM disposition packet is missing route_node_id")
         decision, reason = _decision_from_pm_body(str(result.get("body", "")))
+        if decision in _HIGH_RISK_PM_DISPOSITION_DECISIONS:
+            _stage_pm_decision_gate(
+                ledger,
+                gate_kind="pm_disposition",
+                packet=packet,
+                result=result,
+                decision=decision,
+                reason=reason,
+                node_id=node_id,
+            )
+            return
         record_pm_disposition(ledger, node_id, result["result_id"], decision=decision, reason=reason)
         return
     raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
@@ -2414,6 +2609,15 @@ def _apply_closure_result_side_effect(
     subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet, dict) else {}
     route_scope = str(subject_envelope.get("route_scope") or "")
     node_id = str(subject_envelope.get("route_node_id") or packet["envelope"].get("route_node_id") or "")
+    pm_gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+    if pm_gate:
+        _apply_staged_pm_decision_gate(
+            ledger,
+            pm_gate,
+            closure_packet_id=str(packet.get("packet_id") or ""),
+            closure_result_id=str(result.get("result_id") or ""),
+        )
+        return
     if high_standard_flow_required(ledger) and route_scope in PREPLANNING_GATE_SCOPES:
         _record_preplanning_gate_closure(ledger, route_scope, subject_packet)
         ensure_preplanning_gate_packet(ledger)
@@ -2760,6 +2964,7 @@ def _record_flowguard_from_packet_result(
     order["confidence_boundary"] = "current_run_packet"
     if node_id and node_id in ledger.get("route_nodes", {}):
         ledger["route_nodes"][node_id].setdefault("flowguard_order_ids", []).append(order_id)
+    _mark_pm_decision_gate_flowguard(ledger, subject_id, order_id)
     return order_id
 
 
@@ -2831,6 +3036,8 @@ def _record_review_from_packet_result(
             ledger["route_nodes"][node_id]["accepted_repair_generation"] = int(
                 ledger["route_nodes"][node_id].get("repair_generation", 0)
             )
+    if accepted:
+        _mark_pm_decision_gate_review(ledger, subject_id, review_id)
     return review_id
 
 
@@ -3076,14 +3283,113 @@ def record_validation_evidence(
     *,
     status: str = "passed",
     generation: int | None = None,
+    subject_packet_id: str = "",
+    source_packet_id: str = "",
+    source_result_id: str = "",
+    evidence_kind: str = "validator_packet",
+    owner_role: str = "validator",
+    review_id: str = "",
+    flowguard_order_ids: list[str] | None = None,
+    gate_id: str = "",
+    blockers: list[str] | None = None,
 ) -> None:
     ledger["validation_evidence"][evidence_id] = {
         "evidence_id": evidence_id,
         "status": status,
         "source_generation": generation if generation is not None else ledger["source_generation"],
+        "subject_packet_id": subject_packet_id,
+        "source_packet_id": source_packet_id,
+        "source_result_id": source_result_id,
+        "evidence_kind": evidence_kind,
+        "owner_role": owner_role,
+        "review_id": review_id,
+        "flowguard_order_ids": list(flowguard_order_ids or []),
+        "gate_id": gate_id,
+        "blockers": list(blockers or []),
         "created_at": now_iso(),
     }
     _event(ledger, "validation_evidence_recorded", evidence_id=evidence_id, status=status)
+
+
+def _matching_flowguard_order_ids(
+    ledger: Mapping[str, Any],
+    subject_packet_id: str,
+    modeled_target: str,
+) -> list[str]:
+    rows: list[str] = []
+    for order_id, order in ledger.get("flowguard_work_orders", {}).items():
+        if order.get("subject_id") != subject_packet_id:
+            continue
+        if order.get("modeled_target") != modeled_target:
+            continue
+        if order.get("status") != "complete":
+            continue
+        if order.get("decision") != "pass":
+            continue
+        if order.get("progress_only") or order.get("skipped_checks") or order.get("proof_stale"):
+            continue
+        if not order.get("proof_artifact"):
+            continue
+        if order.get("source_generation") != ledger.get("source_generation"):
+            continue
+        rows.append(str(order_id))
+    return rows
+
+
+def _record_system_validation_for_packet(
+    ledger: dict[str, Any],
+    subject_packet_id: str,
+    *,
+    source_packet_id: str,
+    source_result_id: str,
+    review_id: str,
+) -> str:
+    subject_packet = _require(ledger["packets"], subject_packet_id, "packet")
+    required_target = str(subject_packet["envelope"].get("required_flowguard_target") or "")
+    flowguard_order_ids = _matching_flowguard_order_ids(ledger, subject_packet_id, required_target) if required_target else []
+    blockers: list[str] = []
+    subject_result_id = str(subject_packet.get("accepted_result_id") or subject_packet["envelope"].get("target_result_id") or "")
+    subject_result = ledger.get("results", {}).get(subject_result_id, {})
+    if not isinstance(subject_result, Mapping) or subject_result.get("review_id") != review_id:
+        blockers.append("missing_accepted_review")
+    if required_target and not flowguard_order_ids:
+        blockers.append("missing_matching_flowguard_report")
+    if _pending_pm_decision_gate_for_subject(ledger, subject_packet_id):
+        gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+        if gate and not gate.get("review_id"):
+            blockers.append("missing_pm_decision_gate_review")
+    evidence_id = f"validation-{source_result_id}"
+    gate = _pending_pm_decision_gate_for_subject(ledger, subject_packet_id)
+    gate_id = str(gate.get("gate_id") or "") if gate else ""
+    record_validation_evidence(
+        ledger,
+        evidence_id,
+        status="failed" if blockers else "passed",
+        subject_packet_id=subject_packet_id,
+        source_packet_id=source_packet_id,
+        source_result_id=source_result_id,
+        evidence_kind="system_review_validation",
+        owner_role="system",
+        review_id=review_id,
+        flowguard_order_ids=flowguard_order_ids,
+        gate_id=gate_id,
+        blockers=blockers,
+    )
+    ledger["latest_validation_evidence_id"] = evidence_id
+    result = ledger.get("results", {}).get(source_result_id)
+    if isinstance(result, dict):
+        result["validation_evidence_id"] = evidence_id
+    subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet, Mapping) else {}
+    node_id = str(subject_envelope.get("route_node_id") or "")
+    if (
+        not blockers
+        and node_id
+        and node_id in ledger.get("route_nodes", {})
+        and subject_envelope.get("route_scope") in {"node", "planning", "node_acceptance_plan", "parent_backward_replay"}
+    ):
+        ledger["route_nodes"][node_id].setdefault("validation_evidence_ids", []).append(evidence_id)
+    _mark_pm_decision_gate_validation(ledger, subject_packet_id, evidence_id)
+    return evidence_id
 
 
 def attempt_final_closure(
@@ -4210,7 +4516,20 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "pm_repair_decision_id": blocker.get("pm_repair_decision_id", ""),
             }
             for blocker in ledger.get("active_blockers", {}).values()
-            if blocker.get("status") in {"active", "repairing", "awaiting_recheck"}
+            if blocker.get("status") in {"active", "repairing", "awaiting_recheck", "awaiting_pm_decision_gate"}
+        ],
+        "pm_decision_gates": [
+            {
+                "gate_id": gate.get("gate_id", ""),
+                "gate_kind": gate.get("gate_kind", ""),
+                "status": gate.get("status", ""),
+                "source_packet_id": gate.get("source_packet_id", ""),
+                "decision": gate.get("decision", ""),
+                "flowguard_order_id": gate.get("flowguard_order_id", ""),
+                "review_id": gate.get("review_id", ""),
+                "validation_evidence_id": gate.get("validation_evidence_id", ""),
+            }
+            for gate in ledger.get("pm_decision_gates", {}).values()
         ],
         "host_evidence": list(ledger.get("host_evidence", {}).values()),
         "route_nodes": [

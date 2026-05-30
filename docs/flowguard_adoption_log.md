@@ -21401,3 +21401,68 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Skipped Steps
 - No broad release claim was made from this small follow-up alone; it relies on the already completed control-plane duty release evidence plus the focused lifecycle evidence here.
+
+## automate-validation-and-gate-pm-decisions-20260530 - Validator automation and PM risk gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User agreed that ordinary validator work packets were redundant under the router-controlled black-box flow, but that high-risk PM decisions such as route mutation and waiver should be strengthened instead of applied immediately.
+- Status: implemented_validated_installed_synced_local_git_pending
+- Recorded: 2026-05-30T16:02:39Z
+- FlowGuard package version: 0.39.0
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_validation_pm_gate_model.py`
+- `simulations/run_flowpilot_validation_pm_gate_checks.py`
+- `simulations/flowpilot_validation_pm_gate_results.json`
+- `tmp/flowguard_background/run_meta_checks.meta.json`
+- `tmp/flowguard_background/run_capability_checks.meta.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/ai_project_runtime/runtime.py`
+- `simulations/run_ai_project_runtime_checks.py`
+- `simulations/run_flowpilot_complete_system_runtime_checks.py`
+- `simulations/run_flowpilot_semantic_gate_outcome_checks.py`
+- `tests/test_flowpilot_high_standard_control_flow.py`
+- `tests/test_ai_project_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok, version 0.39.0.
+- `python -m flowguard project-audit --root .` - ok, project record audit passed.
+- `openspec validate automate-validation-and-gate-pm-decisions --strict` - ok.
+- `python -m pytest tests/test_flowpilot_high_standard_control_flow.py tests/test_ai_project_runtime.py -q` - ok; 30 tests and 20 subtests passed.
+- `python simulations/run_flowpilot_validation_pm_gate_checks.py` - ok; 171 traces and model-test alignment passed.
+- `python simulations/run_flowpilot_semantic_gate_outcome_checks.py --no-write-results` - ok; 210 traces and prior semantic gate alignment still passed.
+- `python simulations/run_ai_project_runtime_checks.py --no-write-results` - ok; routine runtime gate passed.
+- `python simulations/run_flowpilot_complete_system_runtime_checks.py --no-write-results` - ok; routine complete-system gate passed.
+- `python simulations/run_meta_checks.py` via `tmp/flowguard_background/run_meta_checks.*` - ok; exit 0, status complete, `proof_reused=false`.
+- `python simulations/run_capability_checks.py` via `tmp/flowguard_background/run_capability_checks.*` - ok; exit 0, status complete, `proof_reused=false`.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot skill synced from repository.
+- `python scripts/audit_local_install_sync.py --json` - ok; repo-owned installed skill fresh.
+- `python scripts/install_flowpilot.py --check --json` - ok; `source_fresh=true`.
+- `python scripts/check_install.py --json` - ok.
+
+### Findings
+- Reviewer pass now records `system_review_validation` evidence and opens closure directly without issuing an ordinary validator work packet.
+- Legacy validation packets remain enforceable: failed legacy validation records failed evidence, blocks closure, and routes through PM repair.
+- PM repair decisions `mutate_route` and `waive_with_authority` are staged in `pm_decision_gates` until FlowGuard, reviewer, system validation, and closure pass.
+- PM disposition `mutate_route` uses the same staged gate; low-risk PM repair and disposition decisions remain direct.
+- Console projection now exposes PM decision gate state without exposing sealed packet bodies.
+- Local installed FlowPilot skill was synced after validation and install audit/check passed.
+
+### Counterexamples
+- `validator_ai_required_on_ordinary_path`
+- `system_validation_treated_as_terminal`
+- `closure_before_system_validation`
+- `high_risk_pm_applied_before_gate`
+- `pm_waiver_applied_before_gate`
+- `pm_mutation_without_flowguard`
+- `pm_decision_reviewer_missing`
+- `low_risk_repair_forced_through_gate`
+- `legacy_validation_fail_issued_closure`
+
+### Skipped Steps
+- No OpenSpec archive was performed; the change remains reviewable.
+- No GitHub push, tag, release, deploy, or public-release claim was performed.
+- Pre-existing dirty result files were preserved and will not be staged as part of this scoped change.

@@ -1,4 +1,4 @@
-"""Run FlowGuard checks for fresh FlowPilot semantic gate outcomes."""
+"""Run FlowGuard checks for FlowPilot validation automation and PM gates."""
 
 from __future__ import annotations
 
@@ -10,14 +10,14 @@ from typing import Any
 from flowguard import Explorer
 
 try:  # pragma: no cover
-    from . import flowpilot_semantic_gate_outcome_model as model
+    from . import flowpilot_validation_pm_gate_model as model
 except ImportError:  # pragma: no cover
-    import flowpilot_semantic_gate_outcome_model as model
+    import flowpilot_validation_pm_gate_model as model
 
 
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
-RESULTS_PATH = ROOT / "flowpilot_semantic_gate_outcome_results.json"
+RESULTS_PATH = ROOT / "flowpilot_validation_pm_gate_results.json"
 
 
 def _flowguard_report() -> dict[str, Any]:
@@ -47,7 +47,7 @@ def _target_plan_report() -> dict[str, Any]:
     failures = model.invariant_failures(state)
     return {
         "ok": not failures and model.is_success(state),
-        "evidence_role": "semantic_gate_outcome_model_not_live_host_proof",
+        "evidence_role": "validation_pm_gate_model_not_live_host_proof",
         "failures": failures,
         "state": model.state_summary(state),
         "labels": list(model.REQUIRED_SAFE_LABELS),
@@ -73,13 +73,13 @@ def _model_test_alignment_report() -> dict[str, Any]:
     test_text = high_standard_test.read_text(encoding="utf-8")
     runtime_text = runtime.read_text(encoding="utf-8")
     obligations = {
-        "semantic_outcome_parser": "_parse_packet_outcome" in runtime_text,
-        "active_blocker_ledger": "active_blockers" in runtime_text,
-        "pm_repair_decision_packet": "pm_repair_decision" in runtime_text,
-        "reviewer_block_no_validation": "test_reviewer_block_routes_to_pm_repair_and_requires_recheck" in test_text,
-        "validator_fail_no_closure": "test_legacy_validator_fail_records_failed_evidence_and_routes_pm_repair" in test_text,
-        "worker_block_no_flowguard": "test_worker_blocked_result_routes_pm_repair_without_flowguard_pass" in test_text,
-        "same_class_recheck": "required_recheck_role" in test_text and "\"cleared\"" in test_text,
+        "system_validation_helper": "_record_system_validation_for_packet" in runtime_text,
+        "reviewer_pass_no_validator_packet": "test_reviewer_pass_records_system_validation_without_validator_packet" in test_text,
+        "legacy_validation_failure_still_blocks": "test_legacy_validator_fail_records_failed_evidence_and_routes_pm_repair" in test_text,
+        "pm_decision_gate_ledger": "pm_decision_gates" in runtime_text,
+        "high_risk_pm_repair_staged": "test_pm_mutate_route_repair_is_gated_before_application" in test_text,
+        "low_risk_pm_repair_direct": "test_pm_sender_reissue_repair_remains_direct" in test_text,
+        "high_risk_pm_disposition_staged": "test_pm_mutate_route_disposition_is_gated_before_application" in test_text,
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {
@@ -100,28 +100,28 @@ def run_checks() -> dict[str, Any]:
     alignment = _model_test_alignment_report()
     rows = [
         {
-            "id": "semantic_gate_outcome_flowguard_model",
+            "id": "validation_pm_gate_flowguard_model",
             "status": "passed" if flowguard["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["simulations/flowpilot_semantic_gate_outcome_model.py"],
+            "evidence": ["simulations/flowpilot_validation_pm_gate_model.py"],
         },
         {
-            "id": "semantic_gate_outcome_target_plan",
+            "id": "validation_pm_gate_target_plan",
             "status": "passed" if target_plan["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["openspec/changes/enforce-new-flowpilot-semantic-gate-outcomes/tasks.md"],
+            "evidence": ["openspec/changes/automate-validation-and-gate-pm-decisions/tasks.md"],
         },
         {
-            "id": "semantic_gate_outcome_hazard_replay",
+            "id": "validation_pm_gate_hazard_replay",
             "status": "passed" if hazards["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["simulations/flowpilot_semantic_gate_outcome_model.py"],
+            "evidence": ["simulations/flowpilot_validation_pm_gate_model.py"],
         },
         {
-            "id": "semantic_gate_outcome_model_test_alignment",
+            "id": "validation_pm_gate_model_test_alignment",
             "status": "passed" if alignment["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
@@ -129,7 +129,7 @@ def run_checks() -> dict[str, Any]:
         },
     ]
     return {
-        "result_type": "flowpilot_semantic_gate_outcome_checks",
+        "result_type": "flowpilot_validation_pm_gate_checks",
         "model_id": model.MODEL_ID,
         "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"] and alignment["ok"],
         "flowguard": flowguard,

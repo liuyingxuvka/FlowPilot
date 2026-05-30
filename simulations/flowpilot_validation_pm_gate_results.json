@@ -1,0 +1,153 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=18 initial_states=1 traces=171",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "closure_before_system_validation",
+      "high_risk_pm_applied_before_gate",
+      "legacy_validation_fail_issued_closure",
+      "low_risk_repair_forced_through_gate",
+      "pm_decision_reviewer_missing",
+      "pm_mutation_without_flowguard",
+      "pm_waiver_applied_before_gate",
+      "system_validation_treated_as_terminal",
+      "validator_ai_required_on_ordinary_path"
+    ],
+    "hazards": {
+      "closure_before_system_validation": [
+        "closure before system validation"
+      ],
+      "high_risk_pm_applied_before_gate": [
+        "high-risk PM decision applied before gate"
+      ],
+      "legacy_validation_fail_issued_closure": [
+        "legacy validation fail issued closure"
+      ],
+      "low_risk_repair_forced_through_gate": [
+        "low-risk PM repair was forced through high-risk gate"
+      ],
+      "pm_decision_reviewer_missing": [
+        "PM decision gate lacked reviewer pass"
+      ],
+      "pm_mutation_without_flowguard": [
+        "PM route mutation applied without FlowGuard"
+      ],
+      "pm_waiver_applied_before_gate": [
+        "PM waiver applied before gate"
+      ],
+      "system_validation_treated_as_terminal": [
+        "system validation treated as terminal completion"
+      ],
+      "validator_ai_required_on_ordinary_path": [
+        "ordinary path still required validator AI"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_validation_automation_pm_gates",
+  "model_test_alignment": {
+    "evidence": [
+      "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+      "tests/test_flowpilot_high_standard_control_flow.py"
+    ],
+    "missing": [],
+    "obligations": {
+      "high_risk_pm_disposition_staged": true,
+      "high_risk_pm_repair_staged": true,
+      "legacy_validation_failure_still_blocks": true,
+      "low_risk_pm_repair_direct": true,
+      "pm_decision_gate_ledger": true,
+      "reviewer_pass_no_validator_packet": true,
+      "system_validation_helper": true
+    },
+    "ok": true
+  },
+  "ok": true,
+  "result_type": "flowpilot_validation_pm_gate_checks",
+  "target_plan": {
+    "evidence_role": "validation_pm_gate_model_not_live_host_proof",
+    "failures": [],
+    "labels": [
+      "record_ordinary_result",
+      "record_flowguard_pass",
+      "record_reviewer_pass",
+      "record_system_validation",
+      "issue_closure_packet_after_system_validation",
+      "accept_closure_after_system_validation",
+      "record_low_risk_pm_decision",
+      "apply_low_risk_pm_decision_directly",
+      "record_high_risk_pm_decision",
+      "stage_high_risk_pm_decision",
+      "pass_pm_decision_flowguard_gate",
+      "pass_pm_decision_reviewer_gate",
+      "record_pm_decision_system_validation",
+      "accept_pm_decision_gate_closure",
+      "apply_staged_pm_decision_after_gate",
+      "block_legacy_validation_failure"
+    ],
+    "ok": true,
+    "state": {
+      "closure_result_accepted": true,
+      "high_risk_pm_decision_staged": true,
+      "legacy_validation_fail_blocked": true,
+      "low_risk_pm_decision_applied": true,
+      "pm_gate_closure_accepted": true,
+      "pm_gate_flowguard_passed": true,
+      "pm_gate_reviewer_passed": true,
+      "staged_pm_decision_applied": true,
+      "status": "complete",
+      "system_validation_recorded": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_validation_pm_gate_model.py"
+        ],
+        "freshness": "current",
+        "id": "validation_pm_gate_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/automate-validation-and-gate-pm-decisions/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "validation_pm_gate_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_validation_pm_gate_model.py"
+        ],
+        "freshness": "current",
+        "id": "validation_pm_gate_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/ai_project_runtime/runtime.py",
+          "tests/test_flowpilot_high_standard_control_flow.py"
+        ],
+        "freshness": "current",
+        "id": "validation_pm_gate_model_test_alignment",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}
