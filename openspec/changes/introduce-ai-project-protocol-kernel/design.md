@@ -23,7 +23,7 @@ agent instances:
 1. Router: decides the next legal action from the ledger.
 2. Planner: turns the user goal into route versions and task packets.
 3. Worker: performs scoped work from a sealed task packet.
-4. Reviewer and explicit FlowGuard officer responsibilities: check work, model
+4. Reviewer and explicit FlowGuard operator responsibilities: check work, model
    risk, select FlowGuard routes, and block weak evidence.
 
 These are responsibilities, not permanent people. The Agent Pool Manager may
@@ -102,7 +102,7 @@ scheduler chooses the sub-skill by the risk being modeled:
 - failure after a green model: `flowguard-model-miss-review`;
 - simplification of overgrown paths: `flowguard-architecture-reduction`.
 
-The scheduler itself is modeled and tested. A FlowGuard officer packet must
+The scheduler itself is modeled and tested. A FlowGuard operator packet must
 say which thing is being modeled: the target product, the development process,
 the packet lifecycle, the dynamic agent lifecycle, the evidence lifecycle, or
 the final closure claim.
@@ -130,7 +130,7 @@ unbroken.
 - Agent reports progress only and router treats it as done.
 - Worker reviews itself.
 - Reviewer passes without checking evidence.
-- FlowGuard officer models the target product when the risk was the
+- FlowGuard operator models the target product when the risk was the
   development process, or the reverse.
 - Route changes while old packets remain open.
 - Old route output is accepted into a new route version.

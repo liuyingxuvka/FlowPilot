@@ -7,7 +7,7 @@ The first real exercise of the new FlowPilot formal runtime exposed two avoidabl
 - Add explicit allowed-value menus wherever a FlowPilot prompt or command asks an AI to fill a fixed enum-like value, starting with `--host-kind`.
 - Tell role agents to stop and report a value-menu mismatch instead of inventing values when none of the listed choices fits.
 - Add run-local evidence output support for Meta and Capability FlowGuard check runners, so formal FlowPilot work packets can write current-run evidence under `.flowpilot/runs/<run-id>/evidence/...`.
-- Make FlowGuard officer packets carry the run-local output policy and the concrete runner flags needed to avoid tracked baseline files.
+- Make FlowGuard operator packets carry the run-local output policy and the concrete runner flags needed to avoid tracked baseline files.
 - Add FlowGuard model coverage and ordinary regressions for enum-menu guidance and run-local evidence isolation.
 
 ## Capabilities

@@ -3,9 +3,9 @@
 The fresh entrypoint already starts correctly: startup UI output is sealed into
 the new current-run ledger, the first PM packet is issued, and PM can ACK and
 return a result. The defect is after the PM result. The runtime must request an
-explicit Process or Product FlowGuard officer packet, not a generic FlowGuard
-operator side command. Reviewer then records acceptance only through a packet
-with a current `packet_id` and ACK.
+explicit FlowGuard operator packet, not a direct FlowGuard side command.
+Reviewer then records acceptance only through a packet with a current
+`packet_id` and ACK.
 
 ## Decision: Role Work Is Always Packet Work
 
@@ -14,7 +14,7 @@ runtime distinguishes packet purpose with `packet_kind`, not with side-channel
 commands.
 
 - `task`: PM or worker performs project work.
-- `flowguard_check`: Process or Product FlowGuard officer checks a subject
+- `flowguard_check`: FlowGuard operator checks a subject
   packet/result for the declared modeled target.
 - `review`: Reviewer checks the subject result and FlowGuard evidence.
 

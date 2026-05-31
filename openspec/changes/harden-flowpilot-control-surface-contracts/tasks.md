@@ -15,7 +15,7 @@
 
 - [x] 3.1 Add unit tests for resolver compatibility and no project-root fallback.
 - [x] 3.2 Add unit tests for invalid UTF-8/invalid JSON returning audit findings instead of exceptions.
-- [x] 3.3 Add unit tests for symmetric packet contracts across PM, FlowGuard officer, reviewer, requested worker packets, and system validation/closure outcomes.
+- [x] 3.3 Add unit tests for symmetric packet contracts across PM, FlowGuard operator, reviewer, requested worker packets, and system validation/closure outcomes.
 - [x] 3.4 Run focused FlowGuard/model checks and targeted runtime tests.
 - [x] 3.5 Sync the local installed FlowPilot skill after validation and run install/audit checks.
 - [x] 3.6 Inspect git status and commit only this scoped repair if validation is green.

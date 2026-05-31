@@ -7,7 +7,7 @@ role work packets can drift unless packet/result/acceptance obligations are
 checked at one shared contract boundary.
 
 This is a bottom-logic repair. It should fix the family once instead of adding
-role-specific patches for PM, reviewer, explicit FlowGuard officer, worker, or
+role-specific patches for PM, reviewer, explicit FlowGuard operator, worker, or
 system validation/closure outcomes.
 
 ## What Changes

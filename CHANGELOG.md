@@ -2,6 +2,38 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.0 - 2026-05-31
+
+### Breaking
+
+- Removed legacy fixed-topology language from current FlowPilot prompts,
+  templates, runtime cards, models, and tests. Current FlowPilot uses the
+  single `flowguard_operator` responsibility for FlowGuard work and generic
+  requested worker responsibilities instead of Process/Product FlowGuard
+  officer split roles or fixed Worker A/B cohorts.
+- Made route-node work depend on current requested responsibilities, current
+  FlowGuard evidence, and current blocker views rather than old compatibility
+  aliases or prose-inferred outcomes.
+
+### Added
+
+- Added OpenSpec change packages for host-neutral role surfaces, mandatory
+  route-node pre-work FlowGuard gates, PM-authored node context packages, and
+  current-effective packet outcome authority.
+- Added a focused pre-work FlowGuard node-gate model and runner covering PM
+  node context packages, pre-work FlowGuard checks, worker release, post-result
+  FlowGuard, independent review, repair, and stale-evidence hazards.
+- Added new FlowGuard operator role/card surfaces and lifecycle templates that
+  use the current `flowguard_operator` vocabulary.
+
+### Changed
+
+- Updated README, protocol, schema, HANDOFF, runtime kit cards, templates,
+  tests, simulations, prompt manifests, and install checks to describe the
+  current new FlowPilot runtime rather than the old fixed-role topology.
+- Rebuilt FlowGuard project topology and synchronized the repo-owned installed
+  FlowPilot skill with the repository source.
+
 ## 0.9.25 - 2026-05-30
 
 ### Added

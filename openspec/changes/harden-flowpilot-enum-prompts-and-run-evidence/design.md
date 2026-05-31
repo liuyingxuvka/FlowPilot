@@ -1,10 +1,10 @@
 ## Context
 
-The new formal runtime is now packet-symmetric for requested PM, FlowGuard officer, Reviewer, and worker-class responsibilities. System validation and system closure are runtime ledger outcomes. The latest live-style exercise found two remaining weak spots outside that symmetry.
+The new formal runtime is now packet-symmetric for requested PM, FlowGuard operator, Reviewer, and worker-class responsibilities. System validation and system closure are runtime ledger outcomes. The latest live-style exercise found two remaining weak spots outside that symmetry.
 
 First, the `lease-agent` CLI already constrains `--host-kind` to `dry_run`, `fake`, or `live`, but the prompt guidance did not spell out that menu in the place where an AI operator needed it. The operator guessed `codex_subagent`, which the CLI correctly rejected.
 
-Second, the FlowGuard officer used the default Meta runner output path. That path is a tracked baseline result file under `simulations/`, so a formal run changed a timestamp in the repository instead of leaving evidence under the run that requested it.
+Second, the FlowGuard operator used the default Meta runner output path. That path is a tracked baseline result file under `simulations/`, so a formal run changed a timestamp in the repository instead of leaving evidence under the run that requested it.
 
 ## Goals / Non-Goals
 
@@ -37,7 +37,7 @@ The prompt also states that `codex_subagent` is not a valid value. That keeps th
 
 ### Decision: Runtime Packets Carry Evidence Output Policy
 
-FlowGuard officer packet bodies will include an evidence output policy. The policy names `.flowpilot/runs/<run-id>/evidence/flowguard/<packet-id>/` as the normal formal-run evidence root and forbids writing formal-run evidence into tracked `simulations/*_results.json` paths unless the task explicitly says to update baselines.
+FlowGuard operator packet bodies will include an evidence output policy. The policy names `.flowpilot/runs/<run-id>/evidence/flowguard/<packet-id>/` as the normal formal-run evidence root and forbids writing formal-run evidence into tracked `simulations/*_results.json` paths unless the task explicitly says to update baselines.
 
 ### Decision: Runner Output Paths Are Optional Overrides
 

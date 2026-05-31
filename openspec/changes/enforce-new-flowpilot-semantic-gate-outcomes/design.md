@@ -11,7 +11,7 @@ That symmetry is useful, but it currently mixes two different meanings:
 - "The role's semantic decision was pass/accept."
 
 The old FlowPilot protocol kept these separate. The Controller/Router validated
-mechanics; reviewer and FlowGuard officer responsibilities own semantic
+mechanics; reviewer and FlowGuard operator responsibilities own semantic
 pass/block where requested; system validation and system closure are runtime
 ledger outcomes; PM owns repair strategy. The new runtime should restore that
 boundary without dispatching Validator or Closure Officer role packets.
@@ -33,7 +33,7 @@ the equivalent fields in a role-specific body:
 - `evidence_refs`: current-run evidence references.
 
 Fake/rehearsal bodies must state an explicit pass/accept/complete outcome.
-Plain bodies from reviewer or FlowGuard officer responsibilities that contain
+Plain bodies from reviewer or FlowGuard operator responsibilities that contain
 clear block/fail terms are treated as non-pass.
 
 ### Decision: Separate outcome records from active blockers
@@ -62,7 +62,7 @@ decision is itself a sealed packet result and may choose:
 - `stop_for_user`
 
 Router/system code applies only routeable mechanics. PM remains the owner of
-repair strategy; reviewer and FlowGuard officer responsibilities do not repair
+repair strategy; reviewer and FlowGuard operator responsibilities do not repair
 the artifact themselves.
 
 ### Decision: Recheck is mandatory for clearing blockers
@@ -70,7 +70,7 @@ the artifact themselves.
 A blocker created by a reviewer block is cleared only when the same gate class
 gets a newer reviewer pass. A system validation failure is cleared only by
 newer current evidence that passes the system validation step. A FlowGuard
-failure is cleared only by a newer FlowGuard officer pass. PM repair decisions
+failure is cleared only by a newer FlowGuard operator pass. PM repair decisions
 can start repair work, mutate route, quarantine evidence, or stop, but they do
 not themselves clear the blocker except for an explicitly authorized waiver.
 

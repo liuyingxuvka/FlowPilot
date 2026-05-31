@@ -208,9 +208,9 @@ and model-confidence overclaims must also fail.
   is no longer a FlowPilot dependency.
 - Formal FlowPilot routes now use runtime-requested role bindings only for
   responsibilities currently issued by the runtime. Typical requested
-  responsibilities include project manager, human-like reviewer, process
-  FlowGuard operator, and bounded worker-class
-  packet executors. The project manager owns route, resume completion runways,
+  responsibilities include project manager, human-like reviewer,
+  FlowGuard operator, and bounded worker-class packet executors. The project
+  manager owns route, resume completion runways,
   PM stop signals, repair, and completion decisions; workers remain packet
   executors, not route or node owners.
 - Every meaningful FlowPilot scope now has two FlowGuard model gates: a

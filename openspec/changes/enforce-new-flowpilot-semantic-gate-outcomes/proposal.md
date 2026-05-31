@@ -1,7 +1,7 @@
 ## Why
 
 The new FlowPilot runtime has the right shape: current-run ledgers, sealed
-packets, dynamic leases, FlowGuard officer packets, reviewer packets,
+packets, dynamic leases, FlowGuard operator packets, reviewer packets,
 system validation, system closure, and PM disposition packets. The remaining control
 gap is semantic gate outcome handling. A reviewer can write a body that means
 "block" or "fail", or the system validation pass can fail,
@@ -16,7 +16,7 @@ without restoring the old fixed-role stack.
 
 ## What Changes
 
-- Add a compact semantic outcome parser for worker, FlowGuard officer,
+- Add a compact semantic outcome parser for worker, FlowGuard operator,
   reviewer, and PM repair-decision packet bodies, plus system validation
   outcomes.
 - Record every parsed outcome in the run ledger with role, packet, subject,

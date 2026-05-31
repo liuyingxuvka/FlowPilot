@@ -4,9 +4,9 @@
 
 The new FlowPilot SHALL request dynamic agent leases only for issued work
 packets. All requested backend responsibilities, including PM, Reviewer,
-Process FlowGuard officer, Product FlowGuard officer, and worker-class
-responsibilities, SHALL use the same packet lifecycle: issued packet, lease,
-ACK, result, ledger side effect, and next packet.
+FlowGuard operator, and worker-class responsibilities, SHALL use the same
+packet lifecycle: issued packet, lease, ACK, result, ledger side effect, and
+next packet.
 
 #### Scenario: First PM packet is issued
 
@@ -17,14 +17,14 @@ ACK, result, ledger side effect, and next packet.
 #### Scenario: PM result requires FlowGuard
 
 - **WHEN** a PM task packet result is submitted and accepted mechanically
-- **THEN** the runtime MUST issue an explicit Process or Product FlowGuard
-  officer work packet for the modeled target
-- **AND** the selected FlowGuard officer MUST be leased through that packet
+- **THEN** the runtime MUST issue an explicit FlowGuard operator work packet
+  for the modeled target
+- **AND** the selected FlowGuard operator MUST be leased through that packet
 - **AND** the runtime MUST NOT require a direct side-command FlowGuard actor.
 
 #### Scenario: FlowGuard result requires review
 
-- **WHEN** a FlowGuard officer packet result records passing evidence for the
+- **WHEN** a FlowGuard operator packet result records passing evidence for the
   subject PM packet and modeled target
 - **THEN** the runtime MUST issue a Reviewer work packet
 - **AND** the Reviewer MUST ACK and submit a result through that packet before
@@ -43,13 +43,13 @@ ACK, result, ledger side effect, and next packet.
 
 The new FlowPilot SHALL progress from startup intake to final backward closure
 through current-run packets for every requested backend responsibility. Final
-closure MUST require accepted task, FlowGuard officer, reviewer, system
+closure MUST require accepted task, FlowGuard operator, reviewer, system
 validation, and system closure evidence.
 
 #### Scenario: Rehearsal end-to-end run
 
 - **WHEN** a deterministic fake-host rehearsal supplies valid results for PM,
-  FlowGuard officer, Reviewer, and any requested worker-class packets
+  FlowGuard operator, Reviewer, and any requested worker-class packets
 - **THEN** final closure MUST complete
 - **AND** the public status MUST still hide sealed bodies
 - **AND** no active lease row may remain for a completed packet.
@@ -59,7 +59,7 @@ validation, and system closure evidence.
 - **WHEN** a deterministic fake project is run through the real public CLI from
   startup intake through `status`, `lease-agent`, `ack`, and `submit-result`
 - **THEN** the rehearsal MUST reach terminal closure through PM, explicit
-  FlowGuard officer, Reviewer, and requested worker-class packets plus
+  FlowGuard operator, Reviewer, and requested worker-class packets plus
   system-owned validation and closure evidence
 - **AND** the rehearsal MUST NOT use the internal fake end-to-end helper as its
   proof

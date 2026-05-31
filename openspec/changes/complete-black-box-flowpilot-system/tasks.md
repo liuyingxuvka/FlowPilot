@@ -26,7 +26,7 @@
 ## 4. Dynamic Host And Responsibility Leases
 
 - [x] 4.1 Add a host-driver interface with deterministic fake-host, dry-run host, and live-host evidence boundaries.
-- [x] 4.2 Implement dynamic responsibility leases for PM, reviewer, explicit FlowGuard officer, worker, research worker, and UI/QA worker responsibilities.
+- [x] 4.2 Implement dynamic responsibility leases for PM, reviewer, explicit FlowGuard operator, worker, research worker, and UI/QA worker responsibilities.
 - [x] 4.3 Add lease replacement, expiration, close, supersede, and late-output quarantine behavior.
 - [x] 4.4 Add role-memory/current-run seeding records that allow replacement without trusting old agent ids.
 - [x] 4.5 Add host evidence rows that distinguish fake, dry-run, and real live background-agent confidence.

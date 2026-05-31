@@ -108,10 +108,10 @@ ancestors, and the rerun target before new work starts.
 
 For route mutation, include `repair_return_to_node_id`, identifying the
 mainline node the repair is meant to rejoin. Router treats mutation as a fresh
-route-check boundary: old Process/Product/Reviewer route approvals become
+route-check boundary: old FlowGuard operator/Reviewer route approvals become
 stale and the changed route must pass route checks again before execution
-continues. Also include `why_current_node_cannot_contain_repair` when the
-repair phase chooses route mutation instead of same-node repair.
+continues. Also include `why_current_node_cannot_contain_repair` when the repair
+phase chooses route mutation instead of same-node repair.
 
 Mutation or repair output must include `prior_path_context_review` showing the
 history considered and why this repair does not repeat a superseded or failed

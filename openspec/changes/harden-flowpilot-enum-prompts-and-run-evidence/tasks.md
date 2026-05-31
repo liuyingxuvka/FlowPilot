@@ -13,7 +13,7 @@
 
 - [x] 3.1 Add focused tests for host-kind value-menu guidance and invalid host-kind rejection.
 - [x] 3.2 Add focused tests that custom Meta/Capability runner output paths do not target canonical tracked result files.
-- [x] 3.3 Add focused tests that FlowGuard officer packets include run-local evidence policy.
+- [x] 3.3 Add focused tests that FlowGuard operator packets include run-local evidence policy.
 - [x] 3.4 Run the new-entrypoint FlowGuard checks, focused unit tests, model-test alignment where affected, install checks, and run-local Meta/Capability regressions.
 
 ## 4. Completion

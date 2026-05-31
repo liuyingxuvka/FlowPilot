@@ -2,7 +2,7 @@
 
 The current repository now has a clean black-box runtime foundation, but it is
 not yet a complete FlowPilot replacement: it does not provide the full startup
-surface, dynamic live-agent host loop, FlowGuard officer workflow, Cockpit
+surface, dynamic live-agent host loop, FlowGuard operator workflow, Cockpit
 operation surface, long-run recovery, migration/cutover path, or real project
 validation needed for a full-system completion claim.
 

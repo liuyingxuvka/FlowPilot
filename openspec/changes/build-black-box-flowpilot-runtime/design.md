@@ -19,10 +19,9 @@ crew:
 - Planner: creates route versions and task packets.
 - Worker: executes a scoped packet.
 - Reviewer: independently checks packet results.
-- Process FlowGuard officer: models development/process/route/evidence risk
-  and returns a scoped report when requested.
-- Product FlowGuard officer: models product/function/modelability risk and
-  returns a scoped report when requested.
+- FlowGuard operator: models development/process/route/evidence risk and
+  product/function/modelability risk, then returns a scoped report when
+  requested.
 
 Any responsibility may be served by a newly leased background agent. A lease is
 a bounded permission to do one kind of work for one route scope. It may ACK,

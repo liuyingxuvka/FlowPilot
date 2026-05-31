@@ -158,11 +158,17 @@ def _spawn_startup_router_daemon_process(router: ModuleType, project_root: Path,
     start_new_session = router.os.name != 'nt'
     if router.os.name == 'nt':
         start_new_session = False
-        creationflags = getattr(router.subprocess, 'CREATE_NEW_PROCESS_GROUP', 0) | getattr(router.subprocess, 'DETACHED_PROCESS', 0) | getattr(router.subprocess, 'CREATE_NO_WINDOW', 0)
+        creationflags = getattr(router.subprocess, 'CREATE_NEW_PROCESS_GROUP', 0) | getattr(router.subprocess, 'CREATE_NO_WINDOW', 0)
+        import msvcrt
+        for stream in (router.sys.stdin, router.sys.stdout, router.sys.stderr):
+            try:
+                router.os.set_handle_inheritable(msvcrt.get_osfhandle(stream.fileno()), False)
+            except (AttributeError, OSError, ValueError):
+                pass
     stdout_handle = stdout_path.open('a', encoding='utf-8')
     stderr_handle = stderr_path.open('a', encoding='utf-8')
     try:
-        process = router.subprocess.Popen(command, cwd=str(project_root), stdin=router.subprocess.DEVNULL, stdout=stdout_handle, stderr=stderr_handle, start_new_session=start_new_session, creationflags=creationflags)
+        process = router.subprocess.Popen(command, cwd=str(project_root), stdin=router.subprocess.DEVNULL, stdout=stdout_handle, stderr=stderr_handle, close_fds=True, start_new_session=start_new_session, creationflags=creationflags)
     finally:
         stdout_handle.close()
         stderr_handle.close()

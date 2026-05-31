@@ -27,13 +27,13 @@ UTF-8 into structured read outcomes instead of uncaught exceptions.
 
 ### Requirement: Role packets share one symmetric control-surface contract
 FlowPilot SHALL validate packet and result authority through a role-neutral
-contract that applies to PM, reviewer, explicit FlowGuard officer, and
+contract that applies to PM, reviewer, explicit FlowGuard operator, and
 requested worker packets. System validation and closure are ledger outcomes,
 not role packets.
 
 #### Scenario: PM-only contract coverage is insufficient
 - **WHEN** PM packets carry full envelope/output authority but reviewer or
-  FlowGuard officer packets lack equivalent fields
+  FlowGuard operator packets lack equivalent fields
 - **THEN** the control-surface contract MUST fail.
 
 #### Scenario: ACK, result, and acceptance remain separate

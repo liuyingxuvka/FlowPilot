@@ -9,7 +9,7 @@
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_new has 550 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_new.py"
         ],
@@ -48,7 +48,7 @@
     "deferred_structure_split_findings": [
       {
         "code": "full_diagnostic_actionable_finding",
-        "message": "flowpilot_new has 550 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "repair_type": "defer_structure_split",
         "source_code": "needs_structure_split",

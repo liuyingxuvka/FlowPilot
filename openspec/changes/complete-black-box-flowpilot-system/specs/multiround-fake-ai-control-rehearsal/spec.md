@@ -7,7 +7,7 @@ surface, not only the packet protocol foundation.
 
 #### Scenario: Fake agent dies mid-packet
 
-- **WHEN** a fake worker or FlowGuard officer ACKs a packet and then stops
+- **WHEN** a fake worker or FlowGuard operator ACKs a packet and then stops
   before result submission
 - **THEN** the runtime MUST expire or replace the lease and keep dependent
   route gates incomplete.

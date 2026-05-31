@@ -2,7 +2,7 @@
 
 ### Requirement: FlowGuard packets use the single FlowGuard operator responsibility
 
-FlowPilot SHALL issue FlowGuard-related packet work only to the explicit current `flowguard_operator` responsibility and SHALL NOT use old Process/Product FlowGuard operator packet owners.
+FlowPilot SHALL issue FlowGuard-related packet work only to the explicit current `flowguard_operator` responsibility and SHALL NOT use old Process/FlowGuard operator packet owners.
 
 #### Scenario: Process-model packet
 - **WHEN** a packet requires process, route, validation-freshness, or development workflow FlowGuard work

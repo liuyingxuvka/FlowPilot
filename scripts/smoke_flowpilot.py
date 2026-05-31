@@ -3,15 +3,62 @@
 from __future__ import annotations
 
 import argparse
+import json
 import subprocess
 import sys
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+FAST_REUSABLE_JSON_PROOF_RUNNERS = {
+    "simulations/run_flowpilot_persistent_router_daemon_checks.py",
+}
 
 
-def run(command: list[str]) -> bool:
+def _json_out_path(command: list[str]) -> Path | None:
+    try:
+        index = command.index("--json-out")
+    except ValueError:
+        return None
+    if index + 1 >= len(command):
+        return None
+    return ROOT / command[index + 1]
+
+
+def _proof_dependencies(json_out: Path) -> list[Path]:
+    stem = json_out.stem
+    if stem.endswith("_results"):
+        stem = stem[: -len("_results")]
+    simulation_root = ROOT / "simulations"
+    candidates = [
+        simulation_root / f"run_{stem}_checks.py",
+        simulation_root / f"{stem}_model.py",
+    ]
+    return [path for path in candidates if path.exists()]
+
+
+def _can_reuse_fast_json_proof(command: list[str]) -> bool:
+    runner = command[1].replace("\\", "/") if len(command) > 1 else ""
+    if runner not in FAST_REUSABLE_JSON_PROOF_RUNNERS:
+        return False
+    json_out = _json_out_path(command)
+    if json_out is None or not json_out.exists():
+        return False
+    try:
+        payload = json.loads(json_out.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return False
+    if payload.get("ok") is not True:
+        return False
+    result_mtime = json_out.stat().st_mtime
+    dependencies = _proof_dependencies(json_out)
+    return bool(dependencies) and all(path.stat().st_mtime <= result_mtime for path in dependencies)
+
+
+def run(command: list[str], *, fast: bool = False) -> bool:
+    if fast and _can_reuse_fast_json_proof(command):
+        print(f"Reusing valid fast proof for {' '.join(command[1:])}")
+        return True
     completed = subprocess.run(command, cwd=ROOT, text=True)
     return completed.returncode == 0
 
@@ -153,7 +200,7 @@ def main(argv: list[str] | None = None) -> int:
     ]
     ok = True
     for command in checks:
-        if not run(command):
+        if not run(command, fast=args.fast):
             ok = False
     return 0 if ok else 1
 

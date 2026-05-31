@@ -6,7 +6,7 @@
 ## 2. Runtime Implementation
 
 - [x] 2.1 Add ledger records for packet outcomes, active blockers, PM repair decisions, and repair transactions.
-- [x] 2.2 Parse reviewer, FlowGuard officer, worker, system validation, system closure, and PM repair-decision outcomes before side effects.
+- [x] 2.2 Parse reviewer, FlowGuard operator, worker, system validation, system closure, and PM repair-decision outcomes before side effects.
 - [x] 2.3 Route reviewer block, system validation fail, FlowGuard fail, and worker blocked/needs-PM outcomes to active blockers.
 - [x] 2.4 Automatically issue PM repair-decision packets and apply PM repair decisions through existing new-runtime primitives.
 - [x] 2.5 Require same-gate/same-role recheck before clearing semantic blockers.

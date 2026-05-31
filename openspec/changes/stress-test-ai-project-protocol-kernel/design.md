@@ -85,7 +85,7 @@ parent test mask a stale or skipped child.
 
 ### Make FlowGuard target selection explicit
 
-A FlowGuard officer packet must name what it is modeling: product behavior,
+A FlowGuard operator packet must name what it is modeling: product behavior,
 development process, packet lifecycle, dynamic agent lifecycle, evidence
 lifecycle, or final closure. The stress checks include wrong-target cases
 because the user specifically called out that FlowGuard's sub-skills must be
