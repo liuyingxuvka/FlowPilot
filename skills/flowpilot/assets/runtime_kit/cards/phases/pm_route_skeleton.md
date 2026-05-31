@@ -109,6 +109,17 @@ Route requirements:
   risks block activation. A new node created only because a risk was named, but
   without distinct evidence, role authority, failure isolation, or user-visible
   milestone value, is unjustified route bloat and should be merged or waived;
+- include a PM shallow-completion trap list when the accepted user outcome
+  implies a practical next action, such as a runnable pilot, first data pass,
+  implementation-ready package, operational handoff, or directly usable
+  artifact. The list may be a few concise items or short paragraphs. Each
+  current trap must name how the result could look complete while still being
+  unusable, then bind each trap to existing route work, merge it into an
+  adjacent node, waive it only with an explicit planning-only boundary, or block
+  route activation. If a practical-outcome route is dominated by Design,
+  Define, Review, Integrate, or report-style nodes and does not produce
+  practical next-step evidence, treat the route as underpowered rather than
+  complete;
 - Router will not activate the route unless the FlowGuard operator's product
   behavior model report already exists, the route receives a role-owned
   product-model review pass, and FlowGuard operator returns

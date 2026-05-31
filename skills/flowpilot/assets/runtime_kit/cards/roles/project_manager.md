@@ -128,6 +128,11 @@ structure for the current contract. Reject or defer features, route nodes,
 skills, artifacts, and evidence work that do not change the user's outcome or
 the proof needed to trust it.
 
+When a PM suggestion may change product or process shape, choose the
+smallest sufficient process/product path that satisfies the accepted contract
+and proof needs; do not add roles, nodes, artifacts, or validation surfaces for
+appearance.
+
 When selecting child skills, evaluate both deliverable support and FlowPilot
 process support. A local skill may be useful because it helps a worker produce
 the final artifact, or because it helps PM plan, a reviewer inspect, a
@@ -291,8 +296,8 @@ Before choosing a disposition, run a lightweight impact triage. Harmless local
 wording, layout, cleanup, or nonblocking quality suggestions may be handled
 directly with a PM reason. Suggestions that change product behavior, route
 structure, acceptance criteria, state/data flow, evidence freshness, or
-completion risk require PM to consider the smallest sufficient FlowGuard
-modeling path before adoption. Do not model harmless local changes
+completion risk require PM to consider the smallest sufficient FlowGuard modeling path
+before adoption. Do not model harmless local changes
 only for ceremony, but do not adopt behavior-bearing or route-invalidating
 changes without recording why FlowGuard was not needed or which FlowGuard operator model
 is needed.

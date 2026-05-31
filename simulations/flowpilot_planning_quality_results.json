@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=240",
+    "summary": "sequences=3 initial_states=1 traces=258",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -23,6 +23,13 @@
         "expected_failure": "research or material-scan packet grants target artifact repair instead of report self-correction",
         "failures": [
           "research or material-scan packet grants target artifact repair instead of report self-correction"
+        ]
+      },
+      "flowguard_operator_packet_repairs_target_artifact": {
+        "detected": true,
+        "expected_failure": "FlowGuard operator packet grants target artifact repair instead of model/report self-correction",
+        "failures": [
+          "FlowGuard operator packet grants target artifact repair instead of model/report self-correction"
         ]
       },
       "flowguard_operator_route_scope_route_viability_missing": {
@@ -81,13 +88,6 @@
           "node acceptance plan is not mapped to a product model segment"
         ]
       },
-      "flowguard_operator_packet_repairs_target_artifact": {
-        "detected": true,
-        "expected_failure": "FlowGuard operator packet grants target artifact repair instead of model/report self-correction",
-        "failures": [
-          "FlowGuard operator packet grants target artifact repair instead of model/report self-correction"
-        ]
-      },
       "overmerged_complex_implementation_node": {
         "detected": true,
         "expected_failure": "route complexity does not match selected planning profile",
@@ -102,6 +102,14 @@
         "failures": [
           "PM closure lacks final-user outcome replay",
           "PM closure lacks low-quality-success risk disposition"
+        ]
+      },
+      "pm_closure_shallow_completion_traps_unresolved": {
+        "detected": true,
+        "expected_failure": "PM closure leaves shallow-completion traps unresolved for the final user",
+        "failures": [
+          "PM closure lacks final-user outcome replay",
+          "PM closure leaves shallow-completion traps unresolved for the final user"
         ]
       },
       "pm_closure_user_outcome_replay_missing": {
@@ -153,11 +161,26 @@
           "PM route is not mapped to the product behavior model"
         ]
       },
+      "pm_shallow_completion_traps_missing": {
+        "detected": true,
+        "expected_failure": "PM did not name the task-specific shallow-completion traps",
+        "failures": [
+          "PM did not name the task-specific shallow-completion traps"
+        ]
+      },
       "pm_user_intent_self_check_missing": {
         "detected": true,
         "expected_failure": "PM plan lacks final-user intent and product usefulness self-check",
         "failures": [
           "PM plan lacks final-user intent and product usefulness self-check"
+        ]
+      },
+      "practical_outcome_design_only_route": {
+        "detected": true,
+        "expected_failure": "practical user outcome was planned as a design-only route without next-step evidence",
+        "failures": [
+          "practical user outcome was planned as a design-only route without next-step evidence",
+          "current shallow-completion traps lack route work, scoped waiver, or blocker"
         ]
       },
       "process_support_skill_ignored": {
@@ -308,11 +331,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 80,
+    "edge_count": 86,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 39,
-    "state_count": 81
+    "rejected_state_count": 42,
+    "state_count": 87
   }
 }

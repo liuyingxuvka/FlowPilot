@@ -21035,6 +21035,68 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-shallow-completion-20260531 - FlowPilot shallow-completion guard hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User identified PM shallow-completion failure mode and requested lightweight FlowPilot skill optimization with OpenSpec and FlowGuard, local install sync, local repository/git sync, and preservation of parallel AI work.
+- Status: implemented_validated_installed_synced
+- Skill decision: used_flowguard
+- Recorded: 2026-05-31T18:41:56+02:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_planning_quality_model.py`
+- `simulations/run_flowpilot_planning_quality_checks.py`
+- `simulations/flowpilot_planning_quality_results.json`
+- `simulations/flowpilot_reviewer_active_challenge_model.py`
+- `simulations/run_flowpilot_reviewer_active_challenge_checks.py`
+- `simulations/flowpilot_reviewer_active_challenge_results.json`
+- `simulations/card_instruction_coverage_results.json`
+- `simulations/meta_thin_parent_results.json`
+- `simulations/meta_layered_full_results.json`
+- `simulations/capability_thin_parent_results.json`
+- `simulations/capability_layered_full_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime Files
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md`
+- `skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md`
+
+### Commands
+- `openspec validate harden-flowpilot-shallow-completion --strict` - ok.
+- Planning and reviewer FlowGuard model checks - ok; shallow-completion hazards detected as expected.
+- Card instruction coverage and runtime card reminder checks - ok.
+- `python -m unittest tests.test_flowpilot_planning_quality tests.test_flowpilot_reviewer_active_challenge tests.test_flowpilot_card_instruction_coverage` - ok; 20 tests passed.
+- FlowGuard project topology build/check - ok.
+- Meta and Capability layered full parent regressions - ok; current with layered full parent evidence.
+- Local install sync, install audit, install check, and general install check - ok.
+
+### Findings
+- PM route planning now names a concise current shallow-completion trap list when the accepted user outcome implies a practical next action.
+- Each current trap must be covered by route work, merged into existing work, waived with a scoped planning-only boundary, or converted into a blocker.
+- Reviewer worker-result review now challenges named traps from the final user's perspective and blocks still-plausible traps without practical next-step evidence.
+- PM closure now replays shallow-completion traps before terminal approval and cannot close from ledger/report cleanliness alone.
+- Local installed FlowPilot is synchronized with repository source.
+
+### Counterexamples
+- `pm_shallow_completion_traps_missing`
+- `practical_outcome_design_only_route`
+- `pm_closure_shallow_completion_traps_unresolved`
+- `shallow_completion_traps_not_challenged`
+- `shallow_completion_trap_downgraded`
+
+### Skipped Or Partial Steps
+- No old compatibility fields or heavyweight schema surfaces were added.
+- No peer AI work was reverted or cleaned up.
+- No GitHub push, tag, release, deploy, public publication, or OpenSpec archive was performed.
+
+### Next Actions
+- Use the concise trap-list pattern for future FlowPilot PM planning: name likely fake-complete outcomes, then route, waive, or block each item before review and closure.
+
+
 ## startup-intake-settings-support-entry-20260531 - Startup intake settings and support entry
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -22131,3 +22193,41 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - No compatibility shim was added for `worker_a`, `worker_b`, old officer role names, or old officer lifecycle templates.
 - No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
 - No git commit was made because the worktree contains broad unrelated and same-file peer changes that should not be staged wholesale.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-05-31T16:25:18+00:00
+- Ended: 2026-05-31T16:25:18+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.39.3
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.

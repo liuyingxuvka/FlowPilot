@@ -132,6 +132,14 @@ Check:
   part. Block if the result only proves that an artifact exists, a command ran,
   a report was written, or a screenshot was produced while the thin-success
   shortcut remains plausible.
+- when the PM package, node plan, route, or source packet identifies
+  shallow-completion traps, challenge them from the final user's point of view.
+  Block if any current trap remains plausible because the evidence is only a
+  design, definition, report, ledger row, file existence proof, screenshot, or
+  command record while the user's practical next step is still undefined. If
+  the accepted user outcome is explicitly planning-only, verify that boundary
+  is visible and do not let the review claim runnable, operational, or
+  implementation-ready completion.
 
 Return pass, needs repair, needs more material, or invalid role origin for the
 PM-built node-completion package.

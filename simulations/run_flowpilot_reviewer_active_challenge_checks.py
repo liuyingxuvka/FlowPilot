@@ -46,6 +46,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.REVIEWER_MADE_PM_ROUTE_DECISION: "reviewer made a PM-owned route or repair decision instead of decision-support",
     model.LOW_QUALITY_SUCCESS_CHALLENGE_MISSING: "reviewer pass lacks low-quality-success challenge, thin-success hypothesis, or proof-of-depth probe",
     model.EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED: "reviewer accepted hard-part quality claim from existence-only evidence",
+    model.SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED: "reviewer pass lacks shallow-completion trap applicability decision",
+    model.SHALLOW_COMPLETION_TRAP_DOWNGRADED: "reviewer did not block a still-plausible shallow-completion trap",
 }
 
 

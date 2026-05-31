@@ -72,9 +72,12 @@ PM_LOW_QUALITY_REVIEW_MISSING = "pm_low_quality_review_missing"
 PM_LOW_QUALITY_REVIEW_GENERIC = "pm_low_quality_review_generic"
 HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER = "hard_low_quality_risk_no_route_owner"
 LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT = "low_quality_risk_causes_route_bloat"
+PM_SHALLOW_COMPLETION_TRAPS_MISSING = "pm_shallow_completion_traps_missing"
+PRACTICAL_OUTCOME_DESIGN_ONLY_ROUTE = "practical_outcome_design_only_route"
 NODE_PLAN_MISSING_LOW_QUALITY_MAPPING = "node_plan_missing_low_quality_mapping"
 WORK_PACKET_MISSING_LOW_QUALITY_WARNING = "work_packet_missing_low_quality_warning"
 PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING = "pm_closure_low_quality_risk_disposition_missing"
+PM_CLOSURE_SHALLOW_COMPLETION_TRAPS_UNRESOLVED = "pm_closure_shallow_completion_traps_unresolved"
 PROCESS_SUPPORT_SKILL_IGNORED = "process_support_skill_ignored"
 ROLE_SKILL_BINDING_MISSING = "role_skill_binding_missing"
 ROLE_SKILL_USE_SELF_ATTESTED = "role_skill_use_self_attested"
@@ -114,9 +117,12 @@ NEGATIVE_SCENARIOS = (
     PM_LOW_QUALITY_REVIEW_GENERIC,
     HARD_LOW_QUALITY_RISK_NO_ROUTE_OWNER,
     LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT,
+    PM_SHALLOW_COMPLETION_TRAPS_MISSING,
+    PRACTICAL_OUTCOME_DESIGN_ONLY_ROUTE,
     NODE_PLAN_MISSING_LOW_QUALITY_MAPPING,
     WORK_PACKET_MISSING_LOW_QUALITY_WARNING,
     PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING,
+    PM_CLOSURE_SHALLOW_COMPLETION_TRAPS_UNRESOLVED,
     PROCESS_SUPPORT_SKILL_IGNORED,
     ROLE_SKILL_BINDING_MISSING,
     ROLE_SKILL_USE_SELF_ATTESTED,
@@ -183,6 +189,11 @@ class State:
     pm_proof_of_depth_defined: bool = False
     hard_low_quality_risks_bound_to_route_nodes: bool = False
     low_quality_review_caused_unjustified_route_node: bool = False
+    practical_next_step_required: bool = False
+    shallow_completion_traps_named: bool = False
+    route_dominated_by_design_only_nodes: bool = False
+    shallow_completion_traps_bound_to_route_work: bool = False
+    route_produces_practical_next_step_evidence: bool = False
     node_acceptance_low_quality_mapping_written: bool = False
     node_acceptance_proof_of_depth_defined: bool = False
     work_packet_carries_low_quality_warning: bool = False
@@ -193,6 +204,8 @@ class State:
     reviewer_prompt_forbids_direct_artifact_repair: bool = False
     generic_packet_template_role_scoped: bool = False
     final_low_quality_risks_disposition_done: bool = False
+    final_shallow_completion_traps_disposition_done: bool = False
+    final_output_practical_next_step_confirmed: bool = False
     closure_or_final_ledger_decision: bool = False
     closure_replays_final_user_outcome: bool = False
 
@@ -296,6 +309,10 @@ def _valid_ui_state() -> State:
         pm_thin_shortcuts_identified=True,
         pm_proof_of_depth_defined=True,
         hard_low_quality_risks_bound_to_route_nodes=True,
+        practical_next_step_required=True,
+        shallow_completion_traps_named=True,
+        shallow_completion_traps_bound_to_route_work=True,
+        route_produces_practical_next_step_evidence=True,
         node_acceptance_low_quality_mapping_written=True,
         node_acceptance_proof_of_depth_defined=True,
         work_packet_carries_low_quality_warning=True,
@@ -306,6 +323,8 @@ def _valid_ui_state() -> State:
         reviewer_prompt_forbids_direct_artifact_repair=True,
         generic_packet_template_role_scoped=True,
         final_low_quality_risks_disposition_done=True,
+        final_shallow_completion_traps_disposition_done=True,
+        final_output_practical_next_step_confirmed=True,
         child_skill_selected=True,
         skill_standard_contract_compiled=True,
         skill_standard_fields=STANDARD_FIELDS,
@@ -444,6 +463,15 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, hard_low_quality_risks_bound_to_route_nodes=False)
     if scenario == LOW_QUALITY_RISK_CAUSES_ROUTE_BLOAT:
         return replace(state, low_quality_review_caused_unjustified_route_node=True)
+    if scenario == PM_SHALLOW_COMPLETION_TRAPS_MISSING:
+        return replace(state, shallow_completion_traps_named=False)
+    if scenario == PRACTICAL_OUTCOME_DESIGN_ONLY_ROUTE:
+        return replace(
+            state,
+            route_dominated_by_design_only_nodes=True,
+            shallow_completion_traps_bound_to_route_work=False,
+            route_produces_practical_next_step_evidence=False,
+        )
     if scenario == NODE_PLAN_MISSING_LOW_QUALITY_MAPPING:
         return replace(
             state,
@@ -457,6 +485,13 @@ def _scenario_state(scenario: str) -> State:
             state,
             closure_or_final_ledger_decision=True,
             final_low_quality_risks_disposition_done=False,
+        )
+    if scenario == PM_CLOSURE_SHALLOW_COMPLETION_TRAPS_UNRESOLVED:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            final_shallow_completion_traps_disposition_done=False,
+            final_output_practical_next_step_confirmed=False,
         )
     if scenario == PROCESS_SUPPORT_SKILL_IGNORED:
         return replace(
@@ -544,6 +579,21 @@ def planning_failures(state: State) -> list[str]:
         failures.append("hard low-quality-success risk lacks an existing route or node owner")
     if state.low_quality_review_caused_unjustified_route_node:
         failures.append("PM created unjustified route bloat from low-quality-success review")
+    if complex_task and state.practical_next_step_required and not state.shallow_completion_traps_named:
+        failures.append("PM did not name the task-specific shallow-completion traps")
+    if (
+        complex_task
+        and state.practical_next_step_required
+        and state.route_dominated_by_design_only_nodes
+        and not state.route_produces_practical_next_step_evidence
+    ):
+        failures.append("practical user outcome was planned as a design-only route without next-step evidence")
+    if (
+        complex_task
+        and state.practical_next_step_required
+        and not state.shallow_completion_traps_bound_to_route_work
+    ):
+        failures.append("current shallow-completion traps lack route work, scoped waiver, or blocker")
     if complex_task and not (
         state.node_acceptance_low_quality_mapping_written
         and state.node_acceptance_proof_of_depth_defined
@@ -575,6 +625,16 @@ def planning_failures(state: State) -> list[str]:
         and not state.final_low_quality_risks_disposition_done
     ):
         failures.append("PM closure lacks low-quality-success risk disposition")
+    if (
+        complex_task
+        and state.closure_or_final_ledger_decision
+        and state.practical_next_step_required
+        and not (
+            state.final_shallow_completion_traps_disposition_done
+            and state.final_output_practical_next_step_confirmed
+        )
+    ):
+        failures.append("PM closure leaves shallow-completion traps unresolved for the final user")
 
     if state.child_skill_selected:
         if not state.skill_standard_contract_compiled:
@@ -746,6 +806,9 @@ def low_quality_success_risks_are_owned(state: State, trace) -> InvariantResult:
             "low-quality-success" in failure
             or "proof of depth" in failure
             or "route bloat" in failure
+            or "shallow-completion" in failure
+            or "design-only route" in failure
+            or "next-step evidence" in failure
         ):
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()

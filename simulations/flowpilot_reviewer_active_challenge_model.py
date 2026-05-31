@@ -64,6 +64,8 @@ USER_FACING_EVIDENCE_EXISTS_ONLY = "user_facing_evidence_exists_only"
 REVIEWER_MADE_PM_ROUTE_DECISION = "reviewer_made_pm_route_decision"
 LOW_QUALITY_SUCCESS_CHALLENGE_MISSING = "low_quality_success_challenge_missing"
 EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED = "existence_only_hard_part_evidence_accepted"
+SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED = "shallow_completion_traps_not_challenged"
+SHALLOW_COMPLETION_TRAP_DOWNGRADED = "shallow_completion_trap_downgraded"
 
 VALID_SCENARIOS = (
     VALID_UI_REVIEW,
@@ -97,6 +99,8 @@ NEGATIVE_SCENARIOS = (
     REVIEWER_MADE_PM_ROUTE_DECISION,
     LOW_QUALITY_SUCCESS_CHALLENGE_MISSING,
     EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED,
+    SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED,
+    SHALLOW_COMPLETION_TRAP_DOWNGRADED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -145,6 +149,10 @@ class State:
     thin_success_failure_hypothesis_recorded: bool = False
     proof_of_depth_challenge_performed: bool = False
     hard_part_claim_supported_by_depth_evidence: bool = False
+    shallow_completion_traps_applicability_decided: bool = False
+    shallow_completion_traps_challenged: bool = False
+    shallow_completion_traps_supported_by_next_step_evidence: bool = False
+    shallow_completion_trap_still_plausible: bool = False
 
     hard_issue_found: bool = False
     hard_issue_classified_blocker: bool = False
@@ -242,6 +250,9 @@ def _valid_review_state(scenario: str, task_family: str) -> State:
         thin_success_failure_hypothesis_recorded=user_perspective_required,
         proof_of_depth_challenge_performed=user_perspective_required,
         hard_part_claim_supported_by_depth_evidence=user_perspective_required,
+        shallow_completion_traps_applicability_decided=True,
+        shallow_completion_traps_challenged=user_perspective_required,
+        shallow_completion_traps_supported_by_next_step_evidence=user_perspective_required,
         reviewer_passed=True,
         report_schema_complete=True,
     )
@@ -369,6 +380,21 @@ def _scenario_state(scenario: str) -> State:
         )
     if scenario == EXISTENCE_ONLY_HARD_PART_EVIDENCE_ACCEPTED:
         return replace(state, hard_part_claim_supported_by_depth_evidence=False)
+    if scenario == SHALLOW_COMPLETION_TRAPS_NOT_CHALLENGED:
+        return replace(
+            state,
+            shallow_completion_traps_applicability_decided=False,
+            shallow_completion_traps_challenged=False,
+            shallow_completion_traps_supported_by_next_step_evidence=False,
+        )
+    if scenario == SHALLOW_COMPLETION_TRAP_DOWNGRADED:
+        return replace(
+            state,
+            shallow_completion_trap_still_plausible=True,
+            shallow_completion_traps_supported_by_next_step_evidence=False,
+            reviewer_passed=True,
+            reviewer_blocked=False,
+        )
     return state
 
 
@@ -445,6 +471,20 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         and not state.hard_part_claim_supported_by_depth_evidence
     ):
         failures.append("reviewer accepted hard-part quality claim from existence-only evidence")
+    if state.reviewer_passed and not state.shallow_completion_traps_applicability_decided:
+        failures.append("reviewer pass lacks shallow-completion trap applicability decision")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
+        and not state.shallow_completion_traps_challenged
+    ):
+        failures.append("reviewer pass lacks shallow-completion trap challenge")
+    if (
+        state.reviewer_passed
+        and state.final_user_perspective_required
+        and not state.shallow_completion_traps_supported_by_next_step_evidence
+    ):
+        failures.append("reviewer accepted shallow-completion trap without practical next-step evidence")
     if state.reviewer_passed and not state.report_schema_complete:
         failures.append("reviewer pass lacks independent challenge report fields")
 
@@ -460,6 +500,8 @@ def reviewer_challenge_failures(state: State) -> list[str]:
         or state.reviewer_passed
     ):
         failures.append("reviewer did not block a hard final-user intent or product usefulness failure")
+    if state.shallow_completion_trap_still_plausible and state.reviewer_passed:
+        failures.append("reviewer did not block a still-plausible shallow-completion trap")
     if state.uncheckable_surface_present and not state.waiver_or_blocker_for_uncheckable:
         failures.append("reviewer found an uncheckable surface without waiver or blocker")
     if state.reviewer_blocked and state.hard_issue_found and not state.reroute_request_recorded_when_needed:

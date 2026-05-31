@@ -51,6 +51,16 @@ when a task-specific hard part was closed only by artifact existence, report
 prose, a screenshot, a command run, or a clean ledger row instead of proof of
 depth. Nonessential quality improvements stay in PM suggestion disposition and
 do not become surprise hard blockers.
+PM must also self-check shallow-completion traps from the final user's point of
+view. Closure is blocked when the delivered output still only looks complete
+because it contains a design, definition, report, ledger row, file existence
+proof, screenshot, or command record while the practical next step implied by
+the accepted user outcome remains undefined. Do not add a new closure schema
+for this check; use the existing `final_user_outcome_replay`,
+`hard_user_intent_failures`, PM suggestion, blocker, waiver, repair, or route
+mutation paths to disposition each current trap. If the route was explicitly
+planning-only, the final report must preserve that boundary and must not claim
+runnable, operational, or implementation-ready completion.
 
 Closure order:
 

@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=174",
+    "summary": "sequences=3 initial_states=1 traces=186",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -156,6 +156,23 @@
           "reviewer made a PM-owned route or repair decision instead of decision-support"
         ]
       },
+      "shallow_completion_trap_downgraded": {
+        "detected": true,
+        "expected_failure": "reviewer did not block a still-plausible shallow-completion trap",
+        "failures": [
+          "reviewer accepted shallow-completion trap without practical next-step evidence",
+          "reviewer did not block a still-plausible shallow-completion trap"
+        ]
+      },
+      "shallow_completion_traps_not_challenged": {
+        "detected": true,
+        "expected_failure": "reviewer pass lacks shallow-completion trap applicability decision",
+        "failures": [
+          "reviewer pass lacks shallow-completion trap applicability decision",
+          "reviewer pass lacks shallow-completion trap challenge",
+          "reviewer accepted shallow-completion trap without practical next-step evidence"
+        ]
+      },
       "simple_review_overburdened": {
         "detected": true,
         "expected_failure": "simple review was overburdened with irrelevant heavyweight challenge work",
@@ -209,11 +226,11 @@
       "valid_simple_review",
       "valid_ui_review"
     ],
-    "edge_count": 58,
+    "edge_count": 62,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 24,
-    "state_count": 59
+    "rejected_state_count": 26,
+    "state_count": 63
   }
 }

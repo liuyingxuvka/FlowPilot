@@ -113,7 +113,7 @@
     "other": {
       "alignment_family_count": 4,
       "code_surface_count": 227,
-      "known_bad_count": 1174,
+      "known_bad_count": 1177,
       "model_count": 73,
       "runner_keys": [
         "capability",
@@ -213,7 +213,7 @@
     "review": {
       "alignment_family_count": 0,
       "code_surface_count": 3,
-      "known_bad_count": 65,
+      "known_bad_count": 67,
       "model_count": 3,
       "runner_keys": [
         "flowpilot_current_scope_pre_review_reconciliation",
@@ -12495,13 +12495,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780232149.0216951,
+  "generated_at_epoch": 1780245943.2238266,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 10,
     "code_surfaces": 923,
     "evidence_summaries": 5,
-    "known_bad_signals": 2308,
+    "known_bad_signals": 2313,
     "models": 133,
     "test_commands": 350
   },
@@ -15267,7 +15267,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 80,
+        "edge_count": 86,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -15276,6 +15276,7 @@
           "ok",
           "artifactless_major_node",
           "evidence_packet_repairs_target_artifact",
+          "flowguard_operator_packet_repairs_target_artifact",
           "flowguard_operator_route_scope_route_viability_missing",
           "generic_template_uses_blanket_repair",
           "hard_low_quality_risk_no_route_owner",
@@ -15284,9 +15285,9 @@
           "node_plan_missing_low_quality_mapping",
           "node_plan_missing_projection",
           "node_plan_not_mapped_to_product_model",
-          "flowguard_operator_packet_repairs_target_artifact",
           "overmerged_complex_implementation_node",
           "pm_closure_low_quality_risk_disposition_missing",
+          "pm_closure_shallow_completion_traps_unresolved",
           "pm_closure_user_outcome_replay_missing",
           "pm_higher_standard_self_check_missing",
           "pm_improvement_opportunity_unclassified",
@@ -15294,7 +15295,9 @@
           "pm_low_quality_review_generic",
           "pm_low_quality_review_missing",
           "pm_route_not_mapped_to_product_model",
+          "pm_shallow_completion_traps_missing",
           "pm_user_intent_self_check_missing",
+          "practical_outcome_design_only_route",
           "process_support_skill_ignored",
           "product_model_missing",
           "profile_without_convergence_loop",
@@ -15317,7 +15320,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 81
+        "state_count": 87
       },
       "model_path": "simulations/flowpilot_planning_quality_model.py",
       "result_path": "simulations/flowpilot_planning_quality_results.json",
@@ -15991,7 +15994,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 58,
+        "edge_count": 62,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -16017,6 +16020,8 @@
           "pm_improvement_signal_dropped",
           "review_package_treated_as_boundary",
           "reviewer_made_pm_route_decision",
+          "shallow_completion_trap_downgraded",
+          "shallow_completion_traps_not_challenged",
           "simple_review_overburdened",
           "uncheckable_without_waiver",
           "user_facing_evidence_exists_only",
@@ -16026,7 +16031,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 59
+        "state_count": 63
       },
       "model_path": "simulations/flowpilot_reviewer_active_challenge_model.py",
       "result_path": "simulations/flowpilot_reviewer_active_challenge_results.json",
@@ -17794,7 +17799,7 @@
   "sources": [
     {
       "exists": true,
-      "mtime_ns": 1780167557772453400,
+      "mtime_ns": 1780244718710011600,
       "path": "AGENTS.md",
       "size": 5863
     },
@@ -18004,7 +18009,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780220663468390500,
+      "mtime_ns": 1780245928231043400,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20663
     },
@@ -18016,7 +18021,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780232121251785000,
+      "mtime_ns": 1780245907413674700,
       "path": "simulations/card_instruction_coverage_results.json",
       "size": 45474
     },
@@ -18832,15 +18837,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780217155747299400,
+      "mtime_ns": 1780245067484743400,
       "path": "simulations/flowpilot_planning_quality_model.py",
-      "size": 39790
+      "size": 42912
     },
     {
       "exists": true,
-      "mtime_ns": 1780217155749300700,
+      "mtime_ns": 1780245543296348700,
       "path": "simulations/flowpilot_planning_quality_results.json",
-      "size": 13331
+      "size": 14415
     },
     {
       "exists": true,
@@ -19042,15 +19047,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1778697270417849400,
+      "mtime_ns": 1780245121140132100,
       "path": "simulations/flowpilot_reviewer_active_challenge_model.py",
-      "size": 29677
+      "size": 31891
     },
     {
       "exists": true,
-      "mtime_ns": 1780232123516651800,
+      "mtime_ns": 1780245543311362800,
       "path": "simulations/flowpilot_reviewer_active_challenge_results.json",
-      "size": 8641
+      "size": 9490
     },
     {
       "exists": true,
@@ -19522,7 +19527,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780220663500390800,
+      "mtime_ns": 1780245928316568800,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26200
     },
@@ -19990,9 +19995,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780217156385955800,
+      "mtime_ns": 1780245078410904200,
       "path": "simulations/run_flowpilot_planning_quality_checks.py",
-      "size": 11269
+      "size": 11647
     },
     {
       "exists": true,
@@ -20086,9 +20091,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1778697284749400900,
+      "mtime_ns": 1780245128022433300,
       "path": "simulations/run_flowpilot_reviewer_active_challenge_checks.py",
-      "size": 9385
+      "size": 9620
     },
     {
       "exists": true,
@@ -22786,9 +22791,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780217154023710900,
+      "mtime_ns": 1780245230805040600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md",
-      "size": 10104
+      "size": 10841
     },
     {
       "exists": true,
@@ -22954,9 +22959,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780218519285770400,
+      "mtime_ns": 1780245260981852800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
-      "size": 17313
+      "size": 18067
     },
     {
       "exists": true,
@@ -23044,9 +23049,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780218519278772700,
+      "mtime_ns": 1780245222492203900,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
-      "size": 13345
+      "size": 13911
     },
     {
       "exists": true,
@@ -23068,9 +23073,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780223527893583100,
+      "mtime_ns": 1780245885404487900,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
-      "size": 30534
+      "size": 30763
     },
     {
       "exists": true,
