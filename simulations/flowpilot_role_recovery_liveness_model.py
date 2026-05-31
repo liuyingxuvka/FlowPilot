@@ -51,7 +51,7 @@ class State:
     scenario: str = ""
     latest_transaction_id: str = ""
     report_transaction_id: str = ""
-    crew_slot_transaction_id: str = ""
+    runtime_roles_slot_transaction_id: str = ""
     target_role_in_report: bool = False
     agent_id_present: bool = False
     host_liveness_status: str = ""
@@ -80,7 +80,7 @@ def _selected_state(scenario: str) -> State:
             scenario=scenario,
             latest_transaction_id="T2",
             report_transaction_id="T2",
-            crew_slot_transaction_id="T2",
+            runtime_roles_slot_transaction_id="T2",
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="active",
@@ -92,7 +92,7 @@ def _selected_state(scenario: str) -> State:
             scenario=scenario,
             latest_transaction_id="T2",
             report_transaction_id="T1",
-            crew_slot_transaction_id="T1",
+            runtime_roles_slot_transaction_id="T1",
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="active",
@@ -104,7 +104,7 @@ def _selected_state(scenario: str) -> State:
             scenario=scenario,
             latest_transaction_id="T2",
             report_transaction_id="T2",
-            crew_slot_transaction_id="T2",
+            runtime_roles_slot_transaction_id="T2",
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="unknown",
@@ -116,7 +116,7 @@ def _selected_state(scenario: str) -> State:
             scenario=scenario,
             latest_transaction_id="T2",
             report_transaction_id="T2",
-            crew_slot_transaction_id="T2",
+            runtime_roles_slot_transaction_id="T2",
             target_role_in_report=True,
             agent_id_present=True,
             host_liveness_status="missing",
@@ -145,7 +145,7 @@ def _role_recovery_proof_is_current(state: State) -> bool:
     return (
         bool(state.latest_transaction_id)
         and state.report_transaction_id == state.latest_transaction_id
-        and state.crew_slot_transaction_id == state.latest_transaction_id
+        and state.runtime_roles_slot_transaction_id == state.latest_transaction_id
         and state.target_role_in_report
         and state.agent_id_present
         and state.host_liveness_status == "active"
@@ -184,8 +184,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.report_transaction_id != state.latest_transaction_id:
         yield Transition("classify_stale_recovery_report_risk", replace(state, status="risk", classification="risk"))
         return
-    if state.crew_slot_transaction_id != state.latest_transaction_id:
-        yield Transition("classify_crew_slot_transaction_mismatch_risk", replace(state, status="risk", classification="risk"))
+    if state.runtime_roles_slot_transaction_id != state.latest_transaction_id:
+        yield Transition("classify_runtime_roles_slot_transaction_mismatch_risk", replace(state, status="risk", classification="risk"))
         return
     if state.host_liveness_status != "active":
         yield Transition("classify_missing_host_liveness_risk", replace(state, status="risk", classification="risk"))

@@ -88,7 +88,16 @@ def _control_blocker_family_key(router: ModuleType, *, attempt_key: str, error_c
     _bind_router(router)
     return "||".join([attempt_key, error_code, postcondition or ""])
 
-def _existing_control_blocker_family_record(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, family_key: str, attempt_key: str) -> dict[str, Any] | None:
+def _existing_control_blocker_family_record(
+    router: ModuleType,
+    project_root: Path,
+    run_root: Path,
+    run_state: dict[str, Any],
+    *,
+    family_key: str,
+    attempt_key: str,
+    allow_active_reuse: bool=True,
+) -> dict[str, Any] | None:
     _bind_router(router)
     control_root = run_root / 'control_blocks'
     if not control_root.exists():
@@ -120,19 +129,20 @@ def _existing_control_blocker_family_record(router: ModuleType, project_root: Pa
             record['same_family_reuse_count'] = int(record.get('same_family_reuse_count') or 0) + 1
             write_json(path, record)
             return {'reuse_kind': 'terminal_same_family', 'path': path, 'record': record}
-    for path, record in reversed(matching):
-        if record.get('resolution_status'):
-            continue
-        pm_lane = record.get('handling_lane') == 'pm_repair_decision_required' or record.get('target_role') == 'project_manager' or record.get('pm_decision_required') is True
-        still_pending_delivery = record.get('delivery_status') == 'pending'
-        pm_repair_recorded = record.get('pm_repair_decision_status') == 'recorded'
-        if not (pm_lane or still_pending_delivery or pm_repair_recorded):
-            continue
-        record['family_key'] = record.get('family_key') or family_key
-        record['same_family_reused_at'] = utc_now()
-        record['same_family_reuse_count'] = int(record.get('same_family_reuse_count') or 0) + 1
-        write_json(path, record)
-        return {'reuse_kind': 'active_same_family', 'path': path, 'record': record}
+    if allow_active_reuse:
+        for path, record in reversed(matching):
+            if record.get('resolution_status'):
+                continue
+            pm_lane = record.get('handling_lane') == 'pm_repair_decision_required' or record.get('target_role') == 'project_manager' or record.get('pm_decision_required') is True
+            still_pending_delivery = record.get('delivery_status') == 'pending'
+            pm_repair_recorded = record.get('pm_repair_decision_status') == 'recorded'
+            if not (pm_lane or still_pending_delivery or pm_repair_recorded):
+                continue
+            record['family_key'] = record.get('family_key') or family_key
+            record['same_family_reused_at'] = utc_now()
+            record['same_family_reuse_count'] = int(record.get('same_family_reuse_count') or 0) + 1
+            write_json(path, record)
+            return {'reuse_kind': 'active_same_family', 'path': path, 'record': record}
     return None
 
 def _write_control_blocker(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, source: str, error_message: str, event: str | None=None, action_type: str | None=None, payload: dict[str, Any] | None=None) -> dict[str, Any]:
@@ -178,7 +188,14 @@ def _write_control_blocker(router: ModuleType, project_root: Path, run_root: Pat
     if target_role == 'project_manager' and category == 'control_plane_reissue':
         category = 'pm_repair_decision_required'
     policy = router._control_blocker_policy(category, responsible_role=responsible_role, event=event, policy_row=policy_row, target_role=target_role)
-    reusable = router._existing_control_blocker_family_record(project_root, run_root, run_state, family_key=family_key, attempt_key=attempt_key)
+    reusable = router._existing_control_blocker_family_record(
+        project_root,
+        run_root,
+        run_state,
+        family_key=family_key,
+        attempt_key=attempt_key,
+        allow_active_reuse=base_category != 'control_plane_reissue',
+    )
     if reusable is not None:
         record = dict(reusable['record'])
         reuse_kind = str(reusable.get('reuse_kind') or '')

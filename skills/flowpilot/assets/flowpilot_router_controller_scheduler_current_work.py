@@ -53,7 +53,7 @@ def _current_work_owner_kind(router: ModuleType, owner_key: str) -> str:
 
 def _current_work_owner_label(router: ModuleType, owner_key: str) -> str:
     _bind_router(router)
-    labels = {'router': 'Router', 'controller': 'Controller', 'user': 'User', 'project_manager': 'Project Manager', 'human_like_reviewer': 'Human-like Reviewer', 'process_flowguard_officer': 'Process FlowGuard Officer', 'product_flowguard_officer': 'Product FlowGuard Officer', 'worker_a': 'Worker A', 'worker_b': 'Worker B'}
+    labels = {'router': 'Router', 'controller': 'Controller', 'user': 'User', 'project_manager': 'Project Manager', 'human_like_reviewer': 'Human-like Reviewer', 'flowguard_operator': 'FlowGuard Operator', 'worker': 'Worker'}
     key = owner_key.strip()
     if key in labels:
         return labels[key]

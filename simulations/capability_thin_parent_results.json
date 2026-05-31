@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-30T18:17:57.054515+00:00",
+  "created_at": "2026-05-31T09:44:23.467390+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-05-30T18:09:48.058776+00:00",
+      "created_at": "2026-05-31T09:36:04.511901+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -71,23 +71,23 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/startup_pm_review_results.json",
-            "result_fingerprint": "f5dfcbc66b2fba61a1c54d45d5089dc40b1e62bf8b7d9e8d3ffb7cc5f245893c",
+            "result_fingerprint": "2c708018ed54c6dbbd612d04379aa89740d0b4e6fabdcc83db93fb0485a8c795",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 3149
           },
           {
-            "edge_count": 24,
+            "edge_count": 26,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_startup_intake_ui",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
-            "result_fingerprint": "8cd503d783a595544260ca857894051be346fc4767aa12fd4dc431132bb8287a",
+            "result_fingerprint": "d1a7ab1dd5c15d6bec46cec305d388cd5df64f5042216122291e8ffbac2744b1",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 25
+            "state_count": 27
           },
           {
             "edge_count": 38,
@@ -129,7 +129,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "fe1a76e356e4dbf064353608c0ce1d54ef8f829d4125d4ba61218f91ed0c079e",
+            "result_fingerprint": "f4bc46936d940da15a7107490533e0e37f449ecec2997e1d375bedea7a66b2f3",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 81
@@ -172,10 +172,10 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/card_instruction_coverage_results.json",
-            "result_fingerprint": "3d0400ce0ad83a9cdf22aef064ab4360618a4e94c3deca6729f352810eca5f88",
+            "result_fingerprint": "44add30c3a528dcd4258035386967a824f55419ec6c92bc3fd266600e49747f3",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 67
+            "state_count": 65
           },
           {
             "edge_count": 58,
@@ -211,7 +211,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_output_contract_results.json",
-            "result_fingerprint": "e58aa5292dbb093a197cd3e15e404bd7c0b570751dd3e2dc9fe58ed2c899f620",
+            "result_fingerprint": "b97088227f68c1efb9eb1180b210ea2503b24a88cefb07f5a9d94bee820ff307",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null
@@ -244,7 +244,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_packet_lifecycle_results.json",
-            "result_fingerprint": "ea1f26ff0d3d7967b8687e73492279017c68285cb299fa0b57397751a673d00f",
+            "result_fingerprint": "0361cac5c64adecc3cc3d7f43bd1848d7bdbcfc031b6afd155c97dd96e025636",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 60
@@ -270,7 +270,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_card_envelope_results.json",
-            "result_fingerprint": "23fcc3c5921b73c15ff95bceb7cd93a6357e3ef2f80497caaf31c1b116238425",
+            "result_fingerprint": "7dd6593112e7f615f16c39acfb0181523c428beb02ea596756853abd6fb21bb9",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 54
@@ -283,7 +283,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_role_output_runtime_results.json",
-            "result_fingerprint": "7a5a31f10a46e2fadc8783da01880ede6a5d396970bf3e23c8df6aac566843a3",
+            "result_fingerprint": "33c0a5b582f5cccb8530e7f7b936ee5ab0ff03306865cdefb171535f1b9d44dd",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null
@@ -347,17 +347,17 @@
             "state_count": 18
           },
           {
-            "edge_count": 24,
+            "edge_count": 26,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_startup_intake_ui",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
-            "result_fingerprint": "8cd503d783a595544260ca857894051be346fc4767aa12fd4dc431132bb8287a",
+            "result_fingerprint": "d1a7ab1dd5c15d6bec46cec305d388cd5df64f5042216122291e8ffbac2744b1",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 25
+            "state_count": 27
           }
         ],
         "evidence_ids": [
@@ -413,7 +413,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/defect_governance_results.json",
-            "result_fingerprint": "058f2fd06fd111eddfc95a55c1e8a3dabb98ac63e4163261f295da27a1546329",
+            "result_fingerprint": "fabaad9c10d17d7534d6313eb58bc26e99c656334a4f1b62445adb1ff759e623",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 49
@@ -426,7 +426,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_repair_transaction_results.json",
-            "result_fingerprint": "4218a1d925b8caa90410c8932de693e80fad59dafa56c936db9a84abf6150e1d",
+            "result_fingerprint": "1c9b64b1b24b4b2165c629ba92bf3e0896cc6be585bae3f8cbebf737f5ad719a",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 205
@@ -458,7 +458,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_model_mesh_results.json",
-            "result_fingerprint": "9845215c2879d1032e1381bcfad64fb5e090534bf4c20699310b24ca8a737627",
+            "result_fingerprint": "89fa97cb10b957639f67ef813e6816840e676881b6e8c91ebaaf238174ee1e96",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 53
@@ -471,7 +471,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_control_transaction_registry_results.json",
-            "result_fingerprint": "2ab78feeec159e96e7b88748e218fb84d0ddb311923b6cbebb0db9d922282554",
+            "result_fingerprint": "3bb3c2b1006caf33e45d232b58444d51aa227f90968a652e3980566c661fd006",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 51

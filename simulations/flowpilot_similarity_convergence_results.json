@@ -1,6 +1,6 @@
 {
   "architecture_reduction": {
-    "unsupported historical_surfaces": [],
+    "compatibility_surfaces": [],
     "completed_candidate_ids": [],
     "decision": "architecture_reduction_ready",
     "findings": [
@@ -849,7 +849,7 @@
       "name": "unsafe_branch_fold_without_replay",
       "ok": true,
       "report": {
-        "unsupported historical_surfaces": [],
+        "compatibility_surfaces": [],
         "completed_candidate_ids": [],
         "decision": "conformance_required",
         "findings": [

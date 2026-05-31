@@ -781,21 +781,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if not state.product_architecture_modelability_card_delivered:
         yield Transition(
-            "product_officer_product_architecture_modelability_card_delivered",
+            "flowguard_operator_product_architecture_modelability_card_delivered",
             _prompt(
                 state,
                 product_architecture_modelability_card_delivered=True,
-                holder="officer",
+                holder="FlowGuard operator",
             ),
         )
         return
     if not state.product_architecture_modelability_passed:
         yield Transition(
-            "product_officer_product_architecture_modelability_passed",
+            "flowguard_operator_product_architecture_modelability_passed",
             _mail(
                 state,
                 product_architecture_modelability_passed=True,
-                product_architecture_officer_result_ledger_checked=True,
+                product_architecture_flowguard_operator_result_ledger_checked=True,
                 holder="controller",
             ),
         )

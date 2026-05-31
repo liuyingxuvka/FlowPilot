@@ -31,17 +31,17 @@ REQUIRED_LABELS = (
     "visible_plan_restored_from_current_run",
     "role_binding_memory_loaded",
     "controller_relay_boundary_confirmed",
-    "six_role_liveness_concurrent_probe_batch_started",
-    "six_role_liveness_checked_all_active",
-    "six_role_liveness_checked_recovery_needed",
-    "six_role_liveness_timeout_unknown_recorded",
+    "runtime_role_liveness_concurrent_probe_batch_started",
+    "runtime_role_liveness_checked_all_active",
+    "runtime_role_liveness_checked_recovery_needed",
+    "runtime_role_liveness_timeout_unknown_recorded",
     "host_reuse_or_replace_resume_roles_requested",
     "active_live_resume_roles_reused_after_memory_refresh",
     "only_failed_resume_roles_replaced_from_current_run_memory",
     "all_uncertain_resume_roles_replaced_from_current_run_memory",
     "current_run_memory_injected_into_resume_roles",
     "role_binding_recovery_report_written_before_pm_resume",
-    "crew_capability_officer_lifecycle_flags_reconciled",
+    "runtime_roles_capability_flowguard_operator_lifecycle_flags_reconciled",
     "resume_state_clear_for_pm_decision",
     "ambiguous_resume_state_blocked_for_pm_recovery",
     "resume_rehydration_obligations_replayed_mechanically",
@@ -95,9 +95,9 @@ def _state_id(state: model.State) -> str:
         f"packet={state.packet_ledger_loaded}|"
         f"prompt={state.prompt_ledger_loaded}|frontier={state.frontier_loaded}|"
         f"visible_plan={state.visible_plan_restored_from_run}|"
-        f"crew={state.role_binding_memory_loaded},{state.host_role_rehydrate_requested},"
-        f"{state.runtime_responsibilitys_ready},restored={state.crew_restored},"
-        f"replaced={state.crew_replaced},memory_injected={state.run_memory_injected_into_roles},"
+        f"runtime_roles={state.role_binding_memory_loaded},{state.host_role_rehydrate_requested},"
+        f"{state.runtime_responsibilities_ready},restored={state.runtime_roles_restored},"
+        f"replaced={state.runtime_roles_replaced},memory_injected={state.run_memory_injected_into_roles},"
         f"report={state.role_binding_recovery_report_written}|"
         f"resume_replay={state.resume_obligation_replay_scanned},"
         f"{state.resume_obligation_replay_completed},"
@@ -105,15 +105,15 @@ def _state_id(state: model.State) -> str:
         f"{state.resume_mechanical_replay_skipped_pm}|"
         f"liveness={state.resume_wake_recorded_to_router},batch={state.liveness_probe_batch_started},"
         f"{state.liveness_probe_batch_concurrent},"
-        f"{state.all_six_liveness_probes_started_before_wait},"
+        f"{state.all_runtime_roles_liveness_probes_started_before_wait},"
         f"{state.liveness_probe_batch_id_consistent},serial={state.serial_liveness_wait_used},"
-        f"{state.all_six_role_liveness_checked},{state.role_liveness_outcome}|"
+        f"{state.all_runtime_role_liveness_checked},{state.role_liveness_outcome}|"
         f"reuse={state.live_agent_reuse_preferred},{state.active_live_agents_reused},"
         f"failed={state.failed_role_count},replaced={state.replacement_role_count},"
         f"unneeded={state.unnecessary_replacement_attempted}|"
-        f"lifecycle={state.crew_lifecycle_flags_current},"
+        f"lifecycle={state.runtime_role_lifecycle_flags_current},"
         f"{state.capability_lifecycle_flags_current},"
-        f"{state.officer_lifecycle_flags_current}|"
+        f"{state.flowguard_operator_lifecycle_flags_current}|"
         f"pm={state.pm_decision_prompt_delivered},{state.pm_decision_returned}|"
         f"pm_manifest_boundary={state.heartbeat_prompt_continuation_boundary_stated},"
         f"status_synced={state.pm_resume_pending_action_status_synced},"

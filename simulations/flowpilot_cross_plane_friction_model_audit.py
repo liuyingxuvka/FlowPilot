@@ -692,8 +692,8 @@ def _audit_event_taxonomy(
             (
                 "reviewer_blocks",
                 "current_node_reviewer_blocks",
-                "process_officer_blocks",
-                "product_officer_blocks",
+                "flowguard_operator_route_scope_blocks",
+                "flowguard_operator_product_scope_blocks",
             )
         )
     }.union(unknown_from_files)
@@ -724,8 +724,8 @@ def _audit_event_taxonomy(
 ROLE_GATE_EVENT_PREFIXES = (
     "reviewer_",
     "current_node_reviewer_",
-    "process_officer_",
-    "product_officer_",
+    "flowguard_operator_route_scope_",
+    "flowguard_operator_product_scope_",
 )
 ROLE_GATE_PASS_MARKERS = (
     "passes",
@@ -792,7 +792,7 @@ def _audit_gate_outcome_contracts(project_root: Path) -> list[dict[str, object]]
         _finding(
             code="gate_outcome_contract_pass_only",
             severity="error",
-            summary="Reviewer/officer gate event groups have pass outcomes without non-pass repair outcomes.",
+            summary="Reviewer/FlowGuard operator gate event groups have pass outcomes without non-pass repair outcomes.",
             matched_invariant="gate_outcome_contracts_have_non_pass_paths",
             evidence={"groups": pass_only[:40], "count": len(pass_only)},
             minimal_fix=(
@@ -900,10 +900,10 @@ def _audit_role_liveness(*, router_state: Any) -> list[dict[str, object]]:
         return []
     return [
         _finding(
-            code="six_role_liveness_unproven",
+            code="runtime_role_liveness_unproven",
             severity="error",
             summary="Standard role-binding support was requested without readiness proof or an early blocker.",
-            matched_invariant="standard_six_roles_have_liveness_gate",
+            matched_invariant="runtime_requested_roles_have_liveness_gate",
             evidence={"requested": requested, "ready": ready, "blocked": blocked},
             minimal_fix=(
                 "At startup/resume, write a role readiness record for the six standard roles "
@@ -1033,7 +1033,7 @@ def state_from_findings(findings: list[dict[str, object]]) -> State:
         state = replace(state, install_audit_policy_accepts_first_class_cockpit=False)
     if "installed_skill_source_drift" in codes:
         state = replace(state, installed_skill_matches_repository_source=False)
-    if "six_role_liveness_unproven" in codes:
+    if "runtime_role_liveness_unproven" in codes:
         state = replace(state, role_liveness_ready_or_blocked=False)
     return state
 

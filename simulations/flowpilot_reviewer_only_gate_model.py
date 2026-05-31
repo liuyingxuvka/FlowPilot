@@ -5,7 +5,7 @@ Risk Purpose Header:
   review the Reviewer-only speed profile for the root-contract and
   child-skill-manifest gates.
 - It guards against freezing or approving before Reviewer pass, keeping removed
-  officer gates as hidden requirements, emitting removed officer cards by
+  FlowGuard operator gates as hidden requirements, emitting removed FlowGuard operator cards by
   default, dropping Reviewer evidence obligations, or starting route work before
   both simplified gates are closed.
 - Future agents should run `python simulations/run_flowpilot_reviewer_only_gate_checks.py`
@@ -14,16 +14,16 @@ Risk Purpose Header:
 
 Risk intent brief:
 - The user explicitly chose Reviewer-only default gates for root contract and
-  child-skill manifest. Product/Process Officer checks must not remain default
+  child-skill manifest. Product/FlowGuard operator route-scope checks must not remain default
   gates or special consultation tails for these two gates.
-- Protected harms: fake speedup from hidden officer waits, unsafe approval
-  without Reviewer, loss of verifiability/evidence scrutiny, removed officer
+- Protected harms: fake speedup from hidden FlowGuard operator waits, unsafe approval
+  without Reviewer, loss of verifiability/evidence scrutiny, removed FlowGuard operator
   cards being emitted by default, and route work starting before both simplified
   gates close.
-- Modeled state and side effects: PM writes, Reviewer card/pass, officer card
-  emissions, officer pass flags, PM freeze/approval, Reviewer checklist scope,
+- Modeled state and side effects: PM writes, Reviewer card/pass, FlowGuard operator card
+  emissions, FlowGuard operator pass flags, PM freeze/approval, Reviewer checklist scope,
   and route-ready transition.
-- Hard invariants: Reviewer is still mandatory; removed officer gates are not
+- Hard invariants: Reviewer is still mandatory; removed FlowGuard operator gates are not
   required or emitted in the Reviewer-only default path; Reviewer checklist
   inherits the proof/evidence burden; route work waits for both simplified
   gates.
@@ -59,23 +59,23 @@ class State:
     pm_root_contract_written: bool = False
     root_reviewer_card_emitted: bool = False
     root_reviewer_passed: bool = False
-    root_product_officer_card_emitted: bool = False
-    root_product_officer_required: bool = False
-    root_product_officer_artifact_required_for_freeze: bool = False
-    root_product_officer_passed: bool = False
+    root_flowguard_operator_product_scope_card_emitted: bool = False
+    root_flowguard_operator_product_scope_required: bool = False
+    root_flowguard_operator_product_scope_artifact_required_for_freeze: bool = False
+    root_flowguard_operator_product_scope_passed: bool = False
     pm_root_contract_frozen: bool = False
 
     pm_child_manifest_written: bool = False
     child_reviewer_card_emitted: bool = False
     child_reviewer_passed: bool = False
-    child_process_officer_card_emitted: bool = False
-    child_process_officer_required: bool = False
-    child_process_officer_artifact_required_for_approval: bool = False
-    child_process_officer_passed: bool = False
-    child_product_officer_card_emitted: bool = False
-    child_product_officer_required: bool = False
-    child_product_officer_artifact_required_for_approval: bool = False
-    child_product_officer_passed: bool = False
+    child_flowguard_operator_route_scope_card_emitted: bool = False
+    child_flowguard_operator_route_scope_required: bool = False
+    child_flowguard_operator_route_scope_artifact_required_for_approval: bool = False
+    child_flowguard_operator_route_scope_passed: bool = False
+    child_flowguard_operator_product_scope_card_emitted: bool = False
+    child_flowguard_operator_product_scope_required: bool = False
+    child_flowguard_operator_product_scope_artifact_required_for_approval: bool = False
+    child_flowguard_operator_product_scope_passed: bool = False
     pm_child_manifest_approved: bool = False
 
     reviewer_root_checks_user_requirements: bool = True
@@ -93,7 +93,7 @@ class State:
     pm_consultation_used: bool = False
     pm_consultation_required_for_gate: bool = False
     role_body_boundary_preserved: bool = True
-    unsupported_historical_officer_events_preserved: bool = True
+    unsupported_historical_flowguard_operator_events_preserved: bool = True
     route_ready: bool = False
 
 
@@ -110,12 +110,12 @@ class ReviewerOnlyGateStep:
     """Model one gate-sequencing step.
 
     Input x State -> Set(Output x State)
-    reads: current PM/reviewer/officer flags, Reviewer checklist coverage,
+    reads: current PM/reviewer/FlowGuard operator flags, Reviewer checklist coverage,
     route-ready flag
     writes: the next PM write, Reviewer card/pass, PM freeze/approval, or
     route-ready marker
     idempotency: each tick only advances a missing monotonic flag; removed
-    officer cards are never emitted by the safe transition relation.
+    FlowGuard operator cards are never emitted by the safe transition relation.
     """
 
     name = "ReviewerOnlyGateStep"
@@ -127,12 +127,12 @@ class ReviewerOnlyGateStep:
         "child_reviewer_passed",
         "pm_child_manifest_approved",
         "reviewer_checklist_coverage",
-        "removed_officer_gate_flags",
+        "removed_flowguard_operator_gate_flags",
     )
     writes = ("pm_write", "reviewer_card", "reviewer_pass", "pm_gate_close", "route_ready")
     input_description = "Reviewer-only pre-route gate tick"
     output_description = "one abstract Reviewer-only gate action"
-    idempotency = "safe ticks are monotonic and do not emit removed officer default cards"
+    idempotency = "safe ticks are monotonic and do not emit removed FlowGuard operator default cards"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         del input_obj
@@ -182,14 +182,14 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Reviewer passed root contract before Reviewer card")
     if state.root_reviewer_card_emitted and not state.pm_root_contract_written:
         failures.append("Reviewer root contract card emitted before PM contract write")
-    if state.root_product_officer_card_emitted:
-        failures.append("Reviewer-only root contract flow emitted removed Product Officer card")
-    if state.root_product_officer_required:
-        failures.append("Reviewer-only root contract flow still required Product Officer")
-    if state.root_product_officer_artifact_required_for_freeze:
-        failures.append("root contract freeze still required Product Officer artifact")
-    if state.pm_root_contract_frozen and state.root_product_officer_required:
-        failures.append("root contract freeze still depended on Product Officer")
+    if state.root_flowguard_operator_product_scope_card_emitted:
+        failures.append("Reviewer-only root contract flow emitted removed FlowGuard operator product-scope card")
+    if state.root_flowguard_operator_product_scope_required:
+        failures.append("Reviewer-only root contract flow still required FlowGuard operator product-scope")
+    if state.root_flowguard_operator_product_scope_artifact_required_for_freeze:
+        failures.append("root contract freeze still required FlowGuard operator product-scope artifact")
+    if state.pm_root_contract_frozen and state.root_flowguard_operator_product_scope_required:
+        failures.append("root contract freeze still depended on FlowGuard operator product-scope")
 
     if state.pm_child_manifest_approved and not state.pm_child_manifest_written:
         failures.append("PM approved child-skill manifest before PM wrote it")
@@ -199,29 +199,29 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Reviewer passed child-skill manifest before Reviewer card")
     if state.child_reviewer_card_emitted and not state.pm_child_manifest_written:
         failures.append("Reviewer child-skill manifest card emitted before PM manifest write")
-    if state.child_process_officer_card_emitted:
-        failures.append("Reviewer-only child-skill flow emitted removed Process Officer card")
-    if state.child_product_officer_card_emitted:
-        failures.append("Reviewer-only child-skill flow emitted removed Product Officer card")
-    if state.child_process_officer_required:
-        failures.append("Reviewer-only child-skill flow still required Process Officer")
-    if state.child_product_officer_required:
-        failures.append("Reviewer-only child-skill flow still required Product Officer")
-    if state.child_process_officer_artifact_required_for_approval:
-        failures.append("child-skill approval still required Process Officer artifact")
-    if state.child_product_officer_artifact_required_for_approval:
-        failures.append("child-skill approval still required Product Officer artifact")
+    if state.child_flowguard_operator_route_scope_card_emitted:
+        failures.append("Reviewer-only child-skill flow emitted removed FlowGuard operator route-scope card")
+    if state.child_flowguard_operator_product_scope_card_emitted:
+        failures.append("Reviewer-only child-skill flow emitted removed FlowGuard operator product-scope card")
+    if state.child_flowguard_operator_route_scope_required:
+        failures.append("Reviewer-only child-skill flow still required FlowGuard operator route-scope")
+    if state.child_flowguard_operator_product_scope_required:
+        failures.append("Reviewer-only child-skill flow still required FlowGuard operator product-scope")
+    if state.child_flowguard_operator_route_scope_artifact_required_for_approval:
+        failures.append("child-skill approval still required FlowGuard operator route-scope artifact")
+    if state.child_flowguard_operator_product_scope_artifact_required_for_approval:
+        failures.append("child-skill approval still required FlowGuard operator product-scope artifact")
     if state.pm_child_manifest_approved and (
-        state.child_process_officer_required or state.child_product_officer_required
+        state.child_flowguard_operator_route_scope_required or state.child_flowguard_operator_product_scope_required
     ):
-        failures.append("child-skill manifest approval still depended on removed officer gate")
+        failures.append("child-skill manifest approval still depended on removed FlowGuard operator gate")
 
     if state.pm_consultation_required_for_gate:
         failures.append("PM consultation was reintroduced as a required gate tail")
     if not state.role_body_boundary_preserved:
         failures.append("Reviewer-only gate simplification broke role/body boundary isolation")
-    if not state.unsupported_historical_officer_events_preserved:
-        failures.append("Reviewer-only gate simplification removed unsupported_historical officer event unsupported_historical")
+    if not state.unsupported_historical_flowguard_operator_events_preserved:
+        failures.append("Reviewer-only gate simplification removed unsupported_historical FlowGuard operator event unsupported_historical")
     if state.route_ready and not state.pm_root_contract_frozen:
         failures.append("route became ready before PM froze root contract")
     if state.route_ready and not state.pm_child_manifest_approved:
@@ -265,7 +265,7 @@ INVARIANTS = (
         description=(
             "Reviewer-only root-contract and child-skill-manifest gates may "
             "speed up FlowPilot only when Reviewer remains mandatory, removed "
-            "officer gates are not default requirements, Reviewer proof/evidence "
+            "FlowGuard operator gates are not default requirements, Reviewer proof/evidence "
             "checks absorb the protected review burden, and route readiness waits "
             "for both PM gate closures."
         ),
@@ -307,32 +307,32 @@ def hazard_states() -> dict[str, State]:
     base = target_reviewer_only_state()
     return {
         "root_freeze_without_reviewer": replace(base, root_reviewer_passed=False),
-        "root_freeze_waits_for_product_officer": replace(base, root_product_officer_required=True),
-        "root_freeze_requires_product_officer_artifact": replace(
+        "root_freeze_waits_for_flowguard_operator_product_scope": replace(base, root_flowguard_operator_product_scope_required=True),
+        "root_freeze_requires_flowguard_operator_product_scope_artifact": replace(
             base,
-            root_product_officer_artifact_required_for_freeze=True,
+            root_flowguard_operator_product_scope_artifact_required_for_freeze=True,
         ),
-        "root_product_officer_card_emitted": replace(base, root_product_officer_card_emitted=True),
+        "root_flowguard_operator_product_scope_card_emitted": replace(base, root_flowguard_operator_product_scope_card_emitted=True),
         "child_approval_without_reviewer": replace(base, child_reviewer_passed=False),
-        "child_approval_waits_for_process_officer": replace(base, child_process_officer_required=True),
-        "child_approval_waits_for_product_officer": replace(base, child_product_officer_required=True),
-        "child_approval_requires_process_officer_artifact": replace(
+        "child_approval_waits_for_flowguard_operator_route_scope": replace(base, child_flowguard_operator_route_scope_required=True),
+        "child_approval_waits_for_flowguard_operator_product_scope": replace(base, child_flowguard_operator_product_scope_required=True),
+        "child_approval_requires_flowguard_operator_route_scope_artifact": replace(
             base,
-            child_process_officer_artifact_required_for_approval=True,
+            child_flowguard_operator_route_scope_artifact_required_for_approval=True,
         ),
-        "child_approval_requires_product_officer_artifact": replace(
+        "child_approval_requires_flowguard_operator_product_scope_artifact": replace(
             base,
-            child_product_officer_artifact_required_for_approval=True,
+            child_flowguard_operator_product_scope_artifact_required_for_approval=True,
         ),
-        "child_process_officer_card_emitted": replace(base, child_process_officer_card_emitted=True),
-        "child_product_officer_card_emitted": replace(base, child_product_officer_card_emitted=True),
+        "child_flowguard_operator_route_scope_card_emitted": replace(base, child_flowguard_operator_route_scope_card_emitted=True),
+        "child_flowguard_operator_product_scope_card_emitted": replace(base, child_flowguard_operator_product_scope_card_emitted=True),
         "root_reviewer_omits_verifiability": replace(base, reviewer_root_checks_verifiability=False),
         "root_reviewer_omits_proof_obligations": replace(base, reviewer_root_checks_proof_obligations=False),
         "child_reviewer_omits_skill_standards": replace(base, reviewer_child_checks_skill_standards=False),
         "child_reviewer_omits_evidence_obligations": replace(base, reviewer_child_checks_evidence_obligations=False),
         "pm_consultation_tail_required": replace(base, pm_consultation_required_for_gate=True),
         "role_body_boundary_broken": replace(base, role_body_boundary_preserved=False),
-        "unsupported_historical_officer_event_handlers_removed": replace(base, unsupported_historical_officer_events_preserved=False),
+        "unsupported_historical_flowguard_operator_event_handlers_removed": replace(base, unsupported_historical_flowguard_operator_events_preserved=False),
         "route_ready_without_root_freeze": replace(base, pm_root_contract_frozen=False),
         "route_ready_without_child_manifest_approval": replace(base, pm_child_manifest_approved=False),
     }
@@ -346,15 +346,15 @@ def optimization_plan() -> dict[str, object]:
                 "order": 1,
                 "gate": "root_contract",
                 "change": "PM freeze depends on PM root contract write and Reviewer pass only",
-                "removed_default_gates": ["product_officer.root_contract_modelability"],
+                "removed_default_gates": ["flowguard_operator_product_scope.root_contract_modelability"],
             },
             {
                 "order": 2,
                 "gate": "child_skill_manifest",
                 "change": "PM approval depends on PM manifest write and Reviewer pass only",
                 "removed_default_gates": [
-                    "process_officer.child_skill_conformance_model",
-                    "product_officer.child_skill_product_fit",
+                    "flowguard_operator_route_scope.child_skill_conformance_model",
+                    "flowguard_operator_product_scope.child_skill_product_fit",
                 ],
             },
             {

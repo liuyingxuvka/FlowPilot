@@ -13,7 +13,7 @@ import flowpilot_router_events_repair_repair_decisions as _events_repair_repair_
 import flowpilot_router_events_repair_gate_decisions as _events_repair_gate_decisions
 
 from flowpilot_router_events_repair_model_miss import (
-    _validate_model_miss_officer_report_refs,
+    _validate_model_miss_flowguard_operator_report_refs,
     _write_model_miss_triage_decision,
 )
 from flowpilot_router_events_repair_repair_decisions import (
@@ -43,7 +43,7 @@ def _bind_router(router: ModuleType) -> None:
         child_module._bind_router(router)
 
 __all__ = (
-    '_validate_model_miss_officer_report_refs',
+    '_validate_model_miss_flowguard_operator_report_refs',
     '_write_model_miss_triage_decision',
     '_repair_transaction_normalized_plan_kind',
     '_event_already_recorded',

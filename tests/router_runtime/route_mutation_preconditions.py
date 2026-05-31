@@ -107,7 +107,7 @@ class RouteMutationPreconditionRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state = read_json(router.run_state_path(run_root))
             self.assertFalse(state["flags"]["route_activated_by_pm"])
             self.assertTrue(state["flags"]["route_draft_written_by_pm"])
-            self.assertFalse(state["flags"]["process_officer_route_check_passed"])
+            self.assertFalse(state["flags"]["flowguard_operator_route_scope_route_check_passed"])
             mutation = read_json(run_root / "routes" / "route-001" / "mutations.json")["items"][-1]
             self.assertEqual(mutation["repair_return_policy"]["repair_return_to_node_id"], "node-001")
             self.assertEqual(mutation["route_topology"]["topology_strategy"], "return_to_original")
@@ -129,7 +129,7 @@ class RouteMutationPreconditionRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 packet_id="node-packet-003",
                 from_role="project_manager",
-                to_role="worker_a",
+                to_role="worker",
                 node_id="node-001",
                 body_text="current node work",
                 metadata={"route_version": 1},

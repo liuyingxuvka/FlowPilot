@@ -20,9 +20,9 @@
       },
       "capability_change_without_product_check": {
         "detected": true,
-        "expected_failure": "product capability change lacks Product FlowGuard check",
+        "expected_failure": "product capability change lacks product-scope FlowGuard check",
         "failures": [
-          "product capability change lacks Product FlowGuard check"
+          "product capability change lacks product-scope FlowGuard check"
         ]
       },
       "changed_route_without_reviewer": {
@@ -80,9 +80,9 @@
       },
       "process_before_product_for_capability_change": {
         "detected": true,
-        "expected_failure": "Process FlowGuard ran before Product FlowGuard for a product capability change",
+        "expected_failure": "route-scope FlowGuard ran before product-scope FlowGuard for a product capability change",
         "failures": [
-          "Process FlowGuard ran before Product FlowGuard for a product capability change"
+          "route-scope FlowGuard ran before product-scope FlowGuard for a product capability change"
         ]
       },
       "repair_node_missing_fields": {
@@ -128,9 +128,9 @@
       },
       "structure_change_without_process_check": {
         "detected": true,
-        "expected_failure": "route structure change lacks Process FlowGuard check",
+        "expected_failure": "route structure change lacks route-scope FlowGuard check",
         "failures": [
-          "route structure change lacks Process FlowGuard check"
+          "route structure change lacks route-scope FlowGuard check"
         ]
       }
     },

@@ -1,14 +1,14 @@
-"""PM role-work request index and officer lifecycle public facade."""
+"""PM role-work request index and FlowGuard operator lifecycle public facade."""
 
 from __future__ import annotations
 
 from types import ModuleType
 
 import flowpilot_router_work_packets_pm_role_lifecycle_index as _owner_child_0
-import flowpilot_router_work_packets_pm_role_lifecycle_officer as _owner_child_1
+import flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator as _owner_child_1
 import flowpilot_router_work_packets_pm_role_lifecycle_contracts as _owner_child_2
 from flowpilot_router_work_packets_pm_role_lifecycle_index import *
-from flowpilot_router_work_packets_pm_role_lifecycle_officer import *
+from flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator import *
 from flowpilot_router_work_packets_pm_role_lifecycle_contracts import *
 
 _OWNER_CHILD_MODULES = (
@@ -36,16 +36,16 @@ __all__ = (
     '_empty_pm_role_work_request_index',
     '_load_pm_role_work_request_index',
     '_write_pm_role_work_request_index',
-    '_officer_request_lifecycle_index_path',
-    '_empty_officer_request_lifecycle_index',
-    '_load_officer_request_lifecycle_index',
-    '_officer_lifecycle_entry',
-    '_upsert_officer_lifecycle_entry',
-    '_write_officer_request_lifecycle_index',
-    '_record_officer_lifecycle_request',
-    '_record_officer_lifecycle_status',
-    '_record_officer_lifecycle_result_returned',
-    '_record_officer_lifecycle_pm_decision',
+    '_flowguard_operator_request_lifecycle_index_path',
+    '_empty_flowguard_operator_request_lifecycle_index',
+    '_load_flowguard_operator_request_lifecycle_index',
+    '_flowguard_operator_lifecycle_entry',
+    '_upsert_flowguard_operator_lifecycle_entry',
+    '_write_flowguard_operator_request_lifecycle_index',
+    '_record_flowguard_operator_lifecycle_request',
+    '_record_flowguard_operator_lifecycle_status',
+    '_record_flowguard_operator_lifecycle_result_returned',
+    '_record_flowguard_operator_lifecycle_pm_decision',
     '_pm_role_work_request_record',
     '_active_pm_role_work_request',
     '_active_pm_role_work_batch_records',

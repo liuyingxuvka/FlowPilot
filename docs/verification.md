@@ -167,7 +167,7 @@ Expected:
 
 ## Startup PM Review Check
 
-For an active target project after route, state, frontier, crew, role memory,
+For an active target project after route, state, frontier, role-binding memory,
 continuation, and visible-plan evidence have been written, the human-like
 reviewer must personally check the real startup facts and write
 `.flowpilot/runs/<run-id>/startup_review/latest.json`.
@@ -210,8 +210,8 @@ Expected:
 If the reviewer report is blocked or PM has not opened startup, FlowPilot must
 not run child skills, image generation, implementation, route chunks, or
 completion work. A route-local file without matching canonical
-state/frontier/crew/continuation evidence is a shadow route, not a recoverable
-partial pass.
+state/frontier/role-binding/continuation evidence is a shadow route, not a
+recoverable partial pass.
 
 ## Heartbeat Lifecycle Check
 

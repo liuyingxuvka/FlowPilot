@@ -144,7 +144,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="flowguard_process_designed",
-            action="process FlowGuard officer uses FlowGuard to design the route before implementation",
+            action="route-scope FlowGuard operator uses FlowGuard to design the route before implementation",
             flowguard_process_design_done=True,
             active_node="generate_candidate_route_tree",
         )
@@ -181,12 +181,12 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if not state.flowguard_officer_model_adversarial_probe_done:
+    if not state.flowguard_operator_model_adversarial_probe_done:
         yield _step(
             state,
-            label="flowguard_officer_model_adversarial_probe_done",
-            action="FlowGuard officers run or validate model checks, inspect counterexamples, cite state fields, labels, counts, commands, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, and blindspots before model approvals",
-            flowguard_officer_model_adversarial_probe_done=True,
+            label="flowguard_operator_model_adversarial_probe_done",
+            action="FlowGuard operators run or validate model checks, inspect counterexamples, cite state fields, labels, counts, commands, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, and blindspots before model approvals",
+            flowguard_operator_model_adversarial_probe_done=True,
             flowguard_model_report_risk_tiers_done=True,
             flowguard_model_report_pm_review_agenda_done=True,
             flowguard_model_report_toolchain_recommendations_done=True,
@@ -199,9 +199,9 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="root_route_model_checked",
-            action="process FlowGuard officer approves checks against the candidate route tree from officer-owned adversarial model evidence",
+            action="route-scope FlowGuard operator approves checks against the candidate route tree from FlowGuard operator-owned adversarial model evidence",
             root_route_model_checked=True,
-            root_route_model_process_officer_approved=True,
+            root_route_model_flowguard_operator_route_scope_approved=True,
             active_node="check_root_product_function_model",
         )
         return
@@ -210,9 +210,9 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="root_product_function_model_checked",
-            action="product FlowGuard officer approves checks against the root product-function model from officer-owned adversarial model evidence",
+            action="product-scope FlowGuard operator approves checks against the root product-function model from FlowGuard operator-owned adversarial model evidence",
             root_product_function_model_checked=True,
-            root_product_function_model_product_officer_approved=True,
+            root_product_function_model_flowguard_operator_product_scope_approved=True,
             active_node="check_strict_gate_obligation_review_model",
         )
         return
@@ -221,7 +221,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="strict_gate_obligation_review_model_checked",
-            action="process FlowGuard officer runs the strict gate-obligation model so current-scope caveats cannot close a review gate",
+            action="route-scope FlowGuard operator runs the strict gate-obligation model so current-scope caveats cannot close a review gate",
             strict_gate_obligation_review_model_checked=True,
             active_node="create_initial_route",
         )

@@ -490,7 +490,7 @@
         "partial_host_role_rehydration"
       ],
       "forbidden_shortcuts": [
-        "continue_with_partial_crew",
+        "continue_with_partial_runtime_roles",
         "treat_timeout_unknown_as_active"
       ],
       "historical_snapshot_required": false,
@@ -508,7 +508,7 @@
       "replay_id": "host.lifecycle.partial_rehydrate_thread_limit",
       "required_evidence": [
         "load_resume_state_evidence_written",
-        "all_six_roles_checked",
+        "all_runtime_roles_checked",
         "missing_role_rejected",
         "timeout_unknown_not_active"
       ],

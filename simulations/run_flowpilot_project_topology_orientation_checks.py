@@ -22,7 +22,7 @@ REQUIRED_LABELS = (
     "generate_flowguard_project_topology",
     "agent_reads_topology_before_nontrivial_work",
     "pm_considers_topology_as_background",
-    "officer_keeps_topology_as_background",
+    "flowguard_operator_keeps_topology_as_background",
     "reviewer_keeps_topology_as_background",
     "select_downstream_flowguard_route_after_orientation",
     "attach_owning_validation_evidence_separate_from_topology",
@@ -53,7 +53,7 @@ def _state_id(state: model.State) -> str:
         f"{state.topology_read_before_work}|layers={state.model_layer_present},"
         f"{state.test_layer_present},{state.code_layer_present},"
         f"{state.evidence_layer_present},{state.known_bad_layer_present}|"
-        f"roles={state.pm_considered_topology},{state.officer_treated_topology_as_background},"
+        f"roles={state.pm_considered_topology},{state.flowguard_operator_treated_topology_as_background},"
         f"{state.reviewer_treated_topology_as_background}|validation="
         f"{state.owning_validation_evidence_present},{state.topology_used_as_validation_evidence}"
     )

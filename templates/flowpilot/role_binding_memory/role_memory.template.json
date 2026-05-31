@@ -3,9 +3,9 @@
   "run_id": "run-001",
   "run_root": ".flowpilot/runs/run-001",
   "route_id": "route-001",
-  "role_key": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
+  "role_key": "<project_manager|human_like_reviewer|flowguard_operator|worker>",
   "display_name": "<human-facing-role-name>",
-  "role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
+  "role": "<project_manager|human_like_reviewer|flowguard_operator|worker>",
   "nickname": "<nickname-or-null>",
   "agent_id": "<agent-id-or-null>",
   "identity_policy": {

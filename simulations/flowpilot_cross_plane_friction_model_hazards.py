@@ -23,7 +23,7 @@ def _safe_base(**changes: object) -> State:
             gate_outcome_contracts_observed=True,
             node_completion_observed=True,
             cockpit_source_present_in_tree=True,
-            standard_six_roles_requested=True,
+            runtime_requested_roles_requested=True,
             active_task_policy_observed=True,
             minimal_repair_strategy_selected=True,
         ),
@@ -85,7 +85,7 @@ def hazard_states() -> dict[str, State]:
         "role_output_event_artifact_scan_missing": _safe_base(
             role_event_artifacts_scanned=False,
         ),
-        "reviewer_officer_gate_outcome_pass_only": _safe_base(
+        "reviewer_flowguard_operator_gate_outcome_pass_only": _safe_base(
             gate_outcome_contracts_complete=False,
         ),
         "node_completion_idempotency_global_only": _safe_base(
@@ -97,7 +97,7 @@ def hazard_states() -> dict[str, State]:
         "installed_skill_source_drift": _safe_base(
             installed_skill_matches_repository_source=False,
         ),
-        "six_role_liveness_unproven": _safe_base(
+        "runtime_role_liveness_unproven": _safe_base(
             role_liveness_ready_or_blocked=False,
         ),
         "active_history_visible_by_default": _safe_base(

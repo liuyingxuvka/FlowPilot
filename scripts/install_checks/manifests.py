@@ -40,6 +40,10 @@ def run_checks(result: dict[str, object]) -> None:
                 else:
                     card_text = full_card_path.read_text(encoding="utf-8")
                     expected_role = str(card.get("audience") or "")
+                    delivery_envelope_ok = (
+                        "router delivery envelope" in card_text
+                        or "runtime delivery envelope" in card_text
+                    )
                     identity_ok = (
                         card_text.lstrip().startswith("<!-- FLOWPILOT_IDENTITY_BOUNDARY_V1")
                         and f"recipient_role: {expected_role}" in card_text
@@ -52,7 +56,7 @@ def run_checks(result: dict[str, object]) -> None:
                         and "next_step_source:" in card_text
                         and "flowpilot_router.py" in card_text
                         and "runtime_context:" in card_text
-                        and "router delivery envelope" in card_text
+                        and delivery_envelope_ok
                         and "do not continue from memory" in card_text
                     )
                     if not identity_ok:
@@ -106,7 +110,6 @@ def run_checks(result: dict[str, object]) -> None:
         controller_card = ROOT / "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md"
         text = controller_card.read_text(encoding="utf-8")
         required_terms = [
-            "active health-and-continuation aid",
             "current_wait.wait_class",
             "ack",
             "three-minute reminder",
@@ -115,22 +118,18 @@ def run_checks(result: dict[str, object]) -> None:
             "fresh liveness check",
             "Do not trust an old \"alive\" status",
             "controller_local_action",
-            "do not remind yourself",
-            "controller_table_prompt",
-            "top to bottom",
-            "as long as FlowPilot is still running",
-            "continuous_controller_standby",
-            "active foreground duty",
-            "sync the visible Codex plan",
-            "finishable checklist item",
-            "daemon-owned startup rows",
-            "Router's scheduler ledger owns ordering",
-            "return to top-to-bottom row processing",
-            "must not mark the visible plan item done",
+            "foreground duty",
+            "process_next_action",
+            "wait_patrol",
+            "recover_or_reissue",
+            "control_plane_blocker",
+            "terminal_return",
             "timeout_still_waiting",
-            "diagnostic-only",
+            "old `flowpilot_router.py` commands are old-run diagnostics",
             "user_status_update_allowed",
-            "not stop the Controller role",
+            "controller_stop_allowed",
+            "flowpilot_new.py final-preflight",
+            "Controller is status-only",
             "status summary is display-only",
             "stale `next_step`",
             "translating control-plane state",

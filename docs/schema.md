@@ -170,8 +170,8 @@ cannot enter child-skill execution, image generation, implementation, or route
 chunks until this block and the matching frontier block show:
 
 - `hard_gate_required: true`;
-- `startup_questions` records explicit user answers for runtime role-assistance
-  permission, scheduled-continuation permission, and display surface;
+- `startup_questions` records the explicit user answer for background-collaboration
+  permission plus fixed manual-continuation and chat-display defaults;
 - `startup_questions.dialog_stopped_for_user_answers: true`;
 - `startup_questions.banner_emitted_after_answers: true`;
 - `.flowpilot/current.json` points at the same run and `.flowpilot/index.json`
@@ -206,19 +206,18 @@ chunks until this block and the matching frontier block show:
 - `status`: `pending`, `answered`, or `blocked`;
 - `asked_before_banner: true`;
 - `dialog_stopped_for_user_answers: true` records that the assistant response
-  ended immediately after asking the three questions and no startup work ran
-  until the user's later reply;
+  ended immediately after asking for the work request and background-collaboration
+  permission, and no startup work ran until the user's later reply;
 - `explicit_user_answer_recorded: true` before the PM can open startup;
 - `provenance`: exactly `explicit_user_reply`; values such as
   `agent_inferred`, `default`, `prior_route`, `naked`, or
   `single_message_invocation` are invalid;
 - `answers.runtime_role_assistances.answer`: `allow` for host-supported role
   mechanisms or `single-agent` for explicit fallback role continuity;
-- `answers.scheduled_continuation.answer`: `allow` for heartbeat/automation or
-  `manual` for manual resume;
-- `answers.display_surface.answer`: `cockpit` to open the native Cockpit UI
-  when startup state is ready, or `chat` to keep displaying route signs in
-  chat;
+- `answers.scheduled_continuation.answer`: fixed `manual`; this is no longer a
+  user-visible startup option;
+- `answers.display_surface.answer`: fixed `chat`; this is no longer a
+  user-visible startup option;
 - `answer_evidence_path`, `answered_at`, and
   `banner_emitted_after_answers: true`.
 
@@ -242,7 +241,7 @@ runtime startup-check script writes it. It must include:
 - `blocking_findings`;
 - scope flags for user authorization, route consistency, cleanup boundary,
   continuation evidence, real Codex heartbeat automation or manual-resume
-  evidence, role-binding decisions, user runtime role-assistance decision versus
+  evidence, role-binding decisions, user background-collaboration decision versus
   actual role-binding state, current binding coverage or explicit fallback
   authorization, and shadow/residual state;
 - required facts for route heartbeat interval 1 minute and route heartbeat
@@ -269,8 +268,8 @@ report and a PM-owned open decision. Worker remediation invalidates the prior
 review report and must be rechecked before PM opens the gate.
 
 A route-local file, generated concept, screenshot, or implementation artifact
-without matching canonical state/frontier/crew/continuation evidence is a
-shadow route. Shadow routes are invalid startup evidence and must be
+without matching canonical state/frontier/role-binding/continuation evidence is
+a shadow route. Shadow routes are invalid startup evidence and must be
 quarantined or superseded before work continues.
 
 `startup_activation.role_binding_startup` records this decision:
@@ -285,18 +284,19 @@ quarantined or superseded before work continues.
 - `blocker` and `evidence_path` for the prompt, failed attempt, or fallback
   decision evidence.
 
-## Crew Ledger
+## Role-Binding Ledger
 
 `role_binding_ledger.json` records role authority and role memory for a formal
 FlowPilot route.
 
-For each role, the ledger records the role name, agent id when available,
-status, authority boundary, latest report path, role memory path, memory
-freshness, recovery or replacement rule, and terminal archive state. It is
-loaded before formal route work and before heartbeat recovery.
+For each currently requested responsibility, the ledger records the role key,
+agent id when available, status, authority boundary, latest report path, role
+memory path, memory freshness, recovery or replacement rule, and terminal
+archive state. It is loaded before formal route work and before resume
+recovery.
 
 Role memory packets under `role_binding_memory/*.json` are the durable continuity
-state for the crew. Each packet records:
+state for requested responsibilities. Each packet records:
 
 - role and nickname;
 - agent id when available;
@@ -394,7 +394,7 @@ It records:
 - functional acceptance matrix with inputs, outputs, states, permissions,
   failure cases, checks, and evidence paths;
 - project-manager synthesis evidence;
-- product FlowGuard officer modelability approval or block;
+- FlowGuard operator modelability approval or block;
 - human-like reviewer usefulness challenge result, including direct checks
   against the user request, inspected material sources, and expected workflow
   reality. `human_like_reviewer_worker_report_only` must be false.
@@ -538,7 +538,7 @@ The frontier records:
 - PM-owned child-skill gate manifest status: route-design discovery from
   PM-selected skills, loaded child-skill files, initial manifest path,
   current-node refined manifest path, required approver assignments,
-  reviewer/officer/PM approval evidence, and whether all current child-skill
+  reviewer/FlowGuard operator/PM approval evidence, and whether all current child-skill
   gates have assigned-role approval;
 - PM-owned final route-wide gate ledger status: ledger path, built route
   version, current-route scan, effective-node resolution, child-skill gate
@@ -732,7 +732,7 @@ downstream work can check `work_beyond_startup_allowed`.
 ## Adversarial Approval Evidence
 
 `role_approvals/*.json` is the canonical evidence family for any PM,
-human-like reviewer, process FlowGuard officer, or product FlowGuard officer
+human-like reviewer, FlowGuard operator, or FlowGuard operator
 approval that is not already embedded in a richer role-owned report. Every
 approval gate may reference one of these files through
 `independent_validation_evidence_path`.
@@ -741,7 +741,7 @@ Each approval evidence object includes:
 
 - `approval_id`, `run_id`, `route_id`, `node_id`, and `gate_id`;
 - `approver_role`: `project_manager`, `human_like_reviewer`,
-  `process_flowguard_officer`, or `product_flowguard_officer`;
+  `flowguard_operator`, or `flowguard_operator`;
 - `approval_scope`: route, material, product architecture, child-skill gate,
   process model, product model, human review, parent backward review,
   startup PM gate, repair, final ledger, lifecycle, or completion;
@@ -764,7 +764,7 @@ Each approval evidence object includes:
   summaries, model labels, state/edge counts, counterexample ids, ledger entry
   ids, and checked state fields supporting the decision;
 - `role_specific_checks`: PM audit, reviewer direct inspection, or FlowGuard
-  officer model-boundary/counterexample checks as applicable;
+  FlowGuard operator model-boundary/counterexample checks as applicable;
 - `risk_or_blindspot_triage`;
 - `unresolved_residual_risk_count`;
 - `decision`: `approved`, `blocked`, `request_more_evidence`, `mutate_route`,
@@ -776,11 +776,11 @@ reports without the approving role's own checks. PM completion approval must
 include a decision-surface audit of the current route/frontier/ledger, stale
 evidence, superseded entries, waiver authority, unresolved counts, reviewer
 backward replay, standard scenario replay, node acceptance plan coverage, and
-risk-or-blindspot triage with zero unresolved residual risks. FlowGuard officer approval must cite
+risk-or-blindspot triage with zero unresolved residual risks. FlowGuard operator approval must cite
 model files, commands or valid unchanged reuse, state/edge counts, invariant
 results, missing labels, counterexamples inspected, PM risk tiers,
 model-derived review agenda, toolchain/model improvement suggestions,
-confidence boundary, and blindspots. Officer model reports are decision
+confidence boundary, and blindspots. FlowGuard operator model reports are decision
 support for the PM: they must classify hard blockers, PM review-required
 items, later-gate or terminal-replay items, and non-risk scope notes instead
 of making absolute "no risk" claims.
@@ -948,7 +948,7 @@ worker report alone.
 ## PM Suggestion Ledger
 
 `pm_suggestion_ledger.jsonl` is the run-scoped ledger for reviewer, worker, and
-FlowGuard officer suggestions that need Project Manager attention. It is
+FlowGuard operator suggestions that need Project Manager attention. It is
 separate from sealed packet/result bodies; entries may cite packet envelopes,
 result envelopes, review reports, model reports, evidence files, commands, or
 state references, but must not copy sealed body content.
@@ -961,11 +961,11 @@ Each entry uses `flowpilot.pm_suggestion_item.v1` and records:
   `future_route_candidate`, `nonblocking_note`, or
   `flowpilot_skill_improvement`;
 - authority basis, including whether a reviewer found a minimum-standard
-  failure, a FlowGuard officer reported a formal model-gate blocker, or a
-  worker/officer note is advisory only;
+  failure, a FlowGuard operator reported a formal model-gate blocker, or a
+  worker/FlowGuard operator note is advisory only;
 - impact triage: local minor change, current-node adjustment, route or
   acceptance change, or product behavior/state change, plus whether PM
-  considered Process/Product FlowGuard and why;
+  considered FlowGuard operator product-modeling and why;
 - PM disposition: `adopt_now`, `repair_or_reissue`, `mutate_route`,
   `defer_to_named_node`, `reject_with_reason`, `waive_with_authority`,
   `stop_for_user`, or `record_for_flowpilot_maintenance`;

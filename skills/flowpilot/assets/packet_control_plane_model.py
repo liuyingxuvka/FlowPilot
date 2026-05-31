@@ -28,7 +28,7 @@ EXTERNAL_INPUTS = (
     NodeCase("contract_recipient_mismatch_packet", "block", "worker"),
     NodeCase("result_path_escape_packet", "block", "worker"),
     NodeCase("controller_origin_packet", "pass", "controller"),
-    NodeCase("result_wrong_role_packet", "block", "worker_b"),
+    NodeCase("result_wrong_role_packet", "block", "human_like_reviewer"),
     NodeCase("agent_id_role_string_packet", "block", "worker"),
     NodeCase("invalid_agent_id_packet", "block", "worker"),
     NodeCase("result_without_ledger_packet", "block", "worker"),

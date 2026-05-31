@@ -44,7 +44,7 @@ def _card_required_source_paths(router: ModuleType, project_root: Path, run_root
         path = run_root / relative_path
         if path.exists():
             source_paths[label] = project_relative(project_root, path)
-    if card_id in {'process_officer.route_process_check', 'reviewer.route_challenge'}:
+    if card_id in {'flowguard_operator.route_process_check', 'reviewer.route_challenge'}:
         for draft_path in sorted((run_root / 'routes').glob('*/flow.draft.json')):
             source_paths[f'route_draft_{draft_path.parent.name}'] = project_relative(project_root, draft_path)
     return source_paths

@@ -149,7 +149,7 @@ ROLE_OUTPUT_BODY_FILENAME_PREFIXES = (
     "flowguard_model_miss_report",
     "gate_decision",
     "material_sufficiency_report",
-    "officer_model_report",
+    "flowguard_operator_model_report",
     "pm_control_blocker_repair_decision",
     "pm_model_miss_triage_decision",
     "pm_package_result_disposition",

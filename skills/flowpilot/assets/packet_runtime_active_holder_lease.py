@@ -70,7 +70,7 @@ def _active_holder_liveness_evidence(
         return {
             "schema_version": "flowpilot.active_holder_liveness_evidence.v1",
             "source": "role_binding_ledger",
-            "role_binding_ledger_path": project_relative(project_root, crew_path),
+            "role_binding_ledger_path": project_relative(project_root, role_binding_path),
             "run_id": paths["run_id"],
             "role_key": holder_role,
             "agent_id": holder_agent_id,

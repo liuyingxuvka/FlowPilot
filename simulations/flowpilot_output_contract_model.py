@@ -11,7 +11,7 @@ Risk intent brief:
   router accept/reject.
 - Adversarial branches include a missing packet contract, a mismatched packet
   contract, a hidden router requirement absent from the contract, a missing
-  required body field, a missing model-test alignment field in an officer
+  required body field, a missing model-test alignment field in a FlowGuard operator
   report, a missing report-writing contract at the final reporter, and a
   forbidden body field copied into the envelope.
 - Hard invariants: accepted outputs must carry one system-predefined contract
@@ -35,9 +35,9 @@ VALID_IMPLEMENTATION = "valid_implementation"
 VALID_REVIEW = "valid_review"
 VALID_FINAL_REPORT = "valid_final_report"
 VALID_GATE_DECISION = "valid_gate_decision"
-VALID_OFFICER_MODEL_REPORT = "valid_officer_model_report"
+VALID_FLOWGUARD_OPERATOR_MODEL_REPORT = "valid_flowguard_operator_model_report"
 VALID_MODEL_MISS_TRIAGE = "valid_model_miss_triage"
-VALID_MODEL_MISS_OFFICER_REPORT = "valid_model_miss_officer_report"
+VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT = "valid_model_miss_flowguard_operator_report"
 MISSING_CONTRACT = "missing_contract"
 MISMATCHED_CONTRACT = "mismatched_contract"
 HIDDEN_ROUTER_REQUIREMENT = "hidden_router_requirement_absent_from_contract"
@@ -61,9 +61,9 @@ VALID_SCENARIOS = (
     VALID_REVIEW,
     VALID_FINAL_REPORT,
     VALID_GATE_DECISION,
-    VALID_OFFICER_MODEL_REPORT,
+    VALID_FLOWGUARD_OPERATOR_MODEL_REPORT,
     VALID_MODEL_MISS_TRIAGE,
-    VALID_MODEL_MISS_OFFICER_REPORT,
+    VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT,
 )
 
 SCENARIOS = (
@@ -164,9 +164,9 @@ GATE_DECISION_CONTRACT = ContractSpec(
     ),
 )
 
-OFFICER_MODEL_REPORT_CONTRACT = ContractSpec(
-    contract_id="flowpilot.output_contract.officer_model_report.v1",
-    task_family="officer.model_report",
+FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT = ContractSpec(
+    contract_id="flowpilot.output_contract.flowguard_operator_model_report.v1",
+    task_family="flowguard_operator.model_report",
     required_body_fields=frozenset(
         {
             "background_artifact_completion",
@@ -210,9 +210,9 @@ MODEL_MISS_TRIAGE_CONTRACT = ContractSpec(
     ),
 )
 
-MODEL_MISS_OFFICER_REPORT_CONTRACT = ContractSpec(
+MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT = ContractSpec(
     contract_id="flowpilot.output_contract.flowguard_model_miss_report.v1",
-    task_family="officer.model_miss_report",
+    task_family="flowguard_operator.model_miss_report",
     required_body_fields=frozenset(
         {
             "bug_class_definition",
@@ -235,9 +235,9 @@ CONTRACTS_BY_FAMILY = {
     REVIEW_CONTRACT.task_family: REVIEW_CONTRACT,
     FINAL_REPORT_CONTRACT.task_family: FINAL_REPORT_CONTRACT,
     GATE_DECISION_CONTRACT.task_family: GATE_DECISION_CONTRACT,
-    OFFICER_MODEL_REPORT_CONTRACT.task_family: OFFICER_MODEL_REPORT_CONTRACT,
+    FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT.task_family: FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT,
     MODEL_MISS_TRIAGE_CONTRACT.task_family: MODEL_MISS_TRIAGE_CONTRACT,
-    MODEL_MISS_OFFICER_REPORT_CONTRACT.task_family: MODEL_MISS_OFFICER_REPORT_CONTRACT,
+    MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT.task_family: MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT,
 }
 
 CONTRACTS_BY_ID = {
@@ -351,14 +351,14 @@ def _select_task_family(scenario: str) -> tuple[str, ContractSpec]:
         return FINAL_REPORT_CONTRACT.task_family, FINAL_REPORT_CONTRACT
     if scenario == VALID_GATE_DECISION:
         return GATE_DECISION_CONTRACT.task_family, GATE_DECISION_CONTRACT
-    if scenario in {VALID_OFFICER_MODEL_REPORT, MISSING_MODEL_TEST_ALIGNMENT_FIELD}:
-        return OFFICER_MODEL_REPORT_CONTRACT.task_family, OFFICER_MODEL_REPORT_CONTRACT
+    if scenario in {VALID_FLOWGUARD_OPERATOR_MODEL_REPORT, MISSING_MODEL_TEST_ALIGNMENT_FIELD}:
+        return FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT.task_family, FLOWGUARD_OPERATOR_MODEL_REPORT_CONTRACT
     if scenario == VALID_MODEL_MISS_TRIAGE:
         return MODEL_MISS_TRIAGE_CONTRACT.task_family, MODEL_MISS_TRIAGE_CONTRACT
-    if scenario == VALID_MODEL_MISS_OFFICER_REPORT:
+    if scenario == VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT:
         return (
-            MODEL_MISS_OFFICER_REPORT_CONTRACT.task_family,
-            MODEL_MISS_OFFICER_REPORT_CONTRACT,
+            MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT.task_family,
+            MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_CONTRACT,
         )
     if scenario == VALID_REVIEW:
         return REVIEW_CONTRACT.task_family, REVIEW_CONTRACT
@@ -461,9 +461,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             VALID_REVIEW: "packet_embeds_selected_contract",
             VALID_FINAL_REPORT: "packet_embeds_selected_contract",
             VALID_GATE_DECISION: "packet_embeds_selected_contract",
-            VALID_OFFICER_MODEL_REPORT: "packet_embeds_selected_contract",
+            VALID_FLOWGUARD_OPERATOR_MODEL_REPORT: "packet_embeds_selected_contract",
             VALID_MODEL_MISS_TRIAGE: "packet_embeds_selected_contract",
-            VALID_MODEL_MISS_OFFICER_REPORT: "packet_embeds_selected_contract",
+            VALID_MODEL_MISS_FLOWGUARD_OPERATOR_REPORT: "packet_embeds_selected_contract",
             MISSING_CONTRACT: "packet_omits_selected_contract",
             MISMATCHED_CONTRACT: "packet_embeds_mismatched_contract",
             HIDDEN_ROUTER_REQUIREMENT: "packet_embeds_contract_with_hidden_router_requirement",
@@ -824,7 +824,7 @@ __all__ = [
     "NEGATIVE_EXPECTED_REJECTIONS",
     "NEGATIVE_SCENARIOS",
     "SCENARIOS",
-    "VALID_OFFICER_MODEL_REPORT",
+    "VALID_FLOWGUARD_OPERATOR_MODEL_REPORT",
     "VALID_SCENARIOS",
     "Action",
     "State",

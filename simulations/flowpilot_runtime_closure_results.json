@@ -31,18 +31,18 @@
           "final user report was used as closure authority"
         ]
       },
-      "officer_direct_event_without_request": {
+      "flowguard_operator_direct_event_without_request": {
         "detected": true,
-        "expected": "officer gate advanced without PM request packet",
+        "expected": "FlowGuard operator gate advanced without PM request packet",
         "failures": [
-          "officer gate advanced without PM request packet"
+          "FlowGuard operator gate advanced without PM request packet"
         ]
       },
-      "officer_invented_event": {
+      "flowguard_operator_invented_event": {
         "detected": true,
-        "expected": "officer gate advanced without router-authorized report event",
+        "expected": "FlowGuard operator gate advanced without router-authorized report event",
         "failures": [
-          "officer gate advanced without router-authorized report event"
+          "FlowGuard operator gate advanced without router-authorized report event"
         ]
       },
       "old_agent_id_reused_as_current": {

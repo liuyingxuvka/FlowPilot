@@ -68,7 +68,7 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "new_entrypoint.symmetric_role_packet_lifecycle",
             obligation_type="invariant",
-            description="Source-audited new-entrypoint packet lifecycle boundary requiring PM, FlowGuard operator, Reviewer, Validator, and Closure officer to use issued packet, lease, ACK, result, packet-owned side effect, and clean lease projection.",
+            description="Source-audited new-entrypoint packet lifecycle boundary requiring requested PM, FlowGuard operator, reviewer, and worker responsibilities to use issued packet, lease, ACK, result, packet-owned side effect, and clean lease projection while system validation and closure remain ledger outcomes.",
             required_test_kinds=(HAPPY, NEGATIVE, EDGE),
         ),
         _source_obligation(
@@ -86,7 +86,7 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "new_entrypoint.host_kind_value_menu",
             obligation_type="contract",
-            description="Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_sidecar_role.",
+            description="Source-audited dynamic host-kind boundary requiring prompts and CLI help to enumerate live/fake/dry_run and reject invented values such as codex_background_worker.",
             required_test_kinds=(HAPPY, NEGATIVE),
         ),
         _source_obligation(
@@ -249,9 +249,9 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             required_test_kinds=(HAPPY, FAILURE),
         ),
         _source_obligation(
-            "runtime_closure.officer_lifecycle_contract",
+            "runtime_closure.flowguard_operator_lifecycle_contract",
             obligation_type="contract",
-            description="Source-audited officer request/result lifecycle records keep PM authority, sealed-body boundaries, and validation results explicit.",
+            description="Source-audited FlowGuard operator request/result lifecycle records keep PM authority, sealed-body boundaries, and validation results explicit.",
             required_test_kinds=(HAPPY,),
         ),
         _source_obligation(

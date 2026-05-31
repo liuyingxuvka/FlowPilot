@@ -78,11 +78,11 @@ REPAIR_ACTIONS = {
         ),
     },
     "gate_outcome_contracts": {
-        "title": "Gate outcome contracts for reviewer/officer gates",
+        "title": "Gate outcome contracts for reviewer/FlowGuard operator gates",
         "fixes": ["gate_outcome_contract_pass_only"],
         "scope": "Gate outcome metadata, wait actions, and repair routing for role gates.",
         "proof_obligation": (
-            "Every reviewer/officer gate has a routable pass outcome and a routable "
+            "Every reviewer/FlowGuard operator gate has a routable pass outcome and a routable "
             "non-pass outcome that does not advance stale approvals."
         ),
     },
@@ -107,9 +107,9 @@ REPAIR_ACTIONS = {
             "it is moved out of source; installed skill hashes match repository source."
         ),
     },
-    "six_role_readiness_gate": {
+    "runtime_role_readiness_gate": {
         "title": "Standard role-binding readiness gate",
-        "fixes": ["six_role_liveness_unproven"],
+        "fixes": ["runtime_role_liveness_unproven"],
         "scope": "Startup/resume readiness record or early blocker only.",
         "proof_obligation": (
             "A role-binding run cannot begin route work until all standard roles are "

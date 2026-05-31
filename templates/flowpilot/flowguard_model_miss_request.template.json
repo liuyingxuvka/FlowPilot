@@ -2,7 +2,7 @@
   "schema_version": "flowpilot.flowguard_model_miss_request.v1",
   "run_id": "run-001",
   "requested_by_role": "project_manager",
-  "assigned_officer_role": "process_flowguard_officer",
+  "assigned_flowguard_operator_role": "flowguard_operator",
   "defect_or_blocker_id": "defect-001",
   "reviewer_block_source_path": ".flowpilot/runs/run-001/state.json",
   "bug_class_definition": "Define the same-class failure family, not only the current error message.",

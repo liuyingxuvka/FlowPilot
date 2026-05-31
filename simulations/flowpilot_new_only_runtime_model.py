@@ -28,7 +28,7 @@ RETIRED_INPUTS = (
     "run_until_wait_new_invocation_alias",
     "unsupported_chat_startup_payload",
     "unsupported_startup_answer_record",
-    "unsupported_officer_event_alias",
+    "unsupported_flowguard_operator_event_alias",
     "unsupported_reviewer_event_alias",
     "unsupported_output_type_alias",
     "event_replay_transaction",

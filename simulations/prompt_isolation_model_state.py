@@ -19,7 +19,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | blocked | complete
     startup_state: str = "none"  # none | awaiting_answers | answers_complete | controller_ready
-    holder: str = "none"  # none | user | controller | pm | reviewer | worker | officer
+    holder: str = "none"  # none | user | controller | pm | reviewer | worker | FlowGuard operator
     phase: str = "none"
     event: str = "none"
 
@@ -96,7 +96,7 @@ class State:
     product_architecture_draft_written: bool = False
     product_architecture_modelability_card_delivered: bool = False
     product_architecture_modelability_passed: bool = False
-    product_architecture_officer_result_ledger_checked: bool = False
+    product_architecture_flowguard_operator_result_ledger_checked: bool = False
     product_architecture_challenge_card_delivered: bool = False
     product_architecture_reviewer_challenged: bool = False
     pm_root_contract_card_delivered: bool = False
@@ -105,7 +105,7 @@ class State:
     root_contract_reviewer_challenged: bool = False
     root_contract_modelability_card_delivered: bool = False
     root_contract_modelability_passed: bool = False
-    root_contract_officer_result_ledger_checked: bool = False
+    root_contract_flowguard_operator_result_ledger_checked: bool = False
     root_contract_frozen_by_pm: bool = False
     pm_dependency_policy_card_delivered: bool = False
     dependency_policy_recorded: bool = False
@@ -116,12 +116,12 @@ class State:
     child_skill_gate_manifest_written: bool = False
     reviewer_child_skill_gate_manifest_card_delivered: bool = False
     child_skill_manifest_reviewer_passed: bool = False
-    process_officer_child_skill_card_delivered: bool = False
-    child_skill_process_officer_passed: bool = False
-    child_skill_process_officer_result_ledger_checked: bool = False
-    product_officer_child_skill_card_delivered: bool = False
-    child_skill_product_officer_passed: bool = False
-    child_skill_product_officer_result_ledger_checked: bool = False
+    flowguard_operator_child_skill_route_card_delivered: bool = False
+    child_skill_flowguard_operator_route_scope_passed: bool = False
+    child_skill_flowguard_operator_route_scope_result_ledger_checked: bool = False
+    flowguard_operator_child_skill_product_card_delivered: bool = False
+    child_skill_flowguard_operator_product_scope_passed: bool = False
+    child_skill_flowguard_operator_product_scope_result_ledger_checked: bool = False
     child_skill_manifest_pm_approved_for_route: bool = False
     capability_evidence_synced: bool = False
     pm_prior_path_context_card_delivered: bool = False

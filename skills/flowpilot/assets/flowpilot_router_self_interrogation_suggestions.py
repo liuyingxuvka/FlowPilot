@@ -118,8 +118,8 @@ def _pm_suggestion_ledger_status(run_root: Path) -> dict[str, Any]:
                 add_issue(entry, "worker-origin suggestions cannot be current_gate_blocker")
             if source_role == "human_like_reviewer" and authority.get("reviewer_minimum_standard_failure") is not True:
                 add_issue(entry, "reviewer current_gate_blocker requires reviewer_minimum_standard_failure")
-            if source_role in PM_SUGGESTION_OFFICER_ROLES and authority.get("formal_flowguard_model_gate") is not True:
-                add_issue(entry, "officer current_gate_blocker requires formal_flowguard_model_gate")
+            if source_role in PM_SUGGESTION_FLOWGUARD_OPERATOR_ROLES and authority.get("formal_flowguard_model_gate") is not True:
+                add_issue(entry, "FlowGuard operator current_gate_blocker requires formal_flowguard_model_gate")
             if closure_status not in {"closed", "stopped_for_user"}:
                 add_issue(entry, "current_gate_blocker must be closed or stopped before final closure")
         if closure.get("blocks_current_gate_until_closed") is True and closure_status not in {"closed", "stopped_for_user"}:

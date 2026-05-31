@@ -206,7 +206,7 @@ def card_boundary_policy_report(runtime_kit_root: Path | None = None) -> dict[st
         "cards.post_ack_policy": "ACK is receipt only; ACK is not completion.",
         "cards.required_return_policy": "System-card ACKs go directly to Router through the card check-in command",
         "cards.next_step_source_policy": "Do not infer the next FlowPilot action from this card, chat history, or prior prompts.",
-        "cards.runtime_context_policy": "Treat the router delivery envelope as the live source",
+        "cards.runtime_context_policy": "Treat the runtime delivery envelope as the live source",
     }
     contradiction_markers = (
         "ACK is completion",

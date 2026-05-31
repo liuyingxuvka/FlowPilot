@@ -3,12 +3,12 @@
   "run_id": "<run-id>",
   "run_root": ".flowpilot/runs/<run-id>",
   "recorded_at": "<iso-8601-timestamp>",
-  "recorded_by_role": "<controller|project_manager|process_flowguard_officer|human_like_reviewer>",
+  "recorded_by_role": "<controller|project_manager|flowguard_operator|human_like_reviewer>",
   "host": {
     "host_kind": "<codex_desktop|codex_cli|chatgpt|manual_only|unknown>",
     "supports_real_wakeups": null,
     "supports_automations": null,
-    "supports_background_sidecar roles": null,
+    "supports_requested_role_bindings": null,
     "supports_native_plan_tool": null,
     "evidence_sources": []
   },
@@ -27,7 +27,7 @@
     "router_direct_dispatch_required_before_worker": true,
     "reviewer_dispatch_required_before_worker": false,
     "role_reminder_required_in_controller_messages": true,
-    "role_echo_required_in_sidecar role_responses": true
+    "role_echo_required_in_requested_role_responses": true
   },
   "packet_resume": {
     "packet_ledger_path": ".flowpilot/runs/<run-id>/packet_ledger.json",
@@ -56,7 +56,7 @@
     "result_envelope_completed_by_role_checked": false,
     "result_envelope_completed_by_agent_id_checked": false,
     "result_body_hash_checked": false,
-    "worker_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown|null>",
+    "worker_result_author_role": "<requested_worker|authorized_non_controller|controller|unknown|null>",
     "worker_result_agent_id": "<agent-id-or-null>",
     "worker_result_author_matches_assignment": false,
     "controller_origin_evidence_blocks_resume": true,

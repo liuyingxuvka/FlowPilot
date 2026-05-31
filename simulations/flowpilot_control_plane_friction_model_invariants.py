@@ -83,12 +83,12 @@ def stopped_run_reconciles_authorities(state: State, trace) -> InvariantResult:
     del trace
     if state.current_status_stopped and (
         state.continuation_heartbeat_active
-        or state.crew_live_agents_active
+        or state.runtime_role_live_agents_active
         or state.packet_loop_active
         or not state.frontier_terminal
     ):
         return InvariantResult.fail(
-            "stopped run left heartbeat, crew, packet loop, or frontier authority active"
+            "stopped run left heartbeat, runtime roles, packet loop, or frontier authority active"
         )
     return InvariantResult.pass_()
 
@@ -1090,8 +1090,8 @@ def role_work_recipient_normalization_preserves_routes(state: State, trace) -> I
 
 def model_miss_report_can_feed_pm_once(state: State, trace) -> InvariantResult:
     del trace
-    if state.model_miss_pm_decision_from_single_report and not state.model_miss_officer_report_complete:
-        return InvariantResult.fail("PM model-miss decision used an incomplete officer report")
+    if state.model_miss_pm_decision_from_single_report and not state.model_miss_flowguard_operator_report_complete:
+        return InvariantResult.fail("PM model-miss decision used an incomplete FlowGuard operator report")
     return InvariantResult.pass_()
 
 def role_memory_is_index_not_authority(state: State, trace) -> InvariantResult:
@@ -1207,7 +1207,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="stopped_run_reconciles_authorities",
-        description="A user-stopped run turns off heartbeat, crew, packet loop, and frontier authorities.",
+        description="A user-stopped run turns off heartbeat, runtime roles, packet loop, and frontier authorities.",
         predicate=stopped_run_reconciles_authorities,
     ),
     Invariant(
@@ -1527,7 +1527,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="model_miss_report_can_feed_pm_once",
-        description="One complete model-miss officer report can support PM decision without a second officer loop.",
+        description="One complete model-miss FlowGuard operator report can support PM decision without a second FlowGuard operator loop.",
         predicate=model_miss_report_can_feed_pm_once,
     ),
     Invariant(

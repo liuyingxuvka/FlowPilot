@@ -212,14 +212,14 @@ class RouteMutationContractHarness(FlowPilotRouterRuntimeTestBase):
                 "run_id": run_root.name,
                 "active_packet_id": packet_id,
                 "active_packet_status": "active",
-                "active_packet_holder": "worker_a",
+                "active_packet_holder": "worker",
                 "packets": [
                     {
                         "packet_id": packet_id,
                         "node_id": node_id,
                         "status": "active",
                         "active_packet_status": "active",
-                        "active_packet_holder": "worker_a",
+                        "active_packet_holder": "worker",
                     }
                 ],
             },

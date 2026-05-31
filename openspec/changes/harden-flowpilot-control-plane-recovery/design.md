@@ -3,8 +3,9 @@
 The audited run `run-20260527-212331` showed a control-plane convergence
 failure across existing FlowPilot surfaces:
 
-- Controller rehydrated all six roles, but Router did not durably replay the
-  receipt/report into `resume_roles_restored`.
+- Controller rehydrated the currently required requested responsibilities, but
+  Router did not durably replay the receipt/report into
+  `resume_roles_restored`.
 - PM wrote many `pm_control_blocker_repair_decision` bodies, but they were
   submitted through the local `submit-output` path, so Router received no
   durable decision event for most of them.
@@ -30,7 +31,8 @@ status, prompts, and regression gates.
 - Make fixed-router-event role outputs impossible to mistake for Router
   consumption when they only wrote local receipts.
 - Make resume rehydration postconditions replayable and idempotent from
-  existing Controller receipts and crew rehydration reports.
+  existing Controller receipts and requested-responsibility rehydration
+  reports.
 - Coalesce repeated control blockers by attempt family and preserve terminal
   family disposition.
 - Make PM `terminal_stop` and `protocol_dead_end` decisions close the active
@@ -80,9 +82,10 @@ trust the existing Controller receipt/report after wake. The hardening will add
 an idempotent reconcile helper that checks current-run rehydration evidence
 before materializing a control blocker.
 
-The helper will accept only current-run evidence with all six roles ready and
-memory status available or otherwise explicitly accepted by the existing resume
-rules. It will not infer liveness from old crew state or wait-agent timeout.
+The helper will accept only current-run evidence with every currently required
+requested responsibility ready and memory status available or otherwise
+explicitly accepted by the existing resume rules. It will not infer liveness
+from old role state or wait-agent timeout.
 
 ### Decision 3: Control blockers coalesce by attempt family
 
@@ -212,7 +215,7 @@ writers, but it cannot quietly bypass the gateway and keep green evidence.
   runtime behavior, and make the error message name the required command.
 - Receipt replay can accidentally trust stale evidence. Mitigation: require
   current-run ids, current resume tick or compatible current-run report, all
-  role keys, and no timeout-as-active shortcut.
+  currently required responsibility keys, and no timeout-as-active shortcut.
 - Blocker coalescing can hide a genuinely new error. Mitigation: coalesce by
   attempt family only when origin action, responsible role, policy row, and
   postcondition match; otherwise materialize a distinct blocker.

@@ -394,8 +394,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         )
         self.assertEqual(lease_help.returncode, 0, lease_help.stderr)
         self.assertIn("{live,fake,dry_run}", lease_help.stdout)
-        self.assertIn("live=real Codex host-supported role", lease_help.stdout)
-        self.assertIn("mechanism", lease_help.stdout)
+        self.assertIn("live=real host-supported role surface", lease_help.stdout)
+        self.assertIn("role surface", lease_help.stdout)
         self.assertIn("Do not invent values outside", lease_help.stdout)
         self.assertIn("this menu", lease_help.stdout)
 
@@ -435,7 +435,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     "--agent-id",
                     "agent-1",
                     "--host-kind",
-                    "codex_sidecar role",
+                    "codex_background_worker",
                 ],
                 text=True,
                 capture_output=True,
@@ -460,7 +460,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                             "--agent-id",
                             "agent-1",
                             "--host-kind",
-                            "codex_sidecar role",
+                            "codex_background_worker",
                         ]
                     )
             self.assertEqual(direct_exit.exception.code, 2)

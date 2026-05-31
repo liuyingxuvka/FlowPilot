@@ -73,9 +73,9 @@ The FlowGuard models for FlowPilot found or guard against:
   the authority key instead of diagnostic-only recovery evidence;
 - controller decides the next route jump directly instead of asking the
   project manager;
-- controller authors or runs FlowGuard model files for an officer, turning
-  the officer into an approval-only stamp;
-- project manager, reviewer, or FlowGuard officer performs implementation work
+- controller authors or runs FlowGuard model files for the FlowGuard operator,
+  turning the operator into an approval-only stamp;
+- project manager, reviewer, or FlowGuard operator performs implementation work
   instead of keeping role authority separate;
 - route mutation after a blocking review is written without project-manager
   repair-strategy interrogation, repair decision, stale-evidence invalidation,
@@ -145,11 +145,11 @@ The FlowGuard models for FlowPilot found or guard against:
 - high-risk gate overlap with active work;
 - stale route continuing after model gap;
 - stale implementation reused after a completion review raised the standard;
-- sidecar role-binding work returned but not merged;
-- parent/module-level sidecar scan treated as permission to assign work;
-- sidecar role binding assigned ownership of a child node, checkpoint, route advancement,
+- helper responsibility-binding work returned but not merged;
+- parent/module-level helper-scope scan treated as permission to assign work;
+- helper role binding assigned ownership of a child node, checkpoint, route advancement,
   or completion decision;
-- new sidecar role binding opened while a suitable idle role binding was available;
+- new helper role binding opened while a suitable idle role binding was available;
 - UI implementation before the relevant UI child-skill gates and evidence;
 - post-implementation rendered QA evidence substituted for the child skill's
   pre-implementation concept-target/reference decision;
@@ -244,10 +244,10 @@ Keep these failure modes in the model and tests.
   A heartbeat may not close by only writing "continue to X" when the next gate
   is still executable.
 - PM-initiated FlowGuard modeling must not be vague delegation. If PM asks a
-  FlowGuard officer to model an uncertain route, product, object, file format,
+  FlowGuard operator to model an uncertain route, product, object, file format,
   protocol, or repair decision, the request names the decision, uncertainty,
-  evidence, candidate options or option-generation need, assigned officer, and
-  required answer shape. The officer checks modelability first; missing
+  evidence, candidate options or option-generation need, assigned modeling
+  scope, and required answer shape. The FlowGuard operator checks modelability first; missing
   evidence creates evidence work, over-broad requests split, and only an
   actionable report can feed PM route decision.
 - Pause, restart, and terminal cleanup must scan all lifecycle authorities:
@@ -305,15 +305,15 @@ Keep these failure modes in the model and tests.
   discarded_with_reason disposition,
   the human-like reviewer has replayed the ledger backward from the final
   product, and the PM has approved the clean ledger.
-- Child-node sidecar scan is the only formal sidecar opportunity gate. Parent
+- Child-node helper-scope scan is the only formal Helper opportunity gate. Parent
   or module review may not directly open role bindings or transfer node ownership.
-- Sidecar scope checking must be separate from reuse-or-open role-binding assignment.
-- `sidecar_report_returned` is not completion evidence; authorized integration/review and
+- Helper scope checking must be separate from reuse-or-open role-binding assignment.
+- `Helper_report_returned` is not completion evidence; authorized integration/review and
   verification are required.
 - Formal routes keep persistent role authority and current-run role memory.
   The project manager owns route, heartbeat-resume,
   completion-runway, PM stop, repair, and completion decisions; workers are
-  sidecars only.
+  helpers only.
 - Heartbeat recovery loads the role-binding ledger and role memory packets,
   restores/replaces the role binding from that memory, asks the project manager for a
   completion-oriented runway, syncs that runway into the visible plan, executes

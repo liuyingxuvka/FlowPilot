@@ -22,16 +22,16 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    model.MISSING_PRODUCT_MODEL: "PM route draft requires Product Officer product behavior model report",
-    model.PROCESS_PASS_WITHOUT_PRODUCT_COVERAGE: "Process Officer route pass must check product behavior model coverage",
-    model.MISSING_PROCESS_VERDICT: "route activation requires Process Officer process_viability_verdict=pass",
+    model.MISSING_PRODUCT_MODEL: "PM route draft requires FlowGuard operator product-scope product behavior model report",
+    model.PROCESS_PASS_WITHOUT_PRODUCT_COVERAGE: "FlowGuard operator route-scope route pass must check product behavior model coverage",
+    model.MISSING_PROCESS_VERDICT: "route activation requires FlowGuard operator route-scope process_viability_verdict=pass",
     model.MISSING_PM_PROCESS_ACCEPTANCE: "route activation requires PM-accepted process route model",
     model.MISSING_REVIEWER_CHALLENGE: "route activation requires Reviewer route challenge pass",
     model.REVIEWER_BEFORE_PM_PROCESS_ACCEPTANCE: "Reviewer route challenge requires PM-accepted process route model",
-    model.REPAIR_REQUIRED_IGNORED: "route activation requires Process Officer process_viability_verdict=pass",
-    model.BLOCKED_IGNORED: "route activation requires Process Officer process_viability_verdict=pass",
+    model.REPAIR_REQUIRED_IGNORED: "route activation requires FlowGuard operator route-scope process_viability_verdict=pass",
+    model.BLOCKED_IGNORED: "route activation requires FlowGuard operator route-scope process_viability_verdict=pass",
     model.REPAIR_MISSING_MAINLINE_RETURN: "repair mutation requires a mainline return target",
-    model.REPAIR_WITHOUT_PROCESS_RECHECK: "repair route requires fresh Process Officer recheck before continuing",
+    model.REPAIR_WITHOUT_PROCESS_RECHECK: "repair route requires fresh FlowGuard operator route-scope recheck before continuing",
     model.ROUTER_SEMANTIC_OVERREACH: "Router must not judge semantic product-model coverage itself",
 }
 

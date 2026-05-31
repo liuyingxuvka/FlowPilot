@@ -40,7 +40,7 @@ NEGATIVE_SCENARIOS = (
     "foreground_receipt_writes_scheduler_during_daemon",
     "readback_permission_kills_daemon",
     "pending_action_overrides_controller_ledger",
-    "worker_event_collapses_batch_to_worker_a",
+    "worker_event_collapses_batch_to_worker",
     "stale_passive_wait_left_open",
     "closed_status_vocabulary_blocks_passive_wait",
     "non_controller_closed_row_blocks_wait",
@@ -159,10 +159,10 @@ def scenario_state(scenario: str) -> State:
     if scenario == "batch_wait_members_project_missing_roles":
         return _accepted(
             scenario,
-            batch_member_roles=("worker_a", "worker_b"),
-            batch_returned_roles=("worker_a",),
-            event_inferred_role="worker_a",
-            projected_missing_roles=("worker_b",),
+            batch_member_roles=("worker", "worker"),
+            batch_returned_roles=("worker",),
+            event_inferred_role="worker",
+            projected_missing_roles=("worker",),
         )
     if scenario == "stale_passive_wait_superseded":
         return _accepted(
@@ -239,13 +239,13 @@ def scenario_state(scenario: str) -> State:
             decision_used_controller_ledger=False,
             pending_action_labeled_projection=False,
         )
-    if scenario == "worker_event_collapses_batch_to_worker_a":
+    if scenario == "worker_event_collapses_batch_to_worker":
         return _rejected(
             scenario,
-            batch_member_roles=("worker_a", "worker_b"),
-            batch_returned_roles=("worker_a",),
-            event_inferred_role="worker_a",
-            projected_missing_roles=("worker_a",),
+            batch_member_roles=("worker", "worker"),
+            batch_returned_roles=("worker",),
+            event_inferred_role="worker",
+            projected_missing_roles=("worker",),
         )
     if scenario == "stale_passive_wait_left_open":
         return _rejected(

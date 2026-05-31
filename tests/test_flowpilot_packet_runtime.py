@@ -42,7 +42,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         )
         return root
 
-    def write_live_crew_slot(self, root: Path, *, role: str = "worker_a", agent_id: str = "agent-worker-a-1") -> None:
+    def write_live_runtime_roles_slot(self, root: Path, *, role: str = "worker", agent_id: str = "agent-worker-1-1") -> None:
         _write_json(
             root / ".flowpilot" / "runs" / "run-test" / "role_binding_ledger.json",
             {
@@ -94,12 +94,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_id=packet_id,
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text=body_text,
         )
 
-    def relay_packet(self, root: Path, envelope: dict, *, packet_id: str = "packet-001", to_role: str = "worker_a") -> dict:
+    def relay_packet(self, root: Path, envelope: dict, *, packet_id: str = "packet-001", to_role: str = "worker") -> dict:
         return packet_runtime.controller_relay_envelope(
             root,
             envelope=envelope,
@@ -122,7 +122,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_flowpilot_runtime_relay_envelope_records_signature_ledger_and_lease(self) -> None:
         root = self.make_project()
         self.issue_packet(root)
-        self.write_live_crew_slot(root, agent_id="agent-worker-a-runtime")
+        self.write_live_runtime_roles_slot(root, agent_id="agent-worker-1-runtime")
 
         result = self.run_flowpilot_runtime(
             root,
@@ -135,9 +135,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "--received-from-role",
                 "project_manager",
                 "--relayed-to-role",
-                "worker_a",
+                "worker",
                 "--holder-agent-id",
-                "agent-worker-a-runtime",
+                "agent-worker-1-runtime",
                 "--route-version",
                 "1",
                 "--frontier-version",
@@ -147,8 +147,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
         self.assertTrue(result["ok"])
         self.assertTrue(result["controller_relay_signature_recorded"])
-        self.assertEqual(result["relayed_to_role"], "worker_a")
-        self.assertEqual(result["ledger_record"]["active_packet_holder"], "worker_a")
+        self.assertEqual(result["relayed_to_role"], "worker")
+        self.assertEqual(result["ledger_record"]["active_packet_holder"], "worker")
         self.assertEqual(result["ledger_record"]["active_packet_status"], "active-holder-lease-issued")
         self.assertTrue(result["ledger_record"]["packet_controller_relay_recorded"])
         self.assertTrue(result["ledger_record"]["active_holder_lease_issued"])
@@ -161,7 +161,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json")
         record = ledger["packets"][0]
         self.assertIn("packet_controller_relay", record)
-        self.assertEqual(record["packet_controller_relay"]["relayed_to_role"], "worker_a")
+        self.assertEqual(record["packet_controller_relay"]["relayed_to_role"], "worker")
 
     def test_pm_issue_writes_physical_envelope_body_and_ledger(self) -> None:
         root = self.make_project()
@@ -180,7 +180,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(status_path.exists())
         written_body = body_path.read_text(encoding="utf-8")
         self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, written_body)
-        self.assertIn("recipient_role: worker_a", written_body)
+        self.assertIn("recipient_role: worker", written_body)
         self.assertIn(body_text, written_body)
         self.assertEqual(envelope["body_hash"], hashlib.sha256(body_path.read_bytes()).hexdigest())
 
@@ -212,7 +212,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["schema_version"], packet_runtime.PACKET_LEDGER_SCHEMA)
         self.assertTrue(ledger["last_recovery"]["corrupt_backup_path"])
         self.assertTrue((root / ledger["last_recovery"]["corrupt_backup_path"]).exists())
-        self.assertEqual(ledger["packets"][0]["active_packet_holder"], "worker_a")
+        self.assertEqual(ledger["packets"][0]["active_packet_holder"], "worker")
 
     def test_packet_runtime_owner_modules_expose_direct_external_contracts(self) -> None:
         root = self.make_project()
@@ -231,10 +231,10 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(ledger_record["router_owned_startup_material"])
         self.assertEqual(
             packet_runtime_active_holder._require_concrete_agent_id(
-                "agent-worker-a-runtime",
-                role="worker_a",
+                "agent-worker-1-runtime",
+                role="worker",
             ),
-            "agent-worker-a-runtime",
+            "agent-worker-1-runtime",
         )
         self.assertEqual(packet_runtime_progress._validate_progress_message("Working on envelope metadata"), "Working on envelope metadata")
         parsed = packet_runtime_cli.parse_args(
@@ -275,7 +275,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(session_dir.name, "runtime_sessions")
 
         model_packet = packet_control_plane_model_state._packet_from_id("wrong_delivery-case")
-        self.assertEqual(model_packet.delivered_to_role, "worker_b")
+        self.assertEqual(model_packet.delivered_to_role, "human_like_reviewer")
         self.assertFalse(
             packet_control_plane_model_state._packet_from_id(
                 "missing_physical_files-case"
@@ -295,11 +295,11 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
 
         self.assertIn("packet_envelope_only", handoff_text)
         self.assertIn("packet_body.md", handoff_text)
-        self.assertIn("This mail is for `worker_a` only", handoff_text)
+        self.assertIn("This mail is for `worker` only", handoff_text)
         self.assertEqual(handoff["mutual_role_reminder"]["schema_version"], "flowpilot.mutual_role_reminder.v1")
         self.assertIn("You are Controller only", handoff["mutual_role_reminder"]["controller_reminder"])
         self.assertIn("project_manager", handoff["mutual_role_reminder"]["sender_reminder"])
-        self.assertIn("worker_a", handoff["mutual_role_reminder"]["recipient_reminder"])
+        self.assertIn("worker", handoff["mutual_role_reminder"]["recipient_reminder"])
         self.assertIn("next envelope", handoff["reply_continuation_reminder"])
         self.assertFalse(handoff["chat_response_body_allowed"])
         self.assertNotIn(body_text, handoff_text)
@@ -311,18 +311,18 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         envelope = self.issue_packet(root, body_text="worker-only instructions")
 
         with self.assertRaises(packet_runtime.PacketRuntimeError):
-            packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+            packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
 
         envelope = self.relay_packet(root, envelope)
-        self.assertIn("This mail is for `worker_a` only", envelope["controller_relay"]["recipient_role_reminder"])
+        self.assertIn("This mail is for `worker` only", envelope["controller_relay"]["recipient_role_reminder"])
         self.assertIn("You are Controller only", envelope["controller_relay"]["mutual_role_reminder"]["controller_reminder"])
         self.assertIn("project_manager", envelope["controller_relay"]["mutual_role_reminder"]["sender_reminder"])
-        self.assertIn("worker_a", envelope["controller_relay"]["mutual_role_reminder"]["recipient_reminder"])
+        self.assertIn("worker", envelope["controller_relay"]["mutual_role_reminder"]["recipient_reminder"])
         self.assertIn("next envelope", envelope["controller_relay"]["reply_continuation_reminder"])
         self.assertFalse(envelope["controller_relay"]["chat_response_body_allowed"])
-        body = packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        body = packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         self.assertIn(packet_runtime.PACKET_IDENTITY_MARKER, body)
-        self.assertIn("recipient_role: worker_a", body)
+        self.assertIn("recipient_role: worker", body)
         self.assertIn("mail_only_reminder", body)
         self.assertIn("worker-only instructions", body)
         with self.assertRaises(packet_runtime.PacketRuntimeError):
@@ -331,13 +331,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_worker_result_writes_physical_result_files_and_reviewer_passes(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
 
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-1",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-1",
             result_body_text="RESULT_BODY_SECRET commands, files, screenshots, and findings",
             next_recipient="human_like_reviewer",
         )
@@ -349,13 +349,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertEqual(result_handoff["envelope_kind"], "result_envelope")
         self.assertEqual(result_handoff["controller_visibility"], "result_envelope_only")
         self.assertIn("result_body.md", result_handoff_text)
-        self.assertIn("worker_a", result_handoff["mutual_role_reminder"]["sender_reminder"])
+        self.assertIn("worker", result_handoff["mutual_role_reminder"]["sender_reminder"])
         self.assertIn("human_like_reviewer", result_handoff["mutual_role_reminder"]["recipient_reminder"])
         self.assertIn("same visible mutual-role reminder", result_handoff["reply_continuation_reminder"])
         self.assertNotIn("RESULT_BODY_SECRET", result_handoff_text)
 
         result = self.relay_result(root, result)
-        self.assertIn("worker_a", result["controller_relay"]["mutual_role_reminder"]["sender_reminder"])
+        self.assertIn("worker", result["controller_relay"]["mutual_role_reminder"]["sender_reminder"])
         self.assertIn("human_like_reviewer", result["controller_relay"]["mutual_role_reminder"]["recipient_reminder"])
         self.assertIn("same visible mutual-role reminder", result["controller_relay"]["reply_continuation_reminder"])
         packet_runtime.read_result_body_for_role(root, result, role="human_like_reviewer")
@@ -363,7 +363,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=envelope,
             result_envelope=result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
 
         result_body_path = self.packet_dir(root) / "result_body.md"
@@ -371,7 +371,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         self.assertTrue(result_body_path.exists())
         result_body = result_body_path.read_text(encoding="utf-8")
         self.assertIn(packet_runtime.RESULT_IDENTITY_MARKER, result_body)
-        self.assertIn("completed_by_role: worker_a", result_body)
+        self.assertIn("completed_by_role: worker", result_body)
         self.assertIn("chat response must contain envelope metadata only", result_body)
         self.assertIn("RESULT_BODY_SECRET", result_body)
         self.assertEqual(result["result_body_hash"], hashlib.sha256(result_body_path.read_bytes()).hexdigest())
@@ -391,15 +391,15 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         session = packet_runtime.begin_role_packet_session(
             root,
             envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
         )
 
         self.assertIn("SESSION_PACKET_SECRET", session["body_text"])
         session_record = self.read_json(root / session["session_path"])
         self.assertEqual(session_record["schema_version"], packet_runtime.ROLE_PACKET_SESSION_SCHEMA)
-        self.assertEqual(session_record["role"], "worker_a")
-        self.assertEqual(session_record["agent_id"], "agent-worker-a-1")
+        self.assertEqual(session_record["role"], "worker")
+        self.assertEqual(session_record["agent_id"], "agent-worker-1-1")
         self.assertFalse(session_record["body_text_persisted_in_session"])
         self.assertNotIn("body_text", session_record)
         self.assertTrue(session_record["packet_open_authorizes_work"])
@@ -411,7 +411,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         ledger = self.read_json(ledger_path)
         packet_record = ledger["packets"][0]
         self.assertEqual(packet_record["packet_runtime_session_id"], session["session_id"])
-        self.assertEqual(packet_record["packet_body_opened_by_agent_id"], "agent-worker-a-1")
+        self.assertEqual(packet_record["packet_body_opened_by_agent_id"], "agent-worker-1-1")
         self.assertTrue(packet_record["packet_body_opened_by_runtime_session"])
         self.assertTrue(packet_record["packet_open_authorizes_work"])
         self.assertEqual(packet_record["packet_open_required_exit"], "expected_packet_result_or_existing_formal_blocker")
@@ -428,8 +428,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             next_recipient="human_like_reviewer",
         )
 
-        self.assertEqual(result["completed_by_role"], "worker_a")
-        self.assertEqual(result["completed_by_agent_id"], "agent-worker-a-1")
+        self.assertEqual(result["completed_by_role"], "worker")
+        self.assertEqual(result["completed_by_agent_id"], "agent-worker-1-1")
         self.assertEqual(result["source_packet_runtime_session_id"], session["session_id"])
         self.assertTrue(result["result_generated_by_runtime_session"])
         result_file = self.read_json(self.result_envelope_path(root))
@@ -443,7 +443,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=opened_envelope,
             result_envelope=result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
         self.assertTrue(audit["passed"])
         self.assertEqual(
@@ -454,7 +454,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=opened_envelope,
             result_envelope=result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
         self.assertTrue(neutral_audit["passed"])
         self.assertEqual(
@@ -466,7 +466,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         packet_record = ledger["packets"][0]
         self.assertEqual(packet_record["result_runtime_session_id"], session["session_id"])
         self.assertTrue(packet_record["result_generated_by_runtime_session"])
-        self.assertEqual(packet_record["completed_by_agent_id"], "agent-worker-a-1")
+        self.assertEqual(packet_record["completed_by_agent_id"], "agent-worker-1-1")
 
     def test_controller_aside_is_process_metadata_on_packet_status_and_result(self) -> None:
         root = self.make_project()
@@ -482,8 +482,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         status = packet_runtime.update_controller_progress(
             root,
             envelope_path=self.packet_envelope_path(root),
-            role="worker_a",
-            agent_id="agent-worker-a-aside",
+            role="worker",
+            agent_id="agent-worker-1-aside",
             progress=35,
             message="Working on packet envelope metadata.",
             controller_aside="I opened the packet and am checking the return shape.",
@@ -498,8 +498,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-aside",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-aside",
             result_body_text="Packet result body stays sealed from Controller.",
             next_recipient="human_like_reviewer",
             strict_role=False,
@@ -520,8 +520,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.update_controller_progress(
                 root,
                 envelope_path=self.packet_envelope_path(root),
-                role="worker_a",
-                agent_id="agent-worker-a-aside",
+                role="worker",
+                agent_id="agent-worker-1-aside",
                 progress=40,
                 message="Still working.",
                 controller_aside="line1\nline2\nline3\nline4",
@@ -533,8 +533,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         worker_session = packet_runtime.begin_role_packet_session(
             root,
             envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
         )
         result = packet_runtime.complete_role_packet_session(
             root,
@@ -572,7 +572,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=opened_envelope,
             result_envelope=relayed_result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
         self.assertTrue(audit["passed"])
 
@@ -586,12 +586,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_reviewer_audit_requires_ledger_open_receipts_not_envelope_markers_only(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-1",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-1",
             result_body_text="valid result",
             next_recipient="human_like_reviewer",
         )
@@ -608,7 +608,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=envelope,
             result_envelope=forged_result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
 
         self.assertFalse(audit["passed"])
@@ -621,7 +621,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         envelope = self.relay_packet(root, self.issue_packet(root))
         forged_envelope = dict(envelope)
         forged_envelope["body_opened_by_role"] = {
-            "role": "worker_a",
+            "role": "worker",
             "opened_at": "2026-05-07T00:00:00Z",
             "controller_relay_verified": True,
             "body_hash_verified": True,
@@ -631,8 +631,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.write_result(
                 root,
                 packet_envelope=forged_envelope,
-                completed_by_role="worker_a",
-                completed_by_agent_id="agent-worker-a-1",
+                completed_by_role="worker",
+                completed_by_agent_id="agent-worker-1-1",
                 result_body_text="forged open marker result",
                 next_recipient="human_like_reviewer",
             )
@@ -640,12 +640,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_result_ready_for_reviewer_relay_requires_result_ledger_absorption(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-1",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-1",
             result_body_text="valid result",
             next_recipient="human_like_reviewer",
         )
@@ -658,7 +658,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=envelope,
             result_envelope=result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
 
         self.assertFalse(audit["passed"])
@@ -668,12 +668,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_reviewer_audit_rejects_completed_agent_id_role_string(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="worker_a",
+            completed_by_role="worker",
+            completed_by_agent_id="worker",
             result_body_text="valid result with role string as agent id",
             next_recipient="human_like_reviewer",
         )
@@ -684,7 +684,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=envelope,
             result_envelope=result,
-            agent_role_map={"worker_a": "worker_a"},
+            agent_role_map={"worker": "worker"},
         )
 
         self.assertFalse(audit["passed"])
@@ -694,12 +694,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_reviewer_blocks_packet_or_result_hash_mismatch(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-1",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-1",
             result_body_text="valid result",
             next_recipient="human_like_reviewer",
         )
@@ -712,7 +712,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=envelope,
             result_envelope=result,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
 
         self.assertFalse(audit["passed"])
@@ -721,13 +721,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_reviewer_blocks_wrong_role_and_controller_origin(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
 
         wrong_role_result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_b",
-            completed_by_agent_id="agent-worker-b-1",
+            completed_by_role="human_like_reviewer",
+            completed_by_agent_id="agent-reviewer-1",
             result_body_text="wrong role result",
             next_recipient="human_like_reviewer",
             strict_role=False,
@@ -738,7 +738,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=envelope,
             result_envelope=wrong_role_result,
-            agent_role_map={"agent-worker-b-1": "worker_b"},
+            agent_role_map={"agent-reviewer-1": "human_like_reviewer"},
         )
         self.assertFalse(wrong_role_audit["passed"])
         self.assertIn("result_completed_by_wrong_role", wrong_role_audit["blockers"])
@@ -775,7 +775,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 envelope_path=self.packet_envelope_path(root),
                 controller_agent_id="agent-controller-1",
                 received_from_role="project_manager",
-                relayed_to_role="worker_a",
+                relayed_to_role="worker",
                 body_was_read_by_controller=True,
             )
 
@@ -806,7 +806,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 envelope_path=self.packet_envelope_path(root, "packet-old"),
                 controller_agent_id="agent-controller-1",
                 received_from_role="project_manager",
-                relayed_to_role="worker_a",
+                relayed_to_role="worker",
                 body_was_read_by_controller=True,
             )
 
@@ -814,13 +814,13 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_id="packet-new",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="replacement work",
             replacement_for="packet-old",
         )
         replacement = self.relay_packet(root, replacement, packet_id="packet-new")
-        packet_runtime.read_packet_body_for_role(root, replacement, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, replacement, role="worker")
         audit = packet_runtime.audit_packet_chain(root, node_id="node-001")
         codes = {item["code"] for item in audit["blockers"]}
         self.assertNotIn("contaminated_packet_without_replacement", codes)
@@ -903,17 +903,17 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         envelope["controller_relay"]["envelope_hash"] = packet_runtime.envelope_hash(envelope)
 
         with self.assertRaises(packet_runtime.PacketRuntimeError):
-            packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+            packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
 
     def test_result_identity_boundary_is_required_on_read(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-1",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-1",
             result_body_text="valid result",
             next_recipient="human_like_reviewer",
         )
@@ -929,12 +929,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_fast_lane_closes_with_controller_notice(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        self.write_live_crew_slot(root)
+        self.write_live_runtime_roles_slot(root)
         lease = packet_runtime.issue_active_holder_lease(
             root,
             packet_envelope=envelope,
-            holder_role="worker_a",
-            holder_agent_id="agent-worker-a-1",
+            holder_role="worker",
+            holder_agent_id="agent-worker-1-1",
             route_version=1,
             frontier_version=1,
         )
@@ -942,8 +942,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         ack = packet_runtime.active_holder_ack(
             root,
             lease_path=lease["lease_path"],
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
             route_version=1,
             frontier_version=1,
         )
@@ -952,29 +952,29 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         progress = packet_runtime.active_holder_progress(
             root,
             lease_path=lease["lease_path"],
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
             progress=20,
             message="Implementation is underway.",
             route_version=1,
             frontier_version=1,
         )
-        self.assertEqual(progress["holder"], "worker_a")
+        self.assertEqual(progress["holder"], "worker")
         self.assertEqual(progress["status"], "working")
 
         session = packet_runtime.begin_role_packet_session(
             root,
             envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
         )
-        self.assertEqual(session["agent_id"], "agent-worker-a-1")
+        self.assertEqual(session["agent_id"], "agent-worker-1-1")
 
         submission = packet_runtime.active_holder_submit_result(
             root,
             lease_path=lease["lease_path"],
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
             result_body_text="FAST_LANE_RESULT_SECRET commands and files",
             next_recipient="human_like_reviewer",
             route_version=1,
@@ -1008,11 +1008,11 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             root,
             packet_envelope=self.read_json(self.packet_envelope_path(root)),
             result_envelope=relayed,
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
         self.assertTrue(audit["passed"])
 
-    def test_active_holder_lease_requires_live_crew_slot(self) -> None:
+    def test_active_holder_lease_requires_live_runtime_roles_slot(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
 
@@ -1020,8 +1020,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.issue_active_holder_lease(
                 root,
                 packet_envelope=envelope,
-                holder_role="worker_a",
-                holder_agent_id="agent-worker-a-1",
+                holder_role="worker",
+                holder_agent_id="agent-worker-1-1",
                 route_version=1,
                 frontier_version=1,
             )
@@ -1036,9 +1036,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "run_id": "run-test",
                 "role_slots": [
                     {
-                        "role_key": "worker_a",
+                        "role_key": "worker",
                         "status": "live_agent_recovered",
-                        "agent_id": "replacement-worker-a",
+                        "agent_id": "replacement-worker-1",
                         "host_liveness_status": "unknown",
                         "liveness_decision": "opened_replacement_from_current_run_memory",
                         "last_role_recovery_result": "targeted_replacement_opened",
@@ -1051,8 +1051,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.issue_active_holder_lease(
                 root,
                 packet_envelope=envelope,
-                holder_role="worker_a",
-                holder_agent_id="replacement-worker-a",
+                holder_role="worker",
+                holder_agent_id="replacement-worker-1",
                 route_version=1,
                 frontier_version=1,
             )
@@ -1060,7 +1060,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_cli_round_trip_writes_controller_notice(self) -> None:
         root = self.make_project()
         self.relay_packet(root, self.issue_packet(root))
-        self.write_live_crew_slot(root)
+        self.write_live_runtime_roles_slot(root)
         packet_path = ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json"
 
         lease = self.run_packet_cli(
@@ -1070,16 +1070,16 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "--envelope-path",
                 packet_path,
                 "--holder-role",
-                "worker_a",
+                "worker",
                 "--holder-agent-id",
-                "agent-worker-a-1",
+                "agent-worker-1-1",
                 "--route-version",
                 "1",
                 "--frontier-version",
                 "1",
             ],
         )
-        self.assertEqual(lease["holder_agent_id"], "agent-worker-a-1")
+        self.assertEqual(lease["holder_agent_id"], "agent-worker-1-1")
 
         ack = self.run_packet_cli(
             root,
@@ -1088,9 +1088,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "--lease-path",
                 lease["lease_path"],
                 "--role",
-                "worker_a",
+                "worker",
                 "--agent-id",
-                "agent-worker-a-1",
+                "agent-worker-1-1",
                 "--route-version",
                 "1",
                 "--frontier-version",
@@ -1106,9 +1106,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "--envelope-path",
                 packet_path,
                 "--role",
-                "worker_a",
+                "worker",
                 "--agent-id",
-                "agent-worker-a-1",
+                "agent-worker-1-1",
             ],
         )
         submission = self.run_packet_cli(
@@ -1118,9 +1118,9 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "--lease-path",
                 lease["lease_path"],
                 "--role",
-                "worker_a",
+                "worker",
                 "--agent-id",
-                "agent-worker-a-1",
+                "agent-worker-1-1",
                 "--result-body-text",
                 "CLI fast lane result",
                 "--next-recipient",
@@ -1140,12 +1140,12 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_fast_lane_rejects_wrong_or_stale_contact(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        self.write_live_crew_slot(root)
+        self.write_live_runtime_roles_slot(root)
         lease = packet_runtime.issue_active_holder_lease(
             root,
             packet_envelope=envelope,
-            holder_role="worker_a",
-            holder_agent_id="agent-worker-a-1",
+            holder_role="worker",
+            holder_agent_id="agent-worker-1-1",
             route_version=1,
             frontier_version=1,
         )
@@ -1154,8 +1154,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.active_holder_ack(
                 root,
                 lease_path=lease["lease_path"],
-                role="worker_b",
-                agent_id="agent-worker-b-1",
+                role="human_like_reviewer",
+                agent_id="agent-reviewer-1",
                 route_version=1,
                 frontier_version=1,
             )
@@ -1164,8 +1164,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.active_holder_ack(
                 root,
                 lease_path=lease["lease_path"],
-                role="worker_a",
-                agent_id="agent-worker-a-2",
+                role="worker",
+                agent_id="agent-worker-1-2",
                 route_version=1,
                 frontier_version=1,
             )
@@ -1174,8 +1174,8 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             packet_runtime.active_holder_ack(
                 root,
                 lease_path=lease["lease_path"],
-                role="worker_a",
-                agent_id="agent-worker-a-1",
+                role="worker",
+                agent_id="agent-worker-1-1",
                 route_version=2,
                 frontier_version=1,
             )
@@ -1183,32 +1183,32 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
     def test_active_holder_mechanical_reject_keeps_current_holder(self) -> None:
         root = self.make_project()
         envelope = self.relay_packet(root, self.issue_packet(root))
-        self.write_live_crew_slot(root)
+        self.write_live_runtime_roles_slot(root)
         lease = packet_runtime.issue_active_holder_lease(
             root,
             packet_envelope=envelope,
-            holder_role="worker_a",
-            holder_agent_id="agent-worker-a-1",
+            holder_role="worker",
+            holder_agent_id="agent-worker-1-1",
             route_version=1,
             frontier_version=1,
         )
         packet_runtime.active_holder_ack(
             root,
             lease_path=lease["lease_path"],
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
         )
         packet_runtime.begin_role_packet_session(
             root,
             envelope_path=".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
         )
         wrong_agent_result = packet_runtime.write_result(
             root,
             packet_envelope=self.read_json(self.packet_envelope_path(root)),
-            completed_by_role="worker_a",
-            completed_by_agent_id="agent-worker-a-2",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-1-2",
             result_body_text="wrong agent result",
             next_recipient="human_like_reviewer",
         )
@@ -1216,15 +1216,15 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
         rejected = packet_runtime.active_holder_submit_existing_result(
             root,
             lease_path=lease["lease_path"],
-            role="worker_a",
-            agent_id="agent-worker-a-1",
+            role="worker",
+            agent_id="agent-worker-1-1",
             result_envelope_path=wrong_agent_result["result_body_path"].rsplit("/", 1)[0] + "/result_envelope.json",
         )
 
         self.assertFalse(rejected["passed"])
         self.assertIn("active_holder_result_completed_by_wrong_agent", rejected["audit"]["blockers"])
         ledger = self.read_json(root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json")
-        self.assertEqual(ledger["active_packet_holder"], "worker_a")
+        self.assertEqual(ledger["active_packet_holder"], "worker")
         self.assertEqual(ledger["active_packet_status"], "active-holder-mechanical-reject")
         self.assertTrue(ledger["packets"][0]["fast_lane_mechanical_reject_recorded"])
         self.assertFalse((self.packet_dir(root) / "controller_next_action_notice.json").exists())

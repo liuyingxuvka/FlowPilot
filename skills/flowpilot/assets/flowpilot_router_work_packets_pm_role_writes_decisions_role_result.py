@@ -62,7 +62,7 @@ def _write_pm_role_work_result_decision(router: ModuleType, project_root: Path, 
         for mapping in gate_mappings:
             if mapping.get('request_id') == record.get('request_id'):
                 record['pm_result_decision']['gate_mapping'] = mapping
-        router._record_officer_lifecycle_pm_decision(project_root, run_root, run_state, record, decision_record)
+        router._record_flowguard_operator_lifecycle_pm_decision(project_root, run_root, run_state, record, decision_record)
     if request_id and index.get('active_request_id') == request_id:
         index['active_request_id'] = None
     if batch_id and index.get('active_batch_id') == batch_id:

@@ -39,7 +39,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -49,13 +48,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "active_task_set_missing_explicit_authority": {
@@ -87,7 +87,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -97,13 +96,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "cockpit_closed_run_exposed_as_active_tab": {
@@ -135,7 +135,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -145,13 +144,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "cockpit_completed_checklists_pending": {
@@ -183,7 +183,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -193,13 +192,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "cockpit_status_mismatch": {
@@ -231,7 +231,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -241,13 +240,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "controller_reads_sealed_body_during_audit": {
@@ -279,7 +279,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -289,13 +288,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": true,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "current_pointer_used_as_daemon_authority": {
@@ -327,7 +327,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -337,13 +336,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "install_audit_layout_policy_conflict": {
@@ -375,7 +375,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -385,13 +384,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "installed_skill_source_drift": {
@@ -423,7 +423,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -433,13 +432,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "material_dispatch_output_contract_role_drift": {
@@ -471,7 +471,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -481,13 +480,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "material_dispatch_write_target_missing": {
@@ -519,7 +519,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -529,13 +528,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "node_completion_idempotency_global_only": {
@@ -567,7 +567,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": false,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -577,61 +576,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
-        }
-      },
-      "unsupported_material_packets_left_unrejected": {
-        "detected": true,
-        "expected_failure": "material-scan dispatch lacks unsupported packet rejection",
-        "failures": [
-          "material-scan dispatch lacks unsupported packet rejection"
-        ],
-        "state": {
-          "active_task_policy_observed": true,
-          "active_task_set_has_explicit_authority": true,
-          "cockpit_checklists_complete_for_completed_nodes": true,
-          "cockpit_closed_runs_hidden_from_active_tabs": true,
-          "cockpit_projection_visible": true,
-          "cockpit_source_present_in_tree": true,
-          "cockpit_status_derived_from_frontier": true,
-          "completed_nodes_observed": true,
-          "controller_boundary_preserved": true,
-          "current_pointer_is_ui_focus_only": true,
-          "gate_outcome_contracts_complete": true,
-          "gate_outcome_contracts_observed": true,
-          "heartbeat_inactive_after_terminal": true,
-          "history_default_hidden": true,
-          "install_audit_policy_accepts_first_class_cockpit": true,
-          "installed_skill_matches_repository_source": true,
-          "material_dispatch_write_target_explicit": true,
-          "material_output_contract_role_scoped": true,
-          "material_scan_packets_observed": true,
-          "minimal_repair_strategy_selected": true,
-          "node_completion_idempotency_scoped_to_active_node": true,
-          "node_completion_observed": true,
-          "unsupported_material_packets_rejected": false,
-          "reviewer_block_events_observed": true,
-          "reviewer_block_events_registered": true,
-          "role_event_artifacts_scanned": true,
-          "role_liveness_ready_or_blocked": true,
-          "route_snapshot_checklists_complete_for_completed_nodes": true,
-          "route_snapshot_status_derived_from_frontier": true,
-          "route_snapshot_visible": true,
-          "router_frontier_lifecycle_terminal_consistent": true,
-          "run_lifecycle_record_written": true,
-          "sealed_body_files_opened_by_controller": false,
-          "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
-          "status": "complete",
-          "step": 10,
-          "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "reviewer_block_event_taxonomy_gap": {
@@ -663,7 +615,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": false,
           "role_event_artifacts_scanned": true,
@@ -673,20 +624,21 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
-      "reviewer_officer_gate_outcome_pass_only": {
+      "reviewer_flowguard_operator_gate_outcome_pass_only": {
         "detected": true,
-        "expected_failure": "reviewer/officer gate outcome contracts have pass-only paths",
+        "expected_failure": "reviewer/FlowGuard operator gate outcome contracts have pass-only paths",
         "failures": [
-          "reviewer/officer gate outcome contracts have pass-only paths"
+          "reviewer/FlowGuard operator gate outcome contracts have pass-only paths"
         ],
         "state": {
           "active_task_policy_observed": true,
@@ -711,7 +663,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -721,13 +672,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "role_output_event_artifact_scan_missing": {
@@ -759,7 +711,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": false,
@@ -769,13 +720,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "route_state_snapshot_completed_checklists_pending": {
@@ -807,7 +759,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -817,13 +768,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "route_state_snapshot_status_mismatch": {
@@ -855,7 +807,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -865,13 +816,62 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
+        }
+      },
+      "runtime_role_liveness_unproven": {
+        "detected": true,
+        "expected_failure": "runtime-requested role bindings have neither readiness proof nor an early blocker",
+        "failures": [
+          "runtime-requested role bindings have neither readiness proof nor an early blocker"
+        ],
+        "state": {
+          "active_task_policy_observed": true,
+          "active_task_set_has_explicit_authority": true,
+          "cockpit_checklists_complete_for_completed_nodes": true,
+          "cockpit_closed_runs_hidden_from_active_tabs": true,
+          "cockpit_projection_visible": true,
+          "cockpit_source_present_in_tree": true,
+          "cockpit_status_derived_from_frontier": true,
+          "completed_nodes_observed": true,
+          "controller_boundary_preserved": true,
+          "current_pointer_is_ui_focus_only": true,
+          "gate_outcome_contracts_complete": true,
+          "gate_outcome_contracts_observed": true,
+          "heartbeat_inactive_after_terminal": true,
+          "history_default_hidden": true,
+          "install_audit_policy_accepts_first_class_cockpit": true,
+          "installed_skill_matches_repository_source": true,
+          "material_dispatch_write_target_explicit": true,
+          "material_output_contract_role_scoped": true,
+          "material_scan_packets_observed": true,
+          "minimal_repair_strategy_selected": true,
+          "node_completion_idempotency_scoped_to_active_node": true,
+          "node_completion_observed": true,
+          "reviewer_block_events_observed": true,
+          "reviewer_block_events_registered": true,
+          "role_event_artifacts_scanned": true,
+          "role_liveness_ready_or_blocked": false,
+          "route_snapshot_checklists_complete_for_completed_nodes": true,
+          "route_snapshot_status_derived_from_frontier": true,
+          "route_snapshot_visible": true,
+          "router_frontier_lifecycle_terminal_consistent": true,
+          "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
+          "sealed_body_files_opened_by_controller": false,
+          "selected_status_separate_from_completion": true,
+          "status": "complete",
+          "step": 10,
+          "terminal_closure_observed": true,
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "selected_state_conflated_with_completed_state": {
@@ -903,7 +903,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -913,61 +912,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": false,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
-        }
-      },
-      "six_role_liveness_unproven": {
-        "detected": true,
-        "expected_failure": "standard runtime roles have neither readiness proof nor an early blocker",
-        "failures": [
-          "standard runtime roles have neither readiness proof nor an early blocker"
-        ],
-        "state": {
-          "active_task_policy_observed": true,
-          "active_task_set_has_explicit_authority": true,
-          "cockpit_checklists_complete_for_completed_nodes": true,
-          "cockpit_closed_runs_hidden_from_active_tabs": true,
-          "cockpit_projection_visible": true,
-          "cockpit_source_present_in_tree": true,
-          "cockpit_status_derived_from_frontier": true,
-          "completed_nodes_observed": true,
-          "controller_boundary_preserved": true,
-          "current_pointer_is_ui_focus_only": true,
-          "gate_outcome_contracts_complete": true,
-          "gate_outcome_contracts_observed": true,
-          "heartbeat_inactive_after_terminal": true,
-          "history_default_hidden": true,
-          "install_audit_policy_accepts_first_class_cockpit": true,
-          "installed_skill_matches_repository_source": true,
-          "material_dispatch_write_target_explicit": true,
-          "material_output_contract_role_scoped": true,
-          "material_scan_packets_observed": true,
-          "minimal_repair_strategy_selected": true,
-          "node_completion_idempotency_scoped_to_active_node": true,
-          "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
-          "reviewer_block_events_observed": true,
-          "reviewer_block_events_registered": true,
-          "role_event_artifacts_scanned": true,
-          "role_liveness_ready_or_blocked": false,
-          "route_snapshot_checklists_complete_for_completed_nodes": true,
-          "route_snapshot_status_derived_from_frontier": true,
-          "route_snapshot_visible": true,
-          "router_frontier_lifecycle_terminal_consistent": true,
-          "run_lifecycle_record_written": true,
-          "sealed_body_files_opened_by_controller": false,
-          "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
-          "status": "complete",
-          "step": 10,
-          "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "terminal_authority_mismatch": {
@@ -999,7 +951,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -1009,13 +960,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": false,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "terminal_closure_missing_run_lifecycle": {
@@ -1047,7 +999,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -1057,13 +1008,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": false,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
         }
       },
       "terminal_control_blocker_not_cleared": {
@@ -1095,7 +1047,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -1105,13 +1056,14 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": false
+          "terminal_control_blocker_cleared": false,
+          "unsupported_material_packets_rejected": true
         }
       },
       "terminal_heartbeat_still_active": {
@@ -1143,7 +1095,6 @@
           "minimal_repair_strategy_selected": true,
           "node_completion_idempotency_scoped_to_active_node": true,
           "node_completion_observed": true,
-          "unsupported_material_packets_rejected": true,
           "reviewer_block_events_observed": true,
           "reviewer_block_events_registered": true,
           "role_event_artifacts_scanned": true,
@@ -1153,13 +1104,62 @@
           "route_snapshot_visible": true,
           "router_frontier_lifecycle_terminal_consistent": true,
           "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
           "sealed_body_files_opened_by_controller": false,
           "selected_status_separate_from_completion": true,
-          "standard_six_roles_requested": true,
           "status": "complete",
           "step": 10,
           "terminal_closure_observed": true,
-          "terminal_control_blocker_cleared": true
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": true
+        }
+      },
+      "unsupported_material_packets_left_unrejected": {
+        "detected": true,
+        "expected_failure": "material-scan dispatch lacks unsupported packet rejection",
+        "failures": [
+          "material-scan dispatch lacks unsupported packet rejection"
+        ],
+        "state": {
+          "active_task_policy_observed": true,
+          "active_task_set_has_explicit_authority": true,
+          "cockpit_checklists_complete_for_completed_nodes": true,
+          "cockpit_closed_runs_hidden_from_active_tabs": true,
+          "cockpit_projection_visible": true,
+          "cockpit_source_present_in_tree": true,
+          "cockpit_status_derived_from_frontier": true,
+          "completed_nodes_observed": true,
+          "controller_boundary_preserved": true,
+          "current_pointer_is_ui_focus_only": true,
+          "gate_outcome_contracts_complete": true,
+          "gate_outcome_contracts_observed": true,
+          "heartbeat_inactive_after_terminal": true,
+          "history_default_hidden": true,
+          "install_audit_policy_accepts_first_class_cockpit": true,
+          "installed_skill_matches_repository_source": true,
+          "material_dispatch_write_target_explicit": true,
+          "material_output_contract_role_scoped": true,
+          "material_scan_packets_observed": true,
+          "minimal_repair_strategy_selected": true,
+          "node_completion_idempotency_scoped_to_active_node": true,
+          "node_completion_observed": true,
+          "reviewer_block_events_observed": true,
+          "reviewer_block_events_registered": true,
+          "role_event_artifacts_scanned": true,
+          "role_liveness_ready_or_blocked": true,
+          "route_snapshot_checklists_complete_for_completed_nodes": true,
+          "route_snapshot_status_derived_from_frontier": true,
+          "route_snapshot_visible": true,
+          "router_frontier_lifecycle_terminal_consistent": true,
+          "run_lifecycle_record_written": true,
+          "runtime_requested_roles_requested": true,
+          "sealed_body_files_opened_by_controller": false,
+          "selected_status_separate_from_completion": true,
+          "status": "complete",
+          "step": 10,
+          "terminal_closure_observed": true,
+          "terminal_control_blocker_cleared": true,
+          "unsupported_material_packets_rejected": false
         }
       }
     },
@@ -1237,7 +1237,6 @@
       "minimal_repair_strategy_selected": true,
       "node_completion_idempotency_scoped_to_active_node": true,
       "node_completion_observed": true,
-      "unsupported_material_packets_rejected": true,
       "reviewer_block_events_observed": true,
       "reviewer_block_events_registered": true,
       "role_event_artifacts_scanned": true,
@@ -1247,13 +1246,14 @@
       "route_snapshot_visible": true,
       "router_frontier_lifecycle_terminal_consistent": true,
       "run_lifecycle_record_written": true,
+      "runtime_requested_roles_requested": true,
       "sealed_body_files_opened_by_controller": false,
       "selected_status_separate_from_completion": true,
-      "standard_six_roles_requested": true,
       "status": "complete",
       "step": 10,
       "terminal_closure_observed": true,
-      "terminal_control_blocker_cleared": true
+      "terminal_control_blocker_cleared": true,
+      "unsupported_material_packets_rejected": true
     }
   }
 }

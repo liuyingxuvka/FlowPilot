@@ -41,7 +41,7 @@ class FlowPilotModelingCoverageTests(unittest.TestCase):
         product_architecture = (cards_root / "phases" / "pm_product_architecture.md").read_text(
             encoding="utf-8"
         )
-        product_officer = (cards_root / "officers" / "product_architecture_modelability.md").read_text(
+        flowguard_operator_product_scope = (cards_root / "flowguard_operator" / "product_architecture_modelability.md").read_text(
             encoding="utf-8"
         )
         product_decision = (cards_root / "phases" / "pm_product_behavior_model_decision.md").read_text(
@@ -53,7 +53,7 @@ class FlowPilotModelingCoverageTests(unittest.TestCase):
         route_skeleton = (cards_root / "phases" / "pm_route_skeleton.md").read_text(
             encoding="utf-8"
         )
-        process_officer = (cards_root / "officers" / "route_process_check.md").read_text(
+        flowguard_operator_route_scope = (cards_root / "flowguard_operator" / "route_process_check.md").read_text(
             encoding="utf-8"
         )
         final_ledger = (cards_root / "phases" / "pm_final_ledger.md").read_text(
@@ -64,17 +64,17 @@ class FlowPilotModelingCoverageTests(unittest.TestCase):
         self.assertIn("FlowGuard is a required foundation", product_architecture)
         self.assertIn("flowguard/product_modeling_plan.json", product_architecture)
         self.assertIn("product model family", product_architecture)
-        self.assertIn("product_model_family_coverage", product_officer)
-        self.assertIn("single", product_officer)
-        self.assertIn("over-collapsed model", product_officer)
+        self.assertIn("product_model_family_coverage", flowguard_operator_product_scope)
+        self.assertIn("single", flowguard_operator_product_scope)
+        self.assertIn("over-collapsed model", flowguard_operator_product_scope)
         self.assertIn("product_model_family_coverage_review", product_decision)
         self.assertIn("ordinary child skills only", child_manifest)
         self.assertIn("after PM has accepted", child_manifest)
         self.assertIn("manifest as a substitute", child_manifest)
         self.assertIn("flowguard/process_modeling_plan.json", route_skeleton)
         self.assertIn("child-skill conformance", route_skeleton)
-        self.assertIn("process_model_family_coverage", process_officer)
-        self.assertIn("Manifest-only coverage is not enough", process_officer)
+        self.assertIn("process_model_family_coverage", flowguard_operator_route_scope)
+        self.assertIn("Manifest-only coverage is not enough", flowguard_operator_route_scope)
         self.assertIn("FlowGuard modeling coverage closure", final_ledger)
         self.assertIn("unresolved model-family count", final_ledger)
 

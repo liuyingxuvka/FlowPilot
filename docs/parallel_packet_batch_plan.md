@@ -15,12 +15,12 @@ performs one batch-level review or PM absorption step before the route advances.
 | 1 | FlowGuard model | Add a dedicated parallel packet batch model covering batch registration, relay, result join, batch review, PM absorption, repair, and stage advance. | Model safe graph passes and known-bad hazards are detected. |
 | 2 | Shared batch runtime | Add router helpers for a `parallel_packet_batch` index with `batch_id`, `batch_kind`, `join_policy`, `review_policy`, packet records, counts, and per-packet status. | One helper can register, load, relay, validate all results, and mark review/absorption for material, research, current-node, and PM role-work. |
 | 3 | Material scan | Move the existing material `packets[]` path onto the shared batch index while keeping material-specific review rules. | Material scan records one batch, relays all packets, and relays all results to reviewer only after every result exists. |
-| 4 | Research package | Replace single `worker_owner`/single packet behavior with `packets[]`. Allow worker and FlowGuard officer packets when the PM package needs parallel research/modeling. | Research relay can address multiple packet recipients and waits for all research/officer results before reviewer direct-source/model review. |
+| 4 | Research package | Replace single `worker_owner`/single packet behavior with `packets[]`. Allow worker and FlowGuard operator packets when the PM package needs parallel research/modeling. | Research relay can address multiple packet recipients and waits for all research/FlowGuard operator results before reviewer direct-source/model review. |
 | 5 | Current node work | Replace the single current-node packet/write grant with a current-node batch and one grant per packet. | PM can register multiple current-node packets, Router tracks all grants, all results, and one batch review before PM node completion. |
 | 6 | PM role-work requests | Replace single `active_request_id` with an active request batch containing multiple role-work packets. | PM may ask multiple roles for bounded advice; Router waits for all returned results before PM records one batch decision. |
 | 7 | Reviewer flow | Add batch-level review contract fields: `batch_id`, `reviewed_packet_ids`, `packet_count`, `per_packet_findings`, and `overall_passed`. | Reviewer cannot pass a batch unless every required packet is opened and reviewed. |
-| 8 | Prompt cards | Update PM, worker, officer, and reviewer cards to describe batch registration, direct-to-router returns, role busy/idle, and one batch join before stage advance. | No active prompt tells roles to return result envelopes through Controller or to advance after a single packet in a batch. |
-| 9 | Tests | Add targeted runtime tests for material, research, current-node, PM role-work, officer packets, partial-result blocking, batch review blocking, and all-pass advance. | New targeted tests pass; existing router/model checks still pass. |
+| 8 | Prompt cards | Update PM, worker, FlowGuard operator, and reviewer cards to describe batch registration, direct-to-router returns, role busy/idle, and one batch join before stage advance. | No active prompt tells roles to return result envelopes through Controller or to advance after a single packet in a batch. |
+| 9 | Tests | Add targeted runtime tests for material, research, current-node, PM role-work, FlowGuard operator packets, partial-result blocking, batch review blocking, and all-pass advance. | New targeted tests pass; existing router/model checks still pass. |
 | 10 | Local sync | Refresh the locally installed FlowPilot skill from the repo and run local install audits. | `install_flowpilot.py --sync-repo-owned --json`, audit, and check commands pass; local git commit records the change. |
 
 ## Prompt Files To Update
@@ -28,12 +28,12 @@ performs one batch-level review or PM absorption step before the route advances.
 | File | Required Update |
 | --- | --- |
 | `skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md` | Describe material scan as a batch. PM may include multiple worker packets; Router joins every result before material sufficiency review. |
-| `skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md` | Replace single `worker_owner` guidance with `packets[]`. PM may include worker research and officer model packets in the same research batch. |
+| `skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md` | Replace single `worker_owner` guidance with `packets[]`. PM may include worker research and FlowGuard operator model packets in the same research batch. |
 | `skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md` | Replace single current-node packet guidance with current-node batch guidance. All packet results must join and pass one batch result review before PM completes the node. |
 | `skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md` | Replace one active request with one active request batch. PM records one disposition after all role-work results return. |
 | `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md` | Add PM-wide rule: issue only work that can start now; simultaneous packet registration means PM asserts the packets can run in parallel inside the current router-authorized scope. |
-| `skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md` and `worker_b.md` | Clarify workers complete only their addressed packet and do not infer batch completion or route advancement. |
-| `skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md` and `process_flowguard_officer.md` | Clarify officers may receive PM batch packets for bounded FlowGuard/modeling work, but cannot make PM decisions or reviewer approvals. |
+| `skills/flowpilot/assets/runtime_kit/cards/roles/worker.md` and `worker.md` | Clarify workers complete only their addressed packet and do not infer batch completion or route advancement. |
+| `skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md` and `flowguard_operator.md` | Clarify FlowGuard operators may receive PM batch packets for bounded FlowGuard/modeling work, but cannot make PM decisions or reviewer approvals. |
 | `skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md` | Add batch-review rule: review every packet result in the Router-supplied batch list and return one overall pass/block report. |
 
 ## Failure Modes FlowGuard Must Catch
@@ -45,7 +45,7 @@ performs one batch-level review or PM absorption step before the route advances.
 | F3 | Router gives a role a second packet while that role still has an open packet. | Invariant failure: busy role assigned another open packet. |
 | F4 | PM emits duplicate packet ids or a duplicate active batch for the same stage. | Invariant failure: duplicate batch/packet registration accepted. |
 | F5 | Old single-packet path bypasses the batch index. | Invariant failure: packet relayed or result accepted without batch membership. |
-| F6 | Officer packet result is not counted in the batch join. | Invariant failure: batch joined while any officer packet is missing. |
+| F6 | FlowGuard operator packet result is not counted in the batch join. | Invariant failure: batch joined while any FlowGuard operator packet is missing. |
 | F7 | Controller reads or relays sealed body content instead of envelope metadata. | Invariant failure: sealed body boundary broken. |
 | F8 | One packet blocks or fails, but the whole batch is still marked passed. | Invariant failure: batch passed with blocking packet. |
 | F9 | Batch repair/reissue loses lineage from the original batch and packets. | Invariant failure: replacement batch lacks parent batch/packet lineage. |

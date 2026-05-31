@@ -1,7 +1,7 @@
 """PM role-work owner public facade for the FlowPilot router.
 
 The behavior is split into gate mappings, request/result writes, request index
-and officer lifecycle, and next-action reconciliation helpers. Public import
+and FlowGuard operator lifecycle, and next-action reconciliation helpers. Public import
 names remain available from this module.
 """
 
@@ -57,16 +57,16 @@ __all__ = (
     '_empty_pm_role_work_request_index',
     '_load_pm_role_work_request_index',
     '_write_pm_role_work_request_index',
-    '_officer_request_lifecycle_index_path',
-    '_empty_officer_request_lifecycle_index',
-    '_load_officer_request_lifecycle_index',
-    '_officer_lifecycle_entry',
-    '_upsert_officer_lifecycle_entry',
-    '_write_officer_request_lifecycle_index',
-    '_record_officer_lifecycle_request',
-    '_record_officer_lifecycle_status',
-    '_record_officer_lifecycle_result_returned',
-    '_record_officer_lifecycle_pm_decision',
+    '_flowguard_operator_request_lifecycle_index_path',
+    '_empty_flowguard_operator_request_lifecycle_index',
+    '_load_flowguard_operator_request_lifecycle_index',
+    '_flowguard_operator_lifecycle_entry',
+    '_upsert_flowguard_operator_lifecycle_entry',
+    '_write_flowguard_operator_request_lifecycle_index',
+    '_record_flowguard_operator_lifecycle_request',
+    '_record_flowguard_operator_lifecycle_status',
+    '_record_flowguard_operator_lifecycle_result_returned',
+    '_record_flowguard_operator_lifecycle_pm_decision',
     '_pm_role_work_request_record',
     '_active_pm_role_work_request',
     '_active_pm_role_work_batch_records',

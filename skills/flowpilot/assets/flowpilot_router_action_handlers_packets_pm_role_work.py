@@ -36,7 +36,7 @@ def _apply_relay_pm_role_work_request_packet(
     for record in records:
         record["status"] = "packet_relayed"
         record["packet_relayed_at"] = router.utc_now()
-        router._record_officer_lifecycle_status(
+        router._record_flowguard_operator_lifecycle_status(
             project_root,
             run_root,
             run_state,
@@ -93,7 +93,7 @@ def _apply_relay_pm_role_work_result_to_pm(
     for record in records:
         record["status"] = "result_relayed_to_pm"
         record["result_relayed_to_pm_at"] = router.utc_now()
-        router._record_officer_lifecycle_status(
+        router._record_flowguard_operator_lifecycle_status(
             project_root,
             run_root,
             run_state,

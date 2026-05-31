@@ -19,15 +19,15 @@ PROCESS_CONTRACT_POLICIES: dict[str, dict[str, str]] = {
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
-    "officer_model_report": {
-        "task_family": "officer.model_report",
-        "packet_type": "officer_request",
+    "flowguard_operator_model_report": {
+        "task_family": "flowguard_operator.model_report",
+        "packet_type": "flowguard_operator_request",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
-    "officer_model_miss_report": {
-        "task_family": "officer.model_miss_report",
-        "packet_type": "officer_request",
+    "flowguard_operator_model_miss_report": {
+        "task_family": "flowguard_operator.model_miss_report",
+        "packet_type": "flowguard_operator_request",
         "required_result_next_recipient": "project_manager",
         "absorbing_role": "project_manager",
     },
@@ -105,8 +105,8 @@ PROCESS_CONTRACT_BINDINGS: dict[str, dict[str, Any]] = _process_contract_binding
 
 PM_ROLE_WORK_CONTRACT_PROCESS_KINDS = {
     "flowpilot.output_contract.pm_role_work_result.v1": "pm_role_work_request",
-    "flowpilot.output_contract.officer_model_report.v1": "officer_model_report",
-    "flowpilot.output_contract.flowguard_model_miss_report.v1": "officer_model_miss_report",
+    "flowpilot.output_contract.flowguard_operator_model_report.v1": "flowguard_operator_model_report",
+    "flowpilot.output_contract.flowguard_model_miss_report.v1": "flowguard_operator_model_miss_report",
 }
 
 PM_ROLE_WORK_FOREIGN_CONTRACT_IDS = {

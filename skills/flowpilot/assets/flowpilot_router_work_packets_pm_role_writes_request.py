@@ -108,7 +108,7 @@ def _mark_pm_role_work_superseded_requests(
     if index.get("active_batch_id") and not active_ids:
         index["active_batch_id"] = None
     for old_record in changed_records:
-        router._record_officer_lifecycle_status(
+        router._record_flowguard_operator_lifecycle_status(
             project_root,
             run_root,
             run_state,
@@ -232,7 +232,7 @@ def _write_pm_role_work_request(router: ModuleType, project_root: Path, run_root
         index['active_batch_id'] = batch_id
         index['active_request_ids'] = [request_id]
     router._write_pm_role_work_request_index(run_root, index)
-    router._record_officer_lifecycle_request(project_root, run_root, run_state, record)
+    router._record_flowguard_operator_lifecycle_request(project_root, run_root, run_state, record)
     run_state['pm_role_work_requests'] = {'index_path': project_relative(project_root, router._pm_role_work_request_index_path(run_root)), 'active_request_id': request_id, 'active_packet_id': packet_id, 'active_to_role': to_role, 'active_request_mode': request_mode}
 
 

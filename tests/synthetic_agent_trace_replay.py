@@ -33,8 +33,8 @@ def rel(root: Path, path: Path) -> str:
 @dataclass(frozen=True)
 class SyntheticTracePackage:
     name: str
-    role: str = "worker_a"
-    agent_id: str = "agent-worker-a-1"
+    role: str = "worker"
+    agent_id: str = "agent-worker-1-1"
     packet_id: str = "trace-packet-001"
     node_id: str = "trace-node-001"
     evidence_kind: str = "synthetic"
@@ -267,15 +267,15 @@ def make_trace_project() -> Path:
             "completed_nodes": [],
         },
     )
-    write_live_crew_slot(root)
+    write_live_runtime_roles_slot(root)
     return root
 
 
-def write_live_crew_slot(
+def write_live_runtime_roles_slot(
     root: Path,
     *,
-    role: str = "worker_a",
-    agent_id: str = "agent-worker-a-1",
+    role: str = "worker",
+    agent_id: str = "agent-worker-1-1",
 ) -> None:
     write_json(
         root / ".flowpilot" / "runs" / "run-test" / "role_binding_ledger.json",

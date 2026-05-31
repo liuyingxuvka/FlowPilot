@@ -42,7 +42,7 @@ skill. The current model boundary covers:
 - acceptance contract freeze and route creation;
 - PM-owned material research packages before product or route decisions can use
   unresolved sources, experiments, mechanisms, or validation claims;
-- packet control plane handoff among controller, PM, reviewer, officers, and
+- packet control plane handoff among controller, PM, reviewer, FlowGuard operators, and
   workers;
 - route heartbeat/manual resume behavior;
 - display-surface startup behavior for Cockpit or chat route signs;

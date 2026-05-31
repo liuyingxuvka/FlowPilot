@@ -16,13 +16,13 @@ Risk intent brief:
   tasks being pulled into formal FlowPilot instead of staying outside it.
 - Modeled state and side effects: PM planning profile selection, child-skill
   standard compilation, root product behavior model availability, PM route and
-  node mapping to that model, process-officer route viability checks, reviewer
+  node mapping to that model, process-FlowGuard operator route viability checks, reviewer
   blocking, and the rule that formal FlowPilot uses the full protocol only.
 - Hard invariants: accepted routes must have a matching full-protocol planning
   profile, skill standards must expose MUST/DEFAULT/FORBID/VERIFY/
   LOOP/ARTIFACT/WAIVER, inherited standards must be visible at route, node,
   packet, reviewer, and result-matrix boundaries, PM route drafts must be based
-  on the product behavior model, process-officer checks must validate route
+  on the product behavior model, process-FlowGuard operator checks must validate route
   viability against that model including repair return-to-mainline, hard
   requirement blindspots cannot pass, and small/simple tasks cannot create a
   light/simple FlowPilot profile.
@@ -31,7 +31,7 @@ Risk intent brief:
   passes.
 - 2026-05-17 extension: role-scoped quality-repair prompts must pressure
   executable workers to fix in-scope defects before completion while preventing
-  reviewer, officer, PM, or generic packet prompts from granting silent target
+  reviewer, FlowGuard operator, PM, or generic packet prompts from granting silent target
   repair authority.
 """
 
@@ -60,7 +60,7 @@ ARTIFACTLESS_MAJOR_NODE = "artifactless_major_node"
 SIMPLE_TASK_OVERTEMPLATED = "simple_task_overtemplated"
 PRODUCT_MODEL_MISSING = "product_model_missing"
 PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL = "pm_route_not_mapped_to_product_model"
-PROCESS_OFFICER_ROUTE_VIABILITY_MISSING = "process_officer_route_viability_missing"
+PROCESS_FLOWGUARD_OPERATOR_ROUTE_VIABILITY_MISSING = "flowguard_operator_route_scope_route_viability_missing"
 REPAIR_NODE_NO_MAINLINE_RETURN = "repair_node_no_mainline_return"
 NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL = "node_plan_not_mapped_to_product_model"
 PM_USER_INTENT_SELF_CHECK_MISSING = "pm_user_intent_self_check_missing"
@@ -81,7 +81,7 @@ ROLE_SKILL_USE_SELF_ATTESTED = "role_skill_use_self_attested"
 WORKER_PACKET_MISSING_IN_SCOPE_REPAIR = "worker_packet_missing_in_scope_repair"
 WORKER_PACKET_REPAIRS_OUT_OF_SCOPE = "worker_packet_repairs_out_of_scope"
 EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT = "evidence_packet_repairs_target_artifact"
-OFFICER_PACKET_REPAIRS_TARGET_ARTIFACT = "officer_packet_repairs_target_artifact"
+FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT = "flowguard_operator_packet_repairs_target_artifact"
 REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR = "reviewer_prompt_grants_direct_repair"
 GENERIC_TEMPLATE_USES_BLANKET_REPAIR = "generic_template_uses_blanket_repair"
 
@@ -102,7 +102,7 @@ NEGATIVE_SCENARIOS = (
     SIMPLE_TASK_OVERTEMPLATED,
     PRODUCT_MODEL_MISSING,
     PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL,
-    PROCESS_OFFICER_ROUTE_VIABILITY_MISSING,
+    PROCESS_FLOWGUARD_OPERATOR_ROUTE_VIABILITY_MISSING,
     REPAIR_NODE_NO_MAINLINE_RETURN,
     NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL,
     PM_USER_INTENT_SELF_CHECK_MISSING,
@@ -123,7 +123,7 @@ NEGATIVE_SCENARIOS = (
     WORKER_PACKET_MISSING_IN_SCOPE_REPAIR,
     WORKER_PACKET_REPAIRS_OUT_OF_SCOPE,
     EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT,
-    OFFICER_PACKET_REPAIRS_TARGET_ARTIFACT,
+    FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT,
     REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR,
     GENERIC_TEMPLATE_USES_BLANKET_REPAIR,
 )
@@ -168,7 +168,7 @@ class State:
     product_behavior_model_written: bool = False
     product_model_risk_boundary_checked: bool = False
     pm_route_maps_to_product_model: bool = False
-    process_officer_validated_route_viability: bool = False
+    flowguard_operator_route_scope_validated_route_viability: bool = False
     repair_return_to_mainline_defined: bool = False
     node_acceptance_plan_maps_product_model_segment: bool = False
     pm_user_intent_self_check_written: bool = False
@@ -189,7 +189,7 @@ class State:
     worker_packet_carries_in_scope_quality_repair: bool = False
     worker_packet_escalates_out_of_scope_defects: bool = False
     evidence_packet_self_corrects_only_own_output: bool = False
-    officer_packet_self_corrects_model_only: bool = False
+    flowguard_operator_packet_self_corrects_model_only: bool = False
     reviewer_prompt_forbids_direct_artifact_repair: bool = False
     generic_packet_template_role_scoped: bool = False
     final_low_quality_risks_disposition_done: bool = False
@@ -284,7 +284,7 @@ def _valid_ui_state() -> State:
         product_behavior_model_written=True,
         product_model_risk_boundary_checked=True,
         pm_route_maps_to_product_model=True,
-        process_officer_validated_route_viability=True,
+        flowguard_operator_route_scope_validated_route_viability=True,
         repair_return_to_mainline_defined=True,
         node_acceptance_plan_maps_product_model_segment=True,
         pm_user_intent_self_check_written=True,
@@ -302,7 +302,7 @@ def _valid_ui_state() -> State:
         worker_packet_carries_in_scope_quality_repair=True,
         worker_packet_escalates_out_of_scope_defects=True,
         evidence_packet_self_corrects_only_own_output=True,
-        officer_packet_self_corrects_model_only=True,
+        flowguard_operator_packet_self_corrects_model_only=True,
         reviewer_prompt_forbids_direct_artifact_repair=True,
         generic_packet_template_role_scoped=True,
         final_low_quality_risks_disposition_done=True,
@@ -402,8 +402,8 @@ def _scenario_state(scenario: str) -> State:
         )
     if scenario == PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL:
         return replace(state, pm_route_maps_to_product_model=False)
-    if scenario == PROCESS_OFFICER_ROUTE_VIABILITY_MISSING:
-        return replace(state, process_officer_validated_route_viability=False)
+    if scenario == PROCESS_FLOWGUARD_OPERATOR_ROUTE_VIABILITY_MISSING:
+        return replace(state, flowguard_operator_route_scope_validated_route_viability=False)
     if scenario == REPAIR_NODE_NO_MAINLINE_RETURN:
         return replace(state, repair_return_to_mainline_defined=False)
     if scenario == NODE_PLAN_NOT_MAPPED_TO_PRODUCT_MODEL:
@@ -484,8 +484,8 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, worker_packet_escalates_out_of_scope_defects=False)
     if scenario == EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT:
         return replace(state, evidence_packet_self_corrects_only_own_output=False)
-    if scenario == OFFICER_PACKET_REPAIRS_TARGET_ARTIFACT:
-        return replace(state, officer_packet_self_corrects_model_only=False)
+    if scenario == FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT:
+        return replace(state, flowguard_operator_packet_self_corrects_model_only=False)
     if scenario == REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR:
         return replace(state, reviewer_prompt_forbids_direct_artifact_repair=False)
     if scenario == GENERIC_TEMPLATE_USES_BLANKET_REPAIR:
@@ -510,11 +510,11 @@ def planning_failures(state: State) -> list[str]:
     if complex_task and not (
         state.product_behavior_model_written and state.product_model_risk_boundary_checked
     ):
-        failures.append("route planning lacks a product behavior model from the Product FlowGuard Officer")
+        failures.append("route planning lacks a product behavior model from the FlowGuard operator product-scope")
     if complex_task and not state.pm_route_maps_to_product_model:
         failures.append("PM route is not mapped to the product behavior model")
-    if complex_task and not state.process_officer_validated_route_viability:
-        failures.append("Process FlowGuard Officer did not validate route viability against the product model")
+    if complex_task and not state.flowguard_operator_route_scope_validated_route_viability:
+        failures.append("FlowGuard operator route-scope did not validate route viability against the product model")
     if complex_task and not state.repair_return_to_mainline_defined:
         failures.append("repair node lacks a defined return to the mainline product route")
     if complex_task and not state.node_acceptance_plan_maps_product_model_segment:
@@ -557,8 +557,8 @@ def planning_failures(state: State) -> list[str]:
         failures.append("worker packet does not escalate out-of-scope defects to PM")
     if complex_task and not state.evidence_packet_self_corrects_only_own_output:
         failures.append("research or material-scan packet grants target artifact repair instead of report self-correction")
-    if complex_task and not state.officer_packet_self_corrects_model_only:
-        failures.append("officer packet grants target artifact repair instead of model/report self-correction")
+    if complex_task and not state.flowguard_operator_packet_self_corrects_model_only:
+        failures.append("FlowGuard operator packet grants target artifact repair instead of model/report self-correction")
     if complex_task and not state.reviewer_prompt_forbids_direct_artifact_repair:
         failures.append("reviewer prompt grants direct repair authority over the reviewed artifact")
     if complex_task and not state.generic_packet_template_role_scoped:
@@ -809,7 +809,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="product_model_drives_route_planning",
-        description="Complex routes require a product behavior model, PM route mapping, process-officer viability check, and node mapping.",
+        description="Complex routes require a product behavior model, PM route mapping, process-FlowGuard operator viability check, and node mapping.",
         predicate=product_model_drives_route_planning,
     ),
     Invariant(
@@ -829,7 +829,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="quality_repair_prompts_preserve_role_authority",
-        description="Executable worker packets require in-scope repair while evidence, officer, reviewer, and generic prompts preserve role authority boundaries.",
+        description="Executable worker packets require in-scope repair while evidence, FlowGuard operator, reviewer, and generic prompts preserve role authority boundaries.",
         predicate=quality_repair_prompts_preserve_role_authority,
     ),
     Invariant(

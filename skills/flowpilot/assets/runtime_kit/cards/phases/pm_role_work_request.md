@@ -5,8 +5,8 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Role-Work Request Channel
 
@@ -17,14 +17,14 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If PM lacks basis, or the suggestion may affect route, product target, acceptance, process safety, replay, repair return path, or risk boundary, PM may request bounded consultation through an allowed role-work request, then must record a final PM disposition after reading the advice artifact.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
-- Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial role-work requests that affect product, process, route, review, repair, validation, evidence freshness, resume, or closure judgement, include FlowGuard Work Order and FlowGuard Report ids or a scoped `flowguard_not_required_reason`.
 
 
 This is the generic channel for PM to ask another FlowPilot role to do bounded
 work while PM owns a decision.
 
-Use `pm_registers_role_work_request` when PM needs a reviewer, officer, or
+Use `pm_registers_role_work_request` when PM needs a reviewer, FlowGuard operator, or
 worker to gather evidence, update or run a model, review a candidate, research a
 question, maintain or rerun packet-scoped tests, return test obligation
 coverage rows, or prepare information before PM decides. PM may submit one request or
@@ -36,14 +36,14 @@ Router may continue non-dependent actions while the role-work request remains
 open, but terminal closure still requires PM to absorb, cancel, supersede, or
 explicitly carry the advisory result forward through the current runtime
 contract. The channel is generic; do not special-case
-`product_flowguard_officer`, `process_flowguard_officer`, reviewer, or worker
+`flowguard_operator`, `flowguard_operator`, reviewer, or worker
 requests.
 
 When `request_kind` asks a role to answer a FlowGuard question, the role-work
 request is the FlowGuard Work Order. Include `flowguard_work_order_id`,
 expected `flowguard_report_id` or result path, `flowguard_route_used` when PM
 has selected a route, `flowguard_report_freshness`, affected output/gate, and
-PM acceptance expectations. Officers return FlowGuard Reports; Reviewers check
+PM acceptance expectations. FlowGuard operators return FlowGuard Reports; Reviewers check
 whether reports support a gate; Workers return packet-scoped FlowGuard
 Obligation Coverage.
 
@@ -58,13 +58,13 @@ The request must include:
 - `packet_body_path` and `packet_body_hash`: sealed PM-authored request body
 
 Every role-work request body must include a `Role-Scoped Quality Repair
-Boundary` matched to `to_role` and `request_kind`. If `to_role` is `worker_a` or
-`worker_b` and the request is bounded implementation or repair, require the
+Boundary` matched to `to_role` and `request_kind`. If `to_role` is a requested
+worker responsibility and the request is bounded implementation or repair, require the
 worker to fix in-scope defects inside the allowed reads, allowed writes,
 acceptance slice, role authority, and verification requirements, rerun required
 checks, and return `blocked`, `needs_pm`, or a PM Suggestion Item for
 out-of-scope defects. If the request is research, material scan, review, or
-officer modeling, require self-correction of the role's own report/model/review
+FlowGuard operator modeling, require self-correction of the role's own report/model/review
 output and route target defects through findings, blockers, repair requests, or
 PM Suggestion Items instead of silent target repair.
 
@@ -74,8 +74,8 @@ validation-gap closure, or FlowGuard model-test coverage, include the relevant
 must require a `Test Obligation Coverage` section with one row per assigned
 obligation, including obligation id, required test kind, changed or inspected
 paths, command or manual replay evidence, freshness status, skipped or failed
-checks, and out-of-scope gaps. Officer requests must use the officer report
-contract fields instead; officers identify obligations and gaps, while workers
+checks, and out-of-scope gaps. FlowGuard operator requests must use the FlowGuard operator report
+contract fields instead; FlowGuard operators identify obligations and gaps, while workers
 maintain ordinary packet-scoped tests unless PM explicitly grants a different
 bounded authority.
 

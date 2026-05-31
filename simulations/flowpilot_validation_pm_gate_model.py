@@ -34,7 +34,7 @@ class State:
     staged_pm_decision_applied: bool = False
     old_packet_roles_rejected: bool = False
     validator_ai_required_on_ordinary_path: bool = False
-    closure_officer_required_on_ordinary_path: bool = False
+    closure_flowguard_operator_required_on_ordinary_path: bool = False
     old_validator_packet_accepted: bool = False
     old_closure_packet_accepted: bool = False
     system_validation_treated_as_terminal: bool = False
@@ -239,8 +239,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("staged PM decision applied before system closure")
     if state.validator_ai_required_on_ordinary_path:
         failures.append("ordinary path still required validator AI")
-    if state.closure_officer_required_on_ordinary_path:
-        failures.append("ordinary path still required Closure Officer AI")
+    if state.closure_flowguard_operator_required_on_ordinary_path:
+        failures.append("ordinary path still required Closure FlowGuard operator AI")
     if state.old_validator_packet_accepted:
         failures.append("old validator packet was accepted")
     if state.old_closure_packet_accepted:
@@ -306,7 +306,7 @@ def hazard_states() -> dict[str, State]:
     base = target_state()
     return {
         "validator_ai_required_on_ordinary_path": replace(base, validator_ai_required_on_ordinary_path=True),
-        "closure_officer_required_on_ordinary_path": replace(base, closure_officer_required_on_ordinary_path=True),
+        "closure_flowguard_operator_required_on_ordinary_path": replace(base, closure_flowguard_operator_required_on_ordinary_path=True),
         "old_validator_packet_accepted": replace(base, old_validator_packet_accepted=True),
         "old_closure_packet_accepted": replace(base, old_closure_packet_accepted=True),
         "system_validation_treated_as_terminal": replace(base, system_validation_treated_as_terminal=True),
@@ -346,7 +346,7 @@ EXTERNAL_INPUTS = (Tick(),)
 INVARIANTS = (
     Invariant(
         "validation_automation_and_pm_decision_gate_order",
-        "System validation replaces ordinary validator AI, system closure replaces ordinary Closure Officer AI, and high-risk PM decisions apply only after gated system closure.",
+        "System validation replaces ordinary validator AI, system closure replaces ordinary Closure FlowGuard operator AI, and high-risk PM decisions apply only after gated system closure.",
         validation_pm_gate_invariant,
     ),
 )

@@ -16,7 +16,7 @@ Protected harms:
 - A bundle acknowledgement replaces independent per-card read receipts.
 - A card is bundled across role, run, agent, resume tick, or dependency
   boundaries.
-- A card that should wait for a PM, reviewer, officer, packet, mail, host, or
+- A card that should wait for a PM, reviewer, FlowGuard operator, packet, mail, host, or
   user event is silently batched with later work.
 - Resume or replacement roles process stale bundle envelopes.
 - Existing single-card delivery unsupported historical regresses.
@@ -54,7 +54,7 @@ resolver, persisted ledgers, CLI/install sync, and real ack validation.
 | B9 | Single-card fallback is removed or broken | Runtime tests must still pass existing single-card card-delivery tests |
 | B10 | `run-until-wait` silently applies the role-boundary bundle | Runtime test must prove it stops at `deliver_system_card_bundle` |
 | B11 | Resume/replacement processes stale bundle without current role I/O receipt | Existing role I/O ack invariant must still fail |
-| B12 | Read receipts replace PM/reviewer/officer semantic judgement | Existing semantic-gate invariant must still fail |
+| B12 | Read receipts replace PM/reviewer/FlowGuard operator semantic judgement | Existing semantic-gate invariant must still fail |
 | B13 | Incomplete bundle ACK stops the route forever | FlowGuard and runtime tests must prove missing card ids are listed, pending return stays unresolved, the same-role recovery wait is returned, a corrected ACK is accepted, and the mainline resumes |
 
 ## Implementation Sequence

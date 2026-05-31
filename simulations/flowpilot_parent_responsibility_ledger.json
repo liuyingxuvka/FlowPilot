@@ -50,7 +50,7 @@
           "release_obligation": "thin_parent_ok"
         },
         {
-          "id": "crew_and_heartbeat",
+          "id": "runtime_roles_and_heartbeat",
           "owner_type": "shared_kernel",
           "evidence_ids": [
             "flowpilot_resume",
@@ -285,7 +285,7 @@
     },
     {
       "field": "role_binding_memory",
-      "owner": "crew_and_heartbeat"
+      "owner": "runtime_roles_and_heartbeat"
     },
     {
       "field": "router_state",

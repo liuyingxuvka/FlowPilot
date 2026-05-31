@@ -27,7 +27,7 @@ HAZARD_EXPECTED_FAILURES = {
     "foreground_receipt_writes_scheduler_during_daemon": "foreground receipt path mutated Router scheduler ledger while daemon owned folding",
     "readback_permission_kills_daemon": "transient ledger access denial released daemon lock as error",
     "pending_action_overrides_controller_ledger": "unsupported_historical pending_action overrode Controller action ledger authority",
-    "worker_event_collapses_batch_to_worker_a": "batch wait projection did not derive missing roles from member state",
+    "worker_event_collapses_batch_to_worker": "batch wait projection did not derive missing roles from member state",
     "stale_passive_wait_left_open": "stale passive wait remained unresolved after prerequisite resolved",
     "closed_status_vocabulary_blocks_passive_wait": "closed Controller row was counted as pending by a noncanonical blocker scan",
     "non_controller_closed_row_blocks_wait": "closed non-Controller row was counted as pending by a noncanonical blocker scan",

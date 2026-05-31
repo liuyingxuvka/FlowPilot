@@ -271,9 +271,7 @@
       "unknown": 2
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
-    "heavy_parent_full_regression_obligations": [
-      "meta"
-    ],
+    "heavy_parent_full_regression_obligations": [],
     "heavyweight_threshold": 10000,
     "large_child_models": [],
     "missing_child_results": [],
@@ -282,33 +280,33 @@
       {
         "edge_count": 18,
         "layered_full_regression": {
-          "current": false,
+          "current": true,
           "proof": {
-            "created_at": "2026-05-30T18:09:48.070295+00:00",
+            "created_at": "2026-05-31T09:36:04.649926+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
-            "reason": "input fingerprint changed",
+            "reason": "valid proof",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
             "state_count": 12,
-            "valid": false
+            "valid": true
           }
         },
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-30T18:09:48.070295+00:00",
+          "created_at": "2026-05-31T09:36:04.649926+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
-          "reason": "input fingerprint changed",
+          "reason": "valid proof",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/meta_layered_full_results.json",
           "state_count": 12,
-          "valid": false
+          "valid": true
         },
-        "release_confidence": "requires_full_regression",
+        "release_confidence": "current_with_layered_full_parent",
         "release_validation_command": "python simulations/run_meta_checks.py --full",
         "result_file": "simulations/meta_thin_parent_results.json",
         "result_type": "thin_parent",
@@ -319,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-30T18:17:08.595041+00:00",
+            "created_at": "2026-05-31T09:36:20.598820+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -330,7 +328,7 @@
             "edge_count": 18,
             "model_id": "meta",
             "ok": true,
-            "release_confidence": "requires_full_regression",
+            "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -345,7 +343,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-05-30T18:09:48.058776+00:00",
+            "created_at": "2026-05-31T09:36:04.511901+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -359,7 +357,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-05-30T18:09:48.058776+00:00",
+          "created_at": "2026-05-31T09:36:04.511901+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -380,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-05-30T18:17:57.066427+00:00",
+            "created_at": "2026-05-31T09:36:20.498275+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -422,27 +420,6 @@
           ],
           "parents": [
             "capability"
-          ],
-          "release_obligations": [
-            "thin_parent_ok"
-          ]
-        },
-        "crew_and_heartbeat": {
-          "children": [
-            "flowpilot_daemon_liveness",
-            "flowpilot_resume",
-            "flowpilot_role_recovery"
-          ],
-          "invariant_families": [
-            "role_binding_recovery",
-            "daemon_liveness_boundary",
-            "manual_resume"
-          ],
-          "owners": [
-            "shared_kernel"
-          ],
-          "parents": [
-            "meta"
           ],
           "release_obligations": [
             "thin_parent_ok"
@@ -560,6 +537,27 @@
           ],
           "owners": [
             "meta"
+          ],
+          "parents": [
+            "meta"
+          ],
+          "release_obligations": [
+            "thin_parent_ok"
+          ]
+        },
+        "runtime_roles_and_heartbeat": {
+          "children": [
+            "flowpilot_daemon_liveness",
+            "flowpilot_resume",
+            "flowpilot_role_recovery"
+          ],
+          "invariant_families": [
+            "daemon_liveness_boundary",
+            "manual_resume",
+            "role_binding_recovery"
+          ],
+          "owners": [
+            "shared_kernel"
           ],
           "parents": [
             "meta"
@@ -774,22 +772,6 @@
           }
         },
         "meta": {
-          "crew_and_heartbeat": {
-            "children": [
-              "flowpilot_resume",
-              "flowpilot_role_recovery",
-              "flowpilot_daemon_liveness"
-            ],
-            "invariant_families": [
-              "manual_resume",
-              "role_binding_recovery",
-              "daemon_liveness_boundary"
-            ],
-            "owner": "shared_kernel",
-            "owner_type": "shared_kernel",
-            "parent": "meta",
-            "release_obligation": "thin_parent_ok"
-          },
           "evidence_mesh_and_install_sync": {
             "children": [
               "flowpilot_model_mesh",
@@ -875,6 +857,22 @@
             "parent": "meta",
             "release_obligation": "thin_parent_ok"
           },
+          "runtime_roles_and_heartbeat": {
+            "children": [
+              "flowpilot_resume",
+              "flowpilot_role_recovery",
+              "flowpilot_daemon_liveness"
+            ],
+            "invariant_families": [
+              "manual_resume",
+              "role_binding_recovery",
+              "daemon_liveness_boundary"
+            ],
+            "owner": "shared_kernel",
+            "owner_type": "shared_kernel",
+            "parent": "meta",
+            "release_obligation": "thin_parent_ok"
+          },
           "startup": {
             "children": [
               "flowpilot_startup_control",
@@ -944,7 +942,7 @@
         },
         {
           "field": "role_binding_memory",
-          "owner": "crew_and_heartbeat"
+          "owner": "runtime_roles_and_heartbeat"
         },
         {
           "field": "router_state",
@@ -981,7 +979,7 @@
       "startup",
       "material_intake",
       "product_architecture",
-      "crew_and_heartbeat",
+      "runtime_roles_and_heartbeat",
       "router_daemon_resume",
       "packet_and_role_authority",
       "child_skill_capability",
@@ -1008,27 +1006,6 @@
         ],
         "parents": [
           "capability"
-        ],
-        "release_obligations": [
-          "thin_parent_ok"
-        ]
-      },
-      "crew_and_heartbeat": {
-        "children": [
-          "flowpilot_daemon_liveness",
-          "flowpilot_resume",
-          "flowpilot_role_recovery"
-        ],
-        "invariant_families": [
-          "role_binding_recovery",
-          "daemon_liveness_boundary",
-          "manual_resume"
-        ],
-        "owners": [
-          "shared_kernel"
-        ],
-        "parents": [
-          "meta"
         ],
         "release_obligations": [
           "thin_parent_ok"
@@ -1154,6 +1131,27 @@
           "thin_parent_ok"
         ]
       },
+      "runtime_roles_and_heartbeat": {
+        "children": [
+          "flowpilot_daemon_liveness",
+          "flowpilot_resume",
+          "flowpilot_role_recovery"
+        ],
+        "invariant_families": [
+          "daemon_liveness_boundary",
+          "manual_resume",
+          "role_binding_recovery"
+        ],
+        "owners": [
+          "shared_kernel"
+        ],
+        "parents": [
+          "meta"
+        ],
+        "release_obligations": [
+          "thin_parent_ok"
+        ]
+      },
       "startup": {
         "children": [
           "flowpilot_deterministic_startup_bootstrap",
@@ -1241,7 +1239,7 @@
         "registered_in_partition": true,
         "result_file": "simulations/card_instruction_coverage_results.json",
         "role": "child_evidence",
-        "state_count": 67,
+        "state_count": 65,
         "tier": "small"
       },
       {
@@ -1545,13 +1543,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 24,
+        "edge_count": 26,
         "model_id": "flowpilot_startup_intake_ui",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
         "role": "child_evidence",
-        "state_count": 25,
+        "state_count": 27,
         "tier": "small"
       },
       {
@@ -1615,7 +1613,7 @@
         "tier": "small"
       }
     ],
-    "release_confidence": "requires_background_or_valid_proof",
+    "release_confidence": "current",
     "release_validation_commands": {
       "capability": "python simulations/run_capability_checks.py --full",
       "meta": "python simulations/run_meta_checks.py --full"

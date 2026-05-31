@@ -260,8 +260,8 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
 
     def test_dispatch_gate_helpers_belong_to_owner_module(self) -> None:
         self.assertEqual(
-            dispatch_gate._dispatch_gate_target_roles({"to_role": "worker_a, project_manager"}),
-            {"worker_a", "project_manager"},
+            dispatch_gate._dispatch_gate_target_roles({"to_role": "worker, project_manager"}),
+            {"worker", "project_manager"},
         )
         self.assertEqual(
             dispatch_gate._dispatch_gate_wait_events_for_packet_record(
@@ -318,12 +318,32 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         original = router_events.handle_precheck_event
         router_events.handle_precheck_event = fake_precheck
         try:
-            result = event_dispatcher._record_external_event_unchecked(
-                router,
-                Path("."),
-                "heartbeat_or_manual_resume_requested",
-                {},
-            )
+            with tempfile.TemporaryDirectory(prefix="flowpilot-dispatcher-boundary-") as tmp:
+                root = Path(tmp)
+                run_id = "run-dispatcher-boundary"
+                run_root = root / ".flowpilot" / "runs" / run_id
+                run_root.mkdir(parents=True)
+                run_root_rel = router.project_relative(root, run_root)
+                router.write_json(
+                    root / ".flowpilot" / "current.json",
+                    {
+                        "schema_version": "flowpilot.current.v1",
+                        "current_run_id": run_id,
+                        "current_run_root": run_root_rel,
+                        "status": "controller_ready",
+                    },
+                )
+                bootstrap = router.new_bootstrap_state(run_id=run_id, run_root_rel=run_root_rel)
+                router.save_bootstrap_state(root, bootstrap)
+                state = router.new_run_state(run_id, run_root_rel, controller_core_loaded=True)
+                router.save_run_state(run_root, state)
+
+                result = event_dispatcher._record_external_event_unchecked(
+                    router,
+                    root,
+                    "heartbeat_or_manual_resume_requested",
+                    {},
+                )
         finally:
             router_events.handle_precheck_event = original
 
@@ -460,41 +480,41 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                 self.assertTrue(callable(getattr(terminal_ledger, name)), name)
 
     def test_runtime_closure_external_record_contracts_are_self_validating(self) -> None:
-        officer_request = {
-            "request_id": "officer-1",
+        flowguard_operator_request = {
+            "request_id": "FlowGuard operator-1",
             "packet_id": "packet-1",
             "requested_by_role": "project_manager",
-            "to_role": "process_flowguard_officer",
-            "process_kind": "officer_model_report",
-            "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
-            "packet_type": "officer_request",
+            "to_role": "flowguard_operator",
+            "process_kind": "flowguard_operator_model_report",
+            "output_contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1",
+            "packet_type": "flowguard_operator_request",
             "status": "registered",
             "strict_process_contract_binding": True,
             "required_result_next_recipient": "project_manager",
             "controller_may_read_packet_body": False,
             "process_contract_binding": {
-                "process_kind": "officer_model_report",
-                "packet_type": "officer_request",
+                "process_kind": "flowguard_operator_model_report",
+                "packet_type": "flowguard_operator_request",
                 "required_result_next_recipient": "project_manager",
             },
-            "packet_envelope_path": "packets/officer-1.envelope.json",
-            "packet_body_path": "packets/officer-1.body.md",
+            "packet_envelope_path": "packets/FlowGuard operator-1.envelope.json",
+            "packet_body_path": "packets/FlowGuard operator-1.body.md",
             "packet_body_hash": "body-hash",
-            "result_envelope_path": "results/officer-1.result.json",
-            "result_body_path": "results/officer-1.result.md",
+            "result_envelope_path": "results/FlowGuard operator-1.result.json",
+            "result_body_path": "results/FlowGuard operator-1.result.md",
         }
-        officer_result = {
+        flowguard_operator_result = {
             "packet_id": "packet-1",
-            "completed_by_role": "process_flowguard_officer",
+            "completed_by_role": "flowguard_operator",
             "next_recipient": "project_manager",
-            "result_body_path": "results/officer-1.result.md",
+            "result_body_path": "results/FlowGuard operator-1.result.md",
             "result_body_hash": "result-hash",
         }
 
-        self.assertEqual(runtime_closure.validate_officer_request_record(officer_request), [])
-        self.assertEqual(runtime_closure.validate_officer_result_record(officer_request, officer_result), [])
-        lifecycle_entry = runtime_closure.officer_lifecycle_entry_from_request(
-            officer_request,
+        self.assertEqual(runtime_closure.validate_flowguard_operator_request_record(flowguard_operator_request), [])
+        self.assertEqual(runtime_closure.validate_flowguard_operator_result_record(flowguard_operator_request, flowguard_operator_result), [])
+        lifecycle_entry = runtime_closure.flowguard_operator_lifecycle_entry_from_request(
+            flowguard_operator_request,
             now="2026-05-18T00:00:00Z",
         )
         self.assertTrue(lifecycle_entry["validation_passed"])

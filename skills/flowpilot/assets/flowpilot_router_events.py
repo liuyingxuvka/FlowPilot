@@ -39,7 +39,7 @@ def _handle_heartbeat_or_manual_resume_requested(
         run_root,
         run_state,
         trigger_source=trigger_source,
-        recovery_scope="all_six_sweep",
+        recovery_scope="all_runtime_roles_sweep",
         target_role_keys=list(router.RUNTIME_ROLE_KEYS),
         fault_payload=payload or {},
     )

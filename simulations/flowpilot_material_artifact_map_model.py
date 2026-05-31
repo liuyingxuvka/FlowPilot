@@ -31,7 +31,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 VALID_REFRESH_METADATA_ONLY = "valid_refresh_metadata_only"
 VALID_PM_PACKAGE_REVIEW_REFS = "valid_pm_package_review_refs"
-VALID_WORKER_AUTHORIZED_READ = "valid_worker_authorized_read"
+VALID_WORKER_AUTHORIZED_READ = "valid_workeruthorized_read"
 VALID_RUNTIME_OPEN_FOR_SEALED_REF = "valid_runtime_open_for_sealed_ref"
 VALID_ROUTE_MEMORY_AND_FINAL_LEDGER = "valid_route_memory_and_final_ledger"
 
@@ -95,7 +95,7 @@ class State:
     package_includes_raw_worker_result_body: bool = False
 
     worker_packet_opened: bool = False
-    worker_allowed_entry_ids_declared: bool = False
+    workerllowed_entry_ids_declared: bool = False
     worker_reads_only_declared_entries: bool = False
     worker_reads_sealed_body_without_runtime: bool = False
 
@@ -175,7 +175,7 @@ def _base_state(scenario: str) -> State:
         package_cites_review_source_entries=True,
         package_cites_reviewable_source_paths=True,
         worker_packet_opened=True,
-        worker_allowed_entry_ids_declared=True,
+        workerllowed_entry_ids_declared=True,
         worker_reads_only_declared_entries=True,
         sealed_ref_requires_runtime_open=True,
         runtime_open_receipt_present=True,
@@ -248,7 +248,7 @@ def material_map_failures(state: State) -> list[str]:
     ):
         failures.append("PM formal package lacks material-map review refs")
 
-    if state.worker_packet_opened and not state.worker_allowed_entry_ids_declared:
+    if state.worker_packet_opened and not state.workerllowed_entry_ids_declared:
         failures.append("worker packet did not declare material-map allowed reads")
     if state.worker_packet_opened and not state.worker_reads_only_declared_entries:
         failures.append("worker read material-map entries outside the current packet authorization")

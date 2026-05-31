@@ -10,7 +10,7 @@ Risk intent brief:
   blockers, over-escalated repairs, stale route evidence, low-risk parent replay
   hard blockers, resource-disposition mistakes, and split stage refresh.
 - The safe scenario is a directly implementable contract: prompt fields are
-  visible, router checks mechanical conformance only, PM/reviewer/officers own
+  visible, router checks mechanical conformance only, PM/reviewer/FlowGuard operators own
   semantic sufficiency, and state-affecting decisions have route-visible
   evidence.
 - Blindspot: this model validates the contract shape. It does not prove that
@@ -34,7 +34,7 @@ REVIEWER_SEMANTIC_GAP = "reviewer_semantic_gap"
 VISUAL_FLOWGUARD_ONLY = "visual_flowguard_only"
 PRODUCT_WITHOUT_FLOWGUARD = "product_without_flowguard"
 MIXED_WITHOUT_REVIEWER = "mixed_without_reviewer"
-DOCUMENTATION_FORCED_PRODUCT_FLOWGUARD = "documentation_forced_product_flowguard"
+DOCUMENTATION_FORCED_PRODUCT_FLOWGUARD = "documentation_forced_product_scope_flowguard"
 ADVISORY_BLOCKS_COMPLETION = "advisory_blocks_completion"
 SKIP_WITHOUT_REASON = "skip_without_reason"
 LOCAL_DEFECT_FORCES_MUTATION = "local_defect_forces_mutation"
@@ -101,8 +101,8 @@ REVIEWER_SEMANTIC_CHECKS = frozenset(
         "proof_method_matches_risk",
         "hard_gate_has_safety_delta",
         "visual_quality_has_reviewer_walkthrough",
-        "product_state_has_product_flowguard",
-        "documentation_not_forced_to_product_flowguard",
+        "product_state_has_product_scope_flowguard",
+        "documentation_not_forced_to_product_scope_flowguard",
         "repair_strategy_matches_issue_type",
         "parent_replay_risk_based_or_waived",
         "resource_disposition_matches_scope",
@@ -134,14 +134,14 @@ class State:
     reviewer_defers_semantics_to_router: bool = False
 
     visual_requires_reviewer_walkthrough: bool = True
-    visual_uses_product_flowguard_only: bool = False
-    product_requires_product_flowguard: bool = True
-    product_flowguard_present: bool = True
+    visual_uses_product_scope_flowguard_only: bool = False
+    product_requires_product_scope_flowguard: bool = True
+    product_scope_flowguard_present: bool = True
     mixed_requires_both: bool = True
-    mixed_product_flowguard_present: bool = True
+    mixed_product_scope_flowguard_present: bool = True
     mixed_reviewer_walkthrough_present: bool = True
     documentation_uses_light_review_or_skip_reason: bool = True
-    documentation_forced_to_product_flowguard: bool = False
+    documentation_forced_to_product_scope_flowguard: bool = False
 
     advisory_nonblocking: bool = True
     skip_or_waive_has_reason: bool = True
@@ -221,14 +221,14 @@ def _valid_state() -> State:
         router_semantic_overreach=False,
         reviewer_defers_semantics_to_router=False,
         visual_requires_reviewer_walkthrough=True,
-        visual_uses_product_flowguard_only=False,
-        product_requires_product_flowguard=True,
-        product_flowguard_present=True,
+        visual_uses_product_scope_flowguard_only=False,
+        product_requires_product_scope_flowguard=True,
+        product_scope_flowguard_present=True,
         mixed_requires_both=True,
-        mixed_product_flowguard_present=True,
+        mixed_product_scope_flowguard_present=True,
         mixed_reviewer_walkthrough_present=True,
         documentation_uses_light_review_or_skip_reason=True,
-        documentation_forced_to_product_flowguard=False,
+        documentation_forced_to_product_scope_flowguard=False,
         advisory_nonblocking=True,
         skip_or_waive_has_reason=True,
         local_defect_uses_local_repair=True,
@@ -259,16 +259,16 @@ def _scenario_state(scenario: str) -> State:
             reviewer_defers_semantics_to_router=True,
         )
     if scenario == VISUAL_FLOWGUARD_ONLY:
-        return replace(state, visual_uses_product_flowguard_only=True, visual_requires_reviewer_walkthrough=False)
+        return replace(state, visual_uses_product_scope_flowguard_only=True, visual_requires_reviewer_walkthrough=False)
     if scenario == PRODUCT_WITHOUT_FLOWGUARD:
-        return replace(state, product_flowguard_present=False)
+        return replace(state, product_scope_flowguard_present=False)
     if scenario == MIXED_WITHOUT_REVIEWER:
         return replace(state, mixed_reviewer_walkthrough_present=False)
     if scenario == DOCUMENTATION_FORCED_PRODUCT_FLOWGUARD:
         return replace(
             state,
             documentation_uses_light_review_or_skip_reason=False,
-            documentation_forced_to_product_flowguard=True,
+            documentation_forced_to_product_scope_flowguard=True,
         )
     if scenario == ADVISORY_BLOCKS_COMPLETION:
         return replace(state, advisory_nonblocking=False)
@@ -308,22 +308,22 @@ def contract_failures(state: State) -> list[str]:
     if missing_reviewer_checks or state.reviewer_defers_semantics_to_router:
         failures.append("reviewer scope omitted semantic gate sufficiency")
 
-    if state.visual_uses_product_flowguard_only or not state.visual_requires_reviewer_walkthrough:
+    if state.visual_uses_product_scope_flowguard_only or not state.visual_requires_reviewer_walkthrough:
         failures.append("visual-quality GateDecision lacks reviewer walkthrough proof")
 
-    if state.product_requires_product_flowguard and not state.product_flowguard_present:
-        failures.append("product/state GateDecision lacks Product FlowGuard proof")
+    if state.product_requires_product_scope_flowguard and not state.product_scope_flowguard_present:
+        failures.append("product/state GateDecision lacks product-scope FlowGuard proof")
 
     if state.mixed_requires_both and not (
-        state.mixed_product_flowguard_present and state.mixed_reviewer_walkthrough_present
+        state.mixed_product_scope_flowguard_present and state.mixed_reviewer_walkthrough_present
     ):
         failures.append("mixed product/visual GateDecision lacks both proof paths")
 
     if (
         not state.documentation_uses_light_review_or_skip_reason
-        or state.documentation_forced_to_product_flowguard
+        or state.documentation_forced_to_product_scope_flowguard
     ):
-        failures.append("documentation-only GateDecision was forced through Product FlowGuard")
+        failures.append("documentation-only GateDecision was forced through product-scope FlowGuard")
 
     if not state.advisory_nonblocking:
         failures.append("advisory GateDecision blocked completion")
@@ -423,9 +423,9 @@ def proof_method_matches_risk_type(state: State, trace) -> InvariantResult:
     failures = contract_failures(state)
     for needle in (
         "visual-quality GateDecision lacks reviewer walkthrough proof",
-        "product/state GateDecision lacks Product FlowGuard proof",
+        "product/state GateDecision lacks product-scope FlowGuard proof",
         "mixed product/visual GateDecision lacks both proof paths",
-        "documentation-only GateDecision was forced through Product FlowGuard",
+        "documentation-only GateDecision was forced through product-scope FlowGuard",
     ):
         if needle in failures:
             return InvariantResult.fail(needle)
@@ -483,7 +483,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="reviewer_scope_keeps_semantics",
-        description="Reviewer/PM/officer checks own semantic gate sufficiency.",
+        description="Reviewer/PM/FlowGuard operator checks own semantic gate sufficiency.",
         predicate=reviewer_scope_keeps_semantics,
     ),
     Invariant(

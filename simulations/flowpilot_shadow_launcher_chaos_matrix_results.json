@@ -1,13 +1,6 @@
 {
   "coverage_boundary": "Rows prove bounded end-to-end control-plane behavior through fake AI packages, the installed launcher, real Router state, daemon recovery, peer isolation, malformed package rejection, and short cleanup repetition. They do not prove arbitrary live AI semantic quality, every historical migration, or indefinite stress behavior.",
-  "findings": [
-    {
-      "code": "unknown_surface",
-      "message": "row surface must be one of the required shadow chaos surfaces",
-      "rehearsal_id": "shadow.current_pointer.install_freshness",
-      "surface": "current_pointer"
-    }
-  ],
+  "findings": [],
   "known_bad_cases": [
     {
       "expected_codes": [
@@ -311,7 +304,7 @@
     "wrong_author_role",
     "stale_hash_or_path"
   ],
-  "ok": false,
+  "ok": true,
   "required_rehearsal_count": 6,
   "required_surface_count": 6,
   "result_type": "flowpilot_shadow_launcher_chaos_matrix",

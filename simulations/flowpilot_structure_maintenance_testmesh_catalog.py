@@ -418,7 +418,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_closure_pm_role_work",
-        command="python -m unittest -v -k test_officer_role_work_writes_authorized_lifecycle_index -k test_pm_terminal_closure_uses_file_backed_contract_and_prior_context tests.router_runtime.closure",
+        command="python -m unittest -v -k test_flowguard_operator_role_work_writes_authorized_lifecycle_index -k test_pm_terminal_closure_uses_file_backed_contract_and_prior_context tests.router_runtime.closure",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=2,
@@ -574,7 +574,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_pm_role_work_waits",
-        command="python -m unittest -v -k test_pm_role_work_batch_waits_for_all_officer_results_before_pm_relay -k test_wait_event_producer_binding_rejects_wrong_target_role tests.router_runtime.pm_role_work",
+        command="python -m unittest -v -k test_pm_role_work_batch_waits_for_all_flowguard_operator_results_before_pm_relay -k test_wait_event_producer_binding_rejects_wrong_target_role tests.router_runtime.pm_role_work",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=2,
@@ -600,7 +600,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_quality_gates_decisions",
-        command="python -m unittest -v -k test_gate_decision_event_records_ledger_and_state -k test_gate_decision_rejects_mechanical_contradictions -k test_gate_decision_same_identity_replay_is_already_recorded -k test_gate_outcome_block_specs_are_registered_and_reset_stale_passes -k test_reviewer_and_officer_gate_event_groups_have_non_pass_outcomes -k test_reviewer_block_events_are_registered_in_external_taxonomy tests.router_runtime.quality_gates",
+        command="python -m unittest -v -k test_gate_decision_event_records_ledger_and_state -k test_gate_decision_rejects_mechanical_contradictions -k test_gate_decision_same_identity_replay_is_already_recorded -k test_gate_outcome_block_specs_are_registered_and_reset_stale_passes -k test_reviewer_and_flowguard_operator_gate_event_groups_have_non_pass_outcomes -k test_reviewer_block_events_are_registered_in_external_taxonomy tests.router_runtime.quality_gates",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=6,
@@ -678,7 +678,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_material_modeling_modelability",
-        command="python -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_unsupported_historical_alias -k test_unsupported_historical_product_officer_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
+        command="python -m unittest -v -k test_research_required_blocks_product_architecture_until_absorbed -k test_product_architecture_and_root_contract_gate_route_skeleton -k test_process_route_model_canonical_event_writes_unsupported_historical_alias -k test_unsupported_historical_flowguard_operator_product_scope_model_report_does_not_close_modelability_gate -k test_pm_repair_transaction_commits_material_reissue_generation tests.router_runtime.material_modeling",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=5,

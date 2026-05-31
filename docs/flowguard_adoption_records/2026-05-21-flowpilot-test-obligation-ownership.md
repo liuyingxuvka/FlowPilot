@@ -8,7 +8,7 @@
   satellite skills; workers maintain ordinary tests only when their work packet
   explicitly assigns that scope.
 - The focused FlowGuard model covers the intended chain from PM skill
-  selection, officer reports, worker test coverage, PM disposition, reviewer
+  selection, FlowGuard operator reports, worker test coverage, PM disposition, reviewer
   review, and final evidence ledger.
 - The installed FlowPilot skill was synchronized from the active repository
   source and independently audited as fresh.
@@ -38,7 +38,7 @@
   broad layered validation routes to TestMesh; model/code/test mismatches route
   to Model-Test Alignment.
 - The focused model intentionally rejects unsafe routes such as PM deciding
-  test coverage before worker evidence, officers default-maintaining ordinary
+  test coverage before worker evidence, FlowGuard operators default-maintaining ordinary
   tests, background progress counted as pass, and reviewer/final ledger closure
   before the PM matrix is dispositioned.
 

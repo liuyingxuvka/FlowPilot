@@ -1,7 +1,7 @@
 {
   "schema_version": "flowpilot.quality_pack_catalog.v1",
   "authority": "system",
-  "runtime_semantics": "role_output_runtime validates generic checklist coverage only; reviewer, officer, and PM gates own quality-pack substance.",
+  "runtime_semantics": "role_output_runtime validates generic checklist coverage only; reviewer, FlowGuard operator, and PM gates own quality-pack substance.",
   "quality_packs": [
     {
       "pack_id": "ui_visual_interaction_quality_pack",

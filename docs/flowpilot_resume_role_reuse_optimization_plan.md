@@ -15,7 +15,7 @@
 | Risk | Failure Mode | FlowGuard / Test Coverage |
 | --- | --- | --- |
 | R1 | Active required bindings are replaced even though they could be reused. | `all_active_roles_replaced_instead_of_reused` hazard fails the resume model. |
-| R2 | One failed role causes unrelated active bindings to be replaced. | `one_failed_role_replaced_all_six` hazard fails the resume model. |
+| R2 | One failed role causes unrelated active bindings to be replaced. | `one_failed_role_replaced_all_runtime_roles` hazard fails the resume model. |
 | R3 | Partial recovery replaces the failed role but does not reuse still-active roles. | `one_failed_role_does_not_reuse_active_roles` hazard fails the resume model. |
 | R4 | A wait timeout is treated as proof that an agent is alive. | Existing timeout-unknown invariant remains active and timeout paths require replacement. |
 | R5 | A replacement role is accepted without current-run memory/state refresh proof. | Router payload validation requires run id, tick id, memory hash, context hash, and rehydration state-loaded proof. |

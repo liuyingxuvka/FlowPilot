@@ -24,7 +24,7 @@ PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
 STARTUP_QUESTIONS = (
     {
         "id": "runtime_role_assistances",
-        "question": "Allow live role bindings through available host mechanisms when the runtime requests them, or use single-controller continuity?",
+        "question": "Allow live role bindings through host-supported isolated role surfaces when the runtime requests them, or use single-controller continuity?",
     },
     {
         "id": "scheduled_continuation",

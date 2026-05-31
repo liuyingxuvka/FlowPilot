@@ -1035,7 +1035,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "active_spec",
-          "text": "unsupported, stale, or contradicted by worker/officer evidence."
+          "text": "unsupported, stale, or contradicted by worker/FlowGuard operator evidence."
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2432,7 +2432,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "action=\"product FlowGuard officer checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture\","
+          "text": "action=\"product-scope FlowGuard operator checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture\","
         },
         {
           "action": "keep_current_structural_term",
@@ -3257,7 +3257,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "failures.append(\"unsupported direct officer event competes with PM role-work result contract\")"
+          "text": "failures.append(\"unsupported direct FlowGuard operator event competes with PM role-work result contract\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -3763,7 +3763,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "registration, old single-packet bypasses, officer-result join loss,"
+          "text": "registration, old single-packet bypasses, FlowGuard operator-result join loss,"
         },
         {
           "action": "manual_review",
@@ -4247,7 +4247,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "failures.append(\"old task agent ids were reused as current live crew\")"
+          "text": "failures.append(\"old task agent ids were reused as current live runtime roles\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -4258,7 +4258,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "failures.append(\"Reviewer-only gate simplification removed unsupported_historical officer event unsupported_historical\")"
+          "text": "failures.append(\"Reviewer-only gate simplification removed unsupported_historical FlowGuard operator event unsupported_historical\")"
         },
         {
           "action": "manual_review",
@@ -4984,7 +4984,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "- Guards against officer reports bypassing PM packet requests, old continuation"
+          "text": "- Guards against FlowGuard operator reports bypassing PM packet requests, old continuation"
         },
         {
           "action": "manual_review",
@@ -5820,7 +5820,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "action=\"product FlowGuard officer checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture\","
+          "text": "action=\"product-scope FlowGuard operator checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture\","
         },
         {
           "action": "keep_current_structural_term",
@@ -6238,7 +6238,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "model.RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET: \"unsupported direct officer event competes with PM role-work result contract\","
+          "text": "model.RETIRED_DIRECT_EVENT_COMPETES_WITH_PM_PACKET: \"unsupported direct FlowGuard operator event competes with PM role-work result contract\","
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -6392,7 +6392,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "\"unsupported_historical_officer_event_handlers_removed\": \"Reviewer-only gate simplification removed unsupported_historical officer event unsupported_historical\","
+          "text": "\"unsupported_historical_flowguard_operator_event_handlers_removed\": \"Reviewer-only gate simplification removed unsupported_historical FlowGuard operator event unsupported_historical\","
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8574,14 +8574,14 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_officer.py:58",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py:58",
           "delete_required": false,
           "line": 58,
-          "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_officer.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
-          "text": "raise RouterError('officer request lifecycle index has unsupported schema')"
+          "text": "raise RouterError('FlowGuard operator request lifecycle index has unsupported schema')"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8739,10 +8739,10 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/officers/child_skill_conformance_model.md:24",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_conformance_model.md:24",
           "delete_required": false,
           "line": 24,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/officers/child_skill_conformance_model.md",
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_conformance_model.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
@@ -8750,10 +8750,10 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/officers/product_architecture_modelability.md:56",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md:56",
           "delete_required": false,
           "line": 56,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/officers/product_architecture_modelability.md",
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
@@ -8761,10 +8761,10 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md:84",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md:84",
           "delete_required": false,
           "line": 84,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md",
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
@@ -8834,7 +8834,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "- require the officer report to state why the old model missed it, what same"
+          "text": "- require the FlowGuard operator report to state why the old model missed it, what same"
         },
         {
           "action": "manual_review",
@@ -8860,10 +8860,10 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md:61",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md:61",
           "delete_required": false,
           "line": 61,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md",
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
@@ -8871,10 +8871,10 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md:145",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md:145",
           "delete_required": false,
           "line": 145,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md",
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",

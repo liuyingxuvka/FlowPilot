@@ -2,11 +2,71 @@
   "coverage_boundary": "Matrix rows prove declared control-flow, runtime, model-test, and background-artifact coverage ownership. Synthetic or fixture rows do not prove live AI semantic quality or live completion.",
   "findings": [],
   "full_diagnostic": {
-    "actionable_summary": [],
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_new has 550 lines, above the 450 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_new"
+        ],
+        "surface_owner": "flowpilot_new"
+      },
+      {
+        "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+        "paths": [
+          "scripts/flowguard_project_topology.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 31,
+        "release_relevance": "public_cli",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "script:flowguard_project_topology"
+        ],
+        "surface_owner": "script:flowguard_project_topology"
+      }
+    ],
     "blocking_actionable_findings": [],
-    "deferred_structure_split_findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
+    "deferred_structure_split_findings": [
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowpilot_new has 550 lines, above the 450 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "asset:flowpilot_new"
+      },
+      {
+        "code": "full_diagnostic_actionable_finding",
+        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
+        "path": "scripts/flowguard_project_topology.py",
+        "repair_type": "defer_structure_split",
+        "source_code": "needs_structure_split",
+        "surface_id": "script:flowguard_project_topology"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 2
+    },
     "ok": true,
     "release_convergence_ok": true
   },

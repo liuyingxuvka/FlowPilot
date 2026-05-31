@@ -3,9 +3,10 @@
 ### Requirement: Dynamic Agent Responsibilities
 
 The new FlowPilot SHALL request dynamic agent leases only for issued work
-packets. All backend responsibilities, including PM, FlowGuard operator,
-Reviewer, Validator, and Closure officer, SHALL use the same packet lifecycle:
-issued packet, lease, ACK, result, ledger side effect, and next packet.
+packets. All requested backend responsibilities, including PM, Reviewer,
+Process FlowGuard officer, Product FlowGuard officer, and worker-class
+responsibilities, SHALL use the same packet lifecycle: issued packet, lease,
+ACK, result, ledger side effect, and next packet.
 
 #### Scenario: First PM packet is issued
 
@@ -16,35 +17,39 @@ issued packet, lease, ACK, result, ledger side effect, and next packet.
 #### Scenario: PM result requires FlowGuard
 
 - **WHEN** a PM task packet result is submitted and accepted mechanically
-- **THEN** the runtime MUST issue a FlowGuard operator work packet
-- **AND** the FlowGuard operator MUST be leased through that packet
+- **THEN** the runtime MUST issue an explicit Process or Product FlowGuard
+  officer work packet for the modeled target
+- **AND** the selected FlowGuard officer MUST be leased through that packet
 - **AND** the runtime MUST NOT require a direct side-command FlowGuard actor.
 
 #### Scenario: FlowGuard result requires review
 
-- **WHEN** a FlowGuard operator packet result records passing evidence for the
-  subject PM packet
+- **WHEN** a FlowGuard officer packet result records passing evidence for the
+  subject PM packet and modeled target
 - **THEN** the runtime MUST issue a Reviewer work packet
 - **AND** the Reviewer MUST ACK and submit a result through that packet before
   review acceptance is recorded.
 
-#### Scenario: Review result requires validation and closure
+#### Scenario: Review result records system validation and closure
 
 - **WHEN** a Reviewer packet result accepts the subject PM result and evidence
-- **THEN** the runtime MUST issue a Validation work packet
-- **AND** a valid Validation result MUST issue a Closure work packet
-- **AND** a valid Closure result MUST attempt final backward closure.
+- **THEN** the runtime MUST record system-owned validation evidence
+- **AND** it MUST attempt system-owned final backward closure from current
+  accepted evidence
+- **AND** it MUST NOT issue Validator or Closure Officer work packets on the
+  ordinary successful path.
 
 ### Requirement: New Entrypoint End-To-End Closure
 
 The new FlowPilot SHALL progress from startup intake to final backward closure
-through current-run packets for every backend role. Final closure MUST require
-accepted task, FlowGuard, review, validation, and closure packet evidence.
+through current-run packets for every requested backend responsibility. Final
+closure MUST require accepted task, FlowGuard officer, reviewer, system
+validation, and system closure evidence.
 
 #### Scenario: Rehearsal end-to-end run
 
 - **WHEN** a deterministic fake-host rehearsal supplies valid results for PM,
-  FlowGuard, Reviewer, Validation, and Closure packets
+  FlowGuard officer, Reviewer, and any requested worker-class packets
 - **THEN** final closure MUST complete
 - **AND** the public status MUST still hide sealed bodies
 - **AND** no active lease row may remain for a completed packet.
@@ -53,8 +58,9 @@ accepted task, FlowGuard, review, validation, and closure packet evidence.
 
 - **WHEN** a deterministic fake project is run through the real public CLI from
   startup intake through `status`, `lease-agent`, `ack`, and `submit-result`
-- **THEN** the rehearsal MUST reach terminal closure through PM, FlowGuard
-  operator, Reviewer, Validator, and Closure officer packets
+- **THEN** the rehearsal MUST reach terminal closure through PM, explicit
+  FlowGuard officer, Reviewer, and requested worker-class packets plus
+  system-owned validation and closure evidence
 - **AND** the rehearsal MUST NOT use the internal fake end-to-end helper as its
   proof
 - **AND** startup text and fake AI result bodies MUST remain hidden from public
@@ -71,8 +77,9 @@ accepted task, FlowGuard, review, validation, and closure packet evidence.
 
 #### Scenario: Direct side-command completion is attempted
 
-- **WHEN** a caller tries to complete FlowGuard, review, validation, or closure
-  without the matching issued packet lifecycle
+- **WHEN** a caller tries to complete FlowGuard or review without the matching
+  issued packet lifecycle, or tries to impersonate system validation/closure as
+  a role packet
 - **THEN** the formal runtime MUST reject or omit that path from the formal
   public command surface
 - **AND** closure MUST remain unproved without packet-backed evidence.

@@ -495,13 +495,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.model_miss_officer_report_complete:
+    if not state.model_miss_flowguard_operator_report_complete:
         yield Transition(
-            "model_miss_officer_report_complete_for_pm_decision",
+            "model_miss_flowguard_operator_report_complete_for_pm_decision",
             _inc(
                 state,
-                holder="process_flowguard_officer",
-                model_miss_officer_report_complete=True,
+                holder="flowguard_operator",
+                model_miss_flowguard_operator_report_complete=True,
                 model_miss_pm_decision_from_single_report=True,
             ),
         )
@@ -591,13 +591,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.route_draft_written and not state.route_process_check_card_delivered:
         yield Transition(
             "route_process_check_card_delivered_with_route_draft_context",
-            _inc(state, holder="officer", route_process_check_card_delivered=True),
+            _inc(state, holder="FlowGuard operator", route_process_check_card_delivered=True),
         )
         return
 
     if state.route_process_check_card_delivered and not state.route_process_check_passed:
         yield Transition(
-            "process_officer_passes_route_check_after_nonempty_route",
+            "flowguard_operator_route_scope_passes_route_check_after_nonempty_route",
             _inc(state, holder="controller", route_process_check_passed=True),
         )
         return
@@ -938,7 +938,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "target_role_updates_progress_status_via_runtime",
             _inc(
                 state,
-                holder="process_flowguard_officer",
+                holder="flowguard_operator",
                 role_work_progress_observed=True,
                 role_work_progress_runtime_written=True,
                 role_work_progress_numeric=True,
@@ -1006,7 +1006,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 state,
                 current_status_stopped=True,
                 continuation_heartbeat_active=False,
-                crew_live_agents_active=False,
+                runtime_role_live_agents_active=False,
                 packet_loop_active=False,
                 frontier_terminal=True,
                 terminal_snapshot_published=True,

@@ -89,6 +89,13 @@ events.
 
 - <bounded acceptance condition for this packet only>
 
+## Node Context Package
+
+If this packet belongs to a route node, copy the runtime-supplied
+`node_context_package` here. This is the PM-authored minimum starting context
+for FlowGuard, worker, and Reviewer work. It is not a scope limit and does not
+grant access to sealed bodies outside the addressed packet.
+
 ## Low-Quality Success Guard
 
 Copy this section from
@@ -114,16 +121,16 @@ The handoff section must include:
 - `artifact_refs`: paths and hashes for every formal output or evidence file;
 - `changed_paths`: files created or edited, or `none`;
 - `output_contract_id`: the contract used for the result/report;
-- `inspection_notes`: what PM, reviewer, or officer should inspect directly;
+- `inspection_notes`: what PM, reviewer, or FlowGuard operator should inspect directly;
 - `pm_suggestion_items`: candidate `flowpilot.pm_suggestion_item.v1` entries,
   or an explicit empty list;
 - consultation note: if this packet is PM consultation, answer only the bounded
   question and do not make PM's final disposition.
 
-## Worker/Officer PM Note
+## Worker/FlowGuard operator PM Note
 
-For packets addressed to `worker_a`, `worker_b`,
-`process_flowguard_officer`, or `product_flowguard_officer`, the PM packet
+For packets addressed to `worker`, `worker`,
+`flowguard_operator`, or `flowguard_operator`, the PM packet
 boundary is a hard scope boundary, not a low-standard target. Within the
 declared boundary, use the simplest high-quality approach that satisfies this
 packet. If a better idea would require broader scope, new route work, extra
@@ -133,7 +140,7 @@ it; report it to PM only.
 Return a soft `PM Note` in the sealed result or report body with exactly these
 labels: `In-scope quality choice` and `PM consideration`. Use `none` when there
 is no useful note. This note is PM decision-support, not a reviewer hard gate.
-If this packet is not addressed to a worker or FlowGuard officer, write `not
+If this packet is not addressed to a worker or FlowGuard operator, write `not
 applicable`.
 
 Also return a `PM Suggestion Items` section. Use `none` when there are no PM
@@ -141,12 +148,12 @@ suggestion candidates. Otherwise list candidate `flowpilot.pm_suggestion_item.v1
 entries with source role, source output reference, summary, classification,
 authority basis, and evidence references. Do not copy sealed body content into
 the suggestion item. Worker-origin items are advisory only and must not use
-`current_gate_blocker`. FlowGuard officer items may use `current_gate_blocker`
+`current_gate_blocker`. FlowGuard operator items may use `current_gate_blocker`
 only for formal model-gate findings inside the PM-requested model boundary.
 
 ## Role-Scoped Quality Repair Boundary
 
-For packets addressed to `worker_a` or `worker_b` that assign implementation,
+For packets addressed to `worker` or `worker` that assign implementation,
 current-node execution, or repair work, completion requires an in-scope quality
 repair check before returning. Inspect your own changed artifacts against this
 packet's allowed reads, allowed writes, acceptance slice, role authority, and
@@ -156,7 +163,7 @@ requires broader scope, changed acceptance, new dependency, route mutation,
 forbidden writes, or another role's authority, do not silently repair it; return
 `blocked`, `needs_pm`, or a PM Suggestion Item.
 
-For material-scan, research, or FlowGuard officer packets, correct defects in
+For material-scan, research, or FlowGuard operator packets, correct defects in
 your own report, model, check command, counterexample interpretation, or
 evidence before returning. Target implementation, product, process, route, or
 authority defects must be reported as findings, blockers, or PM Suggestion Items
@@ -194,7 +201,7 @@ guaranteed.
 If the node acceptance plan declares inherited child-skill standards for this
 packet, copy the exact standard ids here. Each id must include category
 `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`, `ARTIFACT`, or `WAIVER`, the
-source skill path, expected artifact path, and reviewer/officer gate id.
+source skill path, expected artifact path, and reviewer/FlowGuard operator gate id.
 The recipient must return a matching `Skill Standard Result Matrix` row for
 every inherited id. If no child-skill standards apply, write `none` and cite
 the node acceptance plan field that makes them not applicable.

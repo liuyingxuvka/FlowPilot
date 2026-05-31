@@ -62,7 +62,7 @@ ROUTER_FACADE_TARGET_RATIONALES = {
     "work_packets": "Owns material, research, current-node, and PM role-work packet flow.",
     "pm_role_work_gates": "Owns PM role-work gate mapping and targeted result contract helpers.",
     "pm_role_work_writes": "Owns PM role-work request, result, and disposition writes.",
-    "pm_role_work_lifecycle": "Owns PM role-work request indexes and officer lifecycle records.",
+    "pm_role_work_lifecycle": "Owns PM role-work request indexes and FlowGuard operator lifecycle records.",
     "pm_role_work_actions": "Owns PM role-work next-action selection and result reconciliation.",
     "route_artifacts": "Owns PM route, product, node-acceptance, and evidence artifact writes.",
     "events_repair": "Owns control blockers, repair transactions, and gate-decision validation.",

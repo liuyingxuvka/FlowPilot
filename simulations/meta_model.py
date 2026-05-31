@@ -16,7 +16,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 TARGET_CHUNKS = 2
 TARGET_PARENT_NODES = 2
-REQUIRED_ROLE_BINDING_COUNT = 6
+REQUIRED_ROLE_BINDING_COUNT = 4
 MAX_ROUTE_REVISIONS = 2
 MAX_IMPL_RETRIES = 1
 MAX_EXPERIMENTS = 1
@@ -137,8 +137,8 @@ class State:
     root_acceptance_thresholds_defined: bool = False
     root_acceptance_proof_matrix_written: bool = False
     standard_scenario_pack_selected: bool = False
-    product_architecture_officer_adversarial_probe_done: bool = False
-    product_function_architecture_product_officer_approved: bool = False
+    product_architecture_flowguard_operator_adversarial_probe_done: bool = False
+    product_function_architecture_flowguard_operator_product_scope_approved: bool = False
     product_architecture_reviewer_adversarial_probe_done: bool = False
     product_function_architecture_reviewer_challenged: bool = False
     product_architecture_self_interrogation_record_written: bool = False
@@ -161,15 +161,14 @@ class State:
     role_binding_count: int = 0
     project_manager_ready: bool = False
     reviewer_ready: bool = False
-    process_flowguard_officer_ready: bool = False
-    product_flowguard_officer_ready: bool = False
-    worker_a_ready: bool = False
-    worker_b_ready: bool = False
+    flowguard_operator_route_scope_ready: bool = False
+    flowguard_operator_product_scope_ready: bool = False
+    worker_ready: bool = False
     role_binding_ledger_written: bool = False
     role_identity_protocol_recorded: bool = False
     pm_flowguard_delegation_policy_recorded: bool = False
-    officer_owned_async_modeling_policy_recorded: bool = False
-    officer_model_report_provenance_policy_recorded: bool = False
+    flowguard_operator_owned_async_modeling_policy_recorded: bool = False
+    flowguard_operator_model_report_provenance_policy_recorded: bool = False
     controller_coordination_boundary_recorded: bool = False
     independent_approval_protocol_recorded: bool = False
     role_binding_memory_policy_written: bool = False
@@ -192,16 +191,16 @@ class State:
     child_skill_gate_approvers_assigned: bool = False
     child_skill_manifest_independent_validation_done: bool = False
     child_skill_manifest_reviewer_reviewed: bool = False
-    child_skill_manifest_process_officer_approved: bool = False
-    child_skill_manifest_product_officer_approved: bool = False
+    child_skill_manifest_flowguard_operator_route_scope_approved: bool = False
+    child_skill_manifest_flowguard_operator_product_scope_approved: bool = False
     child_skill_manifest_pm_approved_for_route: bool = False
     heartbeat_loaded_state: bool = False
     heartbeat_loaded_frontier: bool = False
     heartbeat_loaded_packet_ledger: bool = False
     heartbeat_loaded_role_binding_memory: bool = False
     heartbeat_host_rehydrate_requested: bool = False
-    heartbeat_restored_crew: bool = False
-    heartbeat_rehydrated_crew: bool = False
+    heartbeat_restored_runtime_roles: bool = False
+    heartbeat_rehydrated_runtime_roles: bool = False
     heartbeat_injected_current_run_memory_into_roles: bool = False
     role_binding_recovery_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
@@ -282,7 +281,7 @@ class State:
     frontier_version: int = 0
     plan_version: int = 0
     flowguard_process_design_done: bool = False
-    flowguard_officer_model_adversarial_probe_done: bool = False
+    flowguard_operator_model_adversarial_probe_done: bool = False
     flowguard_model_report_risk_tiers_done: bool = False
     flowguard_model_report_pm_review_agenda_done: bool = False
     flowguard_model_report_toolchain_recommendations_done: bool = False
@@ -294,13 +293,13 @@ class State:
     router_leaf_only_dispatch_policy_checked: bool = False
     user_flow_diagram_shallow_projection_policy_recorded: bool = False
     root_route_model_checked: bool = False
-    root_route_model_process_officer_approved: bool = False
+    root_route_model_flowguard_operator_route_scope_approved: bool = False
     root_product_function_model_checked: bool = False
-    root_product_function_model_product_officer_approved: bool = False
+    root_product_function_model_flowguard_operator_product_scope_approved: bool = False
     strict_gate_obligation_review_model_checked: bool = False
     parent_subtree_review_checked: bool = False
     parent_product_function_model_checked: bool = False
-    parent_product_function_model_product_officer_approved: bool = False
+    parent_product_function_model_flowguard_operator_product_scope_approved: bool = False
     parent_focused_interrogation_done: bool = False
     parent_focused_interrogation_questions: int = 0
     parent_focused_interrogation_scope_id: str = ""
@@ -316,7 +315,7 @@ class State:
     node_self_interrogation_record_written: bool = False
     node_self_interrogation_findings_dispositioned: bool = False
     node_product_function_model_checked: bool = False
-    node_product_function_model_product_officer_approved: bool = False
+    node_product_function_model_flowguard_operator_product_scope_approved: bool = False
     current_node_high_standard_recheck_written: bool = False
     current_node_minimum_sufficient_complexity_review_written: bool = False
     node_acceptance_plan_written: bool = False
@@ -440,8 +439,8 @@ class State:
     final_standard_scenario_pack_replayed: bool = False
     final_quality_candidate_review_done: bool = False
     final_product_function_model_replayed: bool = False
-    final_product_model_officer_adversarial_probe_done: bool = False
-    final_product_function_model_product_officer_approved: bool = False
+    final_product_model_flowguard_operator_adversarial_probe_done: bool = False
+    final_product_function_model_flowguard_operator_product_scope_approved: bool = False
     final_human_review_context_loaded: bool = False
     final_human_neutral_observation_written: bool = False
     final_human_manual_experiments_run: bool = False
@@ -510,9 +509,9 @@ def _reset_quality_gates() -> dict[str, object]:
 def _reset_dual_layer_scope_gates() -> dict[str, object]:
     return {
         "parent_product_function_model_checked": False,
-        "parent_product_function_model_product_officer_approved": False,
+        "parent_product_function_model_flowguard_operator_product_scope_approved": False,
         "node_product_function_model_checked": False,
-        "node_product_function_model_product_officer_approved": False,
+        "node_product_function_model_flowguard_operator_product_scope_approved": False,
         "node_human_review_context_loaded": False,
         "node_human_neutral_observation_written": False,
         "node_human_manual_experiments_run": False,
@@ -587,8 +586,8 @@ def _reset_execution_scope_gates() -> dict[str, object]:
             "heartbeat_loaded_packet_ledger": False,
             "heartbeat_loaded_role_binding_memory": False,
             "heartbeat_host_rehydrate_requested": False,
-            "heartbeat_restored_crew": False,
-            "heartbeat_rehydrated_crew": False,
+            "heartbeat_restored_runtime_roles": False,
+            "heartbeat_rehydrated_runtime_roles": False,
             "heartbeat_injected_current_run_memory_into_roles": False,
             "role_binding_recovery_report_written": False,
             "replacement_roles_seeded_from_memory": False,
@@ -788,8 +787,8 @@ def _product_function_architecture_ready(state: State) -> bool:
         and state.root_acceptance_thresholds_defined
         and state.root_acceptance_proof_matrix_written
         and state.standard_scenario_pack_selected
-        and state.product_architecture_officer_adversarial_probe_done
-        and state.product_function_architecture_product_officer_approved
+        and state.product_architecture_flowguard_operator_adversarial_probe_done
+        and state.product_function_architecture_flowguard_operator_product_scope_approved
         and state.product_architecture_reviewer_adversarial_probe_done
         and state.product_function_architecture_reviewer_challenged
     )
@@ -826,21 +825,20 @@ def _material_handoff_ready(state: State) -> bool:
     )
 
 
-def _crew_ready(state: State) -> bool:
+def _runtime_roles_ready(state: State) -> bool:
     return (
         state.role_binding_policy_written
         and state.role_binding_count == REQUIRED_ROLE_BINDING_COUNT
         and state.project_manager_ready
         and state.reviewer_ready
-        and state.process_flowguard_officer_ready
-        and state.product_flowguard_officer_ready
-        and state.worker_a_ready
-        and state.worker_b_ready
+        and state.flowguard_operator_route_scope_ready
+        and state.flowguard_operator_product_scope_ready
+        and state.worker_ready
         and state.role_binding_ledger_written
         and state.role_identity_protocol_recorded
         and state.pm_flowguard_delegation_policy_recorded
-        and state.officer_owned_async_modeling_policy_recorded
-        and state.officer_model_report_provenance_policy_recorded
+        and state.flowguard_operator_owned_async_modeling_policy_recorded
+        and state.flowguard_operator_model_report_provenance_policy_recorded
         and state.controller_coordination_boundary_recorded
         and state.independent_approval_protocol_recorded
         and state.role_binding_memory_policy_written
@@ -1044,7 +1042,7 @@ def _route_ready(state: State) -> bool:
         and state.dependency_plan_recorded
         and state.future_installs_deferred
         and state.contract_frozen
-        and _crew_ready(state)
+        and _runtime_roles_ready(state)
         and state.pm_initial_route_decision_recorded
         and state.child_skill_route_design_discovery_started
         and state.child_skill_initial_gate_manifest_extracted
@@ -1054,7 +1052,7 @@ def _route_ready(state: State) -> bool:
         and state.child_skill_manifest_pm_approved_for_route
         and _continuation_ready(state)
         and state.flowguard_process_design_done
-        and state.flowguard_officer_model_adversarial_probe_done
+        and state.flowguard_operator_model_adversarial_probe_done
         and state.route_version > 0
         and state.route_checked
         and state.root_product_function_model_checked
@@ -1142,8 +1140,8 @@ class FlowPilotControlStep:
         "root_acceptance_thresholds_defined",
         "root_acceptance_proof_matrix_written",
         "standard_scenario_pack_selected",
-        "product_architecture_officer_adversarial_probe_done",
-        "product_function_architecture_product_officer_approved",
+        "product_architecture_flowguard_operator_adversarial_probe_done",
+        "product_function_architecture_flowguard_operator_product_scope_approved",
         "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
         "product_architecture_self_interrogation_record_written",
@@ -1166,15 +1164,14 @@ class FlowPilotControlStep:
         "role_binding_count",
         "project_manager_ready",
         "reviewer_ready",
-        "process_flowguard_officer_ready",
-        "product_flowguard_officer_ready",
-        "worker_a_ready",
-        "worker_b_ready",
+        "flowguard_operator_route_scope_ready",
+        "flowguard_operator_product_scope_ready",
+        "worker_ready",
         "role_binding_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
-        "officer_owned_async_modeling_policy_recorded",
-        "officer_model_report_provenance_policy_recorded",
+        "flowguard_operator_owned_async_modeling_policy_recorded",
+        "flowguard_operator_model_report_provenance_policy_recorded",
         "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
         "role_binding_memory_policy_written",
@@ -1192,8 +1189,8 @@ class FlowPilotControlStep:
         "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_role_binding_memory",
         "heartbeat_host_rehydrate_requested",
-        "heartbeat_restored_crew",
-        "heartbeat_rehydrated_crew",
+        "heartbeat_restored_runtime_roles",
+        "heartbeat_rehydrated_runtime_roles",
         "heartbeat_injected_current_run_memory_into_roles",
         "role_binding_recovery_report_written",
         "replacement_roles_seeded_from_memory",
@@ -1248,20 +1245,20 @@ class FlowPilotControlStep:
         "activity_stream_latest_event_written",
         "flowpilot_improvement_live_report_initialized",
         "flowguard_process_design_done",
-        "flowguard_officer_model_adversarial_probe_done",
+        "flowguard_operator_model_adversarial_probe_done",
         "candidate_route_tree_generated",
         "recursive_route_decomposition_policy_written",
         "route_leaf_readiness_gates_defined",
         "route_reviewer_depth_review_required",
         "router_leaf_only_dispatch_policy_checked",
         "root_route_model_checked",
-        "root_route_model_process_officer_approved",
+        "root_route_model_flowguard_operator_route_scope_approved",
         "root_product_function_model_checked",
-        "root_product_function_model_product_officer_approved",
+        "root_product_function_model_flowguard_operator_product_scope_approved",
         "strict_gate_obligation_review_model_checked",
         "parent_subtree_review_checked",
         "parent_product_function_model_checked",
-        "parent_product_function_model_product_officer_approved",
+        "parent_product_function_model_flowguard_operator_product_scope_approved",
         "parent_focused_interrogation_done",
         "parent_focused_interrogation_questions",
         "parent_focused_interrogation_scope_id",
@@ -1281,7 +1278,7 @@ class FlowPilotControlStep:
         "node_self_interrogation_record_written",
         "node_self_interrogation_findings_dispositioned",
         "node_product_function_model_checked",
-        "node_product_function_model_product_officer_approved",
+        "node_product_function_model_flowguard_operator_product_scope_approved",
         "current_node_high_standard_recheck_written",
         "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
@@ -1376,8 +1373,8 @@ class FlowPilotControlStep:
         "final_standard_scenario_pack_replayed",
         "final_quality_candidate_review_done",
         "final_product_function_model_replayed",
-        "final_product_model_officer_adversarial_probe_done",
-        "final_product_function_model_product_officer_approved",
+        "final_product_model_flowguard_operator_adversarial_probe_done",
+        "final_product_function_model_flowguard_operator_product_scope_approved",
         "final_human_review_context_loaded",
         "final_human_neutral_observation_written",
         "final_human_manual_experiments_run",
@@ -1480,8 +1477,8 @@ class FlowPilotControlStep:
         "root_acceptance_thresholds_defined",
         "root_acceptance_proof_matrix_written",
         "standard_scenario_pack_selected",
-        "product_architecture_officer_adversarial_probe_done",
-        "product_function_architecture_product_officer_approved",
+        "product_architecture_flowguard_operator_adversarial_probe_done",
+        "product_function_architecture_flowguard_operator_product_scope_approved",
         "product_architecture_reviewer_adversarial_probe_done",
         "product_function_architecture_reviewer_challenged",
         "product_architecture_self_interrogation_record_written",
@@ -1503,15 +1500,14 @@ class FlowPilotControlStep:
         "role_binding_count",
         "project_manager_ready",
         "reviewer_ready",
-        "process_flowguard_officer_ready",
-        "product_flowguard_officer_ready",
-        "worker_a_ready",
-        "worker_b_ready",
+        "flowguard_operator_route_scope_ready",
+        "flowguard_operator_product_scope_ready",
+        "worker_ready",
         "role_binding_ledger_written",
         "role_identity_protocol_recorded",
         "pm_flowguard_delegation_policy_recorded",
-        "officer_owned_async_modeling_policy_recorded",
-        "officer_model_report_provenance_policy_recorded",
+        "flowguard_operator_owned_async_modeling_policy_recorded",
+        "flowguard_operator_model_report_provenance_policy_recorded",
         "controller_coordination_boundary_recorded",
         "independent_approval_protocol_recorded",
         "pm_initial_route_decision_recorded",
@@ -1526,8 +1522,8 @@ class FlowPilotControlStep:
         "heartbeat_loaded_packet_ledger",
         "heartbeat_loaded_role_binding_memory",
         "heartbeat_host_rehydrate_requested",
-        "heartbeat_restored_crew",
-        "heartbeat_rehydrated_crew",
+        "heartbeat_restored_runtime_roles",
+        "heartbeat_rehydrated_runtime_roles",
         "heartbeat_injected_current_run_memory_into_roles",
         "role_binding_recovery_report_written",
         "replacement_roles_seeded_from_memory",
@@ -1600,16 +1596,16 @@ class FlowPilotControlStep:
         "frontier_version",
         "plan_version",
         "flowguard_process_design_done",
-        "flowguard_officer_model_adversarial_probe_done",
+        "flowguard_operator_model_adversarial_probe_done",
         "candidate_route_tree_generated",
         "root_route_model_checked",
-        "root_route_model_process_officer_approved",
+        "root_route_model_flowguard_operator_route_scope_approved",
         "root_product_function_model_checked",
-        "root_product_function_model_product_officer_approved",
+        "root_product_function_model_flowguard_operator_product_scope_approved",
         "strict_gate_obligation_review_model_checked",
         "parent_subtree_review_checked",
         "parent_product_function_model_checked",
-        "parent_product_function_model_product_officer_approved",
+        "parent_product_function_model_flowguard_operator_product_scope_approved",
         "parent_focused_interrogation_done",
         "parent_focused_interrogation_questions",
         "parent_focused_interrogation_scope_id",
@@ -1624,7 +1620,7 @@ class FlowPilotControlStep:
         "node_self_interrogation_record_written",
         "node_self_interrogation_findings_dispositioned",
         "node_product_function_model_checked",
-        "node_product_function_model_product_officer_approved",
+        "node_product_function_model_flowguard_operator_product_scope_approved",
         "current_node_high_standard_recheck_written",
         "current_node_minimum_sufficient_complexity_review_written",
         "node_acceptance_plan_written",
@@ -1709,8 +1705,8 @@ class FlowPilotControlStep:
         "final_standard_scenario_pack_replayed",
         "final_quality_candidate_review_done",
         "final_product_function_model_replayed",
-        "final_product_model_officer_adversarial_probe_done",
-        "final_product_function_model_product_officer_approved",
+        "final_product_model_flowguard_operator_adversarial_probe_done",
+        "final_product_function_model_flowguard_operator_product_scope_approved",
         "final_human_review_context_loaded",
         "final_human_neutral_observation_written",
         "final_human_manual_experiments_run",
@@ -1903,14 +1899,14 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         )
     if not _product_function_architecture_ready(state):
         return InvariantResult.fail(
-            "final report emitted before PM-owned product-function architecture, product-officer approval, and reviewer challenge"
+            "final report emitted before PM-owned product-function architecture, FlowGuard operator product-function approval, and reviewer challenge"
         )
     if not (state.dependency_plan_recorded and state.future_installs_deferred):
         return InvariantResult.fail("final report emitted before demand-driven dependency plan was recorded")
     if not state.contract_frozen:
         return InvariantResult.fail("final report emitted before contract was frozen")
     if not (
-        _crew_ready(state)
+        _runtime_roles_ready(state)
         and state.pm_initial_route_decision_recorded
         and state.role_binding_ledger_archived
     ):
@@ -1930,8 +1926,8 @@ def no_completion_before_verified_contract(state: State, trace) -> InvariantResu
         and state.root_route_model_checked
         and state.root_product_function_model_checked
         and state.strict_gate_obligation_review_model_checked
-        and state.root_route_model_process_officer_approved
-        and state.root_product_function_model_product_officer_approved
+        and state.root_route_model_flowguard_operator_route_scope_approved
+        and state.root_product_function_model_flowguard_operator_product_scope_approved
     ):
         return InvariantResult.fail("final report emitted before candidate route tree, root process model, root product-function model, and strict gate-obligation review model checks")
     if state.contract_revision != 0:
@@ -2054,7 +2050,7 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
     ):
         return InvariantResult.fail("startup continued after asking questions without stopping for the user's reply")
     if state.startup_banner_emitted and not _startup_questions_complete(state):
-        return InvariantResult.fail("startup banner emitted before all three startup answers were recorded")
+        return InvariantResult.fail("startup banner emitted before startup intake answers and fixed defaults were recorded")
     if state.startup_banner_emitted and not state.startup_banner_user_dialog_confirmed:
         return InvariantResult.fail("startup banner emitted without confirmed user-dialog display")
     if state.startup_banner_emitted and not state.controller_core_loaded:
@@ -2075,7 +2071,7 @@ def startup_question_gate_before_heavy_startup(state: State, trace) -> Invariant
     if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not _run_isolation_ready(state):
         return InvariantResult.fail("FlowPilot advanced before a fresh current run directory and control-state boundary were established")
     if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not state.startup_display_entry_action_done:
-        return InvariantResult.fail("FlowPilot advanced before resolving the user's startup display surface answer")
+        return InvariantResult.fail("FlowPilot advanced before recording the fixed startup display surface default")
     if (state.contract_frozen or state.route_version > 0 or state.work_beyond_startup_allowed) and not state.preflow_visible_plan_cleared:
         return InvariantResult.fail("FlowPilot advanced before clearing the ordinary pre-FlowPilot visible plan")
     if state.contract_frozen and not _root_self_interrogation_gate_ready(state):
@@ -2105,7 +2101,7 @@ def dependency_plan_before_route_or_work(state: State, trace) -> InvariantResult
         or state.final_report_emitted
     )
     if route_version_exists and not (
-        _crew_ready(state)
+        _runtime_roles_ready(state)
         and _run_isolation_ready(state)
         and state.pm_initial_route_decision_recorded
         and _product_function_architecture_ready(state)
@@ -2301,8 +2297,8 @@ def formal_chunk_requires_checked_route_and_verification(state: State, trace) ->
             and state.heartbeat_loaded_packet_ledger
             and state.heartbeat_loaded_role_binding_memory
             and state.heartbeat_host_rehydrate_requested
-            and state.heartbeat_restored_crew
-            and state.heartbeat_rehydrated_crew
+            and state.heartbeat_restored_runtime_roles
+            and state.heartbeat_rehydrated_runtime_roles
             and state.heartbeat_injected_current_run_memory_into_roles
             and state.role_binding_recovery_report_written
             and state.replacement_roles_seeded_from_memory
@@ -2898,19 +2894,19 @@ def actor_authority_gates_require_correct_role(
     any_role_approval = (
         state.startup_self_interrogation_pm_ratified
         or state.material_reviewer_sufficiency_approved
-        or state.product_function_architecture_product_officer_approved
+        or state.product_function_architecture_flowguard_operator_product_scope_approved
         or state.product_function_architecture_reviewer_challenged
         or state.child_skill_manifest_reviewer_reviewed
-        or state.child_skill_manifest_process_officer_approved
-        or state.child_skill_manifest_product_officer_approved
+        or state.child_skill_manifest_flowguard_operator_route_scope_approved
+        or state.child_skill_manifest_flowguard_operator_product_scope_approved
         or state.child_skill_manifest_pm_approved_for_route
-        or state.root_route_model_process_officer_approved
-        or state.root_product_function_model_product_officer_approved
-        or state.parent_product_function_model_product_officer_approved
-        or state.node_product_function_model_product_officer_approved
+        or state.root_route_model_flowguard_operator_route_scope_approved
+        or state.root_product_function_model_flowguard_operator_product_scope_approved
+        or state.parent_product_function_model_flowguard_operator_product_scope_approved
+        or state.node_product_function_model_flowguard_operator_product_scope_approved
         or state.node_human_review_reviewer_approved
         or state.composite_backward_review_reviewer_approved
-        or state.final_product_function_model_product_officer_approved
+        or state.final_product_function_model_flowguard_operator_product_scope_approved
         or state.final_human_review_reviewer_approved
         or state.final_route_wide_gate_ledger_pm_completion_approved
         or state.pm_start_gate_opened
@@ -2919,7 +2915,7 @@ def actor_authority_gates_require_correct_role(
         return InvariantResult.fail(
             "role approval was recorded before the independent adversarial approval protocol existed"
         )
-    if state.startup_self_interrogation_pm_ratified and not _crew_ready(state):
+    if state.startup_self_interrogation_pm_ratified and not _runtime_roles_ready(state):
         return InvariantResult.fail(
             "startup self-interrogation was ratified before runtime role-binding authority was ready"
         )
@@ -2931,7 +2927,7 @@ def actor_authority_gates_require_correct_role(
             "material reviewer approved sufficiency before independently probing direct source material"
         )
     if state.product_function_architecture_pm_synthesized and not (
-        _crew_ready(state) and _material_handoff_ready(state)
+        _runtime_roles_ready(state) and _material_handoff_ready(state)
     ):
         return InvariantResult.fail(
             "PM product-function architecture was synthesized before role binding recovery and reviewed material handoff"
@@ -2954,26 +2950,26 @@ def actor_authority_gates_require_correct_role(
         and state.standard_scenario_pack_selected
     )
     if (
-        state.product_function_architecture_product_officer_approved
+        state.product_function_architecture_flowguard_operator_product_scope_approved
         and not product_architecture_inputs_ready
     ):
         return InvariantResult.fail(
             "product-function architecture approval was recorded before all PM product artifacts existed"
         )
     if (
-        state.product_function_architecture_product_officer_approved
-        and not state.product_architecture_officer_adversarial_probe_done
+        state.product_function_architecture_flowguard_operator_product_scope_approved
+        and not state.product_architecture_flowguard_operator_adversarial_probe_done
     ):
         return InvariantResult.fail(
-            "product officer approved product-function architecture before adversarial modelability and failure-path probe"
+            "product-scope FlowGuard operator approved product-function architecture before adversarial modelability and failure-path probe"
         )
     if state.product_function_architecture_reviewer_challenged and not (
-        state.product_function_architecture_product_officer_approved
+        state.product_function_architecture_flowguard_operator_product_scope_approved
         and state.reviewer_ready
         and state.product_architecture_reviewer_adversarial_probe_done
     ):
         return InvariantResult.fail(
-            "human-like reviewer challenged the product-function architecture before product officer approval, reviewer recovery, or independent adversarial probe"
+            "human-like reviewer challenged the product-function architecture before FlowGuard operator product-function approval, reviewer recovery, or independent adversarial probe"
         )
     if state.flowguard_process_design_done and not (
         state.startup_self_interrogation_pm_ratified
@@ -3007,19 +3003,19 @@ def actor_authority_gates_require_correct_role(
             "child-skill manifest role approval was recorded before independent manifest validation"
         )
     if (
-        state.root_route_model_process_officer_approved
-        or state.root_product_function_model_product_officer_approved
-        or state.parent_product_function_model_product_officer_approved
-        or state.node_product_function_model_product_officer_approved
-    ) and not state.flowguard_officer_model_adversarial_probe_done:
+        state.root_route_model_flowguard_operator_route_scope_approved
+        or state.root_product_function_model_flowguard_operator_product_scope_approved
+        or state.parent_product_function_model_flowguard_operator_product_scope_approved
+        or state.node_product_function_model_flowguard_operator_product_scope_approved
+    ) and not state.flowguard_operator_model_adversarial_probe_done:
         return InvariantResult.fail(
-            "FlowGuard officer model approval was recorded before adversarial model probe evidence"
+            "FlowGuard operator model approval was recorded before adversarial model probe evidence"
         )
     if (
-        state.root_route_model_process_officer_approved
-        or state.root_product_function_model_product_officer_approved
-        or state.parent_product_function_model_product_officer_approved
-        or state.node_product_function_model_product_officer_approved
+        state.root_route_model_flowguard_operator_route_scope_approved
+        or state.root_product_function_model_flowguard_operator_product_scope_approved
+        or state.parent_product_function_model_flowguard_operator_product_scope_approved
+        or state.node_product_function_model_flowguard_operator_product_scope_approved
     ) and not (
         state.flowguard_model_report_risk_tiers_done
         and state.flowguard_model_report_pm_review_agenda_done
@@ -3027,14 +3023,14 @@ def actor_authority_gates_require_correct_role(
         and state.flowguard_model_report_confidence_boundary_done
     ):
         return InvariantResult.fail(
-            "FlowGuard officer model approval was recorded before the report extracted PM risk tiers, review agenda, toolchain recommendations, and confidence boundary"
+            "FlowGuard operator model approval was recorded before the report extracted PM risk tiers, review agenda, toolchain recommendations, and confidence boundary"
         )
-    if state.root_route_model_process_officer_approved and not state.root_route_model_checked:
+    if state.root_route_model_flowguard_operator_route_scope_approved and not state.root_route_model_checked:
         return InvariantResult.fail("root route approval is stale without a root route model check")
-    if state.root_route_model_checked and not state.root_route_model_process_officer_approved:
-        return InvariantResult.fail("root route model check lacks process FlowGuard officer approval")
+    if state.root_route_model_checked and not state.root_route_model_flowguard_operator_route_scope_approved:
+        return InvariantResult.fail("root route model check lacks FlowGuard operator process-model approval")
     if (
-        state.root_product_function_model_product_officer_approved
+        state.root_product_function_model_flowguard_operator_product_scope_approved
         and not state.root_product_function_model_checked
     ):
         return InvariantResult.fail(
@@ -3042,13 +3038,13 @@ def actor_authority_gates_require_correct_role(
         )
     if (
         state.root_product_function_model_checked
-        and not state.root_product_function_model_product_officer_approved
+        and not state.root_product_function_model_flowguard_operator_product_scope_approved
     ):
         return InvariantResult.fail(
-            "root product-function model check lacks product FlowGuard officer approval"
+            "root product-function model check lacks FlowGuard operator product-function approval"
         )
     if (
-        state.parent_product_function_model_product_officer_approved
+        state.parent_product_function_model_flowguard_operator_product_scope_approved
         and not state.parent_product_function_model_checked
     ):
         return InvariantResult.fail(
@@ -3056,13 +3052,13 @@ def actor_authority_gates_require_correct_role(
         )
     if (
         state.parent_product_function_model_checked
-        and not state.parent_product_function_model_product_officer_approved
+        and not state.parent_product_function_model_flowguard_operator_product_scope_approved
     ):
         return InvariantResult.fail(
-            "parent product-function model check lacks product FlowGuard officer approval"
+            "parent product-function model check lacks FlowGuard operator product-function approval"
         )
     if (
-        state.node_product_function_model_product_officer_approved
+        state.node_product_function_model_flowguard_operator_product_scope_approved
         and not state.node_product_function_model_checked
     ):
         return InvariantResult.fail(
@@ -3070,10 +3066,10 @@ def actor_authority_gates_require_correct_role(
         )
     if (
         state.node_product_function_model_checked
-        and not state.node_product_function_model_product_officer_approved
+        and not state.node_product_function_model_flowguard_operator_product_scope_approved
     ):
         return InvariantResult.fail(
-            "node product-function model check lacks product FlowGuard officer approval"
+            "node product-function model check lacks FlowGuard operator product-function approval"
         )
     if state.node_human_review_reviewer_approved and not (
         state.node_human_inspection_passed
@@ -3108,21 +3104,21 @@ def actor_authority_gates_require_correct_role(
             "composite backward review pass lacks reviewer approval"
         )
     if (
-        state.final_product_function_model_product_officer_approved
+        state.final_product_function_model_flowguard_operator_product_scope_approved
         and not (
             state.final_product_function_model_replayed
-            and state.final_product_model_officer_adversarial_probe_done
+            and state.final_product_model_flowguard_operator_adversarial_probe_done
         )
     ):
         return InvariantResult.fail(
-            "final product-function approval is stale without final product replay and adversarial officer probe"
+            "final product-function approval is stale without final product replay and adversarial FlowGuard operator probe"
         )
     if (
         state.final_product_function_model_replayed
-        and not state.final_product_function_model_product_officer_approved
+        and not state.final_product_function_model_flowguard_operator_product_scope_approved
     ):
         return InvariantResult.fail(
-            "final product-function replay lacks product FlowGuard officer approval"
+            "final product-function replay lacks FlowGuard operator product-function approval"
         )
     if state.final_human_review_reviewer_approved and not (
         state.final_human_inspection_passed
@@ -3221,8 +3217,8 @@ def role_binding_memory_rehydration_required(state: State, trace) -> InvariantRe
         and state.controller_action_watch_active
         and state.heartbeat_loaded_role_binding_memory
         and state.heartbeat_host_rehydrate_requested
-        and state.heartbeat_restored_crew
-        and state.heartbeat_rehydrated_crew
+        and state.heartbeat_restored_runtime_roles
+        and state.heartbeat_rehydrated_runtime_roles
         and state.heartbeat_injected_current_run_memory_into_roles
         and state.role_binding_recovery_report_written
         and state.replacement_roles_seeded_from_memory
@@ -3279,7 +3275,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="startup_question_gate_before_heavy_startup",
-        description="FlowPilot asks the native startup intake options, stops for answers, and emits the banner only after all three answers exist.",
+        description="FlowPilot asks the native startup intake question, stops for answers, and emits the banner only after the user answer and fixed defaults exist.",
         predicate=startup_question_gate_before_heavy_startup,
     ),
     Invariant(
@@ -3364,7 +3360,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="actor_authority_gates_require_correct_role",
-        description="Authority-sensitive gates require the PM, reviewer, or matching FlowGuard officer and reject stale approvals.",
+        description="Authority-sensitive gates require the PM, reviewer, or matching FlowGuard operator and reject stale approvals.",
         predicate=actor_authority_gates_require_correct_role,
     ),
     Invariant(

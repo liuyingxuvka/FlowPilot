@@ -68,7 +68,7 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
         raise RouterError('role recovery trigger_source mismatch')
     requested_scope = str(transaction.get('recovery_scope') or 'targeted')
     payload_scope = str(payload.get('recovery_scope') or requested_scope)
-    if payload_scope not in {requested_scope, 'full_crew'}:
+    if payload_scope not in {requested_scope, 'full_role_binding'}:
         raise RouterError('role recovery scope mismatch')
     target_roles = [str(role) for role in transaction.get('target_role_keys') or []]
     payload_targets = payload.get('target_role_keys')
@@ -84,7 +84,7 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
     role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
     slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
     existing_by_role = {str(slot.get('role_key')): slot for slot in slots if isinstance(slot, dict) and slot.get('role_key') in RUNTIME_ROLE_KEYS}
-    full_role_binding = payload_scope == 'full_crew' or any((isinstance(raw, dict) and raw.get('recovery_result') == ROLE_BINDING_FULL_SET_RECOVERY_RESULT for raw in iterable))
+    full_role_binding = payload_scope == 'full_role_binding' or any((isinstance(raw, dict) and raw.get('recovery_result') == ROLE_BINDING_FULL_SET_RECOVERY_RESULT for raw in iterable))
     expected_roles = list(RUNTIME_ROLE_KEYS) if full_role_binding else target_roles
     contexts = {item['role_key']: item for item in router._resume_role_contexts(project_root, run_root, run_state)}
     records_by_role: dict[str, dict[str, Any]] = {}

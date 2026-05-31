@@ -20,7 +20,7 @@ RESULTS_PATH = Path(__file__).resolve().with_name(
 REQUIRED_LABELS = (
     "flowguard_work_order_run_started",
     "pm_writes_flowguard_work_order",
-    "officer_returns_current_flowguard_report",
+    "flowguard_operator_returns_current_flowguard_report",
     "pm_accepts_flowguard_report",
     "pm_assigns_packet_scoped_flowguard_obligations",
     "worker_returns_flowguard_obligation_coverage",
@@ -39,8 +39,8 @@ HAZARD_EXPECTED_FAILURES = {
     "progress_only_report": "PM accepted progress-only FlowGuard evidence",
     "skipped_checks_not_dispositioned": "PM accepted skipped FlowGuard checks without disposition",
     "unaccepted_report": "Reviewer passed before PM accepted the FlowGuard report",
-    "officer_gate_approval": "Officer used FlowGuard report to approve a gate",
-    "officer_route_mutation": "Officer used FlowGuard report to mutate the route",
+    "flowguard_operator_gate_approval": "FlowGuard operator used FlowGuard report to approve a gate",
+    "flowguard_operator_route_mutation": "FlowGuard operator used FlowGuard report to mutate the route",
     "reviewer_bypasses_report_check": "Reviewer passed a FlowGuard-backed gate without checking the report",
     "reviewer_reruns_without_pm_route": "Reviewer reran FlowGuard modeling without PM-routed work authority",
     "worker_route_mutation": "Worker used FlowGuard obligation coverage to mutate the route",
@@ -60,8 +60,8 @@ def _state_id(state: model.State) -> str:
         f"report={state.report_returned},{state.report_scope_matches},"
         f"{state.report_current},{state.report_skipped_checks_dispositioned},"
         f"{state.report_progress_only},{state.report_pm_accepted}|"
-        f"officer={state.officer_answered_work_order},{state.officer_approved_gate},"
-        f"{state.officer_mutated_route}|worker={state.worker_obligations_assigned},"
+        f"FlowGuard operator={state.flowguard_operator_answered_work_order},{state.flowguard_operator_approved_gate},"
+        f"{state.flowguard_operator_mutated_route}|worker={state.worker_obligations_assigned},"
         f"{state.worker_returned_packet_scoped_coverage},{state.worker_mutated_route},"
         f"{state.worker_waived_report_gap}|reviewer={state.reviewer_checked_report},"
         f"{state.reviewer_passed_gate},{state.reviewer_reran_model_without_pm_route}|"

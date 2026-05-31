@@ -49,7 +49,7 @@ Reusable assets for FlowPilot live here or in the repository-level
 - minimal FlowGuard model templates.
 
 For the prompt-isolated runtime, `SKILL.md` stays a small launcher. It must not
-become the place where the full PM, Controller, Reviewer, Officer, or Worker
+become the place where the full PM, Controller, Reviewer, FlowGuard operator, or Worker
 protocol is loaded into the main assistant. Put role and phase instructions in
 `runtime_kit/cards/` and list them in `runtime_kit/manifest.json`.
 Put prompt-like reusable text in `runtime_kit/prompts/` and list it in

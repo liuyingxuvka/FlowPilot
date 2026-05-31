@@ -302,7 +302,7 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
         )
         no_producer["repair_transaction"] = {
             "plan_kind": "role_reissue",
-            "target_role": "worker_a",
+            "target_role": "worker",
         }
         with self.assertRaisesRegex(router.RouterError, "material dispatch repair transaction cannot use role_reissue"):
             router.record_external_event(
@@ -328,9 +328,9 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
             "plan_kind": "packet_reissue",
             "replacement_packets": [
                 {
-                    "packet_id": "real-router-material-repair-worker-a",
+                    "packet_id": "real-router-material-repair-worker-1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Real Router dry-run fake AI repair packet with a fresh producer.",
                 }
             ],

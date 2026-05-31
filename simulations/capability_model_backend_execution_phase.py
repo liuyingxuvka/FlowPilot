@@ -357,7 +357,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
             yield _step(
                 state,
                 label="child_skill_current_gates_role_approved",
-                action="required reviewer, process officer, product officer, or PM approvals close the current child-skill gates; controller drafts are not approvals",
+                action="required reviewer, route-scope FlowGuard operator, product-scope FlowGuard operator, or PM approvals close the current child-skill gates; controller drafts are not approvals",
                 child_skill_current_gates_role_approved=True,
             )
             return
@@ -409,21 +409,21 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                 final_quality_candidate_review_done=True,
             )
             return
-        if not state.final_product_model_officer_adversarial_probe_done:
+        if not state.final_product_model_flowguard_operator_adversarial_probe_done:
             yield _step(
                 state,
-                label="final_product_model_officer_adversarial_probe_done",
-                action="product FlowGuard officer adversarially rechecks final backend product model replay, state fields, counterexamples, counts, and blindspots before approval",
-                final_product_model_officer_adversarial_probe_done=True,
+                label="final_product_model_flowguard_operator_adversarial_probe_done",
+                action="product-scope FlowGuard operator adversarially rechecks final backend product model replay, state fields, counterexamples, counts, and blindspots before approval",
+                final_product_model_flowguard_operator_adversarial_probe_done=True,
             )
             return
         if not state.final_product_function_model_replayed:
             yield _step(
                 state,
                 label="final_product_function_model_replayed",
-                action="product FlowGuard officer approves backend final behavior from adversarial model replay evidence",
+                action="product-scope FlowGuard operator approves backend final behavior from adversarial model replay evidence",
                 final_product_function_model_replayed=True,
-                final_product_function_model_product_officer_approved=True,
+                final_product_function_model_flowguard_operator_product_scope_approved=True,
             )
             return
         if not state.final_human_review_context_loaded:
@@ -506,9 +506,9 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     action="raise backend capability standard and recheck route",
                     capability_route_version=state.capability_route_version + 1,
                     capability_route_checked=False,
-                    capability_route_process_officer_approved=False,
+                    capability_route_flowguard_operator_route_scope_approved=False,
                     capability_product_function_model_checked=False,
-                    capability_product_function_model_product_officer_approved=False,
+                    capability_product_function_model_flowguard_operator_product_scope_approved=False,
                     capability_evidence_synced=False,
                     execution_frontier_written=False,
                     codex_plan_synced=False,
@@ -521,8 +521,8 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     child_skill_gate_approvers_assigned=False,
                     child_skill_manifest_independent_validation_done=False,
                     child_skill_manifest_reviewer_reviewed=False,
-                    child_skill_manifest_process_officer_approved=False,
-                    child_skill_manifest_product_officer_approved=False,
+                    child_skill_manifest_flowguard_operator_route_scope_approved=False,
+                    child_skill_manifest_flowguard_operator_product_scope_approved=False,
                     child_skill_manifest_pm_approved_for_route=False,
                     child_skill_contracts_loaded=False,
                     child_skill_focused_interrogation_done=False,
@@ -538,7 +538,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     child_skill_evidence_plan_written=False,
                     child_skill_subroute_projected=False,
                     child_skill_conformance_model_checked=False,
-                    child_skill_conformance_model_process_officer_approved=False,
+                    child_skill_conformance_model_flowguard_operator_route_scope_approved=False,
                     strict_gate_obligation_review_model_checked=False,
                     child_skill_execution_evidence_audited=False,
                     child_skill_evidence_matches_outputs=False,
@@ -549,13 +549,13 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     dependency_plan_recorded=False,
                     future_installs_deferred=False,
                     flowguard_process_design_done=False,
-                    flowguard_officer_model_adversarial_probe_done=False,
+                    flowguard_operator_model_adversarial_probe_done=False,
                     flowguard_model_report_risk_tiers_done=False,
                     flowguard_model_report_pm_review_agenda_done=False,
                     flowguard_model_report_toolchain_recommendations_done=False,
                     flowguard_model_report_confidence_boundary_done=False,
                     meta_route_checked=False,
-                    meta_route_process_officer_approved=False,
+                    meta_route_flowguard_operator_route_scope_approved=False,
                     sidecar_role_status="none",
                     non_ui_implemented=False,
                     final_verification_done=False,

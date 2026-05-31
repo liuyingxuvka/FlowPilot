@@ -2,10 +2,10 @@
 
 The fresh entrypoint already starts correctly: startup UI output is sealed into
 the new current-run ledger, the first PM packet is issued, and PM can ACK and
-return a result. The defect is after the PM result. The router requested a
-FlowGuard operator, but `lease-agent` could not bind that role because the only
-existing packet was a PM packet. Reviewer then recorded an accepted review, but
-status showed a reviewer lease with an empty `packet_id` and missing ACK.
+return a result. The defect is after the PM result. The runtime must request an
+explicit Process or Product FlowGuard officer packet, not a generic FlowGuard
+operator side command. Reviewer then records acceptance only through a packet
+with a current `packet_id` and ACK.
 
 ## Decision: Role Work Is Always Packet Work
 
@@ -14,10 +14,9 @@ runtime distinguishes packet purpose with `packet_kind`, not with side-channel
 commands.
 
 - `task`: PM or worker performs project work.
-- `flowguard_check`: FlowGuard operator checks a subject packet/result.
+- `flowguard_check`: Process or Product FlowGuard officer checks a subject
+  packet/result for the declared modeled target.
 - `review`: Reviewer checks the subject result and FlowGuard evidence.
-- `validation`: Validator records validation evidence.
-- `closure`: Closure officer performs final backward closure.
 
 All packet kinds use the same host lifecycle:
 
@@ -36,17 +35,16 @@ valid result commits different side effects depending on the packet kind:
 - PM `task` result issues a `flowguard_check` packet.
 - `flowguard_check` result records a FlowGuard work order pass and issues a
   `review` packet.
-- `review` result records independent review acceptance and issues a
-  `validation` packet.
-- `validation` result records validation evidence and issues a `closure`
-  packet.
-- `closure` result attempts final backward closure.
+- `review` result records independent review acceptance, records system-owned
+  validation evidence when the evidence passes, and attempts system-owned final
+  backward closure.
 
 ## Decision: Direct Commands Are No Longer Formal Flow
 
 Direct FlowGuard/review/validation/close commands are not part of the formal
 new flow. Formal operation should use only `status`, `lease-agent`, `ack`, and
-`submit-result` after startup.
+`submit-result` after startup; validation and closure are runtime outcomes, not
+dispatchable role commands.
 
 ## Risks
 

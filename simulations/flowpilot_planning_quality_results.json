@@ -25,6 +25,13 @@
           "research or material-scan packet grants target artifact repair instead of report self-correction"
         ]
       },
+      "flowguard_operator_route_scope_route_viability_missing": {
+        "detected": true,
+        "expected_failure": "FlowGuard operator route-scope did not validate route viability against the product model",
+        "failures": [
+          "FlowGuard operator route-scope did not validate route viability against the product model"
+        ]
+      },
       "generic_template_uses_blanket_repair": {
         "detected": true,
         "expected_failure": "generic packet template uses blanket repair wording instead of role-scoped authority",
@@ -74,11 +81,11 @@
           "node acceptance plan is not mapped to a product model segment"
         ]
       },
-      "officer_packet_repairs_target_artifact": {
+      "flowguard_operator_packet_repairs_target_artifact": {
         "detected": true,
-        "expected_failure": "officer packet grants target artifact repair instead of model/report self-correction",
+        "expected_failure": "FlowGuard operator packet grants target artifact repair instead of model/report self-correction",
         "failures": [
-          "officer packet grants target artifact repair instead of model/report self-correction"
+          "FlowGuard operator packet grants target artifact repair instead of model/report self-correction"
         ]
       },
       "overmerged_complex_implementation_node": {
@@ -153,13 +160,6 @@
           "PM plan lacks final-user intent and product usefulness self-check"
         ]
       },
-      "process_officer_route_viability_missing": {
-        "detected": true,
-        "expected_failure": "Process FlowGuard Officer did not validate route viability against the product model",
-        "failures": [
-          "Process FlowGuard Officer did not validate route viability against the product model"
-        ]
-      },
       "process_support_skill_ignored": {
         "detected": true,
         "expected_failure": "PM child-skill selection did not evaluate process-support skill candidates",
@@ -169,9 +169,9 @@
       },
       "product_model_missing": {
         "detected": true,
-        "expected_failure": "route planning lacks a product behavior model from the Product FlowGuard Officer",
+        "expected_failure": "route planning lacks a product behavior model from the FlowGuard operator product-scope",
         "failures": [
-          "route planning lacks a product behavior model from the Product FlowGuard Officer"
+          "route planning lacks a product behavior model from the FlowGuard operator product-scope"
         ]
       },
       "profile_without_convergence_loop": {

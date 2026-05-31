@@ -41,7 +41,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "gates": [
                     {
                         "gate_id": "process-model",
-                        "required_approver": "process_flowguard_officer",
+                        "required_approver": "flowguard_operator",
                         "evidence_required": ["model-check-result"],
                         "controller_can_approve": False,
                     }
@@ -121,7 +121,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                         f"reviews/current_node_result_missing_passed_budget_{attempt}",
                         {
                             "reviewed_by_role": "human_like_reviewer",
-                            "agent_role_map": {"agent-worker-a": "worker_a"},
+                            "agent_role_map": {"agent-worker-1": "worker"},
                         },
                     ),
                 )
@@ -179,7 +179,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "reviews/current_node_result_missing_passed_race",
                     {
                         "reviewed_by_role": "human_like_reviewer",
-                        "agent_role_map": {"agent-worker-a": "worker_a"},
+                        "agent_role_map": {"agent-worker-1": "worker"},
                     },
                 ),
             )
@@ -190,7 +190,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "reviewed_by_role": "human_like_reviewer",
                 "passed": True,
-                "agent_role_map": {"agent-worker-a": "worker_a"},
+                "agent_role_map": {"agent-worker-1": "worker"},
             },
         )
         router.record_external_event(root, "current_node_reviewer_passes_result", reissued_payload)
@@ -359,7 +359,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "packet_id": "material-scan-001-r1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Reissued material scan packet with a committed repair generation.",
                 }
             ],
@@ -424,7 +424,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "packet_id": "material-scan-001-r1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Reissued material scan packet with a committed repair generation.",
                 }
             ],

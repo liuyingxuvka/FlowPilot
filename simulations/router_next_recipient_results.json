@@ -402,7 +402,7 @@
       "pm_creates_worker_packet_with_single_owner",
       "pm_segment_decision_marks_stale_and_rewrites_frontier",
       "pm_writes_route_draft",
-      "process_officer_returns_route_check",
+      "process_flowguard_operator_returns_route_check",
       "responsible_role_reissues_control_output",
       "resume_loads_ledger_and_derives_next_recipient",
       "reviewer_allows_worker_dispatch",
@@ -410,7 +410,7 @@
       "reviewer_passes_reissued_result",
       "reviewer_returns_route_challenge_pass",
       "router_dispatches_route_challenge_to_reviewer",
-      "router_dispatches_route_process_check_to_process_officer",
+      "router_dispatches_route_process_check_to_process_flowguard_operator",
       "router_routes_reissue_to_original_responsible_role",
       "ui_snapshot_built_from_active_canonical_sources",
       "worker_owner_returns_result"

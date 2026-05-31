@@ -83,34 +83,34 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 label="heartbeat_loaded_role_binding_memory",
                 action="continuation turn loads structured role memory packets before restoring or replacing roles",
                 heartbeat_loaded_role_binding_memory=True,
-                active_node="heartbeat_rehydrate_crew",
+                active_node="heartbeat_rehydrate_runtime_roles",
             )
             return
         if not state.heartbeat_host_rehydrate_requested:
             yield _step(
                 state,
-                label="heartbeat_host_spawn_or_rehydrate_six_roles",
+                label="heartbeat_host_spawn_or_rehydrate_runtime_roles",
                 action="router asks the host to restore or open all runtime-requested roles before PM resume",
                 heartbeat_host_rehydrate_requested=True,
-                active_node="heartbeat_rehydrate_crew",
+                active_node="heartbeat_rehydrate_runtime_roles",
             )
             return
-        if not state.heartbeat_restored_crew:
+        if not state.heartbeat_restored_runtime_roles:
             yield _step(
                 state,
                 label="heartbeat_restored_required_role_binding_coverage",
                 action="continuation turn resumes available role bindings or prepares replacements from role memory",
-                heartbeat_restored_crew=True,
+                heartbeat_restored_runtime_roles=True,
                 replacement_roles_seeded_from_memory=True,
-                active_node="heartbeat_rehydrate_crew",
+                active_node="heartbeat_rehydrate_runtime_roles",
             )
             return
-        if not state.heartbeat_rehydrated_crew:
+        if not state.heartbeat_rehydrated_runtime_roles:
             yield _step(
                 state,
                 label="heartbeat_rehydrated_required_role_binding_coverage",
                 action="continuation turn records full role-binding rehydration status before asking the PM",
-                heartbeat_rehydrated_crew=True,
+                heartbeat_rehydrated_runtime_roles=True,
                 active_node="write_role_binding_recovery_report",
             )
             return
@@ -186,7 +186,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="continuation_resume_ready_checked",
-                action="check automated heartbeat health when supported, or check manual-resume state/frontier/crew-memory readiness when no real wakeup exists",
+                action="check automated heartbeat health when supported, or check manual-resume state/frontier/role-binding-memory readiness when no real wakeup exists",
                 heartbeat_health_checked=True,
                 active_node="check_unfinished_current_node",
             )
@@ -233,9 +233,9 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="parent_product_function_model_checked",
-                action="product FlowGuard officer runs and approves the parent product-function model before entering the active child node",
+                action="product-scope FlowGuard operator runs and approves the parent product-function model before entering the active child node",
                 parent_product_function_model_checked=True,
-                parent_product_function_model_product_officer_approved=True,
+                parent_product_function_model_flowguard_operator_product_scope_approved=True,
                 active_node="emit_node_visible_roadmap",
             )
             return
@@ -281,9 +281,9 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="node_product_function_model_checked",
-                action="product FlowGuard officer runs and approves the active leaf's product-function model before defining implementation work",
+                action="product-scope FlowGuard operator runs and approves the active leaf's product-function model before defining implementation work",
                 node_product_function_model_checked=True,
-                node_product_function_model_product_officer_approved=True,
+                node_product_function_model_flowguard_operator_product_scope_approved=True,
                 active_node="current_node_high_standard_recheck",
             )
             return
@@ -425,7 +425,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                     user_flow_diagram_reviewer_display_checked=False,
                     user_flow_diagram_reviewer_route_match_checked=False,
                     flowguard_process_design_done=False,
-                    flowguard_officer_model_adversarial_probe_done=False,
+                    flowguard_operator_model_adversarial_probe_done=False,
                     flowguard_model_report_risk_tiers_done=False,
                     flowguard_model_report_pm_review_agenda_done=False,
                     flowguard_model_report_toolchain_recommendations_done=False,
@@ -435,14 +435,14 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                     child_skill_gate_approvers_assigned=False,
                     child_skill_manifest_independent_validation_done=False,
                     child_skill_manifest_reviewer_reviewed=False,
-                    child_skill_manifest_process_officer_approved=False,
-                    child_skill_manifest_product_officer_approved=False,
+                    child_skill_manifest_flowguard_operator_route_scope_approved=False,
+                    child_skill_manifest_flowguard_operator_product_scope_approved=False,
                     child_skill_manifest_pm_approved_for_route=False,
                     candidate_route_tree_generated=False,
                     root_route_model_checked=False,
-                    root_route_model_process_officer_approved=False,
+                    root_route_model_flowguard_operator_route_scope_approved=False,
                     root_product_function_model_checked=False,
-                    root_product_function_model_product_officer_approved=False,
+                    root_product_function_model_flowguard_operator_product_scope_approved=False,
                     strict_gate_obligation_review_model_checked=False,
                     parent_backward_review_targets_enumerated=False,
                     parent_subtree_review_checked=False,

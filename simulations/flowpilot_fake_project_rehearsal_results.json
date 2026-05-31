@@ -1637,7 +1637,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0016"
             },
             "ok": true,
@@ -1657,7 +1657,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0016"
             },
             "ok": true
@@ -1671,9 +1671,9 @@
             "--packet-id",
             "packet-0016",
             "--responsibility",
-            "worker",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-15",
+            "fake-flowguard_check-15",
             "--host-kind",
             "fake"
           ],
@@ -1733,7 +1733,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "worker",
               "subject_id": "packet-0017"
             },
             "ok": true,
@@ -1753,7 +1753,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "worker",
               "subject_id": "packet-0017"
             },
             "ok": true
@@ -1767,9 +1767,9 @@
             "--packet-id",
             "packet-0017",
             "--responsibility",
-            "flowguard_operator",
+            "worker",
             "--agent-id",
-            "fake-flowguard_check-16",
+            "fake-task-16",
             "--host-kind",
             "fake"
           ],
@@ -1829,7 +1829,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0018"
             },
             "ok": true,
@@ -1849,7 +1849,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0018"
             },
             "ok": true
@@ -1863,9 +1863,9 @@
             "--packet-id",
             "packet-0018",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-17",
+            "fake-flowguard_check-17",
             "--host-kind",
             "fake"
           ],
@@ -1925,7 +1925,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0019"
             },
             "ok": true,
@@ -1945,7 +1945,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0019"
             },
             "ok": true
@@ -1959,9 +1959,9 @@
             "--packet-id",
             "packet-0019",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-pm_disposition-18",
+            "fake-review-18",
             "--host-kind",
             "fake"
           ],
@@ -2057,7 +2057,7 @@
             "--responsibility",
             "pm",
             "--agent-id",
-            "fake-task-19",
+            "fake-pm_disposition-19",
             "--host-kind",
             "fake"
           ],
@@ -2117,7 +2117,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0021"
             },
             "ok": true,
@@ -2137,7 +2137,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0021"
             },
             "ok": true
@@ -2151,9 +2151,9 @@
             "--packet-id",
             "packet-0021",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-20",
+            "fake-task-20",
             "--host-kind",
             "fake"
           ],
@@ -2213,7 +2213,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0022"
             },
             "ok": true,
@@ -2233,7 +2233,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0022"
             },
             "ok": true
@@ -2247,9 +2247,9 @@
             "--packet-id",
             "packet-0022",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-21",
+            "fake-flowguard_check-21",
             "--host-kind",
             "fake"
           ],
@@ -2309,7 +2309,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "reviewer",
               "subject_id": "packet-0023"
             },
             "ok": true,
@@ -2329,7 +2329,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "reviewer",
               "subject_id": "packet-0023"
             },
             "ok": true
@@ -2343,9 +2343,9 @@
             "--packet-id",
             "packet-0023",
             "--responsibility",
-            "worker",
+            "reviewer",
             "--agent-id",
-            "fake-task-22",
+            "fake-review-22",
             "--host-kind",
             "fake"
           ],
@@ -2501,7 +2501,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "worker",
               "subject_id": "packet-0025"
             },
             "ok": true,
@@ -2521,7 +2521,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "worker",
               "subject_id": "packet-0025"
             },
             "ok": true
@@ -2535,9 +2535,9 @@
             "--packet-id",
             "packet-0025",
             "--responsibility",
-            "reviewer",
+            "worker",
             "--agent-id",
-            "fake-review-24",
+            "fake-task-24",
             "--host-kind",
             "fake"
           ],
@@ -2597,7 +2597,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0026"
             },
             "ok": true,
@@ -2617,7 +2617,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0026"
             },
             "ok": true
@@ -2631,9 +2631,9 @@
             "--packet-id",
             "packet-0026",
             "--responsibility",
-            "pm",
+            "flowguard_operator",
             "--agent-id",
-            "fake-pm_disposition-25",
+            "fake-flowguard_check-25",
             "--host-kind",
             "fake"
           ],
@@ -2693,7 +2693,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0027"
             },
             "ok": true,
@@ -2713,7 +2713,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0027"
             },
             "ok": true
@@ -2727,9 +2727,9 @@
             "--packet-id",
             "packet-0027",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-task-26",
+            "fake-review-26",
             "--host-kind",
             "fake"
           ],
@@ -2789,7 +2789,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0028"
             },
             "ok": true,
@@ -2809,7 +2809,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0028"
             },
             "ok": true
@@ -2823,9 +2823,9 @@
             "--packet-id",
             "packet-0028",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-27",
+            "fake-pm_disposition-27",
             "--host-kind",
             "fake"
           ],
@@ -2885,7 +2885,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0029"
             },
             "ok": true,
@@ -2905,7 +2905,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0029"
             },
             "ok": true
@@ -2919,9 +2919,9 @@
             "--packet-id",
             "packet-0029",
             "--responsibility",
-            "reviewer",
+            "pm",
             "--agent-id",
-            "fake-review-28",
+            "fake-task-28",
             "--host-kind",
             "fake"
           ],
@@ -2981,7 +2981,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0030"
             },
             "ok": true,
@@ -3001,7 +3001,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0030"
             },
             "ok": true
@@ -3015,9 +3015,9 @@
             "--packet-id",
             "packet-0030",
             "--responsibility",
-            "worker",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-29",
+            "fake-flowguard_check-29",
             "--host-kind",
             "fake"
           ],
@@ -3077,7 +3077,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0031"
             },
             "ok": true,
@@ -3097,7 +3097,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0031"
             },
             "ok": true
@@ -3111,9 +3111,9 @@
             "--packet-id",
             "packet-0031",
             "--responsibility",
-            "flowguard_operator",
+            "reviewer",
             "--agent-id",
-            "fake-flowguard_check-30",
+            "fake-review-30",
             "--host-kind",
             "fake"
           ],
@@ -3173,7 +3173,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0032"
             },
             "ok": true,
@@ -3193,7 +3193,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0032"
             },
             "ok": true
@@ -3207,9 +3207,9 @@
             "--packet-id",
             "packet-0032",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-31",
+            "fake-flowguard_check-31",
             "--host-kind",
             "fake"
           ],
@@ -3269,7 +3269,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "worker",
               "subject_id": "packet-0033"
             },
             "ok": true,
@@ -3289,7 +3289,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "worker",
               "subject_id": "packet-0033"
             },
             "ok": true
@@ -3303,9 +3303,9 @@
             "--packet-id",
             "packet-0033",
             "--responsibility",
-            "pm",
+            "worker",
             "--agent-id",
-            "fake-pm_disposition-32",
+            "fake-task-32",
             "--host-kind",
             "fake"
           ],
@@ -3360,6 +3360,294 @@
           ],
           "payload": {
             "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0034"
+            },
+            "ok": true,
+            "result_id": "result-0033"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0034"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0034",
+            "--responsibility",
+            "flowguard_operator",
+            "--agent-id",
+            "fake-flowguard_check-33",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0034",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0034"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0034"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0035"
+            },
+            "ok": true,
+            "result_id": "result-0034"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0035"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0035",
+            "--responsibility",
+            "reviewer",
+            "--agent-id",
+            "fake-review-34",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0035",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0035"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0035"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0036"
+            },
+            "ok": true,
+            "result_id": "result-0035"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0036"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0036",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm_disposition-35",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0036",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0036"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0036"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
               "action": "terminal_return",
               "final_return_allowed": true
             },
@@ -3369,7 +3657,7 @@
               "subject_id": ""
             },
             "ok": true,
-            "result_id": "result-0033"
+            "result_id": "result-0036"
           },
           "returncode": 0,
           "stderr_excerpt": ""
@@ -3480,42 +3768,42 @@
           {
             "lease_id": "lease-0016",
             "packet_id": "packet-0016",
-            "packet_kind": "task"
+            "packet_kind": "flowguard_check"
           },
           {
             "lease_id": "lease-0017",
             "packet_id": "packet-0017",
-            "packet_kind": "flowguard_check"
+            "packet_kind": "task"
           },
           {
             "lease_id": "lease-0018",
             "packet_id": "packet-0018",
-            "packet_kind": "review"
+            "packet_kind": "flowguard_check"
           },
           {
             "lease_id": "lease-0019",
             "packet_id": "packet-0019",
-            "packet_kind": "pm_disposition"
+            "packet_kind": "review"
           },
           {
             "lease_id": "lease-0020",
             "packet_id": "packet-0020",
-            "packet_kind": "task"
+            "packet_kind": "pm_disposition"
           },
           {
             "lease_id": "lease-0021",
             "packet_id": "packet-0021",
-            "packet_kind": "flowguard_check"
+            "packet_kind": "task"
           },
           {
             "lease_id": "lease-0022",
             "packet_id": "packet-0022",
-            "packet_kind": "review"
+            "packet_kind": "flowguard_check"
           },
           {
             "lease_id": "lease-0023",
             "packet_id": "packet-0023",
-            "packet_kind": "task"
+            "packet_kind": "review"
           },
           {
             "lease_id": "lease-0024",
@@ -3525,50 +3813,65 @@
           {
             "lease_id": "lease-0025",
             "packet_id": "packet-0025",
-            "packet_kind": "review"
+            "packet_kind": "task"
           },
           {
             "lease_id": "lease-0026",
             "packet_id": "packet-0026",
-            "packet_kind": "pm_disposition"
+            "packet_kind": "flowguard_check"
           },
           {
             "lease_id": "lease-0027",
             "packet_id": "packet-0027",
-            "packet_kind": "task"
+            "packet_kind": "review"
           },
           {
             "lease_id": "lease-0028",
             "packet_id": "packet-0028",
-            "packet_kind": "flowguard_check"
+            "packet_kind": "pm_disposition"
           },
           {
             "lease_id": "lease-0029",
             "packet_id": "packet-0029",
-            "packet_kind": "review"
+            "packet_kind": "task"
           },
           {
             "lease_id": "lease-0030",
             "packet_id": "packet-0030",
-            "packet_kind": "task"
+            "packet_kind": "flowguard_check"
           },
           {
             "lease_id": "lease-0031",
             "packet_id": "packet-0031",
-            "packet_kind": "flowguard_check"
+            "packet_kind": "review"
           },
           {
             "lease_id": "lease-0032",
             "packet_id": "packet-0032",
-            "packet_kind": "review"
+            "packet_kind": "flowguard_check"
           },
           {
             "lease_id": "lease-0033",
             "packet_id": "packet-0033",
+            "packet_kind": "task"
+          },
+          {
+            "lease_id": "lease-0034",
+            "packet_id": "packet-0034",
+            "packet_kind": "flowguard_check"
+          },
+          {
+            "lease_id": "lease-0035",
+            "packet_id": "packet-0035",
+            "packet_kind": "review"
+          },
+          {
+            "lease_id": "lease-0036",
+            "packet_id": "packet-0036",
             "packet_kind": "pm_disposition"
           }
         ],
-        "lease_count": 33,
+        "lease_count": 36,
         "packet_kinds": [
           "task",
           "flowguard_check",
@@ -3585,6 +3888,7 @@
           "task",
           "flowguard_check",
           "review",
+          "flowguard_check",
           "task",
           "flowguard_check",
           "review",
@@ -3592,6 +3896,7 @@
           "task",
           "flowguard_check",
           "review",
+          "flowguard_check",
           "task",
           "flowguard_check",
           "review",
@@ -3599,6 +3904,7 @@
           "task",
           "flowguard_check",
           "review",
+          "flowguard_check",
           "task",
           "flowguard_check",
           "review",
@@ -3614,7 +3920,7 @@
         }
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\normal_full_path"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\normal_full_path"
     },
     {
       "commands": [
@@ -5092,7 +5398,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0016"
             },
             "ok": true,
@@ -5112,7 +5418,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0016"
             },
             "ok": true
@@ -5126,9 +5432,9 @@
             "--packet-id",
             "packet-0016",
             "--responsibility",
-            "worker",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-15",
+            "fake-flowguard_check-15",
             "--host-kind",
             "fake"
           ],
@@ -5188,7 +5494,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "worker",
               "subject_id": "packet-0017"
             },
             "ok": true,
@@ -5208,7 +5514,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "worker",
               "subject_id": "packet-0017"
             },
             "ok": true
@@ -5222,9 +5528,9 @@
             "--packet-id",
             "packet-0017",
             "--responsibility",
-            "flowguard_operator",
+            "worker",
             "--agent-id",
-            "fake-flowguard_check-16",
+            "fake-task-16",
             "--host-kind",
             "fake"
           ],
@@ -5284,7 +5590,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0018"
             },
             "ok": true,
@@ -5304,7 +5610,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0018"
             },
             "ok": true
@@ -5318,9 +5624,9 @@
             "--packet-id",
             "packet-0018",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-17",
+            "fake-flowguard_check-17",
             "--host-kind",
             "fake"
           ],
@@ -5380,7 +5686,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0019"
             },
             "ok": true,
@@ -5400,7 +5706,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0019"
             },
             "ok": true
@@ -5414,9 +5720,9 @@
             "--packet-id",
             "packet-0019",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-pm_disposition-18",
+            "fake-review-18",
             "--host-kind",
             "fake"
           ],
@@ -5512,7 +5818,7 @@
             "--responsibility",
             "pm",
             "--agent-id",
-            "fake-task-19",
+            "fake-pm_disposition-19",
             "--host-kind",
             "fake"
           ],
@@ -5572,7 +5878,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0021"
             },
             "ok": true,
@@ -5592,7 +5898,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0021"
             },
             "ok": true
@@ -5606,9 +5912,9 @@
             "--packet-id",
             "packet-0021",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-20",
+            "fake-task-20",
             "--host-kind",
             "fake"
           ],
@@ -5668,7 +5974,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0022"
             },
             "ok": true,
@@ -5688,7 +5994,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0022"
             },
             "ok": true
@@ -5702,9 +6008,9 @@
             "--packet-id",
             "packet-0022",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-21",
+            "fake-flowguard_check-21",
             "--host-kind",
             "fake"
           ],
@@ -5764,7 +6070,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "reviewer",
               "subject_id": "packet-0023"
             },
             "ok": true,
@@ -5784,7 +6090,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "reviewer",
               "subject_id": "packet-0023"
             },
             "ok": true
@@ -5798,9 +6104,9 @@
             "--packet-id",
             "packet-0023",
             "--responsibility",
-            "worker",
+            "reviewer",
             "--agent-id",
-            "fake-task-22",
+            "fake-review-22",
             "--host-kind",
             "fake"
           ],
@@ -5956,7 +6262,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "worker",
               "subject_id": "packet-0025"
             },
             "ok": true,
@@ -5976,7 +6282,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "worker",
               "subject_id": "packet-0025"
             },
             "ok": true
@@ -5990,9 +6296,9 @@
             "--packet-id",
             "packet-0025",
             "--responsibility",
-            "reviewer",
+            "worker",
             "--agent-id",
-            "fake-review-24",
+            "fake-task-24",
             "--host-kind",
             "fake"
           ],
@@ -6052,7 +6358,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0026"
             },
             "ok": true,
@@ -6072,7 +6378,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0026"
             },
             "ok": true
@@ -6086,9 +6392,9 @@
             "--packet-id",
             "packet-0026",
             "--responsibility",
-            "pm",
+            "flowguard_operator",
             "--agent-id",
-            "fake-pm_disposition-25",
+            "fake-flowguard_check-25",
             "--host-kind",
             "fake"
           ],
@@ -6148,7 +6454,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0027"
             },
             "ok": true,
@@ -6168,7 +6474,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0027"
             },
             "ok": true
@@ -6182,9 +6488,9 @@
             "--packet-id",
             "packet-0027",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-task-26",
+            "fake-review-26",
             "--host-kind",
             "fake"
           ],
@@ -6244,7 +6550,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0028"
             },
             "ok": true,
@@ -6264,7 +6570,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0028"
             },
             "ok": true
@@ -6278,9 +6584,9 @@
             "--packet-id",
             "packet-0028",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-27",
+            "fake-pm_disposition-27",
             "--host-kind",
             "fake"
           ],
@@ -6340,7 +6646,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0029"
             },
             "ok": true,
@@ -6360,7 +6666,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0029"
             },
             "ok": true
@@ -6374,9 +6680,9 @@
             "--packet-id",
             "packet-0029",
             "--responsibility",
-            "reviewer",
+            "pm",
             "--agent-id",
-            "fake-review-28",
+            "fake-task-28",
             "--host-kind",
             "fake"
           ],
@@ -6436,7 +6742,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0030"
             },
             "ok": true,
@@ -6456,7 +6762,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0030"
             },
             "ok": true
@@ -6470,9 +6776,9 @@
             "--packet-id",
             "packet-0030",
             "--responsibility",
-            "worker",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-29",
+            "fake-flowguard_check-29",
             "--host-kind",
             "fake"
           ],
@@ -6532,7 +6838,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0031"
             },
             "ok": true,
@@ -6552,7 +6858,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0031"
             },
             "ok": true
@@ -6566,9 +6872,9 @@
             "--packet-id",
             "packet-0031",
             "--responsibility",
-            "flowguard_operator",
+            "reviewer",
             "--agent-id",
-            "fake-flowguard_check-30",
+            "fake-review-30",
             "--host-kind",
             "fake"
           ],
@@ -6628,7 +6934,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0032"
             },
             "ok": true,
@@ -6648,7 +6954,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0032"
             },
             "ok": true
@@ -6662,9 +6968,9 @@
             "--packet-id",
             "packet-0032",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-31",
+            "fake-flowguard_check-31",
             "--host-kind",
             "fake"
           ],
@@ -6724,7 +7030,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "worker",
               "subject_id": "packet-0033"
             },
             "ok": true,
@@ -6744,7 +7050,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "worker",
               "subject_id": "packet-0033"
             },
             "ok": true
@@ -6758,9 +7064,9 @@
             "--packet-id",
             "packet-0033",
             "--responsibility",
-            "pm",
+            "worker",
             "--agent-id",
-            "fake-pm_disposition-32",
+            "fake-task-32",
             "--host-kind",
             "fake"
           ],
@@ -6815,6 +7121,294 @@
           ],
           "payload": {
             "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0034"
+            },
+            "ok": true,
+            "result_id": "result-0033"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0034"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0034",
+            "--responsibility",
+            "flowguard_operator",
+            "--agent-id",
+            "fake-flowguard_check-33",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0034",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0034"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0034"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0035"
+            },
+            "ok": true,
+            "result_id": "result-0034"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0035"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0035",
+            "--responsibility",
+            "reviewer",
+            "--agent-id",
+            "fake-review-34",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0035",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0035"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0035"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0036"
+            },
+            "ok": true,
+            "result_id": "result-0035"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0036"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0036",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm_disposition-35",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0036",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0036"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0036"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
               "action": "terminal_return",
               "final_return_allowed": true
             },
@@ -6824,7 +7418,7 @@
               "subject_id": ""
             },
             "ok": true,
-            "result_id": "result-0033"
+            "result_id": "result-0036"
           },
           "returncode": 0,
           "stderr_excerpt": ""
@@ -6867,6 +7461,7 @@
           "task",
           "flowguard_check",
           "review",
+          "flowguard_check",
           "task",
           "flowguard_check",
           "review",
@@ -6874,6 +7469,7 @@
           "task",
           "flowguard_check",
           "review",
+          "flowguard_check",
           "task",
           "flowguard_check",
           "review",
@@ -6881,6 +7477,7 @@
           "task",
           "flowguard_check",
           "review",
+          "flowguard_check",
           "task",
           "flowguard_check",
           "review",
@@ -6890,7 +7487,7 @@
         "wrong_role_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\wrong_role_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\wrong_role_recovery"
     },
     {
       "commands": [
@@ -8119,7 +8716,7 @@
         "route_node_count": 3
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\planning_chain_does_not_terminal"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\planning_chain_does_not_terminal"
     },
     {
       "commands": [
@@ -9578,7 +10175,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0016"
             },
             "ok": true,
@@ -9598,7 +10195,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0016"
             },
             "ok": true
@@ -9612,9 +10209,9 @@
             "--packet-id",
             "packet-0016",
             "--responsibility",
-            "worker",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-15",
+            "fake-flowguard_check-15",
             "--host-kind",
             "fake"
           ],
@@ -9674,7 +10271,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "worker",
               "subject_id": "packet-0017"
             },
             "ok": true,
@@ -9694,7 +10291,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "worker",
               "subject_id": "packet-0017"
             },
             "ok": true
@@ -9708,9 +10305,9 @@
             "--packet-id",
             "packet-0017",
             "--responsibility",
-            "flowguard_operator",
+            "worker",
             "--agent-id",
-            "fake-flowguard_check-16",
+            "fake-task-16",
             "--host-kind",
             "fake"
           ],
@@ -9770,7 +10367,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0018"
             },
             "ok": true,
@@ -9790,7 +10387,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0018"
             },
             "ok": true
@@ -9804,9 +10401,9 @@
             "--packet-id",
             "packet-0018",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-17",
+            "fake-flowguard_check-17",
             "--host-kind",
             "fake"
           ],
@@ -9866,7 +10463,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0019"
             },
             "ok": true,
@@ -9886,7 +10483,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0019"
             },
             "ok": true
@@ -9900,9 +10497,9 @@
             "--packet-id",
             "packet-0019",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-pm_disposition-18",
+            "fake-review-18",
             "--host-kind",
             "fake"
           ],
@@ -9962,7 +10559,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0020"
             },
             "ok": true,
@@ -9982,7 +10579,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0020"
             },
             "ok": true
@@ -9996,9 +10593,9 @@
             "--packet-id",
             "packet-0020",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-19",
+            "fake-pm_disposition-19",
             "--host-kind",
             "fake"
           ],
@@ -10058,7 +10655,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0021"
             },
             "ok": true,
@@ -10078,7 +10675,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0021"
             },
             "ok": true
@@ -10092,9 +10689,9 @@
             "--packet-id",
             "packet-0021",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-20",
+            "fake-flowguard_check-20",
             "--host-kind",
             "fake"
           ],
@@ -10154,7 +10751,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0022"
             },
             "ok": true,
@@ -10174,7 +10771,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0022"
             },
             "ok": true
@@ -10188,9 +10785,9 @@
             "--packet-id",
             "packet-0022",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-task-21",
+            "fake-review-21",
             "--host-kind",
             "fake"
           ],
@@ -10250,7 +10847,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0023"
             },
             "ok": true,
@@ -10270,7 +10867,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0023"
             },
             "ok": true
@@ -10284,9 +10881,9 @@
             "--packet-id",
             "packet-0023",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-22",
+            "fake-task-22",
             "--host-kind",
             "fake"
           ],
@@ -10346,7 +10943,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0024"
             },
             "ok": true,
@@ -10366,7 +10963,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0024"
             },
             "ok": true
@@ -10380,9 +10977,9 @@
             "--packet-id",
             "packet-0024",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-23",
+            "fake-flowguard_check-23",
             "--host-kind",
             "fake"
           ],
@@ -10442,7 +11039,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "reviewer",
               "subject_id": "packet-0025"
             },
             "ok": true,
@@ -10462,7 +11059,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "reviewer",
               "subject_id": "packet-0025"
             },
             "ok": true
@@ -10476,9 +11073,9 @@
             "--packet-id",
             "packet-0025",
             "--responsibility",
-            "worker",
+            "reviewer",
             "--agent-id",
-            "fake-task-24",
+            "fake-review-24",
             "--host-kind",
             "fake"
           ],
@@ -10634,7 +11231,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "worker",
               "subject_id": "packet-0027"
             },
             "ok": true,
@@ -10654,7 +11251,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "worker",
               "subject_id": "packet-0027"
             },
             "ok": true
@@ -10668,9 +11265,9 @@
             "--packet-id",
             "packet-0027",
             "--responsibility",
-            "reviewer",
+            "worker",
             "--agent-id",
-            "fake-review-26",
+            "fake-task-26",
             "--host-kind",
             "fake"
           ],
@@ -10730,7 +11327,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0028"
             },
             "ok": true,
@@ -10750,7 +11347,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0028"
             },
             "ok": true
@@ -10764,9 +11361,9 @@
             "--packet-id",
             "packet-0028",
             "--responsibility",
-            "pm",
+            "flowguard_operator",
             "--agent-id",
-            "fake-pm_disposition-27",
+            "fake-flowguard_check-27",
             "--host-kind",
             "fake"
           ],
@@ -10826,7 +11423,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0029"
             },
             "ok": true,
@@ -10846,7 +11443,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "reviewer",
               "subject_id": "packet-0029"
             },
             "ok": true
@@ -10860,9 +11457,9 @@
             "--packet-id",
             "packet-0029",
             "--responsibility",
-            "pm",
+            "reviewer",
             "--agent-id",
-            "fake-task-28",
+            "fake-review-28",
             "--host-kind",
             "fake"
           ],
@@ -10922,7 +11519,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0030"
             },
             "ok": true,
@@ -10942,7 +11539,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "pm",
               "subject_id": "packet-0030"
             },
             "ok": true
@@ -10956,9 +11553,9 @@
             "--packet-id",
             "packet-0030",
             "--responsibility",
-            "flowguard_operator",
+            "pm",
             "--agent-id",
-            "fake-flowguard_check-29",
+            "fake-pm_disposition-29",
             "--host-kind",
             "fake"
           ],
@@ -11018,7 +11615,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0031"
             },
             "ok": true,
@@ -11038,7 +11635,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0031"
             },
             "ok": true
@@ -11052,9 +11649,9 @@
             "--packet-id",
             "packet-0031",
             "--responsibility",
-            "reviewer",
+            "pm",
             "--agent-id",
-            "fake-review-30",
+            "fake-task-30",
             "--host-kind",
             "fake"
           ],
@@ -11114,7 +11711,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0032"
             },
             "ok": true,
@@ -11134,7 +11731,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0032"
             },
             "ok": true
@@ -11148,9 +11745,9 @@
             "--packet-id",
             "packet-0032",
             "--responsibility",
-            "worker",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-31",
+            "fake-flowguard_check-31",
             "--host-kind",
             "fake"
           ],
@@ -11210,7 +11807,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0033"
             },
             "ok": true,
@@ -11230,7 +11827,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0033"
             },
             "ok": true
@@ -11244,9 +11841,9 @@
             "--packet-id",
             "packet-0033",
             "--responsibility",
-            "flowguard_operator",
+            "reviewer",
             "--agent-id",
-            "fake-flowguard_check-32",
+            "fake-review-32",
             "--host-kind",
             "fake"
           ],
@@ -11306,7 +11903,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0034"
             },
             "ok": true,
@@ -11326,7 +11923,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0034"
             },
             "ok": true
@@ -11340,9 +11937,9 @@
             "--packet-id",
             "packet-0034",
             "--responsibility",
-            "reviewer",
+            "flowguard_operator",
             "--agent-id",
-            "fake-review-33",
+            "fake-flowguard_check-33",
             "--host-kind",
             "fake"
           ],
@@ -11402,7 +11999,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "worker",
               "subject_id": "packet-0035"
             },
             "ok": true,
@@ -11422,7 +12019,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "worker",
               "subject_id": "packet-0035"
             },
             "ok": true
@@ -11436,9 +12033,9 @@
             "--packet-id",
             "packet-0035",
             "--responsibility",
-            "pm",
+            "worker",
             "--agent-id",
-            "fake-pm_disposition-34",
+            "fake-task-34",
             "--host-kind",
             "fake"
           ],
@@ -11498,7 +12095,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0036"
             },
             "ok": true,
@@ -11518,7 +12115,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0036"
             },
             "ok": true
@@ -11532,9 +12129,9 @@
             "--packet-id",
             "packet-0036",
             "--responsibility",
-            "pm",
+            "flowguard_operator",
             "--agent-id",
-            "fake-task-35",
+            "fake-flowguard_check-35",
             "--host-kind",
             "fake"
           ],
@@ -11594,7 +12191,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0037"
             },
             "ok": true,
@@ -11614,7 +12211,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "flowguard_operator",
+              "responsibility": "reviewer",
               "subject_id": "packet-0037"
             },
             "ok": true
@@ -11628,9 +12225,9 @@
             "--packet-id",
             "packet-0037",
             "--responsibility",
-            "flowguard_operator",
+            "reviewer",
             "--agent-id",
-            "fake-flowguard_check-36",
+            "fake-review-36",
             "--host-kind",
             "fake"
           ],
@@ -11690,7 +12287,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0038"
             },
             "ok": true,
@@ -11710,7 +12307,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "reviewer",
+              "responsibility": "pm",
               "subject_id": "packet-0038"
             },
             "ok": true
@@ -11724,9 +12321,9 @@
             "--packet-id",
             "packet-0038",
             "--responsibility",
-            "reviewer",
+            "pm",
             "--agent-id",
-            "fake-review-37",
+            "fake-pm_disposition-37",
             "--host-kind",
             "fake"
           ],
@@ -11786,7 +12383,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "pm",
               "subject_id": "packet-0039"
             },
             "ok": true,
@@ -11806,7 +12403,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "worker",
+              "responsibility": "pm",
               "subject_id": "packet-0039"
             },
             "ok": true
@@ -11820,7 +12417,7 @@
             "--packet-id",
             "packet-0039",
             "--responsibility",
-            "worker",
+            "pm",
             "--agent-id",
             "fake-task-38",
             "--host-kind",
@@ -12074,7 +12671,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0042"
             },
             "ok": true,
@@ -12094,7 +12691,7 @@
             },
             "next_action": {
               "action_type": "lease_agent",
-              "responsibility": "pm",
+              "responsibility": "flowguard_operator",
               "subject_id": "packet-0042"
             },
             "ok": true
@@ -12108,9 +12705,9 @@
             "--packet-id",
             "packet-0042",
             "--responsibility",
-            "pm",
+            "flowguard_operator",
             "--agent-id",
-            "fake-pm_disposition-41",
+            "fake-flowguard_check-41",
             "--host-kind",
             "fake"
           ],
@@ -12165,6 +12762,390 @@
           ],
           "payload": {
             "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "worker",
+              "subject_id": "packet-0043"
+            },
+            "ok": true,
+            "result_id": "result-0042"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "worker",
+              "subject_id": "packet-0043"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0043",
+            "--responsibility",
+            "worker",
+            "--agent-id",
+            "fake-task-42",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0043",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0043"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0043",
+            "--packet-id",
+            "packet-0043"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0043"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0043",
+            "--packet-id",
+            "packet-0043",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0044"
+            },
+            "ok": true,
+            "result_id": "result-0043"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0044"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0044",
+            "--responsibility",
+            "flowguard_operator",
+            "--agent-id",
+            "fake-flowguard_check-43",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0044",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0044"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0044",
+            "--packet-id",
+            "packet-0044"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0044"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0044",
+            "--packet-id",
+            "packet-0044",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0045"
+            },
+            "ok": true,
+            "result_id": "result-0044"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0045"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0045",
+            "--responsibility",
+            "reviewer",
+            "--agent-id",
+            "fake-review-44",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0045",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0045"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0045",
+            "--packet-id",
+            "packet-0045"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0045"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0045",
+            "--packet-id",
+            "packet-0045",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0046"
+            },
+            "ok": true,
+            "result_id": "result-0045"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "lease_agent",
+              "responsibility": "pm",
+              "subject_id": "packet-0046"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0046",
+            "--responsibility",
+            "pm",
+            "--agent-id",
+            "fake-pm_disposition-45",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0046",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0046"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0046",
+            "--packet-id",
+            "packet-0046"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0046"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0046",
+            "--packet-id",
+            "packet-0046",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
               "action": "terminal_return",
               "final_return_allowed": true
             },
@@ -12174,7 +13155,7 @@
               "subject_id": ""
             },
             "ok": true,
-            "result_id": "result-0042"
+            "result_id": "result-0046"
           },
           "returncode": 0,
           "stderr_excerpt": ""
@@ -12231,7 +13212,7 @@
         "terminal": "terminal_complete"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\route_mutation_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\route_mutation_recovery"
     },
     {
       "commands": [
@@ -12343,7 +13324,7 @@
         "result_status": "result_blocked"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\missing_ack_block"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_ack_block"
     },
     {
       "commands": [
@@ -12470,7 +13451,7 @@
         "next_action": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\ack_only_wait"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\ack_only_wait"
     },
     {
       "commands": [
@@ -12661,7 +13642,7 @@
         "resume_decision": "wait_for_result"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\lifecycle_guard_resume_and_patrol"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\lifecycle_guard_resume_and_patrol"
     },
     {
       "commands": [
@@ -13025,7 +14006,7 @@
         "review_packet": "packet-0003"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\slow_reviewer_progress_preserved"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\slow_reviewer_progress_preserved"
     },
     {
       "commands": [
@@ -13463,7 +14444,7 @@
         "reassignment_rejected": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\accepted_packet_reassignment_rejected"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\accepted_packet_reassignment_rejected"
     },
     {
       "commands": [
@@ -13581,7 +14562,7 @@
         "terminal_lifecycle": "stopped_by_user"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\stop_terminal_fence"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\stop_terminal_fence"
     },
     {
       "commands": [
@@ -13719,7 +14700,7 @@
         "liveness_status": "not_found"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\host_liveness_bridge_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\host_liveness_bridge_recovery"
     },
     {
       "commands": [
@@ -13844,7 +14825,7 @@
         "packet_status": "acknowledged"
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\orphan_runner_summary_recovery"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\orphan_runner_summary_recovery"
     },
     {
       "commands": [
@@ -13871,7 +14852,7 @@
         "complete_flowguard_invalid_choice": true
       },
       "ok": true,
-      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal_auto_close_final\\unsupported_side_command"
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\unsupported_side_command"
     }
   ],
   "target_plan": {
@@ -13935,7 +14916,6 @@
       "pm_only_terminal": false,
       "pm_packet_complete": true,
       "result_body_leaked": false,
-      "unsupported_side_command_rejected": true,
       "review_packet_complete": true,
       "route_mutation_recovered": true,
       "route_mutation_without_frontier_rewrite": false,
@@ -13960,6 +14940,7 @@
       "terminal_missing_role_packet": false,
       "terminal_missing_route_node": false,
       "terminal_status_checked": true,
+      "unsupported_side_command_rejected": true,
       "wrong_role_lease_accepted": false,
       "wrong_role_lease_rejected": true,
       "wrong_role_recovery_completed": true
@@ -14125,5 +15106,5 @@
       }
     ]
   },
-  "work_root": "tmp\\flowpilot_fake_project_rehearsal_auto_close_final"
+  "work_root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal"
 }

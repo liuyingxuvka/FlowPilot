@@ -36,7 +36,7 @@ RISK_VISUAL_QUALITY = "visual_quality"
 RISK_MIXED_PRODUCT_VISUAL = "mixed_product_visual"
 RISK_DOCUMENTATION_ONLY = "documentation_only"
 
-METHOD_PRODUCT_FLOWGUARD = "product_flowguard"
+METHOD_PRODUCT_FLOWGUARD = "product_scope_flowguard"
 METHOD_REVIEWER_WALKTHROUGH = "reviewer_walkthrough"
 METHOD_BOTH = "both"
 METHOD_LIGHT_REVIEW = "light_review"
@@ -71,7 +71,7 @@ class State:
     status: str = "new"  # new | running | complete | blocked
     task_scale: str = "unknown"  # unknown | small | complex
     formal_flowpilot_started: bool = False
-    six_role_crew_started: bool = False
+    runtime_role_bindings_started: bool = False
 
     startup_intake_ui_completed: bool = False
     startup_wait_boundary_recorded: bool = False
@@ -86,7 +86,7 @@ class State:
     quality_risk_decision_done: bool = False
     risk_type: str = "unknown"
     selected_quality_method: str = "none"
-    product_flowguard_done: bool = False
+    product_scope_flowguard_done: bool = False
     reviewer_walkthrough_done: bool = False
     light_review_done: bool = False
     not_needed_reason_recorded: bool = False
@@ -167,11 +167,11 @@ def _quality_satisfied(state: State) -> bool:
     if not state.quality_risk_decision_done:
         return False
     if state.risk_type == RISK_PRODUCT_STATE:
-        return state.product_flowguard_done
+        return state.product_scope_flowguard_done
     if state.risk_type == RISK_VISUAL_QUALITY:
         return state.reviewer_walkthrough_done
     if state.risk_type == RISK_MIXED_PRODUCT_VISUAL:
-        return state.product_flowguard_done and state.reviewer_walkthrough_done
+        return state.product_scope_flowguard_done and state.reviewer_walkthrough_done
     if state.risk_type == RISK_DOCUMENTATION_ONLY:
         return state.light_review_done or (
             state.selected_quality_method == METHOD_NOT_NEEDED_WITH_REASON
@@ -240,7 +240,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 status="running",
                 task_scale=TASK_COMPLEX,
                 formal_flowpilot_started=True,
-                six_role_crew_started=True,
+                runtime_role_bindings_started=True,
             ),
         )
         return
@@ -311,8 +311,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not _quality_satisfied(state):
         if state.selected_quality_method == METHOD_PRODUCT_FLOWGUARD:
             yield Transition(
-                "product_flowguard_runs_for_product_state_risk",
-                _step(state, product_flowguard_done=True),
+                "product_scope_flowguard_runs_for_product_state_risk",
+                _step(state, product_scope_flowguard_done=True),
             )
         elif state.selected_quality_method == METHOD_REVIEWER_WALKTHROUGH:
             yield Transition(
@@ -320,10 +320,10 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 _step(state, reviewer_walkthrough_done=True),
             )
         elif state.selected_quality_method == METHOD_BOTH:
-            if not state.product_flowguard_done:
+            if not state.product_scope_flowguard_done:
                 yield Transition(
-                    "product_flowguard_runs_for_mixed_risk",
-                    _step(state, product_flowguard_done=True),
+                    "product_scope_flowguard_runs_for_mixed_risk",
+                    _step(state, product_scope_flowguard_done=True),
                 )
             else:
                 yield Transition(
@@ -431,7 +431,7 @@ def formal_flowpilot_only_for_complex_tasks(state: State, trace) -> InvariantRes
     del trace
     if state.formal_flowpilot_started and state.task_scale != TASK_COMPLEX:
         return InvariantResult.fail("formal FlowPilot was started for a small or nonformal task")
-    if state.formal_flowpilot_started and not state.six_role_crew_started:
+    if state.formal_flowpilot_started and not state.runtime_role_bindings_started:
         return InvariantResult.fail("formal FlowPilot started without required runtime role-binding authority")
     return InvariantResult.pass_()
 
@@ -449,18 +449,18 @@ def mandatory_quality_decision_and_method_match(state: State, trace) -> Invarian
     del trace
     if state.completion_recorded and state.formal_flowpilot_started and not state.quality_risk_decision_done:
         return InvariantResult.fail("completion recorded before mandatory quality-risk decision")
-    if state.risk_type == RISK_PRODUCT_STATE and state.completion_recorded and not state.product_flowguard_done:
-        return InvariantResult.fail("product-state risk completed without Product FlowGuard")
+    if state.risk_type == RISK_PRODUCT_STATE and state.completion_recorded and not state.product_scope_flowguard_done:
+        return InvariantResult.fail("product-state risk completed without product-scope FlowGuard")
     if state.risk_type == RISK_VISUAL_QUALITY:
-        if state.product_flowguard_done and not state.reviewer_walkthrough_done:
+        if state.product_scope_flowguard_done and not state.reviewer_walkthrough_done:
             return InvariantResult.fail("visual-quality risk used FlowGuard as the only quality proof")
         if state.completion_recorded and not state.reviewer_walkthrough_done:
             return InvariantResult.fail("visual-quality risk completed without reviewer walkthrough")
     if state.risk_type == RISK_MIXED_PRODUCT_VISUAL and state.completion_recorded:
-        if not (state.product_flowguard_done and state.reviewer_walkthrough_done):
+        if not (state.product_scope_flowguard_done and state.reviewer_walkthrough_done):
             return InvariantResult.fail("mixed product/visual risk completed without both FlowGuard and reviewer walkthrough")
-    if state.risk_type == RISK_DOCUMENTATION_ONLY and state.product_flowguard_done:
-        return InvariantResult.fail("documentation-only risk was forced through Product FlowGuard")
+    if state.risk_type == RISK_DOCUMENTATION_ONLY and state.product_scope_flowguard_done:
+        return InvariantResult.fail("documentation-only risk was forced through product-scope FlowGuard")
     if state.selected_quality_method == METHOD_NOT_NEEDED_NO_REASON:
         return InvariantResult.fail("quality gate was skipped without a recorded reason")
     return InvariantResult.pass_()
@@ -607,19 +607,19 @@ def invariant_failures(state: State) -> list[str]:
 
 
 def hazard_states() -> dict[str, State]:
-    base = State(status="running", task_scale=TASK_COMPLEX, formal_flowpilot_started=True, six_role_crew_started=True)
+    base = State(status="running", task_scale=TASK_COMPLEX, formal_flowpilot_started=True, runtime_role_bindings_started=True)
     complete_base = replace(base, completion_recorded=True, completion_review_passed=True)
     return {
         "small_task_enters_formal_flowpilot": replace(
             complete_base,
             task_scale=TASK_SMALL,
             formal_flowpilot_started=True,
-            six_role_crew_started=True,
+            runtime_role_bindings_started=True,
         ),
-        "formal_flowpilot_without_six_roles": replace(
+        "formal_flowpilot_without_runtime_roles": replace(
             base,
             formal_flowpilot_started=True,
-            six_role_crew_started=False,
+            runtime_role_bindings_started=False,
         ),
         "startup_text_invalidated_without_side_effect": replace(
             base,
@@ -639,19 +639,19 @@ def hazard_states() -> dict[str, State]:
             complete_base,
             quality_risk_decision_done=False,
         ),
-        "product_state_without_product_flowguard": replace(
+        "product_state_without_product_scope_flowguard": replace(
             complete_base,
             quality_risk_decision_done=True,
             risk_type=RISK_PRODUCT_STATE,
             selected_quality_method=METHOD_PRODUCT_FLOWGUARD,
-            product_flowguard_done=False,
+            product_scope_flowguard_done=False,
         ),
         "visual_quality_flowguard_only": replace(
             complete_base,
             quality_risk_decision_done=True,
             risk_type=RISK_VISUAL_QUALITY,
             selected_quality_method=METHOD_PRODUCT_FLOWGUARD,
-            product_flowguard_done=True,
+            product_scope_flowguard_done=True,
             reviewer_walkthrough_done=False,
         ),
         "mixed_quality_without_reviewer": replace(
@@ -659,15 +659,15 @@ def hazard_states() -> dict[str, State]:
             quality_risk_decision_done=True,
             risk_type=RISK_MIXED_PRODUCT_VISUAL,
             selected_quality_method=METHOD_BOTH,
-            product_flowguard_done=True,
+            product_scope_flowguard_done=True,
             reviewer_walkthrough_done=False,
         ),
-        "documentation_only_forced_product_flowguard": replace(
+        "documentation_only_forced_product_scope_flowguard": replace(
             base,
             quality_risk_decision_done=True,
             risk_type=RISK_DOCUMENTATION_ONLY,
             selected_quality_method=METHOD_PRODUCT_FLOWGUARD,
-            product_flowguard_done=True,
+            product_scope_flowguard_done=True,
         ),
         "quality_not_needed_without_reason": replace(
             base,

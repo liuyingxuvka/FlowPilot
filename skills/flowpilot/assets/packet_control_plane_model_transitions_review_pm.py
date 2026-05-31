@@ -229,7 +229,7 @@ class ReviewerResult:
             audited_state,
             mail_chain_audits=audited_state.mail_chain_audits + (input_obj.packet_id,),
         )
-        if input_obj.completed_by_role != "worker_a":
+        if input_obj.completed_by_role != "worker":
             label = "controller_origin_artifact_blocked" if input_obj.completed_by_role == "controller" else "result_completed_by_wrong_role_blocked"
             new_state = replace(
                 audited_state,

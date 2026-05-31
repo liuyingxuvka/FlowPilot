@@ -82,13 +82,13 @@ def _write_route_draft(router: ModuleType, project_root: Path, run_root: Path, r
 
 def _reset_route_review_after_route_draft_repair(router: ModuleType, run_state: dict[str, Any]) -> None:
     _bind_router(router)
-    for flag in ('process_officer_route_check_card_delivered', 'process_route_model_submitted', 'process_route_model_repair_required', 'process_route_model_blocked', 'process_officer_route_check_passed', 'process_officer_route_repair_required', 'process_officer_route_check_blocked', 'pm_process_route_model_decision_card_delivered', 'pm_process_route_model_accepted', 'pm_process_route_model_rebuild_requested', 'product_officer_route_check_card_delivered', 'product_officer_route_check_passed', 'reviewer_route_check_card_delivered', 'reviewer_route_check_passed', 'route_activated_by_pm'):
+    for flag in ('flowguard_operator_route_check_card_delivered', 'process_route_model_submitted', 'process_route_model_repair_required', 'process_route_model_blocked', 'flowguard_operator_route_check_passed', 'flowguard_operator_route_repair_required', 'flowguard_operator_route_check_blocked', 'pm_process_route_model_decision_card_delivered', 'pm_process_route_model_accepted', 'pm_process_route_model_rebuild_requested', 'flowguard_operator_product_route_check_card_delivered', 'flowguard_operator_product_route_check_passed', 'reviewer_route_check_card_delivered', 'reviewer_route_check_passed', 'route_activated_by_pm'):
         run_state.setdefault('flags', {})[flag] = False
 
 
 def _reset_route_hard_gate_approvals_for_recheck(router: ModuleType, run_state: dict[str, Any]) -> None:
     _bind_router(router)
-    for flag in ('pm_route_skeleton_card_delivered', 'route_draft_written_by_pm', 'process_officer_route_check_card_delivered', 'process_route_model_submitted', 'process_route_model_repair_required', 'process_route_model_blocked', 'process_officer_route_check_passed', 'process_officer_route_repair_required', 'process_officer_route_check_blocked', 'pm_process_route_model_decision_card_delivered', 'pm_process_route_model_accepted', 'pm_process_route_model_rebuild_requested', 'product_officer_route_check_card_delivered', 'product_officer_route_check_passed', 'reviewer_route_check_card_delivered', 'reviewer_route_check_passed', 'route_activated_by_pm'):
+    for flag in ('pm_route_skeleton_card_delivered', 'route_draft_written_by_pm', 'flowguard_operator_route_check_card_delivered', 'process_route_model_submitted', 'process_route_model_repair_required', 'process_route_model_blocked', 'flowguard_operator_route_check_passed', 'flowguard_operator_route_repair_required', 'flowguard_operator_route_check_blocked', 'pm_process_route_model_decision_card_delivered', 'pm_process_route_model_accepted', 'pm_process_route_model_rebuild_requested', 'flowguard_operator_product_route_check_card_delivered', 'flowguard_operator_product_route_check_passed', 'reviewer_route_check_card_delivered', 'reviewer_route_check_passed', 'route_activated_by_pm'):
         run_state.setdefault('flags', {})[flag] = False
 
 
@@ -101,10 +101,10 @@ def _require_product_behavior_model_report(router: ModuleType, project_root: Pat
     _bind_router(router)
     path = router._product_behavior_model_report_path(run_root)
     if not path.exists():
-        raise RouterError('route draft requires Product Officer product behavior model report')
+        raise RouterError('route draft requires FlowGuard operator product-scope product behavior model report')
     report = read_json(path)
     if report.get('passed') is not True:
-        raise RouterError('route draft requires passed Product Officer product behavior model report')
+        raise RouterError('route draft requires passed FlowGuard operator product-scope product behavior model report')
     return path
 
 
@@ -120,7 +120,7 @@ def _require_process_route_model_report(router: ModuleType, project_root: Path, 
         raise RouterError('route activation requires process route model report')
     report = read_json(path)
     if report.get('passed') is not True or report.get('process_viability_verdict') != 'pass':
-        raise RouterError('route activation requires Process Officer process route model pass')
+        raise RouterError('route activation requires FlowGuard operator route-scope process route model pass')
     return path
 
 

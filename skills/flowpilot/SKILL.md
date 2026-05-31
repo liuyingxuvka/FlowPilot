@@ -69,10 +69,10 @@ Nonterminal status, patrol, resume, lease, ACK, result, and scoped-closure comma
 
 If `foreground_duty.action=wait_patrol`, do not final-answer. Run the duty's `refresh_command` or `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60`, wait for output, then follow the next `foreground_duty`. Starting one timer, seeing no new work, or observing a live role is not completion evidence.
 
-Router-ready state preempts foreground waits. Before waiting on role chat or a
-timer, scan daemon status and the Controller action; if Router has work ready,
-use the returned action or `controller-standby` path instead of continuing the
-foreground wait.
+Runtime-ready state preempts foreground waits. Before waiting on role chat or a
+timer, refresh the current lifecycle guard through `flowpilot_new.py patrol` or
+the runtime-provided refresh command; if the guard exposes work, follow the
+returned foreground duty instead of continuing the wait.
 
 Before any final answer, done claim, or Controller shutdown for a new runtime run, run:
 
@@ -88,9 +88,9 @@ When `flowpilot_new.py start` opens the native startup intake UI, formal startup
 
 After startup, the new runtime materializes the first PM-bound high-standard contract packet. PM route planning is not legal until the high-standard contract, current discovery, and selected skill standard gates are accepted.
 
-When the new runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported role mechanism, record the addressable host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Every opened role binding must be explicitly requested with the strongest available host model and highest available reasoning effort.
+When the new runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface, record the actual surface and addressable host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Every opened role binding must be explicitly requested with the strongest available host model and highest available reasoning effort.
 
-All new formal runtime roles are packet roles, but not every gate is a dispatched role. PM, FlowGuard operator, reviewer, and route-node workers follow the same lifecycle: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are router-owned ledger facts after accepted review evidence; do not open validator or Closure Officer workers, and do not complete FlowGuard or review through side-command shortcuts.
+All new formal runtime roles are requested packet responsibilities, but not every gate is a dispatched role. PM, reviewer, explicit FlowGuard operator responsibilities, and route-node worker responsibilities follow the same lifecycle when the runtime requests them: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are runtime-owned ledger facts after accepted review evidence; do not open Validator or Closure FlowGuard operator workers, and do not complete FlowGuard or review through side-command shortcuts.
 
 After PM planning closes, the runtime materializes executable route nodes, requires accepted node acceptance plans, issues each node as its own packet chain, runs FlowGuard and review packets, records system validation and system closure, applies PM disposition per node, uses same-node repair for ordinary quality gaps, runs parent backward replay where needed, then builds a final route-wide gate ledger plus requirement-evidence matrix before terminal completion.
 
@@ -130,5 +130,5 @@ and the router-delivered packet or card names `docs/flowguard_project_topology.m
 roles may read that map as project background only. The topology can guide which
 models, tests, code areas, evidence summaries, and known-bad signals to inspect
 next, but it is not a FlowGuard Report, not validation evidence, and not
-authority for Controller, PM, Officers, or Reviewer to approve gates, mutate
+authority for Controller, PM, FlowGuard operators, or Reviewer to approve gates, mutate
 routes, close nodes, or claim completion.

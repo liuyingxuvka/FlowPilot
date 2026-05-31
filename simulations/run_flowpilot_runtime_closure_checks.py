@@ -20,9 +20,9 @@ RESULTS_PATH = ROOT / "flowpilot_runtime_closure_results.json"
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|scenario={state.scenario}|"
-        f"officer_req={state.pm_officer_request_packet_recorded}|"
-        f"officer_auth={state.officer_report_router_event_authorized}|"
-        f"officer_gate={state.officer_gate_advanced}|"
+        f"flowguard_operator_req={state.pm_flowguard_operator_request_packet_recorded}|"
+        f"flowguard_operator_auth={state.flowguard_operator_report_router_event_authorized}|"
+        f"flowguard_operator_gate={state.flowguard_operator_gate_advanced}|"
         f"quarantine={state.quarantine_recorded}|old_authority={state.imported_state_used_as_current_authority}|"
         f"closure={state.pm_closure_approved}|report={state.final_user_report_written}|"
         f"display={state.display_refreshed}|display_fresh={state.display_version_matches_frontier}|"

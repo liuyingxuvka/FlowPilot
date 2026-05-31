@@ -27,7 +27,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.REVIEWER_HARD_BLOCKER_DOWNGRADED: "reviewer hard blocker was downgraded to a soft note",
     model.REVIEWER_PREFERENCE_BLOCKS_GATE: "reviewer blocked a gate without minimum-standard failure",
     model.WORKER_NOTE_BLOCKS_GATE: "worker advisory note was treated as a gate blocker",
-    model.OFFICER_MAINTENANCE_BLOCKS_PROJECT: "FlowPilot maintenance suggestion blocked current project completion",
+    model.FLOWGUARD_OPERATOR_MAINTENANCE_BLOCKS_PROJECT: "FlowPilot maintenance suggestion blocked current project completion",
     model.PM_CLOSES_WITH_UNDISPOSED_SUGGESTION: "PM closed or advanced without disposing the suggestion",
     model.DEFER_WITHOUT_TARGET: "PM deferred a suggestion without naming a downstream node or gate",
     model.REJECT_WITHOUT_REASON: "PM rejected a suggestion without a reason",

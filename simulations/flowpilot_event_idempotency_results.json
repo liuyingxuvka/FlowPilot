@@ -139,7 +139,7 @@
           "same dedupe key wrote duplicate side effect",
           "duplicate side effect written for replayed event identity"
         ],
-        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_officer|prior=gate:route-check:v1:process_officer|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
+        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_flowguard_operator|prior=gate:route-check:v1:process_flowguard_operator|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
       }
     },
     "ok": true

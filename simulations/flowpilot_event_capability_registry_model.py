@@ -27,7 +27,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 PROJECT_MANAGER = "project_manager"
 REVIEWER = "human_like_reviewer"
-WORKER = "worker_a"
+WORKER = "worker"
 CONTROLLER = "controller"
 
 NODE_KINDS = ("leaf", "parent", "module", "repair", "pre_route")

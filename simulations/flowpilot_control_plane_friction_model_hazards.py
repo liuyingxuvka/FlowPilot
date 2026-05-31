@@ -220,7 +220,7 @@ def _safe_base(**changes: object) -> State:
             pm_role_work_result_normalized=True,
             pm_role_work_result_routes_to_pm=True,
             current_node_result_routes_to_pm=True,
-            model_miss_officer_report_complete=True,
+            model_miss_flowguard_operator_report_complete=True,
             model_miss_pm_decision_from_single_report=True,
             role_memory_delta_written=True,
             role_memory_used_for_authority=False,
@@ -1040,7 +1040,7 @@ def hazard_states() -> dict[str, State]:
             current_node_result_routes_to_pm=False,
         ),
         "pm_decides_from_incomplete_model_miss_report": _safe_base(
-            model_miss_officer_report_complete=False,
+            model_miss_flowguard_operator_report_complete=False,
             model_miss_pm_decision_from_single_report=True,
         ),
         "role_memory_used_as_completion_authority": _safe_base(

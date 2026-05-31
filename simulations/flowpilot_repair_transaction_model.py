@@ -122,8 +122,8 @@ class State:
     model_miss_triage_recorded: bool = False
     flowguard_bug_class_modelable: bool = True
     flowguard_out_of_scope_reason_recorded: bool = False
-    model_miss_officer_request_issued: bool = False
-    model_miss_officer_report_returned: bool = False
+    model_miss_flowguard_operator_request_issued: bool = False
+    model_miss_flowguard_operator_report_returned: bool = False
     same_class_findings_recorded: bool = False
     repair_candidates_compared: bool = False
     minimal_sufficient_repair_recommended: bool = False
@@ -326,25 +326,25 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if (
         state.flowguard_bug_class_modelable
-        and not state.model_miss_officer_request_issued
+        and not state.model_miss_flowguard_operator_request_issued
     ):
         yield Transition(
-            "pm_issues_model_miss_officer_request",
-            _inc(state, holder="pm", model_miss_officer_request_issued=True),
+            "pm_issues_model_miss_flowguard_operator_request",
+            _inc(state, holder="pm", model_miss_flowguard_operator_request_issued=True),
         )
         return
 
     if (
         state.flowguard_bug_class_modelable
-        and state.model_miss_officer_request_issued
-        and not state.model_miss_officer_report_returned
+        and state.model_miss_flowguard_operator_request_issued
+        and not state.model_miss_flowguard_operator_report_returned
     ):
         yield Transition(
-            "officer_reports_same_class_findings_and_minimal_repair",
+            "flowguard_operator_reports_same_class_findings_and_minimal_repair",
             _inc(
                 state,
-                holder="flowguard_officer",
-                model_miss_officer_report_returned=True,
+                holder="flowguard_operator",
+                model_miss_flowguard_operator_report_returned=True,
                 same_class_findings_recorded=True,
                 repair_candidates_compared=True,
                 minimal_sufficient_repair_recommended=True,
@@ -354,7 +354,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if (
         state.flowguard_bug_class_modelable
-        and state.model_miss_officer_report_returned
+        and state.model_miss_flowguard_operator_report_returned
         and not state.pm_selected_repair_after_model_miss
     ):
         yield Transition(
@@ -573,7 +573,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if _requires_post_repair_model_check(state) and not state.post_repair_model_check_passed:
         yield Transition(
             "post_repair_model_check_passed_after_committed_generation",
-            _inc(state, holder="flowguard_officer", post_repair_model_check_passed=True),
+            _inc(state, holder="flowguard_operator", post_repair_model_check_passed=True),
         )
         return
 
@@ -713,17 +713,17 @@ def model_miss_triage_precedes_repair_decision(state: State, trace) -> Invariant
     return InvariantResult.pass_()
 
 
-def model_backed_repair_requires_officer_report(state: State, trace) -> InvariantResult:
+def model_backed_repair_requires_flowguard_operator_report(state: State, trace) -> InvariantResult:
     del trace
     if state.pm_selected_repair_after_model_miss and state.flowguard_bug_class_modelable:
         if not (
-            state.model_miss_officer_report_returned
+            state.model_miss_flowguard_operator_report_returned
             and state.same_class_findings_recorded
             and state.repair_candidates_compared
             and state.minimal_sufficient_repair_recommended
         ):
             return InvariantResult.fail(
-                "PM selected a model-backed repair before officer same-class findings and minimal repair recommendation"
+                "PM selected a model-backed repair before FlowGuard operator same-class findings and minimal repair recommendation"
             )
     if state.pm_selected_repair_after_model_miss and not state.flowguard_bug_class_modelable:
         if not state.flowguard_out_of_scope_reason_recorded:
@@ -1019,9 +1019,9 @@ INVARIANTS = (
         predicate=model_miss_triage_precedes_repair_decision,
     ),
     Invariant(
-        name="model_backed_repair_requires_officer_report",
-        description="Modelable blocker repairs require officer same-class findings and minimal repair recommendation.",
-        predicate=model_backed_repair_requires_officer_report,
+        name="model_backed_repair_requires_flowguard_operator_report",
+        description="Modelable blocker repairs require FlowGuard operator same-class findings and minimal repair recommendation.",
+        predicate=model_backed_repair_requires_flowguard_operator_report,
     ),
     Invariant(
         name="repair_decision_requires_transaction",
@@ -1127,8 +1127,8 @@ def _safe_base(**changes: object) -> State:
             model_miss_triage_recorded=True,
             flowguard_bug_class_modelable=True,
             flowguard_out_of_scope_reason_recorded=False,
-            model_miss_officer_request_issued=True,
-            model_miss_officer_report_returned=True,
+            model_miss_flowguard_operator_request_issued=True,
+            model_miss_flowguard_operator_report_returned=True,
             same_class_findings_recorded=True,
             repair_candidates_compared=True,
             minimal_sufficient_repair_recommended=True,
@@ -1214,8 +1214,8 @@ def hazard_states() -> dict[str, State]:
         "repair_decision_before_model_miss_path_selected": _safe_base(
             pm_selected_repair_after_model_miss=False,
         ),
-        "model_backed_repair_without_officer_report": _safe_base(
-            model_miss_officer_report_returned=False,
+        "model_backed_repair_without_flowguard_operator_report": _safe_base(
+            model_miss_flowguard_operator_report_returned=False,
             same_class_findings_recorded=False,
             repair_candidates_compared=False,
             minimal_sufficient_repair_recommended=False,

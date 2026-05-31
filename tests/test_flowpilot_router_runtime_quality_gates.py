@@ -18,7 +18,7 @@ TEST_NAMES = (
     "test_user_intake_settlement_finalizer_waits_for_controller_mail_after_activation",
     "test_router_owned_check_proof_rejects_self_attested_and_stale_audit",
     "test_child_skill_gates_block_raw_inventory_and_controller_approval",
-    "test_reviewer_and_officer_gate_event_groups_have_non_pass_outcomes",
+    "test_reviewer_and_flowguard_operator_gate_event_groups_have_non_pass_outcomes",
     "test_gate_outcome_block_specs_are_registered_and_reset_stale_passes",
     "test_child_skill_gate_manifest_block_records_repair_without_approval",
     "test_child_skill_gate_manifest_repair_pass_clears_active_gate_block",

@@ -345,14 +345,14 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 - Run heavyweight Meta and Capability checks later before any release-level
   confidence claim.
-- Keep native Cockpit snapshot consumption and future officer field validators
+- Keep native Cockpit snapshot consumption and future FlowGuard operator field validators
   as separate follow-up work.
 
 ## 2026-05-16 FlowPilot Runtime Closure Maintenance
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: v0.9.3 passed release and install checks, but clean-rebuild
-  residuals still left officer model packets, old-state quarantine, final user
+  residuals still left FlowGuard operator model packets, old-state quarantine, final user
   report output, and route display refresh partially enforced by generic paths
   or future-work notes.
 - Status: completed_runtime_closure_maintenance_synced
@@ -363,7 +363,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Risk Intent
 
-- Prevent Process/Product FlowGuard officer reports from completing gates
+- Prevent FlowGuard operator reports from completing gates
   through invented direct events or report wording that the current Router wait
   state did not authorize.
 - Prevent prior-run control files, route/frontier state, old role `agent_id`
@@ -379,7 +379,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 | Planned change | Bug class to catch | Model/check boundary |
 | --- | --- | --- |
-| Officer packet lifecycle | direct officer event bypasses PM packet request or Router allowed events | new focused runtime-closure FlowGuard model plus role-output/runtime tests |
+| Officer packet lifecycle | direct FlowGuard operator event bypasses PM packet request or Router allowed events | new focused runtime-closure FlowGuard model plus role-output/runtime tests |
 | Continuation quarantine | old route/control state or prior agent ids become current authority | new focused runtime-closure FlowGuard model plus template/install checks |
 | Closure user report | user report file makes an incomplete run look closed | new focused runtime-closure FlowGuard model plus terminal/runtime tests |
 | Route display refresh | stale route sign or UI snapshot hides current frontier | new focused runtime-closure FlowGuard model plus display helper tests |
@@ -397,7 +397,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   `1.0`.
 - OK: `python <codex-home>\skills\model-first-function-flow\assets\toolchain_preflight.py --json`
   reported installed FlowGuard schema `1.0`.
-- OK: predictive KB preflight returned relevant officer-event, dynamic Router
+- OK: predictive KB preflight returned relevant FlowGuard operator-event, dynamic Router
   event, and closure-evidence candidate lessons.
 - OK: `openspec validate complete-flowpilot-runtime-closure --strict --json`.
 - OK: `python simulations\run_flowpilot_runtime_closure_checks.py --json-out simulations\flowpilot_runtime_closure_results.json`.
@@ -434,7 +434,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Counterexamples Checked
 
-- Direct officer events without a PM/Router-authorized request.
+- Direct FlowGuard operator events without a PM/Router-authorized request.
 - Old continuation state reused as current authority.
 - Final user report treated as terminal closure proof.
 - Stale route display treated as the route source of truth.
@@ -706,7 +706,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Scope updated:
   - extended file-backed role payload loading to PM material understanding,
     product-function architecture, and root acceptance contract events;
-  - added optional file-backed loading for PM/reviewer/officer artifacts that
+  - added optional file-backed loading for PM/reviewer/FlowGuard operator artifacts that
     already support direct payloads;
   - preserved role-output envelope metadata in written PM artifacts;
   - added router runtime coverage for PM material understanding through a
@@ -1129,12 +1129,12 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   `simulations/meta_model.py`, and `simulations/capability_model.py`.
 - Main findings:
   - PM modeling requests must name the decision, uncertainty, evidence,
-    candidate options or option-generation need, assigned officer, and answer
+    candidate options or option-generation need, assigned FlowGuard operator, and answer
     shape.
-  - The process FlowGuard officer handles "how should FlowPilot do this?"
-    uncertainty; the product FlowGuard officer handles "what is the target
+  - The FlowGuard operator handles "how should FlowPilot do this?"
+    uncertainty; the FlowGuard operator handles "what is the target
     object/product behavior?" uncertainty.
-  - The assigned officer checks modelability first.
+  - The assigned FlowGuard operator checks modelability first.
   - Missing evidence becomes evidence-collection work; over-broad requests
     become split modeling requests.
   - Reports must include coverage, blindspots, failure paths, recommendation,
@@ -1222,7 +1222,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
     require heartbeat/watchdog/global-supervisor automation.
   - The old heartbeat-health gate is now modeled as continuation readiness:
     automated heartbeat health when supported, or manual-resume
-    state/frontier/crew-memory readiness when no real wakeup exists.
+    state/frontier/role-binding-memory readiness when no real wakeup exists.
   - Controlled blocked exits must record a nonterminal resume notice; completed
     exits must record a completion notice instead of a resume prompt.
 - Validation:
@@ -1237,7 +1237,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## 2026-05-02 - Startup Activation Hard Gate
 
 - Trigger: the user found that a formal FlowPilot restart could bypass the
-  intended startup crew, continuation, and route-state activation sequence.
+  intended startup runtime roles, continuation, and route-state activation sequence.
 - Decision: `use_flowguard`.
 - Modeled workflow: startup activation from route file creation through
   canonical state/frontier sync, current runtime-role role-binding ledger, role memory,
@@ -1654,7 +1654,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   reviewer/PM outputs, Controller direct free text, and Controller inspection of
   router hard-check internals.
 - Router role events now require `report_path`/`report_hash` or
-  `decision_path`/`decision_hash` for reviewer, officer, and PM report/decision
+  `decision_path`/`decision_hash` for reviewer, FlowGuard operator, and PM report/decision
   events. Inline body keys such as `passed`, `decision`, `blockers`, `checks`,
   and `evidence` are rejected from Controller-visible payloads.
 - Role cards now state that Controller is relay-only, every exchange must
@@ -1956,7 +1956,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Unsupported historical `record-event *_card_ack` submissions are rejected instead of rerouted.
 - Prompt coverage now detects stale Controller-routed ACK wording and missing direct-Router ACK/result guidance in card and packet prompts.
 - A model miss was found and fixed: startup system cards may be issued before an execution frontier exists, so direct ACK tokens must allow missing frontier bindings only during that startup-before-frontier state.
-- The prompt coverage model found real stale/custom card wording in route officer/reviewer cards and a duplicate stale identity block in `pm_role_work_request`; those prompts were corrected.
+- The prompt coverage model found real stale/custom card wording in route FlowGuard operator/reviewer cards and a duplicate stale identity block in `pm_role_work_request`; those prompts were corrected.
 
 ### Counterexamples
 - Missing direct Router ACK token.
@@ -2000,11 +2000,11 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The resume model now distinguishes all-active reuse, partial failed-role replacement, and all-uncertain replacement.
-- Added hazards prove the model catches all-active roles being replaced, one failed role causing all six replacements, and failed-role recovery that does not reuse still-active roles.
+- Added hazards prove the model catches all-active roles being replaced, one failed role causing all runtime roles replacements, and failed-role recovery that does not reuse still-active roles.
 
 ### Counterexamples
 - `all_active_roles_replaced_instead_of_reused`
-- `one_failed_role_replaced_all_six`
+- `one_failed_role_replaced_all_runtime_roles`
 - `one_failed_role_does_not_reuse_active_roles`
 
 ### Friction Points
@@ -2235,20 +2235,20 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Two-node route: complete node 001, leave stale `node_completed_by_pm=true`, then complete node 002. Old behavior returns `already_recorded`; repaired behavior writes node 002's completion ledger.
 
 ### Friction Points
-- Current live run then reached node 004 and relayed its packet to `worker_a`, but the host could not find the old `worker_a` agent and opening a replacement failed with the host agent thread limit.
-- Controller cannot complete worker-owned packet work or let Worker B impersonate Worker A without violating the packet/write-grant role boundary.
+- Current live run then reached node 004 and relayed its packet to `worker`, but the host could not find the old `worker` agent and opening a replacement failed with the host agent thread limit.
+- Controller cannot complete worker-owned packet work or let Worker impersonate Worker without violating the packet/write-grant role boundary.
 
 ### Skipped Steps
 - No sealed packet or result bodies were read by Controller.
 - No cleanup of untracked `flowpilot_cockpit` artifacts was performed because those appear to be active worker output.
 
 ### Follow-up Update
-- After explicit user approval, the old role sessions were closed to free host capacity. Five fresh roles were started and initialized from current-run memory: PM, reviewer, process officer, product officer, and Worker A.
-- The sixth fresh role, Worker B, still failed to open with the host agent thread limit. The old Worker B was confirmed unreachable after close.
-- Node 004 remains blocked at the router `rehydrate_role_bindings` action because the router requires runtime-requested role records and Controller must not invent a Worker B agent id.
+- After explicit user approval, the old role sessions were closed to free host capacity. Five fresh roles were started and initialized from current-run memory: PM, reviewer, route-scope FlowGuard operator, product-scope FlowGuard operator, and Worker.
+- The sixth fresh role, Worker, still failed to open with the host agent thread limit. The old Worker was confirmed unreachable after close.
+- Node 004 remains blocked at the router `rehydrate_role_bindings` action because the router requires runtime-requested role records and Controller must not invent a Worker agent id.
 
 ### Next Actions
-- Use a host context that allows runtime-requested sidecar roles, or add an explicit protocol fallback for five-live-role continuation when the missing role is not the active packet holder. Do not continue by faking Worker B liveness.
+- Use a host context that allows runtime-requested sidecar roles, or add an explicit protocol fallback for five-live-role continuation when the missing role is not the active packet holder. Do not continue by faking Worker liveness.
 
 
 ## flowpilot-stale-pending-action-requires-flag-20260508 - Recompute stale role-decision waits
@@ -2340,13 +2340,13 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `python scripts/check_public_release.py --json --skip-validation`
 
 ### Findings
-- Output-contract propagation now covers `pm.model_miss_triage` and `officer.model_miss_report` as first-class valid contract families.
+- Output-contract propagation now covers `pm.model_miss_triage` and `flowguard_operator.model_miss_report` as first-class valid contract families.
 - Runtime repair after reviewer/material dispatch block now requires PM to record a model-miss triage decision before `pm.review_repair` or `pm_mutates_route_after_review_block` can proceed.
-- Model-backed repair requires officer report references with same-class findings, candidate repair comparison, and a minimal sufficient repair recommendation.
+- Model-backed repair requires FlowGuard operator report references with same-class findings, candidate repair comparison, and a minimal sufficient repair recommendation.
 - Out-of-scope repair is allowed only when PM records why FlowGuard cannot model the bug class.
 
 ### Counterexamples
-- Previous unsafe paths are now caught: repair before model-miss triage, model-backed repair without officer findings, out-of-scope repair without incapability reason, and reviewer recheck before post-repair model check.
+- Previous unsafe paths are now caught: repair before model-miss triage, model-backed repair without FlowGuard operator findings, out-of-scope repair without incapability reason, and reviewer recheck before post-repair model check.
 
 ### Friction Points
 - Full `run_meta_checks.py` and `run_capability_checks.py` recomputation exceeded the 180-second command window, but `--fast` proof reuse passed because the model file, runner file, FlowGuard schema, and result-file fingerprints were unchanged.
@@ -2435,8 +2435,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - `skills/flowpilot/assets/flowpilot_router.py`
 - `skills/flowpilot/assets/packet_runtime.py`
 - `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
-- `skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md`
-- `skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/worker.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/worker.md`
 - `skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md`
 - `skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md`
 - `templates/flowpilot/flowpilot_skill_improvement_observation.template.json`
@@ -2567,7 +2567,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Date: 2026-05-05
 
 ### Risk Intent
-- Prevent Controller from accepting officer/reviewer route-check results before the Router has delivered the matching work card.
+- Prevent Controller from accepting FlowGuard operator/reviewer route-check results before the Router has delivered the matching work card.
 - Prevent PM route activation from falling back to a dummy route when a reviewed draft exists.
 - Ensure resume recovery derives the next packet recipient from `packet_ledger.json`, not chat memory.
 - Give the future Windows Cockpit a canonical route snapshot built from `current.json`, route/frontier/state, and packet ledger rather than stale index entries.
@@ -2580,8 +2580,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Implementation Files
 - `skills/flowpilot/assets/flowpilot_router.py`
 - `skills/flowpilot/assets/runtime_kit/manifest.json`
-- `skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md`
-- `skills/flowpilot/assets/runtime_kit/cards/officers/route_product_check.md`
+- `skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md`
+- `skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_product_check.md`
 - `skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md`
 - `tests/test_flowpilot_router_runtime.py`
 - `scripts/check_install.py`
@@ -2602,7 +2602,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The new FlowGuard model covers the explicit-next-recipient hazards: unknown next role, direct role pass without Router dispatch, dummy route activation, Controller content decision, duplicate worker ownership, wrong reissue target, resume without ledger-derived next, parent repair without PM segment decision, frontier rewrite without stale marking, UI using stale running index entries, and completion missing unsupported historical obligations.
-- Runtime route checks now require three Router-delivered cards before activation: process officer, product officer, then human reviewer.
+- Runtime route checks now require three Router-delivered cards before activation: route-scope FlowGuard operator, product-scope FlowGuard operator, then human reviewer.
 - Every Router action carries `next_step_contract`, which makes the intended recipient and Controller boundaries explicit.
 - `route_state_snapshot.json` and `active_ui_task_catalog` are runtime contracts for future UI work; they are not the native Windows UI itself.
 - Installed `flowpilot` is fresh against repository source after sequential sync/check: installed digest equals source digest and `source_fresh=true`.
@@ -2639,7 +2639,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Background broad regression was delegated separately with incremental logging requirements and was still running when this note was written.
 
 ### Next Actions
-- Add a persistent next-recipient FlowGuard model during P0, then implement router-owned next actions for route checks, officer packets, repair/reissue, resume continuation, parent/terminal repair branches, and UI active-run snapshots.
+- Add a persistent next-recipient FlowGuard model during P0, then implement router-owned next actions for route checks, FlowGuard operator packets, repair/reissue, resume continuation, parent/terminal repair branches, and UI active-run snapshots.
 
 
 ## flowpilot-pm-minimum-sufficient-complexity-20260505 - Add PM anti-overengineering discipline to route and node decisions.
@@ -2929,7 +2929,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK (0.000s): `python -m unittest tests.test_flowpilot_user_flow_diagram`
 - OK (0.000s): `python scripts/check_install.py`
 - FAIL (0.000s): `python simulations/run_meta_checks.py (blocked by existing external_watchdog field mismatch unrelated to route sign)`
-- FAIL (0.000s): `python simulations/run_capability_checks.py (blocked by existing duplicate final_product_model_officer_adversarial_probe_done argument unrelated to route sign)`
+- FAIL (0.000s): `python simulations/run_capability_checks.py (blocked by existing duplicate final_product_model_flowguard_operator_adversarial_probe_done argument unrelated to route sign)`
 
 ### Findings
 - Closed-Cockpit route sign must be pasted as chat Mermaid; file generation alone is insufficient.
@@ -2955,7 +2955,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Risk Intent
 - Reduce repeated control-plane prompt/check overhead while preserving all unsupported historical obligations.
-- Prevent AI agents from using the simplification as permission to skip reviewer, FlowGuard officer, packet ledger, cache hash, stale evidence, route frontier, final ledger, or terminal replay gates.
+- Prevent AI agents from using the simplification as permission to skip reviewer, FlowGuard operator, packet ledger, cache hash, stale evidence, route frontier, final ledger, or terminal replay gates.
 - Preserve role isolation by keeping barrier bundles as envelope/ledger metadata only; role packet/result bodies remain separate and target-role-only.
 
 ### Implementation Files
@@ -2993,7 +2993,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Findings
 - The executable barrier model covers 16 unsupported historical obligations across 9 barriers and reports no missing obligations at completion.
 - The FlowGuard explorer report passed with no violations, dead branches, exception branches, or reachability failures.
-- Hazard checks detect AI discretion bypass, Controller sealed-body read/summarization, Controller-origin evidence, wrong-role approval, missing role slices, missing obligations, missing reviewer/officer gates, invalid cache reuse, stale evidence use, route mutation without stale/frontier markers, and final closure without clean ledger or terminal replay.
+- Hazard checks detect AI discretion bypass, Controller sealed-body read/summarization, Controller-origin evidence, wrong-role approval, missing role slices, missing obligations, missing reviewer/FlowGuard operator gates, invalid cache reuse, stale evidence use, route mutation without stale/frontier markers, and final closure without clean ledger or terminal replay.
 - The active-run comparison in `simulations/barrier_equivalence_results.json` records pre-route control transitions reduced from 26 prompt deliveries to 6 barriers, while explicitly preserving packet semantics, approvals, hashes, stale markers, and final replay.
 - Installed `flowpilot` is source-fresh against the repository skill after sync.
 
@@ -3010,7 +3010,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Reconcile existing meta/capability model drift separately, then rerun full simulations.
 
 
-## flowpilot-officer-owned-async-modeling-20260503 - Make FlowPilot FlowGuard model gates officer-owned asynchronous gates with provenance requirements
+## flowpilot-FlowGuard operator-owned-async-modeling-20260503 - Make FlowPilot FlowGuard model gates FlowGuard operator-owned asynchronous gates with provenance requirements
 
 - Project: FlowGuardProjectAutopilot
 - Trigger reason: Behavior-bearing FlowPilot protocol change affecting model-gate ownership, route authority, parallel work boundaries, and validation flow
@@ -3036,8 +3036,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK (0.000s): `python scripts/install_flowpilot.py --check --json`
 
 ### Findings
-- PM dispatches FlowGuard modeling requests to matching officers; matching officer must author, run, interpret, and approve/block with provenance.
-- Main executor may continue only non-dependent prep while officer model gates are open; protected route, implementation, checkpoint, and completion gates remain blocked.
+- PM dispatches FlowGuard modeling requests to matching FlowGuard operators; matching FlowGuard operator must author, run, interpret, and approve/block with provenance.
+- Main executor may continue only non-dependent prep while FlowGuard operator model gates are open; protected route, implementation, checkpoint, and completion gates remain blocked.
 - Validation exposed and fixed two model consistency issues: duplicate capability reset argument and stale user-flow reviewer evidence after meta route mutations.
 
 ### Counterexamples
@@ -3100,7 +3100,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## 2026-05-03 - Universal Adversarial Role Approval
 
 ### Trigger
-- The user identified that PM, reviewer, and officer approvals could still read
+- The user identified that PM, reviewer, and FlowGuard operator approvals could still read
   as "approval after reading evidence" instead of independent adversarial
   verification. The requested standard applies to every review, not only UI.
 
@@ -3247,7 +3247,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
   fallback mode or banner-before-answer shortcut in future docs or templates.
 
 
-## flowpilot-pm-model-report-decision-packet-20260503 - Require FlowGuard officer model reports to provide PM decision packets with risk tiers, review agenda, toolchain recommendations, human walkthrough targets, and confidence boundaries
+## flowpilot-pm-model-report-decision-packet-20260503 - Require FlowGuard operator model reports to provide PM decision packets with risk tiers, review agenda, toolchain recommendations, human walkthrough targets, and confidence boundaries
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: User clarified that FlowGuard workers report to PM, and PM decides what to do from model-derived risks and suggestions
@@ -3273,7 +3273,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - Officer report templates now include PM-facing risk tiers, review agenda, toolchain/model suggestions, human walkthrough recommendations, PM decision options, and confidence boundary without absolute no-risk wording.
-- Meta and capability models now reject FlowGuard officer model approval unless report extraction fields are present with adversarial model evidence.
+- Meta and capability models now reject FlowGuard operator model approval unless report extraction fields are present with adversarial model evidence.
 - Repository source and installed local flowpilot skill were synchronized for the updated PM decision packet wording.
 
 ### Counterexamples
@@ -3286,7 +3286,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 ### Next Actions
-- Future FlowGuard officer reports should be treated as PM decision support, not route decisions or no-risk certificates.
+- Future FlowGuard operator reports should be treated as PM decision support, not route decisions or no-risk certificates.
 
 
 ## flowpilot-terminal-human-backward-replay-20260503 - Require terminal human backward replay before PM completion approval
@@ -3533,10 +3533,10 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Implement a native file watcher or bounded automatic polling loop and prove source-change update without pressing refresh.
 
 
-## flowpilot-desktop-cockpit-model-role-remediation-20260503 - Remediate product officer model block for realtime and tray lifecycle gates
+## flowpilot-desktop-cockpit-model-role-remediation-20260503 - Remediate product FlowGuard operator model block for realtime and tray lifecycle gates
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Product officer blocked the cockpit state model because implementation_allowed omitted tray lifecycle and realtime degraded-source path
+- Trigger reason: Product-scope FlowGuard operator blocked the cockpit state model because implementation_allowed omitted tray lifecycle and realtime degraded-source path
 - Status: completed
 - Skill decision: use_flowguard
 - Started: 2026-05-03T16:45:31+00:00
@@ -3554,7 +3554,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Added tray_lifecycle_verified gate before implementation_allowed and added route_auto_refreshed_degraded for changed-source conflicts/missing files.
 
 ### Counterexamples
-- Product officer found implementation_allowed reachable without tray lifecycle evidence; the model now blocks that state.
+- Product-scope FlowGuard operator found implementation_allowed reachable without tray lifecycle evidence; the model now blocks that state.
 
 ### Friction Points
 - none recorded
@@ -3563,7 +3563,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 ### Next Actions
-- Request product and process officer re-review on amended passing results.
+- Request product and route-scope FlowGuard operator re-review on amended passing results.
 
 
 ## flowpilot-major-node-route-sign-display-20260503 - Require FlowPilot Route Sign display at major route-node entry
@@ -4166,7 +4166,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - PM cannot use worker output until reviewer review produces an event back to PM, and current-node repair requires both repair phase and reviewer-blocked event cards.
 
 ### Counterexamples
-- The model detects banner before answers, banner/run-shell progression without a router `next_action`, bootloader-generated prompt bodies, roles before copied kit, user intake before PM bootstrap cards, work before PM resets Controller, worker body without reviewer dispatch, PM use of unreviewed evidence, route activation without officer/reviewer checks, node packet without node cards, repair packet without block event card, final ledger before node completion, completion before closure cleanup, prompt delivery without manifest instruction, mail delivery without ledger instruction, Controller body reads, Controller-origin project evidence, and wrong-role prompt/body delivery.
+- The model detects banner before answers, banner/run-shell progression without a router `next_action`, bootloader-generated prompt bodies, roles before copied kit, user intake before PM bootstrap cards, work before PM resets Controller, worker body without reviewer dispatch, PM use of unreviewed evidence, route activation without FlowGuard operator/reviewer checks, node packet without node cards, repair packet without block event card, final ledger before node completion, completion before closure cleanup, prompt delivery without manifest instruction, mail delivery without ledger instruction, Controller body reads, Controller-origin project evidence, and wrong-role prompt/body delivery.
 
 ### Skipped Steps
 - No FlowPilot skill code, runtime templates, installed skill copy, heartbeat automation, runtime role assistance, UI code, release, remote push, or publication action was changed.
@@ -4296,7 +4296,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Next Actions
 - Extend the router to full multi-node route resolver validation with route-version matching.
-- Add officer/research packet loops and PM absorb-or-mutate decisions.
+- Add FlowGuard operator/research packet loops and PM absorb-or-mutate decisions.
 - Add stale-evidence and generated-resource ledger writers for route mutation and final closure.
 - Add final ledger file writer, unresolved-count/resource validation, terminal closure-suite events, and production replay adapters for promoted abstract models.
 
@@ -4376,7 +4376,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - FlowGuard model updates and runtime regressions now catch premature final ledger, final replay before reviewer card, stale/unresolved evidence, missing UI screenshots, old visual asset reuse, and unsafe resume continuation.
 
 ### Skipped Steps
-- Generalized async FlowGuard officer request/report packets, automatic multi-node traversal beyond the current active-node resolver, old-state import quarantine, and closure-suite lifecycle writing remain future expansion work.
+- Generalized async FlowGuard operator request/report packets, automatic multi-node traversal beyond the current active-node resolver, old-state import quarantine, and closure-suite lifecycle writing remain future expansion work.
 
 
 ## flowpilot-non-ui-runtime-upgrade - Heartbeat, standards, replay, mutation, and closure invalidation
@@ -4392,7 +4392,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - `skills/flowpilot/assets/runtime_kit/manifest.json`
 - `skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md`
 - `skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md`
-- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_officer_request_report_loop.md`
+- `skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md`
 - `skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md`
 - `tests/test_flowpilot_router_runtime.py`
 - `simulations/flowpilot_resume_model.py`
@@ -4424,7 +4424,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Skipped Steps
 - UI/Cockpit implementation was explicitly excluded by the user.
-- Generalized officer packet runtime, old-state import quarantine importer, run-mode policy, route-sign refresh, explicit defect/role-memory closure reconciliation, and final user-report generation remain planned follow-up surfaces.
+- Generalized FlowGuard operator packet runtime, old-state import quarantine importer, run-mode policy, route-sign refresh, explicit defect/role-memory closure reconciliation, and final user-report generation remain planned follow-up surfaces.
 
 
 ## flowpilot-final-mode-retirement-identity-install - Final validation and local sync
@@ -4617,7 +4617,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-startup-hard-gates - Banner, task intake, and fresh role startup
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: User observed that a FlowPilot run did not visibly show the startup banner, appeared to plan project-specific UI work before PM route formation, and did not start all six runtime role assistance up front.
+- Trigger reason: User observed that a FlowPilot run did not visibly show the startup banner, appeared to plan project-specific UI work before PM route formation, and did not start all runtime roles runtime role assistance up front.
 - Status: completed_installed
 - Skill decision: use_flowguard
 - Date: 2026-05-05
@@ -5514,7 +5514,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-safe-simplification-proof-20260506 - Prove safe-equivalent FlowPilot simplification preserves barrier bundles and controller-only run-until-wait boundaries
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: User requested focused FlowGuard proof that safe simplification preserves role boundaries and rejects skipping PM/reviewer/officer/ledger/final replay gates
+- Trigger reason: User requested focused FlowGuard proof that safe simplification preserves role boundaries and rejects skipping PM/reviewer/FlowGuard operator/ledger/final replay gates
 - Status: completed
 - Skill decision: use_flowguard
 - Started: 2026-05-06T19:33:47+00:00
@@ -5533,8 +5533,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK (0.000s): `python simulations/run_barrier_equivalence_checks.py`
 
 ### Findings
-- Barrier equivalence proof now tracks cumulative role-slice coverage and fails completion when PM/reviewer/officer/worker/controller role slices are incomplete.
-- Hazards now detect missing PM, reviewer, process officer, product officer, packet ledger, final replay, and unsafe run-until-wait simplification paths.
+- Barrier equivalence proof now tracks cumulative role-slice coverage and fails completion when PM/reviewer/FlowGuard operator/worker/controller role slices are incomplete.
+- Hazards now detect missing PM, reviewer, route-scope FlowGuard operator, product-scope FlowGuard operator, packet ledger, final replay, and unsafe run-until-wait simplification paths.
 
 ### Counterexamples
 - none recorded
@@ -5936,7 +5936,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The model keeps formal FlowPilot complex-only and preserves the runtime-role role binding once formal FlowPilot starts.
-- Abstract checks catch unsafe gate policies for small-task overactivation, startup side effects before answers, text-only startup false violations, missing quality-risk decisions, visual-quality FlowGuard-only proof, documentation-only Product FlowGuard forcing, advisory records blocking completion, local defects forcing structural mutation, route mutation without stale-evidence invalidation, low-risk parent replay as a hard blocker, unresolved delivery evidence, no-benefit hard gates, and non-transactional state refresh.
+- Abstract checks catch unsafe gate policies for small-task overactivation, startup side effects before answers, text-only startup false violations, missing quality-risk decisions, visual-quality FlowGuard-only proof, documentation-only product-scope FlowGuard forcing, advisory records blocking completion, local defects forcing structural mutation, route mutation without stale-evidence invalidation, low-risk parent replay as a hard blocker, unresolved delivery evidence, no-benefit hard gates, and non-transactional state refresh.
 - Live source audit raised three warning-level signals: parent replay lacks an obvious low-risk waiver path, blocking review failure policy lacks an obvious local-defect branch, and existing control-plane live audit results still report state-friction findings.
 
 ### Counterexamples
@@ -5979,7 +5979,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Findings
 - The GateDecision contract defines a concrete output shape for gate decisions and maps it to prompt/card instructions, router mechanical validation, reviewer/PM semantic sufficiency, and control-plane route-visible state.
 - The new contract model accepted the valid contract, rejected 16 negative contract scenarios, had 35 states and 34 edges, reported no stuck states, and FlowGuard Explorer found no violations or exception branches.
-- The model catches missing prompt fields, missing router fields, router semantic overreach, reviewer semantic gaps, visual-quality FlowGuard-only proof, product/state proof gaps, mixed-risk proof gaps, documentation-only Product FlowGuard forcing, advisory blockers, missing skip reasons, local defect over-escalation, route mutation without stale-evidence invalidation, low-risk parent replay hard blockers, diagnostic resource blockers, unresolved delivery evidence, and split stage refresh.
+- The model catches missing prompt fields, missing router fields, router semantic overreach, reviewer semantic gaps, visual-quality FlowGuard-only proof, product/state proof gaps, mixed-risk proof gaps, documentation-only product-scope FlowGuard forcing, advisory blockers, missing skip reasons, local defect over-escalation, route mutation without stale-evidence invalidation, low-risk parent replay hard blockers, diagnostic resource blockers, unresolved delivery evidence, and split stage refresh.
 
 ### Counterexamples
 - All expected negative GateDecision contract scenarios were rejected with explicit failure messages.
@@ -6682,7 +6682,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-worker-dispatch-guidance-20260509 - Add lightweight PM worker packet balance guidance
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: User identified that PM worker assignment had no lightweight prompt-level guidance, causing worker selection to behave like free choice with a `worker_a` default bias in some packet paths.
+- Trigger reason: User identified that PM worker assignment had no lightweight prompt-level guidance, causing worker selection to behave like free choice with a `worker` default bias in some packet paths.
 - Status: optimized_not_synced
 - Skill decision: used_flowguard_lightweight
 - Started: 2026-05-09T09:05:00+02:00
@@ -6711,10 +6711,10 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `git diff --check` reported only CRLF warnings.
 
 ### Findings
-- PM worker-packet cards now tell PM to choose either `worker_a` or `worker_b` for light/single-scope work while keeping opportunities roughly balanced across the current run.
+- PM worker-packet cards now tell PM to choose either `worker` or `worker` for light/single-scope work while keeping opportunities roughly balanced across the current run.
 - Heavy naturally separable work is now prompt-routed toward bounded disjoint packets for both workers when parallel work can avoid overlapping files, evidence duties, or review ownership.
 - Reviewer-blocked repair and sender reissue now prefer returning work to the same worker that produced the blocked result, preserving local context unless the worker is unavailable, the issue shows a fundamental misunderstanding, or the repair has become separable new work.
-- The guidance intentionally avoids "do not default to worker_a" language so it does not bias PM into mechanically choosing `worker_b`.
+- The guidance intentionally avoids "do not default to worker" language so it does not bias PM into mechanically choosing `worker`.
 
 ### Skipped Steps
 - No router scheduling algorithm, worker load ledger, busy lease, or automatic reassignment logic was added.
@@ -6841,7 +6841,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: full `tests.test_flowpilot_router_runtime` regression completed with 101 tests passing.
 
 ### Findings
-- The normal worker/officer path now has one runtime entry for opening the assigned packet and submitting the result, so the runtime, not the worker prompt text, owns receipt and envelope metadata.
+- The normal worker/FlowGuard operator path now has one runtime entry for opening the assigned packet and submitting the result, so the runtime, not the worker prompt text, owns receipt and envelope metadata.
 - The reviewer/PM result-read path uses the same runtime pattern for sealed result bodies without exposing body content to Controller.
 - Router recovery now separates mechanical metadata gaps from content/authority failures: missing receipts can go back to the responsible role, while wrong role, stale packet, hash mismatch, unresolved ambiguity, or Controller-origin contamination remain PM/reviewer-level blockers.
 - The over-heavy access-history branch was removed because role/hash/relay checks already block the important unsafe reads; logging every attempt would add friction and audit noise without enough safety gain.
@@ -6976,7 +6976,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-role-output-runtime-20260509 - Generalize report/decision clock-in runtime
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: User asked to reduce friction from hand-written high-density PM/reviewer/officer role outputs while preserving Controller/body boundaries and existing packet mail.
+- Trigger reason: User asked to reduce friction from hand-written high-density PM/reviewer/FlowGuard operator role outputs while preserving Controller/body boundaries and existing packet mail.
 - Status: source_updated_not_synced
 - Skill decision: used_flowguard because the change affects role-output contracts, router validation, receipts, ledgers, Controller visibility, and recovery routing.
 
@@ -7001,7 +7001,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Findings
 - `role_output_runtime.py` now prepares contract skeletons, validates required fields/fixed choices/explicit arrays, writes receipts and a role-output ledger, and returns only controller-visible envelopes.
 - Router now verifies runtime receipts when a role-output envelope claims runtime validation, without allowing Controller-visible payloads to contain report/decision body fields.
-- Core role cards now tell PM/reviewer/officers/workers when to use `role_output_runtime.py` versus `packet_runtime.py`, keeping packet results separate from standalone formal role outputs.
+- Core role cards now tell PM/reviewer/FlowGuard operators/workers when to use `role_output_runtime.py` versus `packet_runtime.py`, keeping packet results separate from standalone formal role outputs.
 
 ### Skipped Steps
 - No local installed-skill sync, git stage/commit, version bump, tag, or GitHub push was performed per user instruction.
@@ -7515,10 +7515,10 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Runtime schema enforcement skipped because the requested change was a minimal prompt/protocol update.
 
 
-## flowpilot-worker-officer-soft-pm-note-20260510 - Add soft PM Note guidance for FlowPilot worker and officer packets
+## flowpilot-worker-FlowGuard operator-soft-pm-note-20260510 - Add soft PM Note guidance for FlowPilot worker and FlowGuard operator packets
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Behavior-bearing FlowPilot role protocol change touching worker/officer packet guidance and card instruction coverage
+- Trigger reason: Behavior-bearing FlowPilot role protocol change touching worker/FlowGuard operator packet guidance and card instruction coverage
 - Status: completed
 - Skill decision: use_flowguard
 - Started: 2026-05-10T06:54:53+00:00
@@ -7540,7 +7540,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK (0.000s): `python simulations\run_capability_checks.py --fast`
 
 ### Findings
-- Worker and FlowGuard officer packets now carry soft PM Note guidance for in-scope quality choices and PM-only consideration of out-of-scope ideas.
+- Worker and FlowGuard operator packets now carry soft PM Note guidance for in-scope quality choices and PM-only consideration of out-of-scope ideas.
 - The PM Note is intentionally not added to reviewer hard gates or output_contract required sections.
 
 ### Counterexamples
@@ -7559,7 +7559,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-decision-liveness-model-miss-20260510 - Accepted PM decisions must open a next channel
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Runtime model miss where a legal PM model-miss triage decision could be accepted without opening the officer/evidence/user-stop channel it requested.
+- Trigger reason: Runtime model miss where a legal PM model-miss triage decision could be accepted without opening the FlowGuard operator/evidence/user-stop channel it requested.
 - Status: analysis completed; production router repair not started in this side conversation.
 - Skill decision: use_flowguard
 - Date: 2026-05-10
@@ -7578,16 +7578,16 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The safe decision-liveness model has no invariant failures, no missing labels, no stuck states, no nonterminating components, and zero FlowGuard Explorer violations.
-- Hazard checks catch accepted nonterminal PM decisions looping back to the same PM event, model-backed repair without officer report review, officer report relay without ledger check, and repair packet opening before triage closure.
-- Static router/runtime-kit audit found 3 legal non-authorizing model-miss triage decisions without concrete next-channel implementation: `request_officer_model_miss_analysis`, `needs_evidence_before_modeling`, and `stop_for_user`.
-- The current run contains 1 matching live occurrence for `request_officer_model_miss_analysis`.
+- Hazard checks catch accepted nonterminal PM decisions looping back to the same PM event, model-backed repair without FlowGuard operator report review, FlowGuard operator report relay without ledger check, and repair packet opening before triage closure.
+- Static router/runtime-kit audit found 3 legal non-authorizing model-miss triage decisions without concrete next-channel implementation: `request_flowguard_operator_model_miss_analysis`, `needs_evidence_before_modeling`, and `stop_for_user`.
+- The current run contains 1 matching live occurrence for `request_flowguard_operator_model_miss_analysis`.
 
 ### Counterexamples
-- `request_officer_decision_dead_ends_on_same_pm_event`
+- `request_flowguard_operator_decision_dead_ends_on_same_pm_event`
 - `needs_evidence_decision_dead_ends_on_same_pm_event`
 - `stop_for_user_decision_dead_ends_on_same_pm_event`
-- `model_backed_repair_without_officer_report`
-- `officer_report_routed_without_ledger_check`
+- `model_backed_repair_without_flowguard_operator_report`
+- `flowguard_operator_report_routed_without_ledger_check`
 - `repair_packet_opened_after_unclosed_triage`
 
 ### Skipped Steps
@@ -7687,7 +7687,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-route-hard-gates-20260510 - Enforce product-model-first route hard gates
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Behavior-bearing FlowPilot Router change. Soft product-model-first route guidance was upgraded into Router hard gates while keeping semantic judgement with Product/Process Officer and Reviewer roles.
+- Trigger reason: Behavior-bearing FlowPilot Router change. Soft product-model-first route guidance was upgraded into Router hard gates while keeping semantic judgement with Product/FlowGuard operator route-scope and Reviewer roles.
 - Status: completed
 - Skill decision: use_flowguard
 - Date: 2026-05-10
@@ -7713,9 +7713,9 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `git diff --check` (line-ending normalization warnings only)
 
 ### Findings
-- Router now requires a passed Product Officer product behavior model report before PM route draft.
-- Router route activation now requires role-owned product-model review pass and Process Officer `process_viability_verdict=pass`.
-- Process Officer can now report `repair_required` or `blocked`; those verdicts reopen PM route drafting instead of unlocking activation.
+- Router now requires a passed FlowGuard operator product-scope product behavior model report before PM route draft.
+- Router route activation now requires role-owned product-model review pass and FlowGuard operator route-scope `process_viability_verdict=pass`.
+- FlowGuard operator route-scope can now report `repair_required` or `blocked`; those verdicts reopen PM route drafting instead of unlocking activation.
 - Route mutation now requires `repair_return_to_node_id` and clears stale route approvals so the changed route must pass route checks again before execution continues.
 - Router still does not judge semantic route quality; it checks only role-owned hard-gate artifacts and verdict fields.
 
@@ -7736,7 +7736,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## flowpilot-product-model-first-route-viability-20260510 - Use product behavior model before PM route drafting
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Behavior-bearing FlowPilot planning sequence change. Product FlowGuard output now drives PM route drafting, and Process FlowGuard checks route viability against that product behavior model.
+- Trigger reason: Behavior-bearing FlowPilot planning sequence change. product-scope FlowGuard output now drives PM route drafting, and route-scope FlowGuard checks route viability against that product behavior model.
 - Status: completed
 - Skill decision: use_flowguard
 - Date: 2026-05-10
@@ -7756,13 +7756,13 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `python scripts\check_install.py`
 
 ### Findings
-- Product FlowGuard output is now treated as the root product behavior model for product-architecture work before PM route drafting.
+- product-scope FlowGuard output is now treated as the root product behavior model for product-architecture work before PM route drafting.
 - PM route skeleton guidance now maps nodes to the product behavior model instead of treating the model as a late report.
-- Process FlowGuard guidance now checks whether the PM route can reach the product behavior model, instead of duplicating the Router's mechanical no-skip enforcement.
+- route-scope FlowGuard guidance now checks whether the PM route can reach the product behavior model, instead of duplicating the Router's mechanical no-skip enforcement.
 - Repair and mutation paths now need an explicit return to the mainline node and a note about which product-model checks or evidence must rerun before continuing.
 
 ### Counterexamples
-- The planning-quality model rejects missing product behavior model, PM route not mapped to product model, missing Process Officer route viability check, repair without mainline return, and node acceptance plans not mapped to a product-model segment.
+- The planning-quality model rejects missing product behavior model, PM route not mapped to product model, missing FlowGuard operator route-scope route viability check, repair without mainline return, and node acceptance plans not mapped to a product-model segment.
 
 ### Friction Points
 - A combined pytest run timed out, so validation was split into focused card coverage and router-runtime checks.
@@ -8257,7 +8257,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep future system-card changes aligned across card envelopes, role I/O protocol, runtime entrypoints, Controller wording, router recovery, and FlowGuard hazards.
 
 
-## run-20260511-081606-product-architecture-modelability - Product FlowGuard officer assessed product architecture modelability and produced role-output event envelope
+## run-20260511-081606-product-architecture-modelability - FlowGuard operator assessed product architecture modelability and produced role-output event envelope
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: FlowPilot product architecture modelability gate before route drafting
@@ -8290,7 +8290,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
-## run-20260511-081606-root-contract-modelability - Product FlowGuard officer assessed root acceptance contract modelability and produced role-output event envelope
+## run-20260511-081606-root-contract-modelability - FlowGuard operator assessed root acceptance contract modelability and produced role-output event envelope
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: FlowPilot root contract modelability gate before route design
@@ -8323,7 +8323,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
-## run-20260511-081606-child-skill-product-fit - Product FlowGuard officer assessed child-skill product fit and produced role-output event envelope
+## run-20260511-081606-child-skill-product-fit - FlowGuard operator assessed child-skill product fit and produced role-output event envelope
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: FlowPilot child-skill product-fit gate before route design
@@ -8356,7 +8356,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - none recorded
 
 
-## run-20260511-081606-route-product-check - Product FlowGuard officer assessed PM route product fit and produced route product pass event envelope
+## run-20260511-081606-route-product-check - FlowGuard operator assessed PM route product fit and produced route product pass event envelope
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: FlowPilot route product check gate before route activation
@@ -8741,7 +8741,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Parallel terminal-summary work was preserved and separately verified before local install sync.
 
 ### Counterexamples
-- Rejected: hidden formal work inside an identity card, task card without registered authority, role-guessed unknown event, registered event outside current wait, static card text treated as a dynamic lease, old direct officer event competing with PM role-work, wrong role, wrong contract, wrong recipient, stale authority, and mechanical runtime pass treated as process pass.
+- Rejected: hidden formal work inside an identity card, task card without registered authority, role-guessed unknown event, registered event outside current wait, static card text treated as a dynamic lease, old direct FlowGuard operator event competing with PM role-work, wrong role, wrong contract, wrong recipient, stale authority, and mechanical runtime pass treated as process pass.
 
 ### Friction Points
 - A direct full `run_meta_checks.py` invocation did not return a readable result through the tool, so the valid cached proof path was used with `--fast`.
@@ -8831,12 +8831,12 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The new model separates static card guidance, mechanical role-output validation, and live Router/PM packet authority.
-- Current run `run-20260512-110741` has two concrete rejected router-supplied `officer_model_report` attempts: `product_officer_model_report` was unknown, and `product_officer_blocks_product_architecture_modelability` was registered but not currently allowed.
-- Four router-supplied role-output contracts require a concrete dynamic lease: `officer_model_report`, `flowguard_model_miss_report`, `reviewer_review_report`, and `material_sufficiency_report`.
-- Existing PM role-work packets show the correct mitigation shape for `officer_model_report`: a PM-authored packet with strict process contract binding and result recipient set to `project_manager`.
+- Current run `run-20260512-110741` has two concrete rejected router-supplied `flowguard_operator_model_report` attempts: `flowguard_operator_model_report` was unknown, and `flowguard_operator_blocks_product_architecture_modelability` was registered but not currently allowed.
+- Four router-supplied role-output contracts require a concrete dynamic lease: `flowguard_operator_model_report`, `flowguard_model_miss_report`, `reviewer_review_report`, and `material_sufficiency_report`.
+- Existing PM role-work packets show the correct mitigation shape for `flowguard_operator_model_report`: a PM-authored packet with strict process contract binding and result recipient set to `project_manager`.
 
 ### Counterexamples
-- The model rejects system-card-only router-supplied reports, role-guessed unknown events, registered but not currently allowed events, mechanical green treated as Router acceptance, static card text treated as a dynamic event lease, and unsupported historical direct officer events competing with PM role-work result contracts.
+- The model rejects system-card-only router-supplied reports, role-guessed unknown events, registered but not currently allowed events, mechanical green treated as Router acceptance, static card text treated as a dynamic event lease, and unsupported historical direct FlowGuard operator events competing with PM role-work result contracts.
 
 ### Skipped Steps
 - FlowPilot product/router/runtime code was intentionally not modified per user instruction.
@@ -9164,10 +9164,10 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Keep future card or packet prompt changes under card_instruction_coverage_model hazards before editing production prompts.
 
 
-## dynamic-return-path-gate-alignment-20260513 - Model FlowPilot gate satisfaction for unsupported historical/general officer events
+## dynamic-return-path-gate-alignment-20260513 - Model FlowPilot gate satisfaction for unsupported historical/general FlowGuard operator events
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: A recovered FlowPilot run showed `router_no_legal_next_action` blockers after a unsupported historical/general product officer report was recorded before the concrete product architecture modelability gate event.
+- Trigger reason: A recovered FlowPilot run showed `router_no_legal_next_action` blockers after a unsupported historical/general product FlowGuard operator report was recorded before the concrete product architecture modelability gate event.
 - Status: completed
 - Skill decision: used_flowguard
 - Started: 2026-05-13T07:29:35+02:00
@@ -9209,7 +9209,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## dynamic-return-path-gate-alignment-runtime-20260513 - Enforce FlowPilot gate contracts in Router runtime
 
 - Project: FlowGuardProjectAutopilot_20260430
-- Trigger reason: Implement the approved minimal bottom-level fix after the focused FlowGuard model caught unsupported historical/general officer events, PM repair follow-ups, and unmapped PM role-work results that could bypass active gate satisfaction.
+- Trigger reason: Implement the approved minimal bottom-level fix after the focused FlowGuard model caught unsupported historical/general FlowGuard operator events, PM repair follow-ups, and unmapped PM role-work results that could bypass active gate satisfaction.
 - Status: completed
 - Skill decision: used_flowguard
 - Started: 2026-05-13T07:30:00+02:00
@@ -9223,13 +9223,13 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Runtime Files
 - skills/flowpilot/assets/flowpilot_router.py
-- skills/flowpilot/assets/runtime_kit/cards/officers/product_architecture_modelability.md
-- skills/flowpilot/assets/runtime_kit/cards/officers/route_process_check.md
+- skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md
+- skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md
 
 ### Commands
 - OK: `python -m py_compile simulations\flowpilot_dynamic_return_path_model.py simulations\run_flowpilot_dynamic_return_path_checks.py skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py tests\test_flowpilot_role_output_runtime.py`.
 - OK: `python simulations\run_flowpilot_dynamic_return_path_checks.py --project-root . --json-out simulations\flowpilot_dynamic_return_path_results.json`.
-- OK: `python -m unittest tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_router_supplied_direct_submission_requires_current_wait_authority tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_unsupported historical_product_officer_model_report_does_not_close_modelability_gate tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_gate_targeted_pm_role_work_result_requires_mapped_gate_event tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_product_architecture_and_root_contract_gate_route_skeleton tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_draft_requires_product_behavior_model_report tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_check_reports_require_hard_gate_verdict_fields tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel`.
+- OK: `python -m unittest tests.test_flowpilot_role_output_runtime.FlowPilotRoleOutputRuntimeTests.test_router_supplied_direct_submission_requires_current_wait_authority tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_unsupported historical_flowguard_operator_model_report_does_not_close_modelability_gate tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_gate_targeted_pm_role_work_result_requires_mapped_gate_event tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_product_architecture_and_root_contract_gate_route_skeleton tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_draft_requires_product_behavior_model_report tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_route_check_reports_require_hard_gate_verdict_fields tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel`.
 - OK: `python simulations\run_flowpilot_model_driven_recursive_route_checks.py`.
 - OK: `python simulations\run_meta_checks.py`.
 - OK: `python simulations\run_capability_checks.py`.
@@ -9240,8 +9240,8 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - Router now carries a machine-readable gate contract from gate-bearing card delivery into the generated wait action.
-- Unsupported historical/general officer report events remain registered for unsupported historical, but they are marked non-terminal for active gate completion.
-- Product Officer modelability is now treated as the unsupported historical name for the canonical product behavior model gate.
+- Unsupported historical/general FlowGuard operator report events remain registered for unsupported historical, but they are marked non-terminal for active gate completion.
+- FlowGuard operator product-scope modelability is now treated as the unsupported historical name for the canonical product behavior model gate.
 - Process route check is now treated as the unsupported historical name for the canonical process route model gate.
 - Canonical artifacts are written first, with old unsupported historical artifact paths mirrored for existing callers.
 - PM role-work results that target a gate must declare a concrete mapped gate event before the original gate can be satisfied.
@@ -9260,7 +9260,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - No remote GitHub sync was performed, per user instruction.
 
 ### Next Actions
-- Keep future Product or Process officer gate changes synchronized across FlowGuard model scenarios, Router gate contracts, card wording, canonical artifacts, unsupported historical aliases, and focused runtime tests.
+- Keep future Product or Process FlowGuard operator gate changes synchronized across FlowGuard model scenarios, Router gate contracts, card wording, canonical artifacts, unsupported historical aliases, and focused runtime tests.
 
 
 ## current-node-completion-router-compat-repair-20260513 - Repair batch-registered current-node completion context
@@ -9772,7 +9772,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ## 2026-05-13 - Reviewer-Only Root And Child Gate Simplification
 
 ### Trigger
-- The user approved removing Product/Process Officer participation from the
+- The user approved removing Product/FlowGuard operator route-scope participation from the
   default `root_contract` and `child_skill_manifest` gates, while requiring a
   FlowGuard-first optimization pass before implementation.
 
@@ -9805,11 +9805,11 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Findings
 - The Reviewer-only model now catches all listed risks R1-R14, including
-  hidden officer artifact requirements, removed-officer card emission,
+  hidden FlowGuard operator artifact requirements, removed-FlowGuard operator card emission,
   missing Reviewer evidence burden, broken role/body isolation, and removed
-  unsupported historical officer event unsupported historical.
+  unsupported historical FlowGuard operator event unsupported historical.
 - The target Reviewer-only plan passes with root freeze and child-skill
-  approval requiring Reviewer pass but no Product/Process Officer default
+  approval requiring Reviewer pass but no Product/FlowGuard operator route-scope default
   gate.
 - Runtime tests explicitly prove root freeze does not create or require
   `flowguard/root_contract_modelability.json`, and child-skill approval does
@@ -9820,23 +9820,23 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
 ### Counterexamples
 - root_freeze_without_reviewer
-- root_freeze_waits_for_product_officer
-- root_freeze_requires_product_officer_artifact
-- root_product_officer_card_emitted
+- root_freeze_waits_for_flowguard_operator
+- root_freeze_requires_flowguard_operator_artifact
+- root_flowguard_operator_card_emitted
 - child_approval_without_reviewer
-- child_approval_waits_for_process_officer
-- child_approval_waits_for_product_officer
-- child_approval_requires_process_officer_artifact
-- child_approval_requires_product_officer_artifact
-- child_process_officer_card_emitted
-- child_product_officer_card_emitted
+- child_approval_waits_for_flowguard_operator
+- child_approval_waits_for_flowguard_operator
+- child_approval_requires_flowguard_operator_artifact
+- child_approval_requires_flowguard_operator_artifact
+- child_flowguard_operator_card_emitted
+- child_flowguard_operator_card_emitted
 - root_reviewer_omits_verifiability
 - root_reviewer_omits_proof_obligations
 - child_reviewer_omits_skill_standards
 - child_reviewer_omits_evidence_obligations
 - pm_consultation_tail_required
 - role_body_boundary_broken
-- unsupported historical_officer_event_handlers_removed
+- unsupported historical_flowguard_operator_event_handlers_removed
 - route_ready_without_root_freeze
 - route_ready_without_child_manifest_approval
 
@@ -9933,14 +9933,14 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Worker result return through the active-holder path now produces a Router next-action notice to `project_manager` for result disposition instead of hardcoding reviewer delivery.
 - Router result validation now requires fast-lane mechanics and Controller notice evidence for packets that had an active-holder lease.
 - The model now catches project work starting before an active-holder lease and unsupported historical result return that bypasses fast-lane mechanics.
-- A concurrent reviewer-only optimization left unsupported historical officer events requiring removed default card-delivery flags; those events were marked unsupported historical so old records remain accepted without blocking the new default path.
+- A concurrent reviewer-only optimization left unsupported historical FlowGuard operator events requiring removed default card-delivery flags; those events were marked unsupported historical so old records remain accepted without blocking the new default path.
 
 ### Counterexamples
 - current_node_packet_relayed_without_active_holder_lease
 - unsupported historical_worker_result_return_without_fast_lane_mechanics
 - worker project work started before active-holder lease
 - worker result returned before active-holder mechanics pass
-- card instruction coverage failure from non-unsupported historical removed officer events
+- card instruction coverage failure from non-unsupported historical removed FlowGuard operator events
 
 ### Friction Points
 - Other local AI agents had concurrent FlowPilot speed-profile edits in the same repository; this work preserved their changes and fixed one smoke-test gap they exposed.
@@ -10071,10 +10071,10 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `python scripts/check_install.py`
 
 ### Findings
-- Reviewer-only model catches root freeze without Reviewer, hidden Product Officer waits or artifacts, hidden child-skill Process/Product Officer waits or artifacts, removed card emissions, route readiness before required PM approval, and weakened Reviewer checklist coverage.
+- Reviewer-only model catches root freeze without Reviewer, hidden FlowGuard operator product-scope waits or artifacts, hidden child-skill Process/FlowGuard operator product-scope waits or artifacts, removed card emissions, route readiness before required PM approval, and weakened Reviewer checklist coverage.
 - The reviewer-only target plan passes with root contract freeze and child-skill manifest approval depending on PM authored artifacts plus Reviewer pass only.
 - Runtime validation exposed two stale current-node tests that bypassed the parallel active-holder fast lane; tests now use the active-holder helper instead of direct `write_result`.
-- Runtime validation exposed two Product Officer block specs whose reset lists included their own blocked flag; the reset lists now preserve the freshly recorded block.
+- Runtime validation exposed two FlowGuard operator product-scope block specs whose reset lists included their own blocked flag; the reset lists now preserve the freshly recorded block.
 
 ### Counterexamples
 - Known-bad reviewer-only hazards R1-R14 were detected by `run_flowpilot_reviewer_only_gate_checks.py`.
@@ -10087,7 +10087,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - No GitHub push or remote sync was run by user request.
 
 ### Next Actions
-- Keep the reviewer-only model updated if future agents reintroduce Product/Process Officer default gates at root-contract or child-skill-manifest boundaries.
+- Keep the reviewer-only model updated if future agents reintroduce Product/FlowGuard operator route-scope default gates at root-contract or child-skill-manifest boundaries.
 
 
 ## startup-intake-powershell-source-encoding-20260513 - Repair unsupported historical Windows PowerShell source parsing for startup intake UI
@@ -10145,7 +10145,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Preserve the distinction between PowerShell source-file BOM requirements and generated artifact no-BOM requirements in future startup UI changes.
 
 
-## route-skeleton-reviewer-only-optimization-20260513 - Remove redundant Product route review and final-closure officer slices
+## route-skeleton-reviewer-only-optimization-20260513 - Remove redundant Product route review and final-closure FlowGuard operator slices
 
 - Project: FlowGuardProjectAutopilot_20260430
 - Trigger reason: User requested FlowPilot speed tier 2 optimization with a concrete FlowGuard-first plan before removing redundant Officer checks from route skeleton and final closure.
@@ -10187,10 +10187,10 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - OK: `python scripts/install_flowpilot.py --check --json`
 
 ### Findings
-- Route skeleton no longer has a default Product Officer route fit review between PM Process route model acceptance and Reviewer route challenge.
-- The remaining product-side protection is upstream: Product Officer product behavior model plus PM product behavior model acceptance, then Process Officer checks route coverage against that product model.
+- Route skeleton no longer has a default FlowGuard operator product-scope route fit review between PM Process route model acceptance and Reviewer route challenge.
+- The remaining product-side protection is upstream: FlowGuard operator product-scope product behavior model plus PM product behavior model acceptance, then FlowGuard operator route-scope checks route coverage against that product model.
 - Reviewer route challenge now depends on the PM-accepted Process route model and Product behavior model context instead of a second Product route check.
-- Final closure barrier role slices now require PM and Reviewer only; FlowGuard Officer slices are not required at final closure while all unsupported historical obligations remain preserved.
+- Final closure barrier role slices now require PM and Reviewer only; FlowGuard operator slices are not required at final closure while all unsupported historical obligations remain preserved.
 - The unsupported historical Product route check card and event remain unsupported historical-compatible but are no longer on the default system-card path.
 
 ### Counterexamples
@@ -10199,7 +10199,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Reviewer route challenge before PM process-route acceptance was detected.
 - Route activation without Reviewer challenge was detected.
 - Final closure missing required obligations was detected.
-- Hidden/default route Product Officer wait reintroduction was detected by router next-recipient and route hard-gate models.
+- Hidden/default route FlowGuard operator product-scope wait reintroduction was detected by router next-recipient and route hard-gate models.
 
 ### Friction Points
 - Default control-plane live audit found an existing local `.flowpilot/current.json` active-run inconsistency in material-scan phase context. The abstract control-plane model was rerun with `--skip-live-audit` and passed; the local active-run issue was not caused by this optimization.
@@ -10475,7 +10475,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Findings
 - The stale top-level `.flowpilot/pm_material_understanding.json` references in docs and templates were aligned to `.flowpilot/runs/<run-id>/pm_material_understanding.json`.
 - OpenSpec coverage now explicitly names Router-authorized return events, role-work result/request matching, and prompt/runtime capability drift.
-- Unsupported historical equivalence notes now treat PM role-work as the generic sealed-envelope packet path while preserving dedicated officer-model report lifecycle coverage as remaining future work.
+- Unsupported historical equivalence notes now treat PM role-work as the generic sealed-envelope packet path while preserving dedicated FlowGuard operator-model report lifecycle coverage as remaining future work.
 - The installed local FlowPilot skill is source-fresh against this repository after sync.
 
 ### Skipped Steps
@@ -10600,7 +10600,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Router now has a per-run daemon mode with a fixed one-second tick, a run-scoped single-writer lock, daemon status, daemon event log, and stale-lock recovery path.
 - Controller-visible work now persists in `runtime/controller_action_ledger.json` with per-action files and required Controller receipts; Router does not mark Controller work done without a valid receipt.
 - Daemon ticks call the existing Router decision path, so valid card ACK, bundle ACK, report, packet ACK, result envelope, and return-ledger evidence can be reconciled without a foreground manual `next`.
-- Controller, heartbeat/manual resume, PM/reviewer/worker/officer role cards, packet templates, and protocol text now say role ACKs/results go to the Router mailbox; the daemon consumes valid evidence and roles do not advance route state directly.
+- Controller, heartbeat/manual resume, PM/reviewer/worker/FlowGuard operator role cards, packet templates, and protocol text now say role ACKs/results go to the Router mailbox; the daemon consumes valid evidence and roles do not advance route state directly.
 - Local installed FlowPilot is source-fresh against the repository after the final sync.
 
 ### Counterexamples
@@ -11065,7 +11065,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 ### Risk Intent
 - Prevent route gate/node transition from carrying hidden current-gate obligations forward after ACKs are cleared.
 - Preserve valid bypass/supersede semantics by requiring explicit carry-forward, supersede, quarantine, or stale-evidence treatment instead of blanket deletion.
-- Keep ACK read-receipt clearance separate from PM/reviewer/officer/worker semantic completion.
+- Keep ACK read-receipt clearance separate from PM/reviewer/FlowGuard operator/worker semantic completion.
 
 ### Model Files
 - `simulations/flowpilot_card_envelope_model.py`
@@ -13083,7 +13083,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Focused model: `simulations/flowpilot_packet_open_authority_model.py`
 - Focused runner/result: `simulations/run_flowpilot_packet_open_authority_checks.py`, `simulations/flowpilot_packet_open_authority_results.json`
 - Runtime implementation: `skills/flowpilot/assets/packet_runtime.py`
-- Prompt/card updates: PM startup/review cards, PM/worker/reviewer/officer role cards, and packet body template.
+- Prompt/card updates: PM startup/review cards, PM/worker/reviewer/FlowGuard operator role cards, and packet body template.
 
 ### Commands
 
@@ -13103,7 +13103,7 @@ Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 - Packet-open sessions now persist `work_authority` metadata in the runtime session, packet envelope, packet ledger, and Controller status packet.
 - A successful packet open now states that the addressed role has authority to work that packet and must not wait for another relay or prompt.
 - PM guidance now points PM inability to existing exits: `pm_startup_repair_request`, `pm_startup_protocol_dead_end`, and `pm_control_blocker_repair_decision`.
-- Ordinary worker, reviewer, and officer guidance now says true inability after a verified open must return an existing formal blocker, result-with-blocker, or PM suggestion for PM/Router disposition.
+- Ordinary worker, reviewer, and FlowGuard operator guidance now says true inability after a verified open must return an existing formal blocker, result-with-blocker, or PM suggestion for PM/Router disposition.
 - Step 3 active-writer settlement and Step 4 current-work-owner display were not taken over because parallel OpenSpec changes already own those scopes.
 
 ### Skipped Or Deferred Steps
@@ -13738,7 +13738,7 @@ sync evidence.
 
 - `python -m py_compile skills\flowpilot\assets\flowpilot_router.py tests\test_flowpilot_router_runtime.py simulations\flowpilot_dispatch_recipient_gate_model.py simulations\run_flowpilot_dispatch_recipient_gate_checks.py` passed.
 - `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_user_intake_mail_declares_first_pm_output_obligation tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_busy_packet_holder tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_allows_system_card_for_active_holder tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_independent_pm_dispatch_while_user_intake_output_pending tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_allows_pm_after_user_intake_first_output tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_followup_when_role_wait_is_active tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_frees_worker_after_result_but_blocks_pm_disposition tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_allows_same_role_system_card_bundle tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_classifies_ack_only_card_as_prompt tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_dispatch_recipient_gate_blocks_new_output_card_when_pm_output_pending` passed: 10 tests.
-- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_model_backed_model_miss_triage_requires_officer_report_refs tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_non_authorizing_model_miss_decision_does_not_unlock_review_repair tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_existing_result_reconciles_before_wait tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_advisory_pm_role_work_wait_is_marked_nonblocking tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_gate_targeted_pm_role_work_result_requires_mapped_gate_event tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_batch_waits_for_all_officer_results_before_pm_relay tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_request_requires_valid_recipient_and_contract tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_model_backed_model_miss_triage_unlocks_review_repair tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_out_of_scope_model_miss_triage_unlocks_review_repair_with_reason` passed: 10 tests.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_model_backed_model_miss_triage_requires_flowguard_operator_report_refs tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_non_authorizing_model_miss_decision_does_not_unlock_review_repair tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_existing_result_reconciles_before_wait tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_advisory_pm_role_work_wait_is_marked_nonblocking tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_gate_targeted_pm_role_work_result_requires_mapped_gate_event tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_batch_waits_for_all_flowguard_operator_results_before_pm_relay tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_role_work_request_requires_valid_recipient_and_contract tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_model_backed_model_miss_triage_unlocks_review_repair tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_out_of_scope_model_miss_triage_unlocks_review_repair_with_reason` passed: 10 tests.
 - `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_user_intake_settlement_finalizer_waits_for_controller_mail_after_activation tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_card_bundle_ack_keeps_router_owned_user_intake_sealed_until_activation tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_current_node_packet_relay_uses_router_direct_dispatch tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_pm_model_miss_followup_uses_generic_role_work_request_channel` passed: 4 tests.
 - `python simulations\run_flowpilot_dispatch_recipient_gate_checks.py --json-out simulations\flowpilot_dispatch_recipient_gate_results.json` passed: 17 states / 16 edges, 48 FlowGuard traces, zero violations.
 - `openspec validate unify-dispatch-recipient-gate --strict` passed.
@@ -14182,7 +14182,7 @@ Skipped steps:
   current routine thin-parent confidence.
 - Role-scoped quality repair prompts now pressure executable workers to fix and
   recheck in-scope defects before completion, while research/material-scan,
-  officer, and reviewer prompts preserve authority boundaries by limiting
+  FlowGuard operator, and reviewer prompts preserve authority boundaries by limiting
   correction to their own report/model/review output and routing target defects
   through PM findings, blockers, or suggestion items.
 
@@ -15718,7 +15718,7 @@ Skipped steps:
 ### Findings
 - PM child-skill selection now includes one short reminder to consider FlowGuard satellite skills as process-support candidates.
 - The PM child-skill selection template mirrors that reminder in `selection_rule`.
-- Existing selected-skill, role-skill binding, packet, evidence, and reviewer/officer checking mechanics remain unchanged.
+- Existing selected-skill, role-skill binding, packet, evidence, and reviewer/FlowGuard operator checking mechanics remain unchanged.
 
 ### Counterexamples
 - `process_support_skill_ignored`
@@ -16372,7 +16372,7 @@ Skipped steps:
 ### Findings
 
 - The root failure class is cross-ledger state divergence before next-action computation, not worker inactivity.
-- The earlier FlowGuard coverage missed this because it checked local action occurrence more strongly than durable agreement among batch lifecycle, packet ledger, PM role-work index, officer lifecycle, wait reminders, and run-state projections.
+- The earlier FlowGuard coverage missed this because it checked local action occurrence more strongly than durable agreement among batch lifecycle, packet ledger, PM role-work index, FlowGuard operator lifecycle, wait reminders, and run-state projections.
 - Dispatch busy state must mean the target role truly owns relayed work; an old unrelayed Controller-held superseded request must be cleaned up or ignored as a busy blocker.
 - A daemon save must not be able to erase newer foreground receipts or reminder cooldowns.
 
@@ -20086,6 +20086,124 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## startup-intake-single-background-agent-option - FlowPilot startup UI simplification
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified the startup intake UI should no longer ask scheduled-continuation or Cockpit/display-surface questions; only background-agent permission remains user-visible.
+- Status: implemented and validated
+- Skill decision: used FlowGuard UI flow structure plus development-process checks
+- Recorded: 2026-05-31T07:32:02+00:00
+
+### Model Files
+- `simulations/flowpilot_startup_intake_ui_model.py`
+- `simulations/run_flowpilot_startup_intake_ui_checks.py`
+- `simulations/flowpilot_startup_intake_ui_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime And Prompt Files
+- `skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1`
+- `docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1`
+- `scripts/install_checks/files.py`
+- `HANDOFF.md`
+- `docs/protocol.md`
+- `docs/schema.md`
+- `docs/design_decisions.md`
+- `templates/flowpilot/README.md`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.1.
+- `python -m flowguard project-audit --root .` - ok.
+- `python simulations/run_flowpilot_startup_intake_ui_checks.py --json-out simulations/flowpilot_startup_intake_ui_results.json` - ok; 25 states, 24 edges, obsolete continuation/display hazards detected.
+- `powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1 -SmokeTest` - ok.
+- `powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1 -SmokeTest` - ok.
+- `python -m unittest tests.test_flowpilot_router_startup_runtime` - ok; 5 tests passed.
+- `python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_start_rehearsal_reuses_old_startup_ui_and_enters_new_ledger tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_formal_mode_rejects_headless_startup_result_as_formal_evidence` - ok.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_manual_startup_skips_heartbeat_after_controller_core tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_rejects_body_hash_mismatch tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_rejects_headless_confirmed_result` - ok.
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_waits_for_answers_before_banner_or_controller tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_intake_controller_receipt_folds_native_ui_result` - ok.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - ok; alignment ok, full coverage still false for existing coverage/accounting gaps.
+- `python simulations/run_meta_checks.py` - ok; thin parent current, release confidence requires full regression.
+- `python simulations/run_capability_checks.py` - ok; thin parent current, release confidence requires full regression.
+- `python scripts/flowguard_project_topology.py build && python scripts/flowguard_project_topology.py check` - ok.
+- `python scripts/check_install.py --json` - ok after updating the startup copy check to require the new background-agent wording.
+
+### Findings
+- The startup intake UI now has one user-visible option: background agents.
+- `scheduled_continuation` is still emitted for compatibility but fixed to `manual`.
+- `display_surface` is still emitted for compatibility but fixed to `chat`.
+- The startup intake UI model now treats `scheduled_continuation=allow` and `display_surface=cockpit` as obsolete visible-option hazards.
+
+### Skipped Or Partial Steps
+- No broad heartbeat/runtime removal was performed; this was scoped to startup intake UI choice removal and compatible defaults.
+- One broad router startup test still failed in the current dirty worktree with an existing daemon/prompt injection issue (`role_core_prompts_injected` / no bootloader action). It was not fixed in this scoped UI pass.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
+
+
+## flowpilot-mandatory-prework-flowguard-node-gates-20260531 - Mandatory pre-work FlowGuard node gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested the planned new FlowPilot process upgrade so every node/key work gate is checked by FlowGuard before work starts.
+- Status: implemented_validated_installed
+- Skill decision: used OpenSpec plus FlowGuard development-process/model-test routes.
+- Recorded: 2026-05-31T07:03:11Z
+
+### Model Files
+- `simulations/flowpilot_prework_flowguard_gate_model.py`
+- `simulations/run_flowpilot_prework_flowguard_gate_checks.py`
+- `simulations/flowpilot_prework_flowguard_gate_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime And Prompt Files
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/controller.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/worker.md`
+- `scripts/install_checks/common.py`
+- `scripts/install_checks/manifests.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.1.
+- `python -m flowguard project-audit --root .` - ok.
+- `openspec validate enforce-flowguard-prework-node-gates --strict` - ok.
+- `python simulations/run_flowpilot_prework_flowguard_gate_checks.py` - ok; results refreshed.
+- `python -m unittest tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_recursive_route_execution_runtime tests.test_flowpilot_core_runtime tests.test_flowpilot_new_entrypoint` - ok; 51 targeted runtime tests passed across prior runs.
+- `python simulations/run_flowpilot_flowguard_work_order_checks.py --json-out tmp/flowpilot_flowguard_work_order_check.json` - ok.
+- `python simulations/run_flowpilot_core_runtime_checks.py --json-out tmp/flowpilot_core_runtime_check.json` - ok.
+- `python simulations/run_flowpilot_core_runtime_development_checks.py --json-out tmp/flowpilot_core_runtime_development_check.json` - ok.
+- `python simulations/run_meta_checks.py` via `tmp/flowguard_background/run_meta_checks.*` - ok; exit 0, status complete, proof reuse recorded as `inspect_output`.
+- `python simulations/run_capability_checks.py` via `tmp/flowguard_background/run_capability_checks.*` - ok; exit 0, status complete, proof reuse recorded as `inspect_output`.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - ok.
+- `python scripts/check_install.py --json` - ok.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot was overwritten from the repository and self-check passed.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+
+### Findings
+- Runtime-owned dispatch now opens `node_prework_flowguard` packets after current-generation PM node acceptance plans and before worker task packets.
+- The FlowGuard operator receives PM-visible evidence roots, must select one or more FlowGuard routes, and cannot be skipped by PM risk wording.
+- If pre-work FlowGuard blocks, the runtime routes back to PM repair, marks stale prework packets non-current after repair, and requires a fresh current-generation prework pass.
+- Post-result FlowGuard and independent Reviewer gates remain separate downstream gates.
+- The local installed FlowPilot skill now matches the repository source after sync.
+
+### Counterexamples
+- `pm_optional_prework_skip`
+- `worker_before_prework_flowguard`
+- `prework_block_without_pm_repair`
+- `stale_prework_pass_after_pm_repair`
+- `missing_flowguard_operator_route_selection`
+- `missing_pm_visible_flowguard_artifacts`
+- `post_result_flowguard_skipped`
+- `reviewer_pm_scoped_not_independent`
+
+### Skipped Or Partial Steps
+- No compatibility shim was added for old worker role filenames or old FlowGuard operator field names because the requested target is a new-only FlowPilot process.
+- No OpenSpec archive was performed because the repository has multiple active changes and archival was not requested.
+- No GitHub push, tag, release, deploy, or public-release claim was performed.
+- No broad git commit was made because the worktree contains substantial unrelated parallel changes that must be preserved.
+
 
 ## clean-flowpilot-runtime-language-surfaces-20260530 - Runtime language surface cleanup
 
@@ -20132,7 +20250,7 @@ to identify unsupported historical-layer branches that should be deleted.
 - `python scripts/check_install.py --json` - ok; 885 checks passed.
 
 ### Findings
-- Active prompt, template, protocol, and core-runtime scans found no six-live, background-sidecar, crew, compatibility, `ai_project`, `AI Project`, unsupported-historical, or old-runtime residue after cleanup.
+- Active prompt, template, protocol, and core-runtime scans found no six-live, background-sidecar, runtime roles, compatibility, `ai_project`, `AI Project`, unsupported-historical, or old-runtime residue after cleanup.
 - FlowPilot core runtime and protocol kernel now use current FlowPilot core/protocol naming and non-authoritative input/path rejection wording.
 - Runtime role collaboration wording is used instead of fixed background-agent framing.
 - KB postflight recorded a reusable lesson: prompt vocabulary cleanup in executable skill repositories must pair text scans with compile checks, model checks, install checks, and visible-output scans.
@@ -20437,7 +20555,7 @@ to identify unsupported historical-layer branches that should be deleted.
 - `python -B scripts\smoke_flowpilot.py --fast` -> exit 0; log root `tmp/final_smoke/`.
 
 ### Findings
-- The rehearsal now opens the startup intake path, writes a fake sealed user package, closes startup intake, and then drives PM, FlowGuard operator, Reviewer, Validator, and Closure officer through the same public packet commands.
+- The rehearsal now opens the startup intake path, writes a fake sealed user package, closes startup intake, and then drives PM, FlowGuard operator, Reviewer, Validator, and Closure FlowGuard operator through the same public packet commands.
 - Fake AI result bodies remain sealed in the public report; the rehearsal records hashes and public packet metadata but does not leak body text.
 - Wrong-role lease attempts are rejected and recover through the proper PM packet route.
 - Missing-ACK result submission is blocked into repair state, ACK-only progress remains waiting for a result, and unsupported direct side commands are invalid CLI choices.
@@ -20915,6 +21033,60 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## startup-intake-settings-support-entry-20260531 - Startup intake settings and support entry
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested moving language selection into a settings gear and adding a support-developer entry to the FlowPilot startup intake UI.
+- Status: implemented_validated
+- Skill decision: predictive_kb_preflight + flowguard_existing_model_preflight + flowguard_ui_flow_structure + flowguard_development_process_flow
+- FlowGuard package version: 0.39.1
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_startup_intake_ui_model.py`
+- `simulations/run_flowpilot_startup_intake_ui_checks.py`
+- `simulations/flowpilot_startup_intake_ui_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime And Prompt Files
+- `skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1`
+- `docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1`
+- `scripts/install_checks/files.py`
+- `tests/test_flowpilot_router_startup_runtime.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.1.
+- `python -m flowguard project-audit --root .` - ok.
+- `python simulations/run_flowpilot_startup_intake_ui_checks.py --json-out simulations/flowpilot_startup_intake_ui_results.json` - ok; 27 states and all required settings/support labels covered.
+- `powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1 -SmokeTest` - ok.
+- `powershell.exe -STA -NoProfile -ExecutionPolicy Bypass -File docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1 -SmokeTest` - ok.
+- `python -m py_compile simulations/flowpilot_startup_intake_ui_model.py simulations/run_flowpilot_startup_intake_ui_checks.py scripts/install_checks/files.py tests/test_flowpilot_router_startup_runtime.py` - ok.
+- `python -m unittest tests.test_flowpilot_router_startup_runtime` - ok; 5 tests passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - alignment ok; full coverage still has existing release/structure findings.
+- `python scripts/flowguard_project_topology.py build` then `python scripts/flowguard_project_topology.py check` - ok after the active background fast tier stopped writing result files.
+- `python scripts/check_install.py --json` - ok.
+
+### Findings
+- The main startup intake surface now keeps language selection out of the top-level controls and exposes a settings gear instead.
+- The settings panel contains English/Chinese language selection and a support-developer entry using the canonical PayPal.Me support URL from the predictive KB.
+- Support copy is framed as buying the developer a coffee and includes a no-entitlement disclaimer.
+- Startup result semantics are unchanged: background-agent permission remains the only user-facing startup option, scheduled continuation remains fixed to manual, and display surface remains fixed to chat.
+
+### Counterexamples
+- `language_visible_on_main_surface`
+- `settings_panel_missing_language`
+- `settings_panel_missing_support_url`
+- `support_copy_claims_paid_entitlement`
+
+### Skipped Or Partial Steps
+- Meta and Capability parent checks were not rerun because the startup result/control semantics did not change; this pass touched only visible settings/support UI and the focused startup UI model.
+- A pre-existing background fast tier was running and failed on unrelated suites while this work was underway; topology validation was rerun after it stopped.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
 
 
 ## adopt-runtime-requested-role-bindings-20260530 - Runtime requested role-binding prompt cleanup
@@ -21743,8 +21915,8 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - `AGENTS.md`
 - `skills/flowpilot/SKILL.md`
 - `skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md`
-- `skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md`
-- `skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md`
 - `skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md`
 - `skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md`
 - `skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md`
@@ -21770,7 +21942,7 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Findings
 - The topology map is an orientation artifact for mature FlowGuard projects. It names model, test, code, evidence, and known-bad/risk surfaces before work starts.
-- PM, Process Officer, Product Officer, and Reviewer cards now say the topology can guide inspection but cannot approve gates, mutate routes, close nodes, or replace FlowGuard/test evidence.
+- PM, FlowGuard operator route-scope, FlowGuard operator product-scope, and Reviewer cards now say the topology can guide inspection but cannot approve gates, mutate routes, close nodes, or replace FlowGuard/test evidence.
 - The model rejects skipped topology intake, stale maps, missing model/test/code/evidence/known-bad layers, topology-as-validation overclaim, PM route mutation from topology alone, Reviewer gate approval from topology alone, and Controller interpretation of topology as a FlowGuard Report.
 - A prompt/source regression was caught while validating: `skills/flowpilot/SKILL.md` was missing Router-ready preemption guidance. The guidance was restored and `flowpilot_role_output_runtime` plus Meta checks passed afterward.
 
@@ -21816,3 +21988,146 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+## generalize-background-role-surfaces - Host-Neutral Background Role Surfaces
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user wanted portable FlowPilot wording for background collaboration across AI hosts, without Codex-specific text or old compatibility fields.
+- Status: implemented, focused-validated, installed; broad release/smoke residuals recorded separately.
+- Route: predictive KB preflight, OpenSpec proposal, FlowGuard existing-model preflight, UI-flow structure, development-process flow, and model-test alignment.
+- FlowGuard package/schema: 0.39.1 / 1.0
+- Recorded: 2026-05-31T09:01:08Z
+
+### Model Files
+- `simulations/flowpilot_startup_intake_ui_model.py`
+- `simulations/meta_model_startup_phase.py`
+- `simulations/capability_model_startup_phase.py`
+- `simulations/startup_pm_review_model.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `simulations/flowpilot_structure_maintenance_model.py`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime And Prompt Files
+- `skills/flowpilot/SKILL.md`
+- `skills/flowpilot/assets/flowpilot_new.py`
+- `skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_startup_catalog.py`
+- `skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1`
+- `docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1`
+- `skills/flowpilot/assets/runtime_kit/prompts/startup/heartbeat_resume.md`
+- `skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md`
+- `skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md`
+- `templates/flowpilot/role_binding_ledger.template.json`
+- `scripts/install_checks/files.py`
+- `scripts/install_checks/common.py`
+- `scripts/check_runtime_card_capability_reminders.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.1.
+- `python -m flowguard project-audit --root .` - ok.
+- `openspec validate generalize-background-role-surfaces --strict` - ok.
+- `python simulations/run_flowpilot_startup_intake_ui_checks.py --json-out simulations/flowpilot_startup_intake_ui_results.json` - ok.
+- Startup intake source and preview PowerShell smoke tests - ok; `UI_SMOKE_OK`.
+- `python -m unittest tests.test_flowpilot_new_entrypoint tests.test_flowpilot_router_startup_runtime` - ok; 15 tests passed.
+- `python simulations/run_startup_pm_review_checks.py --json-out simulations/startup_pm_review_results.json` - ok.
+- `python simulations/run_flowpilot_structure_maintenance_checks.py --json-out simulations/flowpilot_structure_maintenance_results.json` - ok after replacing stale `unsupported_historical_preserved` usage with the current `compatibility_preserved` field.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - `alignment_ok=true`; `full_coverage_ok=false` because broad smoke evidence remains failed and two structure split advisories remain.
+- `python simulations/run_meta_checks.py` via `tmp/flowguard_background/run_meta_checks.*` - background wrapper abandoned with no exit artifact; foreground rerun failed on existing `flowpilot_role_output_runtime` `child_result_not_ok` parent evidence.
+- `python simulations/run_capability_checks.py` via `tmp/flowguard_background/run_capability_checks.*` - background wrapper abandoned with no exit artifact; foreground rerun failed on existing `flowpilot_role_output_runtime` `child_result_not_ok` parent evidence.
+- `python scripts/run_test_tier.py --tier integration --background --background-max-parallel 2 --json` - supervisor exit 1 from existing coverage/smoke residuals.
+- `python scripts/smoke_flowpilot.py --fast` via `tmp/test_background/smoke_flowpilot_fast.*` - broad smoke residual remained; an unexpected background-child rerun was stopped during final cleanup and recorded as exit 124 `terminated_by_final_cleanup`.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - ok; 133 model rows, 923 code surfaces, 350 test commands, 2311 known-bad signals.
+- `python scripts/check_runtime_card_capability_reminders.py` - ok; 55 checked cards, no issues.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; local installed skill digest matched source.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/check_install.py --json` - ok after serial topology/check-install pass.
+
+### Findings
+- Startup UI copy now says `Background collaboration` / `后台协作`.
+- AI-facing guidance now says FlowPilot may create or attach requested responsibility through an available host-supported, addressable, isolated role surface.
+- Runtime protocol, cards, templates, docs, tests, and startup FlowGuard models now use the same host-neutral role-surface contract.
+- Install checks were moved from stale `officer` runtime-kit paths to current `flowguard_operator` paths; no old compatibility template was reintroduced.
+- Local installed FlowPilot was synchronized after repository checks passed.
+
+### Skipped Or Partial Steps
+- No old `officer_request_lifecycle.template.json` compatibility file was added.
+- Broad parent/integration/smoke evidence is not green: Meta/Capability parent reruns, coverage sweep, and smoke still report existing `flowpilot_role_output_runtime` / parent-proof residuals or active-run-state gaps. These are recorded as broad residuals, not as focused wording failures.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
+- No git commit was made because the worktree contains substantial unrelated and same-file peer changes, so staging whole files would mix scopes.
+
+## remove-fixed-worker-slots-new-flowpilot-process - New-Only Worker And FlowGuard Operator Flow
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user asked why `workerA` / `workerB` slots still appeared and required conflicts to be resolved in favor of the new FlowPilot workflow.
+- Status: implemented, validated, and installed.
+- Route: predictive KB preflight, OpenSpec apply, FlowGuard existing-model preflight, DevelopmentProcessFlow, and Model-Test Alignment.
+- FlowGuard package/schema: 0.39.1 / 1.0
+- Recorded: 2026-05-31T09:46:36Z
+
+### Model Files
+- `simulations/flowpilot_prework_flowguard_gate_model.py`
+- `simulations/flowpilot_protocol_kernel_stress_model.py`
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+- `simulations/meta_thin_parent_results.json`
+- `simulations/meta_layered_full_results.json`
+- `simulations/capability_thin_parent_results.json`
+- `simulations/capability_layered_full_results.json`
+- `simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime And Prompt Files
+- `skills/flowpilot/assets/runtime_kit/cards/roles/worker.md`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md`
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py`
+- `skills/flowpilot/assets/flowpilot_router_protocol_decision_fields.py`
+- `skills/flowpilot/assets/flowpilot_router_runtime_state.py`
+- `skills/flowpilot/assets/packet_runtime_schema.py`
+- `skills/flowpilot/assets/role_output_runtime_schema_specs.py`
+- `templates/flowpilot/flowguard_operator_request_lifecycle.template.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.1.
+- `python -m flowguard project-audit --root .` - ok.
+- Focused legacy-slot search - ok; current-source hits only document that Worker A/B must not be current runtime keys.
+- `python -m py_compile` for changed parent/stress/source-check models - ok.
+- `python simulations/run_flowpilot_protocol_kernel_stress_checks.py --json` - ok.
+- `python simulations/run_flowpilot_prework_flowguard_gate_checks.py --json-out simulations/flowpilot_prework_flowguard_gate_results.json` - ok.
+- `python simulations/run_flowpilot_core_runtime_checks.py --json-out simulations/flowpilot_core_runtime_results.json` - ok.
+- `python simulations/run_flowpilot_role_output_runtime_checks.py --json-out simulations/flowpilot_role_output_runtime_results.json` - ok.
+- `python -m pytest tests/test_flowpilot_packet_runtime.py tests/test_flowpilot_protocol_kernel_stress.py -q` - ok; 36 passed, 43 subtests passed.
+- `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_high_standard_control_flow.py -q` - ok; 37 passed, 24 subtests passed.
+- `python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -q` - ok; 23 passed.
+- `python scripts/run_test_tier.py --tier fast --background --background-dir tmp/flowguard_background --background-max-parallel 4 --json` - supervisor exit 1 because early coverage/topology checks read in-progress evidence; later smoke and post-supervisor checks closed the evidence gap.
+- Meta and Capability layered full parent regressions - ok; current with layered full parent evidence.
+- `python scripts/smoke_flowpilot.py --fast` via `tmp/test_background/smoke_flowpilot_fast.*` - ok; exit 0, status passed, proof reused.
+- `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` - ok; no blocking findings.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - ok; alignment and release convergence true, deferred structure split advisories only.
+- `python -m pytest tests/test_flowpilot_synthetic_agent_coverage_matrix.py -q` - ok; 6 passed, 68 subtests passed.
+- `python -m pytest tests/test_flowpilot_model_test_alignment.py -q` - ok; 17 passed, 403 subtests passed.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - ok; no findings.
+- `openspec validate adopt-pm-node-context-packages --strict` - ok.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot source is fresh.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/check_install.py --json` - ok.
+
+### Findings
+- Formal runtime role keys now use one worker responsibility role and one `flowguard_operator` role.
+- Fixed `worker_a` and `worker_b` protocol slots were removed from current code paths.
+- PM node context packages are attached as minimum starting context for pre-work FlowGuard, worker, post-result FlowGuard, and Reviewer packets.
+- Meta and Capability parent role-binding expectations were reduced from six fixed roles to four current runtime roles.
+- Protocol stress scenarios allocate repeat worker packets as generic `worker-N` leases, not Worker A/B names.
+- Local installed FlowPilot was synchronized with the repository after validation.
+
+### Skipped Or Partial Steps
+- No compatibility shim was added for `worker_a`, `worker_b`, old officer role names, or old officer lifecycle templates.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public-release claim was performed.
+- No git commit was made because the worktree contains broad unrelated and same-file peer changes that should not be staged wholesale.

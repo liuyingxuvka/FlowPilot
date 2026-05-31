@@ -1387,9 +1387,9 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         envelope = router.write_role_output_envelope(
             root,
             output_path="role_outputs/route_process_check.json",
-            body={"reviewed_by_role": "process_flowguard_officer", "passed": True},
-            event_name="process_officer_submits_process_route_model",
-            from_role="process_flowguard_officer",
+            body={"reviewed_by_role": "flowguard_operator", "passed": True},
+            event_name="flowguard_operator_submits_process_route_model",
+            from_role="flowguard_operator",
         )
 
         self.assertEqual(envelope["schema_version"], "flowpilot.role_output_envelope.v1")
@@ -1617,7 +1617,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "gates": [
                     {
                         "gate_id": "process-model",
-                        "required_approver": "process_flowguard_officer",
+                        "required_approver": "flowguard_operator",
                         "controller_can_approve": False,
                     }
                 ],
@@ -1649,10 +1649,10 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.record_external_event(root, "pm_approves_child_skill_manifest_for_route")
         manifest_after_approval = read_json(run_root / "child_skill_gate_manifest.json")
         self.assertTrue(manifest_after_approval["approval"]["reviewer_passed"])
-        self.assertFalse(manifest_after_approval["approval"]["process_officer_passed"])
-        self.assertTrue(manifest_after_approval["approval"]["process_officer_default_gate_removed"])
-        self.assertFalse(manifest_after_approval["approval"]["product_officer_passed"])
-        self.assertTrue(manifest_after_approval["approval"]["product_officer_default_gate_removed"])
+        self.assertFalse(manifest_after_approval["approval"]["flowguard_operator_route_scope_passed"])
+        self.assertTrue(manifest_after_approval["approval"]["flowguard_operator_route_scope_default_gate_removed"])
+        self.assertFalse(manifest_after_approval["approval"]["flowguard_operator_product_scope_passed"])
+        self.assertTrue(manifest_after_approval["approval"]["flowguard_operator_product_scope_default_gate_removed"])
         self.assertFalse((run_root / "flowguard" / "child_skill_conformance_model.json").exists())
         self.assertFalse((run_root / "flowguard" / "child_skill_product_fit.json").exists())
         self.assertFalse((run_root / "capabilities" / "capability_sync.json").exists())

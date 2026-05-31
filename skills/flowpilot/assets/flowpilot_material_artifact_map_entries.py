@@ -73,7 +73,7 @@ def make_entry(
         "body_text_included": False,
         "sealed_body_boundary_preserved": True,
         "requires_runtime_open": any(bool(ref.get("requires_runtime_open")) for ref in body_refs),
-        "allowed_role_reads": allowed_role_reads or ["project_manager", "human_like_reviewer", "worker_a", "worker_b"],
+        "allowed_role_reads": allowed_role_reads or ["project_manager", "human_like_reviewer", "worker"],
         "related_entries": related_entries or [],
         "metadata": metadata or {},
     }

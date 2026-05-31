@@ -36,29 +36,29 @@
       },
       "manifest_only_model_coverage": {
         "detected": true,
-        "expected_failure": "child-skill manifest was used as officer model-family coverage",
+        "expected_failure": "child-skill manifest was used as FlowGuard operator model-family coverage",
         "failures": [
           "PM accepted product model family before planned product families were covered",
-          "Product Officer report omitted a planned product model family",
-          "child-skill manifest was used as officer model-family coverage",
-          "Process Officer report omitted a planned process model family",
+          "FlowGuard operator product-scope report omitted a planned product model family",
+          "child-skill manifest was used as FlowGuard operator model-family coverage",
+          "FlowGuard operator route-scope report omitted a planned process model family",
           "PM accepted process model family before planned process families were covered"
         ]
       },
       "missing_process_modeling_plan": {
         "detected": true,
-        "expected_failure": "PM process modeling plan is missing before Process Officer modeling",
+        "expected_failure": "PM process modeling plan is missing before FlowGuard operator route-scope modeling",
         "failures": [
-          "PM process modeling plan is missing before Process Officer modeling",
+          "PM process modeling plan is missing before FlowGuard operator route-scope modeling",
           "PM accepted process model family before planned process families were covered"
         ]
       },
       "missing_product_modeling_plan": {
         "detected": true,
-        "expected_failure": "PM product modeling plan is missing before Product Officer modeling",
+        "expected_failure": "PM product modeling plan is missing before FlowGuard operator product-scope modeling",
         "failures": [
-          "PM product modeling plan is missing before Product Officer modeling",
-          "Product Officer report referenced a missing product modeling plan",
+          "PM product modeling plan is missing before FlowGuard operator product-scope modeling",
+          "FlowGuard operator product-scope report referenced a missing product modeling plan",
           "PM accepted product model family before planned product families were covered"
         ]
       },
@@ -86,18 +86,18 @@
       },
       "process_report_missing_planned_family": {
         "detected": true,
-        "expected_failure": "Process Officer report omitted a planned process model family",
+        "expected_failure": "FlowGuard operator route-scope report omitted a planned process model family",
         "failures": [
-          "Process Officer report omitted a planned process model family",
+          "FlowGuard operator route-scope report omitted a planned process model family",
           "PM accepted process model family before planned process families were covered"
         ]
       },
       "product_report_missing_planned_family": {
         "detected": true,
-        "expected_failure": "Product Officer report omitted a planned product model family",
+        "expected_failure": "FlowGuard operator product-scope report omitted a planned product model family",
         "failures": [
           "PM accepted product model family before planned product families were covered",
-          "Product Officer report omitted a planned product model family"
+          "FlowGuard operator product-scope report omitted a planned product model family"
         ]
       },
       "product_single_model_overcollapse": {
@@ -137,6 +137,10 @@
       "completion_declared": true,
       "final_ledger_has_unresolved_model_families": false,
       "final_ledger_references_modeling_coverage": true,
+      "flowguard_operator_product_scope_covers_planned_families": true,
+      "flowguard_operator_product_scope_report_references_plan": true,
+      "flowguard_operator_route_scope_covers_planned_families": true,
+      "flowguard_operator_route_scope_report_references_plan": true,
       "flowguard_treated_as_foundation": true,
       "ordinary_child_skills_selected_after_product_acceptance": true,
       "pm_references_snapshot_before_product_modeling": true,
@@ -144,8 +148,6 @@
       "process_model_families_declared": true,
       "process_model_family_pm_accepted": true,
       "process_modeling_plan_written": true,
-      "process_officer_covers_planned_families": true,
-      "process_officer_report_references_plan": true,
       "process_plan_references_child_manifest": true,
       "process_plan_references_product_family": true,
       "process_plan_references_snapshot": true,
@@ -154,8 +156,6 @@
       "product_model_families_declared": true,
       "product_model_family_pm_accepted": true,
       "product_modeling_plan_written": true,
-      "product_officer_covers_planned_families": true,
-      "product_officer_report_references_plan": true,
       "product_plan_references_snapshot": true,
       "route_activated": true,
       "scenario": "intended_model_coverage",
@@ -171,11 +171,11 @@
     "core_order": [
       "startup FlowGuard capability snapshot",
       "PM Product Modeling Plan",
-      "Product Officer product model family",
+      "FlowGuard operator product-scope product model family",
       "PM accepts product model family",
       "PM child-skill manifest",
       "PM Process Modeling Plan",
-      "Process Officer process model family",
+      "FlowGuard operator route-scope process model family",
       "PM accepts process model family",
       "route execution",
       "final route-wide modeling coverage ledger"

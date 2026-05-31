@@ -18,7 +18,7 @@ model-backed project-control runtime:
 9. update the model and route when new facts invalidate the current route;
 10. open or restore runtime-required role bindings for each new formal
   FlowPilot task, with a project manager as route-decision and
-  completion-runway authority and worker roles limited to bounded sidecar
+  completion-runway authority and worker roles limited to bounded Helper
   tasks;
 11. finish only after evidence proves the frozen contract is met.
 
@@ -72,8 +72,10 @@ matches the source tree.
 
 It covers two ownership surfaces:
 
-- planned router split ownership, where `flowpilot_router.py` remains the
-  current public root state coordinator;
+- fresh-runtime ownership, where `flowpilot_new.py` owns current formal runs,
+  lifecycle guard state, and requested-responsibility packet routing;
+- legacy router split ownership, where `flowpilot_router.py` remains a
+  diagnostic and old-run repair facade;
 - split FlowGuard model scripts backed by focused state, transition,
   invariant, hazard, audit, and strategy helpers as applicable.
 
@@ -192,10 +194,10 @@ and model-confidence overclaims must also fail.
 - Selected child skills now require a Skill Standard Contract instead of a
   manifest-only gate list. PM extracts `MUST`, `DEFAULT`, `FORBID`, `VERIFY`,
   `LOOP`, `ARTIFACT`, and `WAIVER` standards with source paths, then maps each
-  non-waived standard into route nodes, work packets, reviewer/officer gates,
+  non-waived standard into route nodes, work packets, reviewer/operator gates,
   and expected artifacts.
 - Node acceptance plans and work packets now inherit the Skill Standard
-  Contract projection. Worker/officer results must return a Skill Standard
+  Contract projection. Worker/FlowGuard operator results must return a Skill Standard
   Result Matrix for inherited standard ids, and reviewers block missing rows,
   manifest-only evidence, or unapproved waivers.
 - UI projects now default to the experimental
@@ -204,12 +206,13 @@ and model-confidence overclaims must also fail.
   `design-iterator`, `design-implementation-reviewer`, image generation when
   needed, and geometry/screenshot QA. The older `concept-led-ui-redesign` skill
   is no longer a FlowPilot dependency.
-- Formal FlowPilot routes now use persistent runtime-required role bindings for
-  project manager, human-like reviewer, process FlowGuard officer, product
-  FlowGuard officer, worker A, and worker B when those responsibilities are
-  requested by the runtime. The project manager owns route, heartbeat-resume
-  completion runways, PM stop signals, repair, and completion decisions;
-  workers remain bounded sidecars, not route or node owners.
+- Formal FlowPilot routes now use runtime-requested role bindings only for
+  responsibilities currently issued by the runtime. Typical requested
+  responsibilities include project manager, human-like reviewer, process
+  FlowGuard operator, and bounded worker-class
+  packet executors. The project manager owns route, resume completion runways,
+  PM stop signals, repair, and completion decisions; workers remain packet
+  executors, not route or node owners.
 - Every meaningful FlowPilot scope now has two FlowGuard model gates: a
   development-process model and a product-function model.
 - Human-like inspection is now a route mechanism. Blocking inspection findings
@@ -234,8 +237,8 @@ and model-confidence overclaims must also fail.
   current subnode/gate or record a concrete blocker, and cannot stop after only
   writing "continue to the next gate."
 - Heartbeat is optional host capability. Unsupported hosts run in
-  `manual-resume` mode from the same `.flowpilot/` state/frontier/crew-memory
-  evidence and must not require heartbeat automation.
+  `manual-resume` mode from the same `.flowpilot/` state, frontier, packet,
+  and role-binding memory evidence and must not require heartbeat automation.
   Any controlled nonterminal stop records and displays a resume notice; terminal
   completion records a completion notice instead of a resume prompt.
 - Human-like inspection now begins with a neutral observation pass before
@@ -287,13 +290,12 @@ and model-confidence overclaims must also fail.
 - Role authority is now an explicit protocol gate. Startup self-interrogation,
   product-function architecture synthesis, route advancement, heartbeat
   resume, repair strategy, route mutation, and completion require
-  project-manager decisions; process models require the process FlowGuard
-  officer; product-function architecture modelability and product-function
-  models require the product FlowGuard officer; product usefulness challenge,
+  project-manager decisions; FlowGuard modelability and model execution
+  require the FlowGuard operator; product usefulness challenge,
   human-like observations, judgement, and rechecks require the reviewer. The
   controller may relay, record status, request decisions, and enforce hard stops but may not
   self-approve these gates.
-- Every PM, reviewer, and FlowGuard officer approval now has a universal
+- Every PM, reviewer, and FlowGuard operator approval now has a universal
   adversarial approval baseline. Completion reports, worker reports,
   screenshots, logs, and prior role reports are only pointers. The approving
   role must personally probe the relevant sources or state, test failure
@@ -352,20 +354,20 @@ and model-confidence overclaims must also fail.
   disposition, and reviewers inspect PM-built formal gate packages rather than
   raw worker result bodies. PM may complete a node only after the formal
   reviewer node-completion gate passes plus any required parent backward replay
-  and PM segment decision. Generalized async FlowGuard officer request/report
+  and PM segment decision. Generalized async FlowGuard operator request/report
   packets remain the next packet-loop expansion.
 - The project manager may proactively use FlowGuard as a modeling laboratory
   for uncertain route, repair, feature, product-object, file-format, protocol,
   or validation decisions. The PM writes a structured modeling request, assigns
-  the process FlowGuard officer, product FlowGuard officer, or both, receives
+  the FlowGuard operator, receives
   a modelability-aware report, and then records the route decision.
-- FlowGuard modeling requests are now officer-owned async gates when live
-  background roles are available. The PM records the request and officer output
-  root, the matching officer authors/runs/interprets the model and writes
+- FlowGuard modeling requests are now FlowGuard operator-owned async gates when live
+  background roles are available. The PM records the request and operator output
+  root, the FlowGuard operator authors/runs/interprets the model and writes
   execution provenance, and the controller may only do non-dependent
   preparation while the model gate is pending.
-- FlowGuard officer reports are PM decision-support packets, not absolute
-  no-risk certificates. The officers must extract model-derived risk tiers,
+- FlowGuard operator reports are PM decision-support packets, not absolute
+  no-risk certificates. The FlowGuard operator must extract model-derived risk tiers,
   PM review-required hotspots, human walkthrough targets, toolchain/model
   improvement suggestions, and a confidence boundary; PM decides whether to
   continue, repair, add evidence, split, mutate, or block.
@@ -377,9 +379,9 @@ and model-confidence overclaims must also fail.
   return, completion review, and explicit user requests require the chat
   Mermaid when Cockpit is closed. Generated files or display packets alone do
   not count as chat display.
-- Crew records now separate `role_key`, `display_name`, and diagnostic-only
-  `agent_id` so UI and authority checks do not drift when host agent names or
-  handles change.
+- Role-binding records now separate `role_key`, `display_name`, and
+  diagnostic-only `agent_id` so UI and authority checks do not drift when host
+  agent names or handles change.
 - Formal startup now has a PM-owned startup activation gate. Before any child
   skill, imagegen, implementation, route chunk, or completion work, the
   human-like reviewer must personally check real state/frontier/route,
@@ -393,15 +395,16 @@ and model-confidence overclaims must also fail.
   `work_beyond_startup_allowed: true`; there is no third startup opener or
   runtime startup-check script. Route-local artifacts without that canonical match
   are shadow routes to quarantine or supersede.
-- Formal startup now begins with a three-question pre-banner gate. On
-  `Use FlowPilot` / `使用开始`, the assistant asks for runtime role assistance
-  permission, scheduled-continuation permission, and whether to open Cockpit UI
-  or use chat route signs, then the assistant response must stop immediately and
-  wait for the user's reply. The startup banner, route writes, Cockpit launch,
-  child skills, role bindings, heartbeat probes, imagegen, and implementation
-  are blocked until a later user reply explicitly answers all three questions
-  and `startup_activation.startup_questions` records both the stop-and-wait
-  evidence and banner-after-answers evidence.
+- Formal startup now begins with a single-option pre-banner gate. On
+  `Use FlowPilot` / `使用开始`, the assistant asks for the user's work request and
+  whether FlowPilot may open background agents, then the assistant response must
+  stop immediately and wait for the user's reply. The startup banner, route
+  writes, child skills, role bindings, heartbeat probes, imagegen, and
+  implementation are blocked until a later user reply explicitly answers that
+  background-agent question and `startup_activation.startup_questions` records
+  both the stop-and-wait evidence and banner-after-answers evidence. Removed
+  startup choices are recorded as fixed defaults: manual continuation and chat
+  route signs.
 - Long operations no longer carry a FlowPilot stale-heartbeat wrapper; use
   ordinary checkpoints, logs, and host tool status for bounded-operation
   evidence.
@@ -425,12 +428,12 @@ and model-confidence overclaims must also fail.
 FlowGuard caught and fixed these design issues:
 
 1. High-risk gates must not overlap active formal chunks.
-2. `sidecar report returned` is not enough for completion; the controller must
+2. `helper report returned` is not enough for completion; the controller must
    merge and verify the result.
-3. Sidecar opportunity checks belong at child-node entry. Parent/module review
+3. Helper opportunity checks belong at child-node entry. Parent/module review
    may identify likely helper work but must not open role bindings or transfer
    node ownership.
-4. Sidecar scope checking must be separate from reuse-or-open assignment, and a
+4. Helper scope checking must be separate from reuse-or-open assignment, and a
    suitable idle role binding must be reused before opening a new one.
 5. Completion checks must use historical gate evidence, not only a helper that
    applies to `running` state.
@@ -460,7 +463,7 @@ FlowGuard caught and fixed these design issues:
     mutation, or completion decision must record the correct approving role,
     and route repair must invalidate stale approvals together with stale
     product evidence.
-15. Live sidecar role continuity is not reliable enough to be a source of truth
+15. Live helper responsibility continuity is not reliable enough to be a source of truth
     after heartbeat sleep or manual resume. Role continuity must be persisted
     through structured role memory packets; replacement roles must be seeded
     from those packets before they can approve gates.
@@ -512,7 +515,7 @@ FlowGuard caught and fixed these design issues:
 
 - The main skill launcher lives at `skills/flowpilot/SKILL.md`. It is now
   intentionally small and delegates formal startup to
-  `skills/flowpilot/assets/flowpilot_router.py`.
+  `skills/flowpilot/assets/flowpilot_new.py`.
 - Prompt-isolated runtime cards live under
   `skills/flowpilot/assets/runtime_kit/` and are listed in
   `skills/flowpilot/assets/runtime_kit/manifest.json`.
@@ -521,12 +524,12 @@ FlowGuard caught and fixed these design issues:
   current-run state, frontier, packet ledger, and role-binding memory into
   `continuation/resume_reentry.json` without reading sealed bodies or inferring
   progress from chat history; ambiguous resume state blocks for PM recovery.
-- `flowpilot_router.py` now drives the current-node packet loop through the
-  physical `packet_runtime` envelope/body system. It requires route activation,
-  current-node packet registration, router direct-dispatch preflight, packet
-  ledger checks, Controller envelope-only relay, worker result relay to PM,
-  PM package-result disposition, and a reviewer formal node-completion audit
-  before PM node completion.
+- `flowpilot_new.py` now drives the fresh current-run packet loop through the
+  physical envelope/body system. It requires route activation, current-node
+  packet registration, runtime dispatch preflight, packet ledger checks,
+  Controller envelope-only relay, worker result relay to PM, PM
+  package-result disposition, reviewer audit, and system-owned validation and
+  closure before PM node completion.
 - Route activation and review-block repair now write run-scoped route/frontier
   state. `execution_frontier.json` tracks the active node, completed nodes, and
   route-mutation repair state; mutation records are written before new repair
@@ -576,7 +579,7 @@ FlowGuard caught and fixed these design issues:
   requested.
 - Current project progress is tracked in `.flowpilot/current.json` plus the
   active `.flowpilot/runs/<run-id>/` directory.
-- Runtime closure hardening now writes explicit officer request lifecycle,
+- Runtime closure hardening now writes explicit FlowGuard operator request lifecycle,
   continuation quarantine, final user report, and route-display refresh
   artifacts. The focused model and checker are
   `simulations/flowpilot_runtime_closure_model.py` and
@@ -596,7 +599,7 @@ FlowGuard caught and fixed these design issues:
   `simulations/run_flowpilot_route_mutation_activation_checks.py`.
 - The Python structure simplification passes keep current public entrypoints and
   protocol semantics stable while reducing several heavy active files.
-  `flowpilot_router.py` remains the public Router entrypoint, while event dispatch,
+  `flowpilot_router.py` remains the legacy diagnostic Router entrypoint, while event dispatch,
   event finalization, event intake, Controller action providers, Controller
   action handlers, route activation/mutation, and heartbeat/resume helpers now
   live in focused modules:

@@ -7,15 +7,17 @@ branches, heartbeat behavior, and any task-local behavior models.
 ## Startup
 
 1. On FlowPilot invocation, enter `startup_pending_user_answers`.
-2. Ask native startup intake options: runtime role assistance permission,
-   scheduled-continuation permission, and whether to open Cockpit UI. End the assistant response immediately
-   after these questions. Do not inspect files, start tools, create route state,
-   open role bindings, probe heartbeat, or show the banner in the same response.
-   FlowPilot remains in `startup_pending_user_answers` until the user's later
-   reply supplies all three answers. Do not ask the user to choose a mode.
-3. Record the explicit answer set in state/frontier startup activation
-   evidence. A compact later user reply may satisfy all three only when the
-   choices are explicit.
+2. Ask the native startup intake for the user's work request and the single
+   user-visible option: whether FlowPilot may use background collaboration for
+   this task. End the assistant response immediately after this question. Do not
+   inspect files, start tools, create route state, open role bindings, probe
+   heartbeat, or show the banner in the same response. FlowPilot remains in
+   `startup_pending_user_answers` until the user's later reply supplies the
+   work request and background-collaboration answer. Do not ask the user to choose a
+   mode.
+3. Record the explicit background-collaboration answer in state/frontier startup
+   activation evidence. Record removed startup choices as fixed defaults:
+   manual continuation and chat route signs.
 4. Emit the fenced `FlowPilot` ASCII startup banner in chat. The banner means
    the startup-question gate is open.
 5. Create or load `.flowpilot/`, allocate a fresh `run_id`, create
@@ -89,7 +91,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     It must include a user-task map, product capability map, feature necessity
     decisions, display rationale for every visible element, missing high-value
     feature review, negative scope, and a functional acceptance matrix.
-14. Have the product FlowGuard officer approve or block modelability and
+14. Have the FlowGuard operator approve or block modelability and
     product-function coverage, and have the human-like reviewer challenge
     usefulness, unnecessary display, missing workflow support, bad defaults,
     and failure-state gaps. If either blocks, the project manager revises the
@@ -108,11 +110,11 @@ branches, heartbeat behavior, and any task-local behavior models.
     references, and extract a child-skill gate manifest with key stages,
     required checks, standards, evidence needs, skipped references with
     reasons, visible mini-route milestones, and required approver roles.
-19. Have the human-like reviewer, process FlowGuard officer, and product
-    FlowGuard officer review their slices of the manifest. The project manager
+19. Have the human-like reviewer, FlowGuard operator, and product
+    FlowGuard operator review their slices of the manifest. The project manager
     then approves or blocks manifest inclusion in route modeling, the
-    execution frontier, and the PM runway. The controller, worker A, and
-    worker B are forbidden approvers for child-skill gates.
+    execution frontier, and the PM runway. The controller and requested
+    worker responsibilities are forbidden approvers for child-skill gates.
 20. Verify FlowGuard and required dependency skills.
 21. Inspect dependency/tool needs and write a dependency plan.
 22. Install only the minimum dependencies needed for FlowPilot itself and the
@@ -144,17 +146,17 @@ branches, heartbeat behavior, and any task-local behavior models.
     completion notice; controlled nonterminal stops emit a resume notice that
     says whether to wait for heartbeat or type `continue FlowPilot`.
 28. Ask the project manager for the initial route-design decision.
-29. Ask the process FlowGuard officer to use FlowGuard as process designer for
+29. Ask the FlowGuard operator to use FlowGuard as process designer for
     the active route.
 30. Generate a candidate route tree from the approved product-function
     architecture, contract, and PM-approved child-skill gate manifest.
-31. The process FlowGuard officer authors, runs, interprets, and approves or
+31. The FlowGuard operator authors, runs, interprets, and approves or
     blocks the root development-process model against the candidate tree.
-32. The product FlowGuard officer authors, runs, interprets, and approves or
+32. The FlowGuard operator authors, runs, interprets, and approves or
     blocks the root product-function model for the target product or workflow
     behavior, using the approved product-function architecture as a source
     artifact.
-32. The matching officers inspect counterexamples for both model scopes and
+32. The matching FlowGuard operators inspect counterexamples for both model scopes and
     write approve/block reports.
 33. Freeze the checked candidate as route `flow.json` and generate English
     `flow.md`.
@@ -212,7 +214,7 @@ branches, heartbeat behavior, and any task-local behavior models.
     allowed, manual-resume evidence when manual continuation is selected or
     reviewer-verified scheduler unavailability is PM-downgraded,
     residual route state, and shadow-route evidence. It must bind the
-    runtime role-assistance answer to actual role-binding state: if the user
+    background-collaboration answer to actual role-binding state: if the user
     allowed role assistance, verify each runtime-required binding was opened for
     this FlowPilot task after that user decision and after current route allocation, and
     verify none of its `agent_id` values comes from prior route ledgers or
@@ -247,13 +249,13 @@ branches, heartbeat behavior, and any task-local behavior models.
     `work_beyond_startup_allowed: true` from the clean factual report. If the
     three answers are incomplete, the prompt did not stop for the user's reply,
     answers are inconsistent with role-binding/continuation evidence, or required
-    cleanup evidence is missing, route the issue back through PM and workers. A
-    route-local file without matching canonical state/frontier/crew/continuation
-    evidence is a shadow route and must be quarantined or superseded before
-    continuing.
+    cleanup evidence is missing, route the issue back through PM and requested
+    worker responsibilities. A route-local file without matching canonical
+    state/frontier/role-binding/continuation evidence is a shadow route and
+    must be quarantined or superseded before continuing.
 38. Start the first bounded chunk only after continuation mode is known.
     Automated routes use heartbeat restore; manual-resume routes load the same
-    state/frontier/crew-memory inputs in the active turn. In both modes the
+    state/frontier/role-binding-memory inputs in the active turn. In both modes the
     project manager issues a completion-oriented runway, the controller syncs that
     runway into the visible plan, and continuation readiness,
     parent-subtree review, unfinished-current-node recovery check,
@@ -278,11 +280,11 @@ usage:
 Use FlowPilot. Ask the startup intake options first.
 ```
 
-FlowPilot invocation only opens the three-question startup prompt. It is not
-authorization for role bindings, fallback execution,
-scheduled jobs, manual resume, or a default display surface. The assistant must stop immediately after
-asking those questions, and the banner is emitted only after the later user
-answer set is complete.
+FlowPilot invocation only opens the startup prompt for the work request and
+background-collaboration permission. It is not authorization for role bindings,
+fallback execution, scheduled jobs, manual resume, or a default display
+surface. The assistant must stop immediately after asking, and the banner is
+emitted only after the later user answer is complete.
 
 ## Material Intake And PM Handoff
 
@@ -364,7 +366,7 @@ It records:
 - functional acceptance matrix with inputs, outputs, states, failure cases,
   checks, and evidence paths.
 
-The product FlowGuard officer approves or blocks whether the architecture can
+The FlowGuard operator approves or blocks whether the architecture can
 be modeled and checked. The human-like reviewer challenges usefulness,
 ambition, and completeness before the contract freezes by comparing the PM
 architecture against the user request, inspected materials, and expected
@@ -458,12 +460,12 @@ item. At any moment, the only authorized execution scope is the current
 `active_node` plus the `current_subnode` or `next_gate` recorded in
 `.flowpilot/runs/<run-id>/execution_frontier.json`.
 
-Before the main executor, worker A, worker B, a child-skill route, verification,
-polishing, or review-evidence drafting starts work, the project manager issues a
-current-node work brief. The brief names the authorized node and gates, the
-current-node step plan, expected artifacts, evidence paths, required approvers,
-the visible route-sign display, and any downstream route context marked as
-context only.
+Before the main executor, any requested worker responsibility, a child-skill
+route, verification, polishing, or review-evidence drafting starts work, the
+project manager issues a current-node work brief. The brief names the
+authorized node and gates, the current-node step plan, expected artifacts,
+evidence paths, required approvers, the visible route-sign display, and any
+downstream route context marked as context only.
 
 Workers and the main executor must treat that brief as the full work boundary.
 They may read the downstream runway for context, but they must not implement,
@@ -527,7 +529,7 @@ parent, and leaf obligations.
 ## PM Review And Modeling Packages
 
 The project manager is also the authorization boundary for review and FlowGuard
-modeling. Reviewers and FlowGuard officers may read the full route as context,
+modeling. Reviewers and FlowGuard operators may read the full route as context,
 but they may only review or model the scope explicitly named by PM.
 
 Before any node review, parent backward replay, terminal backward replay,
@@ -557,7 +559,7 @@ issues an updated review package.
 Before any FlowGuard model gate starts, PM issues a modeling package. It names
 the authorized model scope, exact PM decision needed, protected node or gate,
 allowed inputs, expected report shape, and blocked downstream actions.
-FlowGuard officers may report counterexamples, missing evidence, route-mutation
+FlowGuard operators may report counterexamples, missing evidence, route-mutation
 suggestions, and PM decision options, but they do not advance the route, accept
 evidence, or expand modeling scope without PM authorization.
 
@@ -575,7 +577,7 @@ decisions, relay worker results, sync the visible plan from PM decisions,
 record status, and enforce hard stops. It cannot create worker evidence, run
 ordinary implementation commands for worker nodes, edit product files, approve
 gates, or advance the route from controller-origin evidence. For FlowGuard
-model gates, the matching FlowGuard officer must author, run, interpret, and
+model gates, the matching FlowGuard operator must author, run, interpret, and
 approve or block the model.
 
 Canonical authority rules:
@@ -584,22 +586,22 @@ Canonical authority rules:
   product-function architecture synthesis, route advancement,
   heartbeat-resume runway selection, PM stop signals, repair strategy, route
   mutation, and completion;
-- the process FlowGuard officer authors, runs, interprets, and approves or
+- the FlowGuard operator authors, runs, interprets, and approves or
   blocks development-process model coverage;
-- the product FlowGuard officer approves or blocks pre-contract
+- the FlowGuard operator approves or blocks pre-contract
   product-function architecture modelability, then authors, runs, interprets,
   and approves or blocks product-function model coverage;
 - the human-like reviewer owns pre-contract usefulness challenge, neutral
   observation, pass/block inspection, and same-class recheck;
-- worker A and worker B only produce bounded sidecar reports. They cannot
-  approve gates, mutate routes, checkpoint, or complete the route.
+- requested worker responsibilities only produce bounded packet results. They
+  cannot approve gates, mutate routes, checkpoint, or complete the route.
 
 Child-skill gates use the same authority matrix. The project manager owns
 route-design extraction of child-skill stages, checks, standards, evidence
 needs, visible mini-route milestones, and required approvers. The human-like
 reviewer approves human/product/visual/interaction review judgements; the
-process FlowGuard officer approves process and conformance gates; the product
-FlowGuard officer approves product-function impact gates; and the project
+FlowGuard operator approves process and conformance gates; the product
+FlowGuard operator approves product-function impact gates; and the project
 manager approves route inclusion, route mutation, parent return, and final
 child-to-parent closure. Authorized workers may draft evidence or
 implementation output, but their self-approval is invalid.
@@ -649,7 +651,7 @@ controller context must not contain packet body text. If the body is present in
 the controller handoff or the packet files are missing, dispatch and review are
 blocked before content inspection.
 
-Worker, reviewer, officer, and PM returns use the same envelope/body split.
+Worker, reviewer, FlowGuard operator, and PM returns use the same envelope/body split.
 The returning role gives the controller a `result_envelope` naming
 `packet_id`, `completed_by_role`, `completed_by_agent_id`, `node_id`,
 `result_body_path`, `result_body_hash`, and `next_recipient`. Detailed
@@ -692,7 +694,7 @@ controller-origin self-approval.
 
 ## Universal Adversarial Approval Baseline
 
-Every PM, reviewer, and FlowGuard officer approval is an independent
+Every PM, reviewer, and FlowGuard operator approval is an independent
 adversarial validation event. Completion reports, worker summaries, screenshots,
 smoke logs, model-result snippets, and PM summaries are pointers only; they
 cannot be the approval basis by themselves.
@@ -722,12 +724,12 @@ stale and superseded evidence, unresolved counts, waiver authority, blocker
 handling, downstream consequences, and consistency with the frozen user goal.
 Reviewer approvals attack the artifact or behavior directly: source material,
 UI surface, output, log, screenshot, backend effect, delivered product, and
-failure or edge cases. FlowGuard officer approvals attack the model boundary:
+failure or edge cases. FlowGuard operator approvals attack the model boundary:
 model files, commands or valid unchanged reuse, state/edge counts, invariant
 results, missing labels, counterexamples, and blindspots.
 
 An approval without independent validation evidence is pending or blocked. A PM
-cannot launder a report-only reviewer or officer pass by accepting it later;
+cannot launder a report-only reviewer or FlowGuard operator pass by accepting it later;
 the gate must be rechecked by the correct role.
 
 Unresolved risks are not acceptable residuals. If a role finds a real risk,
@@ -790,7 +792,7 @@ agent after authorization or replace the role from the latest memory packet
 after explicit fallback approval. A replacement role started only from a generic
 prompt is not recovered and cannot approve gates.
 
-Crew identity uses three separate fields. `role_key` is the stable authority
+Role-binding identity uses three separate fields. `role_key` is the stable authority
 and routing id. `display_name` is the user-facing chat/UI label. `agent_id` is
 only a diagnostic/recovery handle and must not be shown as the primary label or
 used as the authority key.
@@ -908,15 +910,15 @@ file or protocol structure, unknown software/object behavior, validation
 strategy, or whether more evidence is needed.
 
 The PM creates a structured modeling request and assigns it to the process
-FlowGuard officer, the product FlowGuard officer, or both. Process requests ask
+FlowGuard operator, the FlowGuard operator, or both. Process requests ask
 "how should FlowPilot do this?" Product requests ask "what is the target system
 or product behavior?" Combined requests are valid when route choice depends on
 target-object uncertainty.
 
 Each request must name the decision, uncertainty, evidence sources, candidate
-options or option-generation need, assigned officer scope, required answer
-shape, officer output root, and controller parallel-preparation boundary.
-The assigned officer first checks modelability. If evidence is missing, the
+options or option-generation need, assigned FlowGuard operator scope, required answer
+shape, FlowGuard operator output root, and controller parallel-preparation boundary.
+The assigned FlowGuard operator first checks modelability. If evidence is missing, the
 route gains evidence-collection work. If the request is too broad, it is split
 into smaller modelable requests. A report is valid only after modelability is
 resolved.
@@ -928,7 +930,7 @@ next smallest executable action, and any route mutation candidate. It must not
 claim absolute "no risk"; it states the model boundary, what was and was not
 proved, and the concrete PM decision options. The PM then records a decision:
 continue current route, mutate route, add evidence work, split request, repair
-before advance, or block with a concrete reason. Officers advise from models;
+before advance, or block with a concrete reason. FlowGuard operators advise from models;
 the PM owns the route decision.
 
 Heartbeat records alone are not enough to claim unattended recovery. FlowPilot
@@ -1095,7 +1097,7 @@ one disposition: `selected`, `used`, `superseded`, `discarded`, `deleted`, or
 resource has a current disposition and reason.
 
 The activity stream is append-only. PM decisions, reviewer holds/releases and
-reports, officer modeling actions, worker reports, route mutations, checkpoint
+reports, FlowGuard operator modeling actions, worker reports, route mutations, checkpoint
 writes, heartbeat/manual-resume actions, and terminal closure events append
 progress records as they happen. Cockpit and chat progress displays read from
 this stream plus current route/frontier state, so users see progress without
@@ -1114,36 +1116,36 @@ This applies to root project scope, parent scope, leaf node scope, repair node
 scope, child-skill capability scope, and final completion scope. A process-only
 pass is not enough for implementation, checkpoint, or completion.
 
-The matching FlowGuard officer owns model execution. The process FlowGuard
-officer authors, runs, interprets, and approves or blocks process model
-coverage. The product FlowGuard officer authors, runs, interprets, and
+The matching FlowGuard operator owns model execution. The process FlowGuard
+FlowGuard operator authors, runs, interprets, and approves or blocks process model
+coverage. The FlowGuard operator authors, runs, interprets, and
 approves or blocks product model coverage. The controller may provide
 context and receive the report, but it must not author or run FlowGuard model
-files on the officer's behalf. The officer approval must cite the model
+files on the FlowGuard operator's behalf. The FlowGuard operator approval must cite the model
 boundary, model files, commands run or valid unchanged reuse, state/edge counts,
 invariant results, missing labels, counterexamples inspected, and blindspots.
-If an officer blocks, the route follows the same repair/mutation path as a
+If a FlowGuard operator blocks, the route follows the same repair/mutation path as a
 human-like inspection block.
 
-FlowGuard model gates are officer-owned asynchronous gates when live background
+FlowGuard model gates are FlowGuard operator-owned asynchronous gates when live background
 roles are available. The PM writes a modeling request, assigns it to the
-matching process/product officer, and records an officer output root under the
-active run. While that officer authors, runs, interprets, and reports, the main
+matching FlowGuard operator work order, and records an operator output root under the
+active run. While that FlowGuard operator authors, runs, interprets, and reports, the main
 executor may continue only non-dependent preparation: read-only context review,
 dependency inventory, non-model evidence drafts, or scaffold work that cannot
 satisfy or bypass the pending model gate. Implementation, route freeze,
 checkpoint closure, completion closure, and any protected gate remain blocked
-until the officer report is approved.
+until the FlowGuard operator report is approved.
 
-Every officer report proves execution ownership with `model_author_role`,
+Every FlowGuard operator report proves execution ownership with `model_author_role`,
 `model_runner_role`, `model_interpreter_role`, `approved_by_role`,
-`commands_run_by_officer`, model files, input snapshots, state/edge counts,
+`commands_run_by_flowguard_operator`, model files, input snapshots, state/edge counts,
 invariant and missing-label results, inspected counterexamples, PM risk-tier
 extraction, model-derived review agenda, toolchain/model improvement
 suggestions, confidence boundary, blindspots, and any valid unchanged-reuse
 basis. Main-executor outputs can be cited only as pointers. If the host cannot
-let live officers run tools, FlowPilot records explicit single-agent fallback
-and does not claim parallel officer execution.
+let live FlowGuard operators run tools, FlowPilot records explicit single-agent fallback
+and does not claim parallel FlowGuard operator execution.
 
 When entering a parent layer, FlowPilot reruns both the current parent process
 model and product-function model. When entering a leaf, FlowPilot checks the
@@ -1178,15 +1180,15 @@ stop. A report that only summarizes worker screenshots, screenshot QA, or an
 interaction smoke log is `worker_report_only` evidence and cannot approve a
 human-review gate.
 
-Reviewer, worker, and FlowGuard officer suggestions share one PM disposition
+Reviewer, worker, and FlowGuard operator suggestions share one PM disposition
 loop. Each suggestion that needs PM attention becomes a
 `flowpilot.pm_suggestion_item.v1` entry in
 `.flowpilot/runs/<run-id>/pm_suggestion_ledger.jsonl`. Reviewer suggestions,
-worker/officer `PM Note` items, model-derived route risks, and higher-standard
+worker/FlowGuard operator `PM Note` items, model-derived route risks, and higher-standard
 or simplification opportunities use the same ledger fields. The ledger unifies
 intake and PM closure; it does not flatten role authority. Reviewers may block
 only when the minimum current-gate standard is not guaranteed. Workers cannot
-block gates. FlowGuard officers block only through formal model-gate findings;
+block gates. FlowGuard operators block only through formal model-gate findings;
 ordinary tool or model improvement notes remain PM decision-support.
 
 The PM disposition for every ledger item must be one of: `adopt_now`,
@@ -1204,7 +1206,7 @@ does not treat all suggestions the same. Minor local wording, layout, cleanup,
 or nonblocking quality suggestions can be disposed directly with a reason.
 Suggestions that change product behavior, route structure, acceptance criteria,
 state/data flow, evidence freshness, or completion risk require PM to consider
-the smallest sufficient Process/Product FlowGuard modeling path before
+the smallest sufficient FlowGuard operator product-modeling path before
 adoption. This is a PM judgement prompt, not a blanket rule to model harmless
 local changes.
 
@@ -1348,7 +1350,7 @@ substitutes for inspection. A checkpoint is allowed only after inspection
 passes or every blocking issue has been repaired and rechecked by the same
 inspector class.
 Before writing the checkpoint, refresh role memory packets for every role that
-made a meaningful decision, inspection, FlowGuard approval/block, sidecar
+made a meaningful decision, inspection, FlowGuard approval/block, Helper
 report, or blocker note in the turn. The compact structured packet is the
 authoritative recovery state; raw chat transcripts are optional evidence only.
 
@@ -1384,8 +1386,8 @@ input:
 
 ```text
 load child subtree -> emit subtree map -> focused parent self-interrogation ->
-process officer checks parent process model ->
-product officer checks parent product model -> adjust or enter children
+FlowGuard operator checks parent process model ->
+FlowGuard operator checks parent product model -> adjust or enter children
 ```
 
 If the parent model finds missing, stale, oversized, misplaced, or unnecessary

@@ -41,7 +41,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | blocked | complete
     trigger_source: str = "none"  # none | heartbeat | manual_resume | mid_run_fault
-    recovery_scope: str = "none"  # none | all_six | targeted | full_crew
+    recovery_scope: str = "none"  # none | all_runtime_roles | targeted | full_role_binding
     target_failed_roles: int = 0
 
     user_stop_requested: bool = False
@@ -69,7 +69,7 @@ class State:
 
     role_binding_generation: int = 1
     role_binding_epoch_advanced: bool = False
-    crew_ready: bool = False
+    runtime_roles_ready: bool = False
     memory_context_injected: bool = False
     packet_holder_lost: bool = False
     packet_ownership_reconciled: bool = False
@@ -166,10 +166,10 @@ def _start_recovery(trigger_source: str, scope: str, failed_roles: int) -> State
     )
 
 
-def _crew_ready(state: State, *, full_recycle: bool = False) -> State:
+def _runtime_roles_ready(state: State, *, full_recycle: bool = False) -> State:
     return replace(
         state,
-        crew_ready=True,
+        runtime_roles_ready=True,
         role_binding_epoch_advanced=True,
         role_binding_generation=state.role_binding_generation + (1 if full_recycle else 0),
         stale_generation_output_seen=not state.restore_result == "success",
@@ -183,11 +183,11 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.trigger_source == "none":
         yield Transition(
             "heartbeat_entered_unified_recovery",
-            _start_recovery("heartbeat", "all_six", 0),
+            _start_recovery("heartbeat", "all_runtime_roles", 0),
         )
         yield Transition(
             "manual_resume_entered_unified_recovery",
-            _start_recovery("manual_resume", "all_six", 0),
+            _start_recovery("manual_resume", "all_runtime_roles", 0),
         )
         yield Transition(
             "mid_run_liveness_fault_entered_unified_recovery",
@@ -221,9 +221,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if not state.scope_confirmed:
-        if state.recovery_scope == "all_six":
+        if state.recovery_scope == "all_runtime_roles":
             yield Transition(
-                "all_six_sweep_selected",
+                "all_runtime_roles_sweep_selected",
                 replace(state, scope_confirmed=True),
             )
         elif state.recovery_scope == "targeted":
@@ -231,14 +231,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 "targeted_role_scope_selected",
                 replace(state, scope_confirmed=True),
             )
-        elif state.recovery_scope == "full_crew":
+        elif state.recovery_scope == "full_role_binding":
             yield Transition(
-                "full_crew_scope_selected",
+                "full_role_binding_scope_selected",
                 replace(state, scope_confirmed=True),
             )
         return
 
-    if not state.restore_attempted and state.recovery_scope != "full_crew":
+    if not state.restore_attempted and state.recovery_scope != "full_role_binding":
         yield Transition(
             "restore_attempted_before_replacement",
             replace(state, restore_attempted=True),
@@ -248,7 +248,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.restore_attempted and state.restore_result == "unknown":
         yield Transition(
             "old_role_restored",
-            _crew_ready(replace(state, restore_result="success")),
+            _runtime_roles_ready(replace(state, restore_result="success")),
         )
         yield Transition(
             "old_role_restore_failed",
@@ -263,7 +263,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     ):
         yield Transition(
             "targeted_replacement_opened",
-            _crew_ready(
+            _runtime_roles_ready(
                 replace(
                     state,
                     targeted_replace_attempted=True,
@@ -286,13 +286,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if (
         state.restore_result == "failed"
         and not state.full_recycle_attempted
-        and state.recovery_scope == "all_six"
+        and state.recovery_scope == "all_runtime_roles"
     ):
         yield Transition(
             "full_role_binding_recovery_attempted",
             replace(
                 state,
-                recovery_scope="full_crew",
+                recovery_scope="full_role_binding",
                 full_recycle_attempted=True,
             ),
         )
@@ -320,7 +320,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "full_role_binding_recovery_attempted",
             replace(
                 state,
-                recovery_scope="full_crew",
+                recovery_scope="full_role_binding",
                 full_recycle_attempted=True,
             ),
         )
@@ -329,7 +329,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.full_recycle_attempted and state.full_recycle_result == "unknown":
         yield Transition(
             "full_role_binding_recovery_succeeded",
-            _crew_ready(replace(state, full_recycle_result="success"), full_recycle=True),
+            _runtime_roles_ready(replace(state, full_recycle_result="success"), full_recycle=True),
         )
         yield Transition(
             "full_role_binding_recovery_failure_blocks_environment",
@@ -338,12 +338,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 status="blocked",
                 full_recycle_result="failed",
                 recovery_pending=False,
-                crew_ready=False,
+                runtime_roles_ready=False,
             ),
         )
         return
 
-    if state.crew_ready and not state.memory_context_injected:
+    if state.runtime_roles_ready and not state.memory_context_injected:
         yield Transition(
             "memory_context_injected",
             replace(state, memory_context_injected=True),
@@ -372,7 +372,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.crew_ready and not state.recovery_report_written:
+    if state.runtime_roles_ready and not state.recovery_report_written:
         yield Transition(
             "recovery_report_written",
             replace(state, recovery_report_written=True),
@@ -541,7 +541,7 @@ def invariant_failures(state: State) -> list[str]:
     if (
         state.full_recycle_attempted
         and state.restore_result != "failed"
-        and state.recovery_scope != "full_crew"
+        and state.recovery_scope != "full_role_binding"
     ):
         failures.append("full role binding recycle happened before targeted recovery failed")
     if (
@@ -561,9 +561,9 @@ def invariant_failures(state: State) -> list[str]:
         and (state.recovery_report_written or state.pm_decision_requested)
     ):
         failures.append("capacity/full-slot conflict did not escalate to full recycle")
-    if state.full_recycle_result == "failed" and state.crew_ready:
-        failures.append("failed full role binding recycle was marked crew-ready")
-    if state.crew_ready and not state.memory_context_injected and (
+    if state.full_recycle_result == "failed" and state.runtime_roles_ready:
+        failures.append("failed full role binding recycle was marked runtime roles ready")
+    if state.runtime_roles_ready and not state.memory_context_injected and (
         state.recovery_report_written or state.pm_decision_requested
     ):
         failures.append("recovered role was marked ready without memory injection")
@@ -676,7 +676,7 @@ def _ready_state(**changes: object) -> State:
         restore_result="failed",
         targeted_replace_attempted=True,
         targeted_replace_result="success",
-        crew_ready=True,
+        runtime_roles_ready=True,
         role_binding_epoch_advanced=True,
         memory_context_injected=True,
         packet_holder_lost=True,
@@ -730,10 +730,10 @@ def hazard_states() -> dict[str, State]:
             recovery_report_written=True,
         ),
         "failed_full_recycle_marked_ready": _ready_state(
-            recovery_scope="full_crew",
+            recovery_scope="full_role_binding",
             full_recycle_attempted=True,
             full_recycle_result="failed",
-            crew_ready=True,
+            runtime_roles_ready=True,
         ),
         "ready_without_memory_injection": _ready_state(
             memory_context_injected=False,

@@ -291,7 +291,7 @@ def run_checks(*, include_source: bool = True) -> dict[str, object]:
         "skipped_checks": {
             "semantic_sufficiency": (
                 "skipped_with_reason: role_output_runtime is a mechanical "
-                "submission runtime; PM/reviewer/officer gates own semantics"
+                "submission runtime; PM/reviewer/FlowGuard operator gates own semantics"
             )
         },
     }

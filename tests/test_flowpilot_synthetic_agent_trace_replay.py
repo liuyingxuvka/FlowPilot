@@ -47,7 +47,7 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
 
         record = replay.packet_record()
         self.assertTrue(record["active_holder_ack_recorded"])
-        self.assertEqual(record["packet_body_opened_by_role"], "worker_a")
+        self.assertEqual(record["packet_body_opened_by_role"], "worker")
         self.assertTrue(record["packet_body_opened_after_controller_relay_check"])
         self.assertTrue(record["fast_lane_result_mechanics_passed"])
         self.assertEqual(record["result_envelope"]["next_recipient"], "project_manager")
@@ -125,7 +125,7 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
 
         ledger = replay.ledger()
         record = replay.packet_record()
-        self.assertEqual(ledger["active_packet_holder"], "worker_a")
+        self.assertEqual(ledger["active_packet_holder"], "worker")
         self.assertEqual(ledger["active_packet_status"], "active-holder-acknowledged")
         self.assertTrue(record["active_holder_ack_recorded"])
         self.assertIsNone(record["result_body_hash"])
@@ -149,8 +149,8 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
             packet_runtime.active_holder_ack(
                 replay.root,
                 lease_path=replay.lease["lease_path"],  # type: ignore[index]
-                role="worker_b",
-                agent_id="agent-worker-b-1",
+                role="human_like_reviewer",
+                agent_id="agent-reviewer-1",
                 route_version=1,
                 frontier_version=1,
             )
@@ -159,8 +159,8 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
             packet_runtime.active_holder_ack(
                 replay.root,
                 lease_path=replay.lease["lease_path"],  # type: ignore[index]
-                role="worker_a",
-                agent_id="agent-worker-a-2",
+                role="worker",
+                agent_id="agent-worker-1-2",
                 route_version=1,
                 frontier_version=1,
             )
@@ -190,7 +190,7 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
             replay.root,
             packet_envelope=read_json(replay.packet_envelope_path),
             result_envelope=read_json(replay.result_envelope_path),
-            agent_role_map={"agent-worker-a-1": "worker_a"},
+            agent_role_map={"agent-worker-1-1": "worker"},
         )
         self.assertFalse(audit["passed"])
         self.assertIn("missing_or_invalid_result_controller_relay", audit["blockers"])
@@ -223,7 +223,7 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
                     "--source-kind",
                     "fixture",
                     "--role",
-                    "worker_a",
+                    "worker",
                     "--reason",
                     "Fixture proves control-flow behavior but not live project completion.",
                 ]
@@ -472,14 +472,14 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
         ambiguous_root = self.make_project()
         ambiguous_run_root = self.boot_to_controller(ambiguous_root)
-        (ambiguous_run_root / "role_binding_memory" / "worker_b.json").unlink()
+        (ambiguous_run_root / "role_binding_memory" / "worker.json").unlink()
         router.record_external_event(ambiguous_root, "heartbeat_or_manual_resume_requested")
         action = self.next_after_display_sync(ambiguous_root)
         self.assertEqual(action["action_type"], "load_resume_state")
         router.apply_action(ambiguous_root, "load_resume_state")
         action = self.next_after_display_sync(ambiguous_root)
         self.assertEqual(action["action_type"], "rehydrate_role_bindings")
-        self.assertEqual(action["memory_missing_role_keys"], ["worker_b"])
+        self.assertEqual(action["memory_missing_role_keys"], ["worker"])
         router.apply_action(ambiguous_root, "rehydrate_role_bindings", self.resume_role_agent_payload(ambiguous_root, action))
         self.deliver_expected_card(ambiguous_root, "controller.resume_reentry")
         self.deliver_expected_card(ambiguous_root, "pm.role_binding_recovery_freshness")
@@ -540,7 +540,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             root,
             packet_id="synthetic-node-packet-sibling-replacement",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="synthetic current node work",
             metadata={"route_version": 1},
@@ -605,7 +605,6 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         self.assertEqual(packet_ledger["route_mutation_packet_disposition"]["topology_strategy"], "sibling_branch_replacement")
 
     def test_pm_package_disposition_envelope_authority_fake_package(self) -> None:
-        root = self.make_project()
         replay = run_worker_result_trace(
             SyntheticTracePackage(
                 name="pm_package_disposition_envelope_authority",
@@ -620,7 +619,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "may be submitted only"):
             role_output_runtime.submit_output(
-                root,
+                replay.root,
                 output_type="pm_package_result_disposition",
                 role="controller",
                 agent_id="agent-controller",
@@ -686,8 +685,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             transaction_id="synthetic-repair-tx-active-generation",
             packet_generation_id="synthetic-repair-tx-active-generation-gen-001",
             packet_specs=[
-                {"packet_id": "synthetic-material-repair-worker-a", "to_role": "worker_a", "body_text": "Repair generation packet A"},
-                {"packet_id": "synthetic-material-repair-worker-b", "to_role": "worker_b", "body_text": "Repair generation packet B"},
+                {"packet_id": "synthetic-material-repair-worker", "to_role": "worker", "body_text": "Repair generation packet"},
             ],
         )
         state["flags"]["material_scan_packets_relayed"] = True
@@ -797,7 +795,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
                 {
                     "packet_id": "systemic-material-scan-r1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Systemic replay replacement packet with still-blocked dispatch evidence.",
                 }
             ],

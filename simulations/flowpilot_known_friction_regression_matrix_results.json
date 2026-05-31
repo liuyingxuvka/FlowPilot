@@ -15,12 +15,13 @@
       "defect_family:control_blocker_same_family_storm",
       "defect_family:protocol_dead_end_reopened_by_resume",
       "defect_family:break_glass_patch_limbo",
-      "defect_family:heartbeat_diagnostic_only_resume"
+      "defect_family:heartbeat_diagnostic_only_resume",
+      "defect_family:accepted_packet_reassignment_race"
     ],
     "gate_plan": {
-      "gate_count": 13,
+      "gate_count": 14,
       "plan_id": "flowpilot_known_friction_defect_families",
-      "proof_evidence_count": 13
+      "proof_evidence_count": 14
     },
     "gate_report": {
       "blocked_gate_ids": [],
@@ -41,7 +42,8 @@
         "defect_family:control_blocker_same_family_storm",
         "defect_family:protocol_dead_end_reopened_by_resume",
         "defect_family:break_glass_patch_limbo",
-        "defect_family:heartbeat_diagnostic_only_resume"
+        "defect_family:heartbeat_diagnostic_only_resume",
+        "defect_family:accepted_packet_reassignment_race"
       ],
       "plan_id": "flowpilot_known_friction_defect_families",
       "scoped_gate_ids": [],
@@ -50,8 +52,8 @@
     "ok": true,
     "risk_ledger_plan": {
       "ledger_id": "flowpilot_known_friction_risk_ledger",
-      "proof_evidence_count": 13,
-      "row_count": 13
+      "proof_evidence_count": 14,
+      "row_count": 14
     },
     "risk_ledger_report": {
       "confidence": "full",
@@ -142,6 +144,11 @@
       "row_findings": [
         {
           "code": "missing_required_friction",
+          "friction_id": "known_friction.accepted_packet_reassignment_race",
+          "message": "required known-friction row is missing"
+        },
+        {
+          "code": "missing_required_friction",
           "friction_id": "known_friction.ack_false_blocker",
           "message": "required known-friction row is missing"
         },
@@ -229,6 +236,11 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "new_runtime_wait_reassignment_race"
         },
         {
           "code": "missing_source_class",
@@ -325,7 +337,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:f5ca15376a8d8f6f60802dcbabc66bebb8c47804719223ae493d33f1b8af75e4"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -391,7 +403,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:f5ca15376a8d8f6f60802dcbabc66bebb8c47804719223ae493d33f1b8af75e4"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -495,7 +507,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:f5ca15376a8d8f6f60802dcbabc66bebb8c47804719223ae493d33f1b8af75e4"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -548,7 +560,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:f5ca15376a8d8f6f60802dcbabc66bebb8c47804719223ae493d33f1b8af75e4"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -602,6 +614,11 @@
         }
       },
       "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.accepted_packet_reassignment_race",
+          "message": "required known-friction row is missing"
+        },
         {
           "code": "missing_required_friction",
           "friction_id": "known_friction.ack_false_blocker",
@@ -691,6 +708,11 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "new_runtime_wait_reassignment_race"
         },
         {
           "code": "missing_source_class",
@@ -789,7 +811,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:f5ca15376a8d8f6f60802dcbabc66bebb8c47804719223ae493d33f1b8af75e4"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -895,7 +917,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:6ac6584b8d6e74c456f892e6c271b78307e7523828a830ee7416da6380cf6e10"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:f5ca15376a8d8f6f60802dcbabc66bebb8c47804719223ae493d33f1b8af75e4"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -949,6 +971,11 @@
         }
       },
       "row_findings": [
+        {
+          "code": "missing_required_friction",
+          "friction_id": "known_friction.accepted_packet_reassignment_race",
+          "message": "required known-friction row is missing"
+        },
         {
           "code": "missing_required_friction",
           "friction_id": "known_friction.ack_false_blocker",
@@ -1038,6 +1065,11 @@
           "code": "missing_source_class",
           "message": "required historical source class is not represented",
           "source_class": "material_packet_generation_reissue"
+        },
+        {
+          "code": "missing_source_class",
+          "message": "required historical source class is not represented",
+          "source_class": "new_runtime_wait_reassignment_race"
         },
         {
           "code": "missing_source_class",
@@ -3444,7 +3476,7 @@
     "runtime_command": "python -m unittest tests.router_runtime.packet_result_family"
   },
   "packet_result_family_parity_ok": true,
-  "required_friction_count": 13,
+  "required_friction_count": 14,
   "required_global_gates": [
     "background_final_artifact_contract",
     "copied_runtime_kit_freshness",
@@ -3454,7 +3486,7 @@
     "scoped_confidence_disclosure"
   ],
   "result_type": "flowpilot_known_friction_regression_matrix",
-  "row_count": 13,
+  "row_count": 14,
   "rows": [
     {
       "child_evidence_ids": [
@@ -3966,10 +3998,52 @@
       "runtime_test": "tests.router_runtime.resume.ResumeRuntimeTests.test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
       "source_class": "heartbeat_resume_diagnostic_only_loop",
       "trigger_state": "Heartbeat/manual resume fires after daemon heartbeat is stale, old chat state still looks active, or wait-agent timeout is tempting to treat as liveness."
+    },
+    {
+      "child_evidence_ids": [
+        "historical_live_run_replay_matrix",
+        "new_lifecycle_guard_flowguard_model",
+        "new_foreground_duty_model_test_alignment",
+        "fake_project_blackbox_cli_slow_reviewer_progress",
+        "fake_project_blackbox_cli_accepted_packet_reassignment"
+      ],
+      "defect_family_authority_boundary": "flowpilot_new.py foreground duty, progress, lifecycle guard, packet assignment, ACK, and repair-accepted-packet command",
+      "defect_family_gate_required": true,
+      "defect_family_high_risk": true,
+      "defect_family_id": "defect_family:accepted_packet_reassignment_race",
+      "defect_family_promoted": true,
+      "defect_family_recurrence_count": 2,
+      "evidence_current": true,
+      "evidence_role": "primary_known_friction_gate",
+      "evidence_status": "passed",
+      "expected_safe_behavior": "Patrol keeps Controller on timed wait while progress/liveness is healthy; replacement requires current failure evidence; packets with accepted_result_id cannot be reassigned or ACK-regressed; accepted-result races are repaired by closing mistaken replacement leases and restoring the original accepted result.",
+      "forbidden_shortcuts": [
+        "replace_role_on_repeated_wait_without_current_liveness_failure",
+        "assign_packet_after_accepted_result_id_exists",
+        "let_foreground_return_while_wait_or_repair_duty_is_open"
+      ],
+      "friction_id": "known_friction.accepted_packet_reassignment_race",
+      "full_confidence_boundary": "Covers the new black-box runtime liveness ladder, accepted-packet hard gates, repair helper, and public fake-AI rehearsals; it does not prove external host delivery quality outside the current-run ledger contract.",
+      "global_gates": [
+        "repo_source_to_installed_skill_sync",
+        "background_final_artifact_contract",
+        "current_transcript_regression",
+        "scoped_confidence_disclosure"
+      ],
+      "historical_bad_case": "run-20260530-102304 accepted reviewer result-0003, then a repeated wait created replacement lease-0004 and regressed packet-0003 to acknowledged while the original result should have remained authoritative.",
+      "live_ai_semantic_quality_proven": false,
+      "model_check": "python simulations/run_flowpilot_lifecycle_guard_checks.py && python simulations/run_flowpilot_fake_project_rehearsal_checks.py",
+      "model_obligation": "new_lifecycle_guard.slow_live_progress_preserved + new_lifecycle_guard.accepted_packet_reassignment_rejected + new_lifecycle_guard.accepted_packet_race_repair",
+      "priority": "P0",
+      "replay_fixture": "current_transcript.run-20260530-102304.packet-0003.accepted_result_reassignment_race",
+      "runtime_surface": "flowpilot_new.py foreground duty, progress, lifecycle guard, packet assignment, ACK, and repair-accepted-packet command",
+      "runtime_test": "tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_progress_keeps_slow_live_result_wait_in_patrol; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_liveness_failure_allows_replacement_duty; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accepted_packet_rejects_reassignment_and_ack_regression; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_repair_accepted_packet_assignment_race_restores_original_result; tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows",
+      "source_class": "new_runtime_wait_reassignment_race",
+      "trigger_state": "New FlowPilot foreground duty is waiting on an active packet lease, the role may be slow but live, and a later lifecycle pass is tempted to replace or reassign the same packet without current liveness failure evidence."
     }
   ],
   "rows_by_priority": {
-    "P0": 11,
+    "P0": 12,
     "P1": 2
   }
 }

@@ -859,9 +859,9 @@ def invariant_failures(state: State) -> list[str]:
     ):
         failures.append("single-agent role continuity was authorized without the user's single-agent answer")
     if state.runtime_role_bindings_opened and state.runtime_role_assistances_answer != "allow":
-        failures.append("live role bindings were opened without the user's runtime role-assistance answer")
+        failures.append("live role bindings were opened without the user's background-collaboration answer")
     if state.live_agents_active and state.runtime_role_assistances_answer != "allow":
-        failures.append("active live role bindings exist without the user's runtime role-assistance answer")
+        failures.append("active live role bindings exist without the user's background-collaboration answer")
     if (
         state.startup_review_status == "clean"
         and state.runtime_role_assistances_answer == "allow"

@@ -32,12 +32,14 @@ def _recursive_ledger() -> tuple[dict, str]:
     return ledger, packet_id
 
 
-def _open_packets(ledger: dict, kind: str | None = None) -> list[str]:
+def _open_packets(ledger: dict, kind: str | None = None, scope: str | None = None) -> list[str]:
     rows: list[str] = []
     for packet_id, packet in ledger["packets"].items():
         if packet["status"] != "open":
             continue
         if kind and packet["envelope"].get("packet_kind", "task") != kind:
+            continue
+        if scope and packet["envelope"].get("route_scope") != scope:
             continue
         rows.append(packet_id)
     return rows
@@ -78,7 +80,14 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
 
 def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
     node_id = ledger["execution_frontier"]["active_node_id"]
-    task_packet = _open_packets(ledger, "task")[0]
+    if _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard"):
+        prework_packet = _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0]
+        _complete_open_packet(
+            ledger,
+            prework_packet,
+            json.dumps({"decision": "pass", "selected_routes": ["flowguard-development-process-flow"]}),
+        )
+    task_packet = _open_packets(ledger, "task", scope="node")[0]
     _complete_open_packet(ledger, task_packet, f"SEALED_RESULT_BODY: completed {node_id}")
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
@@ -102,7 +111,7 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-001")
         action = runtime.router_next_action(ledger).to_json()
         self.assertEqual(action["action_type"], "lease_agent")
-        self.assertEqual(action["subject_id"], _open_packets(ledger, "task")[0])
+        self.assertEqual(action["subject_id"], _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0])
 
     def test_all_nodes_accept_before_terminal_completion(self) -> None:
         ledger, pm_packet = _recursive_ledger()
@@ -155,6 +164,62 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertTrue(all(node["node_id"].startswith("node-") for node in projection["route_nodes"]))
         self.assertNotIn("SEALED_RESULT_BODY", json.dumps(projection, sort_keys=True))
 
+    def test_final_ledger_uses_current_effective_packets(self) -> None:
+        ledger = runtime.new_ledger("Build target", "Accept only current route work.")
+        ledger["startup_intake"] = {"sealed": True}
+        ledger["recursive_route_execution_required"] = True
+        runtime.create_route(ledger, "Recursive route", ["implementation"])
+        ledger["results"]["planning-result"] = {"result_id": "planning-result", "body": "plan"}
+        runtime.materialize_route_from_planning_result(
+            ledger,
+            "planning-result",
+            nodes=[{"node_id": "node-001", "title": "Implementation"}],
+        )
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Historical node packet",
+            "SEALED_NODE_PACKET",
+            route_node_id="node-001",
+            route_scope="node",
+        )
+        ledger["route_nodes"]["node-001"]["packet_ids"].append(packet_id)
+        ledger["route_nodes"]["node-001"]["status"] = "accepted"
+        ledger["route_nodes"]["node-001"]["accepted_result_id"] = "result-current"
+        ledger["route_nodes"]["node-001"]["prework_flowguard_order_id"] = "prework-flowguard-1"
+        ledger["route_nodes"]["node-001"]["prework_flowguard_repair_generation"] = 0
+        ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
+            "order_id": "prework-flowguard-1",
+            "status": "complete",
+            "decision": "pass",
+        }
+        ledger["execution_frontier"]["active_node_id"] = ""
+        ledger["execution_frontier"]["status"] = "ready_for_final_closure"
+        ledger["packets"][packet_id]["status"] = "result_blocked"
+        ledger["packets"][packet_id]["active_blocker_id"] = "blocker-stale"
+        ledger["active_blockers"]["blocker-stale"] = {
+            "blocker_id": "blocker-stale",
+            "status": "awaiting_recheck",
+            "packet_id": packet_id,
+            "subject_packet_id": packet_id,
+            "repair_target_packet_id": packet_id,
+            "required_recheck_role": "worker",
+            "gate_kind": "task",
+            "route_node_id": "node-001",
+            "blocker_class": "local_artifact",
+        }
+
+        final_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+        projection = runtime.render_console(ledger)
+
+        self.assertEqual(final_ledger["unresolved_count"], 0)
+        self.assertEqual(projection["active_blockers"], [])
+        self.assertEqual(projection["route_stage"], "route_wide_closure")
+
+        ledger["route_nodes"]["node-001"]["status"] = "running"
+        current_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+
+        self.assertIn(f"packet_not_accepted:{packet_id}", current_ledger["unresolved"])
 
 if __name__ == "__main__":
     unittest.main()

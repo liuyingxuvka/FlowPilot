@@ -3,15 +3,15 @@
 Risk Purpose Header:
 - This model uses FlowGuard to review the FlowPilot protocol change that makes
   FlowGuard capability snapshots, PM product/process modeling plans, and
-  officer-owned model families explicit before route execution.
+  FlowGuard operator-owned model families explicit before route execution.
 - It guards against treating FlowGuard as an ordinary optional child skill,
   skipping the startup snapshot, accepting unplanned single-model overcollapse,
-  letting a child-skill manifest substitute for officer model-family coverage,
+  letting a child-skill manifest substitute for FlowGuard operator model-family coverage,
   activating a route before process model-family acceptance, or completing with
   unresolved model coverage.
 - Future agents should run
   `python simulations/run_flowpilot_modeling_coverage_checks.py` before changing
-  PM product modeling, Process/Product FlowGuard officer cards, child-skill
+  PM product modeling, Process/FlowGuard operator product-scope cards, child-skill
   manifest closure, route activation, or final ledger modeling-coverage rules.
 
 Risk intent brief:
@@ -22,7 +22,7 @@ Risk intent brief:
   intentionally skipped.
 - After product model acceptance, PM selects ordinary child skills and maps them
   to product/route evidence.
-- Before process modeling, PM plans process model families so Process Officer
+- Before process modeling, PM plans process model families so FlowGuard operator route-scope
   can prove the process covers the accepted product model family and child-skill
   manifest.
 - Mid-run FlowGuard upgrades are intentionally out of scope; one startup
@@ -102,8 +102,8 @@ class State:
     product_model_families_declared: bool = False
     product_merge_or_skip_reasons_written: bool = False
     product_distinct_risk_families_present: bool = True
-    product_officer_report_references_plan: bool = False
-    product_officer_covers_planned_families: bool = False
+    flowguard_operator_product_scope_report_references_plan: bool = False
+    flowguard_operator_product_scope_covers_planned_families: bool = False
     product_model_family_pm_accepted: bool = False
 
     ordinary_child_skills_selected_after_product_acceptance: bool = False
@@ -116,8 +116,8 @@ class State:
     process_plan_references_child_manifest: bool = False
     process_model_families_declared: bool = False
     process_merge_or_skip_reasons_written: bool = False
-    process_officer_report_references_plan: bool = False
-    process_officer_covers_planned_families: bool = False
+    flowguard_operator_route_scope_report_references_plan: bool = False
+    flowguard_operator_route_scope_covers_planned_families: bool = False
     process_model_family_pm_accepted: bool = False
 
     route_activated: bool = False
@@ -150,8 +150,8 @@ def _base_valid_state() -> State:
         product_model_families_declared=True,
         product_merge_or_skip_reasons_written=True,
         product_distinct_risk_families_present=True,
-        product_officer_report_references_plan=True,
-        product_officer_covers_planned_families=True,
+        flowguard_operator_product_scope_report_references_plan=True,
+        flowguard_operator_product_scope_covers_planned_families=True,
         product_model_family_pm_accepted=True,
         ordinary_child_skills_selected_after_product_acceptance=True,
         child_skill_manifest_maps_to_product_family=True,
@@ -162,8 +162,8 @@ def _base_valid_state() -> State:
         process_plan_references_child_manifest=True,
         process_model_families_declared=True,
         process_merge_or_skip_reasons_written=True,
-        process_officer_report_references_plan=True,
-        process_officer_covers_planned_families=True,
+        flowguard_operator_route_scope_report_references_plan=True,
+        flowguard_operator_route_scope_covers_planned_families=True,
         process_model_family_pm_accepted=True,
         route_activated=True,
         final_ledger_references_modeling_coverage=True,
@@ -211,15 +211,15 @@ def scenario_state(scenario: str) -> State:
             "product_merge_or_skip_reasons_written": False,
         },
         PRODUCT_REPORT_MISSING_PLANNED_FAMILY: {
-            "product_officer_covers_planned_families": False,
+            "flowguard_operator_product_scope_covers_planned_families": False,
         },
         CHILD_SKILL_BEFORE_PRODUCT_MODEL: {
             "product_model_family_pm_accepted": False,
             "ordinary_child_skills_selected_after_product_acceptance": True,
         },
         MANIFEST_ONLY_MODEL_COVERAGE: {
-            "product_officer_covers_planned_families": False,
-            "process_officer_covers_planned_families": False,
+            "flowguard_operator_product_scope_covers_planned_families": False,
+            "flowguard_operator_route_scope_covers_planned_families": False,
             "child_skill_manifest_used_as_model_family_coverage": True,
         },
         MISSING_PROCESS_MODELING_PLAN: {
@@ -231,7 +231,7 @@ def scenario_state(scenario: str) -> State:
             "process_plan_references_child_manifest": False,
         },
         PROCESS_REPORT_MISSING_PLANNED_FAMILY: {
-            "process_officer_covers_planned_families": False,
+            "flowguard_operator_route_scope_covers_planned_families": False,
         },
         ROUTE_ACTIVATED_BEFORE_MODEL_FAMILIES: {
             "product_model_family_pm_accepted": False,
@@ -262,7 +262,7 @@ def modeling_coverage_failures(state: State) -> list[str]:
         failures.append("PM product modeling started without referencing the startup FlowGuard snapshot")
 
     if not state.product_modeling_plan_written:
-        failures.append("PM product modeling plan is missing before Product Officer modeling")
+        failures.append("PM product modeling plan is missing before FlowGuard operator product-scope modeling")
     if state.product_modeling_plan_written and not state.product_plan_references_snapshot:
         failures.append("PM product modeling plan does not reference the startup FlowGuard snapshot")
     if state.product_distinct_risk_families_present and not (
@@ -270,16 +270,16 @@ def modeling_coverage_failures(state: State) -> list[str]:
         or state.product_merge_or_skip_reasons_written
     ):
         failures.append("distinct product risk families were collapsed into one model without merge or skip reasons")
-    if state.product_officer_report_references_plan and not state.product_modeling_plan_written:
-        failures.append("Product Officer report referenced a missing product modeling plan")
+    if state.flowguard_operator_product_scope_report_references_plan and not state.product_modeling_plan_written:
+        failures.append("FlowGuard operator product-scope report referenced a missing product modeling plan")
     if state.product_model_family_pm_accepted and not (
         state.product_modeling_plan_written
-        and state.product_officer_report_references_plan
-        and state.product_officer_covers_planned_families
+        and state.flowguard_operator_product_scope_report_references_plan
+        and state.flowguard_operator_product_scope_covers_planned_families
     ):
         failures.append("PM accepted product model family before planned product families were covered")
-    if not state.product_officer_covers_planned_families:
-        failures.append("Product Officer report omitted a planned product model family")
+    if not state.flowguard_operator_product_scope_covers_planned_families:
+        failures.append("FlowGuard operator product-scope report omitted a planned product model family")
 
     if (
         state.ordinary_child_skills_selected_after_product_acceptance
@@ -287,12 +287,12 @@ def modeling_coverage_failures(state: State) -> list[str]:
     ):
         failures.append("ordinary child skills were selected before PM accepted the product model family")
     if state.child_skill_manifest_used_as_model_family_coverage:
-        failures.append("child-skill manifest was used as officer model-family coverage")
+        failures.append("child-skill manifest was used as FlowGuard operator model-family coverage")
     if state.child_skill_manifest_maps_to_product_family and not state.product_model_family_pm_accepted:
         failures.append("child-skill manifest mapped to a product model family before PM accepted it")
 
     if not state.process_modeling_plan_written:
-        failures.append("PM process modeling plan is missing before Process Officer modeling")
+        failures.append("PM process modeling plan is missing before FlowGuard operator route-scope modeling")
     if state.process_modeling_plan_written and not state.process_plan_references_snapshot:
         failures.append("PM process modeling plan does not reference the startup FlowGuard snapshot")
     if state.process_modeling_plan_written and not (
@@ -305,12 +305,12 @@ def modeling_coverage_failures(state: State) -> list[str]:
         or state.process_merge_or_skip_reasons_written
     ):
         failures.append("process model families were not declared or explicitly merged/skipped")
-    if not state.process_officer_covers_planned_families:
-        failures.append("Process Officer report omitted a planned process model family")
+    if not state.flowguard_operator_route_scope_covers_planned_families:
+        failures.append("FlowGuard operator route-scope report omitted a planned process model family")
     if state.process_model_family_pm_accepted and not (
         state.process_modeling_plan_written
-        and state.process_officer_report_references_plan
-        and state.process_officer_covers_planned_families
+        and state.flowguard_operator_route_scope_report_references_plan
+        and state.flowguard_operator_route_scope_covers_planned_families
     ):
         failures.append("PM accepted process model family before planned process families were covered")
 
@@ -330,7 +330,7 @@ class ModelingCoverageStep:
     """Review one FlowPilot modeling-coverage scenario.
 
     Input x State -> Set(Output x State)
-    reads: startup snapshot, PM product/process modeling plans, officer model
+    reads: startup snapshot, PM product/process modeling plans, FlowGuard operator model
     family reports, child-skill manifest projection, route activation, and
     terminal ledger coverage
     writes: accepted or rejected scenario decision
@@ -416,7 +416,7 @@ INVARIANTS = (
         name="flowpilot_modeling_coverage_plans",
         description=(
             "FlowPilot accepts route execution and closure only after a startup "
-            "FlowGuard snapshot, PM product/process modeling plans, officer "
+            "FlowGuard snapshot, PM product/process modeling plans, FlowGuard operator "
             "model-family reports, child-skill projection, and final coverage "
             "ledger are current for the run."
         ),
@@ -454,11 +454,11 @@ def model_plan() -> dict[str, object]:
         "core_order": [
             "startup FlowGuard capability snapshot",
             "PM Product Modeling Plan",
-            "Product Officer product model family",
+            "FlowGuard operator product-scope product model family",
             "PM accepts product model family",
             "PM child-skill manifest",
             "PM Process Modeling Plan",
-            "Process Officer process model family",
+            "FlowGuard operator route-scope process model family",
             "PM accepts process model family",
             "route execution",
             "final route-wide modeling coverage ledger",

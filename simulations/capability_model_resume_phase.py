@@ -75,7 +75,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="heartbeat_loaded_role_binding_memory",
-            action="continuation turn loads all six compact role memory packets before restoring or replacing runtime responsibilities",
+            action="continuation turn loads all runtime roles compact role memory packets before restoring or replacing runtime responsibilities",
             heartbeat_loaded_role_binding_memory=True,
         )
         return
@@ -83,28 +83,28 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
     if _route_scaffold_ready(state) and not state.heartbeat_host_rehydrate_requested:
         yield _step(
             state,
-            label="heartbeat_host_spawn_or_rehydrate_six_roles",
+            label="heartbeat_host_spawn_or_rehydrate_runtime_roles",
             action="router asks the host to restore or open all runtime-requested roles before PM resume",
             heartbeat_host_rehydrate_requested=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_restored_crew:
+    if _route_scaffold_ready(state) and not state.heartbeat_restored_runtime_roles:
         yield _step(
             state,
             label="heartbeat_restored_required_role_binding_coverage",
             action="continuation turn restores live runtime responsibilities when available and prepares memory-seeded replacements otherwise",
-            heartbeat_restored_crew=True,
+            heartbeat_restored_runtime_roles=True,
             replacement_roles_seeded_from_memory=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_rehydrated_crew:
+    if _route_scaffold_ready(state) and not state.heartbeat_rehydrated_runtime_roles:
         yield _step(
             state,
             label="heartbeat_rehydrated_required_role_binding_coverage",
             action="rehydrate the six FlowPilot roles from role memory packets before asking the project manager for the next capability runway",
-            heartbeat_rehydrated_crew=True,
+            heartbeat_rehydrated_runtime_roles=True,
         )
         return
 
@@ -180,7 +180,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="continuation_resume_ready_checked",
-            action="check automated heartbeat health when supported, or check manual-resume state/frontier/crew-memory readiness when no real wakeup exists",
+            action="check automated heartbeat health when supported, or check manual-resume state/frontier/role-binding-memory readiness when no real wakeup exists",
             heartbeat_health_checked=True,
         )
         return

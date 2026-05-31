@@ -18,6 +18,21 @@
     "route_sign_review": ".flowpilot/runs/<run-id>/diagrams/user-flow-diagram-review.json"
   },
   "purpose": "Written at node entry after the current-node FlowPilot Route Sign has been refreshed, visibly displayed, and the PM has rechecked this node against the run's highest-achievable product target. It turns this node's concrete obligations and inherited root high-risk requirements into experiments, checks, fixtures, and evidence paths before implementation or node closure.",
+  "node_context_package": {
+    "schema_version": "black_box_flowpilot.node_context_package.v1",
+    "node_id": "<node-id>",
+    "repair_generation": 0,
+    "purpose": "<why-this-node-exists-now-and-what-it-must-achieve>",
+    "acceptance_criteria": [],
+    "relevant_references": [],
+    "evidence_targets": [],
+    "inspection_targets": [],
+    "known_risks": [],
+    "flowguard_targets": [],
+    "reviewer_starting_points": [],
+    "minimum_starting_context_not_boundary": true,
+    "sealed_body_boundary": "references_only_authorized_runtime_open_required"
+  },
   "requirement_traceability": {
     "schema_version": "flowpilot.node_requirement_traceability.v1",
     "source_route_node_id": "<node-id>",
@@ -119,7 +134,7 @@
         "applies_to_this_node": true,
         "status_for_this_node": "<complete_here|complete_later|not_applicable|waived|blocked>",
         "required_artifact_path": "<path-or-null>",
-        "required_reviewer_or_officer_gate_id": "<gate-id-or-null>",
+        "required_reviewer_or_flowguard_gate_id": "<gate-id-or-null>",
         "waiver_reason": "<reason-or-null>"
       }
     ]
@@ -148,7 +163,7 @@
     {
       "binding_id": "<skill-name>:<role>:<context>:<output-or-gate-id>",
       "source_child_skill_gate_manifest_binding_id": "<binding-id>",
-      "used_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|followup_officer>",
+      "used_by_role": "<project_manager|human_like_reviewer|flowguard_operator|worker|followup_operator>",
       "use_context": "<planning|route_design|acceptance_writing|execution|review|modeling|validation|followup>",
       "source_skill": "<skill-name>",
       "source_path": "<path-to-SKILL.md>",
@@ -158,14 +173,14 @@
       "must_open_source_skill": true,
       "result_evidence_required": true,
       "evidence_section": "Role Skill Use Evidence",
-      "reviewer_or_checker_role": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+      "reviewer_or_checker_role": "<human_like_reviewer|project_manager|flowguard_operator>",
       "self_attestation_allowed": false
     }
   ],
   "work_packet_projection": [
     {
       "packet_id_or_slice": "<packet-id-or-slice>",
-      "recipient_role": "<worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+      "recipient_role": "<worker|flowguard_operator>",
       "covers_requirement_ids": [],
       "inherited_standard_ids": [],
       "role_skill_use_binding_ids": [],
@@ -213,10 +228,10 @@
       "expected_observation": "<expected-result>",
       "actual_observation": "<filled-after-run-or-null>",
       "evidence_paths": [],
-      "owner_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|authorized_non_controller>",
-      "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+      "owner_role": "<worker|human_like_reviewer|flowguard_operator|authorized_non_controller>",
+      "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
       "worker_report_only_allowed": false,
-      "reviewer_or_officer_direct_check_required": true,
+      "reviewer_or_flowguard_operator_direct_check_required": true,
       "status": "<planned|passed|blocked|superseded>"
     }
   ],

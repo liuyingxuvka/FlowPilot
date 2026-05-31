@@ -84,7 +84,7 @@ def _root_contract_ready(**changes: object) -> State:
         product_architecture_draft_written=True,
         product_architecture_modelability_card_delivered=True,
         product_architecture_modelability_passed=True,
-        product_architecture_officer_result_ledger_checked=True,
+        product_architecture_flowguard_operator_result_ledger_checked=True,
         product_architecture_challenge_card_delivered=True,
         product_architecture_reviewer_challenged=True,
         pm_root_contract_card_delivered=True,
@@ -312,14 +312,14 @@ def hazard_states() -> dict[str, State]:
             research_worker_result_ledger_checked=True,
             research_reviewer_passed=True,
         ),
-        "officer_result_without_ledger_check": _ready(
+        "flowguard_operator_result_without_ledger_check": _ready(
             pm_material_understanding_card_delivered=True,
             material_understanding_written=True,
             pm_product_architecture_card_delivered=True,
             product_architecture_draft_written=True,
             product_architecture_modelability_card_delivered=True,
             product_architecture_modelability_passed=True,
-            product_architecture_officer_result_ledger_checked=False,
+            product_architecture_flowguard_operator_result_ledger_checked=False,
         ),
         "product_architecture_before_research_absorbed": _ready(
             material_review="research_required",

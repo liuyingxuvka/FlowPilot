@@ -5,14 +5,14 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work, meaning continue the work assigned by this card, and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Reviewer Startup Fact Check
 
 ## Role Capability Reminder
 
-- Do not contact workers or officers directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
+- Do not contact workers or FlowGuard operators directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
 - Classify findings as hard blockers for this gate, future requirements, or nonblocking notes; only hard current-gate failures should block this gate.
 
 
@@ -39,7 +39,7 @@ startup. Do not rely on Controller summaries or PM intent. Inspect the current
 run files and report only factual findings.
 
 The router writes `startup/startup_mechanical_audit.json` and a
-`router_owned_check_proof` sidecar for recomputable startup checks. Treat that
+`router_owned_check_proof` companion proof for recomputable startup checks. Treat that
 audit as proof only for mechanical file/state checks. It does not prove that an
 AI honestly captured facts outside the host-visible run record, that live
 agents are fresh, that a host heartbeat is really bound to this run, or that
@@ -69,7 +69,7 @@ Required checks:
 - `.flowpilot/index.json` includes the current run id;
 - the router-dispatched FlowPilot role bindings are fresh for this run or have
   explicit same-task rehydration/fallback evidence;
-- role binding records, when host-supported role mechanisms are used, show the
+- role binding records, when host-supported isolated role surfaces are used, show the
   strongest-available model policy and highest-available reasoning-effort
   policy rather than foreground/Controller model inheritance;
 - continuation mode is recorded from the user's startup answer and matched to

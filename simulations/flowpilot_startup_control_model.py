@@ -55,7 +55,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 RESPONSIBLE_REPAIR_ROLES = frozenset(
-    {"project_manager", "human_like_reviewer", "worker_a", "worker_b"}
+    {"project_manager", "human_like_reviewer", "worker", "worker"}
 )
 
 REQUIRED_LABELS = (
@@ -669,14 +669,14 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return lifecycle + (
             Transition(
                 "router_routes_sealed_repair_packet_to_responsible_role",
-                "worker_a",
+                "worker",
                 replace(
                     state,
-                    holder="worker_a",
+                    holder="worker",
                     repair_packet_registered=True,
                     repair_packet_sealed=True,
-                    repair_packet_responsible_role="worker_a",
-                    repair_packet_recipient="worker_a",
+                    repair_packet_responsible_role="worker",
+                    repair_packet_recipient="worker",
                     repair_packet_routed_to_role=True,
                 ),
             ),
@@ -1309,15 +1309,15 @@ def hazard_states() -> dict[str, State]:
         "unsealed_repair_packet": _startup_passed(
             router_error_seen=True,
             repair_packet_registered=True,
-            repair_packet_responsible_role="worker_a",
-            repair_packet_recipient="worker_a",
+            repair_packet_responsible_role="worker",
+            repair_packet_recipient="worker",
             repair_packet_routed_to_role=True,
         ),
         "repair_packet_to_controller": _startup_passed(
             router_error_seen=True,
             repair_packet_registered=True,
             repair_packet_sealed=True,
-            repair_packet_responsible_role="worker_a",
+            repair_packet_responsible_role="worker",
             repair_packet_recipient="controller",
             repair_packet_routed_to_role=True,
         ),
@@ -1325,8 +1325,8 @@ def hazard_states() -> dict[str, State]:
             router_error_seen=True,
             repair_packet_registered=True,
             repair_packet_sealed=True,
-            repair_packet_responsible_role="worker_a",
-            repair_packet_recipient="worker_a",
+            repair_packet_responsible_role="worker",
+            repair_packet_recipient="worker",
             repair_packet_routed_to_role=True,
             controller_knows_repair_details=True,
         ),

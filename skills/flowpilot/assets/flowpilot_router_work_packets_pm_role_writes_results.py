@@ -122,7 +122,7 @@ def _write_role_work_result_returned(router: ModuleType, project_root: Path, run
     record['result_body_hash'] = result.get('result_body_hash')
     record['result_returned_at'] = utc_now()
     index['active_request_id'] = request_id
-    router._record_officer_lifecycle_result_returned(project_root, run_root, run_state, record, result)
+    router._record_flowguard_operator_lifecycle_result_returned(project_root, run_root, run_state, record, result)
     router._write_pm_role_work_request_index(run_root, index)
     router._mark_parallel_batch_results_joined(project_root, run_root, run_state, 'pm_role_work')
 

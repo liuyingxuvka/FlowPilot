@@ -2,13 +2,13 @@
 
 ## Scope
 
-Upgrade FlowPilot route governance from "PM drafts a route and officers review
+Upgrade FlowPilot route governance from "PM drafts a route and FlowGuard operators review
 it" to a model-driven loop:
 
 - PM owns product and route decisions.
-- Product FlowGuard Officer turns PM intent into product behavior models.
+- FlowGuard operator turns PM intent into product behavior models.
 - Reviewer challenges product models before route drafting.
-- Process FlowGuard Officer turns route drafts into serial execution models.
+- FlowGuard operator turns route drafts into serial execution models.
 - Reviewer challenges route/process models before activation.
 - Every non-leaf node repeats the same local product/process/reviewer loop.
 - PM may promote a too-large leaf into a parent node and split it deeper.
@@ -22,10 +22,10 @@ This plan does not include remote GitHub publication.
 
 | Step | Optimization point | Concrete change | Primary files |
 | --- | --- | --- | --- |
-| 1 | Product model as first-class artifact | Product Officer must write a real product behavior model, not only a pass report. PM must explicitly accept or request rebuild. | `cards/officers/product_architecture_modelability.md`, `cards/phases/pm_product_architecture.md`, `contract_index.json` |
+| 1 | Product model as first-class artifact | FlowGuard operator product-scope must write a real product behavior model, not only a pass report. PM must explicitly accept or request rebuild. | `cards/flowguard_operator/product_architecture_modelability.md`, `cards/phases/pm_product_architecture.md`, `contract_index.json` |
 | 2 | Product reviewer gate before route | Reviewer challenges the product model before PM can draft the route. | `cards/reviewer/product_architecture_challenge.md`, `flowpilot_router.py` |
 | 3 | Route draft depends on accepted product model | PM route skeleton must cite the accepted and reviewer-challenged product model. | `cards/phases/pm_route_skeleton.md`, route templates |
-| 4 | Process model as first-class artifact | Process Officer must write a serial execution model and leaf decomposition audit. | `cards/officers/route_process_check.md`, `contract_index.json`, route templates |
+| 4 | Process model as first-class artifact | FlowGuard operator route-scope must write a serial execution model and leaf decomposition audit. | `cards/flowguard_operator/route_process_check.md`, `contract_index.json`, route templates |
 | 5 | PM accepts process model | PM must approve or request rebuild of the serial execution model before route product check/reviewer challenge. | `flowpilot_router.py`, new PM decision contract/card text |
 | 6 | Reviewer route challenge after process model | Reviewer challenges serial coverage, leaf size, repair returns, and closure safety. | `cards/reviewer/route_challenge.md` |
 | 7 | Recursive non-leaf entry loop | Every non-leaf node runs local product modeling, PM acceptance, reviewer product challenge, process modeling, PM acceptance, and reviewer route challenge before child execution. | `pm_node_acceptance_plan.md`, `route_process_check.md`, `route_challenge.md`, `flowpilot_router.py` |
@@ -56,10 +56,10 @@ This plan does not include remote GitHub publication.
 
 | Risk id | Possible bug from this upgrade | FlowGuard expectation | Runtime/test expectation |
 | --- | --- | --- | --- |
-| R1 | PM drafts route before Product Officer wrote product model. | Model rejects route drafting before product model. | Router blocks `pm.route_skeleton`. |
+| R1 | PM drafts route before FlowGuard operator product-scope wrote product model. | Model rejects route drafting before product model. | Router blocks `pm.route_skeleton`. |
 | R2 | Product model exists but PM did not accept it. | Model rejects route drafting before PM product model decision. | Router requires `pm_product_model_decision.json`. |
 | R3 | Reviewer product challenge is skipped. | Model rejects route drafting before product reviewer pass. | Router order includes reviewer gate before route skeleton. |
-| R4 | Process Officer only reviews route instead of producing serial model. | Model rejects route activation without process execution model. | Router requires `process_route_execution_model.json`. |
+| R4 | FlowGuard operator route-scope only reviews route instead of producing serial model. | Model rejects route activation without process execution model. | Router requires `process_route_execution_model.json`. |
 | R5 | Process model contains parallel branches as execution truth. | Model rejects non-serial execution model. | Process artifact has one canonical `serial_execution_order`. |
 | R6 | A terminal leaf hides multiple independent tasks. | Model rejects leaf readiness. | Leaf audit blocks hidden parallel/multi-worker leaves. |
 | R7 | PM cannot split an oversized leaf discovered at node entry. | Model requires leaf promotion path. | Router supports leaf-to-parent promotion and invalidates stale approvals. |

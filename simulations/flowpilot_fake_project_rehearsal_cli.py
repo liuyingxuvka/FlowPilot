@@ -150,6 +150,33 @@ def assert_public_projection_is_sealed(projection: dict[str, Any]) -> None:
         ensure(packet.get("sealed_body_hidden") is True, f"packet body is not marked hidden: {packet}")
 
 
+def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
+    node_id = str(packet.get("route_node_id") or "")
+    return json.dumps(
+        {
+            "route_node_id": node_id,
+            "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
+            "repair_policy": "same_node_repair_default",
+            "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
+            "node_context_package": {
+                "node_id": node_id,
+                "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
+                "acceptance_criteria": [
+                    "worker result satisfies the node packet",
+                    "pre-work and post-result FlowGuard evidence are current",
+                    "reviewer independently challenges the node outcome",
+                ],
+                "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
+                "evidence_targets": ["worker result body", "FlowGuard report", "reviewer report", "validation output"],
+                "inspection_targets": ["changed files", "command output", "model artifacts", "runtime ledger"],
+                "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
+                "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
+                "reviewer_starting_points": ["worker result", "node context package", "FlowGuard reports", "validation evidence"],
+            },
+        }
+    )
+
+
 def complete_full_packet_chain(
     root: Path,
     command_log: list[dict[str, Any]],
@@ -205,6 +232,8 @@ def complete_full_packet_chain(
                     "3. Validate tests, evidence, and route-wide closure",
                 ]
             )
+        elif packet_kind == "task" and packet.get("route_scope") == "node_acceptance_plan":
+            body = _node_acceptance_plan_body(packet)
         elif packet_kind == "pm_disposition":
             pm_disposition_count += 1
             decision = first_pm_disposition_decision if pm_disposition_count == 1 else "accept"
@@ -339,6 +368,8 @@ def complete_planning_chain_only(
                     "3. Validate tests, evidence, and route-wide closure",
                 ]
             )
+        elif packet_kind == "task" and route_scope == "node_acceptance_plan":
+            body = _node_acceptance_plan_body(packet)
         else:
             body = f"SEALED_RESULT_BODY: fake planning {packet_kind}"
         current_payload = run_cli(

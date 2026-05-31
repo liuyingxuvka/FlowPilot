@@ -3,10 +3,10 @@
 Risk purpose:
 - Uses FlowGuard (https://github.com/liuyingxuvka/FlowGuard) to review the
   FlowPilot runtime-closure pass.
-- Guards against officer reports bypassing PM packet requests, old continuation
+- Guards against FlowGuard operator reports bypassing PM packet requests, old continuation
   state becoming current authority, final user reports substituting for
   terminal closure, and stale route-display projections overriding route state.
-- Run or update this model when changing officer request/report routing,
+- Run or update this model when changing FlowGuard operator request/report routing,
   continuation import/quarantine behavior, terminal summary/user-report
   writing, or route-display refresh semantics.
 - Companion command:
@@ -22,7 +22,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 SCENARIOS = (
-    "officer_authorized_packet",
+    "flowguard_operator_authorized_packet",
     "continuation_quarantine",
     "closure_user_report",
     "route_display_refresh",
@@ -44,11 +44,11 @@ class State:
     status: str = "new"  # new | running | complete
     scenario: str = "unset"
 
-    pm_officer_request_packet_recorded: bool = False
-    officer_report_router_event_authorized: bool = False
-    officer_report_body_sealed_from_controller: bool = False
-    officer_report_relayed_to_pm: bool = False
-    officer_gate_advanced: bool = False
+    pm_flowguard_operator_request_packet_recorded: bool = False
+    flowguard_operator_report_router_event_authorized: bool = False
+    flowguard_operator_report_body_sealed_from_controller: bool = False
+    flowguard_operator_report_relayed_to_pm: bool = False
+    flowguard_operator_gate_advanced: bool = False
 
     prior_state_imported: bool = False
     quarantine_recorded: bool = False
@@ -78,16 +78,16 @@ class RuntimeClosureStep:
 
     name = "RuntimeClosureStep"
     input_description = "one FlowPilot runtime-closure step"
-    output_description = "officer, quarantine, closure-report, or display-refresh transition"
+    output_description = "FlowGuard operator, quarantine, closure-report, or display-refresh transition"
     reads = (
-        "pm role-work/officer request index",
+        "pm role-work/FlowGuard operator request index",
         "packet/result envelopes",
         "current-run quarantine records",
         "terminal closure authorities",
         "route/frontier/display files",
     )
     writes = (
-        "officer report completion state",
+        "FlowGuard operator report completion state",
         "current-run quarantine ledger",
         "final user report artifacts",
         "display refresh artifacts",
@@ -113,24 +113,24 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
             for scenario in SCENARIOS
         )
 
-    if state.scenario == "officer_authorized_packet":
-        if not state.pm_officer_request_packet_recorded:
-            return (("pm_records_officer_request_packet", replace(state, pm_officer_request_packet_recorded=True)),)
-        if not state.officer_report_router_event_authorized:
-            return (("router_authorizes_officer_report_event", replace(state, officer_report_router_event_authorized=True)),)
-        if not state.officer_report_body_sealed_from_controller:
+    if state.scenario == "flowguard_operator_authorized_packet":
+        if not state.pm_flowguard_operator_request_packet_recorded:
+            return (("pm_records_flowguard_operator_request_packet", replace(state, pm_flowguard_operator_request_packet_recorded=True)),)
+        if not state.flowguard_operator_report_router_event_authorized:
+            return (("router_authorizes_flowguard_operator_report_event", replace(state, flowguard_operator_report_router_event_authorized=True)),)
+        if not state.flowguard_operator_report_body_sealed_from_controller:
             return (
                 (
-                    "controller_relays_officer_envelope_without_body",
-                    replace(state, officer_report_body_sealed_from_controller=True),
+                    "controller_relays_flowguard_operator_envelope_without_body",
+                    replace(state, flowguard_operator_report_body_sealed_from_controller=True),
                 ),
             )
-        if not state.officer_report_relayed_to_pm:
-            return (("router_relays_officer_report_to_pm", replace(state, officer_report_relayed_to_pm=True)),)
+        if not state.flowguard_operator_report_relayed_to_pm:
+            return (("router_relays_flowguard_operator_report_to_pm", replace(state, flowguard_operator_report_relayed_to_pm=True)),)
         return (
             (
-                "pm_advances_gate_from_authorized_officer_report",
-                replace(state, officer_gate_advanced=True, status="complete"),
+                "pm_advances_gate_from_authorized_flowguard_operator_report",
+                replace(state, flowguard_operator_gate_advanced=True, status="complete"),
             ),
         )
 
@@ -176,12 +176,12 @@ def next_states(state: State) -> tuple[tuple[str, State], ...]:
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
 
-    if state.officer_gate_advanced and not state.pm_officer_request_packet_recorded:
-        failures.append("officer gate advanced without PM request packet")
-    if state.officer_gate_advanced and not state.officer_report_router_event_authorized:
-        failures.append("officer gate advanced without router-authorized report event")
-    if state.officer_report_relayed_to_pm and not state.officer_report_body_sealed_from_controller:
-        failures.append("officer report relay exposed sealed body to Controller")
+    if state.flowguard_operator_gate_advanced and not state.pm_flowguard_operator_request_packet_recorded:
+        failures.append("FlowGuard operator gate advanced without PM request packet")
+    if state.flowguard_operator_gate_advanced and not state.flowguard_operator_report_router_event_authorized:
+        failures.append("FlowGuard operator gate advanced without router-authorized report event")
+    if state.flowguard_operator_report_relayed_to_pm and not state.flowguard_operator_report_body_sealed_from_controller:
+        failures.append("FlowGuard operator report relay exposed sealed body to Controller")
 
     if state.imported_state_used_as_current_authority and not state.quarantine_recorded:
         failures.append("imported prior state became authority without quarantine")
@@ -221,9 +221,9 @@ def _invariant(name: str, expected: str) -> Invariant:
 
 
 INVARIANTS = (
-    _invariant("officer_requires_pm_request", "officer gate advanced without PM request packet"),
-    _invariant("officer_requires_router_authorization", "officer gate advanced without router-authorized report event"),
-    _invariant("officer_body_stays_sealed", "officer report relay exposed sealed body to Controller"),
+    _invariant("flowguard_operator_requires_pm_request", "FlowGuard operator gate advanced without PM request packet"),
+    _invariant("flowguard_operator_requires_router_authorization", "FlowGuard operator gate advanced without router-authorized report event"),
+    _invariant("flowguard_operator_body_stays_sealed", "FlowGuard operator report relay exposed sealed body to Controller"),
     _invariant("prior_state_requires_quarantine", "imported prior state became authority without quarantine"),
     _invariant("prior_control_state_read_only", "imported control state was not converted to read-only evidence"),
     _invariant("old_agent_ids_are_audit_only", "old agent id became current authority"),
@@ -236,23 +236,23 @@ INVARIANTS = (
 
 
 HAZARD_STATES = {
-    "officer_direct_event_without_request": replace(
+    "flowguard_operator_direct_event_without_request": replace(
         initial_state(),
         status="complete",
-        scenario="officer_authorized_packet",
-        officer_report_router_event_authorized=True,
-        officer_report_body_sealed_from_controller=True,
-        officer_report_relayed_to_pm=True,
-        officer_gate_advanced=True,
+        scenario="flowguard_operator_authorized_packet",
+        flowguard_operator_report_router_event_authorized=True,
+        flowguard_operator_report_body_sealed_from_controller=True,
+        flowguard_operator_report_relayed_to_pm=True,
+        flowguard_operator_gate_advanced=True,
     ),
-    "officer_invented_event": replace(
+    "flowguard_operator_invented_event": replace(
         initial_state(),
         status="complete",
-        scenario="officer_authorized_packet",
-        pm_officer_request_packet_recorded=True,
-        officer_report_body_sealed_from_controller=True,
-        officer_report_relayed_to_pm=True,
-        officer_gate_advanced=True,
+        scenario="flowguard_operator_authorized_packet",
+        pm_flowguard_operator_request_packet_recorded=True,
+        flowguard_operator_report_body_sealed_from_controller=True,
+        flowguard_operator_report_relayed_to_pm=True,
+        flowguard_operator_gate_advanced=True,
     ),
     "prior_state_reused_without_quarantine": replace(
         initial_state(),
@@ -303,8 +303,8 @@ HAZARD_STATES = {
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "officer_direct_event_without_request": "officer gate advanced without PM request packet",
-    "officer_invented_event": "officer gate advanced without router-authorized report event",
+    "flowguard_operator_direct_event_without_request": "FlowGuard operator gate advanced without PM request packet",
+    "flowguard_operator_invented_event": "FlowGuard operator gate advanced without router-authorized report event",
     "prior_state_reused_without_quarantine": "imported prior state became authority without quarantine",
     "old_agent_id_reused_as_current": "old agent id became current authority",
     "final_report_before_pm_closure": "final user report written before clean terminal closure",
@@ -315,12 +315,12 @@ HAZARD_EXPECTED_FAILURES = {
 
 
 REQUIRED_LABELS = (
-    "select_officer_authorized_packet",
-    "pm_records_officer_request_packet",
-    "router_authorizes_officer_report_event",
-    "controller_relays_officer_envelope_without_body",
-    "router_relays_officer_report_to_pm",
-    "pm_advances_gate_from_authorized_officer_report",
+    "select_flowguard_operator_authorized_packet",
+    "pm_records_flowguard_operator_request_packet",
+    "router_authorizes_flowguard_operator_report_event",
+    "controller_relays_flowguard_operator_envelope_without_body",
+    "router_relays_flowguard_operator_report_to_pm",
+    "pm_advances_gate_from_authorized_flowguard_operator_report",
     "select_continuation_quarantine",
     "current_run_imports_prior_evidence",
     "current_run_records_quarantine_disposition",

@@ -61,12 +61,10 @@ def _event_wait_role(event: str, meta: dict[str, str]) -> str:
         return "project_manager"
     if event.startswith("reviewer_") or event.startswith("current_node_reviewer_"):
         return "human_like_reviewer"
-    if event.startswith("product_officer_"):
-        return "product_flowguard_officer"
-    if event.startswith("process_officer_"):
-        return "process_flowguard_officer"
+    if event.startswith("flowguard_operator_"):
+        return "flowguard_operator"
     if event.startswith("worker_"):
-        return "worker_a"
+        return "worker"
     if event.startswith("host_"):
         return "host"
     if event.startswith("controller_") or event in {"capability_evidence_synced"}:

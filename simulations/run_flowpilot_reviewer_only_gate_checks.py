@@ -30,23 +30,23 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "root_freeze_without_reviewer": "PM froze root contract before Reviewer pass",
-    "root_freeze_waits_for_product_officer": "Reviewer-only root contract flow still required Product Officer",
-    "root_freeze_requires_product_officer_artifact": "root contract freeze still required Product Officer artifact",
-    "root_product_officer_card_emitted": "Reviewer-only root contract flow emitted removed Product Officer card",
+    "root_freeze_waits_for_flowguard_operator_product_scope": "Reviewer-only root contract flow still required FlowGuard operator product-scope",
+    "root_freeze_requires_flowguard_operator_product_scope_artifact": "root contract freeze still required FlowGuard operator product-scope artifact",
+    "root_flowguard_operator_product_scope_card_emitted": "Reviewer-only root contract flow emitted removed FlowGuard operator product-scope card",
     "child_approval_without_reviewer": "PM approved child-skill manifest before Reviewer pass",
-    "child_approval_waits_for_process_officer": "Reviewer-only child-skill flow still required Process Officer",
-    "child_approval_waits_for_product_officer": "Reviewer-only child-skill flow still required Product Officer",
-    "child_approval_requires_process_officer_artifact": "child-skill approval still required Process Officer artifact",
-    "child_approval_requires_product_officer_artifact": "child-skill approval still required Product Officer artifact",
-    "child_process_officer_card_emitted": "Reviewer-only child-skill flow emitted removed Process Officer card",
-    "child_product_officer_card_emitted": "Reviewer-only child-skill flow emitted removed Product Officer card",
+    "child_approval_waits_for_flowguard_operator_route_scope": "Reviewer-only child-skill flow still required FlowGuard operator route-scope",
+    "child_approval_waits_for_flowguard_operator_product_scope": "Reviewer-only child-skill flow still required FlowGuard operator product-scope",
+    "child_approval_requires_flowguard_operator_route_scope_artifact": "child-skill approval still required FlowGuard operator route-scope artifact",
+    "child_approval_requires_flowguard_operator_product_scope_artifact": "child-skill approval still required FlowGuard operator product-scope artifact",
+    "child_flowguard_operator_route_scope_card_emitted": "Reviewer-only child-skill flow emitted removed FlowGuard operator route-scope card",
+    "child_flowguard_operator_product_scope_card_emitted": "Reviewer-only child-skill flow emitted removed FlowGuard operator product-scope card",
     "root_reviewer_omits_verifiability": "Reviewer root contract pass omitted verifiability/testability check",
     "root_reviewer_omits_proof_obligations": "Reviewer root contract pass omitted proof obligation check",
     "child_reviewer_omits_skill_standards": "Reviewer child-skill pass omitted skill standard contract check",
     "child_reviewer_omits_evidence_obligations": "Reviewer child-skill pass omitted evidence obligation check",
     "pm_consultation_tail_required": "PM consultation was reintroduced as a required gate tail",
     "role_body_boundary_broken": "Reviewer-only gate simplification broke role/body boundary isolation",
-    "unsupported_historical_officer_event_handlers_removed": "Reviewer-only gate simplification removed unsupported_historical officer event unsupported_historical",
+    "unsupported_historical_flowguard_operator_event_handlers_removed": "Reviewer-only gate simplification removed unsupported_historical FlowGuard operator event unsupported_historical",
     "route_ready_without_root_freeze": "route became ready before PM froze root contract",
     "route_ready_without_child_manifest_approval": "route became ready before PM approved child-skill manifest",
 }
@@ -56,18 +56,18 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|root={state.pm_root_contract_written},"
         f"{state.root_reviewer_card_emitted},{state.root_reviewer_passed},"
-        f"{state.pm_root_contract_frozen}|root_officer="
-        f"{state.root_product_officer_card_emitted},{state.root_product_officer_required},"
-        f"{state.root_product_officer_artifact_required_for_freeze},"
-        f"{state.root_product_officer_passed}|child={state.pm_child_manifest_written},"
+        f"{state.pm_root_contract_frozen}|root_flowguard_operator="
+        f"{state.root_flowguard_operator_product_scope_card_emitted},{state.root_flowguard_operator_product_scope_required},"
+        f"{state.root_flowguard_operator_product_scope_artifact_required_for_freeze},"
+        f"{state.root_flowguard_operator_product_scope_passed}|child={state.pm_child_manifest_written},"
         f"{state.child_reviewer_card_emitted},{state.child_reviewer_passed},"
-        f"{state.pm_child_manifest_approved}|child_officers="
-        f"{state.child_process_officer_card_emitted},{state.child_process_officer_required},"
-        f"{state.child_process_officer_artifact_required_for_approval},"
-        f"{state.child_process_officer_passed},{state.child_product_officer_card_emitted},"
-        f"{state.child_product_officer_required},"
-        f"{state.child_product_officer_artifact_required_for_approval},"
-        f"{state.child_product_officer_passed}|"
+        f"{state.pm_child_manifest_approved}|child_flowguard_operators="
+        f"{state.child_flowguard_operator_route_scope_card_emitted},{state.child_flowguard_operator_route_scope_required},"
+        f"{state.child_flowguard_operator_route_scope_artifact_required_for_approval},"
+        f"{state.child_flowguard_operator_route_scope_passed},{state.child_flowguard_operator_product_scope_card_emitted},"
+        f"{state.child_flowguard_operator_product_scope_required},"
+        f"{state.child_flowguard_operator_product_scope_artifact_required_for_approval},"
+        f"{state.child_flowguard_operator_product_scope_passed}|"
         f"reviewer_root={state.reviewer_root_checks_user_requirements},"
         f"{state.reviewer_root_checks_verifiability},"
         f"{state.reviewer_root_checks_proof_obligations},"
@@ -79,7 +79,7 @@ def _state_id(state: model.State) -> str:
         f"{state.reviewer_child_checks_skipped_steps},"
         f"{state.reviewer_child_rejects_self_approval}|consult="
         f"{state.pm_consultation_used},{state.pm_consultation_required_for_gate}|"
-        f"compat={state.role_body_boundary_preserved},{state.unsupported_historical_officer_events_preserved}|"
+        f"compat={state.role_body_boundary_preserved},{state.unsupported_historical_flowguard_operator_events_preserved}|"
         f"route={state.route_ready}"
     )
 

@@ -19,17 +19,17 @@ ROLE_CHECKS = {
         "suggestion_ledger": r"PM suggestion|pm_suggestion|suggestion/blocker ledger",
     },
     "reviewer": {
-        "no_direct_role_contact": r"Do not contact workers or officers directly|cannot.*contact.*direct",
+        "no_direct_role_contact": r"Do not contact workers or FlowGuard operators directly|cannot.*contact.*direct",
         "pm_routes_needed_work": r"PM suggestion|PM to route|blocker",
         "finding_classes": r"hard blockers?.*future requirements?.*nonblocking notes?",
     },
-    "officer": {
+    "flowguard_operator": {
         "pm_routes_needed_work": r"structured blocker or PM suggestion|PM suggestion",
         "no_pm_decision": r"Do not approve routes or make PM decisions|PM still owns|PM owns",
     },
     "worker": {
         "packet_scope": r"packet scope|bounded scope|scope",
-        "no_role_decision": r"PM|Reviewer|Officer",
+        "no_role_decision": r"PM|Reviewer|FlowGuard operator",
         "self_check": r"Self-Check|self-check",
     },
 }
@@ -107,9 +107,9 @@ def _role_for_card(card: dict[str, Any]) -> str | None:
         return "pm"
     if audience == "human_like_reviewer" and kind == "reviewer_gate":
         return "reviewer"
-    if kind == "officer_gate":
-        return "officer"
-    if card_id in {"worker.research_report", "worker_a.core", "worker_b.core"}:
+    if audience == "flowguard_operator" and kind == "flowguard_operator_gate":
+        return "flowguard_operator"
+    if card_id in {"worker.research_report", "worker.core"}:
         return "worker"
     return None
 

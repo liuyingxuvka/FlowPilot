@@ -2,7 +2,7 @@
 
 This runtime kit is copied into each new `.flowpilot/runs/<run-id>/` directory.
 It is the only prompt source for formal FlowPilot startup after the bootloader
-loads `flowpilot_router.py`.
+loads `flowpilot_new.py`.
 
 Rules:
 
@@ -12,7 +12,7 @@ Rules:
 - System cards are always `from: system`, `issued_by: router`, and
   `delivered_by: controller`.
 - Role-to-role work uses packet/mail ledgers and sealed bodies.
-- Formal file-backed PM decisions, reviewer reports, officer reports, and
+- Formal file-backed PM decisions, reviewer reports, FlowGuard operator reports, and
   GateDecision bodies use `role_output_runtime.py` for skeleton generation,
   mechanical validation, receipts, ledgers, hashes, and controller-visible
   envelopes.
@@ -29,7 +29,7 @@ Rules:
   `runtime_receipt_ref` metadata. Top-level path/hash envelope shortcuts are
   not current inputs.
 - `quality_pack_catalog.json` is route-quality data. The role-output runtime
-  validates generic `quality_pack_checks` coverage only; reviewer/officer/PM
+  validates generic `quality_pack_checks` coverage only; reviewer/FlowGuard operator/PM
   gates own pack-specific quality judgement.
 - Controller may deliver cards and envelopes, but must not read sealed packet
   or result bodies, and must not read role-output bodies from envelopes.

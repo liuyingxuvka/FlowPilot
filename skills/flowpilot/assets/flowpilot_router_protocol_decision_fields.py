@@ -106,9 +106,9 @@ PM_SUGGESTION_CLOSURE_STATUSES_BY_DISPOSITION = {
     "record_for_flowpilot_maintenance": {"closed"},
 }
 
-PM_SUGGESTION_WORKER_ROLES = {"worker_a", "worker_b"}
+PM_SUGGESTION_WORKER_ROLES = {"worker"}
 
-PM_SUGGESTION_OFFICER_ROLES = {"process_flowguard_officer", "product_flowguard_officer"}
+PM_SUGGESTION_FLOWGUARD_OPERATOR_ROLES = {"flowguard_operator"}
 
 SELF_INTERROGATION_SCOPES = {
     "startup",
@@ -141,8 +141,7 @@ GATE_DECISION_ALLOWED_KINDS = {
 GATE_DECISION_ALLOWED_OWNER_ROLES = {
     "project_manager",
     "human_like_reviewer",
-    "process_flowguard_officer",
-    "product_flowguard_officer",
+    "flowguard_operator",
 }
 
 GATE_DECISION_ALLOWED_RISKS = {
@@ -202,10 +201,8 @@ GATE_DECISION_SEMANTIC_OVERREACH_FIELDS = {
 RUNTIME_ROLE_KEYS = (
     "project_manager",
     "human_like_reviewer",
-    "process_flowguard_officer",
-    "product_flowguard_officer",
-    "worker_a",
-    "worker_b",
+    "flowguard_operator",
+    "worker",
 )
 
 ROLE_CARD_KEYS = ("controller", *RUNTIME_ROLE_KEYS)

@@ -7,34 +7,34 @@ from typing import Any
 ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft': {'flag': 'route_draft_written_by_pm',
                            'requires_flag': 'pm_route_skeleton_card_delivered',
                            'summary': 'PM wrote the route draft from the frozen root contract.'},
- 'process_officer_submits_process_route_model': {'flag': 'process_route_model_submitted',
-                                                 'requires_flag': 'process_officer_route_check_card_delivered',
+ 'flowguard_operator_submits_process_route_model': {'flag': 'process_route_model_submitted',
+                                                 'requires_flag': 'flowguard_operator_route_check_card_delivered',
                                                  'gate_id': 'process_route_model',
                                                  'terminal_gate_outcome': True,
-                                                 'summary': 'Process FlowGuard Officer submitted '
+                                                 'summary': 'FlowGuard operator submitted '
                                                             'the canonical process route model.'},
  'pm_accepts_process_route_model': {'flag': 'pm_process_route_model_accepted',
                                     'requires_flag': 'pm_process_route_model_decision_card_delivered',
-                                    'summary': 'PM accepted the Process FlowGuard serial route '
+                                    'summary': 'PM accepted the FlowGuard serial route '
                                                'execution model before Reviewer route challenge.'},
  'pm_requests_process_route_model_rebuild': {'flag': 'pm_process_route_model_rebuild_requested',
                                              'requires_flag': 'pm_process_route_model_decision_card_delivered',
                                              'summary': 'PM rejected the current process route '
                                                         'model and requested route/model rebuild '
                                                         'before route challenge.'},
- 'process_officer_requests_process_route_model_repair': {'flag': 'process_route_model_repair_required',
-                                                         'requires_flag': 'process_officer_route_check_card_delivered',
+ 'flowguard_operator_requests_process_route_model_repair': {'flag': 'process_route_model_repair_required',
+                                                         'requires_flag': 'flowguard_operator_route_check_card_delivered',
                                                          'gate_id': 'process_route_model',
                                                          'terminal_gate_outcome': True,
-                                                         'summary': 'Process FlowGuard Officer '
+                                                         'summary': 'FlowGuard operator '
                                                                     'requested repair of the '
                                                                     'canonical process route '
                                                                     'model.'},
- 'process_officer_blocks_process_route_model': {'flag': 'process_route_model_blocked',
-                                                'requires_flag': 'process_officer_route_check_card_delivered',
+ 'flowguard_operator_blocks_process_route_model': {'flag': 'process_route_model_blocked',
+                                                'requires_flag': 'flowguard_operator_route_check_card_delivered',
                                                 'gate_id': 'process_route_model',
                                                 'terminal_gate_outcome': True,
-                                                'summary': 'Process FlowGuard Officer blocked the '
+                                                'summary': 'FlowGuard operator blocked the '
                                                            'canonical process route model.'},
  'reviewer_passes_route_check': {'flag': 'reviewer_route_check_passed',
                                  'requires_flag': 'reviewer_route_check_card_delivered',
@@ -44,8 +44,8 @@ ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft':
                                  'summary': 'Reviewer blocked the route challenge.'},
  'pm_activates_reviewed_route': {'flag': 'route_activated_by_pm',
                                  'requires_flag': 'reviewer_route_check_passed',
-                                 'summary': 'PM activated route after Product Officer product '
-                                            'model, Process Officer route model, and Reviewer '
+                                 'summary': 'PM activated route after FlowGuard operator product '
+                                            'model, FlowGuard operator route model, and Reviewer '
                                             'route challenge.'},
  'pm_writes_node_acceptance_plan': {'flag': 'node_acceptance_plan_written',
                                     'requires_flag': 'pm_node_acceptance_plan_card_delivered',
@@ -120,7 +120,7 @@ ROUTE_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_writes_route_draft':
                                         'summary': 'PM recorded a parent/module repair protocol '
                                                    'blocker after parent backward replay repair.'},
  'role_records_gate_decision': {'flag': 'gate_decision_recorded',
-                                'summary': 'A PM, reviewer, or FlowGuard officer recorded a '
+                                'summary': 'A PM, reviewer, or FlowGuard operator recorded a '
                                            'mechanically valid GateDecision.'},
  'pm_completes_current_node_from_reviewed_result': {'flag': 'node_completed_by_pm',
                                                     'requires_flag': 'node_reviewer_passed_result',

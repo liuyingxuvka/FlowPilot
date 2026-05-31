@@ -122,7 +122,7 @@ being split:
   packet records in the packet ledger.
 - Worker-facing packets lacked a clear role-scoped obligation to repair
   in-scope defects before completion, while blanket repair wording would have
-  broken reviewer/officer authority boundaries. The prompt repair adds
+  broken reviewer/FlowGuard operator authority boundaries. The prompt repair adds
   role-specific in-scope worker repair, report/model self-correction, and
   reviewer anti-repair wording with planning-quality model coverage.
 

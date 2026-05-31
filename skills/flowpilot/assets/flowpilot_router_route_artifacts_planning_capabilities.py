@@ -101,8 +101,7 @@ def _validate_selected_child_skills(selected_skills: Any) -> list[dict[str, Any]
     allowed_approvers = {
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
+        "flowguard_operator",
     }
     for skill in selected_skills:
         if not isinstance(skill, dict):
@@ -192,8 +191,8 @@ def _write_child_skill_gate_manifest(project_root: Path, run_root: Path, run_sta
         "selected_skills": selected_skills,
         "approval": {
             "reviewer_passed": False,
-            "process_officer_passed": False,
-            "product_officer_passed": False,
+            "flowguard_operator_process_passed": False,
+            "flowguard_operator_product_passed": False,
             "pm_approved_for_route": False,
         },
         **_role_output_envelope_record_for_mutable_artifact(

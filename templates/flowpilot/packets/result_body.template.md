@@ -18,7 +18,7 @@ recipient_role: <same-as-result-envelope-next_recipient>
 recipient_identity: I completed this as `<completed_by_role>` for this packet result only; the next recipient must read it only as the result envelope recipient.
 allowed_scope: Read and review only this result body, its result envelope, and the source packet evidence after verifying Controller relay and completed_by_role identity.
 forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass Router, hide unresolved issues, or relabel this result.
-required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, officer response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path. Result envelopes land in the Router mailbox; the Router daemon consumes valid evidence on its one-second tick, and result producers do not advance route state directly.
+required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, FlowGuard operator response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path. Result envelopes land in the Router mailbox; the Router daemon consumes valid evidence on its one-second tick, and result producers do not advance route state directly.
 controller_aside: The result envelope may include an optional `controller_aside` for a short Controller-only process/status note. It is not evidence, not a finding, not a recommendation, not an approval, and not a Router event source.
 ---
 
@@ -36,7 +36,7 @@ evidence, findings, recommendations, decisions, approvals, or report details.
 Router preserves the field as metadata and must not use it to satisfy waits or
 derive events.
 
-Before reading this file, reviewer, PM, or officer must verify that
+Before reading this file, reviewer, PM, or FlowGuard operator must verify that
 `result_envelope.json#controller_relay` was delivered by Controller, targets the
 reader role, matches the result envelope hash, and declares that Controller did
 not read or execute this body. If the check fails, do not read this body; return
@@ -59,7 +59,7 @@ the unopened envelope for PM reissue or repair.
 - artifact_refs: <formal-output-or-evidence-paths-and-hashes-or-none>
 - changed_paths: <created-or-edited-paths-or-none>
 - output_contract_id: <packet-envelope-output_contract.contract_id>
-- inspection_notes: <what-PM-reviewer-or-officer-should-inspect-directly>
+- inspection_notes: <what-PM-reviewer-or-FlowGuard operator-should-inspect-directly>
 - pm_suggestion_items: <candidate-items-or-empty-list>
 - consultation_note: <bounded-advice-only-or-not-applicable>
 
@@ -89,7 +89,7 @@ guard classification is `none`.
 
 ## PM Note
 
-For worker or FlowGuard officer packet results, include a short PM-facing note.
+For worker or FlowGuard operator packet results, include a short PM-facing note.
 This note is decision-support, not gate approval and not permission to expand
 scope. For other result types, write `not applicable`.
 
@@ -103,7 +103,7 @@ Use `none` when there are no PM suggestion candidates. Otherwise list candidate
 `pm_suggestion_ledger.jsonl`. Include source role, source output reference,
 summary, classification, authority basis, and evidence references. Do not copy
 sealed body content into the suggestion item. Worker-origin items are advisory
-only and must not use `current_gate_blocker`. FlowGuard officer items may use
+only and must not use `current_gate_blocker`. FlowGuard operator items may use
 `current_gate_blocker` only for formal model-gate findings inside the
 PM-requested model boundary.
 
@@ -153,4 +153,4 @@ Bindings` section says no role skill use bindings apply.
 
 ## Requested Next Recipient
 
-<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>
+<human_like_reviewer|project_manager|flowguard_operator>

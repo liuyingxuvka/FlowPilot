@@ -27,7 +27,7 @@
     "controller_body_reads_forbidden": true
   },
   "completed_at": "<iso-8601-timestamp>",
-  "completed_by_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
+  "completed_by_role": "<worker|human_like_reviewer|flowguard_operator|project_manager>",
   "completed_by_agent_id": "<agent-id-or-single-agent-role-continuity-id>",
   "expected_role_from_packet_envelope": "<packet-envelope-to_role>",
   "completed_role_matches_packet_to_role": false,
@@ -56,9 +56,9 @@
     "completed_by_role": "<same-as-completed_by_role>",
     "required": true
   },
-  "next_recipient": "<project_manager|process_flowguard_officer|product_flowguard_officer>",
+  "next_recipient": "<project_manager|flowguard_operator>",
   "return_to": "controller",
-  "next_holder": "<project_manager|process_flowguard_officer|product_flowguard_officer>",
+  "next_holder": "<project_manager|flowguard_operator>",
   "body_visibility": "sealed_target_role_only",
   "controller_visibility": "envelope_only",
   "controller_relay": {

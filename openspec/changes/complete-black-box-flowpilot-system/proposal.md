@@ -30,7 +30,7 @@ material only.
 - Keep old FlowPilot assets as a source library only: startup panel ideas,
   icon assets, envelope field names, route-sign display logic, install scripts,
   and historical failure cases may be reused when mapped to the new ledger.
-- **BREAKING**: Old `.flowpilot` control state, fixed six-agent startup as a
+- **BREAKING**: Old `.flowpilot` control state, fixed named-agent startup as a
   runtime invariant, old agent ids, stale result artifacts, and compatibility
   aliases cannot act as current authority for the complete system.
 

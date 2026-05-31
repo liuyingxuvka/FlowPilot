@@ -1,7 +1,7 @@
 """FlowGuard model for FlowPilot FlowGuard-first role work orders.
 
 This focused child model checks the new decision-core obligation chain:
-PM creates or cites a FlowGuard Work Order, an Officer returns a current
+PM creates or cites a FlowGuard Work Order, an FlowGuard operator returns a current
 FlowGuard Report, PM accepts or dispositions it, Workers return only
 packet-scoped FlowGuard obligation coverage, Reviewers check report freshness
 and scope before passing gates, and Controller remains status-only.
@@ -44,9 +44,9 @@ class State:
     report_progress_only: bool = False
     report_pm_accepted: bool = False
 
-    officer_answered_work_order: bool = False
-    officer_approved_gate: bool = False
-    officer_mutated_route: bool = False
+    flowguard_operator_answered_work_order: bool = False
+    flowguard_operator_approved_gate: bool = False
+    flowguard_operator_mutated_route: bool = False
 
     worker_obligations_assigned: bool = False
     worker_returned_packet_scoped_coverage: bool = False
@@ -136,10 +136,10 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
     if state.pm_work_order_written and not state.report_returned:
         return (
             Transition(
-                "officer_returns_current_flowguard_report",
+                "flowguard_operator_returns_current_flowguard_report",
                 replace(
                     state,
-                    officer_answered_work_order=True,
+                    flowguard_operator_answered_work_order=True,
                     report_returned=True,
                     report_scope_matches=True,
                     report_current=True,
@@ -178,8 +178,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM made a non-trivial decision without a FlowGuard Report")
     if state.flowguard_not_required_reason and state.nontrivial_judgement:
         failures.append("PM used flowguard_not_required_reason for non-trivial judgement")
-    if state.report_returned and not state.officer_answered_work_order:
-        failures.append("FlowGuard report was not tied to an Officer work-order answer")
+    if state.report_returned and not state.flowguard_operator_answered_work_order:
+        failures.append("FlowGuard report was not tied to an FlowGuard operator work-order answer")
     if state.report_pm_accepted and not state.report_scope_matches:
         failures.append("PM accepted a wrongly scoped FlowGuard report")
     if state.report_pm_accepted and not state.report_current:
@@ -188,10 +188,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM accepted progress-only FlowGuard evidence")
     if state.report_pm_accepted and not state.report_skipped_checks_dispositioned:
         failures.append("PM accepted skipped FlowGuard checks without disposition")
-    if state.officer_approved_gate:
-        failures.append("Officer used FlowGuard report to approve a gate")
-    if state.officer_mutated_route:
-        failures.append("Officer used FlowGuard report to mutate the route")
+    if state.flowguard_operator_approved_gate:
+        failures.append("FlowGuard operator used FlowGuard report to approve a gate")
+    if state.flowguard_operator_mutated_route:
+        failures.append("FlowGuard operator used FlowGuard report to mutate the route")
     if state.worker_returned_packet_scoped_coverage and not state.worker_obligations_assigned:
         failures.append("Worker returned FlowGuard coverage without assigned obligations")
     if state.worker_mutated_route:
@@ -230,7 +230,7 @@ INVARIANTS = (
         name="flowpilot_flowguard_work_order_role_chain",
         description=(
             "FlowPilot may use FlowGuard as the decision core only when PM owns "
-            "the work order and acceptance, Officers produce reports without "
+            "the work order and acceptance, FlowGuard operators produce reports without "
             "gate authority, Reviewers check report support, Workers stay "
             "packet-scoped, and Controller remains status-only."
         ),
@@ -263,7 +263,7 @@ def target_success_state() -> State:
         report_current=True,
         report_skipped_checks_dispositioned=True,
         report_pm_accepted=True,
-        officer_answered_work_order=True,
+        flowguard_operator_answered_work_order=True,
         worker_obligations_assigned=True,
         worker_returned_packet_scoped_coverage=True,
         reviewer_checked_report=True,
@@ -283,8 +283,8 @@ def hazard_states() -> dict[str, State]:
         "progress_only_report": replace(base, report_progress_only=True),
         "skipped_checks_not_dispositioned": replace(base, report_skipped_checks_dispositioned=False),
         "unaccepted_report": replace(base, report_pm_accepted=False),
-        "officer_gate_approval": replace(base, officer_approved_gate=True),
-        "officer_route_mutation": replace(base, officer_mutated_route=True),
+        "flowguard_operator_gate_approval": replace(base, flowguard_operator_approved_gate=True),
+        "flowguard_operator_route_mutation": replace(base, flowguard_operator_mutated_route=True),
         "reviewer_bypasses_report_check": replace(base, reviewer_checked_report=False),
         "reviewer_reruns_without_pm_route": replace(base, reviewer_reran_model_without_pm_route=True),
         "worker_route_mutation": replace(base, worker_mutated_route=True),

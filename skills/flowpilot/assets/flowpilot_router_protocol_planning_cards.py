@@ -120,7 +120,7 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "label": "worker_research_report_duty_card_delivered",
         "card_id": "worker.research_report",
         "requires_flag": "research_capability_decision_recorded",
-        "to_role": "worker_a",
+        "to_role": "worker",
     },
     {
         "flag": "reviewer_research_check_card_delivered",
@@ -158,11 +158,11 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "to_role": "project_manager",
     },
     {
-        "flag": "product_officer_product_architecture_card_delivered",
-        "label": "product_officer_product_architecture_modelability_card_delivered",
-        "card_id": "product_officer.product_architecture_modelability",
+        "flag": "flowguard_operator_product_architecture_card_delivered",
+        "label": "flowguard_operator_product_architecture_modelability_card_delivered",
+        "card_id": "flowguard_operator.product_architecture_modelability",
         "requires_flag": "product_architecture_written_by_pm",
-        "to_role": "product_flowguard_officer",
+        "to_role": "flowguard_operator",
     },
     {
         "flag": "pm_product_behavior_model_decision_card_delivered",

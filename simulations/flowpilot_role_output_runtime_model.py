@@ -4,11 +4,11 @@ Risk intent brief:
 - Generalize the packet-runtime "clock-in" idea to formal role outputs while
   preserving sealed-body boundaries and removing Controller as the return
   receiver for completed work.
-- Prevent hand-written PM/reviewer/officer/worker reports from reaching the
+- Prevent hand-written PM/reviewer/FlowGuard operator/worker reports from reaching the
   router with missing required fields, missing explicit empty arrays, wrong
   role ownership, stale hashes, or body leakage in Controller-visible payloads.
 - Keep semantic sufficiency out of the runtime: the runtime validates contract
-  mechanics and records receipts; PM/reviewer/officer judgment still owns
+  mechanics and records receipts; PM/reviewer/FlowGuard operator judgment still owns
   content quality.
 - Avoid turning mechanical metadata gaps into PM repair loops when the original
   role can safely re-submit through the runtime.

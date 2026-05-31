@@ -6720,9 +6720,9 @@
       },
       "read_receipt_replaces_semantic_gate": {
         "detected": true,
-        "expected_failure": "system-card read receipt replaced semantic PM/reviewer/officer judgement",
+        "expected_failure": "system-card read receipt replaced semantic PM/reviewer/FlowGuard operator judgement",
         "failures": [
-          "system-card read receipt replaced semantic PM/reviewer/officer judgement"
+          "system-card read receipt replaced semantic PM/reviewer/FlowGuard operator judgement"
         ],
         "state": {
           "ack_body_empty": true,

@@ -287,7 +287,7 @@ class WorkerOrControllerResult:
                 "controller_origin_result_envelope",
             )
             return
-        completed_by_role = "worker_b" if input_obj.packet_id.startswith("result_wrong_role") else input_obj.expected_executor_role
+        completed_by_role = "human_like_reviewer" if input_obj.packet_id.startswith("result_wrong_role") else input_obj.expected_executor_role
         completed_by_agent_id = completed_by_role if input_obj.packet_id.startswith("agent_id_role_string") else f"agent-{completed_by_role}"
         result_body_hash_valid = not input_obj.packet_id.startswith("result_body_hash_mismatch")
         result_body_stale = input_obj.packet_id.startswith("stale_result_body")
@@ -343,7 +343,7 @@ class ControllerResultRelay:
         "holder_changes",
         "holder_status_updates",
     )
-    input_description = "worker/reviewer/officer result envelope"
+    input_description = "worker/reviewer/FlowGuard operator result envelope"
     output_description = "result envelope relayed by controller or left unsigned for reviewer block"
     idempotency = "Result relay signatures are keyed by packet ID."
 

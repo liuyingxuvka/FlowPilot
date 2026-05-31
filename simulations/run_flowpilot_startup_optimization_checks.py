@@ -18,7 +18,7 @@ RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_startup_optimization
 HAZARD_EXPECTED_FAILURES = {
     "roles_ready_without_core_receipts": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
     "later_core_injection_required": "optimized startup still required a delayed role-core injection gate",
-    "fewer_than_six_roles": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
+    "fewer_than_required_runtime_roles": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
     "heartbeat_before_run_or_roles": "heartbeat was created before current run and role ledger existed",
     "heartbeat_after_reviewer_dispatch": "reviewer startup fact card was dispatched before early heartbeat binding",
     "heartbeat_wrong_cadence": "heartbeat lacked current-run one-minute verified host proof",
@@ -49,9 +49,9 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|answers={state.startup_answers_recorded}|"
         f"run={state.run_shell_created},{state.current_pointer_written},{state.run_index_updated}|"
-        f"roles={state.six_roles_started},{state.role_core_prompts_delivered_at_spawn},"
+        f"roles={state.runtime_roles_started},{state.role_core_prompts_delivered_at_spawn},"
         f"{state.role_core_prompt_hashes_recorded},{state.role_io_protocol_receipts_current},"
-        f"later_core={state.later_core_injection_required},few={state.fewer_than_six_roles_used}|"
+        f"later_core={state.later_core_injection_required},few={state.fewer_than_required_runtime_roles_used}|"
         f"heartbeat={state.scheduled_continuation_requested},{state.heartbeat_created},"
         f"{state.heartbeat_bound_to_current_run},{state.heartbeat_interval_minutes},"
         f"{state.heartbeat_host_proof_verified}|"

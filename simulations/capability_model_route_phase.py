@@ -257,9 +257,9 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="child_skill_conformance_model_checked",
-            action="process FlowGuard officer models and approves child-skill contract conformance before capability work",
+            action="FlowGuard operator models and approves child-skill contract conformance before capability work",
             child_skill_conformance_model_checked=True,
-            child_skill_conformance_model_process_officer_approved=True,
+            child_skill_conformance_model_flowguard_operator_route_scope_approved=True,
         )
         return
 
@@ -267,7 +267,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="strict_gate_obligation_review_model_checked",
-            action="process FlowGuard officer runs the strict gate-obligation model so child-skill review caveats cannot close the active gate",
+            action="route-scope FlowGuard operator runs the strict gate-obligation model so child-skill review caveats cannot close the active gate",
             strict_gate_obligation_review_model_checked=True,
         )
         return
@@ -339,17 +339,17 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="flowguard_process_designed",
-            action="process FlowGuard officer uses FlowGuard as the capability-route process designer",
+            action="route-scope FlowGuard operator uses FlowGuard as the capability-route process designer",
             flowguard_process_design_done=True,
         )
         return
 
-    if not state.flowguard_officer_model_adversarial_probe_done:
+    if not state.flowguard_operator_model_adversarial_probe_done:
         yield _step(
             state,
-            label="flowguard_officer_model_adversarial_probe_done",
-            action="FlowGuard officers run or validate model checks, inspect counterexamples, cite state fields, labels, counts, commands, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, and blindspots before model approvals",
-            flowguard_officer_model_adversarial_probe_done=True,
+            label="flowguard_operator_model_adversarial_probe_done",
+            action="FlowGuard operators run or validate model checks, inspect counterexamples, cite state fields, labels, counts, commands, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, and blindspots before model approvals",
+            flowguard_operator_model_adversarial_probe_done=True,
             flowguard_model_report_risk_tiers_done=True,
             flowguard_model_report_pm_review_agenda_done=True,
             flowguard_model_report_toolchain_recommendations_done=True,
@@ -361,9 +361,9 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="meta_route_checked",
-            action="process FlowGuard officer approves meta-route checks from officer-owned adversarial model evidence",
+            action="route-scope FlowGuard operator approves meta-route checks from FlowGuard operator-owned adversarial model evidence",
             meta_route_checked=True,
-            meta_route_process_officer_approved=True,
+            meta_route_flowguard_operator_route_scope_approved=True,
         )
         return
 
@@ -371,10 +371,10 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="capability_route_checked",
-            action="process FlowGuard officer approves capability-route checks from officer-owned adversarial model evidence",
+            action="route-scope FlowGuard operator approves capability-route checks from FlowGuard operator-owned adversarial model evidence",
             capability_route_version=state.capability_route_version or 1,
             capability_route_checked=True,
-            capability_route_process_officer_approved=True,
+            capability_route_flowguard_operator_route_scope_approved=True,
         )
         return
 
@@ -406,9 +406,9 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="capability_product_function_model_checked",
-            action="product FlowGuard officer approves the capability product-function model from officer-owned adversarial model evidence",
+            action="product-scope FlowGuard operator approves the capability product-function model from FlowGuard operator-owned adversarial model evidence",
             capability_product_function_model_checked=True,
-            capability_product_function_model_product_officer_approved=True,
+            capability_product_function_model_flowguard_operator_product_scope_approved=True,
         )
         return
 

@@ -18,7 +18,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -76,7 +76,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -134,7 +134,7 @@
         "state": {
           "controller_auto_continued_after_recovery": true,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -188,12 +188,12 @@
         "detected": true,
         "failures": [
           "mid-run full recycle skipped targeted recovery escalation",
-          "failed full role binding recycle was marked crew-ready"
+          "failed full role binding recycle was marked runtime roles ready"
         ],
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": true,
           "full_recycle_result": "failed",
@@ -215,7 +215,7 @@
           "priority_confirmed": true,
           "recovery_pending": true,
           "recovery_report_written": true,
-          "recovery_scope": "full_crew",
+          "recovery_scope": "full_role_binding",
           "replacement_creation_failed": false,
           "replacement_order_preserved": true,
           "replacement_required_count": 2,
@@ -251,7 +251,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": true,
           "full_recycle_result": "unknown",
@@ -309,7 +309,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": false,
+          "runtime_roles_ready": false,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -367,7 +367,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": false,
+          "runtime_roles_ready": false,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -425,7 +425,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": false,
+          "runtime_roles_ready": false,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -484,7 +484,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -543,7 +543,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -601,7 +601,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -659,7 +659,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": false,
+          "runtime_roles_ready": false,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -717,7 +717,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -775,7 +775,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -833,7 +833,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -891,7 +891,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -949,7 +949,7 @@
         "state": {
           "controller_auto_continued_after_recovery": false,
           "role_binding_generation": 1,
-          "crew_ready": true,
+          "runtime_roles_ready": true,
           "existing_evidence_settled": false,
           "full_recycle_attempted": false,
           "full_recycle_result": "unknown",
@@ -1020,7 +1020,7 @@
     "heartbeat_success_count": 6,
     "invariant_failures": [],
     "labels": [
-      "all_six_sweep_selected",
+      "all_runtime_roles_sweep_selected",
       "current_run_state_loaded",
       "existing_ack_and_output_settled_without_replay",
       "full_role_binding_recovery_attempted",

@@ -211,7 +211,7 @@ def _write_node_acceptance_plan(
         "advance_gate": {
             "required_before_chunk_execution": True,
             "required_before_node_checkpoint": True,
-            "reviewer_or_officer_direct_check_required": True,
+            "reviewer_or_flowguard_operator_direct_check_required": True,
             "all_covered_requirements_closed_or_triaged": False,
             "unresolved_requirement_ids": route_node_requirement_ids,
         },

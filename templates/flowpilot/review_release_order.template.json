@@ -10,8 +10,8 @@
   "purpose": "Project-manager order that releases the human-like reviewer only after worker output has returned to PM and PM has built the formal current-gate package.",
   "worker_output": {
     "ready_for_review": false,
-    "owner_role": "<worker_a|worker_b|authorized_non_controller|other>",
-    "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown>",
+    "owner_role": "<worker|authorized_non_controller|other>",
+    "actual_result_author_role": "<worker|authorized_non_controller|controller|unknown>",
     "packet_envelope_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_envelope.json",
     "packet_body_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/packet_body.md",
     "physical_packet_files_written": false,

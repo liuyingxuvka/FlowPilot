@@ -5,12 +5,12 @@
   "node_id": "<node-id-or-null>",
   "created_at": "<iso-8601-timestamp>",
   "created_by_role_key": "project_manager",
-  "dispatch_mode": "officer_owned_async",
-  "officer_output_root": ".flowpilot/runs/<run-id>/officer_runs/<request-id>/",
+  "dispatch_mode": "flowguard_operator_owned_async",
+  "flowguard_operator_output_root": ".flowpilot/runs/<run-id>/flowguard_operator_runs/<request-id>/",
   "flowguard_capability_snapshot_path": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
   "pm_modeling_plan_path": ".flowpilot/runs/<run-id>/flowguard/<product-or-process>_modeling_plan.json",
-  "assigned_officer_role_keys": [
-    "<process_flowguard_officer|product_flowguard_officer>"
+  "assigned_flowguard_operator_role_keys": [
+    "<flowguard_operator>"
   ],
   "controller_coordination": {
     "allowed": true,
@@ -20,7 +20,7 @@
       "relaying already-authorized packets",
       "requesting corrected role evidence"
     ],
-    "blocked_scope_until_officer_reports": [
+    "blocked_scope_until_flowguard_operator_reports": [
       "implementation protected by this model gate",
       "route freeze or route advance protected by this model gate",
       "checkpoint or completion closure protected by this model gate",
@@ -69,7 +69,7 @@
       "model_author_role",
       "model_runner_role",
       "model_interpreter_role",
-      "commands_run_by_officer",
+      "commands_run_by_flowguard_operator",
       "model coverage",
       "blindspots",
       "failure paths",

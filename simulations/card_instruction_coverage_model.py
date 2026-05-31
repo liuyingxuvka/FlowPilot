@@ -20,12 +20,12 @@ from flowguard import FunctionResult, InvariantResult
 
 
 NEXT_STEP_SOURCE_FIELD = "next_step_source"
-NEXT_STEP_ROUTER_FRAGMENT = "flowpilot_router.py"
+NEXT_STEP_RUNTIME_FRAGMENT = "flowpilot_new.py"
 LIVE_CONTEXT_SOURCE_FIELD = "runtime_context"
 LIVE_CONTEXT_HELPER = "_live_card_delivery_context"
 LIVE_CONTEXT_SCHEMA = "flowpilot.live_card_context.v1"
 LIVE_CONTEXT_REQUIRED_TERMS = (
-    "router delivery envelope",
+    "runtime delivery envelope",
     "current run",
     "current task",
     "current card",
@@ -50,10 +50,10 @@ LIVE_CONTEXT_REQUIRED_FIELDS = (
     "execution_frontier",
     "prompt_delivery_ledger",
 )
-DIRECT_ROUTER_ACK_REQUIRED_TERMS = (
-    "system-card acks go directly to router",
-    "card check-in command",
-    "router-directed return path",
+DIRECT_RUNTIME_ACK_REQUIRED_TERMS = (
+    "system-card acks go directly",
+    "current runtime",
+    "runtime",
 )
 STALE_CONTROLLER_ACK_PATTERNS = (
     re.compile(r"\breturn\s+(?:the\s+)?ack\s+to\s+controller\b", re.IGNORECASE),
@@ -109,13 +109,13 @@ ROLE_CARD_POST_ACK_TERMS = (
     "wait for a phase card",
     "event card",
     "work packet",
-    "router-authorized output contract",
+    "runtime-authorized output contract",
 )
 WORK_CARD_POST_ACK_TERMS = (
     "after work-card ack",
     "continue the work assigned by this card",
     "formal output or blocker",
-    "router-directed runtime path",
+    "runtime path",
 )
 EVENT_CARD_POST_ACK_TERMS = (
     "after event-card ack",
@@ -166,18 +166,16 @@ OUTPUT_CONTRACT_REQUIRED_CARD_IDS = frozenset(
         "pm.material_scan",
         "pm.research_package",
         "pm.current_node_loop",
-        "pm.officer_request_report_loop",
+        "pm.flowguard_operator_request_report_loop",
         "pm.resume_decision",
         "pm.parent_segment_decision",
         "pm.closure",
         "pm.event.node_started",
-        "worker_a.core",
-        "worker_b.core",
+        "worker.core",
         "worker.research_report",
         "reviewer.core",
         "reviewer.worker_result_review",
-        "process_officer.core",
-        "product_officer.core",
+        "flowguard_operator.core",
     }
 )
 PM_NOTE_GUIDANCE_REQUIRED_CARD_IDS = frozenset(
@@ -185,12 +183,10 @@ PM_NOTE_GUIDANCE_REQUIRED_CARD_IDS = frozenset(
         "pm.material_scan",
         "pm.research_package",
         "pm.current_node_loop",
-        "pm.officer_request_report_loop",
-        "worker_a.core",
-        "worker_b.core",
+        "pm.flowguard_operator_request_report_loop",
+        "worker.core",
         "worker.research_report",
-        "process_officer.core",
-        "product_officer.core",
+        "flowguard_operator.core",
     }
 )
 PM_CONTROL_BLOCKER_REPAIR_CARD_IDS = frozenset(
@@ -206,8 +202,7 @@ PROJECT_TOPOLOGY_REQUIRED_CARD_IDS = frozenset(
         "pm.route_skeleton",
         "pm.node_acceptance_plan",
         "pm.closure",
-        "process_officer.core",
-        "product_officer.core",
+        "flowguard_operator.core",
         "reviewer.core",
     }
 )
@@ -232,10 +227,8 @@ ACTION_TERMS_BY_ROLE: dict[str, tuple[str, ...]] = {
         "return",
     ),
     "human_like_reviewer": ("review", "check", "verify", "pass", "block", "return"),
-    "process_flowguard_officer": ("model", "review", "check", "pass", "report", "return"),
-    "product_flowguard_officer": ("model", "review", "check", "pass", "report", "return"),
-    "worker_a": ("execute", "work", "return", "report", "result"),
-    "worker_b": ("execute", "work", "return", "report", "result"),
+    "flowguard_operator": ("model", "review", "check", "pass", "report", "return"),
+    "worker": ("execute", "work", "return", "report", "result"),
 }
 
 
@@ -382,8 +375,7 @@ def _has_output_contract_guidance(card_id: str, text: str) -> bool:
         "pm.core",
         "pm.output_contract_catalog",
         "reviewer.core",
-        "process_officer.core",
-        "product_officer.core",
+            "flowguard_operator.core",
     }:
         has_gate_decision_contract = (
             "flowpilot.output_contract.gate_decision.v1" in lower
@@ -485,7 +477,7 @@ def _has_direct_router_ack_guidance(identity: dict[str, str], text: str) -> bool
         f"{identity.get(NEXT_STEP_SOURCE_FIELD, '')}\n"
         f"{text}"
     ).lower()
-    return all(term in lower for term in DIRECT_ROUTER_ACK_REQUIRED_TERMS)
+    return all(term in lower for term in DIRECT_RUNTIME_ACK_REQUIRED_TERMS)
 
 
 def _post_ack_text(identity: dict[str, str], text: str) -> str:
@@ -696,7 +688,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 envelope_only_return=_has_envelope_only_return(identity, text),
                 chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
-                next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
+                next_step_mentions_router=NEXT_STEP_RUNTIME_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 direct_router_ack_guidance=_has_direct_router_ack_guidance(identity, text),
                 post_ack_receipt_guidance=_has_post_ack_receipt_guidance(identity, text),
                 role_card_post_ack_wait_guidance=_has_role_card_post_ack_wait_guidance(
@@ -755,7 +747,7 @@ def collect_card_facts(project_root: Path) -> tuple[CardFacts, ...]:
                 envelope_only_return=_has_envelope_only_return(identity, text),
                 chat_body_suppression=_has_chat_body_suppression(identity, text),
                 next_step_source=bool(identity.get(NEXT_STEP_SOURCE_FIELD)),
-                next_step_mentions_router=NEXT_STEP_ROUTER_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
+                next_step_mentions_router=NEXT_STEP_RUNTIME_FRAGMENT in identity.get(NEXT_STEP_SOURCE_FIELD, ""),
                 direct_router_ack_guidance=_has_direct_router_ack_guidance(identity, text),
                 post_ack_receipt_guidance=_has_post_ack_receipt_guidance(identity, text),
                 role_card_post_ack_wait_guidance=_has_role_card_post_ack_wait_guidance(
@@ -848,7 +840,7 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
     if not card.next_step_source:
         failures.append(f"{card.card_id}: missing next_step_source")
     if not card.next_step_mentions_router:
-        failures.append(f"{card.card_id}: next_step_source does not name flowpilot_router.py")
+        failures.append(f"{card.card_id}: next_step_source does not name flowpilot_new.py")
     if not card.direct_router_ack_guidance:
         failures.append(f"{card.card_id}: missing direct Router system-card ACK guidance")
     if not card.post_ack_receipt_guidance:
@@ -874,7 +866,7 @@ def card_failures(card: CardFacts) -> tuple[str, ...]:
     if not card.output_contract_guidance:
         failures.append(f"{card.card_id}: missing output_contract and Contract Self-Check guidance")
     if not card.pm_note_guidance:
-        failures.append(f"{card.card_id}: missing worker/officer PM Note soft guidance")
+        failures.append(f"{card.card_id}: missing worker/FlowGuard operator PM Note soft guidance")
     if not card.pm_control_blocker_repair_guidance:
         failures.append(f"{card.card_id}: missing PM control-blocker repair guidance for fatal and repair-decision lanes")
     if not card.project_topology_guidance:
@@ -1060,7 +1052,7 @@ def hazard_cards() -> dict[str, CardFacts]:
         ),
         "missing_pm_note_guidance": replace(
             good,
-            card_id="worker_a.core",
+            card_id="worker.core",
             pm_note_guidance=False,
         ),
         "missing_pm_control_blocker_repair_guidance": replace(

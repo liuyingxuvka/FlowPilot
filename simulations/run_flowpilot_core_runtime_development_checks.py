@@ -71,7 +71,7 @@ def run_checks() -> dict[str, Any]:
     hazards = _hazard_report()
     rows = [
         {
-            "id": "development_process_flowguard_model",
+            "id": "development_route_scope_flowguard_model",
             "status": "passed" if flowguard["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",

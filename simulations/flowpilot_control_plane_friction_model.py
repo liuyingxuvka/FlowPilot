@@ -14,7 +14,7 @@ Risk intent brief:
   PM instead of same-role reissue, material-scan packet dispatch with phase,
   contract, write-target, or canonical-body drift, PM repair reissue specs that
   never enter the packet runtime, success-only repair gates that cannot accept
-  reviewer recheck blockers, stopped runs with live heartbeat/crew/packet
+  reviewer recheck blockers, stopped runs with live heartbeat/runtime roles/packet
   state, stale snapshots treated as active UI state, ambiguous multi-active
   runs under current-json-only authority, product architecture delivery without
   PM material-understanding source paths, protocol blockers written outside
@@ -53,8 +53,8 @@ Risk intent brief:
   user-facing status summaries remain metadata-only and blocker-consistent;
   PM role-work and current-node worker results return to PM before formal
   reviewer gates; role memory is an index, never an approval authority; and a
-  complete model-miss officer report can reach a PM decision without a second
-  officer loop; child-skill gate reviewer passes clear only the matching
+  complete model-miss FlowGuard operator report can reach a PM decision without a second
+  FlowGuard operator loop; child-skill gate reviewer passes clear only the matching
   current gate blocker; direct Router ACK consumption preserves the semantic
   reviewer pass/block wait; PM repair authority cannot impersonate reviewer
   event authority; no-legal-next blockers wait for currently receivable role

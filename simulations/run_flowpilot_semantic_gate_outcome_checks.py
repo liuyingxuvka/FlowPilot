@@ -69,17 +69,28 @@ def _hazard_report() -> dict[str, Any]:
 
 def _model_test_alignment_report() -> dict[str, Any]:
     high_standard_test = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
+    core_test = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
+    recursive_test = REPO_ROOT / "tests" / "test_flowpilot_recursive_route_execution_runtime.py"
     runtime = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
     test_text = high_standard_test.read_text(encoding="utf-8")
+    core_test_text = core_test.read_text(encoding="utf-8")
+    recursive_test_text = recursive_test.read_text(encoding="utf-8")
     runtime_text = runtime.read_text(encoding="utf-8")
     obligations = {
         "semantic_outcome_parser": "_parse_packet_outcome" in runtime_text,
+        "declared_outcome_line_parser": "_declared_outcome_token_from_body" in runtime_text,
+        "no_whole_body_nonpass_scan": "_NONPASS_TEXT_RE" not in runtime_text,
+        "declared_pass_context_words_test": "test_declared_pass_ignores_contextual_failure_words" in core_test_text,
+        "declared_block_line_test": "test_declared_block_line_routes_to_semantic_repair" in core_test_text,
         "active_blocker_ledger": "active_blockers" in runtime_text,
+        "effective_blocker_view": "_blocker_current_effective" in runtime_text,
+        "effective_packet_final_view": "_packet_requires_current_acceptance" in runtime_text,
         "pm_repair_decision_packet": "pm_repair_decision" in runtime_text,
         "reviewer_block_no_validation": "test_reviewer_block_routes_to_pm_repair_and_requires_recheck" in test_text,
         "system_validation_failure_routes_pm": "test_system_validation_failure_routes_to_pm_repair" in test_text,
-        "worker_block_no_flowguard": "test_worker_blocked_result_routes_pm_repair_without_flowguard_pass" in test_text,
+        "workerlock_no_flowguard": "test_workerlocked_result_routes_pm_repair_without_flowguard_pass" in test_text,
         "same_class_recheck": "required_recheck_role" in test_text and "\"cleared\"" in test_text,
+        "final_ledger_effective_packets": "test_final_ledger_uses_current_effective_packets" in recursive_test_text,
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {
@@ -88,7 +99,9 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "missing": missing,
         "evidence": [
             "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "tests/test_flowpilot_core_runtime.py",
             "tests/test_flowpilot_high_standard_control_flow.py",
+            "tests/test_flowpilot_recursive_route_execution_runtime.py",
         ],
     }
 
@@ -111,7 +124,7 @@ def run_checks() -> dict[str, Any]:
             "status": "passed" if target_plan["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["openspec/changes/enforce-new-flowpilot-semantic-gate-outcomes/tasks.md"],
+            "evidence": ["openspec/changes/harden-new-flowpilot-effective-outcomes/tasks.md"],
         },
         {
             "id": "semantic_gate_outcome_hazard_replay",

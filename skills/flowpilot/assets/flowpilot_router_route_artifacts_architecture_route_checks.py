@@ -56,8 +56,8 @@ def _write_route_process_pass_report(
     payload: dict[str, Any],
 ) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "process_flowguard_officer":
-        raise RouterError("route process check must be reviewed_by_role=process_flowguard_officer")
+    if payload.get("reviewed_by_role") != "flowguard_operator":
+        raise RouterError("route process check must be reviewed_by_role=flowguard_operator")
     if payload.get("passed") is not True or payload.get("process_viability_verdict") != "pass":
         raise RouterError("route process check requires process_viability_verdict=pass")
     required_true = (
@@ -86,7 +86,7 @@ def _write_route_process_pass_report(
         {
             "schema_version": "flowpilot.process_route_model.v1",
             "run_id": run_state["run_id"],
-            "reviewed_by_role": "process_flowguard_officer",
+            "reviewed_by_role": "flowguard_operator",
             "passed": True,
             "process_viability_verdict": "pass",
             "product_behavior_model_checked": True,
@@ -111,8 +111,8 @@ def _write_route_process_issue_report(
     expected_verdict: str,
 ) -> None:
     payload = _load_file_backed_role_payload(project_root, payload)
-    if payload.get("reviewed_by_role") != "process_flowguard_officer":
-        raise RouterError("route process issue report must be reviewed_by_role=process_flowguard_officer")
+    if payload.get("reviewed_by_role") != "flowguard_operator":
+        raise RouterError("route process issue report must be reviewed_by_role=flowguard_operator")
     if payload.get("passed") is True:
         raise RouterError("route process issue report cannot pass")
     if payload.get("process_viability_verdict") != expected_verdict:
@@ -132,7 +132,7 @@ def _write_route_process_issue_report(
         {
             "schema_version": "flowpilot.process_route_model.v1",
             "run_id": run_state["run_id"],
-            "reviewed_by_role": "process_flowguard_officer",
+            "reviewed_by_role": "flowguard_operator",
             "passed": False,
             "process_viability_verdict": expected_verdict,
             "product_behavior_model_checked": bool(payload.get("product_behavior_model_checked")),
@@ -148,16 +148,16 @@ def _write_route_process_issue_report(
     )
     for flag in (
         "route_draft_written_by_pm",
-        "process_officer_route_check_card_delivered",
+        "flowguard_operator_route_check_card_delivered",
         "process_route_model_submitted",
         "process_route_model_repair_required",
         "process_route_model_blocked",
-        "process_officer_route_check_passed",
+        "flowguard_operator_route_check_passed",
         "pm_process_route_model_decision_card_delivered",
         "pm_process_route_model_accepted",
         "pm_process_route_model_rebuild_requested",
-        "product_officer_route_check_card_delivered",
-        "product_officer_route_check_passed",
+        "flowguard_operator_product_route_check_card_delivered",
+        "flowguard_operator_product_route_check_passed",
         "reviewer_route_check_card_delivered",
         "reviewer_route_check_passed",
         "route_activated_by_pm",

@@ -23,7 +23,7 @@
     "valid_final_report": "accepted",
     "valid_gate_decision": "accepted",
     "valid_implementation": "accepted",
-    "valid_model_miss_officer_report": "accepted",
+    "valid_model_miss_flowguard_operator_report": "accepted",
     "valid_model_miss_triage": "accepted",
     "valid_review": "accepted"
   },

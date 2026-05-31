@@ -9,7 +9,7 @@ That is necessary but not enough for the user's target system. The target
 system will run for many rounds with dynamic background agents. A worker may
 ACK and disappear, a closed lease may later return output, a route may mutate
 while old packets are still open, and a weak reviewer or wrong FlowGuard
-operator can accidentally turn a progress signal into a completion claim.
+officer can accidentally turn a progress signal into a completion claim.
 
 This change adds a stress layer around the protocol kernel without replacing
 the kernel or the old FlowPilot router. The stress layer is a test and evidence
@@ -85,7 +85,7 @@ parent test mask a stale or skipped child.
 
 ### Make FlowGuard target selection explicit
 
-A FlowGuard operator packet must name what it is modeling: product behavior,
+A FlowGuard officer packet must name what it is modeling: product behavior,
 development process, packet lifecycle, dynamic agent lifecycle, evidence
 lifecycle, or final closure. The stress checks include wrong-target cases
 because the user specifically called out that FlowGuard's sub-skills must be

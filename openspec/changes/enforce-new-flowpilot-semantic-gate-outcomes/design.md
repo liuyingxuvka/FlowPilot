@@ -3,7 +3,7 @@
 The fresh FlowPilot runtime intentionally replaced old Router/card complexity
 with a smaller packet lifecycle:
 
-`task -> flowguard_check -> review -> validation -> closure -> PM disposition`.
+`task -> flowguard_check -> review -> system_validation -> system_closure -> PM disposition`.
 
 That symmetry is useful, but it currently mixes two different meanings:
 
@@ -11,8 +11,10 @@ That symmetry is useful, but it currently mixes two different meanings:
 - "The role's semantic decision was pass/accept."
 
 The old FlowPilot protocol kept these separate. The Controller/Router validated
-mechanics; reviewer, validator, and FlowGuard roles owned semantic pass/block;
-PM owned repair strategy. The new runtime should restore that boundary.
+mechanics; reviewer and FlowGuard officer responsibilities own semantic
+pass/block where requested; system validation and system closure are runtime
+ledger outcomes; PM owns repair strategy. The new runtime should restore that
+boundary without dispatching Validator or Closure Officer role packets.
 
 ## Decisions
 
@@ -30,8 +32,8 @@ the equivalent fields in a role-specific body:
 - `recommended_resolution`: PM-actionable repair recommendation.
 - `evidence_refs`: current-run evidence references.
 
-Plain successful legacy/fake bodies still default to pass so existing fake
-rehearsals remain small. Plain bodies from reviewer or validator that contain
+Fake/rehearsal bodies must state an explicit pass/accept/complete outcome.
+Plain bodies from reviewer or FlowGuard officer responsibilities that contain
 clear block/fail terms are treated as non-pass.
 
 ### Decision: Separate outcome records from active blockers
@@ -60,16 +62,17 @@ decision is itself a sealed packet result and may choose:
 - `stop_for_user`
 
 Router/system code applies only routeable mechanics. PM remains the owner of
-repair strategy; reviewer and validator do not repair the artifact themselves.
+repair strategy; reviewer and FlowGuard officer responsibilities do not repair
+the artifact themselves.
 
 ### Decision: Recheck is mandatory for clearing blockers
 
 A blocker created by a reviewer block is cleared only when the same gate class
-gets a newer reviewer pass. A validator failure is cleared only by a newer
-validator pass. A FlowGuard failure is cleared only by a newer FlowGuard pass.
-PM repair decisions can start repair work, mutate route, quarantine evidence,
-or stop, but they do not themselves clear the blocker except for an explicitly
-authorized waiver.
+gets a newer reviewer pass. A system validation failure is cleared only by
+newer current evidence that passes the system validation step. A FlowGuard
+failure is cleared only by a newer FlowGuard officer pass. PM repair decisions
+can start repair work, mutate route, quarantine evidence, or stop, but they do
+not themselves clear the blocker except for an explicitly authorized waiver.
 
 ### Decision: Same-node repair remains the default local repair
 
@@ -98,8 +101,9 @@ for structural findings.
 3. Extend ledger initialization, packet-result application, outcome parsing,
    active blocker recording, PM repair packet issuing, PM repair application,
    and public status projection.
-4. Add focused tests for reviewer block, validator fail, worker blocked, PM
-   repair decision issuance/application, same-class recheck, and no silent pass.
+4. Add focused tests for reviewer block, system validation fail, worker
+   blocked, PM repair decision issuance/application, same-class recheck, and no
+   silent pass.
 5. Run OpenSpec validation, FlowGuard project audit, focused model checks,
    targeted pytest, fake rehearsal, install sync/audit/check, and background
    heavier model checks where practical.

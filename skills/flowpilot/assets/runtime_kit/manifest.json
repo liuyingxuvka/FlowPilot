@@ -135,7 +135,7 @@
       "source": "system"
     },
     {
-      "audience": "worker_a",
+      "audience": "worker",
       "id": "worker.research_report",
       "issued_by": "router",
       "kind": "worker_duty",
@@ -230,11 +230,11 @@
       "source": "system"
     },
     {
-      "audience": "product_flowguard_officer",
-      "id": "product_officer.product_architecture_modelability",
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.product_architecture_modelability",
       "issued_by": "router",
-      "kind": "officer_gate",
-      "path": "cards/officers/product_architecture_modelability.md",
+      "kind": "flowguard_operator_gate",
+      "path": "cards/flowguard_operator/product_architecture_modelability.md",
       "source": "system"
     },
     {
@@ -255,11 +255,11 @@
       "source": "system"
     },
     {
-      "audience": "product_flowguard_officer",
-      "id": "product_officer.root_contract_modelability",
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.root_contract_modelability",
       "issued_by": "router",
-      "kind": "officer_gate",
-      "path": "cards/officers/root_contract_modelability.md",
+      "kind": "flowguard_operator_gate",
+      "path": "cards/flowguard_operator/root_contract_modelability.md",
       "source": "system"
     },
     {
@@ -306,19 +306,19 @@
       "source": "system"
     },
     {
-      "audience": "process_flowguard_officer",
-      "id": "process_officer.child_skill_conformance_model",
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.child_skill_conformance_model",
       "issued_by": "router",
-      "kind": "officer_gate",
-      "path": "cards/officers/child_skill_conformance_model.md",
+      "kind": "flowguard_operator_gate",
+      "path": "cards/flowguard_operator/child_skill_conformance_model.md",
       "source": "system"
     },
     {
-      "audience": "product_flowguard_officer",
-      "id": "product_officer.child_skill_product_fit",
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.child_skill_product_fit",
       "issued_by": "router",
-      "kind": "officer_gate",
-      "path": "cards/officers/child_skill_product_fit.md",
+      "kind": "flowguard_operator_gate",
+      "path": "cards/flowguard_operator/child_skill_product_fit.md",
       "source": "system"
     },
     {
@@ -349,11 +349,11 @@
       "source": "system"
     },
     {
-      "audience": "process_flowguard_officer",
-      "id": "process_officer.route_process_check",
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.route_process_check",
       "issued_by": "router",
-      "kind": "officer_gate",
-      "path": "cards/officers/route_process_check.md",
+      "kind": "flowguard_operator_gate",
+      "path": "cards/flowguard_operator/route_process_check.md",
       "source": "system"
     },
     {
@@ -454,11 +454,11 @@
     },
     {
       "audience": "project_manager",
-      "id": "pm.officer_request_report_loop",
+      "id": "pm.flowguard_operator_request_report_loop",
       "issued_by": "router",
       "kind": "phase",
-      "path": "cards/phases/pm_officer_request_report_loop.md",
-      "phase": "officer_request_report_loop",
+      "path": "cards/phases/pm_flowguard_operator_request_report_loop.md",
+      "phase": "flowguard_operator_request_report_loop",
       "source": "system"
     },
     {
@@ -522,35 +522,19 @@
       "source": "system"
     },
     {
-      "audience": "process_flowguard_officer",
-      "id": "process_officer.core",
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.core",
       "issued_by": "router",
       "kind": "role_core",
-      "path": "cards/roles/process_flowguard_officer.md",
+      "path": "cards/roles/flowguard_operator.md",
       "source": "system"
     },
     {
-      "audience": "product_flowguard_officer",
-      "id": "product_officer.core",
+      "audience": "worker",
+      "id": "worker.core",
       "issued_by": "router",
       "kind": "role_core",
-      "path": "cards/roles/product_flowguard_officer.md",
-      "source": "system"
-    },
-    {
-      "audience": "worker_a",
-      "id": "worker_a.core",
-      "issued_by": "router",
-      "kind": "role_core",
-      "path": "cards/roles/worker_a.md",
-      "source": "system"
-    },
-    {
-      "audience": "worker_b",
-      "id": "worker_b.core",
-      "issued_by": "router",
-      "kind": "role_core",
-      "path": "cards/roles/worker_b.md",
+      "path": "cards/roles/worker.md",
       "source": "system"
     }
   ],

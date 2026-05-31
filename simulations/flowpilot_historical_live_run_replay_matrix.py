@@ -132,11 +132,11 @@ HISTORICAL_LIVE_RUN_REPLAY_ROWS: tuple[dict[str, Any], ...] = (
         "protected_state_invariant": "resume cannot resume work from partial host-role lifecycle evidence",
         "required_evidence": [
             "load_resume_state_evidence_written",
-            "all_six_roles_checked",
+            "all_runtime_roles_checked",
             "missing_role_rejected",
             "timeout_unknown_not_active",
         ],
-        "forbidden_shortcuts": ["continue_with_partial_crew", "treat_timeout_unknown_as_active"],
+        "forbidden_shortcuts": ["continue_with_partial_runtime_roles", "treat_timeout_unknown_as_active"],
         "finite_package_classes": ["partial_host_role_rehydration"],
         "evidence_test": (
             "FlowPilotHistoricalLiveRunReplayTests."

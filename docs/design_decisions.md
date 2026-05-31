@@ -27,17 +27,17 @@ quality tier for a formal FlowPilot run. For small maintenance work inside an
 active project, FlowPilot may record continuity state, but it should not claim a
 full formal route unless the showcase-grade gates ran.
 
-The first user-facing startup gate is the three-question prompt:
-runtime role assistance permission, scheduled-continuation permission, and
-display surface preference. The
-assistant must stop immediately after asking and wait for the user's later
-reply before banner display, route writes, child skills, role bindings, heartbeat
-probes, image generation, or implementation.
+The first user-facing startup gate asks for the work request and one option:
+whether FlowPilot may use background collaboration for the task. The assistant must
+stop immediately after asking and wait for the user's later reply before banner
+display, route writes, child skills, role bindings, heartbeat probes, image
+generation, or implementation.
 
-Run modes are unsupported entirely. A compact later reply may provide all three
-startup answers at once, but host limits, invocation text, existing state, and
-prior routes cannot authorize role bindings, scheduled jobs, fallback
-execution, or display-surface choices.
+Run modes are unsupported entirely. Host limits, invocation text, existing
+state, and prior routes cannot authorize role bindings. When background
+collaboration is authorized, concrete role bindings use current host-supported,
+addressable, isolated role surfaces. Scheduled continuation and display surface
+are fixed startup defaults: manual continuation and chat route signs.
 
 Removing modes does not change hard-gate behavior or the quality floor.
 
@@ -119,7 +119,7 @@ counterexamples failing before implementation changes land.
 
 Legal role waits are modeled from event contracts, not from one-off phase
 patches. A state with a satisfied prerequisite and an unsatisfied PM, reviewer,
-worker, officer, or host event is a legal wait; it must not be converted into a
+worker, FlowGuard operator, or host event is a legal wait; it must not be converted into a
 PM decision-required blocker. A blocker is reserved for true no-next-action
 states where neither a Controller action nor an expected external role event is
 available.
@@ -158,7 +158,7 @@ that skill's detailed prompt text.
 Child-skill fidelity is PM-owned route design, not just execution hygiene. The
 project manager extracts a gate manifest from the loaded child skill before
 route modeling, assigns required approvers for every child-skill check, and
-asks the reviewer plus both FlowGuard officers to review their slices before
+asks the reviewer plus both FlowGuard operators to review their slices before
 PM route inclusion. Node entry refines the manifest for current context. The
 authorized workers can draft evidence and implement only from current packets, but cannot approve child-skill
 gates or return the parent node from its own checklist pass.
@@ -242,7 +242,7 @@ completion review, or user request.
 Formal FlowPilot routes keep role authority and memory in the current run, but
 live host bindings are opened only when the runtime requests a responsibility.
 The project manager owns route, heartbeat-resume runway, PM stop signals,
-repair, and completion decisions. The reviewer inspects; the FlowGuard officers own their models end
+repair, and completion decisions. The reviewer inspects; the FlowGuard operators own their models end
 to end by authoring, running, interpreting, and approving or blocking them.
 They do not implement product code and they do not decide route movement. Their
 reports give the project manager a decision packet: hard blockers,
@@ -289,7 +289,7 @@ acceptance-floor changes, or completion. Returned sidecar work must be merged
 and verified by the controller, then the project manager decides the next
 route movement.
 
-After meaningful PM decisions, reviewer judgements, FlowGuard officer reports,
+After meaningful PM decisions, reviewer judgements, FlowGuard operator reports,
 or worker sidecar reports, the role's report path and memory packet are both
 updated before checkpoint. Terminal closure archives both the role-binding ledger and
 role memory status after lifecycle reconciliation.

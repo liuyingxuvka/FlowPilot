@@ -213,7 +213,7 @@ def write_route_mutation(
         "affected_sibling_nodes": affected_sibling_nodes,
         "replay_scope_node_id": replay_scope_node_id or None,
         "continue_after_node_id": continue_after_node_id or None,
-        "process_officer_recheck_required": True,
+        "flowguard_operator_recheck_required": True,
         "route_activation_recheck_required": True,
         "display_current_route_on_node_entry_only": True,
     }
@@ -241,7 +241,7 @@ def write_route_mutation(
             "replay_scope_node_id": replay_scope_node_id or None,
             "continue_after_node_id": continue_after_node_id or None,
             "topology_strategy": topology_strategy,
-            "process_officer_recheck_required": True,
+            "flowguard_operator_recheck_required": True,
             "route_activation_recheck_required": True,
         },
         "repair_restart_policy": {

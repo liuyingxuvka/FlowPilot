@@ -142,8 +142,6 @@ def _record_event_expected_role(router: ModuleType, event: str, run_state: dict[
 def _record_event_from_role_matches(router: ModuleType, event: str, from_role: str, expected_role: str) -> bool:
     if from_role == expected_role:
         return True
-    if event.startswith('worker_') and expected_role == 'worker_a' and (from_role in {'worker_a', 'worker_b'}):
-        return True
     if ',' in expected_role and from_role in {part.strip() for part in expected_role.split(',') if part.strip()}:
         return True
     return False

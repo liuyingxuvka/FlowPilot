@@ -165,12 +165,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.standard_six_roles_requested:
+    if not state.runtime_requested_roles_requested:
         yield Transition(
-            "standard_six_roles_ready_or_blocked_before_route_work",
+            "standard_runtime_roles_ready_or_blocked_before_route_work",
             _inc(
                 state,
-                standard_six_roles_requested=True,
+                runtime_requested_roles_requested=True,
                 role_liveness_ready_or_blocked=True,
             ),
         )

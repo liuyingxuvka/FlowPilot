@@ -28,7 +28,7 @@ The target behavior is single-track:
 | 4 | Make system-card ACKs token/direct-router only. | `skills/flowpilot/assets/card_runtime.py`, `skills/flowpilot/assets/flowpilot_runtime.py`, `skills/flowpilot/assets/flowpilot_router.py` | Valid runtime ACKs carry direct Router authorization; stale or tokenless ACKs fail. |
 | 5 | Remove unsupported historical card ACK unsupported historical. | `skills/flowpilot/assets/flowpilot_router.py` | `record_external_event(..., "*_card_ack")` no longer reroutes; it raises a protocol error. |
 | 6 | Keep packet ACK/result fast lane as the packet-local Router path and align text around it. | `skills/flowpilot/assets/packet_runtime.py`, `templates/flowpilot/packets/*.template.md` | Packet bodies tell active holders to ACK and return packet completion to Router, not Controller. |
-| 7 | Update all role/system/phase/reviewer/officer cards that still teach old ACK routing. | `skills/flowpilot/assets/runtime_kit/cards/**/*.md` | No card prompt says Controller should receive, teach, hand-write, or relay ACKs. |
+| 7 | Update all role/system/phase/reviewer/FlowGuard operator cards that still teach old ACK routing. | `skills/flowpilot/assets/runtime_kit/cards/**/*.md` | No card prompt says Controller should receive, teach, hand-write, or relay ACKs. |
 | 8 | Update protocol documentation and skill guidance. | `skills/flowpilot/SKILL.md`, `skills/flowpilot/references/*.md`, `docs/*.md` | Docs describe ACKs, active-holder packet results, and formal role outputs as Router-direct; Controller relays only Router-authorized metadata. |
 | 9 | Update tests for new pass/fail behavior. | `tests/test_flowpilot_card_runtime.py`, `tests/test_flowpilot_router_runtime.py`, `tests/test_flowpilot_packet_runtime.py` | New path passes; old external-event ACK route fails. |
 | 10 | Sync local install and local git only. | installed skill under user Codex home, local repository | Install audit passes; local commit exists; no GitHub push. |
@@ -88,5 +88,5 @@ read before claiming completion.
 
 - Do not push to GitHub.
 - Do not add a permanent old-ACK unsupported historical bridge.
-- Do not change semantic PM/reviewer/officer decision authority.
+- Do not change semantic PM/reviewer/FlowGuard operator decision authority.
 - Do not make Controller read sealed packet or result bodies.

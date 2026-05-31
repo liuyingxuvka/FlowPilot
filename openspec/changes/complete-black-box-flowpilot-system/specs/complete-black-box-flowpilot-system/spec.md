@@ -28,7 +28,7 @@ requiring a fixed permanent role topology as runtime authority.
 
 #### Scenario: Lease expires before result
 
-- **WHEN** a worker, reviewer, PM, or FlowGuard operator lease expires before a
+- **WHEN** a worker, reviewer, PM, or FlowGuard officer lease expires before a
   valid result is committed
 - **THEN** the router MUST mark the lease inactive and require replacement,
   repair, or an explicit blocked state before the dependent gate can continue.

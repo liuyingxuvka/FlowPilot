@@ -633,7 +633,7 @@ def _audit_role_output_event_dedup(router_state: object) -> dict[str, object]:
 
 def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
     packet_ledger, packet_error = _read_json(run_root / "packet_ledger.json")
-    role_binding_ledger, crew_error = _read_json(run_root / "role_binding_ledger.json")
+    role_binding_ledger, runtime_roles_error = _read_json(run_root / "role_binding_ledger.json")
     role_keys = {
         str(slot.get("role_key"))
         for slot in (role_binding_ledger.get("role_slots") if isinstance(role_binding_ledger, dict) else []) or []
@@ -667,7 +667,7 @@ def _audit_packet_result_authority(run_root: Path) -> dict[str, object]:
             )
     return {
         "packet_ledger_error": packet_error,
-        "role_binding_ledger_error": crew_error,
+        "role_binding_ledger_error": runtime_roles_error,
         "result_author_identity_replayable": not issues,
         "result_author_matches_current_role": all(issue.get("role_exists_in_role_binding_ledger") for issue in issues),
         "issues": issues[:12],
@@ -1901,7 +1901,7 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
             f"{run_prefix}/pm_material_understanding.json",
             f"{run_prefix}/material/pm_material_understanding_payload.json",
         ),
-        "product_officer.product_architecture_modelability": (
+        "flowguard_operator.product_architecture_modelability": (
             f"{run_prefix}/product_function_architecture.json",
         ),
         "reviewer.product_architecture_challenge": (
@@ -1917,7 +1917,7 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
             f"{run_prefix}/root_acceptance_contract.json",
             f"{run_prefix}/standard_scenario_pack.json",
         ),
-        "product_officer.root_contract_modelability": (
+        "flowguard_operator_product_scope.root_contract_modelability": (
             f"{run_prefix}/root_acceptance_contract.json",
             f"{run_prefix}/standard_scenario_pack.json",
         ),
@@ -1939,13 +1939,13 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
             f"{run_prefix}/pm_child_skill_selection.json",
             f"{run_prefix}/capabilities.json",
         ),
-        "process_officer.child_skill_conformance_model": (
+        "flowguard_operator_route_scope.child_skill_conformance_model": (
             f"{run_prefix}/child_skill_gate_manifest.json",
             f"{run_prefix}/reviews/child_skill_gate_manifest_review.json",
             f"{run_prefix}/pm_child_skill_selection.json",
             f"{run_prefix}/capabilities.json",
         ),
-        "product_officer.child_skill_product_fit": (
+        "flowguard_operator_product_scope.child_skill_product_fit": (
             f"{run_prefix}/child_skill_gate_manifest.json",
             f"{run_prefix}/reviews/child_skill_gate_manifest_review.json",
             f"{run_prefix}/flowguard/child_skill_conformance_model.json",
@@ -1965,7 +1965,7 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
             f"{run_prefix}/capabilities/capability_sync.json",
             f"{run_prefix}/route_memory/pm_prior_path_context.json",
         ),
-        "process_officer.route_process_check": (
+        "flowguard_operator.route_process_check": (
             f"{run_prefix}/root_acceptance_contract.json",
             f"{run_prefix}/child_skill_gate_manifest.json",
             f"{run_prefix}/capabilities/capability_sync.json",
@@ -1984,20 +1984,20 @@ def _required_card_source_rules(run_id: str) -> dict[str, tuple[str, ...]]:
 def _expected_card_phases() -> dict[str, str]:
     return {
         "pm.product_architecture": "product_architecture",
-        "product_officer.product_architecture_modelability": "product_architecture",
+        "flowguard_operator.product_architecture_modelability": "product_architecture",
         "reviewer.product_architecture_challenge": "product_architecture",
         "pm.root_contract": "root_contract",
         "reviewer.root_contract_challenge": "root_contract",
-        "product_officer.root_contract_modelability": "root_contract",
+        "flowguard_operator_product_scope.root_contract_modelability": "root_contract",
         "pm.dependency_policy": "dependency_policy",
         "pm.child_skill_selection": "child_skill_selection",
         "pm.child_skill_gate_manifest": "child_skill_gate_manifest",
         "reviewer.child_skill_gate_manifest_review": "child_skill_gate_manifest",
-        "process_officer.child_skill_conformance_model": "child_skill_gate_manifest",
-        "product_officer.child_skill_product_fit": "child_skill_gate_manifest",
+        "flowguard_operator_route_scope.child_skill_conformance_model": "child_skill_gate_manifest",
+        "flowguard_operator_product_scope.child_skill_product_fit": "child_skill_gate_manifest",
         "pm.prior_path_context": "prior_path_context",
         "pm.route_skeleton": "route_skeleton",
-        "process_officer.route_process_check": "route_skeleton",
+        "flowguard_operator.route_process_check": "route_skeleton",
         "reviewer.route_challenge": "route_skeleton",
     }
 
@@ -2075,9 +2075,9 @@ def _audit_child_skill_gate_sync(run_root: Path) -> tuple[bool, dict[str, object
 def _gate_key_for_outcome_event(event: object) -> str:
     if event in {"reviewer_blocks_child_skill_gate_manifest", "reviewer_passes_child_skill_gate_manifest"}:
         return "child_skill_gate_manifest"
-    if event in {"process_officer_blocks_child_skill_conformance_model", "process_officer_passes_child_skill_conformance_model"}:
+    if event in {"flowguard_operator_route_scope_blocks_child_skill_conformance_model", "flowguard_operator_route_scope_passes_child_skill_conformance_model"}:
         return "child_skill_conformance_model"
-    if event in {"product_officer_blocks_child_skill_product_fit", "product_officer_passes_child_skill_product_fit"}:
+    if event in {"flowguard_operator_product_scope_blocks_child_skill_product_fit", "flowguard_operator_product_scope_passes_child_skill_product_fit"}:
         return "child_skill_product_fit"
     return "unknown"
 
@@ -2691,8 +2691,8 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         route_draft_node_counts[rel] = node_count
         if draft_error or node_count == 0:
             route_draft_has_nodes = False
-    route_process_check_delivered = _latest_delivery(prompt_deliveries, "process_officer.route_process_check") is not None
-    route_process_check_passed = bool(flags.get("process_officer_route_check_passed"))
+    route_process_check_delivered = _latest_delivery(prompt_deliveries, "flowguard_operator.route_process_check") is not None
+    route_process_check_passed = bool(flags.get("flowguard_operator_route_scope_route_check_passed"))
     material_dispatch = _audit_material_scan_dispatch_integrity(
         project_root=root,
         run_root=run_root,
@@ -2743,7 +2743,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             findings,
             code="route_process_check_on_empty_route_draft",
             severity="error",
-            summary="process_officer.route_process_check was delivered while the current route draft had no nodes",
+            summary="flowguard_operator.route_process_check was delivered while the current route draft had no nodes",
             invariant="route_checks_require_nonempty_route_nodes",
             evidence={"route_draft_node_counts": route_draft_node_counts},
         )

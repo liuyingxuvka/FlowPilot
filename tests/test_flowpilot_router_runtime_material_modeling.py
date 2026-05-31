@@ -13,7 +13,7 @@ TEST_NAMES = (
     "test_material_scan_direct_relay_blocks_missing_output_contract",
     "test_research_required_blocks_product_architecture_until_absorbed",
     "test_product_architecture_and_root_contract_gate_route_skeleton",
-    "test_unknown_product_officer_model_report_is_rejected",
+    "test_unknown_flowguard_operator_product_scope_model_report_is_rejected",
     "test_process_route_model_canonical_event_writes_canonical_artifact_only",
     "test_pm_repair_transaction_commits_material_reissue_generation",
     "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",

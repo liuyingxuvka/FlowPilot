@@ -5,8 +5,8 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Node Acceptance Plan Phase
 
@@ -17,7 +17,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If PM lacks basis, or the suggestion may affect route, product target, acceptance, process safety, replay, repair return path, or risk boundary, PM may request bounded consultation through an allowed role-work request, then must record a final PM disposition after reading the advice artifact.
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
-- Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial node, acceptance, proof, validation, test-obligation, repair-return, or evidence-freshness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 - In mature FlowGuard projects, read `docs/flowguard_project_topology.md` as background architecture before node acceptance planning. It guides relevant model/test/code/evidence inspection, but it is not a FlowGuard Report and is not gate evidence. If this phase changes topology sources, rebuild and check the topology before claiming done.
 
@@ -43,7 +43,7 @@ route-memory prior path context. The plan must state:
   ordinary test or replay evidence before this node can close. Each row must
   name `obligation_id`, `source`, `required_test_kind`, `owner_role`,
   `expected_evidence`, `freshness_rule`, and current PM disposition. For any
-  officer modeling used to derive these rows, include `role_skill_use_bindings`
+  FlowGuard operator modeling used to derive these rows, include `role_skill_use_bindings`
   for the exact FlowGuard child skill or satellite route PM selected, such as
   Existing Model Preflight, DevelopmentProcessFlow, Model-Test Alignment, or
   TestMesh;
@@ -60,11 +60,11 @@ route-memory prior path context. The plan must state:
   product architecture or root contract, the node-local hard part, the
   thin-success shortcut most likely to make the node look complete while still
   being low quality, warning signs PM and Reviewer should distrust, and proof
-  of depth that must appear in the worker/officer result;
+  of depth that must appear in the worker/FlowGuard operator result;
 - inherited `skill_standard_projection`: every child-skill standard relevant
   to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
   `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
-  required artifact path, required reviewer/officer gate, and whether it is
+  required artifact path, required reviewer/FlowGuard operator gate, and whether it is
   completed here, completed later, not applicable, or waived by PM authority;
 - `active_child_skill_bindings`: for each selected child skill that supplies
   execution behavior for this node, name the exact child skill, source
@@ -74,19 +74,19 @@ route-memory prior path context. The plan must state:
   stricter child-skill requirement wins unless PM records an explicit waiver;
 - `role_skill_use_bindings`: for each selected child skill that supports this
   node or gate through PM planning, specification, route design, reviewer
-  review, officer modeling, validation, or worker execution, name the exact
+  review, FlowGuard operator modeling, validation, or worker execution, name the exact
   role, use context, source `SKILL.md`, referenced paths, selected standard
   ids, affected output or gate, and Role Skill Use Evidence required. Include
   PM's own planning skill use when it materially shapes acceptance criteria,
   route structure, node proof, or validation expectations;
 - `work_packet_projection`: the exact inherited standard ids that must be
-  copied into each worker/officer packet, plus the active child-skill bindings
+  copied into each worker/FlowGuard operator packet, plus the active child-skill bindings
   that must be copied into each worker packet with direct-use instructions,
   allowed source paths, result-matrix rows, and `Child Skill Use Evidence`
   rows the recipient must return. When a packet or role-output request carries
   `role_skill_use_bindings`, also copy the Role Skill Use Evidence rows the
   recipient must return. When the node declares test obligations, copy the
-  relevant `test_obligation_matrix.pre_worker` rows into the worker or officer
+  relevant `test_obligation_matrix.pre_worker` rows into the worker or FlowGuard operator
   packet and require `Test Obligation Coverage` rows in the result for every
   packet-scoped test obligation. Do not issue a work packet if this projection
   is missing for a selected child skill or required test obligation;
@@ -95,7 +95,7 @@ route-memory prior path context. The plan must state:
 - direct evidence closure rules: report prose, file existence, or a clean
   ledger row is not enough to close a covered requirement unless the root
   contract explicitly allowed that evidence type. Name direct evidence,
-  scenario replay, reviewer/officer check, waiver authority, or unresolved
+  scenario replay, reviewer/FlowGuard operator check, waiver authority, or unresolved
   reason for every covered requirement;
 - whether the node has children and therefore requires parent backward replay;
 - whether the active node is a parent/module, leaf, or repair node. If it has
@@ -112,8 +112,8 @@ route-memory prior path context. The plan must state:
   dispatch. If it is over-split, merge or waive the extra structure with a PM
   complexity reason before dispatch;
 - when a leaf is promoted to parent/module, mark old leaf approvals stale,
-  attach the new ordered children, and require the local Product FlowGuard
-  model, PM model decision, Reviewer product challenge, Process FlowGuard
+  attach the new ordered children, and require the local FlowGuard operator product-model
+  model, PM model decision, Reviewer product challenge, FlowGuard operator process-model
   serial child route, PM process decision, and Reviewer route challenge before
   dispatching those children;
 - forbidden low-standard or placeholder outcomes;
@@ -123,11 +123,11 @@ route-memory prior path context. The plan must state:
 - recheck criteria proving the node still meets the frozen contract after
   worker output, repair, or route mutation.
 
-After worker, officer, or reviewer output returns, PM must update
+After worker, FlowGuard operator, or reviewer output returns, PM must update
 `test_obligation_matrix.post_worker` before approving node completion. The
 post-worker matrix must absorb changed paths, new or stale evidence, skipped
 checks, failed checks, background tests without complete exit/meta artifacts,
-and officer `missing_test_kinds`. Every row must be dispositioned as
+and FlowGuard operator `missing_test_kinds`. Every row must be dispositioned as
 `covered`, `worker_test_packet_required`, `testmesh_required`,
 `model_test_alignment_required`, `waived_with_authority`,
 `deferred_to_named_node`, or `blocked`. Undispositioned rows block PM

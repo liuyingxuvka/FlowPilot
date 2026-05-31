@@ -106,10 +106,10 @@
   "parent_partition": "router_daemon_resume",
   "parent_reattachment": {
     "child_output_contract": "daemon subdomain green result reattaches to router_daemon_resume",
-    "unsupported historical_full_model": "flowpilot_persistent_router_daemon",
     "parent": "meta",
     "parent_consumes_this_child": true,
-    "partition": "router_daemon_resume"
+    "partition": "router_daemon_resume",
+    "unsupported_historical_full_model": "flowpilot_persistent_router_daemon"
   },
   "progress": {
     "cannot_reach_terminal_count": 0,

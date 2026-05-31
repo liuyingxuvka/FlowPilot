@@ -128,8 +128,8 @@ def invariant_failures(state: State) -> list[str]:
             state.pm_child_skill_selection_written,
             state.child_skill_gate_manifest_written,
             state.child_skill_manifest_reviewer_passed,
-            state.child_skill_process_officer_passed,
-            state.child_skill_product_officer_passed,
+            state.child_skill_flowguard_operator_route_scope_passed,
+            state.child_skill_flowguard_operator_product_scope_passed,
             state.child_skill_manifest_pm_approved_for_route,
             state.route_skeleton_written,
             state.route_activated_by_pm,
@@ -281,10 +281,10 @@ def invariant_failures(state: State) -> list[str]:
         state.product_architecture_modelability_passed
         and not (
             state.product_architecture_modelability_card_delivered
-            and state.product_architecture_officer_result_ledger_checked
+            and state.product_architecture_flowguard_operator_result_ledger_checked
         )
     ):
-        failures.append("product architecture modelability result reached PM before officer card and packet-ledger check")
+        failures.append("product architecture modelability result reached PM before FlowGuard operator card and packet-ledger check")
     if (
         state.product_architecture_challenge_card_delivered
         and not state.product_architecture_modelability_passed
@@ -310,9 +310,9 @@ def invariant_failures(state: State) -> list[str]:
     if state.root_contract_reviewer_challenged and not state.root_contract_challenge_card_delivered:
         failures.append("reviewer challenged root contract before root contract challenge card")
     if state.root_contract_modelability_card_delivered:
-        failures.append("root contract Product Officer card emitted in reviewer-only flow")
+        failures.append("root contract FlowGuard operator product-scope card emitted in reviewer-only flow")
     if state.root_contract_modelability_passed:
-        failures.append("root contract Product Officer pass recorded in reviewer-only flow")
+        failures.append("root contract FlowGuard operator product-scope pass recorded in reviewer-only flow")
     if state.root_contract_frozen_by_pm and not (
         state.root_contract_draft_written
         and state.root_contract_reviewer_challenged
@@ -354,14 +354,14 @@ def invariant_failures(state: State) -> list[str]:
         and state.child_skill_gate_manifest_written
     ):
         failures.append("reviewer passed child-skill manifest before review card and manifest")
-    if state.process_officer_child_skill_card_delivered:
-        failures.append("child-skill Process Officer card emitted in reviewer-only flow")
-    if state.child_skill_process_officer_passed:
-        failures.append("child-skill Process Officer pass recorded in reviewer-only flow")
-    if state.product_officer_child_skill_card_delivered:
-        failures.append("child-skill Product Officer card emitted in reviewer-only flow")
-    if state.child_skill_product_officer_passed:
-        failures.append("child-skill Product Officer pass recorded in reviewer-only flow")
+    if state.flowguard_operator_child_skill_route_card_delivered:
+        failures.append("child-skill FlowGuard operator route-scope card emitted in reviewer-only flow")
+    if state.child_skill_flowguard_operator_route_scope_passed:
+        failures.append("child-skill FlowGuard operator route-scope pass recorded in reviewer-only flow")
+    if state.flowguard_operator_child_skill_product_card_delivered:
+        failures.append("child-skill FlowGuard operator product-scope card emitted in reviewer-only flow")
+    if state.child_skill_flowguard_operator_product_scope_passed:
+        failures.append("child-skill FlowGuard operator product-scope pass recorded in reviewer-only flow")
     if state.child_skill_manifest_pm_approved_for_route and not state.child_skill_manifest_reviewer_passed:
         failures.append("PM approved child-skill manifest before reviewer pass")
     if state.capability_evidence_synced and not state.child_skill_manifest_pm_approved_for_route:
@@ -548,7 +548,7 @@ INVARIANTS = (
     Invariant(
         name="prompt_isolation_packet_control",
         description=(
-            "Bootloader, Controller, PM, Reviewer, Worker, and Officer can only "
+            "Bootloader, Controller, PM, Reviewer, Worker, and FlowGuard operator can only "
             "act from current prompt cards, manifest checks, ledger checks, and "
             "reviewed packet evidence."
         ),

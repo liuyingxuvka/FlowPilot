@@ -96,7 +96,7 @@ def reviewer_block_events_are_known(state: State, _trace: object) -> InvariantRe
 
 def gate_outcome_contracts_have_non_pass_paths(state: State, _trace: object) -> InvariantResult:
     if state.gate_outcome_contracts_observed and not state.gate_outcome_contracts_complete:
-        return _fail("reviewer/officer gate outcome contracts have pass-only paths")
+        return _fail("reviewer/FlowGuard operator gate outcome contracts have pass-only paths")
     return _ok()
 
 
@@ -119,8 +119,8 @@ def install_policy_matches_first_class_sources(state: State, _trace: object) -> 
     return _ok()
 
 
-def standard_six_roles_have_liveness_gate(state: State, _trace: object) -> InvariantResult:
-    if state.standard_six_roles_requested and not state.role_liveness_ready_or_blocked:
+def runtime_requested_roles_have_liveness_gate(state: State, _trace: object) -> InvariantResult:
+    if state.runtime_requested_roles_requested and not state.role_liveness_ready_or_blocked:
         return _fail("runtime-requested role bindings have neither readiness proof nor an early blocker")
     return _ok()
 
@@ -170,7 +170,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="gate_outcome_contracts_have_non_pass_paths",
-        description="Reviewer/officer gate outcome contracts include a non-pass repair route.",
+        description="Reviewer/FlowGuard operator gate outcome contracts include a non-pass repair route.",
         predicate=gate_outcome_contracts_have_non_pass_paths,
     ),
     Invariant(
@@ -184,9 +184,9 @@ INVARIANTS = (
         predicate=install_policy_matches_first_class_sources,
     ),
     Invariant(
-        name="standard_six_roles_have_liveness_gate",
+        name="runtime_requested_roles_have_liveness_gate",
         description="Standard role-binding runs prove readiness or stop at an early blocker.",
-        predicate=standard_six_roles_have_liveness_gate,
+        predicate=runtime_requested_roles_have_liveness_gate,
     ),
     Invariant(
         name="active_task_policy_hides_history",
@@ -217,6 +217,6 @@ __all__ = [
     "node_completion_is_idempotent_per_active_node",
     "reviewer_block_events_are_known",
     "route_snapshot_uses_frontier_completion",
-    "standard_six_roles_have_liveness_gate",
+    "runtime_requested_roles_have_liveness_gate",
     "terminal_closure_has_single_authority",
 ]

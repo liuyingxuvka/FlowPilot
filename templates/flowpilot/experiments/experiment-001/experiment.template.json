@@ -10,8 +10,8 @@
   "source_node_acceptance_plan": "<path-or-null>",
   "started_at": "<iso-8601-timestamp>",
   "ended_at": "<iso-8601-timestamp-or-null>",
-  "owner_role": "<worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
-  "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+  "owner_role": "<worker|flowguard_operator>",
+  "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
   "question": "<one-question-this-experiment-answers>",
   "hypothesis_to_attack": "<what-could-make-the-current-route-or-assumption-wrong>",
   "method": "<bounded-method>",
@@ -30,9 +30,9 @@
   "stop_condition": "<when-to-stop>",
   "result": "<pending|passed|failed|inconclusive|blocked|superseded>",
   "conclusion": "<decision-relevant-conclusion-or-null>",
-  "reviewer_or_officer_check": {
+  "reviewer_or_flowguard_operator_check": {
     "direct_check_required": true,
-    "checked_by_role": "<human_like_reviewer|process_flowguard_officer|product_flowguard_officer|none>",
+    "checked_by_role": "<human_like_reviewer|flowguard_operator|none>",
     "check_path": "<path-or-null>",
     "worker_report_only_allowed": false
   },

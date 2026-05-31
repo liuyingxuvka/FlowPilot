@@ -1,26 +1,29 @@
 ## Why
 
 The new FlowPilot runtime has the right shape: current-run ledgers, sealed
-packets, dynamic leases, FlowGuard packets, reviewer packets, validation
-packets, closure packets, and PM disposition packets. The remaining control
-gap is semantic gate outcome handling. A reviewer or validator can write a
-body that means "block" or "fail", while the fresh packet path still treats the
-packet family as accepted unless a mechanical envelope blocker is present.
+packets, dynamic leases, FlowGuard officer packets, reviewer packets,
+system validation, system closure, and PM disposition packets. The remaining control
+gap is semantic gate outcome handling. A reviewer can write a body that means
+"block" or "fail", or the system validation pass can fail,
+while the fresh packet path still treats the packet family as accepted unless a
+mechanical envelope blocker is present.
 
 That recreates an old FlowPilot failure mode: a gate has a pass path, but its
 non-pass path is not routable. The old protocol solved this with explicit
 pass/block outcomes, active blockers, PM repair decisions, same-class recheck,
 and stale-evidence invalidation. The new runtime should borrow that contract
-without restoring the old fixed crew or card stack.
+without restoring the old fixed-role stack.
 
 ## What Changes
 
-- Add a compact semantic outcome parser for worker, FlowGuard, reviewer,
-  validator, closure, and PM repair-decision packet bodies.
+- Add a compact semantic outcome parser for worker, FlowGuard officer,
+  reviewer, and PM repair-decision packet bodies, plus system validation
+  outcomes.
 - Record every parsed outcome in the run ledger with role, packet, subject,
   target result, decision, blocker class, recommendation, and evidence refs.
-- Convert reviewer blocks, validator failures, FlowGuard failures, and worker
-  blocked/needs-PM results into active blockers instead of accepted evidence.
+- Convert reviewer blocks, system validation failures, FlowGuard failures, and
+  worker blocked/needs-PM results into active blockers instead of accepted
+  evidence.
 - Automatically issue a PM repair-decision packet for each active semantic
   blocker.
 - Apply PM repair decisions through the existing new runtime primitives:
@@ -45,7 +48,8 @@ without restoring the old fixed crew or card stack.
 - `black-box-packet-lifecycle`: Packet acceptance depends on semantic outcome
   as well as mechanical envelope validity.
 - `high-standard-flowpilot-control-flow`: High-standard gates cannot advance
-  through reviewer or validator prose that says the gate failed.
+  through reviewer prose or system validation evidence that says the gate
+  failed.
 - `new-flowpilot-liveness-recovery`: `repair_packet` remains nonterminal, but
   semantic blockers now route to PM repair-decision packets instead of passive
   stuck states.
@@ -57,8 +61,8 @@ without restoring the old fixed crew or card stack.
   existing submit-result/status paths.
 - Models: new focused FlowGuard semantic gate-outcome model plus result
   artifact.
-- Tests: focused high-standard/new-entrypoint tests for reviewer block,
-  validator fail, worker blocked, PM repair decisions, same-class recheck, and
+- Tests: focused high-standard/new-entrypoint tests for reviewer block, system
+  validation fail, worker blocked, PM repair decisions, same-class recheck, and
   no silent pass.
 - Install sync: local installed `flowpilot` skill under the active Codex skills
   directory.

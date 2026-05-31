@@ -54,12 +54,20 @@ def run_checks(result: dict[str, object]) -> None:
         forbidden_copy_terms = (
             "Runtime role assistance",
             "runtime role-binding coverage",
-            "\u540e\u53f0\u667a\u80fd\u4f53",
             "\u516d\u89d2\u8272\u56e2\u961f",
-        )
-        required_copy_terms = (
             "Runtime role collaboration",
             "\u8fd0\u884c\u65f6\u89d2\u8272\u534f\u4f5c",
+            "Background agents",
+            "\u540e\u53f0\u667a\u80fd\u4f53",
+        )
+        required_copy_terms = (
+            "Background collaboration",
+            "\u540e\u53f0\u534f\u4f5c",
+            "Settings",
+            "\u8bbe\u7f6e",
+            "Support developer",
+            "\u652f\u6301\u5f00\u53d1\u8005",
+            "https://paypal.me/Yingxuliu",
         )
         forbidden_present = [term for term in forbidden_copy_terms if term in text]
         missing_required = [term for term in required_copy_terms if term not in text]
@@ -129,7 +137,7 @@ def run_checks(result: dict[str, object]) -> None:
                 "native startup intake UI",
                 "There is no requirement for a non-startup monitoring UI",
                 ".flowpilot/runs/<run-id>/ledger.json` is authority",
-                "create or attach only the requested responsibility through an available host-supported role mechanism",
+                "create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface",
             )
         )
         result["checks"].append(

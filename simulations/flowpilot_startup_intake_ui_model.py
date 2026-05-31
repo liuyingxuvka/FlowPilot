@@ -2,11 +2,15 @@
 
 Risk purpose:
 - Use FlowGuard (https://github.com/liuyingxuvka/FlowGuard) to review the
-  planned replacement of the chat three-question startup boundary with the
-  native startup intake UI.
+  native startup intake UI as the formal startup boundary.
 - Guard against Controller seeing user request body text, startup continuing
-  after UI cancel, option toggles drifting from existing startup enums, and
-  reviewer startup checks relying on chat history instead of UI records.
+  after UI cancel, the remaining background-collaboration toggle drifting from existing
+  startup enums, removed continuation/display options returning as user-visible
+  choices, and reviewer startup checks relying on chat history instead of UI
+  records.
+- Guard that language selection is no longer a top-level startup option and is
+  available only from the settings gear together with the support-developer
+  entry.
 - Guard against Windows PowerShell UTF-8 BOM artifacts breaking Router JSON
   parsing or leaking an encoding marker into the PM-bound intake packet.
 - Guard against Windows PowerShell 5.1 parsing non-ASCII UTF-8 no-BOM `.ps1`
@@ -36,6 +40,8 @@ REQUIRED_LABELS = (
     "router_loaded",
     "startup_ui_source_encoding_contract_verified",
     "startup_intake_ui_opened",
+    "settings_button_visible_and_main_language_hidden",
+    "settings_panel_opened_with_language_and_support",
     "ui_confirmed_with_all_artifacts",
     "ui_cancelled_before_run",
     "startup_answers_recorded_from_ui",
@@ -44,12 +50,17 @@ REQUIRED_LABELS = (
     "sealed_user_request_ref_recorded",
     "pm_intake_packet_created_from_sealed_body_ref",
     "reviewer_checks_ui_record_receipt_and_envelope",
-    "host_options_applied_from_ui_choices",
+    "host_options_applied_from_background_choice_and_defaults",
     "controller_core_loaded_after_sealed_intake",
     "startup_ui_path_complete",
 )
 
-MAX_SEQUENCE_LENGTH = 17
+MAX_SEQUENCE_LENGTH = 19
+
+FIXED_STARTUP_DEFAULTS = {
+    "scheduled_continuation": "manual",
+    "display_surface": "chat",
+}
 
 
 @dataclass(frozen=True)
@@ -71,6 +82,14 @@ class State:
     launch_mode: str = "none"  # none | interactive_native | headless | synthetic
     headless_result: bool = False
     formal_startup_allowed: bool = False
+    settings_button_visible: bool = False
+    language_visible_on_main: bool = False
+    settings_panel_opened: bool = False
+    language_visible_in_settings: bool = False
+    support_developer_visible_in_settings: bool = False
+    support_uses_canonical_url: bool = False
+    support_entitlement_disclaimer_visible: bool = False
+    support_claims_paid_entitlement: bool = False
 
     receipt_written: bool = False
     envelope_written: bool = False
@@ -139,6 +158,7 @@ class StartupIntakeStep:
         "startup_intake_envelope",
         "startup_intake_body_hash",
         "startup_options",
+        "settings_panel",
     )
     writes = (
         "startup_answers",
@@ -147,6 +167,7 @@ class StartupIntakeStep:
         "pm_intake_packet",
         "reviewer_startup_fact_check",
         "host_startup_options",
+        "settings_language_and_support_surface",
     )
     input_description = "one FlowPilot startup intake UI/router tick"
     output_description = "one legal startup intake state transition"
@@ -178,7 +199,7 @@ def is_success(state: State) -> bool:
     return state.status == "complete"
 
 
-def _confirm_state(state: State, *, background: str, continuation: str, display: str) -> State:
+def _confirm_state(state: State, *, background: str) -> State:
     return replace(
         state,
         ui_result="confirmed",
@@ -197,8 +218,8 @@ def _confirm_state(state: State, *, background: str, continuation: str, display:
         router_json_reader_bom_tolerant=True,
         pm_packet_body_bom_stripped=True,
         runtime_role_assistances=background,
-        scheduled_continuation=continuation,
-        display_surface=display,
+        scheduled_continuation=FIXED_STARTUP_DEFAULTS["scheduled_continuation"],
+        display_surface=FIXED_STARTUP_DEFAULTS["display_surface"],
     )
 
 
@@ -229,6 +250,32 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, ui_opened=True, status="waiting_ui"),
             ),
         )
+    if state.status == "waiting_ui" and state.ui_opened and not state.settings_button_visible:
+        return (
+            Transition(
+                "settings_button_visible_and_main_language_hidden",
+                replace(
+                    state,
+                    settings_button_visible=True,
+                    language_visible_on_main=False,
+                ),
+            ),
+        )
+    if state.status == "waiting_ui" and state.settings_button_visible and not state.settings_panel_opened:
+        return (
+            Transition(
+                "settings_panel_opened_with_language_and_support",
+                replace(
+                    state,
+                    settings_panel_opened=True,
+                    language_visible_in_settings=True,
+                    support_developer_visible_in_settings=True,
+                    support_uses_canonical_url=True,
+                    support_entitlement_disclaimer_visible=True,
+                    support_claims_paid_entitlement=False,
+                ),
+            ),
+        )
     if state.status == "waiting_ui" and state.ui_result == "none":
         return (
             Transition(
@@ -236,8 +283,6 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 _confirm_state(
                     state,
                     background="allow",
-                    continuation="allow",
-                    display="cockpit",
                 ),
             ),
             Transition(
@@ -256,8 +301,6 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 _confirm_state(
                     state,
                     background="single-agent",
-                    continuation="manual",
-                    display="chat",
                 ),
             ),
         )
@@ -325,7 +368,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
     ):
         return (
             Transition(
-                "host_options_applied_from_ui_choices",
+                "host_options_applied_from_background_choice_and_defaults",
                 replace(
                     state,
                     roles_started=state.runtime_role_assistances == "allow",
@@ -389,6 +432,22 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         return InvariantResult.fail("startup UI launcher source may not parse on unsupported_historical Windows PowerShell")
     if state.ui_opened and not state.unsupported_historical_powershell_source_parse_safe:
         return InvariantResult.fail("startup UI launcher source may not parse on unsupported_historical Windows PowerShell")
+    if state.settings_button_visible and state.language_visible_on_main:
+        return InvariantResult.fail("language selector remained visible on the startup main surface")
+    if state.ui_result in {"confirmed", "cancelled"} and not state.settings_button_visible:
+        return InvariantResult.fail("startup UI reached a user decision before the settings gear was available")
+    if state.ui_result in {"confirmed", "cancelled"} and not state.settings_panel_opened:
+        return InvariantResult.fail("startup UI reached a user decision before settings panel structure was verified")
+    if state.settings_panel_opened and not state.language_visible_in_settings:
+        return InvariantResult.fail("settings panel did not contain language selection")
+    if state.settings_panel_opened and not (
+        state.support_developer_visible_in_settings
+        and state.support_uses_canonical_url
+        and state.support_entitlement_disclaimer_visible
+    ):
+        return InvariantResult.fail("settings panel did not contain the canonical support-developer entry")
+    if state.support_claims_paid_entitlement:
+        return InvariantResult.fail("support developer copy implied a paid entitlement")
     if state.startup_answers_recorded and not (
         state.receipt_written
         and state.envelope_written
@@ -415,6 +474,10 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
             return InvariantResult.fail("scheduled continuation toggle did not map to a startup answer enum")
         if state.display_surface not in STARTUP_ENUMS["display_surface"]:
             return InvariantResult.fail("display surface toggle did not map to a startup answer enum")
+        if state.scheduled_continuation != FIXED_STARTUP_DEFAULTS["scheduled_continuation"]:
+            return InvariantResult.fail("scheduled continuation is no longer a visible startup UI option")
+        if state.display_surface != FIXED_STARTUP_DEFAULTS["display_surface"]:
+            return InvariantResult.fail("display surface is no longer a visible startup UI option")
     if state.runtime_role_assistances == "single-agent" and state.roles_started:
         return InvariantResult.fail("runtime role assistance started despite UI single-agent choice")
     if state.scheduled_continuation == "manual" and state.heartbeat_created:
@@ -455,11 +518,20 @@ def invariant_failures(state: State) -> list[str]:
 
 
 def hazard_states() -> dict[str, State]:
-    base = _confirm_state(
+    safe_waiting = replace(
         _source_safe_state(replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui")),
+        settings_button_visible=True,
+        language_visible_on_main=False,
+        settings_panel_opened=True,
+        language_visible_in_settings=True,
+        support_developer_visible_in_settings=True,
+        support_uses_canonical_url=True,
+        support_entitlement_disclaimer_visible=True,
+        support_claims_paid_entitlement=False,
+    )
+    base = _confirm_state(
+        safe_waiting,
         background="allow",
-        continuation="allow",
-        display="cockpit",
     )
     recorded = replace(base, startup_answers_recorded=True, startup_answer_values_valid=True)
     encoded = replace(base, artifact_encoding_contract_verified=True)
@@ -483,6 +555,22 @@ def hazard_states() -> dict[str, State]:
             router_loaded=True,
             ui_opened=True,
             status="waiting_ui",
+        ),
+        "language_visible_on_main_surface": replace(
+            safe_waiting,
+            language_visible_on_main=True,
+        ),
+        "settings_panel_missing_language": replace(
+            safe_waiting,
+            language_visible_in_settings=False,
+        ),
+        "settings_panel_missing_support_url": replace(
+            safe_waiting,
+            support_uses_canonical_url=False,
+        ),
+        "support_copy_claims_paid_entitlement": replace(
+            safe_waiting,
+            support_claims_paid_entitlement=True,
         ),
         "utf8_no_bom_script_source_unsupported_historical_powershell_parse_break": replace(
             recorded,
@@ -509,6 +597,8 @@ def hazard_states() -> dict[str, State]:
         ),
         "bom_repair_bypasses_body_hash": replace(recorded, body_hash_verified=False),
         "invalid_toggle_value": replace(recorded, runtime_role_assistances="yes"),
+        "obsolete_scheduled_continuation_option_accepted": replace(recorded, scheduled_continuation="allow"),
+        "obsolete_display_surface_option_accepted": replace(recorded, display_surface="cockpit"),
         "single_agent_starts_roles": replace(
             recorded,
             runtime_role_assistances="single-agent",
@@ -538,12 +628,21 @@ def hazard_states() -> dict[str, State]:
 
 
 def approved_plan_state() -> State:
+    safe_waiting = replace(
+        _source_safe_state(replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui")),
+        settings_button_visible=True,
+        language_visible_on_main=False,
+        settings_panel_opened=True,
+        language_visible_in_settings=True,
+        support_developer_visible_in_settings=True,
+        support_uses_canonical_url=True,
+        support_entitlement_disclaimer_visible=True,
+        support_claims_paid_entitlement=False,
+    )
     return replace(
         _confirm_state(
-            _source_safe_state(replace(initial_state(), router_loaded=True, ui_opened=True, status="waiting_ui")),
+            safe_waiting,
             background="allow",
-            continuation="allow",
-            display="cockpit",
         ),
         startup_answers_recorded=True,
         startup_answer_values_valid=True,
@@ -557,8 +656,9 @@ def approved_plan_state() -> State:
         reviewer_checked_envelope_hash=True,
         reviewer_startup_passed=True,
         roles_started=True,
-        heartbeat_created=True,
-        cockpit_opened=True,
+        heartbeat_created=False,
+        cockpit_opened=False,
+        chat_display_fallback_recorded=True,
         controller_core_loaded=True,
         status="complete",
     )

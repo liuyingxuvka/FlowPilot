@@ -24,7 +24,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 ROUTER_OBLIGATIONS = (
     "controller_boundary",
     "pm_route_draft",
-    "process_officer_route_check",
+    "flowguard_operator_route_scope_route_check",
     "reviewer_route_challenge",
     "reviewed_route_activation",
     "single_owner_worker_packet",
@@ -42,8 +42,8 @@ ALL_OBLIGATIONS = sum(OBLIGATION_BITS.values())
 REQUIRED_LABELS = (
     "controller_boundary_confirmed",
     "pm_writes_route_draft",
-    "router_dispatches_route_process_check_to_process_officer",
-    "process_officer_returns_route_check",
+    "router_dispatches_route_process_check_to_flowguard_operator_route_scope",
+    "flowguard_operator_route_scope_returns_route_check",
     "pm_accepts_process_route_model",
     "router_dispatches_route_challenge_to_reviewer",
     "reviewer_returns_route_challenge_pass",
@@ -202,23 +202,23 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         ),
         2: Transition(
-            "router_dispatches_route_process_check_to_process_officer",
-            "process_flowguard_officer",
+            "router_dispatches_route_process_check_to_flowguard_operator_route_scope",
+            "flowguard_operator",
             replace(
                 state,
                 step=3,
-                last_action="router_dispatches_route_process_check_to_process_officer",
-                last_recipient="process_flowguard_officer",
+                last_action="router_dispatches_route_process_check_to_flowguard_operator_route_scope",
+                last_recipient="flowguard_operator",
             ),
         ),
         3: Transition(
-            "process_officer_returns_route_check",
+            "flowguard_operator_route_scope_returns_route_check",
             "controller",
             replace(
                 state,
                 step=4,
-                obligations=_add(state, "process_officer_route_check"),
-                last_action="process_officer_returns_route_check",
+                obligations=_add(state, "flowguard_operator_route_scope_route_check"),
+                last_action="flowguard_operator_route_scope_returns_route_check",
                 last_recipient="controller",
             ),
         ),
@@ -272,7 +272,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 state,
                 step=9,
                 obligations=_add(state, "single_owner_worker_packet"),
-                packet_owner="worker_a",
+                packet_owner="worker",
                 last_action="pm_creates_worker_packet_with_single_owner",
                 last_recipient="project_manager",
             ),
@@ -291,8 +291,8 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         ),
         10: Transition(
             "controller_relays_worker_packet_to_owner",
-            "worker_a",
-            replace(state, step=11, last_action="controller_relays_worker_packet_to_owner", last_recipient="worker_a"),
+            "worker",
+            replace(state, step=11, last_action="controller_relays_worker_packet_to_owner", last_recipient="worker"),
         ),
         11: Transition(
             "worker_owner_returns_result",
@@ -323,14 +323,14 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         ),
         14: Transition(
             "router_routes_reissue_to_original_responsible_role",
-            "worker_a",
+            "worker",
             replace(
                 state,
                 step=15,
                 obligations=_add(state, "rejection_routes_to_reissue_or_pm_repair"),
-                reissue_target="worker_a",
+                reissue_target="worker",
                 last_action="router_routes_reissue_to_original_responsible_role",
-                last_recipient="worker_a",
+                last_recipient="worker",
             ),
         ),
         15: Transition(
@@ -446,7 +446,7 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("route activated from dummy route instead of reviewed draft")
     if state.second_packet_owner_assigned:
         failures.append("same worker packet assigned to more than one owner")
-    if state.packet_owner not in {"none", "worker_a", "worker_b"}:
+    if state.packet_owner not in {"none", "worker", "worker"}:
         failures.append("worker packet owner is not a known worker role")
     if state.packet_owner != "none" and state.step >= 11 and not state.reviewer_dispatch_allowed:
         failures.append("worker packet relayed before router direct dispatch approval")
@@ -515,11 +515,11 @@ def _covered_prefix_state() -> State:
         last_action="ui_snapshot_built_from_active_canonical_sources",
         last_recipient="ui_host",
         route_activation_source="reviewed_draft",
-        packet_owner="worker_a",
+        packet_owner="worker",
         reviewer_dispatch_allowed=True,
         result_reviewed_by_reviewer=True,
         rejection_lane="control_plane_reissue",
-        reissue_target="worker_a",
+        reissue_target="worker",
         resume_next_derived_from_ledger=True,
         parent_segment_pm_decision_recorded=True,
         stale_evidence_marked=True,

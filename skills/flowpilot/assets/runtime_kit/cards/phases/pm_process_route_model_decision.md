@@ -5,26 +5,26 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Process Route Model Decision Phase
 
 ## Role Capability Reminder
 
 - Formal work products must live in run-scoped files or project artifacts. Handoff messages point to artifacts with paths/hashes, changed paths when applicable, output contract, inspection notes, and PM Suggestion Items; the message body is not the sole work product.
-- PM owns route activation. Process FlowGuard supplies the executable process model and reachability evidence; it does not activate the route.
+- PM owns route activation. FlowGuard operator supplies the executable process model and reachability evidence; it does not activate the route.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - If the route model evidence is not enough to decide, PM may ask another FlowPilot role for bounded `role_work_request` evidence before accepting.
 - If accepting would hide a process gap, choose an explicit repair path: route mutation, packet reissue, artifact quarantine, or stop for user input.
 
-Read the PM route draft and the Process FlowGuard Officer's route process
+Read the PM route draft and the FlowGuard operator's route process
 check.
 
 Decide whether the route process model is good enough to become the serial
 execution basis for Reviewer route challenge.
 
-Accept only when Process FlowGuard has modeled the route as one executable
+Accept only when FlowGuard operator has modeled the route as one executable
 serial line:
 
 - every effective root, parent/module, child, leaf, and repair segment is
@@ -49,7 +49,7 @@ If the model is acceptable, write
 and return `pm_accepts_process_route_model`.
 
 If it is not acceptable, return `pm_requests_process_route_model_rebuild` and
-state whether PM must rewrite the route draft, ask Process FlowGuard to rebuild
+state whether PM must rewrite the route draft, ask FlowGuard operator to rebuild
 the model, split/promote nodes, or add supplemental nodes.
 
 The decision body must include:
@@ -57,7 +57,7 @@ The decision body must include:
 - `decided_by_role: "project_manager"`;
 - `decision: "accept_process_route_model"` or
   `decision: "request_process_route_model_rebuild"`;
-- `source_paths` naming the route draft and Process FlowGuard report;
+- `source_paths` naming the route draft and FlowGuard operator report;
 - `serial_execution_line_review`;
 - `recursive_node_entry_review`;
 - `leaf_worker_readiness_review`;

@@ -1,5 +1,5 @@
 {
-  "schema_version": "flowpilot.officer_request_lifecycle_index.v1",
+  "schema_version": "flowpilot.flowguard_operator_request_lifecycle_index.v1",
   "run_id": "run-001",
   "authority": "pm_role_work_request_index_and_router_authorized_result_events",
   "controller_visibility": "packet_and_result_envelopes_only",

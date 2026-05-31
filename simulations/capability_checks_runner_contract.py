@@ -29,15 +29,15 @@ REQUIRED_LABELS = (
     "required_role_binding_role_binding_policy_written",
     "project_manager_opened_for_current_task",
     "human_like_reviewer_opened_for_current_task",
-    "process_flowguard_officer_opened_for_current_task",
-    "product_flowguard_officer_opened_for_current_task",
-    "worker_a_opened_for_current_task",
-    "worker_b_opened_for_current_task",
+    "flowguard_operator_route_scope_opened_for_current_task",
+    "flowguard_operator_product_scope_opened_for_current_task",
+    "worker_opened_for_current_task",
+    "worker_opened_for_current_task",
     "role_binding_ledger_written",
     "role_identity_protocol_recorded",
     "pm_flowguard_delegation_policy_recorded",
-    "officer_owned_async_modeling_policy_recorded",
-    "officer_model_report_provenance_policy_recorded",
+    "flowguard_operator_owned_async_modeling_policy_recorded",
+    "flowguard_operator_model_report_provenance_policy_recorded",
     "controller_coordination_boundary_recorded",
     "independent_approval_protocol_recorded",
     "role_binding_memory_packets_written",
@@ -82,8 +82,8 @@ REQUIRED_LABELS = (
     "root_acceptance_thresholds_defined",
     "root_acceptance_proof_matrix_written",
     "standard_scenario_pack_selected",
-    "product_architecture_officer_adversarial_probe_done",
-    "product_function_architecture_product_officer_approved",
+    "product_architecture_flowguard_operator_adversarial_probe_done",
+    "product_function_architecture_flowguard_operator_product_scope_approved",
     "product_architecture_reviewer_adversarial_probe_done",
     "product_function_architecture_reviewer_challenged",
     "product_architecture_self_interrogation_record_written",
@@ -124,7 +124,7 @@ REQUIRED_LABELS = (
     "persistent_router_daemon_started_before_controller_core",
     "pm_initial_capability_decision_recorded",
     "flowguard_process_designed",
-    "flowguard_officer_model_adversarial_probe_done",
+    "flowguard_operator_model_adversarial_probe_done",
     "meta_route_checked",
     "capability_route_checked",
     "parent_backward_structural_trigger_rule_recorded",
@@ -148,7 +148,7 @@ REQUIRED_LABELS = (
     "heartbeat_loaded_packet_ledger",
     "heartbeat_checked_or_restarted_persistent_router_daemon",
     "heartbeat_loaded_role_binding_memory",
-    "heartbeat_host_spawn_or_rehydrate_six_roles",
+    "heartbeat_host_spawn_or_rehydrate_runtime_roles",
     "heartbeat_restored_required_role_binding_coverage",
     "heartbeat_rehydrated_required_role_binding_coverage",
     "heartbeat_injected_current_run_memory_into_roles",
@@ -271,7 +271,7 @@ REQUIRED_LABELS = (
     "final_acceptance_matrix_reviewed",
     "final_standard_scenario_pack_replayed",
     "final_quality_candidate_reviewed",
-    "final_product_model_officer_adversarial_probe_done",
+    "final_product_model_flowguard_operator_adversarial_probe_done",
     "final_product_function_model_replayed",
     "final_human_review_context_loaded",
     "final_human_neutral_observation_written",
@@ -374,25 +374,25 @@ def _state_id(state: model.State) -> str:
         f"{state.root_acceptance_thresholds_defined},"
         f"{state.root_acceptance_proof_matrix_written},"
         f"{state.standard_scenario_pack_selected},"
-        f"{state.product_architecture_officer_adversarial_probe_done},"
-        f"{state.product_function_architecture_product_officer_approved},"
+        f"{state.product_architecture_flowguard_operator_adversarial_probe_done},"
+        f"{state.product_function_architecture_flowguard_operator_product_scope_approved},"
         f"{state.product_architecture_reviewer_adversarial_probe_done},"
         f"{state.product_function_architecture_reviewer_challenged},"
         f"{state.product_architecture_self_interrogation_record_written},"
         f"{state.product_architecture_self_interrogation_findings_dispositioned}|"
-        f"crew={state.role_binding_policy_written},{state.role_binding_count},"
+        f"runtime_roles={state.role_binding_policy_written},{state.role_binding_count},"
         f"{state.project_manager_ready},{state.reviewer_ready},"
-        f"{state.process_flowguard_officer_ready},"
-        f"{state.product_flowguard_officer_ready},"
-        f"{state.worker_a_ready},{state.worker_b_ready},"
+        f"{state.flowguard_operator_route_scope_ready},"
+        f"{state.flowguard_operator_product_scope_ready},"
+        f"{state.worker_ready},{state.worker_ready},"
         f"{state.role_binding_ledger_written},"
         f"{state.role_binding_memory_policy_written},"
         f"{state.role_binding_memory_packets_written},"
         f"{state.pm_initial_capability_decision_recorded},"
         f"{state.role_binding_memory_archived},{state.role_binding_ledger_archived}|"
-        f"officer_async={state.pm_flowguard_delegation_policy_recorded},"
-        f"{state.officer_owned_async_modeling_policy_recorded},"
-        f"{state.officer_model_report_provenance_policy_recorded},"
+        f"flowguard_operator_async={state.pm_flowguard_delegation_policy_recorded},"
+        f"{state.flowguard_operator_owned_async_modeling_policy_recorded},"
+        f"{state.flowguard_operator_model_report_provenance_policy_recorded},"
         f"{state.controller_coordination_boundary_recorded},"
         f"{state.independent_approval_protocol_recorded}|"
         f"router_daemon={state.router_daemon_started},"
@@ -409,8 +409,8 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_gate_approvers_assigned},"
         f"{state.child_skill_manifest_independent_validation_done},"
         f"{state.child_skill_manifest_reviewer_reviewed},"
-        f"{state.child_skill_manifest_process_officer_approved},"
-        f"{state.child_skill_manifest_product_officer_approved},"
+        f"{state.child_skill_manifest_flowguard_operator_route_scope_approved},"
+        f"{state.child_skill_manifest_flowguard_operator_product_scope_approved},"
         f"{state.child_skill_manifest_pm_approved_for_route},"
         f"{state.child_skill_node_gate_manifest_refined},"
         f"{state.child_skill_gate_authority_records_written},"
@@ -437,7 +437,7 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_stricter_standard_precedence_bound},"
         f"{state.node_acceptance_risk_experiments_mapped},"
         f"{state.child_skill_conformance_model_checked},"
-        f"{state.child_skill_conformance_model_process_officer_approved},"
+        f"{state.child_skill_conformance_model_flowguard_operator_route_scope_approved},"
         f"strict_gate={state.strict_gate_obligation_review_model_checked},"
         f"{state.child_skill_manifest_only_evidence_rejected},"
         f"{state.child_skill_execution_reports_written},"
@@ -463,8 +463,8 @@ def _state_id(state: model.State) -> str:
         f"{state.heartbeat_loaded_frontier},"
         f"{state.heartbeat_loaded_role_binding_memory},"
         f"{state.heartbeat_host_rehydrate_requested},"
-        f"{state.heartbeat_restored_crew},"
-        f"{state.heartbeat_rehydrated_crew},"
+        f"{state.heartbeat_restored_runtime_roles},"
+        f"{state.heartbeat_rehydrated_runtime_roles},"
         f"{state.heartbeat_injected_current_run_memory_into_roles},"
         f"{state.role_binding_recovery_report_written},"
         f"{state.replacement_roles_seeded_from_memory},"
@@ -484,13 +484,13 @@ def _state_id(state: model.State) -> str:
         f"{state.lifecycle_reconciliation_done},"
         f"{state.terminal_lifecycle_frontier_written}|"
         f"fg_design={state.flowguard_process_design_done},"
-        f"{state.flowguard_officer_model_adversarial_probe_done}|"
+        f"{state.flowguard_operator_model_adversarial_probe_done}|"
         f"deps={state.dependency_plan_recorded},{state.future_installs_deferred}|"
-        f"meta={state.meta_route_checked},{state.meta_route_process_officer_approved}|"
+        f"meta={state.meta_route_checked},{state.meta_route_flowguard_operator_route_scope_approved}|"
         f"cap={state.capability_route_checked},"
-        f"{state.capability_route_process_officer_approved},"
+        f"{state.capability_route_flowguard_operator_route_scope_approved},"
         f"{state.capability_product_function_model_checked},"
-        f"{state.capability_product_function_model_product_officer_approved}|"
+        f"{state.capability_product_function_model_flowguard_operator_product_scope_approved}|"
         f"parent_backward_targets={state.parent_backward_structural_trigger_rule_recorded},"
         f"{state.parent_backward_review_targets_enumerated},"
         f"{state.parent_backward_review_targets_route_version},"
@@ -599,9 +599,9 @@ def _state_id(state: model.State) -> str:
         f"{state.final_acceptance_matrix_review_done},"
         f"{state.final_standard_scenario_pack_replayed},"
         f"{state.final_quality_candidate_review_done},"
-        f"{state.final_product_model_officer_adversarial_probe_done},"
+        f"{state.final_product_model_flowguard_operator_adversarial_probe_done},"
         f"{state.final_product_function_model_replayed},"
-        f"{state.final_product_function_model_product_officer_approved},"
+        f"{state.final_product_function_model_flowguard_operator_product_scope_approved},"
         f"{state.final_human_review_context_loaded},"
         f"{state.final_human_neutral_observation_written},"
         f"{state.final_human_manual_experiments_run},"

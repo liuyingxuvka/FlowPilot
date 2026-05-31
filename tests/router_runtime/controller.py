@@ -65,7 +65,7 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
             actor="controller",
             label="controller_sends_wait_target_reminder",
             summary="Send reminder to waiting role.",
-            to_role="worker_a",
+            to_role="worker",
             extra={"postcondition": "wait_target_reminder_sent"},
         )
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]

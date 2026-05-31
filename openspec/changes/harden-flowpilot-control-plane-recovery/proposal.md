@@ -15,9 +15,10 @@ daemon heartbeat, and known-friction gates converge on one durable state.
 - Fixed-router-event role outputs must be either submitted through Router or
   rejected with an explicit local-only status; a local receipt alone must never
   look like a consumed Router decision.
-- Resume role rehydration receipts and reports must be replayable into the
-  existing `resume_roles_restored` postcondition without generating duplicate
-  blockers when all six roles are ready.
+- Resume requested-responsibility rehydration receipts and reports must be
+  replayable into the existing `resume_roles_restored` postcondition without
+  generating duplicate blockers when every currently required responsibility is
+  ready.
 - Control blockers must coalesce by existing attempt family; repeated failures
   for the same family must update or preserve the active family state instead
   of creating unbounded replacement blockers.

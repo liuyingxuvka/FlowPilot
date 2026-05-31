@@ -83,12 +83,12 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                 active_node="final_product_function_replay",
             )
             return
-        if not state.final_product_model_officer_adversarial_probe_done:
+        if not state.final_product_model_flowguard_operator_adversarial_probe_done:
             yield _step(
                 state,
-                label="final_product_model_officer_adversarial_probe_done",
-                action="product FlowGuard officer adversarially rechecks the final product model boundary, state fields, counterexamples, counts, and blindspots before approving final replay",
-                final_product_model_officer_adversarial_probe_done=True,
+                label="final_product_model_flowguard_operator_adversarial_probe_done",
+                action="product-scope FlowGuard operator adversarially rechecks the final product model boundary, state fields, counterexamples, counts, and blindspots before approving final replay",
+                final_product_model_flowguard_operator_adversarial_probe_done=True,
                 active_node="final_product_function_replay",
             )
             return
@@ -96,9 +96,9 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="final_product_function_model_replayed",
-                action="product FlowGuard officer replays and approves final product behavior against the root product-function model before completion self-interrogation",
+                action="product-scope FlowGuard operator replays and approves final product behavior against the root product-function model before completion self-interrogation",
                 final_product_function_model_replayed=True,
-                final_product_function_model_product_officer_approved=True,
+                final_product_function_model_flowguard_operator_product_scope_approved=True,
                 active_node="final_human_inspection_context",
             )
             return
@@ -200,7 +200,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                     user_flow_diagram_reviewer_display_checked=False,
                     user_flow_diagram_reviewer_route_match_checked=False,
                     flowguard_process_design_done=False,
-                    flowguard_officer_model_adversarial_probe_done=False,
+                    flowguard_operator_model_adversarial_probe_done=False,
                     flowguard_model_report_risk_tiers_done=False,
                     flowguard_model_report_pm_review_agenda_done=False,
                     flowguard_model_report_toolchain_recommendations_done=False,
@@ -210,14 +210,14 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                     child_skill_gate_approvers_assigned=False,
                     child_skill_manifest_independent_validation_done=False,
                     child_skill_manifest_reviewer_reviewed=False,
-                    child_skill_manifest_process_officer_approved=False,
-                    child_skill_manifest_product_officer_approved=False,
+                    child_skill_manifest_flowguard_operator_route_scope_approved=False,
+                    child_skill_manifest_flowguard_operator_product_scope_approved=False,
                     child_skill_manifest_pm_approved_for_route=False,
                     candidate_route_tree_generated=False,
                     root_route_model_checked=False,
-                    root_route_model_process_officer_approved=False,
+                    root_route_model_flowguard_operator_route_scope_approved=False,
                     root_product_function_model_checked=False,
-                    root_product_function_model_product_officer_approved=False,
+                    root_product_function_model_flowguard_operator_product_scope_approved=False,
                     strict_gate_obligation_review_model_checked=False,
                     parent_backward_review_targets_enumerated=False,
                     parent_subtree_review_checked=False,
@@ -257,8 +257,8 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                     final_standard_scenario_pack_replayed=False,
                     final_quality_candidate_review_done=False,
                     final_product_function_model_replayed=False,
-                    final_product_model_officer_adversarial_probe_done=False,
-                    final_product_function_model_product_officer_approved=False,
+                    final_product_model_flowguard_operator_adversarial_probe_done=False,
+                    final_product_function_model_flowguard_operator_product_scope_approved=False,
                     final_human_review_context_loaded=False,
                     final_human_neutral_observation_written=False,
                     final_human_manual_experiments_run=False,
@@ -604,7 +604,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                 label="role_binding_memory_archived_at_terminal",
                 action="archive final role memory packet statuses after lifecycle reconciliation and before role-binding ledger archive",
                 role_binding_memory_archived=True,
-                active_node="ready_to_archive_crew",
+                active_node="ready_to_archive_runtime_roles",
             )
             return
         if not state.role_binding_ledger_archived:

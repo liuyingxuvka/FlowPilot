@@ -9,19 +9,19 @@ mechanical envelope validity before applying packet side effects.
 - **THEN** the runtime MUST record a non-pass packet outcome
 - **AND** the reviewed result MUST NOT be accepted.
 
-#### Scenario: Validator fail is not accepted as pass
-- **WHEN** a validation packet result body says validation failed
+#### Scenario: System validation failure is not accepted as pass
+- **WHEN** system validation derives a failed outcome from current evidence
 - **THEN** the runtime MUST record failed validation evidence
-- **AND** the runtime MUST NOT issue closure from that validation result.
+- **AND** the runtime MUST NOT record system closure from that evidence.
 
-#### Scenario: Legacy successful fake bodies remain pass
-- **WHEN** a packet result body does not declare a non-pass outcome
-- **THEN** the runtime MAY default to pass for fake/rehearsal compatibility
-- **AND** existing happy-path fake rehearsal MUST still complete.
+#### Scenario: Successful rehearsal bodies use explicit pass outcomes
+- **WHEN** a fake or rehearsal packet result body is accepted
+- **THEN** the result MUST provide an explicit pass/accept/complete outcome
+- **AND** silent compatibility defaults MUST NOT be required for completion.
 
 ### Requirement: Non-pass outcomes create active blockers
-The runtime SHALL create an active blocker for each reviewer block, validator
-fail, FlowGuard fail, or worker blocked/needs-PM outcome.
+The runtime SHALL create an active blocker for each reviewer block, system
+validation fail, FlowGuard fail, or worker blocked/needs-PM outcome.
 
 #### Scenario: Active blocker records repair owner
 - **WHEN** a semantic non-pass outcome is recorded
@@ -66,7 +66,7 @@ authorized waiver.
 - **WHEN** a reviewer blocker is active for a subject packet
 - **AND** a newer reviewer packet for that same subject records `pass`
 - **THEN** the active blocker MAY be marked cleared
-- **AND** downstream validation may proceed.
+- **AND** downstream system validation may proceed.
 
 #### Scenario: PM cannot impersonate reviewer pass
 - **WHEN** PM records a repair decision after reviewer block

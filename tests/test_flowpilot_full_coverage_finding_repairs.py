@@ -50,7 +50,7 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             project_root = Path(tmp)
             run_root = project_root / ".flowpilot" / "runs" / "run-test"
-            packet_id = "material-scan-runtime-data-worker-a"
+            packet_id = "material-scan-runtime-data-worker-1"
             result_body_path = ".flowpilot/runs/run-test/packets/material/result_body.md"
             spec_body_path = ".flowpilot/runs/run-test/material/packet_bodies/spec.md"
             packet_body_path = ".flowpilot/runs/run-test/packets/material/packet_body.md"
@@ -58,7 +58,7 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
             output_contract = {
                 "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
                 "task_family": "worker.material_scan",
-                "recipient_role": "worker_a",
+                "recipient_role": "worker",
                 "expected_result_body_path": result_body_path,
             }
             spec_text = "Inspect runtime data and return the material scan result."
@@ -74,7 +74,7 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
             envelope = {
                 "packet_id": packet_id,
                 "packet_type": "material_scan",
-                "to_role": "worker_a",
+                "to_role": "worker",
                 "body_path": packet_body_path,
                 "body_hash": hashlib.sha256(packet_text.encode("utf-8")).hexdigest(),
                 "result_body_path": result_body_path,
@@ -283,7 +283,7 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
             project_root = Path(tmp)
             run_root = project_root / ".flowpilot" / "runs" / "run-test"
             audit_path = run_root / "material" / "material_packet_review_audit.json"
-            packet_id = "material-scan-runtime-data-worker-a"
+            packet_id = "material-scan-runtime-data-worker-1"
             audit = {
                 "schema_version": "flowpilot.packet_group_reviewer_audit.v1",
                 "run_id": "run-test",

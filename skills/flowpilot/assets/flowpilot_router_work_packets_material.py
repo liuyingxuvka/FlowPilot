@@ -74,9 +74,9 @@ def _write_material_scan_packets(router: ModuleType, project_root: Path, run_roo
         if not isinstance(spec, dict):
             raise RouterError('each material scan packet must be an object')
         packet_id = str(spec.get('packet_id') or f'material-scan-{index:03d}')
-        to_role = str(spec.get('to_role') or 'worker_a')
-        if to_role not in {'worker_a', 'worker_b'}:
-            raise RouterError('material scan packet must target worker_a or worker_b')
+        to_role = str(spec.get('to_role') or 'worker')
+        if to_role != 'worker':
+            raise RouterError('material scan packet must target the requested worker responsibility')
         body_text = router._material_packet_body_text_from_spec(project_root, spec)
         envelope = packet_runtime.create_packet(project_root, run_id=str(run_state['run_id']), packet_id=packet_id, from_role='project_manager', to_role=to_role, node_id=str(spec.get('node_id') or 'material-intake'), body_text=body_text, is_current_node=False, packet_type='material_scan', metadata={'stage': 'material_scan', 'source': 'pm_issues_material_and_capability_scan_packets', **(spec.get('metadata') if isinstance(spec.get('metadata'), dict) else {})}, output_contract=spec.get('output_contract') if isinstance(spec.get('output_contract'), dict) else None)
         records.append(router._packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type='material_scan'))
@@ -163,7 +163,7 @@ def _write_research_package(router: ModuleType, project_root: Path, run_root: Pa
     packet_specs = payload.get('packets')
     if packet_specs is not None and (not isinstance(packet_specs, list) or not packet_specs):
         raise RouterError('research package packets must be a non-empty list when provided')
-    package = {'schema_version': 'flowpilot.research_package.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'decision_question': decision_question, 'allowed_source_types': payload.get('allowed_source_types') or [], 'host_capability_decision': payload.get('host_capability_decision') or 'local_sources_only', 'worker_owner': payload.get('worker_owner') or 'worker_a', 'batch_id': payload.get('batch_id') or 'research-batch-001', 'packets': packet_specs or [], 'reviewer_direct_check_required': True, 'stop_conditions': payload.get('stop_conditions') or [], 'written_at': utc_now(), **_role_output_envelope_record(payload)}
+    package = {'schema_version': 'flowpilot.research_package.v1', 'run_id': run_state['run_id'], 'written_by_role': 'project_manager', 'decision_question': decision_question, 'allowed_source_types': payload.get('allowed_source_types') or [], 'host_capability_decision': payload.get('host_capability_decision') or 'local_sources_only', 'worker_owner': payload.get('worker_owner') or 'worker', 'batch_id': payload.get('batch_id') or 'research-batch-001', 'packets': packet_specs or [], 'reviewer_direct_check_required': True, 'stop_conditions': payload.get('stop_conditions') or [], 'written_at': utc_now(), **_role_output_envelope_record(payload)}
     write_json(run_root / 'research' / 'research_package.json', package)
     material_artifact_map.refresh_material_artifact_map(project_root, run_root, run_state)
 
@@ -176,9 +176,9 @@ def _write_research_capability_decision(router: ModuleType, project_root: Path, 
     if payload.get('explicit_user_approval_required') is True and payload.get('explicit_user_approval_recorded') is not True:
         raise RouterError('research capability decision requires recorded user approval for gated sources')
     package = read_json(package_path)
-    worker_owner = str(package.get('worker_owner') or 'worker_a')
-    if worker_owner not in {'worker_a', 'worker_b'}:
-        raise RouterError('research worker owner must be worker_a or worker_b')
+    worker_owner = str(package.get('worker_owner') or 'worker')
+    if worker_owner != 'worker':
+        raise RouterError('research worker owner must be the requested worker responsibility')
     batch_id = str(payload.get('batch_id') or package.get('batch_id') or 'research-batch-001')
     allowed_source_types = list(package.get('allowed_source_types') or [])
     allowed_sources = payload.get('allowed_sources')
@@ -193,9 +193,9 @@ def _write_research_capability_decision(router: ModuleType, project_root: Path, 
         if not isinstance(spec, dict):
             raise RouterError('each research packet spec must be an object')
         to_role = str(spec.get('to_role') or spec.get('recipient_role') or worker_owner)
-        if to_role not in {'worker_a', 'worker_b', 'process_flowguard_officer', 'product_flowguard_officer'}:
-            raise RouterError('research packets may target workers or FlowGuard officers only')
-        packet_type = 'officer_request' if to_role in {'process_flowguard_officer', 'product_flowguard_officer'} else 'research'
+        if to_role not in {'worker', 'flowguard_operator', 'flowguard_operator'}:
+            raise RouterError('research packets may target workers or FlowGuard operators only')
+        packet_type = 'flowguard_operator_request' if to_role in {'flowguard_operator', 'flowguard_operator'} else 'research'
         packet_id = str(spec.get('packet_id') or f'research-packet-{index:03d}')
         body_text = spec.get('body_text')
         if body_text is None:
@@ -203,8 +203,8 @@ def _write_research_capability_decision(router: ModuleType, project_root: Path, 
         if not isinstance(body_text, str) or not body_text.strip():
             raise RouterError('research packet requires non-empty body_text')
         output_contract = spec.get('output_contract') if isinstance(spec.get('output_contract'), dict) else None
-        if output_contract is None and packet_type == 'officer_request':
-            output_contract = router._pm_role_work_output_contract(run_root, contract_id=str(spec.get('output_contract_id') or 'flowpilot.output_contract.officer_model_report.v1'), to_role=to_role, packet_type=packet_type, node_id='research')
+        if output_contract is None and packet_type == 'flowguard_operator_request':
+            output_contract = router._pm_role_work_output_contract(run_root, contract_id=str(spec.get('output_contract_id') or 'flowpilot.output_contract.flowguard_operator_model_report.v1'), to_role=to_role, packet_type=packet_type, node_id='research')
         envelope = packet_runtime.create_packet(project_root, run_id=str(run_state['run_id']), packet_id=packet_id, from_role='project_manager', to_role=to_role, node_id='research', body_text=body_text, is_current_node=False, packet_type=packet_type, metadata={'stage': 'research', 'source': 'research_capability_decision_recorded', 'batch_id': batch_id, 'research_package_path': project_relative(project_root, package_path), **(spec.get('metadata') if isinstance(spec.get('metadata'), dict) else {})}, output_contract=output_contract)
         records.append(router._packet_record_from_envelope(project_root, run_state, envelope=envelope, packet_type=packet_type))
     router._write_parallel_packet_batch(project_root, run_root, run_state, batch_id=batch_id, batch_kind='research', phase='research', records=records, node_id='research', join_policy='all_results_before_pm_absorption', review_policy='pm_absorbs_batch_before_research_direct_source_review', pm_absorption_required=True)

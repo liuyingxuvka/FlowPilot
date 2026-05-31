@@ -36,7 +36,7 @@ class CardsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         self.apply_next_non_card_action(root)
         action = router.next_action(root)
-        self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
+        self.assertEqual(action["card_id"], "flowguard_operator.product_architecture_modelability")
         context = action["delivery_context"]
         self.assertEqual(context["current_stage"]["current_phase"], "product_architecture")
         self.assertIn(

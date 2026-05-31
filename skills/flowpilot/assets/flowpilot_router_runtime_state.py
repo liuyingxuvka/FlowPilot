@@ -281,12 +281,10 @@ def _role_memory_event_role(router: ModuleType, event: str, payload: dict[str, A
         return 'project_manager'
     if event.startswith('reviewer_') or event.startswith('current_node_reviewer_'):
         return 'human_like_reviewer'
-    if event.startswith('process_officer_'):
-        return 'process_flowguard_officer'
-    if event.startswith('product_officer_'):
-        return 'product_flowguard_officer'
+    if event.startswith('flowguard_operator_'):
+        return 'flowguard_operator'
     if event.startswith('worker_'):
-        return 'worker_a'
+        return 'worker'
     return None
 
 def _append_role_memory_delta(router: ModuleType, run_root: Path, run_state: dict[str, Any], *, event: str, payload: dict[str, Any]) -> dict[str, Any] | None:

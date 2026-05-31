@@ -217,7 +217,7 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
             "request_id": "request-a",
             "packet_id": "packet-a",
             "packet_ids": ["packet-a"],
-            "to_role": "process_flowguard_officer",
+            "to_role": "flowguard_operator",
         }
         second = {
             **base,
@@ -225,7 +225,7 @@ class FlowPilotControlPlaneContractUnitTests(unittest.TestCase):
             "request_id": "request-b",
             "packet_id": "packet-b",
             "packet_ids": ["packet-b"],
-            "to_role": "product_flowguard_officer",
+            "to_role": "flowguard_operator",
         }
 
         self.assertNotEqual(
@@ -384,9 +384,10 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
         for index in range(packet_count):
             suffix = "" if packet_count == 1 else f"-{chr(ord('a') + index)}"
             packet_id = f"packet-release{suffix}"
-            role = "worker_a" if index % 2 == 0 else "worker_b"
+            role = "worker" if index % 2 == 0 else "flowguard_operator"
             packet = packet_runtime.create_packet(
                 root,
+                run_id=run_id,
                 packet_id=packet_id,
                 from_role="project_manager",
                 to_role=role,
@@ -554,14 +555,14 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "packet_id": "packet-1",
                 "packet_type": "material_scan",
                 "from_role": "project_manager",
-                "to_role": "worker_a",
+                "to_role": "worker",
                 "body_path": router.project_relative(root, result_envelope.parent / "packet_body.md"),
                 "body_hash": "hash",
                 "output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
                 "output_contract": {
                     "schema_version": "flowpilot.output_contract.v1",
                     "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
-                    "recipient_role": "worker_a",
+                    "recipient_role": "worker",
                     "selected_by_role": "project_manager",
                 },
             },
@@ -637,7 +638,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "packet_id": "packet-1",
                 "packet_type": "material_scan",
                 "from_role": "project_manager",
-                "to_role": "worker_a",
+                "to_role": "worker",
                 "body_path": router.project_relative(root, result_envelope.parent / "packet_body.md"),
                 "body_hash": "hash",
                 "output_contract_id": "flowpilot.output_contract.worker_material_scan_result.v1",
@@ -732,17 +733,17 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
             body={
                 "decided_by_role": "project_manager",
                 "decision": "rework_requested",
-                "decision_reason": "Worker B result needs a targeted repair.",
+                "decision_reason": "Worker result needs a targeted repair.",
                 "packet_outcomes": [
                     {
                         "packet_id": "packet-release-a",
                         "outcome": "accepted",
-                        "reason": "Worker A result is usable.",
+                        "reason": "Worker result is usable.",
                     },
                     {
                         "packet_id": "packet-release-b",
                         "outcome": "rework_requested",
-                        "reason": "Worker B result failed PM self-check.",
+                        "reason": "Worker result failed PM self-check.",
                     },
                 ],
                 "residual_risks": [],

@@ -60,9 +60,9 @@ def _commit_material_scan_repair_generation(router: ModuleType, project_root: Pa
         if not isinstance(spec, dict):
             raise RouterError('each repair transaction packet spec must be an object')
         packet_id = str(spec.get('packet_id') or f'material-scan-repair-{index:03d}')
-        to_role = str(spec.get('to_role') or 'worker_a')
-        if to_role not in {'worker_a', 'worker_b'}:
-            raise RouterError('material scan repair packet must target worker_a or worker_b')
+        to_role = str(spec.get('to_role') or 'worker')
+        if to_role != 'worker':
+            raise RouterError('material scan repair packet must target the requested worker responsibility')
         body_text = router._material_packet_body_text_from_spec(project_root, spec)
         envelope = packet_runtime.create_packet(project_root, run_id=str(run_state['run_id']), packet_id=packet_id, from_role='project_manager', to_role=to_role, node_id=str(spec.get('node_id') or 'material-intake'), body_text=body_text, is_current_node=False, packet_type='material_scan', metadata={'stage': 'material_scan', 'source': 'repair_transaction_commit', 'repair_transaction_id': transaction_id, 'packet_generation_id': packet_generation_id, 'replacement_for': spec.get('replacement_for'), **(spec.get('metadata') if isinstance(spec.get('metadata'), dict) else {})}, output_contract=spec.get('output_contract') if isinstance(spec.get('output_contract'), dict) else None)
         paths = packet_runtime.packet_paths(project_root, packet_id, str(run_state['run_id']))

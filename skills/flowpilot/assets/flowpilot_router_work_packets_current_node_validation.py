@@ -79,7 +79,7 @@ def _validate_current_node_packet_envelope(router: ModuleType, project_root: Pat
         raise RouterError('current-node packet must be issued by project_manager')
     if envelope.get('to_role') == 'controller':
         raise RouterError('current-node packet cannot assign product work to Controller')
-    if active_bindings and envelope.get('to_role') in {'worker_a', 'worker_b'}:
+    if active_bindings and envelope.get('to_role') == 'worker':
         metadata = envelope.get('metadata') if isinstance(envelope.get('metadata'), dict) else {}
         projected_ids = set(router._metadata_binding_ids(metadata, 'active_child_skill_bindings', 'child_skill_binding_projection'))
         expected_ids = {str(binding['binding_id']) for binding in active_bindings}
@@ -228,7 +228,7 @@ def _next_current_node_packet_action(router: ModuleType, project_root: Path, run
     if flags.get('current_node_worker_result_returned') and (not flags.get('current_node_result_relayed_to_pm')):
         if not router._current_node_results_complete(project_root, run_state):
             missing_roles = router._current_node_missing_result_roles(project_root, run_state)
-            return _expected_role_decision_wait_action(project_root, run_state, run_root, label='controller_waits_for_remaining_current_node_batch_results', summary='Controller must wait for every current-node batch result before relaying the batch to PM.', allowed_external_events=['worker_current_node_result_returned'], to_role=','.join(missing_roles) if missing_roles else 'worker_a,worker_b', payload_contract={'schema_version': PAYLOAD_CONTRACT_SCHEMA, 'name': 'current_node_batch_result_envelope', 'required_fields': ['packet_id', 'result_envelope_path'], 'batch_join_policy': 'all_results_before_pm_absorption'}, producer_roles_override=missing_roles)
+            return _expected_role_decision_wait_action(project_root, run_state, run_root, label='controller_waits_for_remaining_current_node_batch_results', summary='Controller must wait for every current-node batch result before relaying the batch to PM.', allowed_external_events=['worker_current_node_result_returned'], to_role=','.join(missing_roles) if missing_roles else 'worker', payload_contract={'schema_version': PAYLOAD_CONTRACT_SCHEMA, 'name': 'current_node_batch_result_envelope', 'required_fields': ['packet_id', 'result_envelope_path'], 'batch_join_policy': 'all_results_before_pm_absorption'}, producer_roles_override=missing_roles)
         records = router._current_node_packet_records(project_root, run_state)
         result_paths = [router._result_envelope_path_from_packet_record(project_root, run_state, record) for record in records]
         runtime_relay_operations = router._result_runtime_relay_operations(project_root, run_state, records, packet_family='current_node', postcondition='current_node_result_relayed_to_pm', to_role='project_manager')

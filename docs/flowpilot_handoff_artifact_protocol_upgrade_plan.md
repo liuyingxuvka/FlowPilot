@@ -13,12 +13,12 @@ Remote GitHub sync is out of scope. Local repository changes, local installed sk
 | 1 | Formalize the two-object output rule | Every substantive role output has a formal artifact and a readable handoff letter | Role cards and output contracts require both |
 | 2 | Add handoff letter minimum structure | Handoff includes work summary, artifact refs, changed paths, inspection notes, risks, and PM suggestion items | Contract and prompt text name these sections |
 | 3 | Preserve role-authored artifacts | Router validates and registers artifacts instead of silently rebuilding a narrowed official file | Route draft registration keeps PM-authored fields such as repair-return policy |
-| 4 | Deliver handoff context to downstream roles | Reviewer/officer/PM delivery includes the upstream handoff path plus formal artifact refs | Delivery context and source paths include handoff and artifact refs |
-| 5 | Require downstream consistency checks | Downstream roles read the handoff and verify it matches the formal artifacts | Reviewer/officer cards require handoff-artifact consistency review |
+| 4 | Deliver handoff context to downstream roles | Reviewer/FlowGuard operator/PM delivery includes the upstream handoff path plus formal artifact refs | Delivery context and source paths include handoff and artifact refs |
+| 5 | Require downstream consistency checks | Downstream roles read the handoff and verify it matches the formal artifacts | Reviewer/FlowGuard operator cards require handoff-artifact consistency review |
 | 6 | Make PM suggestions universal | Every role output includes PM Suggestion Items or an explicit no-new-suggestion statement | Role cards and contracts require suggestion sections |
 | 7 | Separate PM final disposition from optional consultation | PM can directly decide or request bounded specialist input; consultation is not a final disposition | PM cards and ledger schema distinguish consultation state from final disposition |
 | 8 | Add bounded consultation packets | PM consultation requests name the target role, question, blocking status, and artifact refs | PM role-work request card supports consultation request packets |
-| 9 | Require consulted role formal advice | Process/product/reviewer/worker consultation replies are formal advice artifacts, not chat | Officer/reviewer/worker cards define consultation response duties |
+| 9 | Require consulted role formal advice | Process/product/reviewer/worker consultation replies are formal advice artifacts, not chat | FlowGuard operator/reviewer/worker cards define consultation response duties |
 | 10 | Gate advancement on unresolved blocking items | A blocking suggestion cannot advance only because consultation is pending | Router/ledger checks reject unresolved blocking suggestion states |
 | 11 | Keep ACK separate from completion | ACK only proves a card was received; handoff/artifact output proves work completion | System and role cards state ACK is not completion evidence |
 | 12 | Sync local install after source change | Repository-owned FlowPilot skill refreshes installed `<Codex skills root>/flowpilot` | `install_flowpilot.py --sync-repo-owned --check --json` reports fresh source |
@@ -29,7 +29,7 @@ Remote GitHub sync is out of scope. Local repository changes, local installed sk
 | --- | --- | --- | --- |
 | R1 | Role puts the only work product in the handoff letter | Reviewers cannot inspect durable formal evidence | Reject message-only work product |
 | R2 | Router rebuilds a narrowed official artifact and drops role-authored fields | PM can do the work and still fail review, as happened with route repair policy | Reject router artifact truncation |
-| R3 | Downstream reviewer/officer does not receive or read the handoff letter | Reviewer may miss where the real artifact or changed files are | Reject downstream handoff omission |
+| R3 | Downstream reviewer/FlowGuard operator does not receive or read the handoff letter | Reviewer may miss where the real artifact or changed files are | Reject downstream handoff omission |
 | R4 | Handoff claims and formal artifact refs do not match | PM/reviewer may inspect the wrong or stale file | Reject handoff-artifact mismatch |
 | R5 | Hash/path validation is skipped or stale | Router can accept stale or wrong artifacts | Reject stale or unchecked artifact hash |
 | R6 | PM suggestions are omitted from a role output | Higher-standard opportunities vanish | Reject missing suggestion section |
@@ -81,7 +81,7 @@ Remote GitHub sync is out of scope. Local repository changes, local installed sk
 | FlowGuard handoff/artifact model | Complete | `simulations/run_flowpilot_handoff_artifact_protocol_checks.py` passes and detects R1-R14 hazards |
 | Router route-draft preservation | Complete | `_write_route_draft` preserves PM-authored payload fields and records `router_preservation` metadata |
 | Router regression test | Complete | `test_pm_route_draft_preserves_role_authored_repair_policy_fields` passes |
-| Role and phase prompts | Complete | PM, worker, reviewer, officer, all PM phase cards, and resume system card carry artifact-backed handoff and optional-consultation rules |
+| Role and phase prompts | Complete | PM, worker, reviewer, FlowGuard operator, all PM phase cards, and resume system card carry artifact-backed handoff and optional-consultation rules |
 | Packet/result templates | Complete | Packet template requires artifact-backed handoff; result template includes `Artifact Handoff` |
 | Packet output contracts | Complete | Default packet output contract and registry require `Artifact Handoff` for packet result families |
 | Output-contract FlowGuard model | Complete | Implementation contract model includes artifact refs, changed paths, inspection notes, and PM suggestions |

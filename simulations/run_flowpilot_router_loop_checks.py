@@ -16,13 +16,13 @@ REQUIRED_LABELS = (
     "controller_boundary_confirmed_envelope_only",
     "controller_fail_closes_no_next_action_to_pm_blocker",
     "pm_activates_route",
-    "officer_lifecycle_flags_reconciled_before_model_packet",
-    "officer_packet_card_delivered_before_controller_relay",
-    "officer_packet_relayed_after_officer_card",
-    "officer_result_returned_to_packet_ledger",
-    "officer_result_ledger_checked_before_pm_relay",
-    "officer_result_routed_to_pm_after_ledger_check",
-    "pm_absorbs_officer_result_before_node_packet",
+    "flowguard_operator_lifecycle_flags_reconciled_before_model_packet",
+    "flowguard_operator_packet_card_delivered_before_controller_relay",
+    "flowguard_operator_packet_relayed_after_flowguard_operator_card",
+    "flowguard_operator_result_returned_to_packet_ledger",
+    "flowguard_operator_result_ledger_checked_before_pm_relay",
+    "flowguard_operator_result_routed_to_pm_after_ledger_check",
+    "pm_absorbs_flowguard_operator_result_before_node_packet",
     "controller_refreshes_route_history_context_for_node_plan",
     "pm_reads_prior_path_context_for_node_plan",
     "pm_opens_current_node_high_standard_gate",
@@ -99,10 +99,10 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "packet_registered_before_route_activation": "current-node packet registered before route activation",
-    "officer_packet_card_before_route_activation": "officer packet card delivered before route activation",
-    "officer_packet_card_before_lifecycle_flags": "officer packet card delivered before officer lifecycle flags were reconciled",
-    "officer_packet_relayed_without_officer_card": "officer packet relayed before officer card",
-    "officer_result_routed_without_ledger_check": "officer result routed to PM before packet-ledger check",
+    "flowguard_operator_packet_card_before_route_activation": "FlowGuard operator packet card delivered before route activation",
+    "flowguard_operator_packet_card_before_lifecycle_flags": "FlowGuard operator packet card delivered before FlowGuard operator lifecycle flags were reconciled",
+    "flowguard_operator_packet_relayed_without_flowguard_operator_card": "FlowGuard operator packet relayed before FlowGuard operator card",
+    "flowguard_operator_result_routed_without_ledger_check": "FlowGuard operator result routed to PM before packet-ledger check",
     "reviewer_acceptance_plan_review_without_plan": "reviewer reviewed node acceptance plan before PM wrote it",
     "node_acceptance_plan_without_pm_high_standard_gate": "node acceptance plan written before PM high-standard gate",
     "node_acceptance_plan_without_prior_path_context": "node acceptance plan written before PM read fresh prior path context",
@@ -222,14 +222,14 @@ def _state_id(state: model.State) -> str:
         f"outcomes={state.repair_outcome_success_event},"
         f"{state.repair_outcome_blocker_event},"
         f"{state.repair_outcome_protocol_blocker_event}|"
-        f"officer={state.officer_packet_card_delivered},"
-        f"{state.officer_packet_relayed},"
-        f"{state.officer_packet_identity_boundary_present},"
-        f"{state.officer_result_returned},"
-        f"{state.officer_result_identity_boundary_present},"
-        f"{state.officer_result_ledger_checked},"
-        f"{state.officer_result_routed_to_pm},"
-        f"life={state.officer_lifecycle_flags_current}|"
+        f"FlowGuard operator={state.flowguard_operator_packet_card_delivered},"
+        f"{state.flowguard_operator_packet_relayed},"
+        f"{state.flowguard_operator_packet_identity_boundary_present},"
+        f"{state.flowguard_operator_result_returned},"
+        f"{state.flowguard_operator_result_identity_boundary_present},"
+        f"{state.flowguard_operator_result_ledger_checked},"
+        f"{state.flowguard_operator_result_routed_to_pm},"
+        f"life={state.flowguard_operator_lifecycle_flags_current}|"
         f"history={state.route_history_context_refreshed},"
         f"{state.pm_prior_path_context_reviewed},"
         f"{state.route_history_context_stale},"

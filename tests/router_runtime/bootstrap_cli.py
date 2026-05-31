@@ -116,7 +116,7 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state_a["active_flow_block_agents"] = [
             {
                 "flow_block_id": "run-a",
-                "agent_role": "worker_a",
+                "agent_role": "worker",
                 "result_target_id": "run:run-a",
                 "status": "running",
             },
@@ -135,7 +135,7 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(catalog["active_tasks"][0]["target_id"], "run:run-a")
         self.assertEqual(
             {agent["agent_role"]: agent["result_target_id"] for agent in catalog["block_scoped_agents"]},
-            {"worker_a": "run:run-a", "reviewer": "run:run-a"},
+            {"worker": "run:run-a", "reviewer": "run:run-a"},
         )
     def test_cli_accepts_json_after_subcommand(self) -> None:
         parsed = router.parse_args(["--root", "C:/tmp/project", "next", "--json"])

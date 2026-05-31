@@ -9,8 +9,8 @@
       "producer_roles": [
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator",
+        "flowguard_operator"
       ],
       "output_contract_ids": [
         "flowpilot.output_contract.gate_decision.v1",
@@ -61,8 +61,7 @@
       "transaction_type": "result_absorption",
       "producer_roles": [
         "project_manager",
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "output_contract_ids": [
         "flowpilot.output_contract.pm_package_result_disposition.v1",

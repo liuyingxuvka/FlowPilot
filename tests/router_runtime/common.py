@@ -337,9 +337,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
         envelope_path, envelope_hash = self.write_event_envelope(root, name, envelope)
         return envelope, envelope_path, envelope_hash
-    def model_miss_officer_report_body(self) -> dict:
+    def model_miss_flowguard_operator_report_body(self) -> dict:
         return {
-            "reported_by_role": "process_flowguard_officer",
+            "reported_by_role": "flowguard_operator",
             "old_model_miss_reason": "The old model did not represent reviewer-block repair as a model-miss gate.",
             "bug_class_definition": "reviewer blockers that can be generalized into FlowGuard-detectable same-class failures",
             "same_class_findings": [{"finding_id": "same-class-001", "summary": "repair could start before model-miss triage"}],
@@ -392,13 +392,13 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             report = self.role_report_envelope(
                 root,
                 "flowguard/model_miss_report",
-                self.model_miss_officer_report_body(),
+                self.model_miss_flowguard_operator_report_body(),
             )
             body.update(
                 {
-                    "officer_report_refs": [
+                    "flowguard_operator_report_refs": [
                         {
-                            "officer_role": "process_flowguard_officer",
+                            "flowguard_operator_role": "flowguard_operator",
                             "report_path": report["report_path"],
                             "report_hash": report["report_hash"],
                         }
@@ -415,7 +415,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                         "run_flowpilot_repair_transaction_checks",
                     ],
                     "selected_next_action": "enter pm.review_repair with model-backed recommendation",
-                    "why_repair_may_start": "Officer report generalized the class and PM selected a minimal repair path.",
+                    "why_repair_may_start": "FlowGuard operator report generalized the class and PM selected a minimal repair path.",
                 }
             )
         elif decision == "out_of_scope_not_modelable":
@@ -491,7 +491,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "packets": [
                 {
                     "packet_id": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Inspect the current request, repository state, and available local materials.",
                 }
             ]
@@ -508,7 +508,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "packets": [
                 {
                     "packet_id": "material-scan-file-backed-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_path": self.rel(root, body_path),
                     "body_hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
                 }
@@ -601,7 +601,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         root: Path,
         *,
         request_id: str = "model-miss-followup-001",
-        to_role: str = "product_flowguard_officer",
+        to_role: str = "flowguard_operator",
         request_kind: str = "model_miss",
         request_mode: str = "blocking",
         output_contract_id: str = "flowpilot.output_contract.flowguard_model_miss_report.v1",
@@ -1328,7 +1328,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "all_liveness_probes_started_before_wait": True,
             "rehydrated_role_bindings": records,
         }
-    def role_recovery_agent_payload(self, root: Path, action: dict, *, role: str = "worker_a") -> dict:
+    def role_recovery_agent_payload(self, root: Path, action: dict, *, role: str = "worker") -> dict:
         request = next(item for item in action["role_recovery_request"] if item["role_key"] == role)
         transaction = action["role_recovery_transaction"]
         return {
@@ -1378,21 +1378,21 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             action_type="await_role_decision",
             actor="controller",
             label=label,
-            summary=f"Controller waits for worker_a test output: {label}",
+            summary=f"Controller waits for worker test output: {label}",
             allowed_reads=[],
             allowed_writes=[],
-            to_role="worker_a",
+            to_role="worker",
             extra={"allowed_external_events": [allowed_event], **(extra or {})},
         )
         entry = router._write_controller_action_entry(root, run_root, state, action)  # type: ignore[attr-defined]
         router.save_run_state(run_root, state)
         return entry
-    def recover_worker_a_after_liveness_fault(self, root: Path) -> dict:
+    def recover_worker_after_liveness_fault(self, root: Path) -> dict:
         router.record_external_event(
             root,
             "controller_reports_role_liveness_fault",
             {
-                "role_key": "worker_a",
+                "role_key": "worker",
                 "host_liveness_status": "missing",
                 "detected_by": "controller",
             },
@@ -1402,7 +1402,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         router.apply_action(root, "load_role_recovery_state")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "recover_role_bindings")
-        router.apply_action(root, "recover_role_bindings", self.role_recovery_agent_payload(root, action, role="worker_a"))
+        router.apply_action(root, "recover_role_bindings", self.role_recovery_agent_payload(root, action, role="worker"))
         return read_json(self.run_root_for(root) / "continuation" / "role_recovery_report.json")
     def bootstrap_state(self, root: Path) -> dict:
         return read_json(router.bootstrap_state_path(root))
@@ -1529,14 +1529,14 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             },
         )
 
-        self.deliver_expected_card(root, "product_officer.product_architecture_modelability")
+        self.deliver_expected_card(root, "flowguard_operator.product_architecture_modelability")
         router.record_external_event(
             root,
-            "product_officer_submits_product_behavior_model",
+            "flowguard_operator_submits_product_behavior_model",
             self.role_report_envelope(
                 root,
                 "flowguard/product_behavior_model",
-                {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                {"reviewed_by_role": "flowguard_operator", "passed": True},
             ),
         )
 
@@ -1614,7 +1614,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "gates": [
                     {
                         "gate_id": "process-model",
-                        "required_approver": "process_flowguard_officer",
+                        "required_approver": "flowguard_operator",
                         "evidence_required": ["model-check-result"],
                         "controller_can_approve": False,
                     }
@@ -1671,10 +1671,10 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             {"route_id": "route-001", "active_node_id": node_id, "route_version": 1},
         )
     def complete_route_checks(self, root: Path) -> None:
-        self.deliver_expected_card(root, "process_officer.route_process_check")
+        self.deliver_expected_card(root, "flowguard_operator.route_process_check")
         router.record_external_event(
             root,
-            "process_officer_submits_process_route_model",
+            "flowguard_operator_submits_process_route_model",
             self.role_report_envelope(
                 root,
                 "flowguard/process_route_model",
@@ -1695,7 +1695,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         )
     def route_process_pass_body(self) -> dict:
         return {
-            "reviewed_by_role": "process_flowguard_officer",
+            "reviewed_by_role": "flowguard_operator",
             "passed": True,
             "process_viability_verdict": "pass",
             "product_behavior_model_checked": True,
@@ -1707,7 +1707,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
     def route_product_pass_body(self) -> dict:
         return {
-            "reviewed_by_role": "product_flowguard_officer",
+            "reviewed_by_role": "flowguard_operator",
             "passed": True,
             "route_model_review_verdict": "pass",
             "product_behavior_model_checked": True,
@@ -1721,7 +1721,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "product_function_architecture.json",
                 "flowguard/product_behavior_model.json",
             ],
-            "pm_model_fit_review": "PM accepted the Product FlowGuard model as the product basis.",
+            "pm_model_fit_review": "PM accepted the product-scope FlowGuard model as the product basis.",
             "product_goal_coverage": "The model covers the requested product goal.",
             "unmodeled_or_ambiguous_behavior": [],
             "next_action": "reviewer_product_architecture_challenge",
@@ -2237,7 +2237,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "authority_basis": {
                 "reviewer_minimum_standard_failure": not clean,
                 "formal_flowguard_model_gate": False,
-                "worker_or_officer_advisory_only": False,
+                "worker_or_flowguard_operator_advisory_only": False,
                 "reason": "Reviewer finding classification test fixture.",
             },
             "evidence_refs": [],
@@ -2278,7 +2278,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             root,
             packet_id=packet_id,
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -2307,7 +2307,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_id: "worker_a"},
+                    "agent_role_map": {agent_id: "worker"},
                 },
             ),
         )
@@ -2333,8 +2333,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         root: Path,
         *,
         packet_id: str,
-        completed_by_role: str = "worker_a",
-        completed_by_agent_id: str = "agent-worker-a",
+        completed_by_role: str = "worker",
+        completed_by_agent_id: str = "agent-worker-1",
         deliver_review_card: bool = True,
         record_result_return: bool = True,
     ) -> tuple[Path, str, str]:
@@ -2346,7 +2346,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             root,
             packet_id=packet_id,
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -2354,14 +2354,14 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
         router.record_external_event(root, "pm_registers_current_node_packet", {"packet_id": packet_id, "packet_envelope_path": packet_path})
         self.apply_until_action(root, "relay_current_node_packet")
-        if completed_by_role == "worker_a":
+        if completed_by_role == "worker":
             completed_by_agent_id, result_path = self.submit_current_node_result_via_active_holder(
                 root,
                 packet_id=packet_id,
                 result_body_text="reviewable result",
             )
         else:
-            packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker_a")
+            packet_runtime.read_packet_body_for_role(root, read_json(root / packet_path), role="worker")
             result = packet_runtime.write_result(
                 root,
                 packet_envelope=read_json(root / packet_path),

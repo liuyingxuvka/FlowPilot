@@ -79,10 +79,10 @@ def _validate_pm_role_work_process_contract_binding(router: ModuleType, *, contr
     if not process_kind:
         raise RouterError(f'PM role-work request output_contract_id is not allowed for PM role-work process: {contract_id}')
     binding = dict(PROCESS_CONTRACT_BINDINGS[process_kind])
-    if process_kind in {'officer_model_report', 'officer_model_miss_report'} and to_role not in {'process_flowguard_officer', 'product_flowguard_officer'}:
-        raise RouterError(f'output_contract_id {contract_id} is an officer process contract and must target an officer role')
-    if process_kind == 'officer_model_miss_report' and request_kind != 'model_miss':
-        raise RouterError('officer model-miss contract requires request_kind=model_miss')
+    if process_kind in {'flowguard_operator_model_report', 'flowguard_operator_model_miss_report'} and to_role not in {'flowguard_operator', 'flowguard_operator'}:
+        raise RouterError(f'output_contract_id {contract_id} is a FlowGuard operator process contract and must target a FlowGuard operator role')
+    if process_kind == 'flowguard_operator_model_miss_report' and request_kind != 'model_miss':
+        raise RouterError('FlowGuard operator model-miss contract requires request_kind=model_miss')
     if process_kind == 'pm_role_work_request' and to_role not in PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES:
         raise RouterError('PM role-work process target role is not allowed')
     return {'process_kind': process_kind, 'task_family': binding['task_family'], 'contract_id': binding['contract_id'], 'packet_type': binding['packet_type'], 'required_result_next_recipient': binding['required_result_next_recipient'], 'absorbing_role': binding['absorbing_role']}

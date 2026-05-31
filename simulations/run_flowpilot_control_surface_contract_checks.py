@@ -24,6 +24,7 @@ REQUIRED_LABELS = (
     "block_ack_result_acceptance_conflated",
     "block_accepted_packet_mutated",
     "block_old_generation_result_accepted",
+    "block_unsupported_historical_current_fields",
 )
 
 EXPECTED_HAZARD_FAILURES = {
@@ -34,6 +35,7 @@ EXPECTED_HAZARD_FAILURES = {
     "ack_treated_as_result_accepted": "risk scenario was accepted: ack_treated_as_result",
     "accepted_result_reassigned_accepted": "risk scenario was accepted: accepted_result_reassigned",
     "old_generation_result_accepted_accepted": "risk scenario was accepted: old_generation_result_accepted",
+    "unsupported_historical_pointer_accepted_accepted": "risk scenario was accepted: unsupported_historical_pointer_accepted",
     "success_overblocked": "safe control surface was blocked",
 }
 

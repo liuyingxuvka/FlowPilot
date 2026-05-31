@@ -16,7 +16,7 @@ GATE_REPAIR_RESET_FLAGS: dict[str, tuple[str, ...]] = {
         "product_behavior_model_submitted",
         "product_behavior_model_blocked",
         "reviewer_product_architecture_card_delivered",
-        "product_officer_product_architecture_card_delivered",
+        "flowguard_operator_product_architecture_card_delivered",
         "root_contract_written_by_pm",
         "root_contract_reviewer_passed",
         "root_contract_frozen_by_pm",
@@ -40,7 +40,7 @@ GATE_REPAIR_RESET_FLAGS: dict[str, tuple[str, ...]] = {
         "root_contract_reviewer_passed",
         "root_contract_frozen_by_pm",
         "reviewer_root_contract_card_delivered",
-        "product_officer_root_contract_card_delivered",
+        "flowguard_operator_root_contract_card_delivered",
         "pm_child_skill_selection_written",
         "child_skill_gate_manifest_written",
         "child_skill_manifest_reviewer_passed",
@@ -59,8 +59,8 @@ GATE_REPAIR_RESET_FLAGS: dict[str, tuple[str, ...]] = {
         "child_skill_manifest_pm_approved_for_route",
         "capability_evidence_synced",
         "reviewer_child_skill_gate_manifest_card_delivered",
-        "process_officer_child_skill_card_delivered",
-        "product_officer_child_skill_card_delivered",
+        "flowguard_operator_child_skill_conformance_card_delivered",
+        "flowguard_operator_child_skill_product_fit_card_delivered",
         "route_draft_written_by_pm",
         "process_route_model_submitted",
         "process_route_model_repair_required",
@@ -80,8 +80,8 @@ GATE_REPAIR_RESET_FLAGS: dict[str, tuple[str, ...]] = {
         "pm_process_route_model_accepted",
         "pm_process_route_model_rebuild_requested",
         "reviewer_route_check_passed",
-        "process_officer_route_check_card_delivered",
-        "product_officer_route_check_card_delivered",
+        "flowguard_operator_route_check_card_delivered",
+        "flowguard_operator_product_route_check_card_delivered",
         "reviewer_route_check_card_delivered",
         "route_activated_by_pm",
     ),
@@ -149,8 +149,8 @@ GATE_OUTCOME_BLOCK_EVENT_SPECS: dict[str, dict[str, Any]] = {
         "checked_paths": ("product_function_architecture.json",),
         "reset_flags": PRODUCT_ARCHITECTURE_REPAIR_RESET_FLAGS,
     },
-    "product_officer_blocks_product_behavior_model": {
-        "expected_role": "product_flowguard_officer",
+    "flowguard_operator_blocks_product_behavior_model": {
+        "expected_role": "flowguard_operator",
         "path": "flowguard/product_behavior_model_block.json",
         "schema_version": "flowpilot.product_behavior_model_block.v1",
         "checked_paths": ("product_function_architecture.json",),
@@ -214,12 +214,12 @@ GATE_OUTCOME_BLOCK_EVENTS = frozenset(GATE_OUTCOME_BLOCK_EVENT_SPECS)
 GATE_OUTCOME_PASS_CLEAR_FLAGS: dict[str, tuple[str, ...]] = {
     "reviewer_passes_research_direct_source_check": ("research_review_blocked",),
     "reviewer_passes_product_architecture": ("product_architecture_reviewer_blocked",),
-    "product_officer_submits_product_behavior_model": (
+    "flowguard_operator_submits_product_behavior_model": (
         "product_behavior_model_blocked",
     ),
     "reviewer_passes_root_acceptance_contract": ("root_contract_reviewer_blocked",),
     "reviewer_passes_child_skill_gate_manifest": ("child_skill_manifest_reviewer_blocked",),
-    "process_officer_submits_process_route_model": (
+    "flowguard_operator_submits_process_route_model": (
         "process_route_model_repair_required",
         "process_route_model_blocked",
     ),

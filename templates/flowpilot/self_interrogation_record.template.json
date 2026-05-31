@@ -6,7 +6,7 @@
   "route_version": 1,
   "node_id": "<node-id-or-null>",
   "scope": "<startup|product_architecture|node_entry|repair|completion|role_result>",
-  "owner_role": "<project_manager|human_like_reviewer|worker_a|worker_b|process_flowguard_officer|product_flowguard_officer>",
+  "owner_role": "<project_manager|human_like_reviewer|worker|flowguard_operator>",
   "source_event": "<event-that-produced-this-record>",
   "source_artifact_path": ".flowpilot/runs/run-001/<source-artifact>.json",
   "findings": [

@@ -25,7 +25,7 @@ REQUIRED_LABELS = (
     "pm_decision_context_opened_with_always_available_work_request_channel",
     "pm_opens_advisory_role_work_request_before_final_decision",
     "router_continues_non_dependent_work_while_request_pending",
-    "pm_requests_model_miss_officer_analysis_via_generic_work_request",
+    "pm_requests_model_miss_flowguard_operator_analysis_via_generic_work_request",
     "pm_requests_evidence_before_modeling_via_generic_work_request",
     "pm_role_work_request_packet_created",
     "pm_role_work_request_packet_relayed_to_role",
@@ -34,7 +34,7 @@ REQUIRED_LABELS = (
     "role_work_result_routed_to_pm_after_ledger_check",
     "pm_absorbs_role_work_result_before_dependent_decision",
     "pm_continues_decision_after_absorbing_advisory_request",
-    "pm_authorizes_model_backed_repair_after_generic_officer_result",
+    "pm_authorizes_model_backed_repair_after_generic_flowguard_operator_result",
     "pm_reopens_triage_after_absorbing_evidence_request",
     "pm_records_controlled_stop_for_user",
     "controlled_user_stop_recorded_after_pm_stop_decision",
@@ -46,7 +46,7 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "request_officer_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
+    "request_flowguard_operator_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
     "needs_evidence_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
     "stop_for_user_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
     "pm_context_without_work_request_channel": "PM decision context opened without always-available role-work-request channel",
@@ -359,12 +359,12 @@ def _router_static_audit() -> dict[str, object]:
         if isinstance(card, dict) and card.get("id")
     }
     contract_entries = _contract_entries(contract_index)
-    officer_model_miss_contracts = [
+    flowguard_operator_model_miss_contracts = [
         entry
         for entry in contract_entries
-        if entry.get("task_family") == "officer.model_miss_report"
+        if entry.get("task_family") == "flowguard_operator.model_miss_report"
     ]
-    officer_model_miss_contract_declared = bool(officer_model_miss_contracts)
+    flowguard_operator_model_miss_contract_declared = bool(flowguard_operator_model_miss_contracts)
     generic_pm_work_request_event_declared = (
         "PM_ROLE_WORK_REQUEST_EVENT" in source
         and "pm_registers_role_work_request" in source
@@ -381,8 +381,8 @@ def _router_static_audit() -> dict[str, object]:
     generic_pm_work_packet_relay_declared = "relay_pm_role_work_request_packet" in source
     generic_pm_work_result_relay_declared = "relay_pm_role_work_result_to_pm" in source
     generic_pm_work_request_index_declared = "pm_work_requests" in source
-    model_miss_officer_uses_generic_request = (
-        "request_officer_model_miss_analysis" in source
+    model_miss_flowguard_operator_uses_generic_request = (
+        "request_flowguard_operator_model_miss_analysis" in source
         and "model_miss_triage_followup_request" in source
         and "pm_registers_role_work_request" in source
     )
@@ -424,11 +424,11 @@ def _router_static_audit() -> dict[str, object]:
         if decision == model.DECISION_REQUEST_OFFICER:
             if not generic_channel_declared:
                 missing.append("generic PM role-work-request channel")
-            if not officer_model_miss_contract_declared:
-                missing.append("officer.model_miss_report output contract")
-            if not model_miss_officer_uses_generic_request:
-                missing.append("model-miss officer-analysis decision mapped to generic PM work request")
-            if non_authorizing_flag_reset_present and not model_miss_officer_uses_generic_request:
+            if not flowguard_operator_model_miss_contract_declared:
+                missing.append("flowguard_operator.model_miss_report output contract")
+            if not model_miss_flowguard_operator_uses_generic_request:
+                missing.append("model-miss FlowGuard operator-analysis decision mapped to generic PM work request")
+            if non_authorizing_flag_reset_present and not model_miss_flowguard_operator_uses_generic_request:
                 missing.append("non-authorizing decision resets model_miss_triage_closed and waits on the same PM event")
         elif decision == model.DECISION_NEEDS_EVIDENCE:
             if not generic_channel_declared:
@@ -472,8 +472,8 @@ def _router_static_audit() -> dict[str, object]:
             "generic_pm_work_packet_relay_declared": generic_pm_work_packet_relay_declared,
             "generic_pm_work_result_relay_declared": generic_pm_work_result_relay_declared,
             "generic_pm_work_request_index_declared": generic_pm_work_request_index_declared,
-            "officer_model_miss_contract_declared": officer_model_miss_contract_declared,
-            "model_miss_officer_uses_generic_request": model_miss_officer_uses_generic_request,
+            "flowguard_operator_model_miss_contract_declared": flowguard_operator_model_miss_contract_declared,
+            "model_miss_flowguard_operator_uses_generic_request": model_miss_flowguard_operator_uses_generic_request,
             "evidence_decision_uses_generic_request": evidence_decision_uses_generic_request,
             "controlled_stop_declared": controlled_stop_declared,
             "non_authorizing_flag_reset_present": non_authorizing_flag_reset_present,

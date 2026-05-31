@@ -9,18 +9,11 @@
   "recorded_at": "<iso-8601-timestamp>",
   "recorded_by_role": "<controller|project_manager>",
   "status": "<not_started|passed|blocked|partial>",
-  "required_roles": [
-    "project_manager",
-    "human_like_reviewer",
-    "process_flowguard_officer",
-    "product_flowguard_officer",
-    "worker_a",
-    "worker_b"
-  ],
+  "required_roles": [],
   "policy": {
     "role_continuity_required": true,
     "same_task_agent_id_resume_only": true,
-    "six_role_liveness_preflight_required": true,
+    "currently_required_responsibility_liveness_preflight_required": true,
     "wait_agent_timeout_is_timeout_unknown_not_active": true,
     "historical_agent_ids_are_audit_history_only": true,
     "replacement_must_be_seeded_from_memory": true,
@@ -38,19 +31,12 @@
   "liveness_preflight": {
     "checked_at": "<iso-8601-timestamp>",
     "awaiting_role": "<role-key-or-null>",
-    "roles_checked": [
-      "project_manager",
-      "human_like_reviewer",
-      "process_flowguard_officer",
-      "product_flowguard_officer",
-      "worker_a",
-      "worker_b"
-    ],
+    "roles_checked": [],
     "timeout_unknown_role_keys": [],
     "missing_cancelled_or_unknown_role_keys": [],
     "replacement_role_keys": [],
     "wait_agent_timeout_treated_as_active": false,
-    "decision": "<all_roles_active|roles_ready_after_replacement|resume_needed|blocked>"
+    "decision": "<all_required_responsibilities_active|required_responsibilities_ready_after_replacement|resume_needed|blocked>"
   },
   "role_results": [
     {
@@ -73,7 +59,7 @@
     }
   ],
   "summary": {
-    "roles_required": 6,
+    "roles_required": "<current-runtime-required-count>",
     "roles_rehydrated": 0,
     "roles_replaced_from_memory": 0,
     "roles_blocked": 0,

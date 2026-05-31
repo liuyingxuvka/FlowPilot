@@ -31,7 +31,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "startup.questions.pause_before_work",
                 obligation_type="contract",
-                description="Startup asks the three questions, waits for answers, and blocks banner/controller work until the answer boundary is satisfied.",
+                description="Startup asks for the work request and background-collaboration permission, waits for the answer, and blocks banner/controller work until the answer boundary is satisfied.",
                 required_test_kinds=(HAPPY, NEGATIVE),
             ),
             _obligation(
@@ -225,13 +225,13 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "packet_result_family.pm_role_work.durable_event_fold",
                 obligation_type="transition",
-                description="PM role-work batches fold durable officer result envelopes into role_work_result_returned before stale waits.",
+                description="PM role-work batches fold durable FlowGuard operator result envelopes into role_work_result_returned before stale waits.",
                 required_test_kinds=(HAPPY,),
             ),
             _obligation(
                 "packet_result_family.pm_role_work.partial_member_wait",
                 obligation_type="scenario",
-                description="Partial PM role-work batches name only missing officer roles and keep completed members out of reminders.",
+                description="Partial PM role-work batches name only missing FlowGuard operator roles and keep completed members out of reminders.",
                 required_test_kinds=(EDGE,),
             ),
             _obligation(

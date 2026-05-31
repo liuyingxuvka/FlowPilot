@@ -242,15 +242,15 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.process_recheck_passed:
         yield Transition(
-            "process_flowguard_officer_simulates_candidate_route",
-            _running(state, holder="process_flowguard_officer", process_recheck_passed=True),
+            "flowguard_operator_route_scope_simulates_candidate_route",
+            _running(state, holder="flowguard_operator", process_recheck_passed=True),
         )
         return
 
     if not state.product_recheck_passed:
         yield Transition(
-            "product_flowguard_officer_checks_candidate_route",
-            _running(state, holder="product_flowguard_officer", product_recheck_passed=True),
+            "flowguard_operator_product_scope_checks_candidate_route",
+            _running(state, holder="flowguard_operator", product_recheck_passed=True),
         )
         return
 

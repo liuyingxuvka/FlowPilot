@@ -14,7 +14,7 @@
   "selection_rule": "Product capability needs and FlowPilot process needs choose skills, including FlowGuard satellite skills as process-support candidates. Local skill availability alone never creates route work.",
   "selection_dimensions": {
     "deliverable_support": "Does the skill help produce, validate, or inspect the user-visible deliverable?",
-    "process_support": "Does the skill help PM, reviewer, officer, worker, or follow-up roles perform FlowPilot planning, modeling, review, validation, or evidence work?",
+    "process_support": "Does the skill help PM, reviewer, FlowGuard operator, worker, or follow-up roles perform FlowPilot planning, modeling, review, validation, or evidence work?",
     "raw_availability_is_not_a_reason": true
   },
   "minimum_sufficient_complexity_rule": {
@@ -33,11 +33,11 @@
       },
       "supported_product_capabilities": [],
       "supported_flowpilot_process_contexts": [
-        "<pm_planning|pm_route_design|pm_acceptance_writing|worker_execution|reviewer_review|process_officer_modeling|product_officer_modeling|validation|followup>"
+        "<pm_planning|pm_route_design|pm_acceptance_writing|worker_execution|reviewer_review|flowguard_operator_modeling|validation|followup>"
       ],
       "role_skill_use_candidates": [
         {
-          "used_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|followup_officer>",
+          "used_by_role": "<project_manager|human_like_reviewer|flowguard_operator|worker|followup_operator>",
           "use_context": "<planning|route_design|acceptance_writing|execution|review|modeling|validation|followup>",
           "candidate_output_or_gate": "<affected-output-or-gate-id>",
           "evidence_required": true
@@ -66,6 +66,6 @@
     "pm_decision_recorded": true,
     "raw_inventory_used_as_authority": false,
     "controller_self_approval_allowed": false,
-    "worker_approval_allowed": false
+    "workerpproval_allowed": false
   }
 }

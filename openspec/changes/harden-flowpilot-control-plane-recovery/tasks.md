@@ -14,10 +14,10 @@
 
 ## 3. Resume Rehydration Postcondition Replay
 
-- [x] 3.1 Add an idempotent Router reconcile helper that validates current-run crew rehydration report evidence before blocker materialization.
+- [x] 3.1 Add an idempotent Router reconcile helper that validates current-run requested-responsibility rehydration report evidence before blocker materialization.
 - [x] 3.2 Fold valid done receipts for `rehydrate_role_agents` through existing Router-owned resume report handling.
 - [x] 3.3 Set or preserve `resume_roles_restored`, `resume_role_agents_rehydrated`, and `crew_rehydration_report_written` only from valid current-run evidence.
-- [x] 3.4 Add tests for valid six-role report replay, valid receipt/report replay, and incomplete report blocking.
+- [x] 3.4 Add tests for valid requested-responsibility report replay, valid receipt/report replay, and incomplete report blocking.
 
 ## 4. Control Blocker Family Coalescing
 

@@ -61,7 +61,7 @@
       "standard_scenarios": [],
       "owner_role": "project_manager",
       "approval_owner_role": "project_manager",
-      "required_reviewer_or_officer": "<human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>"
+      "required_reviewer_or_flowguard_operator": "<human_like_reviewer|flowguard_operator|project_manager>"
     }
   ],
   "inherited_low_quality_success_risks": [
@@ -107,7 +107,7 @@
   },
   "approvals": {
     "project_manager_approval_path": "<path-or-null>",
-    "product_flowguard_officer_modelability_path": "<path-or-null>",
+    "flowguard_operator_modelability_path": "<path-or-null>",
     "human_like_reviewer_challenge_path": "<path-or-null>"
   }
 }

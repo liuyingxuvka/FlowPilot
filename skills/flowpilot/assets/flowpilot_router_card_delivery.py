@@ -18,15 +18,13 @@ CARD_RETURN_EVENT_NAMES = frozenset(
         "pm_card_ack",
         "reviewer_card_ack",
         "worker_card_ack",
-        "process_officer_card_ack",
-        "product_officer_card_ack",
+        "flowguard_operator_card_ack",
         "card_ack",
         "controller_card_bundle_ack",
         "pm_card_bundle_ack",
         "reviewer_card_bundle_ack",
         "worker_card_bundle_ack",
-        "process_officer_card_bundle_ack",
-        "product_officer_card_bundle_ack",
+        "flowguard_operator_card_bundle_ack",
         "card_bundle_ack",
     }
 )
@@ -106,10 +104,8 @@ def card_return_event_for_card(card_id: str) -> str:
         return "reviewer_card_ack"
     if card_id.startswith("worker."):
         return "worker_card_ack"
-    if card_id.startswith("process_officer."):
-        return "process_officer_card_ack"
-    if card_id.startswith("product_officer."):
-        return "product_officer_card_ack"
+    if card_id.startswith("flowguard_operator."):
+        return "flowguard_operator_card_ack"
     return "card_ack"
 
 
@@ -122,10 +118,8 @@ def card_bundle_return_event_for_role(role: str) -> str:
         return "reviewer_card_bundle_ack"
     if role.startswith("worker"):
         return "worker_card_bundle_ack"
-    if role == "process_flowguard_officer":
-        return "process_officer_card_bundle_ack"
-    if role == "product_flowguard_officer":
-        return "product_officer_card_bundle_ack"
+    if role == "flowguard_operator":
+        return "flowguard_operator_card_bundle_ack"
     return "card_bundle_ack"
 
 

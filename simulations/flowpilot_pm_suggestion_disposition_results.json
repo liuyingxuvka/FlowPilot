@@ -46,7 +46,7 @@
           "no-suggestion case wrote a heavy empty report"
         ]
       },
-      "officer_maintenance_blocks_project": {
+      "flowguard_operator_maintenance_blocks_project": {
         "detected": true,
         "expected_failure": "FlowPilot maintenance suggestion blocked current project completion",
         "failures": [
@@ -126,7 +126,7 @@
   "safe_graph": {
     "accepted_scenarios": [
       "valid_no_suggestion_lightweight",
-      "valid_officer_model_mutates_route",
+      "valid_flowguard_operator_model_mutates_route",
       "valid_reviewer_blocker_repaired",
       "valid_reviewer_improvement_deferred",
       "valid_skill_maintenance_recorded",

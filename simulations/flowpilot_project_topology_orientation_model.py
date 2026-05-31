@@ -44,7 +44,7 @@ class State:
     owning_validation_evidence_present: bool = False
     downstream_route_selected_after_orientation: bool = False
     pm_considered_topology: bool = False
-    officer_treated_topology_as_background: bool = False
+    flowguard_operator_treated_topology_as_background: bool = False
     reviewer_treated_topology_as_background: bool = False
     controller_interpreted_topology_as_report: bool = False
     reviewer_approved_gate_from_topology: bool = False
@@ -129,14 +129,14 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("agent_reads_topology_before_nontrivial_work", replace(state, topology_read_before_work=True)),)
     if state.topology_read_before_work and not state.pm_considered_topology:
         return (Transition("pm_considers_topology_as_background", replace(state, pm_considered_topology=True)),)
-    if state.pm_considered_topology and not state.officer_treated_topology_as_background:
+    if state.pm_considered_topology and not state.flowguard_operator_treated_topology_as_background:
         return (
             Transition(
-                "officer_keeps_topology_as_background",
-                replace(state, officer_treated_topology_as_background=True),
+                "flowguard_operator_keeps_topology_as_background",
+                replace(state, flowguard_operator_treated_topology_as_background=True),
             ),
         )
-    if state.officer_treated_topology_as_background and not state.reviewer_treated_topology_as_background:
+    if state.flowguard_operator_treated_topology_as_background and not state.reviewer_treated_topology_as_background:
         return (
             Transition(
                 "reviewer_keeps_topology_as_background",
@@ -243,7 +243,7 @@ def target_success_state() -> State:
         owning_validation_evidence_present=True,
         downstream_route_selected_after_orientation=True,
         pm_considered_topology=True,
-        officer_treated_topology_as_background=True,
+        flowguard_operator_treated_topology_as_background=True,
         reviewer_treated_topology_as_background=True,
         topology_refreshed_after_source_change=True,
     )

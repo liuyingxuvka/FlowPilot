@@ -34,7 +34,7 @@ def _base_ledger() -> tuple[dict[str, Any], str, str]:
         "Implement runtime slice",
         "SEALED_TASK_BODY: worker private instructions",
     )
-    worker = runtime.lease_agent(ledger, "worker", agent_id="worker-a")
+    worker = runtime.lease_agent(ledger, "worker", agent_id="worker-1")
     runtime.assign_packet(ledger, packet_id, worker)
     return ledger, packet_id, worker
 
@@ -103,7 +103,7 @@ def replacement_worker_success() -> dict[str, Any]:
         "SEALED_RESULT_BODY: late stale result",
         evidence_ids=["late"],
     )
-    replacement = runtime.lease_agent(ledger, "worker", agent_id="worker-b")
+    replacement = runtime.lease_agent(ledger, "worker", agent_id="worker-2")
     runtime.assign_packet(ledger, packet_id, replacement)
     result_id = _complete_happy_path(ledger, packet_id, replacement)
     return _scenario_result(
@@ -149,7 +149,7 @@ def self_review_blocks() -> dict[str, Any]:
     result_id = runtime.submit_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
     order_id = runtime.create_flowguard_work_order(ledger, "development_process", "done_claim", packet_id)
     runtime.complete_flowguard_work_order(ledger, order_id)
-    reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="worker-a")
+    reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="worker-1")
     review_id = runtime.review_result(ledger, result_id, reviewer)
     return _scenario_result(
         "self_review_blocks",

@@ -169,7 +169,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "packet_id": "packet-missing-author",
                 "result_envelope": {
-                    "completed_by_role": "worker_a",
+                    "completed_by_role": "worker",
                     "completed_agent_id": None,
                     "completed_agent_id_belongs_to_role": False,
                 },

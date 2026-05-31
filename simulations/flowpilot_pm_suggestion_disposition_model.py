@@ -2,11 +2,11 @@
 
 Risk intent brief:
 - Validate a unified Project-Manager-owned suggestion loop for reviewer,
-  worker, and FlowGuard officer suggestions before changing FlowPilot protocol
+  worker, and FlowGuard operator suggestions before changing FlowPilot protocol
   or runtime code.
 - Protected harms: reviewer hard blockers being downgraded to advisory notes,
   reviewer preferences overblocking a gate, workers gaining gate authority,
-  formal officer blockers being treated as maintenance notes, PM closing a gate
+  formal FlowGuard operator blockers being treated as maintenance notes, PM closing a gate
   with undisposed suggestions, vague deferrals, unexplained rejection/waiver,
   route mutation with stale evidence, sealed-body leakage into ledgers, duplicate
   skill-maintenance systems, and heavy empty reports for no-suggestion cases.
@@ -35,14 +35,14 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 VALID_REVIEWER_BLOCKER_REPAIRED = "valid_reviewer_blocker_repaired"
 VALID_REVIEWER_IMPROVEMENT_DEFERRED = "valid_reviewer_improvement_deferred"
 VALID_WORKER_NOTE_REJECTED = "valid_worker_note_rejected"
-VALID_OFFICER_MODEL_MUTATES_ROUTE = "valid_officer_model_mutates_route"
+VALID_FLOWGUARD_OPERATOR_MODEL_MUTATES_ROUTE = "valid_flowguard_operator_model_mutates_route"
 VALID_SKILL_MAINTENANCE_RECORDED = "valid_skill_maintenance_recorded"
 VALID_NO_SUGGESTION_LIGHTWEIGHT = "valid_no_suggestion_lightweight"
 
 REVIEWER_HARD_BLOCKER_DOWNGRADED = "reviewer_hard_blocker_downgraded"
 REVIEWER_PREFERENCE_BLOCKS_GATE = "reviewer_preference_blocks_gate"
 WORKER_NOTE_BLOCKS_GATE = "worker_note_blocks_gate"
-OFFICER_MAINTENANCE_BLOCKS_PROJECT = "officer_maintenance_blocks_project"
+FLOWGUARD_OPERATOR_MAINTENANCE_BLOCKS_PROJECT = "flowguard_operator_maintenance_blocks_project"
 PM_CLOSES_WITH_UNDISPOSED_SUGGESTION = "pm_closes_with_undisposed_suggestion"
 DEFER_WITHOUT_TARGET = "defer_without_target"
 REJECT_WITHOUT_REASON = "reject_without_reason"
@@ -58,7 +58,7 @@ VALID_SCENARIOS = (
     VALID_REVIEWER_BLOCKER_REPAIRED,
     VALID_REVIEWER_IMPROVEMENT_DEFERRED,
     VALID_WORKER_NOTE_REJECTED,
-    VALID_OFFICER_MODEL_MUTATES_ROUTE,
+    VALID_FLOWGUARD_OPERATOR_MODEL_MUTATES_ROUTE,
     VALID_SKILL_MAINTENANCE_RECORDED,
     VALID_NO_SUGGESTION_LIGHTWEIGHT,
 )
@@ -67,7 +67,7 @@ NEGATIVE_SCENARIOS = (
     REVIEWER_HARD_BLOCKER_DOWNGRADED,
     REVIEWER_PREFERENCE_BLOCKS_GATE,
     WORKER_NOTE_BLOCKS_GATE,
-    OFFICER_MAINTENANCE_BLOCKS_PROJECT,
+    FLOWGUARD_OPERATOR_MAINTENANCE_BLOCKS_PROJECT,
     PM_CLOSES_WITH_UNDISPOSED_SUGGESTION,
     DEFER_WITHOUT_TARGET,
     REJECT_WITHOUT_REASON,
@@ -84,8 +84,8 @@ SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
 SOURCE_REVIEWER = "reviewer"
 SOURCE_WORKER = "worker"
-SOURCE_PROCESS_OFFICER = "process_officer"
-SOURCE_PRODUCT_OFFICER = "product_officer"
+SOURCE_PROCESS_OFFICER = "flowguard_operator_route_scope"
+SOURCE_PRODUCT_OFFICER = "flowguard_operator_product_scope"
 SOURCE_NONE = "none"
 
 CLASS_CURRENT_GATE_BLOCKER = "current_gate_blocker"
@@ -142,8 +142,8 @@ class State:
 
     classification: str = CLASS_NONE
     reviewer_minimum_standard_failure: bool = False
-    officer_formal_model_gate: bool = False
-    worker_or_officer_advisory_only: bool = False
+    flowguard_operator_formal_model_gate: bool = False
+    worker_or_flowguard_operator_advisory_only: bool = False
 
     impact_triage_recorded: bool = False
     impact_level: str = IMPACT_NONE
@@ -259,16 +259,16 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             _base_state(scenario),
             source_role=SOURCE_WORKER,
-            worker_or_officer_advisory_only=True,
+            worker_or_flowguard_operator_advisory_only=True,
             classification=CLASS_NONBLOCKING_NOTE,
             pm_disposition=DISPOSITION_REJECT_WITH_REASON,
         )
-    if scenario == VALID_OFFICER_MODEL_MUTATES_ROUTE:
+    if scenario == VALID_FLOWGUARD_OPERATOR_MODEL_MUTATES_ROUTE:
         return replace(
             _base_state(scenario),
             source_role=SOURCE_PROCESS_OFFICER,
             classification=CLASS_CURRENT_GATE_BLOCKER,
-            officer_formal_model_gate=True,
+            flowguard_operator_formal_model_gate=True,
             impact_level=IMPACT_ROUTE_OR_ACCEPTANCE_CHANGE,
             flowguard_decision=FLOWGUARD_PROCESS_MODEL_NEEDED,
             pm_disposition=DISPOSITION_MUTATE_ROUTE,
@@ -312,12 +312,12 @@ def _scenario_state(scenario: str) -> State:
         return replace(
             _base_state(scenario),
             source_role=SOURCE_WORKER,
-            worker_or_officer_advisory_only=True,
+            worker_or_flowguard_operator_advisory_only=True,
             classification=CLASS_CURRENT_GATE_BLOCKER,
             pm_disposition=DISPOSITION_REPAIR_OR_REISSUE,
             blocker_resolved=True,
         )
-    if scenario == OFFICER_MAINTENANCE_BLOCKS_PROJECT:
+    if scenario == FLOWGUARD_OPERATOR_MAINTENANCE_BLOCKS_PROJECT:
         return replace(
             _base_state(scenario),
             source_role=SOURCE_PROCESS_OFFICER,
@@ -356,7 +356,7 @@ def _scenario_state(scenario: str) -> State:
             _base_state(scenario),
             source_role=SOURCE_PROCESS_OFFICER,
             classification=CLASS_CURRENT_GATE_BLOCKER,
-            officer_formal_model_gate=True,
+            flowguard_operator_formal_model_gate=True,
             pm_disposition=DISPOSITION_MUTATE_ROUTE,
             gate_closed=False,
             route_mutated=True,
@@ -395,7 +395,7 @@ def _scenario_state(scenario: str) -> State:
             _base_state(scenario),
             source_role=SOURCE_PROCESS_OFFICER,
             classification=CLASS_CURRENT_GATE_BLOCKER,
-            officer_formal_model_gate=True,
+            flowguard_operator_formal_model_gate=True,
             impact_triage_recorded=False,
             impact_level=IMPACT_ROUTE_OR_ACCEPTANCE_CHANGE,
             flowguard_considered=False,
@@ -457,9 +457,9 @@ def suggestion_failures(state: State) -> list[str]:
     if (
         state.source_role in {SOURCE_PROCESS_OFFICER, SOURCE_PRODUCT_OFFICER}
         and state.classification == CLASS_CURRENT_GATE_BLOCKER
-        and not state.officer_formal_model_gate
+        and not state.flowguard_operator_formal_model_gate
     ):
-        failures.append("officer advisory note was treated as a formal gate blocker")
+        failures.append("FlowGuard operator advisory note was treated as a formal gate blocker")
 
     if (
         state.classification == CLASS_FLOWPILOT_SKILL_IMPROVEMENT
@@ -585,7 +585,7 @@ def advisory_roles_do_not_gain_gate_authority(state: State, trace) -> InvariantR
     if state.status != "accepted":
         return InvariantResult.pass_()
     for failure in suggestion_failures(state):
-        if "worker advisory" in failure or "officer advisory" in failure:
+        if "worker advisory" in failure or "FlowGuard operator advisory" in failure:
             return InvariantResult.fail(failure)
     return InvariantResult.pass_()
 
@@ -645,7 +645,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="advisory_roles_do_not_gain_gate_authority",
-        description="Worker and advisory officer notes cannot become gate authority before PM classification.",
+        description="Worker and advisory FlowGuard operator notes cannot become gate authority before PM classification.",
         predicate=advisory_roles_do_not_gain_gate_authority,
     ),
     Invariant(

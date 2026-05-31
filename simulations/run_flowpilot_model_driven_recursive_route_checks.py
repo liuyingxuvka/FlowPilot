@@ -22,10 +22,10 @@ REQUIRED_LABELS = tuple(
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    model.ROUTE_DRAFTED_BEFORE_PRODUCT_MODEL: "route drafted before Product Officer wrote product behavior model",
+    model.ROUTE_DRAFTED_BEFORE_PRODUCT_MODEL: "route drafted before FlowGuard operator product-scope wrote product behavior model",
     model.PRODUCT_MODEL_PM_DECISION_SKIPPED: "route drafted before PM accepted product behavior model",
     model.PRODUCT_REVIEW_SKIPPED_BEFORE_ROUTE: "route drafted before reviewer challenged product model",
-    model.PROCESS_MODEL_MISSING_BEFORE_ACTIVATION: "route activated without Process Officer serial execution model",
+    model.PROCESS_MODEL_MISSING_BEFORE_ACTIVATION: "route activated without FlowGuard operator route-scope serial execution model",
     model.PROCESS_MODEL_NOT_SERIAL: "process route execution model is not serial",
     model.HIDDEN_PARALLEL_LEAF_MARKED_READY: "leaf readiness accepted hidden parallel or multi-worker work",
     model.LEAF_TOO_LARGE_NOT_PROMOTED: "oversized leaf was not promoted to a parent with child nodes",

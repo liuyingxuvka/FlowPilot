@@ -53,7 +53,7 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
             root,
             packet_id=packet_id,
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text=f"synthetic current node work for {packet_id}",
             metadata={"route_version": 1},
@@ -91,7 +91,7 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_id: "worker_a"},
+                    "agent_role_map": {agent_id: "worker"},
                 },
             ),
         )
@@ -138,7 +138,7 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
                 root,
                 lease_path=lease["lease_path"],
                 role=lease["holder_role"],
-                agent_id="agent-worker-a-wrong",
+                agent_id="agent-worker-1-wrong",
                 result_body_text="bad result\n\nContract Self-Check\n\nstatus: pass\n",
                 next_recipient="project_manager",
                 route_version=lease["route_version"],
@@ -251,7 +251,7 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
         )
         bad_decision["repair_transaction"] = {
             "plan_kind": "role_reissue",
-            "target_role": "worker_a",
+            "target_role": "worker",
         }
 
         with self.assertRaisesRegex(router.RouterError, "material dispatch repair transaction cannot use role_reissue"):
@@ -273,9 +273,9 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
             "plan_kind": "packet_reissue",
             "replacement_packets": [
                 {
-                    "packet_id": "e2e-material-repair-worker-a",
+                    "packet_id": "e2e-material-repair-worker-1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "E2E fake AI repair packet with a fresh producer.",
                 }
             ],

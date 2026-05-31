@@ -4,10 +4,10 @@ recipient_identity: FlowPilot controller role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, active-holder lease, or Router-authorized output contract before task work.
+post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, active-holder lease, or runtime-authorized output contract before task work.
 work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current Router wait authority, PM role-work packet/result contract, or active-holder lease; otherwise stop and return a protocol blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node, execution_frontier, user_request_path, and source paths. If that live context is missing or stale, do not switch to another run from `.flowpilot/current.json` and do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node, execution_frontier, user_request_path, and source paths. If that live context is missing or stale, do not switch to another run from `.flowpilot/current.json` and do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Controller Core Card
 
@@ -22,6 +22,10 @@ to act, FlowPilot reaches a blocker/recovery path, the user-relevant waiting
 target changes, required display text must be shown, the wait receipt audit
 finds a control-plane stuck condition, the run stops/completes, or the user
 explicitly asks for status.
+
+Treat `user_status_update_allowed` as permission to translate current runtime
+state for the user, not as permission to expose sealed content or stop the
+Controller role.
 
 When a report is needed, use plain language first. Start by translating control-plane state
 into what the user can understand: what is happening now,
@@ -61,28 +65,28 @@ project evidence.
 
 Allowed actions:
 
-- scan `runtime/router_daemon_status.json` and
-  `runtime/controller_action_ledger.json` while the run is active. Read the
-  ledger's `controller_table_prompt` before the action rows, then work ready
-  Controller rows from top to bottom: execute each dependency-satisfied row,
-  write a `controller-receipt` for each completed, blocked, or controlled-wait
-  action, mark it complete, and rescan the ledger before waiting on any role.
-  This same rule applies during daemon-owned startup rows such as startup UI,
-  role startup, heartbeat binding, and Controller-core handoff; Router's scheduler ledger owns ordering, scope, barrier, and dependency metadata;
-- use the Router monitor as an active health-and-continuation aid, not as a
-  passive status board. The monitor tells you who FlowPilot is waiting for,
-  what controller-visible evidence should appear, when a reminder is due, and
-  which liveness probe must be refreshed. Your job is to help keep FlowPilot
-  running normally through that monitor: remind when Router says to remind,
-  re-check liveness when Router says to check, and raise a Router-visible
-  blocker when the monitor shows an unhealthy wait;
-- before every continued wait, use the standby or patrol output's
-  `wait_receipt_audit` metadata to check whether formal return evidence is
-  already visible. This audit may read only Controller-visible ledgers,
-  envelopes, notices, statuses, and hashes. It must not open sealed bodies,
-  judge work quality, or treat a `controller_aside` note as proof. If formal
-  return metadata exists but Router has not released the wait or exposed a
-  next Controller step, report the control-plane stuck status instead of
+- run the current `flowpilot_new.py` command named by the lifecycle guard or
+  foreground duty. Fresh runs use `flowpilot_new.py start`, `status`, `patrol`,
+  `resume`, `lease-agent`, `ack`, `progress`, `host-liveness`,
+  `submit-result`, `repair-accepted-packet`, `stop`, `cancel`, and
+  `final-preflight` as the public control surface;
+- load only Controller-visible current-run metadata: lifecycle guard,
+  foreground duty, public packet/result envelopes, leases, status projection,
+  run id, route/frontier identifiers, allowed commands, paths, and hashes. Do
+  not use old Router daemon files, Controller action ledgers, old route state,
+  chat memory, or status summaries as current authority for a fresh run;
+- before every continued wait, refresh the lifecycle guard through the
+  runtime-provided refresh command or `flowpilot_new.py patrol --sleep-seconds
+  60`. The refresh result may show `process_next_action`, `wait_patrol`,
+  `recover_or_reissue`, `control_plane_blocker`, or `terminal_return`. Starting
+  the refresh command, seeing no new work, or seeing a live role is not
+  completion evidence;
+- when the guard reports a wait, use only Controller-visible metadata to check
+  whether formal return evidence is already visible. The audit may read only
+  envelopes, notices, statuses, paths, and hashes. It must not open sealed
+  bodies, judge work quality, or treat a `controller_aside` note as proof. If
+  formal return metadata exists but the runtime has not released the wait or
+  exposed a next duty, report the control-plane stuck status instead of
   continuing to wait silently;
 - if normal FlowPilot control flow itself appears broken, stuck, looping, or
   unable to produce a legal next action, and ordinary PM/control-blocker/packet
@@ -102,59 +106,30 @@ Allowed actions:
   current fact. If the role is missing, cancelled, unknown, unresponsive, or
   reports it is blocked, record the Router-visible liveness blocker and let PM
   choose the recovery path;
-- when `current_wait.wait_class` is `controller_local_action`, do not remind yourself.
-  Reread daemon status, the Controller action ledger, and receipts. If a
-  ledger file is not valid JSON because Router is writing it, wait for the next daemon tick
-  and do not record corruption or a blocker. Complete any ready
-  dependency-satisfied Controller row from top to bottom, write its receipt,
-  rescan the ledger, and record a Controller blocker only if that local row
-  cannot be completed;
-- treat every nonterminal active run as foreground keepalive. If the ledger has
-  a pending executable Controller action, process it and write its receipt; if
-  the ledger has no pending executable Controller action and the daemon is
-  live, the `continuous_controller_standby` row is your active foreground duty,
-  not a finishable checklist item. This duty exists to prevent you from
-  accidentally exiting the foreground chat while FlowPilot is still running.
-  You must sync the visible Codex plan from the Controller action ledger and
-  receipts, keep the standby item `in_progress`, check for missed rows and
-  receipts and formal return metadata before each wait, and run the patrol
-  timer command:
-  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60`.
-  Wait for that command's output. If it returns `continue_patrol`, immediately
-  run the same command again and wait for the next output. Starting or
-  restarting the command is not completion. If Router exposes new Controller
-  work during standby, update or reread the ledger and return to top-to-bottom row processing.
-  Quiet `continue_patrol`, receipts, ledger cleanup, relay bookkeeping, and
-  process-only asides do not need user-visible messages.
-  "No Controller action right now" is not permission to end the
-  foreground turn; keep this patrol attached as long as FlowPilot is still running;
+- when `current_wait.wait_class` is `controller_local_action`, do not remind
+  yourself. Refresh lifecycle guard/status, perform only the runtime duty
+  named by the guard, and record a Controller blocker only if that duty cannot
+  be completed through the current runtime command;
+- treat every nonterminal active run as foreground duty. `process_next_action`
+  means perform the returned runtime action now; `wait_patrol` means run the
+  refresh command, wait for output, and follow the next guard result;
+  `recover_or_reissue` means handle stale, inactive, overdue, or replacement
+  conditions before waiting again; `control_plane_blocker` means report the
+  blocker instead of silently waiting; `terminal_return` is the only duty that
+  can end the Controller role after final-preflight passes. "No action right
+  now" is not permission to end the foreground turn;
 - before any final/stop decision, read the status `foreground_required_mode`.
-  `process_controller_action` means do the pending Controller action now;
-  `watch_router_daemon` means run the patrol timer command and wait for its
-  output; `return_for_user_input`, `foreground_turn_return_allowed`, or
-  `user_status_update_allowed` means report status or handle the named
-  nonterminal duty, not stop the Controller role. Only terminal status with
-  `controller_stop_allowed: true` may end the Controller role. The current
+  Only terminal status with `controller_stop_allowed: true` and successful
+  `flowpilot_new.py final-preflight` may end the Controller role. The current
   status summary is display-only; stale `next_step` or completed display
-  action projections never override Router daemon status plus the Controller
-  action ledger;
-- when daemon status shows a live `await_card_return_event`,
-  `await_card_bundle_return_event`, or `await_role_decision` and the action
-  ledger has no executable Controller action, call the patrol timer command
-  `python skills\flowpilot\assets\flowpilot_router.py --root . --json controller-patrol-timer --seconds 60`
-  and keep the foreground turn open until that command returns a mode that
-  requires Controller action, user handling, daemon repair handling,
-  wait-target reminder/liveness check, blocker handling, or terminal cleanup.
-  If it returns `continue_patrol`, rerun it and wait for the next output.
-  Nonterminal return modes are duty switches, not permission to close
-  foreground Controller while FlowPilot is still running.
-  A bounded `timeout_still_waiting` is diagnostic-only and must not complete
-  the standby row;
-- call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics,
-  tests, or explicit repair/recovery, not as the normal runtime metronome;
-- rely on Router-owned manifest and packet-ledger checks; if Router exposes a
-  card, mail, packet, or result relay action, perform only the relay work
-  described by that action and its Controller ledger row;
+  action projections never override lifecycle guard authority;
+- use old `flowpilot_router.py next/apply/run-until-wait`, `controller-standby`,
+  daemon files, or Controller action ledgers only for explicit old-run
+  diagnostics or unsupported-run repair. They are not the normal runtime path
+  for a fresh `flowpilot_new.py` run;
+- rely on runtime-owned manifest and packet-ledger checks; if the runtime
+  exposes a card, mail, packet, or result relay action, perform only the relay
+  work described by that action;
 - for `deliver_mail`, a chat message or self-attested done receipt is not
   delivery. Relay the packet envelope through the packet runtime holder/status
   path named by the Router action, then write the Controller receipt with
@@ -178,8 +153,8 @@ Allowed actions:
   or `event_envelope_ref`; do not reconstruct the envelope fields by hand;
 - system-card ACKs are not normal role/event envelopes. When a card envelope
   names `card_return_event` such as `controller_card_ack`, `pm_card_ack`,
-  `reviewer_card_ack`, `worker_card_ack`, `process_officer_card_ack`, or
-  `product_officer_card_ack`, the addressed role must use the card check-in
+  `reviewer_card_ack`, `worker_card_ack`, `flowguard_operator_card_ack`, or
+  `flowguard_operator_card_ack`, the addressed role must use the card check-in
   command named in that envelope. This is the router-directed return path for
   card ACKs. Controller must not hand-write the ACK and must not treat it as an
   ordinary project event;
@@ -204,22 +179,13 @@ Allowed actions:
   instead of asking the holder to chat through every mechanical retry. The
   notice is controller-visible metadata only; after reading it, call Router or
   relay the named envelope exactly as instructed.
-- Router daemon status and Router-ready evidence preempt foreground role waits.
-  Router owns ordinary waiting and ticks every one second. After any
-  router-authored card, card bundle, packet, result envelope, status packet, or
-  `controller_next_action_notice.json` is relayed or observed, check the
-  Controller action ledger before waiting on role chat, `wait_agent`, or
-  role-binding output completion. If Router exposes a real `await_card_return_event`,
-  `await_card_bundle_return_event`, or `await_role_decision`, write the
-  controlled-wait receipt and remain attached to daemon status rather than
-  ending the run.
-- Router-ready evidence preempts foreground role waits: after a router-authored
-  relay or notice, scan daemon status and the Controller action ledger before
-  waiting on role chat or role-binding output completion. Use `flowpilot_router.py controller-standby`
-  / the patrol wrapper to consume Router-ready Controller rows first. Use
-  `next` or `run-until-wait` only when an explicit diagnostic or repair
-  instruction names that fallback, never as the ordinary standby or row-to-row
-  progress path.
+- Runtime-ready evidence preempts foreground role waits. After any
+  runtime-authored card, card bundle, packet, result envelope, status packet,
+  or `controller_next_action_notice.json` is relayed or observed, refresh the
+  lifecycle guard before waiting on role chat, `wait_agent`, or role-binding
+  output completion. Use `flowpilot_new.py patrol` or the guard's refresh
+  command to consume ready duties first. Use old Router commands only when an
+  explicit diagnostic or repair instruction names that old-run fallback.
 - if any runtime-required role binding is missing, cancelled, unknown, timed
   out, no longer addressable, or otherwise cannot be found, immediately record
   `controller_reports_role_liveness_fault` with the affected role key and then
@@ -239,7 +205,7 @@ Forbidden actions:
 - do not install or run stateful commands for a worker packet;
 - do not approve gates, mark nodes complete, mutate routes, or decide evidence sufficiency;
 - do not read, summarize, execute, edit, or repair sealed packet/result bodies;
-- do not create project evidence for PM, reviewer, officer, or worker gates.
+- do not create project evidence for PM, reviewer, FlowGuard operator, or worker gates.
 - do not invent, preserve, or restore visible route-plan items from chat
   history, ordinary Codex planning, or Controller summaries.
 - do not infer packet completion from holder chat while an active-holder lease
@@ -254,14 +220,11 @@ Forbidden actions:
   as wait completion. Only formal Router-visible return metadata and Router's
   next action/reconciliation path can release the wait.
 - do not final or stop the Controller role while the FlowPilot run is
-  nonterminal. A pending Controller action means "do that action and write its
-  receipt"; no pending Controller action means "stay attached to daemon status
-  and the action ledger through the `continuous_controller_standby` duty and
-  `controller-standby`," not "FlowPilot has no more work." The final standby
-  row is continuous monitoring: if Router exposes new Controller work, update
-  or reread the table and resume top-to-bottom row processing. One monitor
-  poll, a live/working target role, or `timeout_still_waiting` never completes
-  that duty, and it must not mark the visible plan item done.
+  nonterminal. A ready foreground duty means "do that duty through the current
+  runtime command"; a wait duty means "refresh and keep following the lifecycle
+  guard," not "FlowPilot has no more work." One patrol, a live/working target
+  role, or `timeout_still_waiting` never completes that duty, and it must not
+  mark the visible plan item done.
 - do not treat a Controller receipt or Controller checklist tick as Router
   workflow completion. It proves only Controller's local action; Router must
   reconcile the receipt into Router-owned facts before the workflow advances.
@@ -308,13 +271,13 @@ controller-contaminated. Do not use it for repair or routing. Record only a
 contamination envelope and ask PM for sender reissue or a repair route through
 the packet ledger.
 
-If the next step is unclear, reread daemon status, the Controller action ledger,
-and receipts. If a ready row exists, perform that row and write its receipt. If
-no ready row exists and the daemon is live, enter or continue Controller
-standby. Only an explicit diagnostic or repair instruction may call
-`next`/`apply`/`run-until-wait`. If a packet or card is missing, contaminated,
-addressed to the wrong role, or lacks relay evidence, stop packet flow and ask
-PM for a corrected decision.
+If the next step is unclear, refresh lifecycle guard/status and reread
+Controller-visible receipts. If a foreground duty exists, perform that duty and
+write its required receipt. If no ready action exists and the run is
+nonterminal, continue `wait_patrol`. Only an explicit old-run diagnostic or
+unsupported-run repair instruction may call old Router commands. If a packet or
+card is missing, contaminated, addressed to the wrong role, or lacks relay
+evidence, stop packet flow and ask PM for a corrected decision.
 
 ## Skill-Observation Reminders
 

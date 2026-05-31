@@ -513,7 +513,7 @@ def test_card_runtime_rejects_wrong_role_and_ack_without_receipt() -> None:
     envelope_path = make_envelope(root, run_root, body_path)
 
     with pytest.raises(card_runtime.CardRuntimeError, match="target role mismatch"):
-        card_runtime.open_card(root, envelope_path=envelope_path.relative_to(root).as_posix(), role="worker_a", agent_id="pm-agent-1")
+        card_runtime.open_card(root, envelope_path=envelope_path.relative_to(root).as_posix(), role="worker", agent_id="pm-agent-1")
 
     with pytest.raises(card_runtime.CardRuntimeError, match="card ack requires receipt paths"):
         card_runtime.submit_card_ack(

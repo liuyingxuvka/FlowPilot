@@ -140,9 +140,9 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                 {
                     "schema_version": packet_runtime_schema.PACKET_ENVELOPE_SCHEMA,
                     "packet_id": "packet-1",
-                    "packet_body_path": ".flowpilot/runs/run-test/packets/packet-1/packet_body.md",
-                    "packet_body_hash": packet_runtime_schema.sha256_file(body),
-                    "to_role": "worker_a",
+                    "body_path": ".flowpilot/runs/run-test/packets/packet-1/packet_body.md",
+                    "body_hash": packet_runtime_schema.sha256_file(body),
+                    "to_role": "worker",
                 },
             )
 
@@ -150,12 +150,12 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                 {"contract_id": "custom.contract.v1"},
                 packet_type="work_packet",
                 from_role="project_manager",
-                to_role="worker_a",
+                to_role="worker",
                 node_id="node-1",
             )
             reminder = packet_runtime_contracts.mutual_role_reminder(
                 source_role="project_manager",
-                target_role="worker_a",
+                target_role="worker",
                 envelope_kind="packet",
             )
             envelope = packet_runtime_paths.load_envelope(
@@ -175,7 +175,7 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
                 },
             )
 
-            self.assertEqual(contract["recipient_role"], "worker_a")
+            self.assertEqual(contract["recipient_role"], "worker")
             self.assertEqual(packet_runtime_contracts.output_contract_id(contract), "custom.contract.v1")
             self.assertIn("Controller only", reminder["controller_reminder"])
             self.assertEqual(envelope["body_path"], ".flowpilot/runs/run-test/packets/packet-1/packet_body.md")

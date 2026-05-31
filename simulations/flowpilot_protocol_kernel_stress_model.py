@@ -119,12 +119,12 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="happy_path_replacement_worker",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "worker_progress",
             "worker_timeout",
             "close_lease",
-            "issue_worker_b",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -139,7 +139,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="missing_ack_result_attempt",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "submit_valid_result",
             "write_current_evidence",
             "independent_review_accept",
@@ -152,14 +152,14 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ),
     ScriptedScenario(
         name="ack_only_timeout",
-        events=("issue_worker_a", "worker_ack", "worker_progress", "attempt_accept"),
+        events=("issue_worker", "worker_ack", "worker_progress", "attempt_accept"),
         expected_classification=BLOCK_ACK_WITHOUT_OUTPUT,
         family="ack_without_output",
     ),
     ScriptedScenario(
         name="wrong_shape_result",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_invalid_result",
             "write_current_evidence",
@@ -174,7 +174,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="closed_agent_late_output",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "close_lease",
             "late_submit_valid_result",
@@ -190,7 +190,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="route_mutation_stale_return",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "mutate_route",
             "submit_old_route_result",
@@ -206,7 +206,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="weak_review_after_valid_result",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -221,7 +221,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="self_review_after_valid_result",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -236,7 +236,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="stale_evidence_after_source_change",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "source_changes",
@@ -252,7 +252,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="wrong_flowguard_target_then_final_claim",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -267,13 +267,13 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="mixed_correct_and_stale_results",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "mutate_route",
             "submit_old_route_result",
             "reject_stale_result",
             "close_old_route_packets",
-            "issue_worker_b",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -288,7 +288,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="final_closure_gap_after_all_green",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -302,7 +302,7 @@ SCRIPTED_SCENARIOS: tuple[ScriptedScenario, ...] = (
     ScriptedScenario(
         name="progress_only_background_evidence",
         events=(
-            "issue_worker_a",
+            "issue_worker",
             "worker_ack",
             "submit_valid_result",
             "write_current_evidence",
@@ -336,8 +336,8 @@ HISTORICAL_REPLAY_CASES = (
 )
 
 RANDOM_EVENTS = (
-    "issue_worker_a",
-    "issue_worker_b",
+    "issue_worker",
+    "issue_worker",
     "worker_ack",
     "worker_progress",
     "submit_valid_result",
@@ -403,10 +403,8 @@ def apply_event(state: StressState, event: str) -> StressState:
     if state.status != "running":
         return state
 
-    if event == "issue_worker_a":
-        return _new_packet_state(state, "worker-a")
-    if event == "issue_worker_b":
-        return _new_packet_state(state, "worker-b")
+    if event == "issue_worker":
+        return _new_packet_state(state, f"worker-{state.event_count}")
     if event == "worker_ack":
         return replace(state, ack_received=True)
     if event == "worker_progress":
@@ -439,7 +437,7 @@ def apply_event(state: StressState, event: str) -> StressState:
             result_submitted=True,
             result_packet_valid=True,
             result_route_version=state.packet_route_version,
-            result_producer_lease_id=state.active_lease_id or "worker-a",
+            result_producer_lease_id=state.active_lease_id or "worker-1",
             result_after_close=True,
         )
     if event == "mutate_route":

@@ -280,7 +280,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         ledger = runtime.new_ledger("Goal", "Contract")
         runtime.create_route(ledger, "Route", ["Do work"])
         packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "body")
-        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-a", packet_id=packet_id)
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-1", packet_id=packet_id)
         runtime.assign_packet(ledger, packet_id, lease_id)
         runtime.ack_lease(ledger, lease_id, packet_id)
         self.assertEqual(ledger["packets"][packet_id]["status"], "acknowledged")
@@ -294,6 +294,47 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertTrue(result["envelope"]["ack_result_accepted_separate"])
         self.assertEqual(result["envelope"]["output_contract"]["packet_id"], packet_id)
         self.assertEqual(control_surface.audit_packet_contracts(ledger), [])
+
+    def test_declared_pass_ignores_contextual_failure_words(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            "\n".join(
+                [
+                    "Status: PASS",
+                    "The old topology check failed before this repair.",
+                    "The report includes function-block rows and blocker history.",
+                ]
+            ),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["semantic_decision"], "pass")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_submitted")
+        self.assertFalse(ledger.get("active_blockers"))
+        self.assertTrue([row for row in ledger["packets"].values() if row["envelope"].get("packet_kind") == "flowguard_check"])
+
+    def test_declared_block_line_routes_to_semantic_repair(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            "Decision: block\nReason: current evidence is not sufficient.",
+        )
+
+        self.assertEqual(ledger["results"][result_id]["semantic_decision"], "block")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_blocked")
+        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
+        self.assertEqual(len(active), 1)
+        action = runtime.router_next_action(ledger)
+        self.assertEqual(action.action_type, "lease_agent")
+        self.assertEqual(action.responsibility, "pm")
 
     def test_run_until_wait_folds_internal_action_to_role_boundary(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")

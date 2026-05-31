@@ -1,30 +1,46 @@
 <!-- FLOWPILOT_IDENTITY_BOUNDARY_V1
-recipient_role: product_flowguard_officer
-recipient_identity: FlowPilot product FlowGuard officer role
+recipient_role: flowguard_operator
+recipient_identity: FlowPilot FlowGuard operator role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
-# Product FlowGuard Officer Root Contract Modelability
+# FlowGuard operator Child Skill Product Fit
 
 ## Role Capability Reminder
 
 - When more evidence, worker work, reviewer review, or PM choice is needed, return a structured blocker or PM suggestion for PM to route.
 - Do not approve routes or make PM decisions; your report is model evidence and repair/risk advice for PM.
-- This card's model output is a FlowGuard Report. Cite `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_route_used`, `flowguard_report_freshness`, skipped checks, progress-only evidence status, and PM decision impact.
 
 
-Assess the frozen root acceptance contract and scenario pack.
+Check the child-skill gate manifest for product fit.
 
 Report:
 
-- whether root requirements are modelable or testable;
-- which proof obligations need product FlowGuard modeling;
-- scenario gaps or ambiguous acceptance criteria;
-- confidence boundary;
-- whether PM must repair the contract before route design.
+- whether each selected child skill supports a product capability;
+- whether rejected/deferred skills leave product gaps;
+- product risks that need scenarios, route nodes, or final replay checks;
+- confidence boundary and PM review-required hotspots.
 
-This is decision support for the PM, not a no-risk certificate.
+Required gate fields:
+
+- For `flowguard_operator_passes_child_skill_product_fit`, include top-level:
+
+```json
+{
+  "reviewed_by_role": "flowguard_operator",
+  "passed": true
+}
+```
+
+- For `flowguard_operator_blocks_child_skill_product_fit`, include top-level:
+
+```json
+{
+  "reviewed_by_role": "flowguard_operator",
+  "passed": false
+}
+```

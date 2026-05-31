@@ -580,7 +580,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="downstream_review_uses_handoff_and_artifacts",
-        description="Downstream reviewers/officers/PM read handoff and check formal artifacts.",
+        description="Downstream reviewers/FlowGuard operators/PM read handoff and check formal artifacts.",
         predicate=downstream_review_uses_handoff_and_artifacts,
     ),
     Invariant(

@@ -44,7 +44,7 @@ tool.
 | R9 | External OpenSpec/OpenSpark/SparkKey output becomes route authority. | FlowPilot stops being standalone and may trust a tool not present on another machine. | `standalone_authority_preserved` catches external authority without PM import approval. |
 | R10 | A light/simple FlowPilot profile is introduced for small tasks. | User explicitly requires FlowPilot to mean the full protocol. | `full_protocol_only` catches light profile or simple-profile waivers. |
 | R11 | Child-skill stricter requirements lose the trace link. | A selected skill can require evidence that never appears in node or final closure. | `node_trace_required_after_node_phase` catches dropped child-skill requirement bindings. |
-| R12 | Final ledger relies on file existence instead of direct evidence and reviewer/officer checks. | Completion becomes clerical instead of proof-backed. | `final_trace_required_at_completion` catches existence-only closure. |
+| R12 | Final ledger relies on file existence instead of direct evidence and reviewer/FlowGuard operator checks. | Completion becomes clerical instead of proof-backed. | `final_trace_required_at_completion` catches existence-only closure. |
 | R13 | Router-invented or non-router-authorized events create trace outputs. | Trace artifacts could bypass FlowPilot's control plane. | `router_authority_for_trace_events` catches trace outputs without router-owned event authority and validation. |
 
 ## FlowGuard Pre-Implementation Gate
@@ -67,7 +67,7 @@ The check must prove both sides:
 | --- | --- | --- |
 | A | Add FlowGuard model and this plan document. | Run requirement-traceability checks and compile new Python files. |
 | B | Product/root/route/node/final templates. | Rerun requirement-traceability checks; inspect JSON templates parse successfully. |
-| C | PM/reviewer/officer cards. | Rerun focused text/schema checks and requirement-traceability checks. |
+| C | PM/reviewer/FlowGuard operator cards. | Rerun focused text/schema checks and requirement-traceability checks. |
 | D | Router validation for node/final traceability. | Run router artifact validation tests and compile router. |
 | E | Existing capability/meta checks and install sync. | Run `run_capability_checks.py`, `run_meta_checks.py`, local install check/sync, and git status review. |
 

@@ -11,10 +11,10 @@ This heartbeat is a stable launcher, not a route-specific work prompt. Current
 work comes only from PM decisions and reviewer-approved formal gate packages
 loaded from the current run. Heartbeat and manual mid-run wakeups use the same
 router resume path; do not self-classify old work-chain state as alive.
-Before role liveness or PM resume work, inspect the current run's Router daemon
-status, daemon lock, and Controller action ledger. Attach to a live daemon;
-restart from persisted current-run state only when the daemon is missing or
-stale, and never start a second Router writer.
+Before role liveness or PM resume work, load the current run's lifecycle guard,
+foreground duty, packet/lease state, and status projection through the current
+runtime. Do not attach to old Router daemon files or Controller action ledgers
+as fresh-run authority.
 
 Route: `route-001`
 
@@ -68,13 +68,12 @@ Wakeup sequence:
    execution frontier, active route, role-binding ledger, role-binding memory, latest
    heartbeat/manual-resume evidence, packet/status ledger, and controller relay
    history. Do not open any `packet_body.md` or `result_body.md`.
-3. Check `runtime/router_daemon_status.json`, `runtime/router_daemon.lock`, and
-   `runtime/controller_action_ledger.json`. If the daemon lock is live, attach
-   Controller to that ledger; if it is missing or stale, restart the daemon from
-   current-run persisted state before route, packet, or role recovery continues.
+3. Refresh the current lifecycle guard and foreground duty. If the guard
+   returns work, follow that duty; if it returns a wait, run the runtime refresh
+   command and continue from the next guard result.
 4. Restore the visible plan from current-run route/display state.
-5. Run the runtime-role liveness preflight for PM, reviewer, FlowGuard officers,
-   worker A, worker B, and the currently awaited role from the packet ledger.
+5. Run the runtime-role liveness preflight for every currently required
+   requested responsibility and the currently awaited role from the packet ledger.
    `wait_agent` timeout is `timeout_unknown`, not active. Missing, cancelled,
    unknown, or timeout-unknown roles must be replaced or blocked before asking
    for route decisions.
@@ -92,7 +91,7 @@ Wakeup sequence:
 8. If PM issues a packet envelope/body pair, sign and relay only the envelope to
    the addressed role. The recipient must verify the controller signature before
    opening the body. Include `ROLE_REMINDER`.
-9. If a worker already has an unfinished packet, resume that exact packet only
+9. If a Workerlready has an unfinished packet, resume that exact packet only
    when controller relay signature, holder chain, prior router direct-dispatch
    preflight, body open record, and worker identity are clear. If unclear, ask PM for
    repair/reissue/quarantine; Controller must not finish it.

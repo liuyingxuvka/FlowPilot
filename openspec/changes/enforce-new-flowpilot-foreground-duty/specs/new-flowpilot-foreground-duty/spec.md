@@ -63,12 +63,11 @@ The new FlowPilot runtime SHALL treat packet, phase, or stage closure as
 scoped closure unless route-wide final closure evidence is present.
 
 #### Scenario: Packet closure continues to discovery packet
-- **WHEN** a closure officer accepts a packet-level closure and the router
-  opens or exposes a discovery packet
+- **WHEN** system-owned scoped closure accepts a packet-level closure and the
+  router opens or exposes a discovery packet
 - **THEN** the next foreground duty MUST process or wait on the discovery
   packet
-- **AND** the Controller MUST NOT treat the closure officer result as project
-  completion.
+- **AND** the Controller MUST NOT treat scoped closure as project completion.
 
 ### Requirement: Foreground duty remains new-runtime only
 The new FlowPilot foreground duty SHALL derive authority from the new runtime

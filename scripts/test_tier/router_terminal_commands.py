@@ -54,7 +54,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_closure_pm_role_work",
         "tests.router_runtime.closure",
         patterns=(
-            "test_officer_role_work_writes_authorized_lifecycle_index",
+            "test_flowguard_operator_role_work_writes_authorized_lifecycle_index",
             "test_pm_terminal_closure_uses_file_backed_contract_and_prior_context",
         ),
         description="Terminal closure PM role-work and file-backed contract slice.",
@@ -197,7 +197,7 @@ ROUTER_PM_ROLE_WORK_COMMANDS = (
         "router_pm_role_work_waits",
         "tests.router_runtime.pm_role_work",
         patterns=(
-            "test_pm_role_work_batch_waits_for_all_officer_results_before_pm_relay",
+            "test_pm_role_work_batch_waits_for_all_flowguard_operator_results_before_pm_relay",
             "test_wait_event_producer_binding_rejects_wrong_target_role",
         ),
         description="PM role-work wait, batch, and producer binding slice.",
@@ -209,7 +209,7 @@ ROUTER_QUALITY_GATE_COMMANDS = (
         "router_quality_gates_background_manifest",
         "tests.router_runtime.quality_gates",
         patterns=(
-            "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
+            "test_host_role_mode_requires_fresh_role_binding_records",
             "test_child_skill_gate_manifest_block_records_repair_without_approval",
             "test_child_skill_gate_manifest_repair_pass_clears_active_gate_block",
             "test_manifest_references_existing_system_cards",
@@ -224,10 +224,10 @@ ROUTER_QUALITY_GATE_COMMANDS = (
             "test_gate_decision_rejects_mechanical_contradictions",
             "test_gate_decision_same_identity_replay_is_already_recorded",
             "test_gate_outcome_block_specs_are_registered_and_reset_stale_passes",
-            "test_reviewer_and_officer_gate_event_groups_have_non_pass_outcomes",
+            "test_reviewer_and_flowguard_operator_gate_event_groups_have_non_pass_outcomes",
             "test_reviewer_block_events_are_registered_in_external_taxonomy",
         ),
-        description="Quality-gate decision and reviewer/officer event slice.",
+        description="Quality-gate decision and reviewer/FlowGuard operator event slice.",
     ),
     _unittest_k(
         "router_quality_gates_evidence_artifacts",
@@ -305,7 +305,7 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
             "test_research_required_blocks_product_architecture_until_absorbed",
             "test_product_architecture_and_root_contract_gate_route_skeleton",
             "test_process_route_model_canonical_event_writes_canonical_artifact_only",
-            "test_unknown_product_officer_model_report_is_rejected",
+            "test_unknown_flowguard_operator_product_scope_model_report_is_rejected",
             "test_pm_repair_transaction_commits_material_reissue_generation",
             "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
             "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",

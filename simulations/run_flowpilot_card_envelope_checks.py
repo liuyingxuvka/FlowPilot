@@ -76,7 +76,7 @@ HAZARD_EXPECTED_FAILURES = {
     "cross_role_missing_required_join": "Router advanced before required cross-role batch ack/report and receipt joins",
     "controller_reads_card_body": "Controller read a system-card body",
     "controller_mutates_batch": "Controller changed Router-authored batch delivery",
-    "read_receipt_replaces_semantic_gate": "system-card read receipt replaced semantic PM/reviewer/officer judgement",
+    "read_receipt_replaces_semantic_gate": "system-card read receipt replaced semantic PM/reviewer/FlowGuard operator judgement",
     "stale_controller_ack_prompt": "stale prompt still instructed ACK return to Controller",
     "missing_role_direct_router_ack_prompt": "Router advanced without prompt coverage for direct Router ACK instructions",
     "missing_packet_direct_router_ack_prompt": "Router advanced without prompt coverage for direct Router ACK instructions",

@@ -328,7 +328,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "card.submit_card_ack",
             "route_sign.generate",
             "role_output.prepare_output_session",
-            "runtime_closure.validate_officer_request_record",
+            "runtime_closure.validate_flowguard_operator_request_record",
             "runtime_closure.continuation_quarantine_record",
             "daemon.run_router_daemon",
             "daemon.acquire_lock",

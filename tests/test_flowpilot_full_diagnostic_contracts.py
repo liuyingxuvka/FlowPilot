@@ -237,7 +237,7 @@ import flowpilot_router_work_packets_pm_role_actions as work_packets_pm_role_act
 import flowpilot_router_work_packets_pm_role_lifecycle as work_packets_pm_role_lifecycle  # noqa: E402
 import flowpilot_router_work_packets_pm_role_lifecycle_contracts as work_packets_pm_role_lifecycle_contracts  # noqa: E402
 import flowpilot_router_work_packets_pm_role_lifecycle_index as work_packets_pm_role_lifecycle_index  # noqa: E402
-import flowpilot_router_work_packets_pm_role_lifecycle_officer as work_packets_pm_role_lifecycle_officer  # noqa: E402
+import flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator as work_packets_pm_role_lifecycle_flowguard_operator  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes as work_packets_pm_role_writes  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_decisions as work_packets_pm_role_writes_decisions  # noqa: E402
 import flowpilot_router_work_packets_pm_role_writes_request as work_packets_pm_role_writes_request  # noqa: E402
@@ -766,7 +766,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "batch_status": "packets_relayed",
                 "count_key": "relayed",
                 "count_status": "packet_relayed",
-                "officer_lifecycle_status": "packet_relayed",
+                "flowguard_operator_lifecycle_status": "packet_relayed",
             },
         )
 
@@ -830,7 +830,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         fake_router._write_pm_role_work_request_index = (  # type: ignore[attr-defined]
             lambda run_root, request_index: writes.append({"active_request_id": request_index.get("active_request_id")})
         )
-        fake_router._record_officer_lifecycle_status = (  # type: ignore[attr-defined]
+        fake_router._record_flowguard_operator_lifecycle_status = (  # type: ignore[attr-defined]
             lambda project_root, run_root, run_state, record, *, lifecycle_status: lifecycle_statuses.append(
                 lifecycle_status
             )
@@ -1067,7 +1067,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "project_manager",
             )
         )
-        self.assertEqual(event_intake.role_list("worker_a, worker_b"), {"worker_a", "worker_b"})
+        self.assertEqual(event_intake.role_list("worker, worker"), {"worker", "worker"})
         self.assertEqual(event_intake.system_card_delivery_flag(router, "pm.route_skeleton"), "pm_route_skeleton_card_delivered")
         self.assertIn("flowpilot_router_events_repair_policy", events_repair.owner_child_module_names())
         self.assertIs(
@@ -1497,7 +1497,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                         {
                             "packet_id": "packet-missing-author",
                             "result_envelope": {
-                                "completed_by_role": "worker_a",
+                                "completed_by_role": "worker",
                                 "completed_agent_id": None,
                                 "completed_agent_id_belongs_to_role": False,
                             },
@@ -1881,8 +1881,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             work_packets_pm_role_lifecycle_index._pm_role_work_request_record,
         )
         self.assertIs(
-            work_packets_pm_role_lifecycle._record_officer_lifecycle_request,
-            work_packets_pm_role_lifecycle_officer._record_officer_lifecycle_request,
+            work_packets_pm_role_lifecycle._record_flowguard_operator_lifecycle_request,
+            work_packets_pm_role_lifecycle_flowguard_operator._record_flowguard_operator_lifecycle_request,
         )
         self.assertIs(
             work_packets_pm_role_lifecycle._validate_pm_role_work_process_contract_binding,
@@ -1891,7 +1891,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(
             set(work_packets_pm_role_lifecycle.__all__),
             set(work_packets_pm_role_lifecycle_index.__all__)
-            | set(work_packets_pm_role_lifecycle_officer.__all__)
+            | set(work_packets_pm_role_lifecycle_flowguard_operator.__all__)
             | set(work_packets_pm_role_lifecycle_contracts.__all__),
         )
         self.assertIs(
@@ -2096,7 +2096,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
     def test_packet_control_plane_and_reviewer_external_contracts(self) -> None:
         runtime_args = flowpilot_runtime_cli.parse_args(
-            ["--root", ".", "open-packet", "--envelope-path", "packet.json", "--role", "worker_a", "--agent-id", "agent-a"]
+            ["--root", ".", "open-packet", "--envelope-path", "packet.json", "--role", "worker", "--agent-id", "agent-a"]
         )
         self.assertEqual(runtime_args.command, "open-packet")
         self.assertIs(flowpilot_runtime_cli.parse_args, flowpilot_runtime_args.parse_args)
@@ -2121,7 +2121,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         resumed = list(packet_issue_resume.HeartbeatResumeLoad().apply(HeartbeatCase("heartbeat-packet"), state))
         reviewed = list(
             packet_review_pm.ReviewerResultEnvelopeCheck().apply(
-                NodeResult("packet-1", "worker_a", "agent-worker_a"),
+                NodeResult("packet-1", "worker", "agent-worker"),
                 State(result_controller_relay_signatures=("packet-1",), result_ledger_records=("packet-1",)),
             )
         )
@@ -2137,20 +2137,20 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             result_body.write_text("result body", encoding="utf-8")
             packet_envelope = {
                 "packet_id": "packet-1",
-                "to_role": "worker_a",
+                "to_role": "worker",
                 "body_path": str(packet_body.relative_to(project_root)),
                 "body_hash": hashlib.sha256(b"packet body").hexdigest(),
                 "body_opened_by_role": {
-                    "role": "worker_a",
+                    "role": "worker",
                     "controller_relay_verified": True,
                     "body_hash_verified": True,
                 },
-                "controller_relay": {"verified": True, "recipient_role": "worker_a"},
+                "controller_relay": {"verified": True, "recipient_role": "worker"},
             }
             result_envelope = {
                 "packet_id": "packet-1",
-                "completed_by_role": "worker_a",
-                "completed_by_agent_id": "agent-worker_a",
+                "completed_by_role": "worker",
+                "completed_by_agent_id": "agent-worker",
                 "next_recipient": "human_like_reviewer",
                 "result_body_path": str(result_body.relative_to(project_root)),
                 "result_body_hash": hashlib.sha256(b"result body").hexdigest(),
@@ -2170,7 +2170,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                     "packets": [
                         {
                             "packet_id": "packet-1",
-                            "packet_body_opened_by_role": "worker_a",
+                            "packet_body_opened_by_role": "worker",
                             "packet_body_opened_after_controller_relay_check": True,
                             "result_body_opened_by_role": "human_like_reviewer",
                             "result_body_opened_after_controller_relay_check": True,
@@ -2186,7 +2186,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 project_root,
                 packet_envelope=packet_envelope,
                 result_envelope=result_envelope,
-                agent_role_map={"agent-worker_a": "worker_a"},
+                agent_role_map={"agent-worker": "worker"},
             )
 
         self.assertEqual(issued[0].label, "pm_packet_issued")

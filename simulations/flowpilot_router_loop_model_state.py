@@ -15,7 +15,7 @@ Risk intent brief:
 - Adversarial branches include packet registration before route activation,
   worker dispatch before router direct dispatch, reviewer pass before PM
   disposition and formal gate release, result relay before packet-ledger checks,
-  reviewer result-review card before PM gate release, officer packet relay without an officer card, repair/recheck
+  reviewer result-review card before PM gate release, FlowGuard operator packet relay without a FlowGuard operator card, repair/recheck
   bypasses around the reviewer,
   router wait events that are impossible under the active node kind, parent
   repair lanes that target leaf/current-node worker dispatch, collapsed repair
@@ -32,7 +32,7 @@ Risk intent brief:
   expected PM/reviewer role-event waits must not be materialized as
   no-next-action blockers;
   current-node packets gate write grants; router direct dispatch gates worker work;
-  worker and officer results are
+  worker and FlowGuard operator results are
   packet-ledger checked before PM relay; PM dispositions worker results before
   formal reviewer gate packages; active-holder fast-lane
   closure writes a Controller-visible next-action notice before cross-role relay; repair/recheck returns to the
@@ -108,7 +108,7 @@ class Action:
 @dataclass(frozen=True)
 class State:
     status: str = "new"  # new | running | blocked | complete
-    holder: str = "none"  # none | controller | pm | reviewer | worker | officer
+    holder: str = "none"  # none | controller | pm | reviewer | worker | FlowGuard operator
     active_node_kind: str = "leaf"  # leaf | parent | module | repair
     route_version: int = 0
 
@@ -126,15 +126,15 @@ class State:
     repair_outcome_protocol_blocker_event: str = "none"
 
     route_activated: bool = False
-    officer_packet_card_delivered: bool = False
-    officer_packet_relayed: bool = False
-    officer_packet_identity_boundary_present: bool = False
-    officer_result_returned: bool = False
-    officer_result_identity_boundary_present: bool = False
-    officer_result_ledger_checked: bool = False
-    officer_result_routed_to_pm: bool = False
-    pm_absorbed_officer_result: bool = False
-    officer_lifecycle_flags_current: bool = False
+    flowguard_operator_packet_card_delivered: bool = False
+    flowguard_operator_packet_relayed: bool = False
+    flowguard_operator_packet_identity_boundary_present: bool = False
+    flowguard_operator_result_returned: bool = False
+    flowguard_operator_result_identity_boundary_present: bool = False
+    flowguard_operator_result_ledger_checked: bool = False
+    flowguard_operator_result_routed_to_pm: bool = False
+    pm_absorbed_flowguard_operator_result: bool = False
+    flowguard_operator_lifecycle_flags_current: bool = False
     route_history_context_refreshed: bool = False
     pm_prior_path_context_reviewed: bool = False
     route_history_context_stale: bool = False
@@ -255,26 +255,26 @@ class EventContract:
 
 EXPECTED_ROLE_EVENT_CONTRACTS: tuple[EventContract, ...] = (
     EventContract(
-        name="officer_result_returned",
-        role="officer",
-        requires_all=(("officer_packet_relayed", True),),
+        name="flowguard_operator_result_returned",
+        role="FlowGuard operator",
+        requires_all=(("flowguard_operator_packet_relayed", True),),
         satisfied_by_any=(
-            (("officer_result_returned", True),),
+            (("flowguard_operator_result_returned", True),),
         ),
     ),
     EventContract(
-        name="pm_absorbs_officer_result",
+        name="pm_absorbs_flowguard_operator_result",
         role="pm",
-        requires_all=(("officer_result_routed_to_pm", True),),
+        requires_all=(("flowguard_operator_result_routed_to_pm", True),),
         satisfied_by_any=(
-            (("pm_absorbed_officer_result", True),),
+            (("pm_absorbed_flowguard_operator_result", True),),
         ),
     ),
     EventContract(
         name="pm_opens_current_node_high_standard_gate",
         role="pm",
         requires_all=(
-            ("pm_absorbed_officer_result", True),
+            ("pm_absorbed_flowguard_operator_result", True),
             ("pm_prior_path_context_reviewed", True),
         ),
         satisfied_by_any=(

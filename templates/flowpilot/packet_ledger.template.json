@@ -21,11 +21,11 @@
     "router_direct_dispatch_required_before_worker": true,
     "reviewer_dispatch_required_before_worker": false,
     "role_reminder_required_in_controller_messages": true,
-    "role_echo_required_in_sidecar role_responses": true
+    "role_echo_required_in_requested helper responsibility_responses": true
   },
   "active_packet_id": "<packet-id-or-null>",
   "active_packet_status": "<needs-pm-decision|packet-with-reviewer|packet-with-worker|worker-result-needs-pm-disposition|pm-gate-package-with-reviewer|reviewer-decision-needs-pm|ambiguous-blocked|complete>",
-  "active_packet_holder": "<PM|Reviewer|WorkerA|WorkerB|Controller|User|null>",
+    "active_packet_holder": "<PM|Reviewer|Worker|Controller|User|null>",
   "parallel_packet_batches": {
     "schema_version": "flowpilot.parallel_packet_batch_member_status.v1",
     "controller_visibility": "metadata_only",
@@ -46,7 +46,7 @@
   "packets": [
     {
       "packet_id": "<packet-id>",
-      "packet_type": "<user_intake|work_packet|review_request|officer_request|result|review_decision|pm_decision>",
+      "packet_type": "<user_intake|work_packet|review_request|flowguard_operator_request|result|review_decision|pm_decision>",
       "node_id": "<node-id>",
       "created_by_role": "project_manager",
       "created_at": "<iso-8601-timestamp>",
@@ -92,13 +92,13 @@
         "replacement_packet_id": "<packet-id-or-null>"
       },
       "packet_envelope": {
-        "packet_type": "<user_intake|work_packet|review_request|officer_request|pm_decision>",
+        "packet_type": "<user_intake|work_packet|review_request|flowguard_operator_request|pm_decision>",
         "from_role": "project_manager",
-        "to_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager>",
+        "to_role": "<worker|human_like_reviewer|flowguard_operator|project_manager>",
         "node_id": "<node-id>",
         "is_current_node": true,
         "return_to": "controller",
-        "next_holder": "<Controller|WorkerA|WorkerB|Reviewer|ProcessFlowGuardOfficer|ProductFlowGuardOfficer|PM>",
+        "next_holder": "<Controller|Worker|Reviewer|FlowGuardOperator|PM>",
         "body_visibility": "<sealed_target_role_only|external_user_input_controller_visible>",
         "replacement_for": "<packet-id-or-null>",
         "controller_allowed_actions": [
@@ -126,7 +126,7 @@
       },
       "holder_history": [
         {
-          "holder": "<PM|Controller|Reviewer|WorkerA|WorkerB|ProcessFlowGuardOfficer|ProductFlowGuardOfficer|User>",
+          "holder": "<PM|Controller|Reviewer|Worker|FlowGuardOperator|User>",
           "status": "<envelope-created|envelope-relayed|result-envelope-returned|blocked|complete>",
           "changed_at": "<iso-8601-timestamp>",
           "user_status_update_written": false,
@@ -137,7 +137,7 @@
       "router_direct_dispatch_decision": "<pending|approved|blocked>",
       "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
       "reviewer_dispatch_decision": "not_required",
-      "assigned_worker_role": "<worker_a|worker_b|authorized_non_controller|null>",
+      "assigned_worker_role": "<worker|authorized_non_controller|null>",
       "worker_result_path": "<worker-result-envelope-path-or-null>",
       "pm_result_disposition_path": "<pm-package-result-disposition-path-or-null>",
       "pm_formal_gate_package_path": "<pm-built-review-gate-package-path-or-null>",
@@ -165,12 +165,12 @@
       "result_body_opened_after_controller_relay_check": false,
       "result_body_stale_after_route_mutation": false,
       "result_envelope": {
-        "completed_by_role": "<worker_a|worker_b|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|project_manager|controller|unknown>",
+        "completed_by_role": "<worker|human_like_reviewer|flowguard_operator|project_manager|controller|unknown>",
         "completed_by_agent_id": "<agent-id-or-null>",
         "expected_role_from_packet_envelope": "<packet-envelope-to_role>",
         "completed_role_matches_packet_to_role": false,
         "completed_agent_id_belongs_to_role": false,
-        "next_recipient": "<project_manager|process_flowguard_officer|product_flowguard_officer>"
+        "next_recipient": "<project_manager|flowguard_operator>"
       },
       "mail_chain_audit": {
         "required_at_every_subnode_and_major_node": true,
@@ -196,8 +196,8 @@
         "result_envelope_completed_by_role_checked": false,
         "result_envelope_completed_by_agent_id_checked": false,
         "result_body_hash_checked": false,
-        "expected_executor_role": "<worker_a|worker_b|authorized_non_controller|project_manager|process_flowguard_officer|product_flowguard_officer|human_like_reviewer>",
-        "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|project_manager|process_flowguard_officer|product_flowguard_officer|human_like_reviewer|controller|unknown>",
+        "expected_executor_role": "<worker|authorized_non_controller|project_manager|flowguard_operator|human_like_reviewer>",
+        "actual_result_author_role": "<worker|authorized_non_controller|project_manager|flowguard_operator|human_like_reviewer|controller|unknown>",
         "pm_packet_author_verified": false,
         "router_direct_dispatch_preflight_checked": false,
         "worker_identity_verified": false,

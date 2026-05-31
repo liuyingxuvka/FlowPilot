@@ -167,7 +167,7 @@ def _write_product_behavior_model_report(
         run_root,
         run_state,
         payload,
-        expected_role="product_flowguard_officer",
+        expected_role="flowguard_operator",
         path=canonical_path,
         schema_version="flowpilot.product_behavior_model.v1",
         checked_paths=[run_root / "product_function_architecture.json"],

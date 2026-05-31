@@ -60,30 +60,30 @@ def invariant_failures(state: State) -> list[str]:
 
     if state.route_activated and not state.controller_boundary_confirmed:
         failures.append("route activated before Controller relay boundary was confirmed")
-    if state.officer_lifecycle_flags_current and not state.route_activated:
-        failures.append("officer lifecycle flags reconciled before route activation")
-    if state.officer_packet_card_delivered and not state.officer_lifecycle_flags_current:
-        failures.append("officer packet card delivered before officer lifecycle flags were reconciled")
-    if state.officer_packet_card_delivered and not state.route_activated:
-        failures.append("officer packet card delivered before route activation")
-    if state.officer_packet_relayed and not state.officer_packet_card_delivered:
-        failures.append("officer packet relayed before officer card")
-    if state.officer_packet_relayed and not state.officer_packet_identity_boundary_present:
-        failures.append("officer packet relayed without packet recipient identity boundary")
-    if state.officer_result_returned and not state.officer_packet_relayed:
-        failures.append("officer result returned before officer packet relay")
-    if state.officer_result_returned and not state.officer_result_identity_boundary_present:
-        failures.append("officer result returned without completed-by identity boundary")
-    if state.officer_result_ledger_checked and not state.officer_result_returned:
-        failures.append("officer result ledger checked before officer result returned")
-    if state.officer_result_routed_to_pm and not state.officer_result_ledger_checked:
-        failures.append("officer result routed to PM before packet-ledger check")
-    if state.pm_absorbed_officer_result and not state.officer_result_routed_to_pm:
-        failures.append("PM absorbed officer result before result relay")
+    if state.flowguard_operator_lifecycle_flags_current and not state.route_activated:
+        failures.append("FlowGuard operator lifecycle flags reconciled before route activation")
+    if state.flowguard_operator_packet_card_delivered and not state.flowguard_operator_lifecycle_flags_current:
+        failures.append("FlowGuard operator packet card delivered before FlowGuard operator lifecycle flags were reconciled")
+    if state.flowguard_operator_packet_card_delivered and not state.route_activated:
+        failures.append("FlowGuard operator packet card delivered before route activation")
+    if state.flowguard_operator_packet_relayed and not state.flowguard_operator_packet_card_delivered:
+        failures.append("FlowGuard operator packet relayed before FlowGuard operator card")
+    if state.flowguard_operator_packet_relayed and not state.flowguard_operator_packet_identity_boundary_present:
+        failures.append("FlowGuard operator packet relayed without packet recipient identity boundary")
+    if state.flowguard_operator_result_returned and not state.flowguard_operator_packet_relayed:
+        failures.append("FlowGuard operator result returned before FlowGuard operator packet relay")
+    if state.flowguard_operator_result_returned and not state.flowguard_operator_result_identity_boundary_present:
+        failures.append("FlowGuard operator result returned without completed-by identity boundary")
+    if state.flowguard_operator_result_ledger_checked and not state.flowguard_operator_result_returned:
+        failures.append("FlowGuard operator result ledger checked before FlowGuard operator result returned")
+    if state.flowguard_operator_result_routed_to_pm and not state.flowguard_operator_result_ledger_checked:
+        failures.append("FlowGuard operator result routed to PM before packet-ledger check")
+    if state.pm_absorbed_flowguard_operator_result and not state.flowguard_operator_result_routed_to_pm:
+        failures.append("PM absorbed FlowGuard operator result before result relay")
     if state.pm_node_high_standard_gate_opened and not (
-        state.pm_absorbed_officer_result and state.pm_node_high_standard_risks_reviewed
+        state.pm_absorbed_flowguard_operator_result and state.pm_node_high_standard_risks_reviewed
     ):
-        failures.append("PM high-standard gate opened before officer result absorption and risk review")
+        failures.append("PM high-standard gate opened before FlowGuard operator result absorption and risk review")
     if state.node_acceptance_plan_written and not state.node_acceptance_plan_prior_context_used:
         failures.append("node acceptance plan written before PM read fresh prior path context")
     if state.node_acceptance_plan_written and not state.pm_node_high_standard_gate_opened:
@@ -418,12 +418,12 @@ INVARIANTS = (
         description=(
             "The current-node packet loop requires route activation before packet "
             "registration, a PM high-standard gate and reviewed node acceptance "
-            "plan before the packet, officer lifecycle flags before officer "
+            "plan before the packet, FlowGuard operator lifecycle flags before FlowGuard operator "
             "packet relay, controller no-next-action states fail-close to PM, "
             "expected role-event waits never materialize PM blockers, "
             "current-node packets gate write grants, router direct dispatch before "
             "worker or repair work, "
-            "packet-ledger checks before worker/officer result relay, PM result "
+            "packet-ledger checks before worker/FlowGuard operator result relay, PM result "
             "disposition before formal reviewer node-completion gates, reviewer "
             "recheck before repaired completion, reviewer-blocked route mutation "
             "with stale evidence/frontier markers, same-scope replay after "

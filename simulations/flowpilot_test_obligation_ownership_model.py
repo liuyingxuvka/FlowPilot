@@ -2,7 +2,7 @@
 
 This focused model checks the responsibility chain behind FlowGuard model
 reports, ordinary tests, and node closure. The main rule is that FlowGuard
-officers identify obligations and missing test kinds, PM turns those gaps into
+FlowGuard operators identify obligations and missing test kinds, PM turns those gaps into
 explicit dispositions, workers maintain packet-scoped tests when assigned, and
 reviewers block closure when PM's matrix is missing or stale.
 """
@@ -20,10 +20,10 @@ GAP_KINDS = ("none", "ordinary_worker", "broad_validation", "alignment_mismatch"
 REQUIRED_LABELS = (
     "flowpilot_test_obligation_flow_started",
     "pm_writes_pre_worker_test_obligation_matrix",
-    "officer_report_absorbed_with_no_test_gap",
-    "officer_report_absorbed_with_ordinary_worker_gap",
-    "officer_report_absorbed_with_broad_validation_gap",
-    "officer_report_absorbed_with_alignment_mismatch_gap",
+    "flowguard_operator_report_absorbed_with_no_test_gap",
+    "flowguard_operator_report_absorbed_with_ordinary_worker_gap",
+    "flowguard_operator_report_absorbed_with_broad_validation_gap",
+    "flowguard_operator_report_absorbed_with_alignment_mismatch_gap",
     "worker_result_absorbed_for_test_matrix_refresh",
     "pm_updates_post_worker_test_obligation_matrix",
     "worker_test_packet_returns_coverage_rows",
@@ -53,7 +53,7 @@ class Action:
 class State:
     status: str = "new"  # new | running | blocked | complete
     pre_worker_matrix_written: bool = False
-    officer_report_absorbed: bool = False
+    flowguard_operator_report_absorbed: bool = False
     worker_result_absorbed: bool = False
     post_worker_matrix_written: bool = False
     gap_kind: str = "unknown"  # unknown | none | ordinary_worker | broad_validation | alignment_mismatch
@@ -68,7 +68,7 @@ class State:
     evidence_quality_package_carries_rows: bool = False
     final_ledger_carries_rows: bool = False
     controller_decided_test_disposition: bool = False
-    officer_maintained_ordinary_test_code: bool = False
+    flowguard_operator_maintained_ordinary_test_code: bool = False
     background_progress_counted_as_pass: bool = False
     missing_test_kinds_left_as_residual_prose: bool = False
     stale_test_evidence_used: bool = False
@@ -80,20 +80,20 @@ class Transition(NamedTuple):
 
 
 class TestObligationOwnershipStep:
-    """Model one PM/officer/worker/reviewer test-obligation handoff.
+    """Model one PM/FlowGuard operator/worker/reviewer test-obligation handoff.
 
     Input x State -> Set(Output x State)
-    reads: node acceptance plan, officer report rows, worker result evidence,
+    reads: node acceptance plan, FlowGuard operator report rows, worker result evidence,
     background validation artifacts, PM dispositions, reviewer gate package
     writes: matrix rows, owner-specific evidence, PM dispositions, gate status
     idempotency: each tick advances at most one ownership obligation and never
-    lets Controller or an officer become the ordinary test-code owner.
+    lets Controller or a FlowGuard operator become the ordinary test-code owner.
     """
 
     name = "TestObligationOwnershipStep"
     reads = (
         "node_acceptance_plan",
-        "officer_model_report",
+        "flowguard_operator_model_report",
         "worker_result",
         "pm_disposition",
         "reviewer_gate_package",
@@ -161,13 +161,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, pre_worker_matrix_written=True),
             ),
         )
-    if not state.officer_report_absorbed:
+    if not state.flowguard_operator_report_absorbed:
         return tuple(
             Transition(
-                "officer_report_absorbed_with_no_test_gap"
+                "flowguard_operator_report_absorbed_with_no_test_gap"
                 if gap_kind == "none"
-                else f"officer_report_absorbed_with_{gap_kind}_gap",
-                replace(state, officer_report_absorbed=True, gap_kind=gap_kind),
+                else f"flowguard_operator_report_absorbed_with_{gap_kind}_gap",
+                replace(state, flowguard_operator_report_absorbed=True, gap_kind=gap_kind),
             )
             for gap_kind in GAP_KINDS
         )
@@ -277,8 +277,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("test obligation matrix uses an unknown gap kind")
     if state.controller_decided_test_disposition:
         failures.append("Controller decided test obligation disposition")
-    if state.officer_maintained_ordinary_test_code:
-        failures.append("FlowGuard officer maintained ordinary test code by default")
+    if state.flowguard_operator_maintained_ordinary_test_code:
+        failures.append("FlowGuard operator maintained ordinary test code by default")
     if state.background_progress_counted_as_pass:
         failures.append("background progress was counted as passing test evidence")
     if state.missing_test_kinds_left_as_residual_prose:
@@ -288,14 +288,14 @@ def invariant_failures(state: State) -> list[str]:
     if state.worker_result_absorbed and not state.pre_worker_matrix_written:
         failures.append("worker result was absorbed before pre-worker test matrix")
     if state.post_worker_matrix_written and not (
-        state.pre_worker_matrix_written and state.officer_report_absorbed and state.worker_result_absorbed
+        state.pre_worker_matrix_written and state.flowguard_operator_report_absorbed and state.worker_result_absorbed
     ):
         failures.append("post-worker test matrix was written before required inputs")
     if state.worker_test_packet_completed and not state.worker_test_coverage_rows_returned:
         failures.append("worker test packet completed without test obligation coverage rows")
     if state.all_test_obligations_dispositioned and not (
         state.pre_worker_matrix_written
-        and state.officer_report_absorbed
+        and state.flowguard_operator_report_absorbed
         and state.worker_result_absorbed
         and state.post_worker_matrix_written
     ):
@@ -347,7 +347,7 @@ INVARIANTS = (
     Invariant(
         name="flowpilot_test_obligation_ownership",
         description=(
-            "PM owns test-obligation matrix and disposition, officers own model "
+            "PM owns test-obligation matrix and disposition, FlowGuard operators own model "
             "obligations and missing test kinds, workers own packet-scoped test "
             "maintenance, reviewers block unsupported closure, and final ledgers "
             "carry explicit evidence freshness."
@@ -375,7 +375,7 @@ def _safe_complete_state(gap_kind: str = "ordinary_worker") -> State:
     state = State(
         status="running",
         pre_worker_matrix_written=True,
-        officer_report_absorbed=True,
+        flowguard_operator_report_absorbed=True,
         worker_result_absorbed=True,
         post_worker_matrix_written=True,
         gap_kind=gap_kind,
@@ -405,7 +405,7 @@ def hazard_states() -> dict[str, State]:
     base = _safe_complete_state()
     return {
         "controller_decides_tests": replace(base, controller_decided_test_disposition=True),
-        "officer_writes_ordinary_tests": replace(base, officer_maintained_ordinary_test_code=True),
+        "flowguard_operator_writes_ordinary_tests": replace(base, flowguard_operator_maintained_ordinary_test_code=True),
         "background_progress_counted": replace(base, background_progress_counted_as_pass=True),
         "missing_tests_left_as_prose": replace(base, missing_test_kinds_left_as_residual_prose=True),
         "stale_test_evidence_used": replace(base, stale_test_evidence_used=True),

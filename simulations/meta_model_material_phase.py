@@ -438,26 +438,26 @@ def apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
             label="standard_scenario_pack_selected",
             action="project manager selects the standard scenario pack for terminal replay of happy paths, edge cases, regressions, lifecycle, and PM-risk scenarios",
             standard_scenario_pack_selected=True,
-            active_node="product_officer_probe_product_function_architecture",
+            active_node="flowguard_operator_product_scope_probe_product_function_architecture",
         )
         return
 
-    if not state.product_architecture_officer_adversarial_probe_done:
+    if not state.product_architecture_flowguard_operator_adversarial_probe_done:
         yield _step(
             state,
-            label="product_architecture_officer_adversarial_probe_done",
-            action="product FlowGuard officer checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture",
-            product_architecture_officer_adversarial_probe_done=True,
+            label="product_architecture_flowguard_operator_adversarial_probe_done",
+            action="product-scope FlowGuard operator checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture",
+            product_architecture_flowguard_operator_adversarial_probe_done=True,
             active_node="approve_product_function_architecture",
         )
         return
 
-    if not state.product_function_architecture_product_officer_approved:
+    if not state.product_function_architecture_flowguard_operator_product_scope_approved:
         yield _step(
             state,
-            label="product_function_architecture_product_officer_approved",
-            action="product FlowGuard officer approves that the PM product-function architecture is modelable and strong enough to freeze the contract from",
-            product_function_architecture_product_officer_approved=True,
+            label="product_function_architecture_flowguard_operator_product_scope_approved",
+            action="product-scope FlowGuard operator approves that the PM product-function architecture is modelable and strong enough to freeze the contract from",
+            product_function_architecture_flowguard_operator_product_scope_approved=True,
             active_node="reviewer_probe_product_function_architecture",
         )
         return
@@ -486,7 +486,7 @@ def apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="product_architecture_self_interrogation_record_written",
-            action="PM writes a durable product-architecture self-interrogation record after officer and reviewer challenge so architecture doubts have a downstream destination",
+            action="PM writes a durable product-architecture self-interrogation record after FlowGuard operator and reviewer challenge so architecture doubts have a downstream destination",
             product_architecture_self_interrogation_record_written=True,
             active_node="freeze_contract",
         )

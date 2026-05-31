@@ -6,7 +6,7 @@ from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
 
 
 TEST_NAMES = (
-    "test_officer_role_work_writes_authorized_lifecycle_index",
+    "test_flowguard_operator_role_work_writes_authorized_lifecycle_index",
     "test_display_plan_is_controller_synced_projection_from_pm_plan",
     "test_closure_lifecycle_blocks_when_ledgers_are_dirty_after_terminal_replay",
     "test_terminal_closure_blocks_dirty_defect_ledger_after_terminal_replay",

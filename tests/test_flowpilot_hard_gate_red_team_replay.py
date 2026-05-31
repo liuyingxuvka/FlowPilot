@@ -56,11 +56,11 @@ class FlowPilotHardGateRedTeamReplayTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "not currently allowed"):
             role_output_runtime.validate_direct_router_submission_authority(
                 root,
-                output_type="officer_model_report",
-                role="product_flowguard_officer",
-                agent_id="agent-product-officer-hard-gate",
+                output_type="flowguard_operator_model_report",
+                role="flowguard_operator",
+                agent_id="agent-product-FlowGuard operator-hard-gate",
                 run_id="run-test",
-                event_name="product_officer_submits_product_behavior_model",
+                event_name="flowguard_operator_submits_product_behavior_model",
             )
 
         self.assertFalse((run_root / "role_outputs").exists())
@@ -76,7 +76,7 @@ class FlowPilotHardGateRedTeamReplayTests(FlowPilotRouterRuntimeTestBase):
                 replay.root,
                 lease_path=replay.lease["lease_path"],  # type: ignore[index]
                 role=replay.package.role,
-                agent_id="agent-worker-a-wrong",
+                agent_id="agent-worker-1-wrong",
                 result_body_text="bad result\n\nContract Self-Check\n\nstatus: pass\n",
                 next_recipient="project_manager",
                 route_version=1,

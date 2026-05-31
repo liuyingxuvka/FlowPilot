@@ -44,7 +44,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_intake_ui_completed",
-            action="open the native startup intake UI for runtime role assistance, continuation, and display-surface options",
+            action="open the native startup intake UI for the work request and background-collaboration permission",
             startup_intake_ui_completed=True,
             active_node="await_startup_intake_result",
         )
@@ -64,9 +64,9 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_runtime_role_assistance_option_recorded",
-            action="record the startup intake runtime role-assistance option for host-supported role bindings versus single-agent continuity",
+            action="record the startup intake background-collaboration option for host-supported addressable isolated role surfaces versus single-agent continuity",
             startup_runtime_role_assistance_option_recorded=True,
-            active_node="record_startup_continuation_option",
+            active_node="record_startup_fixed_continuation_default",
         )
         return
 
@@ -74,9 +74,9 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_continuation_option_recorded",
-            action="record the startup intake continuation option for heartbeat/automation versus manual resume",
+            action="record the startup intake fixed manual-continuation default; no continuation toggle is shown",
             startup_continuation_option_recorded=True,
-            active_node="record_startup_display_surface_option",
+            active_node="record_startup_fixed_display_surface_default",
         )
         return
 
@@ -84,7 +84,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_display_surface_option_recorded",
-            action="record the startup intake display-surface option for Cockpit UI versus chat route signs",
+            action="record the startup intake fixed chat display-surface default; no Cockpit UI toggle is shown",
             startup_display_surface_option_recorded=True,
             startup_answer_values_valid=True,
             startup_answer_provenance="explicit_user_reply",
@@ -156,7 +156,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="activity_stream_initialized",
-            action="create the run-level activity stream so PM, reviewer, officer, worker, route, heartbeat, and user-visible progress events can be displayed without manual refresh",
+            action="create the run-level activity stream so PM, reviewer, FlowGuard operator, worker, route, heartbeat, and user-visible progress events can be displayed without manual refresh",
             activity_stream_initialized=True,
             activity_stream_latest_event_written=True,
             active_node="initialize_flowpilot_improvement_report",
@@ -204,7 +204,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="control_state_written_under_run_root",
-            action="write state, frontier, route, crew, and review control artifacts only under the current run directory",
+            action="write state, frontier, route, runtime roles, and review control artifacts only under the current run directory",
             control_state_written_under_run_root=True,
             active_node="quarantine_prior_top_level_control_state",
         )
@@ -234,7 +234,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="startup_display_entry_action_done",
-            action="open Cockpit UI immediately when requested, or display the chat route sign when the user chose chat",
+            action="display the chat route sign after startup state is ready",
             startup_display_entry_action_done=True,
             active_node="freeze_contract",
         )
@@ -283,7 +283,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="required_role_binding_role_binding_policy_written",
-            action="write runtime role-binding authority policy for project manager, reviewer, process FlowGuard officer, product FlowGuard officer, worker A, and worker B responsibilities",
+            action="write runtime role-binding authority policy for project manager, reviewer, route-scope FlowGuard operator, product-scope FlowGuard operator, worker A, and worker B responsibilities",
             role_binding_policy_written=True,
             active_node="spawn_project_manager",
         )
@@ -307,50 +307,50 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
             action="open a fresh human-like reviewer for the new formal FlowPilot task before route work",
             role_binding_count=2,
             reviewer_ready=True,
-            active_node="spawn_process_flowguard_officer",
+            active_node="spawn_flowguard_operator_route_scope",
         )
         return
 
     if state.role_binding_count == 2:
         yield _step(
             state,
-            label="process_flowguard_officer_opened_for_current_task",
-            action="open a fresh process FlowGuard officer for the new formal FlowPilot task before route work",
+            label="flowguard_operator_route_scope_opened_for_current_task",
+            action="open a fresh route-scope FlowGuard operator for the new formal FlowPilot task before route work",
             role_binding_count=3,
-            process_flowguard_officer_ready=True,
-            active_node="spawn_product_flowguard_officer",
+            flowguard_operator_route_scope_ready=True,
+            active_node="spawn_flowguard_operator_product_scope",
         )
         return
 
     if state.role_binding_count == 3:
         yield _step(
             state,
-            label="product_flowguard_officer_opened_for_current_task",
-            action="open a fresh product FlowGuard officer for the new formal FlowPilot task before route work",
+            label="flowguard_operator_product_scope_opened_for_current_task",
+            action="open a fresh product-scope FlowGuard operator for the new formal FlowPilot task before route work",
             role_binding_count=4,
-            product_flowguard_officer_ready=True,
-            active_node="spawn_worker_a",
+            flowguard_operator_product_scope_ready=True,
+            active_node="spawn_worker",
         )
         return
 
     if state.role_binding_count == 4:
         yield _step(
             state,
-            label="worker_a_opened_for_current_task",
+            label="worker_opened_for_current_task",
             action="open a fresh worker A for bounded sidecar work in the new formal FlowPilot task",
             role_binding_count=5,
-            worker_a_ready=True,
-            active_node="spawn_worker_b",
+            worker_ready=True,
+            active_node="spawn_worker",
         )
         return
 
     if state.role_binding_count == 5:
         yield _step(
             state,
-            label="worker_b_opened_for_current_task",
+            label="worker_opened_for_current_task",
             action="open a fresh worker B for bounded sidecar work in the new formal FlowPilot task",
             role_binding_count=REQUIRED_ROLE_BINDING_COUNT,
-            worker_b_ready=True,
+            worker_ready=True,
             active_node="write_role_binding_ledger",
         )
         return
@@ -379,28 +379,28 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="pm_flowguard_delegation_policy_recorded",
-            action="record that the project manager creates structured FlowGuard modeling requests for uncertain process, product, reference-system, migration-equivalence, experiment-derived behavior, or validation decisions and assigns them to the process or product FlowGuard officer",
+            action="record that the project manager creates structured FlowGuard modeling requests for uncertain process, product, reference-system, migration-equivalence, experiment-derived behavior, or validation decisions and assigns them to the process or product-scope FlowGuard operator",
             pm_flowguard_delegation_policy_recorded=True,
-            active_node="record_officer_owned_async_modeling_policy",
+            active_node="record_flowguard_operator_owned_async_modeling_policy",
         )
         return
 
-    if not state.officer_owned_async_modeling_policy_recorded:
+    if not state.flowguard_operator_owned_async_modeling_policy_recorded:
         yield _step(
             state,
-            label="officer_owned_async_modeling_policy_recorded",
-            action="record that FlowGuard model gates dispatch to officer-owned run directories while the controller may relay only non-dependent coordination",
-            officer_owned_async_modeling_policy_recorded=True,
-            active_node="record_officer_model_report_provenance_policy",
+            label="flowguard_operator_owned_async_modeling_policy_recorded",
+            action="record that FlowGuard model gates dispatch to FlowGuard operator-owned run directories while the controller may relay only non-dependent coordination",
+            flowguard_operator_owned_async_modeling_policy_recorded=True,
+            active_node="record_flowguard_operator_model_report_provenance_policy",
         )
         return
 
-    if not state.officer_model_report_provenance_policy_recorded:
+    if not state.flowguard_operator_model_report_provenance_policy_recorded:
         yield _step(
             state,
-            label="officer_model_report_provenance_policy_recorded",
-            action="require officer model reports to prove model author, runner, interpreter, commands, input snapshots, state counts, counterexample inspection, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, blindspots, and decision",
-            officer_model_report_provenance_policy_recorded=True,
+            label="flowguard_operator_model_report_provenance_policy_recorded",
+            action="require FlowGuard operator model reports to prove model author, runner, interpreter, commands, input snapshots, state counts, counterexample inspection, risk tiers, PM review agenda, toolchain recommendations, confidence boundary, blindspots, and decision",
+            flowguard_operator_model_report_provenance_policy_recorded=True,
             active_node="record_controller_coordination_boundary",
         )
         return
@@ -409,7 +409,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="controller_coordination_boundary_recorded",
-            action="record that controller coordination during officer modeling cannot satisfy route freeze, implementation, checkpoint, completion, or protected model gates",
+            action="record that controller coordination during FlowGuard operator modeling cannot satisfy route freeze, implementation, checkpoint, completion, or protected model gates",
             controller_coordination_boundary_recorded=True,
             active_node="record_independent_approval_protocol",
         )
@@ -419,7 +419,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="independent_approval_protocol_recorded",
-            action="record that every PM, reviewer, and FlowGuard officer approval requires independent adversarial validation evidence and cannot be completion-report-only",
+            action="record that every PM, reviewer, and FlowGuard operator approval requires independent adversarial validation evidence and cannot be completion-report-only",
             independent_approval_protocol_recorded=True,
             active_node="write_role_binding_memory_packets",
         )

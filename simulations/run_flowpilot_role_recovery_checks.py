@@ -21,7 +21,7 @@ REQUIRED_LABELS = (
     "user_stop_preempts_recovery",
     "recovery_preempts_normal_work",
     "current_run_state_loaded",
-    "all_six_sweep_selected",
+    "all_runtime_roles_sweep_selected",
     "targeted_role_scope_selected",
     "restore_attempted_before_replacement",
     "old_role_restored",
@@ -65,7 +65,7 @@ def _state_id(state: model.State) -> str:
         f"slot={state.slot_reconciliation_attempted},"
         f"{state.slot_reconciliation_result}|"
         f"full={state.full_recycle_attempted},{state.full_recycle_result}|"
-        f"crew={state.crew_ready},gen={state.role_binding_generation},"
+        f"runtime_roles={state.runtime_roles_ready},gen={state.role_binding_generation},"
         f"epoch={state.role_binding_epoch_advanced}|"
         f"memory={state.memory_context_injected}|"
         f"packet={state.packet_holder_lost},"
@@ -122,7 +122,7 @@ def explore_safe_graph() -> dict[str, object]:
         state
         for state in complete_states
         if state.trigger_source in {"heartbeat", "manual_resume"}
-        and state.recovery_scope == "all_six"
+        and state.recovery_scope == "all_runtime_roles"
     ]
     full_recycle_success = [
         state

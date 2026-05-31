@@ -242,7 +242,7 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_work_packets_current_node_validation",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_contracts",
     "asset:flowpilot_router_work_packets_pm_role_lifecycle_index",
-    "asset:flowpilot_router_work_packets_pm_role_lifecycle_officer",
+    "asset:flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator",
     "asset:flowpilot_router_work_packets_pm_role_writes_decisions",
     "asset:flowpilot_router_work_packets_pm_role_writes_decisions_formal_gate",
     "asset:flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition",
@@ -793,10 +793,10 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
     },
     "flowpilot_router_work_packets_pm_role_lifecycle": {
         "split_status": "completed_split",
-        "split_reason": "pm_role_work_index_officer_lifecycle_and_contract_helpers_extracted",
+        "split_reason": "pm_role_work_index_flowguard_operator_lifecycle_and_contract_helpers_extracted",
         "completed_split_paths": (
             "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py",
-            "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_officer.py",
+            "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py",
             "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_contracts.py",
         ),
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",

@@ -1,7 +1,7 @@
 {
   "schema_version": "flowpilot.flowguard_model_miss_report.v1",
   "run_id": "run-001",
-  "reported_by_role": "process_flowguard_officer",
+  "reported_by_role": "flowguard_operator",
   "defect_or_blocker_id": "defect-001",
   "modeled_boundary": "The bug class and same-class search boundary modeled for PM triage.",
   "flowguard_capability": {

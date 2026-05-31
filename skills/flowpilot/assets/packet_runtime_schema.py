@@ -160,7 +160,7 @@ DEFAULT_OUTPUT_CONTRACT_BY_PACKET_TYPE = {
     "research": "flowpilot.output_contract.worker_research_result.v1",
     "work_packet": "flowpilot.output_contract.worker_current_node_result.v1",
     "review_request": "flowpilot.output_contract.reviewer_review_report.v1",
-    "officer_request": "flowpilot.output_contract.officer_model_report.v1",
+    "flowguard_operator_request": "flowpilot.output_contract.flowguard_operator_model_report.v1",
     "pm_decision": "flowpilot.output_contract.pm_decision.v1",
 }
 
@@ -169,7 +169,7 @@ DEFAULT_OUTPUT_CONTRACT_TASK_FAMILY_BY_PACKET_TYPE = {
     "research": "worker.research",
     "work_packet": "worker.current_node",
     "review_request": "reviewer.review",
-    "officer_request": "officer.model_report",
+    "flowguard_operator_request": "flowguard_operator.model_report",
     "pm_decision": "pm.decision",
 }
 
@@ -201,10 +201,8 @@ PROGRESS_MESSAGE_FORBIDDEN_TERMS = (
 ROLE_KEYS = {
     "project_manager",
     "human_like_reviewer",
-    "process_flowguard_officer",
-    "product_flowguard_officer",
-    "worker_a",
-    "worker_b",
+    "flowguard_operator",
+    "worker",
     "controller",
 }
 

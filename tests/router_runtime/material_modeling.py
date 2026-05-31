@@ -235,8 +235,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.record_external_event(root, "worker_scan_results_returned")
         blocker = raised.exception.control_blocker
         self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
-        self.assertEqual(blocker["target_role"], "worker_a")
-        self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
+        self.assertEqual(blocker["target_role"], "worker")
+        self.assertEqual(blocker["responsible_role_for_reissue"], "worker")
         self.assertFalse(blocker["pm_decision_required"])
     def test_material_scan_direct_relay_blocks_body_hash_mismatch(self) -> None:
         root = self.make_project()
@@ -323,7 +323,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "bounded_local_read_only_experiments",
                 ],
                 "host_capability_decision": "local_sources_first",
-                "worker_owner": "worker_a",
+                "worker_owner": "worker",
                 "stop_conditions": ["Do not edit production code."],
             },
         )
@@ -349,7 +349,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.record_external_event(
                 root,
                 "worker_research_report_returned",
-                {"completed_by_role": "worker_a", "answers_decision_question": True},
+                {"completed_by_role": "worker", "answers_decision_question": True},
             )
         state_before_research_relay = read_json(router.run_state_path(run_root))
         ledger_checks_before_research = int(state_before_research_relay.get("ledger_checks", 0))
@@ -363,7 +363,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         research_index_path = run_root / "research" / "research_packet.json"
         research_packet_id = read_json(research_index_path)["packets"][0]["packet_id"]
         research_lease = self.active_holder_lease_for_packet(root, research_packet_id)
-        self.assertEqual(research_lease["holder_role"], "worker_a")
+        self.assertEqual(research_lease["holder_role"], "worker")
         state_after_research_packet = read_json(router.run_state_path(run_root))
         self.assertEqual(state_after_research_packet["ledger_checks"], ledger_checks_before_research + 1)
         self.assertEqual(state_after_research_packet["ledger_check_requests"], ledger_requests_before_research + 1)
@@ -459,18 +459,18 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.apply_next_non_card_action(root)
         action = router.next_action(root)
-        self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
+        self.assertEqual(action["card_id"], "flowguard_operator.product_architecture_modelability")
         self.ack_system_card_action(root, action)
         with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "product_officer_submits_product_behavior_model", {"passed": True})
+            router.record_external_event(root, "flowguard_operator_submits_product_behavior_model", {"passed": True})
         self.assertTrue(self.handle_pending_control_blocker(root))
         router.record_external_event(
             root,
-            "product_officer_submits_product_behavior_model",
+            "flowguard_operator_submits_product_behavior_model",
             self.role_report_envelope(
                 root,
                 "flowguard/product_architecture_modelability",
-                {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                {"reviewed_by_role": "flowguard_operator", "passed": True},
             ),
         )
 
@@ -545,7 +545,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.record_external_event(root, "pm_activates_reviewed_route")
         router.record_external_event(root, "pm_freezes_root_acceptance_contract")
         state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"].get("product_officer_root_contract_card_delivered", False))
+        self.assertFalse(state["flags"].get("flowguard_operator_root_contract_card_delivered", False))
         self.assertFalse(state["flags"].get("root_contract_modelability_passed", False))
         self.assertFalse((run_root / "flowguard" / "root_contract_modelability.json").exists())
 
@@ -572,7 +572,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(
                 root,
-                "process_officer_submits_process_route_model",
+                "flowguard_operator_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check",
@@ -581,7 +581,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             )
         self.complete_route_checks(root)
         router.record_external_event(root, "pm_activates_reviewed_route")
-    def test_unknown_product_officer_model_report_is_rejected(self) -> None:
+    def test_unknown_flowguard_operator_product_scope_model_report_is_rejected(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -606,33 +606,33 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.apply_next_non_card_action(root)
         action = router.next_action(root)
-        self.assertEqual(action["card_id"], "product_officer.product_architecture_modelability")
+        self.assertEqual(action["card_id"], "flowguard_operator.product_architecture_modelability")
         self.assertEqual(action["gate_contract"]["gate_id"], "product_behavior_model")
         self.ack_system_card_action(root, action)
         wait = self.next_after_display_sync(root)
         self.assertEqual(wait["action_type"], "await_role_decision")
         self.assertEqual(wait["gate_contract"]["gate_id"], "product_behavior_model")
-        self.assertIn("product_officer_submits_product_behavior_model", wait["allowed_external_events"])
-        self.assertIn("product_officer_blocks_product_behavior_model", wait["allowed_external_events"])
-        self.assertNotIn("product_officer_model_report", wait["allowed_external_events"])
+        self.assertIn("flowguard_operator_submits_product_behavior_model", wait["allowed_external_events"])
+        self.assertIn("flowguard_operator_blocks_product_behavior_model", wait["allowed_external_events"])
+        self.assertNotIn("flowguard_operator_product_scope_model_report", wait["allowed_external_events"])
 
         with self.assertRaisesRegex(router.RouterError, "unknown external event"):
-            router.record_external_event(root, "product_officer_model_report", {"status": "received"})
+            router.record_external_event(root, "flowguard_operator_product_scope_model_report", {"status": "received"})
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"].get("product_behavior_model_submitted", False))
 
         wait = self.next_after_display_sync(root)
         self.assertEqual(wait["action_type"], "await_role_decision")
-        self.assertIn("product_officer_submits_product_behavior_model", wait["allowed_external_events"])
-        self.assertNotIn("product_officer_model_report", wait["allowed_external_events"])
+        self.assertIn("flowguard_operator_submits_product_behavior_model", wait["allowed_external_events"])
+        self.assertNotIn("flowguard_operator_product_scope_model_report", wait["allowed_external_events"])
 
         router.record_external_event(
             root,
-            "product_officer_submits_product_behavior_model",
+            "flowguard_operator_submits_product_behavior_model",
             self.role_report_envelope(
                 root,
                 "flowguard/product_behavior_model",
-                {"reviewed_by_role": "product_flowguard_officer", "passed": True},
+                {"reviewed_by_role": "flowguard_operator", "passed": True},
             ),
         )
         action = self.deliver_expected_card(root, "pm.product_behavior_model_decision")
@@ -655,17 +655,17 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             },
         )
 
-        action = self.deliver_expected_card(root, "process_officer.route_process_check")
+        action = self.deliver_expected_card(root, "flowguard_operator.route_process_check")
         self.assertEqual(action["gate_contract"]["gate_id"], "process_route_model")
         wait = self.next_after_display_sync(root)
         self.assertEqual(wait["action_type"], "await_role_decision")
         self.assertEqual(wait["gate_contract"]["gate_id"], "process_route_model")
-        self.assertIn("process_officer_submits_process_route_model", wait["allowed_external_events"])
-        self.assertNotIn("process_officer_passes_route_check", wait["allowed_external_events"])
+        self.assertIn("flowguard_operator_submits_process_route_model", wait["allowed_external_events"])
+        self.assertNotIn("flowguard_operator_route_scope_passes_route_check", wait["allowed_external_events"])
 
         router.record_external_event(
             root,
-            "process_officer_submits_process_route_model",
+            "flowguard_operator_submits_process_route_model",
             self.role_report_envelope(root, "flowguard/process_route_model", self.route_process_pass_body()),
         )
         state = read_json(router.run_state_path(run_root))
@@ -705,7 +705,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "packet_id": "material-scan-001-r1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Reissued material scan packet with a committed repair generation.",
                 }
             ],
@@ -750,7 +750,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         packet_envelope = read_json(root / material_index["packets"][0]["packet_envelope_path"])
         self.assertEqual(packet_envelope["result_body_path"], material_index["packets"][0]["result_body_path"])
         packet_body = (root / packet_envelope["body_path"]).read_text(encoding="utf-8")
-        self.assertIn('"recipient_role": "worker_a"', packet_body)
+        self.assertIn('"recipient_role": "worker"', packet_body)
         self.assertIn('"required_result_envelope_fields"', packet_body)
         self.assertTrue((run_root / "packets" / "material-scan-001-r1" / "packet_envelope.json").exists())
         ledger = read_json(run_root / "packet_ledger.json")
@@ -802,7 +802,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "packet_id": "material-scan-001-r1",
                     "replacement_for": "material-scan-001",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "body_text": "Reissued material scan packet with a committed repair generation.",
                 }
             ],
@@ -855,7 +855,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         decision["repair_transaction"] = {
             "plan_kind": "role_reissue",
-            "target_role": "worker_a",
+            "target_role": "worker",
         }
 
         with self.assertRaisesRegex(router.RouterError, "material dispatch repair transaction cannot use role_reissue"):
@@ -887,13 +887,13 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             packet_generation_id="repair-tx-active-generation-test-gen-001",
             packet_specs=[
                 {
-                    "packet_id": "material-scan-repair-worker-a",
-                    "to_role": "worker_a",
+                    "packet_id": "material-scan-repair-worker-1",
+                    "to_role": "worker",
                     "body_text": "Repair generation packet A",
                 },
                 {
-                    "packet_id": "material-scan-repair-worker-b",
-                    "to_role": "worker_b",
+                    "packet_id": "material-scan-repair-worker-2",
+                    "to_role": "worker",
                     "body_text": "Repair generation packet B",
                 },
             ],
@@ -929,13 +929,13 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
             packet_generation_id="repair-tx-active-results-test-gen-001",
             packet_specs=[
                 {
-                    "packet_id": "material-scan-repair-result-worker-a",
-                    "to_role": "worker_a",
+                    "packet_id": "material-scan-repair-result-worker-1",
+                    "to_role": "worker",
                     "body_text": "Repair result generation packet A",
                 },
                 {
-                    "packet_id": "material-scan-repair-result-worker-b",
-                    "to_role": "worker_b",
+                    "packet_id": "material-scan-repair-result-worker-2",
+                    "to_role": "worker",
                     "body_text": "Repair result generation packet B",
                 },
             ],
@@ -969,7 +969,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["worker_scan_results_returned"])
-        self.assertIn("worker_b", action["to_role"])
+        self.assertIn("worker", action["to_role"])
         self.assertNotEqual(action.get("action_type"), "relay_material_scan_results_to_pm")
     def test_material_scan_mechanical_agent_id_gap_reissues_to_worker(self) -> None:
         root = self.make_project()
@@ -999,8 +999,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         blocker = raised.exception.control_blocker
         self.assertIsInstance(blocker, dict)
         self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
-        self.assertEqual(blocker["target_role"], "worker_a")
-        self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
+        self.assertEqual(blocker["target_role"], "worker")
+        self.assertEqual(blocker["responsible_role_for_reissue"], "worker")
         self.assertFalse(blocker["pm_decision_required"])
         self.assertIn("completed_agent_id_is_role_key_not_agent_id", str(raised.exception))
         self.assertTrue(self.handle_pending_control_blocker(root))
@@ -1008,7 +1008,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIsNone(state["active_repair_transaction"])
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["to_role"], "worker_a")
+        self.assertEqual(action["to_role"], "worker")
         self.assertIn("worker_scan_results_returned", action["allowed_external_events"])
 
         material_index = read_json(material_index_path)

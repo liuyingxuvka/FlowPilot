@@ -5467,7 +5467,7 @@
   "live_run_projection": {
     "classification_ok": false,
     "ok": true,
-    "skip_reason": ".flowpilot/current.json has no current_run_root",
+    "skip_reason": "no .flowpilot/current.json found",
     "skipped": true
   },
   "ok": true,
@@ -5487,6 +5487,6 @@
     "terminal_state_count": 360
   },
   "skipped_checks": {
-    "live_run_projection": "skipped_with_reason: .flowpilot/current.json has no current_run_root"
+    "live_run_projection": "skipped_with_reason: no .flowpilot/current.json found"
   }
 }

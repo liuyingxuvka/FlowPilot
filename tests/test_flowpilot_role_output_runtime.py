@@ -260,9 +260,9 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "Router-supplied event"):
             role_output_runtime.validate_direct_router_submission_authority(
                 root,
-                output_type="officer_model_report",
-                role="product_flowguard_officer",
-                agent_id="agent-product-officer-no-event",
+                output_type="flowguard_operator_model_report",
+                role="flowguard_operator",
+                agent_id="agent-product-FlowGuard operator-no-event",
             )
 
         _write_json(
@@ -278,10 +278,10 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "not currently allowed"):
             role_output_runtime.validate_direct_router_submission_authority(
                 root,
-                output_type="officer_model_report",
-                role="product_flowguard_officer",
-                agent_id="agent-product-officer-wrong-event",
-                event_name="product_officer_model_report",
+                output_type="flowguard_operator_model_report",
+                role="flowguard_operator",
+                agent_id="agent-product-FlowGuard operator-wrong-event",
+                event_name="flowguard_operator_product_scope_model_report",
             )
 
         _write_json(
@@ -289,10 +289,10 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             {
                 "pending_action": {
                     "action_type": "await_role_decision",
-                    "to_role": "product_flowguard_officer",
+                    "to_role": "flowguard_operator",
                     "allowed_external_events": [
-                        "product_officer_submits_product_behavior_model",
-                        "product_officer_blocks_product_behavior_model",
+                        "flowguard_operator_submits_product_behavior_model",
+                        "flowguard_operator_blocks_product_behavior_model",
                     ],
                 }
             },
@@ -300,17 +300,17 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         with self.assertRaisesRegex(role_output_runtime.RoleOutputRuntimeError, "not currently allowed"):
             role_output_runtime.validate_direct_router_submission_authority(
                 root,
-                output_type="officer_model_report",
-                role="product_flowguard_officer",
-                agent_id="agent-product-officer-unknown-event",
-                event_name="product_officer_model_report",
+                output_type="flowguard_operator_model_report",
+                role="flowguard_operator",
+                agent_id="agent-product-FlowGuard operator-unknown-event",
+                event_name="flowguard_operator_product_scope_model_report",
             )
         authority = role_output_runtime.validate_direct_router_submission_authority(
             root,
-            output_type="officer_model_report",
-            role="product_flowguard_officer",
-            agent_id="agent-product-officer-current-wait",
-            event_name="product_officer_blocks_product_behavior_model",
+            output_type="flowguard_operator_model_report",
+            role="flowguard_operator",
+            agent_id="agent-product-FlowGuard operator-current-wait",
+            event_name="flowguard_operator_blocks_product_behavior_model",
         )
         self.assertTrue(authority["ok"])
         self.assertEqual(authority["authority_source"], "current_router_wait")
@@ -324,11 +324,11 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                     str(root),
                     "submit-output-to-router",
                     "--output-type",
-                    "officer_model_report",
+                    "flowguard_operator_model_report",
                     "--role",
-                    "product_flowguard_officer",
+                    "flowguard_operator",
                     "--agent-id",
-                    "agent-product-officer-cli",
+                    "agent-product-FlowGuard operator-cli",
                     "--body-json",
                     "{}",
                 ]

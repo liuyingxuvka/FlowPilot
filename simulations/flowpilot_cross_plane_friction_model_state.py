@@ -25,10 +25,10 @@ STANDARD_SIX_ROLES = frozenset(
     {
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b",
+        "flowguard_operator",
+        "flowguard_operator",
+        "worker",
+        "worker",
     }
 )
 BODY_PATH_NAMES = frozenset(
@@ -94,7 +94,7 @@ class State:
     install_audit_policy_accepts_first_class_cockpit: bool = True
     installed_skill_matches_repository_source: bool = True
 
-    standard_six_roles_requested: bool = False
+    runtime_requested_roles_requested: bool = False
     role_liveness_ready_or_blocked: bool = True
 
     active_task_policy_observed: bool = False

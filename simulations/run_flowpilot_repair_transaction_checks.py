@@ -20,8 +20,8 @@ REQUIRED_LABELS = (
     "router_registers_blocker_with_origin_and_failure_events",
     "pm_records_model_miss_triage_for_modelable_blocker",
     "pm_records_flowguard_out_of_scope_reason",
-    "pm_issues_model_miss_officer_request",
-    "officer_reports_same_class_findings_and_minimal_repair",
+    "pm_issues_model_miss_flowguard_operator_request",
+    "flowguard_operator_reports_same_class_findings_and_minimal_repair",
     "pm_selects_model_backed_repair_candidate",
     "pm_selects_out_of_scope_repair_candidate",
     "pm_records_repair_decision_without_resolving_blocker",
@@ -55,7 +55,7 @@ HAZARD_EXPECTED_FAILURES = {
     "post_decision_wait_exposed_before_pm_flag_visible": "post-decision repair wait events were exposed before the PM repair decision flag was visible",
     "repair_decision_before_model_miss_triage": "PM repair decision started before closing model-miss triage obligation",
     "repair_decision_before_model_miss_path_selected": "PM repair decision started before selecting a model-miss repair path",
-    "model_backed_repair_without_officer_report": "PM selected a model-backed repair before officer same-class findings and minimal repair recommendation",
+    "model_backed_repair_without_flowguard_operator_report": "PM selected a model-backed repair before FlowGuard operator same-class findings and minimal repair recommendation",
     "out_of_scope_repair_without_reason": "PM out-of-scope repair decision lacked FlowGuard incapability reason",
     "reissue_spec_outside_transaction": "PM repair wrote replacement artifacts outside a repair transaction",
     "await_existing_event_without_producer": "await_existing_event repair transaction lacked an existing producer",
@@ -99,8 +99,8 @@ def _state_id(state: model.State) -> str:
         f"repair_routes={state.pm_review_repair_event_routes_blocker_kind}|"
         f"model_miss={state.model_miss_triage_recorded},modelable={state.flowguard_bug_class_modelable},"
         f"out_of_scope={state.flowguard_out_of_scope_reason_recorded},"
-        f"request={state.model_miss_officer_request_issued},"
-        f"report={state.model_miss_officer_report_returned},"
+        f"request={state.model_miss_flowguard_operator_request_issued},"
+        f"report={state.model_miss_flowguard_operator_report_returned},"
         f"same_class={state.same_class_findings_recorded},"
         f"candidates={state.repair_candidates_compared},"
         f"minimal={state.minimal_sufficient_repair_recommended},"
@@ -241,7 +241,7 @@ def _architecture_candidate() -> dict[str, object]:
     return {
         "name": "repair_transaction_generation_commit",
         "principles": [
-            "PM repair decisions first close the model-miss obligation: FlowGuard-modelable blockers get officer same-class findings and a minimal repair recommendation, while out-of-scope blockers need an explicit incapability reason.",
+            "PM repair decisions first close the model-miss obligation: FlowGuard-modelable blockers get FlowGuard operator same-class findings and a minimal repair recommendation, while out-of-scope blockers need an explicit incapability reason.",
             "PM repair decisions open a transaction; they never resolve blockers directly.",
             "Post-decision repair waits are not exposed until the PM repair decision flag is visible to daemon-readable state.",
             "The repair transaction plan kind is the executable authority; PM explanation fields do not create Router work by themselves.",
@@ -255,7 +255,7 @@ def _architecture_candidate() -> dict[str, object]:
         ],
         "minimal_runtime_change_set": [
             "Add a PM model-miss triage gate before PM repair decision and transaction opening.",
-            "Require officer model-miss reports to include same-class findings, candidate comparison, and a minimal sufficient repair recommendation for modelable blockers.",
+            "Require FlowGuard operator model-miss reports to include same-class findings, candidate comparison, and a minimal sufficient repair recommendation for modelable blockers.",
             "Add a run-scoped repair_transaction record and transaction_id.",
             "Validate repair_transaction.plan_kind with plan-specific executable fields before commit.",
             "Make PM repair decision flag, active blocker wait events, repair transaction, and projection indexes one post-decision state boundary.",

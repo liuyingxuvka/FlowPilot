@@ -509,13 +509,13 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             command="python -m unittest tests.test_flowpilot_router_boundaries.FlowPilotRouterBoundaryTests.test_runtime_closure_external_record_contracts_are_self_validating",
             test_kind=HAPPY,
             covers=(
-                "runtime_closure.officer_lifecycle_contract",
+                "runtime_closure.flowguard_operator_lifecycle_contract",
                 "runtime_closure.continuation_and_final_report_contract",
             ),
             code_contracts=(
-                "runtime_closure.validate_officer_request_record",
-                "runtime_closure.validate_officer_result_record",
-                "runtime_closure.officer_lifecycle_entry_from_request",
+                "runtime_closure.validate_flowguard_operator_request_record",
+                "runtime_closure.validate_flowguard_operator_result_record",
+                "runtime_closure.flowguard_operator_lifecycle_entry_from_request",
                 "runtime_closure.continuation_quarantine_record",
                 "runtime_closure.validate_continuation_quarantine_record",
                 "runtime_closure.final_user_report_record",

@@ -15,7 +15,7 @@ Risk intent brief:
 - Adversarial branches include packet registration before route activation,
   worker dispatch before router direct dispatch, reviewer pass before PM
   disposition and formal gate release, result relay before packet-ledger checks,
-  reviewer result-review card before PM gate release, officer packet relay without an officer card, repair/recheck
+  reviewer result-review card before PM gate release, FlowGuard operator packet relay without a FlowGuard operator card, repair/recheck
   bypasses around the reviewer,
   router wait events that are impossible under the active node kind, parent
   repair lanes that target leaf/current-node worker dispatch, collapsed repair
@@ -32,7 +32,7 @@ Risk intent brief:
   expected PM/reviewer role-event waits must not be materialized as
   no-next-action blockers;
   current-node packets gate write grants; router direct dispatch gates worker work;
-  worker and officer results are
+  worker and FlowGuard operator results are
   packet-ledger checked before PM relay; PM dispositions worker results before
   formal reviewer gate packages; active-holder fast-lane
   closure writes a Controller-visible next-action notice before cross-role relay; repair/recheck returns to the

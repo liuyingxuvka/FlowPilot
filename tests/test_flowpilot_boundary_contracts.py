@@ -56,13 +56,13 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
 
         built = aside.build_controller_aside(
             "  started\n\n waiting for Router  ",
-            from_role="worker_a",
+            from_role="worker",
             source="role_output_runtime.progress_status",
         )
         self.assertIsNotNone(built)
         assert built is not None
         self.assertEqual(built["schema_version"], aside.CONTROLLER_PROCESS_ASIDE_SCHEMA)
-        self.assertEqual(built["from_role"], "worker_a")
+        self.assertEqual(built["from_role"], "worker")
         self.assertEqual(built["to_role"], "controller")
         self.assertEqual(built["text"], "started\nwaiting for Router")
         self.assertTrue(built["not_formal_evidence"])
@@ -99,7 +99,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
             "schema_version": "test.packet_envelope.v1",
             "packet_id": "material-scan-001",
             "from_role": "project_manager",
-            "to_role": "worker_a",
+            "to_role": "worker",
             "body_path": packet_body_rel,
             "body_hash": packet_runtime.sha256_file(packet_body),
             "body_visibility": "sealed_target_role_only",
@@ -110,7 +110,7 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         result_envelope = {
             "schema_version": "test.result_envelope.v1",
             "packet_id": "material-scan-001",
-            "completed_by_role": "worker_a",
+            "completed_by_role": "worker",
             "next_recipient": "project_manager",
             "result_body_path": result_body_rel,
             "result_body_hash": packet_runtime.sha256_file(result_body),
@@ -354,17 +354,17 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         self.assertTrue(
             current_work_pending._pending_role_wait_should_use_batch_projection(
                 router,
-                {"action_type": "await_role_decision", "to_role": "worker_a"},
+                {"action_type": "await_role_decision", "to_role": "worker"},
             )
         )
         self.assertEqual(
             current_work_pending._pending_role_wait_should_use_batch_projection(
                 router,
-                {"action_type": "await_role_decision", "to_role": "worker_a"},
+                {"action_type": "await_role_decision", "to_role": "worker"},
             ),
             current_work._pending_role_wait_should_use_batch_projection(
                 router,
-                {"action_type": "await_role_decision", "to_role": "worker_a"},
+                {"action_type": "await_role_decision", "to_role": "worker"},
             ),
         )
 

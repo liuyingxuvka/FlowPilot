@@ -74,11 +74,11 @@ the script can run.
 | H2 | User closes UI and FlowPilot still creates a run or starts roles. | Fail if cancel path reaches run shell, Controller, roles, heartbeat, or Cockpit. |
 | H3 | Router or Controller-visible envelope leaks user body text. | Fail if body text appears in bootstrap state, startup answers, user request envelope, or Controller handoff. |
 | H4 | UI result is accepted without receipt, envelope, body path, or matching body hash. | Fail if any required artifact or hash check is missing. |
-| H5 | Toggle values drift from existing startup answer enums. | Fail if toggle mapping is missing or produces non-enum values. |
-| H6 | Runtime role assistance or heartbeat are started against UI OFF choices. | Fail if `single-agent` still opens live role bindings or `manual` still creates heartbeat. |
-| H7 | Cockpit UI is assumed open when UI choice is chat or Cockpit launch fails. | Fail if display status ignores UI choice or lacks fallback. |
+| H5 | The remaining background-collaboration toggle drifts from existing startup answer enums. | Fail if toggle mapping is missing or produces non-enum values. |
+| H6 | Runtime role assistance or heartbeat are started against the recorded startup defaults. | Fail if `single-agent` still opens live role bindings or `manual` still creates heartbeat. |
+| H7 | Removed continuation or display-surface UI choices return as formal startup options. | Fail if startup accepts `scheduled_continuation=allow` or `display_surface=cockpit` from the startup UI. |
 | H8 | Reviewer startup or live review relies on chat text instead of UI result/receipt/envelope evidence. | Fail if reviewer pass does not reference UI record, receipt, and hash evidence. |
-| H9 | Existing old three-question payload path remains the only legal startup path. | Fail if UI-confirmed startup cannot advance through reused post-answer boot actions. |
+| H9 | Existing old multi-question payload path remains the only legal startup path. | Fail if UI-confirmed startup cannot advance through reused post-answer boot actions. |
 | H10 | Long-running model/test work overwrites peer-agent changes or unrelated dirty files. | Verification plan avoids broad formatters and only touches scoped files. |
 | H11 | UI JSON result/receipt/envelope is written with a UTF-8 BOM and Router rejects it before startup answers can be recorded. | Fail if confirmed UI artifacts are not Router-readable without a manual byte rewrite. |
 | H12 | Only one JSON artifact is fixed, while receipt or envelope still has BOM and fails later in validation. | Fail unless result, receipt, and envelope share the no-BOM/BOM-compatible contract. |

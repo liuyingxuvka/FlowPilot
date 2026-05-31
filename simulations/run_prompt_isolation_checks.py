@@ -66,8 +66,8 @@ REQUIRED_LABELS = (
     "pm_writes_material_understanding_from_reviewed_sources",
     "pm_product_architecture_phase_card_delivered",
     "pm_writes_product_architecture_draft",
-    "product_officer_product_architecture_modelability_card_delivered",
-    "product_officer_product_architecture_modelability_passed",
+    "flowguard_operator_product_architecture_modelability_card_delivered",
+    "flowguard_operator_product_architecture_modelability_passed",
     "reviewer_product_architecture_challenge_card_delivered",
     "reviewer_challenges_product_architecture",
     "pm_root_contract_phase_card_delivered",
@@ -180,8 +180,8 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_child_skill_selection_written},"
         f"{state.child_skill_gate_manifest_written},"
         f"{state.child_skill_manifest_reviewer_passed},"
-        f"{state.child_skill_process_officer_passed},"
-        f"{state.child_skill_product_officer_passed},"
+        f"{state.child_skill_flowguard_operator_route_scope_passed},"
+        f"{state.child_skill_flowguard_operator_product_scope_passed},"
         f"{state.child_skill_manifest_pm_approved_for_route},"
         f"{state.capability_evidence_synced}|"
         f"history={state.pm_prior_path_context_card_delivered},"

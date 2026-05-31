@@ -313,7 +313,7 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
     }
 
 
-def _planning_body_for(packet_kind: str, route_scope: str) -> str:
+def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = "") -> str:
     if packet_kind == "task" and route_scope == "high_standard_contract":
         return json.dumps(
             {
@@ -352,6 +352,35 @@ def _planning_body_for(packet_kind: str, route_scope: str) -> str:
                 "2. Implement the fake calculator CLI behavior",
                 "3. Validate tests, evidence, and route-wide closure",
             ]
+        )
+    if packet_kind == "task" and route_scope == "node_acceptance_plan":
+        return json.dumps(
+            {
+                "route_node_id": route_node_id,
+                "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
+                "repair_policy": "same_node_repair_default",
+                "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
+                "node_context_package": {
+                    "node_id": route_node_id,
+                    "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
+                    "acceptance_criteria": [
+                        "worker result satisfies the node packet",
+                        "pre-work and post-result FlowGuard evidence are current",
+                        "reviewer independently challenges the node outcome",
+                    ],
+                    "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
+                    "evidence_targets": ["worker result body", "FlowGuard report", "reviewer report", "validation output"],
+                    "inspection_targets": ["changed files", "command output", "model artifacts", "runtime ledger"],
+                    "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
+                    "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
+                    "reviewer_starting_points": [
+                        "worker result",
+                        "node context package",
+                        "FlowGuard reports",
+                        "validation evidence",
+                    ],
+                },
+            }
         )
     return f"SEALED_RESULT_BODY: fake planning {packet_kind}"
 
@@ -441,7 +470,7 @@ def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]
             "--packet-id",
             packet_id,
             "--body",
-            _planning_body_for(packet_kind, route_scope),
+            _planning_body_for(packet_kind, route_scope, str(packet.get("route_node_id") or "")),
         )
 
     raise RehearsalFailure("slow reviewer scenario never reached a reviewer packet")
@@ -487,7 +516,11 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
             "--packet-id",
             packet_id,
             "--body",
-            _planning_body_for(str(current_packet.get("packet_kind", "")), str(current_packet.get("route_scope", ""))),
+            _planning_body_for(
+                str(current_packet.get("packet_kind", "")),
+                str(current_packet.get("route_scope", "")),
+                str(current_packet.get("route_node_id") or ""),
+            ),
         )
         projection = status_projection(root, command_log)
         packet = packet_row(projection, pm_packet)

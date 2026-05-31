@@ -15,7 +15,7 @@
       "family_type": "<product_behavior|ui_interaction|data_state|failure_recovery|capability_fit|validation_evidence|other>",
       "reason": "<why this family needs its own model or explicit disposition>",
       "source_requirement_ids": [],
-      "expected_officer_role_key": "product_flowguard_officer",
+      "expected_flowguard_operator_role_key": "flowguard_operator",
       "expected_model_paths": [],
       "required_obligation_types": [
         "scenario",
@@ -43,7 +43,7 @@
       "approved_by_role_key": "project_manager"
     }
   ],
-  "product_officer_role_skill_bindings": [
+  "flowguard_operator_role_skill_bindings": [
     {
       "binding_id": "<binding-id>",
       "flowguard_skill_name": "<flowguard-skill-name>",
@@ -53,7 +53,7 @@
     }
   ],
   "pm_decision": {
-    "status": "<draft|approved_for_product_officer|blocked|superseded>",
+    "status": "<draft|approved_for_flowguard_operator|blocked|superseded>",
     "reason": "<reason>",
     "single_model_is_sufficient": false,
     "single_model_reason": "<reason-or-null>"

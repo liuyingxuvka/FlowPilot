@@ -27,7 +27,7 @@ DEFAULT_ACCEPTANCE_CONTRACT = (
     "backward closure."
 )
 HOST_KIND_HELP = (
-    "Allowed values: live=real Codex host-supported role mechanism, "
+    "Allowed values: live=real host-supported role surface, "
     "fake=deterministic rehearsal wrapper, dry_run=no real agent. "
     "Do not invent values outside this menu."
 )

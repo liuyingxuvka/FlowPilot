@@ -23,7 +23,7 @@ class RouteMutationDraftActivationRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     {
                         "trigger": "reviewer_block",
                         "rejoin_target": "node-001",
-                        "rerun_checks": ["process_officer_route_process_check"],
+                        "rerun_checks": ["flowguard_operator_route_scope_route_process_check"],
                     }
                 ],
             }

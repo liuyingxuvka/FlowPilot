@@ -653,7 +653,7 @@ class ControlPlaneStateConsistencyStep:
         "packet_batches",
         "packet_ledger",
         "pm_role_work_index",
-        "officer_lifecycle_index",
+        "flowguard_operator_lifecycle_index",
         "router_state_projection",
         "daemon_snapshot_version",
         "wait_reminder_identity",

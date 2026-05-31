@@ -8,13 +8,13 @@ Risk intent brief:
   active nodes that cannot be executed, stale approvals after route mutation,
   and Controller compensation by direct product implementation.
 - Modeled state and side effects: root planning, node-entry replanning,
-  in-progress replanning, review-failure repair, Product FlowGuard checks,
-  Process FlowGuard checks, Reviewer approval, stale evidence handling, and
+  in-progress replanning, review-failure repair, product-scope FlowGuard checks,
+  route-scope FlowGuard checks, Reviewer approval, stale evidence handling, and
   route activation/use.
 - Hard invariants: planning issues are fixed by route rewrites or ordinary node
   additions; repair nodes require reviewed failure evidence; product capability
-  changes run Product FlowGuard before Process FlowGuard; every structure change
-  runs Process FlowGuard; every changed route is reviewed before use; every
+  changes run product-scope FlowGuard before route-scope FlowGuard; every structure change
+  runs route-scope FlowGuard; every changed route is reviewed before use; every
   active node is executable before entry; Controller never substitutes for route
   gates by doing product work.
 - Blindspot: this model checks the abstract policy. Production router/card
@@ -123,9 +123,9 @@ class State:
     rerun_obligations_defined: bool = False
 
     product_capability_changed: bool = False
-    product_flowguard_checked: bool = False
-    product_flowguard_before_process: bool = False
-    process_flowguard_checked: bool = False
+    product_scope_flowguard_checked: bool = False
+    product_scope_flowguard_before_process: bool = False
+    route_scope_flowguard_checked: bool = False
     reviewer_approved_changed_route: bool = False
     old_approval_reused_after_change: bool = False
 
@@ -160,8 +160,8 @@ class RouteReplanningPolicyStep:
         "route_started",
         "completed_nodes",
         "change_kind",
-        "product_flowguard_checked",
-        "process_flowguard_checked",
+        "product_scope_flowguard_checked",
+        "route_scope_flowguard_checked",
         "reviewer_approved_changed_route",
         "active_node_executable",
         "repair_fields_complete",
@@ -194,7 +194,7 @@ def _valid_planning_replan() -> State:
         current_node_kind="root",
         change_kind="route_rewrite",
         added_node_fields_complete=True,
-        process_flowguard_checked=True,
+        route_scope_flowguard_checked=True,
         reviewer_approved_changed_route=True,
         active_node_executable=True,
         pm_activated_or_used_route=True,
@@ -214,9 +214,9 @@ def _valid_planning_capability_expansion() -> State:
         ordinary_node_added=True,
         added_node_fields_complete=True,
         product_capability_changed=True,
-        product_flowguard_checked=True,
-        product_flowguard_before_process=True,
-        process_flowguard_checked=True,
+        product_scope_flowguard_checked=True,
+        product_scope_flowguard_before_process=True,
+        route_scope_flowguard_checked=True,
         reviewer_approved_changed_route=True,
         active_node_executable=True,
         pm_activated_or_used_route=True,
@@ -237,9 +237,9 @@ def _valid_node_entry_replan() -> State:
         ordinary_node_added=True,
         added_node_fields_complete=True,
         product_capability_changed=True,
-        product_flowguard_checked=True,
-        product_flowguard_before_process=True,
-        process_flowguard_checked=True,
+        product_scope_flowguard_checked=True,
+        product_scope_flowguard_before_process=True,
+        route_scope_flowguard_checked=True,
         reviewer_approved_changed_route=True,
         active_node_executable=True,
         pm_activated_or_used_route=True,
@@ -259,7 +259,7 @@ def _valid_in_progress_replan() -> State:
         target_node_result_submitted=False,
         change_kind="node_internal_replan",
         added_node_fields_complete=True,
-        process_flowguard_checked=True,
+        route_scope_flowguard_checked=True,
         reviewer_approved_changed_route=True,
         active_node_executable=True,
         pm_activated_or_used_route=True,
@@ -284,7 +284,7 @@ def _valid_review_failure_repair() -> State:
         stale_evidence_reset=True,
         mainline_return_defined=True,
         rerun_obligations_defined=True,
-        process_flowguard_checked=True,
+        route_scope_flowguard_checked=True,
         reviewer_approved_changed_route=True,
         active_node_executable=True,
         pm_activated_or_used_route=True,
@@ -350,11 +350,11 @@ def _scenario_state(scenario: str) -> State:
     if scenario == ORDINARY_NODE_MISSING_FIELDS:
         return replace(state, scenario=scenario, added_node_fields_complete=False)
     if scenario == CAPABILITY_CHANGE_WITHOUT_PRODUCT_CHECK:
-        return replace(state, scenario=scenario, product_flowguard_checked=False)
+        return replace(state, scenario=scenario, product_scope_flowguard_checked=False)
     if scenario == PROCESS_BEFORE_PRODUCT_FOR_CAPABILITY_CHANGE:
-        return replace(state, scenario=scenario, product_flowguard_before_process=False)
+        return replace(state, scenario=scenario, product_scope_flowguard_before_process=False)
     if scenario == STRUCTURE_CHANGE_WITHOUT_PROCESS_CHECK:
-        return replace(state, scenario=scenario, process_flowguard_checked=False)
+        return replace(state, scenario=scenario, route_scope_flowguard_checked=False)
     if scenario == CHANGED_ROUTE_WITHOUT_REVIEWER:
         return replace(state, scenario=scenario, reviewer_approved_changed_route=False)
     if scenario == NODE_ENTRY_REPAIR_BEFORE_WORK:
@@ -418,16 +418,16 @@ def policy_failures(state: State) -> list[str]:
         state.ordinary_node_added or state.change_kind in PLANNING_CHANGES
     ) and not state.added_node_fields_complete:
         failures.append("added ordinary node lacks owner input output evidence or acceptance fields")
-    if state.product_capability_changed and not state.product_flowguard_checked:
-        failures.append("product capability change lacks Product FlowGuard check")
+    if state.product_capability_changed and not state.product_scope_flowguard_checked:
+        failures.append("product capability change lacks product-scope FlowGuard check")
     if (
         state.product_capability_changed
-        and state.process_flowguard_checked
-        and not state.product_flowguard_before_process
+        and state.route_scope_flowguard_checked
+        and not state.product_scope_flowguard_before_process
     ):
-        failures.append("Process FlowGuard ran before Product FlowGuard for a product capability change")
-    if _route_structure_changed(state) and not state.process_flowguard_checked:
-        failures.append("route structure change lacks Process FlowGuard check")
+        failures.append("route-scope FlowGuard ran before product-scope FlowGuard for a product capability change")
+    if _route_structure_changed(state) and not state.route_scope_flowguard_checked:
+        failures.append("route structure change lacks route-scope FlowGuard check")
     if _changed_route_or_node(state) and state.pm_activated_or_used_route and not state.reviewer_approved_changed_route:
         failures.append("changed route was used before Reviewer approval")
     if (
@@ -550,7 +550,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="model_gates_cover_changed_routes",
-        description="Product capability and route-structure changes run Product/Process FlowGuard and Reviewer gates before use.",
+        description="Product capability and route-structure changes run Product/route-scope FlowGuard and Reviewer gates before use.",
         predicate=model_gates_cover_changed_routes,
     ),
     Invariant(

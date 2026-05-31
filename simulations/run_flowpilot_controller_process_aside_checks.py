@@ -22,7 +22,7 @@ HAZARD_EXPECTED_FAILURES = {
     "aside_replaces_formal_body": "process aside replaced the formal output body",
     "aside_becomes_evidence": "Controller used process aside as formal content",
     "aside_drives_router_event": "Router semantically inspected process aside text",
-    "worker_to_worker_aside": "worker process aside became Worker-to-Worker communication",
+    "worker_to_workerside": "worker process aside became Worker-to-Worker communication",
     "missing_aside_blocks_flow": "missing optional process aside blocked formal flow",
     "controller_reports_formal_content_from_aside": "Controller used process aside as formal content",
     "routine_aside_relayed_to_user": "routine process aside was automatically relayed to the user",
@@ -46,8 +46,8 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_uses_aside_for_formal_content},"
         f"user_msg={state.user_visible_message_emitted_from_aside},"
         f"formal_visible={state.formal_state_independently_user_visible}|"
-        f"worker={state.worker_aside_controller_only},"
-        f"{state.worker_aside_visible_to_sibling_worker}|"
+        f"worker={state.workerside_controller_only},"
+        f"{state.workerside_visible_to_sibling_worker}|"
         f"missing_blocks={state.missing_aside_blocks_flow}"
     )
 

@@ -6,21 +6,21 @@ CARD_PHASE_BY_ID = {
     "pm.material_scan": "material_scan",
     "reviewer.material_sufficiency": "material_scan",
     "pm.product_architecture": "product_architecture",
-    "product_officer.product_architecture_modelability": "product_architecture",
+    "flowguard_operator.product_architecture_modelability": "product_architecture",
     "pm.product_behavior_model_decision": "product_architecture",
     "reviewer.product_architecture_challenge": "product_architecture",
     "pm.root_contract": "root_contract",
     "reviewer.root_contract_challenge": "root_contract",
-    "product_officer.root_contract_modelability": "root_contract",
+    "flowguard_operator.root_contract_modelability": "root_contract",
     "pm.dependency_policy": "dependency_policy",
     "pm.child_skill_selection": "child_skill_selection",
     "pm.child_skill_gate_manifest": "child_skill_gate_manifest",
     "reviewer.child_skill_gate_manifest_review": "child_skill_gate_manifest",
-    "process_officer.child_skill_conformance_model": "child_skill_gate_manifest",
-    "product_officer.child_skill_product_fit": "child_skill_gate_manifest",
+    "flowguard_operator.child_skill_conformance_model": "child_skill_gate_manifest",
+    "flowguard_operator.child_skill_product_fit": "child_skill_gate_manifest",
     "pm.prior_path_context": "prior_path_context",
     "pm.route_skeleton": "route_skeleton",
-    "process_officer.route_process_check": "route_skeleton",
+    "flowguard_operator.route_process_check": "route_skeleton",
     "pm.process_route_model_decision": "route_skeleton",
     "reviewer.route_challenge": "route_skeleton",
 }
@@ -39,7 +39,7 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "pm_material_understanding_payload": "material/pm_material_understanding_payload.json",
         "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
     },
-    "product_officer.product_architecture_modelability": {
+    "flowguard_operator.product_architecture_modelability": {
         "product_function_architecture": "product_function_architecture.json",
         "flowguard_capability_snapshot": "flowguard/capability_snapshot.json",
         "product_modeling_plan": "flowguard/product_modeling_plan.json",
@@ -68,7 +68,7 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "standard_scenario_pack": "standard_scenario_pack.json",
     },
-    "product_officer.root_contract_modelability": {
+    "flowguard_operator.root_contract_modelability": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "standard_scenario_pack": "standard_scenario_pack.json",
     },
@@ -93,13 +93,13 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "pm_child_skill_selection": "pm_child_skill_selection.json",
         "capabilities": "capabilities.json",
     },
-    "process_officer.child_skill_conformance_model": {
+    "flowguard_operator.child_skill_conformance_model": {
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "child_skill_gate_manifest_review": "reviews/child_skill_gate_manifest_review.json",
         "pm_child_skill_selection": "pm_child_skill_selection.json",
         "capabilities": "capabilities.json",
     },
-    "product_officer.child_skill_product_fit": {
+    "flowguard_operator.child_skill_product_fit": {
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "child_skill_gate_manifest_review": "reviews/child_skill_gate_manifest_review.json",
         "child_skill_conformance_model": "flowguard/child_skill_conformance_model.json",
@@ -122,7 +122,7 @@ CARD_REQUIRED_SOURCE_PATHS = {
         "pm_product_behavior_model_decision": "flowguard/product_behavior_model_pm_decision.json",
         "pm_prior_path_context": "route_memory/pm_prior_path_context.json",
     },
-    "process_officer.route_process_check": {
+    "flowguard_operator.route_process_check": {
         "root_acceptance_contract": "root_acceptance_contract.json",
         "child_skill_gate_manifest": "child_skill_gate_manifest.json",
         "capability_sync": "capabilities/capability_sync.json",

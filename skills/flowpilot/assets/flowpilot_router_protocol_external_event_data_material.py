@@ -111,16 +111,16 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                           'requires_flag': 'reviewer_product_architecture_card_delivered',
                                           'summary': 'Reviewer blocked the PM product-function '
                                                      'architecture challenge.'},
- 'product_officer_submits_product_behavior_model': {'flag': 'product_behavior_model_submitted',
-                                                    'requires_flag': 'product_officer_product_architecture_card_delivered',
+ 'flowguard_operator_submits_product_behavior_model': {'flag': 'product_behavior_model_submitted',
+                                                    'requires_flag': 'flowguard_operator_product_architecture_card_delivered',
                                                     'gate_id': 'product_behavior_model',
                                                     'terminal_gate_outcome': True,
-                                                    'summary': 'Product FlowGuard Officer '
+                                                    'summary': 'FlowGuard operator '
                                                                'submitted the canonical product '
                                                                'behavior model.'},
  'pm_accepts_product_behavior_model': {'flag': 'pm_product_behavior_model_accepted',
                                        'requires_flag': 'pm_product_behavior_model_decision_card_delivered',
-                                       'summary': 'PM accepted the Product FlowGuard product '
+                                       'summary': 'PM accepted the FlowGuard product '
                                                   'behavior model as the product basis for review '
                                                   'and route planning.'},
  'pm_requests_product_behavior_model_rebuild': {'flag': 'pm_product_behavior_model_rebuild_requested',
@@ -129,11 +129,11 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                                            'behavior model and requested product '
                                                            'architecture/model rebuild before '
                                                            'reviewer challenge.'},
- 'product_officer_blocks_product_behavior_model': {'flag': 'product_behavior_model_blocked',
-                                                   'requires_flag': 'product_officer_product_architecture_card_delivered',
+ 'flowguard_operator_blocks_product_behavior_model': {'flag': 'product_behavior_model_blocked',
+                                                   'requires_flag': 'flowguard_operator_product_architecture_card_delivered',
                                                    'gate_id': 'product_behavior_model',
                                                    'terminal_gate_outcome': True,
-                                                   'summary': 'Product FlowGuard Officer blocked '
+                                                   'summary': 'FlowGuard operator blocked '
                                                               'the canonical product behavior '
                                                               'model.'},
  'pm_writes_root_acceptance_contract': {'flag': 'root_contract_written_by_pm',

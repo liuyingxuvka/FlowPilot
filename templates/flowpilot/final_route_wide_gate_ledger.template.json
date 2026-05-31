@@ -187,7 +187,7 @@
       "standard_scenario_ids": [],
       "stale_evidence_refs": [],
       "superseded_by_requirement_ids": [],
-      "waiver_authority": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|null>",
+      "waiver_authority": "<project_manager|human_like_reviewer|flowguard_operator|null>",
       "unresolved_reason": "<reason-or-null>"
     }
   ],
@@ -200,7 +200,7 @@
       "gate_family": "<child_skill|human_review|parent_backward_replay|product_model|process_model|verification|resource_lineage|lifecycle|completion>",
       "covers_requirement_ids": [],
       "covers_scenario_ids": [],
-      "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+      "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
       "status": "<approved|waived|blocked|superseded|stale|unresolved>",
       "evidence_paths": [],
       "independent_validation": {

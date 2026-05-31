@@ -123,11 +123,11 @@ function Get-FileSha256([string]$Path) {
     }
 }
 
-function New-StartupAnswerMap([bool]$AgentsEnabled, [bool]$ContinuationEnabled, [bool]$CockpitEnabled) {
+function New-StartupAnswerMap([bool]$AgentsEnabled) {
     return @{
         runtime_role_assistances = $(if ($AgentsEnabled) { "allow" } else { "single-agent" })
-        scheduled_continuation = $(if ($ContinuationEnabled) { "allow" } else { "manual" })
-        display_surface = $(if ($CockpitEnabled) { "cockpit" } else { "chat" })
+        scheduled_continuation = "manual"
+        display_surface = "chat"
         provenance = "explicit_user_reply"
     }
 }
@@ -136,8 +136,6 @@ function Write-StartupIntakeResult(
     [string]$Status,
     [string]$BodyText,
     [bool]$AgentsEnabled,
-    [bool]$ContinuationEnabled,
-    [bool]$CockpitEnabled,
     [string]$Language,
     [string]$LaunchMode = "interactive_native",
     [bool]$Headless = $false,
@@ -147,7 +145,7 @@ function Write-StartupIntakeResult(
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
     $recordedAt = Get-UtcNow
-    $answers = New-StartupAnswerMap $AgentsEnabled $ContinuationEnabled $CockpitEnabled
+    $answers = New-StartupAnswerMap $AgentsEnabled
     $source = if ($Headless) { "headless_startup_intake" } else { "native_wpf_startup_intake" }
     $receiptPath = Join-Path $outDir "startup_intake_receipt.json"
     $resultPath = Join-Path $outDir "startup_intake_result.json"
@@ -256,12 +254,12 @@ function Write-StartupIntakeResult(
 }
 
 if ($HeadlessCancel) {
-    Write-StartupIntakeResult "cancelled" "" $true $true $true "en" "headless" $true $false | Write-Output
+    Write-StartupIntakeResult "cancelled" "" $true "en" "headless" $true $false | Write-Output
     exit 0
 }
 
 if (-not [string]::IsNullOrWhiteSpace($HeadlessConfirmText)) {
-    Write-StartupIntakeResult "confirmed" $HeadlessConfirmText $true $true $true "en" "headless" $true $false | Write-Output
+    Write-StartupIntakeResult "confirmed" $HeadlessConfirmText $true "en" "headless" $true $false | Write-Output
     exit 0
 }
 
@@ -325,6 +323,59 @@ $Xaml = @"
                 <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentPressedBrush}" />
               </Trigger>
             </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="IconButton" TargetType="Button">
+      <Setter Property="Width" Value="38" />
+      <Setter Property="Height" Value="38" />
+      <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+      <Setter Property="Background" Value="#FFFFFF" />
+      <Setter Property="BorderBrush" Value="{StaticResource AccentLineBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="FontSize" Value="18" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Border
+                x:Name="ButtonBorder"
+                Background="{TemplateBinding Background}"
+                BorderBrush="{TemplateBinding BorderBrush}"
+                BorderThickness="{TemplateBinding BorderThickness}"
+                CornerRadius="8">
+              <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter TargetName="ButtonBorder" Property="Background" Value="{StaticResource AccentSoftBrush}" />
+              </Trigger>
+              <Trigger Property="IsPressed" Value="True">
+                <Setter TargetName="ButtonBorder" Property="Background" Value="#E7D8F6" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+
+    <Style x:Key="LinkButton" TargetType="Button">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="Transparent" />
+      <Setter Property="BorderThickness" Value="0" />
+      <Setter Property="FontSize" Value="12.5" />
+      <Setter Property="FontWeight" Value="SemiBold" />
+      <Setter Property="Cursor" Value="Hand" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -498,32 +549,79 @@ $Xaml = @"
                 FontWeight="SemiBold" />
           </StackPanel>
 
-          <Border
-              Grid.Column="2"
-              BorderBrush="Transparent"
-              BorderThickness="0"
-              Padding="0"
-              Height="36"
-              VerticalAlignment="Top"
-              Background="Transparent">
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <Viewbox Width="18" Height="18" Margin="0,0,7,0">
-                <Canvas Width="24" Height="24">
-                  <Ellipse Width="18" Height="18" Canvas.Left="3" Canvas.Top="3" Stroke="#8A5AD0" StrokeThickness="1.5" />
-                  <Line X1="4" Y1="9" X2="20" Y2="9" Stroke="#8A5AD0" StrokeThickness="1.5" />
-                  <Line X1="4" Y1="15" X2="20" Y2="15" Stroke="#8A5AD0" StrokeThickness="1.5" />
-                  <Path Data="M12 3 C15 6 15 18 12 21" Stroke="#8A5AD0" StrokeThickness="1.5" Fill="{x:Null}" />
-                  <Path Data="M12 3 C9 6 9 18 12 21" Stroke="#8A5AD0" StrokeThickness="1.5" Fill="{x:Null}" />
-                </Canvas>
-              </Viewbox>
-              <Border Background="Transparent" CornerRadius="17" Padding="2">
-                <StackPanel Orientation="Horizontal">
-                  <RadioButton x:Name="EnglishLanguage" GroupName="Language" IsChecked="True" Content="English" Style="{StaticResource LanguageChoice}" />
-                  <RadioButton x:Name="ChineseLanguage" GroupName="Language" Content="中文" Style="{StaticResource LanguageChoice}" />
+          <Grid Grid.Column="2" VerticalAlignment="Top">
+            <Button
+                x:Name="SettingsButton"
+                Style="{StaticResource IconButton}"
+                Content="⚙" />
+            <Popup
+                x:Name="SettingsPopup"
+                Placement="Bottom"
+                HorizontalOffset="-274"
+                VerticalOffset="8"
+                StaysOpen="False"
+                AllowsTransparency="True"
+                PopupAnimation="Fade">
+              <Border
+                  Width="312"
+                  Background="#FFFFFF"
+                  BorderBrush="{StaticResource AccentLineBrush}"
+                  BorderThickness="1"
+                  CornerRadius="8"
+                  Padding="16">
+                <StackPanel>
+                  <TextBlock
+                      x:Name="SettingsTitle"
+                      Text="Settings"
+                      Foreground="{StaticResource InkBrush}"
+                      FontSize="14"
+                      FontWeight="SemiBold"
+                      Margin="0,0,0,12" />
+                  <TextBlock
+                      x:Name="LanguageLabel"
+                      Text="Language"
+                      Foreground="{StaticResource MutedBrush}"
+                      FontSize="12.5"
+                      FontWeight="SemiBold"
+                      Margin="0,0,0,7" />
+                  <Border Background="Transparent" Padding="0" HorizontalAlignment="Left" Margin="0,0,0,16">
+                    <StackPanel Orientation="Horizontal">
+                      <RadioButton x:Name="EnglishLanguage" GroupName="Language" IsChecked="True" Content="English" Style="{StaticResource LanguageChoice}" />
+                      <RadioButton x:Name="ChineseLanguage" GroupName="Language" Content="中文" Style="{StaticResource LanguageChoice}" />
+                    </StackPanel>
+                  </Border>
+                  <Border BorderBrush="{StaticResource LineBrush}" BorderThickness="0,1,0,0" Padding="0,14,0,0">
+                    <StackPanel>
+                      <TextBlock
+                          x:Name="SupportTitle"
+                          Text="Support developer"
+                          Foreground="{StaticResource InkBrush}"
+                          FontSize="13"
+                          FontWeight="SemiBold" />
+                      <TextBlock
+                          x:Name="SupportBody"
+                          Text="Buy the developer a coffee via PayPal."
+                          Foreground="{StaticResource MutedBrush}"
+                          FontSize="12.5"
+                          TextWrapping="Wrap"
+                          Margin="0,5,0,4" />
+                      <Button
+                          x:Name="SupportLinkButton"
+                          Content="https://paypal.me/Yingxuliu"
+                          Style="{StaticResource LinkButton}" />
+                      <TextBlock
+                          x:Name="SupportNote"
+                          Text="Support is voluntary and does not purchase technical support, warranty, priority service, commercial rights, or feature requests."
+                          Foreground="{StaticResource MutedBrush}"
+                          FontSize="11.5"
+                          TextWrapping="Wrap"
+                          Margin="0,8,0,0" />
+                    </StackPanel>
+                  </Border>
                 </StackPanel>
               </Border>
-            </StackPanel>
-          </Border>
+            </Popup>
+          </Grid>
         </Grid>
 
         <ScrollViewer
@@ -587,34 +685,10 @@ $Xaml = @"
                     <ColumnDefinition Width="Auto" />
                   </Grid.ColumnDefinitions>
                   <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="AgentsTitle" Text="Runtime role collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to request additional role bindings when the current task needs them and the host supports it." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
+                    <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
+                    <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
                   </StackPanel>
                   <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
-                </Grid>
-
-                <Grid MinHeight="82" Margin="0,0,0,26">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="ContinuationTitle" Text="Scheduled continuation" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock x:Name="ContinuationBody" Text="Allow heartbeat or manual-resume setup for long work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
-                  </StackPanel>
-                  <ToggleButton x:Name="ContinuationToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
-                </Grid>
-
-                <Grid MinHeight="82" Margin="0">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="CockpitTitle" Text="Cockpit UI" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock x:Name="CockpitBody" Text="Open the visual control surface instead of chat-only route signs." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
-                  </StackPanel>
-                  <ToggleButton x:Name="CockpitToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
                 </Grid>
             </StackPanel>
           </Grid>
@@ -648,10 +722,11 @@ $Window = [Windows.Markup.XamlReader]::Load($Reader)
 $Window.Icon = [System.Windows.Media.Imaging.BitmapImage]::new([System.Uri]::new($IconPath))
 
 $Names = @(
-    "EnglishLanguage", "ChineseLanguage", "TitleText", "RequestLabel",
+    "SettingsButton", "SettingsPopup", "EnglishLanguage", "ChineseLanguage",
+    "SettingsTitle", "LanguageLabel", "SupportTitle", "SupportBody",
+    "SupportLinkButton", "SupportNote", "TitleText", "RequestLabel",
     "WorkRequest", "PlaceholderText", "AgentsTitle", "AgentsBody",
-    "ContinuationTitle", "ContinuationBody", "CockpitTitle", "CockpitBody",
-    "AgentsToggle", "ContinuationToggle", "CockpitToggle", "ConfirmButton", "StatusText"
+    "AgentsToggle", "ConfirmButton", "StatusText"
 )
 
 $Ui = @{}
@@ -663,28 +738,32 @@ $Copy = @{
     en = @{
         Window = "FlowPilot"
         Title = "FlowPilot"
+        SettingsTooltip = "Settings"
+        SettingsTitle = "Settings"
+        LanguageLabel = "Language"
+        SupportTitle = "Support developer"
+        SupportBody = "Buy the developer a coffee via PayPal."
+        SupportNote = "Support is voluntary and does not purchase technical support, warranty, priority service, commercial rights, or feature requests."
         RequestLabel = "Work request"
         Placeholder = "Write the instructions you want the AI to follow."
-        AgentsTitle = "Runtime role collaboration"
-        AgentsBody = "Allow FlowPilot to request additional role bindings when the current task needs them and the host supports it."
-        ContinuationTitle = "Scheduled continuation"
-        ContinuationBody = "Allow heartbeat or manual-resume setup for long work."
-        CockpitTitle = "Cockpit UI"
-        CockpitBody = "Open the visual control surface instead of chat-only route signs."
+        AgentsTitle = "Background collaboration"
+        AgentsBody = "Allow FlowPilot to use this environment's supported background workers for isolated role work."
         Confirm = "Confirm"
         Confirmed = "Startup intake recorded."
     }
     zh = @{
         Window = "FlowPilot"
         Title = "FlowPilot"
+        SettingsTooltip = "设置"
+        SettingsTitle = "设置"
+        LanguageLabel = "语言"
+        SupportTitle = "支持开发者"
+        SupportBody = "通过 PayPal 请开发者喝杯咖啡。"
+        SupportNote = "支持是自愿的，不购买技术支持、保修、优先服务、商业权利或功能请求承诺。"
         RequestLabel = "工作要求"
         Placeholder = "请写下给 AI 的工作目标和具体命令。"
-        AgentsTitle = "运行时角色协作"
-        AgentsBody = "宿主支持时，允许 FlowPilot 按当前任务需要请求额外角色协作。"
-        ContinuationTitle = "定时继续"
-        ContinuationBody = "允许为长任务设置心跳或手动恢复。"
-        CockpitTitle = "Cockpit UI"
-        CockpitBody = "打开可视化控制台，而不是只用聊天路线标识。"
+        AgentsTitle = "后台协作"
+        AgentsBody = "允许 FlowPilot 使用当前环境支持的后台工作者处理隔离的角色任务。"
         Confirm = "确认"
         Confirmed = "启动注入已记录。"
     }
@@ -708,18 +787,32 @@ function Apply-Language {
     $T = $Copy[$Lang]
     $Window.Title = $T.Window
     $Ui.TitleText.Text = $T.Title
+    $Ui.SettingsButton.ToolTip = $T.SettingsTooltip
+    $Ui.SettingsTitle.Text = $T.SettingsTitle
+    $Ui.LanguageLabel.Text = $T.LanguageLabel
+    $Ui.SupportTitle.Text = $T.SupportTitle
+    $Ui.SupportBody.Text = $T.SupportBody
+    $Ui.SupportNote.Text = $T.SupportNote
     $Ui.RequestLabel.Text = $T.RequestLabel
     $Ui.PlaceholderText.Text = $T.Placeholder
     $Ui.AgentsTitle.Text = $T.AgentsTitle
     $Ui.AgentsBody.Text = $T.AgentsBody
-    $Ui.ContinuationTitle.Text = $T.ContinuationTitle
-    $Ui.ContinuationBody.Text = $T.ContinuationBody
-    $Ui.CockpitTitle.Text = $T.CockpitTitle
-    $Ui.CockpitBody.Text = $T.CockpitBody
     $Ui.ConfirmButton.Content = $T.Confirm
     $Ui.StatusText.Text = ""
 }
 
+$SupportUrl = "https://paypal.me/Yingxuliu"
+$Ui.SettingsPopup.PlacementTarget = $Ui.SettingsButton
+$Ui.SettingsButton.Add_Click({
+    $Ui.SettingsPopup.IsOpen = -not $Ui.SettingsPopup.IsOpen
+})
+$Ui.SupportLinkButton.Add_Click({
+    try {
+        Start-Process $SupportUrl
+    } catch {
+        $Ui.StatusText.Text = $_.Exception.Message
+    }
+})
 $Ui.EnglishLanguage.Add_Checked({ Apply-Language })
 $Ui.ChineseLanguage.Add_Checked({ Apply-Language })
 $Ui.WorkRequest.Add_TextChanged({ Update-Placeholder })
@@ -730,8 +823,6 @@ $Ui.ConfirmButton.Add_Click({
             "confirmed" `
             $Ui.WorkRequest.Text `
             ([bool]$Ui.AgentsToggle.IsChecked) `
-            ([bool]$Ui.ContinuationToggle.IsChecked) `
-            ([bool]$Ui.CockpitToggle.IsChecked) `
             $Lang
         $script:StartupIntakeCompleted = $true
         $script:ExitCode = 0
@@ -750,8 +841,6 @@ $Window.Add_Closing({
                 "cancelled" `
                 "" `
                 ([bool]$Ui.AgentsToggle.IsChecked) `
-                ([bool]$Ui.ContinuationToggle.IsChecked) `
-                ([bool]$Ui.CockpitToggle.IsChecked) `
                 (Get-Language) | Out-Null
             $script:ExitCode = 0
         } catch {

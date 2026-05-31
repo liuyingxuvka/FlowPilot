@@ -55,7 +55,7 @@
       "finding_id": "<finding-id>",
       "severity": "<blocking|important|minor>",
       "problem": "<what-is-wrong-with-the-worker-output>",
-      "required_worker_action": "<specific-research-or-experiment-action>",
+      "required_workerction": "<specific-research-or-experiment-action>",
       "required_reviewer_recheck": true
     }
   ],

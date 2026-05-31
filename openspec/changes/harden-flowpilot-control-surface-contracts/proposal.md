@@ -7,14 +7,13 @@ role work packets can drift unless packet/result/acceptance obligations are
 checked at one shared contract boundary.
 
 This is a bottom-logic repair. It should fix the family once instead of adding
-role-specific patches for PM, reviewer, FlowGuard operator, validator, worker,
-or closure packets.
+role-specific patches for PM, reviewer, explicit FlowGuard officer, worker, or
+system validation/closure outcomes.
 
 ## What Changes
 
-- Add a shared current-run resolver that accepts the new `run_id/run_root`
-  pointer and legacy `current_run_id/current_run_root` and
-  `active_run_id/active_run_root` pointers.
+- Add a shared current-run resolver that accepts only the current
+  `run_id/run_root` pointer schema and rejects implicit or old pointer names.
 - Add shared safe JSON/text readers that return structured read findings for
   missing, invalid, or non-UTF-8 evidence instead of crashing audits.
 - Add a lightweight control-surface contract validator for current-run packet

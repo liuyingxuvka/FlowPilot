@@ -1,21 +1,26 @@
 {
   "actual_card_graph": {
-    "active_card_count": 58,
-    "card_count": 65,
-    "checked_count": 65,
+    "active_card_count": 56,
+    "card_count": 63,
+    "checked_count": 63,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
       "card_instruction_checked:controller.break_glass_repair",
       "card_instruction_checked:controller.core",
       "card_instruction_checked:controller.resume_reentry",
+      "card_instruction_checked:flowguard_operator.child_skill_conformance_model",
+      "card_instruction_checked:flowguard_operator.child_skill_product_fit",
+      "card_instruction_checked:flowguard_operator.core",
+      "card_instruction_checked:flowguard_operator.product_architecture_modelability",
+      "card_instruction_checked:flowguard_operator.root_contract_modelability",
+      "card_instruction_checked:flowguard_operator.route_process_check",
       "card_instruction_checked:pm.child_skill_gate_manifest",
       "card_instruction_checked:pm.child_skill_selection",
       "card_instruction_checked:pm.closure",
       "card_instruction_checked:pm.continuation_capability_binding",
       "card_instruction_checked:pm.controller_reset_duty",
       "card_instruction_checked:pm.core",
-      "card_instruction_checked:pm.role_binding_recovery_freshness",
       "card_instruction_checked:pm.current_node_loop",
       "card_instruction_checked:pm.dependency_policy",
       "card_instruction_checked:pm.event.node_started",
@@ -23,12 +28,12 @@
       "card_instruction_checked:pm.event.reviewer_report",
       "card_instruction_checked:pm.evidence_quality_package",
       "card_instruction_checked:pm.final_ledger",
+      "card_instruction_checked:pm.flowguard_operator_request_report_loop",
       "card_instruction_checked:pm.material_absorb_or_research",
       "card_instruction_checked:pm.material_scan",
       "card_instruction_checked:pm.material_understanding",
       "card_instruction_checked:pm.model_miss_triage",
       "card_instruction_checked:pm.node_acceptance_plan",
-      "card_instruction_checked:pm.officer_request_report_loop",
       "card_instruction_checked:pm.output_contract_catalog",
       "card_instruction_checked:pm.parent_backward_targets",
       "card_instruction_checked:pm.parent_segment_decision",
@@ -41,18 +46,12 @@
       "card_instruction_checked:pm.research_package",
       "card_instruction_checked:pm.resume_decision",
       "card_instruction_checked:pm.review_repair",
+      "card_instruction_checked:pm.role_binding_recovery_freshness",
       "card_instruction_checked:pm.role_work_request",
       "card_instruction_checked:pm.root_contract",
       "card_instruction_checked:pm.route_skeleton",
       "card_instruction_checked:pm.startup_activation",
       "card_instruction_checked:pm.startup_intake",
-      "card_instruction_checked:process_officer.child_skill_conformance_model",
-      "card_instruction_checked:process_officer.core",
-      "card_instruction_checked:process_officer.route_process_check",
-      "card_instruction_checked:product_officer.child_skill_product_fit",
-      "card_instruction_checked:product_officer.core",
-      "card_instruction_checked:product_officer.product_architecture_modelability",
-      "card_instruction_checked:product_officer.root_contract_modelability",
       "card_instruction_checked:reviewer.child_skill_gate_manifest_review",
       "card_instruction_checked:reviewer.core",
       "card_instruction_checked:reviewer.evidence_quality_review",
@@ -68,9 +67,8 @@
       "card_instruction_checked:reviewer.strict_gate_obligation_review",
       "card_instruction_checked:reviewer.worker_result_review",
       "card_instruction_checked:startup_banner",
+      "card_instruction_checked:worker.core",
       "card_instruction_checked:worker.research_report",
-      "card_instruction_checked:worker_a.core",
-      "card_instruction_checked:worker_b.core",
       "card_instruction_coverage_complete"
     ],
     "live_context_errors": [],
@@ -88,7 +86,7 @@
       "stale_controller_ack_guidance": false
     },
     "router_sequence_manifest_errors": [],
-    "state_count": 67,
+    "state_count": 65,
     "status": "complete"
   },
   "hazard_checks": {
@@ -451,7 +449,7 @@
         "detected": true,
         "failures": [
           "hazard.good: missing next_step_source",
-          "hazard.good: next_step_source does not name flowpilot_router.py"
+          "hazard.good: next_step_source does not name flowpilot_new.py"
         ]
       },
       "missing_output_contract_guidance": {
@@ -601,7 +599,7 @@
       "missing_pm_note_guidance": {
         "card": {
           "action_guidance": true,
-          "card_id": "worker_a.core",
+          "card_id": "worker.core",
           "chat_body_suppression": true,
           "controller_router_notice_guidance": true,
           "direct_router_ack_guidance": true,
@@ -631,7 +629,7 @@
         },
         "detected": true,
         "failures": [
-          "worker_a.core: missing worker/officer PM Note soft guidance"
+          "worker.core: missing worker/FlowGuard operator PM Note soft guidance"
         ]
       },
       "missing_post_ack_receipt_guidance": {
@@ -775,7 +773,7 @@
         },
         "detected": true,
         "failures": [
-          "hazard.good: next_step_source does not name flowpilot_router.py"
+          "hazard.good: next_step_source does not name flowpilot_new.py"
         ]
       },
       "role_card_starts_work_after_ack": {

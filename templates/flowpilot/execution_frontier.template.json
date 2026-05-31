@@ -133,19 +133,23 @@
       "banner_emitted_after_answers": false,
       "answers": {
         "runtime_role_assistances": {
-          "question": "May FlowPilot use runtime role collaboration for this task?",
+          "question": "May FlowPilot use background collaboration for this task?",
           "answer": null,
           "answered": false
         },
         "scheduled_continuation": {
-          "question": "May FlowPilot create heartbeat or scheduled continuation jobs?",
-          "answer": null,
-          "answered": false
+          "question": "Fixed startup default: manual resume.",
+          "answer": "manual",
+          "answered": true,
+          "fixed_default": true,
+          "user_visible": false
         },
         "display_surface": {
-          "question": "Should FlowPilot open the Cockpit UI when startup state is ready, or use chat route signs?",
-          "answer": null,
-          "answered": false
+          "question": "Fixed startup default: chat route signs.",
+          "answer": "chat",
+          "answered": true,
+          "fixed_default": true,
+          "user_visible": false
         }
       },
       "display_entry_action": {
@@ -294,7 +298,7 @@
     "pm_decision_path": "<pm-decision-evidence-path-or-null>",
     "pm_controller_reminder_present": false,
     "reviewer_dispatch_path": "<reviewer-dispatch-evidence-path-or-null>",
-    "worker_identity": "<worker_a|worker_b|authorized_non_controller|null>",
+    "worker_identity": "<worker|authorized_non_controller|null>",
     "worker_result_path": "<node-result-path-or-null>",
     "review_decision_path": "<review-decision-path-or-null>",
     "envelope_body_policy": {
@@ -325,8 +329,8 @@
       "result_envelope_completed_by_role_checked": false,
       "result_envelope_completed_by_agent_id_checked": false,
       "result_body_hash_checked": false,
-      "expected_executor_role": "<worker_a|worker_b|authorized_non_controller|null>",
-      "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown|null>",
+      "expected_executor_role": "<worker|authorized_non_controller|null>",
+      "actual_result_author_role": "<worker|authorized_non_controller|controller|unknown|null>",
       "completed_by_agent_id": "<agent-id-or-null>",
       "completed_agent_id_belongs_to_role": false,
       "worker_result_author_matches_assignment": false,
@@ -364,12 +368,12 @@
     "missing_feature_review_done": false,
     "negative_scope_written": false,
     "functional_acceptance_matrix_written": false,
-    "product_officer_modelability_status": "<pending|approved|blocked>",
-    "product_officer_report_path": "<path-or-null>",
+    "flowguard_operator_modelability_status": "<pending|approved|blocked>",
+    "flowguard_operator_report_path": "<path-or-null>",
     "reviewer_usefulness_challenge_status": "<pending|passed|blocked>",
     "reviewer_report_path": "<path-or-null>",
     "independent_validation_required": true,
-    "product_officer_independent_validation_path": "<path-or-null>",
+    "flowguard_operator_independent_validation_path": "<path-or-null>",
     "reviewer_independent_validation_path": "<path-or-null>",
     "contract_freeze_allowed": false
   },
@@ -464,14 +468,14 @@
     "referenced_files_loaded_or_skipped": [],
     "gate_count": 0,
     "reviewer_review_path": "<path-or-null>",
-    "process_officer_approval_path": "<path-or-null>",
-    "product_officer_approval_path": "<path-or-null>",
+    "flowguard_operator_approval_path": "<path-or-null>",
+    "flowguard_operator_approval_path": "<path-or-null>",
     "pm_route_inclusion_approval_path": "<path-or-null>",
     "independent_validation_required": true,
     "completion_report_only_allowed": false,
     "reviewer_independent_validation_path": "<path-or-null>",
-    "process_officer_independent_validation_path": "<path-or-null>",
-    "product_officer_independent_validation_path": "<path-or-null>",
+    "flowguard_operator_independent_validation_path": "<path-or-null>",
+    "flowguard_operator_independent_validation_path": "<path-or-null>",
     "pm_independent_validation_path": "<path-or-null>",
     "node_refinement_done": false,
     "controller_self_approval_allowed": false,
@@ -490,13 +494,12 @@
         "personal_walkthrough_required": "<true|false>",
         "reviewer_walkthrough_evidence_path": "<path-or-null>",
         "design_recommendations_required": "<true|false>",
-        "draft_owner": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b>",
+        "draft_owner": "<project_manager|human_like_reviewer|flowguard_operator|worker>",
         "execution_owner": "<role-or-null>",
-        "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+        "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
         "forbidden_approvers": [
           "controller",
-          "worker_a",
-          "worker_b"
+        "worker"
         ],
         "approval_status": "<draft|pending|approved|blocked|waived|superseded>",
         "approval_evidence_path": "<path-or-null>",
@@ -563,13 +566,12 @@
   },
   "current_gate_authority": {
     "gate_id": "<current-gate-or-null>",
-    "draft_owner": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|authorized_non_controller|null>",
+    "draft_owner": "<project_manager|human_like_reviewer|flowguard_operator|worker|authorized_non_controller|null>",
     "execution_owner": "<role-or-null>",
     "required_approver": "<role-or-null>",
     "forbidden_approvers": [
       "controller",
-      "worker_a",
-      "worker_b"
+        "worker"
     ],
     "approval_status": "<none|draft|pending|approved|blocked|superseded>",
     "approval_evidence_path": "<path-or-null>",
@@ -600,47 +602,43 @@
       "required_approver": "project_manager",
       "forbidden_approvers": [
         "controller",
-        "worker_a",
-        "worker_b"
+        "worker"
       ]
     },
     "product_function_architecture": {
       "draft_owner": "project_manager",
       "required_approver": "project_manager",
       "secondary_required_approvers": [
-        "product_flowguard_officer",
+        "flowguard_operator",
         "human_like_reviewer"
       ],
       "forbidden_approvers": [
         "controller",
-        "worker_a",
-        "worker_b"
+        "worker"
       ]
     },
     "process_model": {
-      "draft_owner": "process_flowguard_officer",
-      "execution_owner": "process_flowguard_officer",
-      "interpretation_owner": "process_flowguard_officer",
-      "required_approver": "process_flowguard_officer",
+      "draft_owner": "flowguard_operator",
+      "execution_owner": "flowguard_operator",
+      "interpretation_owner": "flowguard_operator",
+      "required_approver": "flowguard_operator",
       "forbidden_approvers": [
         "controller",
         "project_manager",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b"
+        "flowguard_operator",
+        "worker"
       ]
     },
     "product_model": {
-      "draft_owner": "product_flowguard_officer",
-      "execution_owner": "product_flowguard_officer",
-      "interpretation_owner": "product_flowguard_officer",
-      "required_approver": "product_flowguard_officer",
+      "draft_owner": "flowguard_operator",
+      "execution_owner": "flowguard_operator",
+      "interpretation_owner": "flowguard_operator",
+      "required_approver": "flowguard_operator",
       "forbidden_approvers": [
         "controller",
         "project_manager",
-        "process_flowguard_officer",
-        "worker_a",
-        "worker_b"
+        "flowguard_operator",
+        "worker"
       ]
     },
     "human_review": {
@@ -649,8 +647,7 @@
       "forbidden_approvers": [
         "controller",
         "project_manager",
-        "worker_a",
-        "worker_b"
+        "worker"
       ]
     },
     "route_mutation": {
@@ -659,18 +656,16 @@
       "forbidden_approvers": [
         "controller",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b"
+        "flowguard_operator",
+        "flowguard_operator",
+        "worker"
       ]
     },
     "completion": {
       "required_approver": "project_manager",
       "forbidden_approvers": [
         "controller",
-        "worker_a",
-        "worker_b"
+        "worker"
       ]
     }
   },
@@ -711,10 +706,9 @@
     "required_roles": [
       "project_manager",
       "human_like_reviewer",
-      "process_flowguard_officer",
-      "product_flowguard_officer",
-      "worker_a",
-      "worker_b"
+      "flowguard_operator",
+      "flowguard_operator",
+        "worker"
     ],
     "role_memory_required": true,
     "role_memory_packets_loaded": 0,

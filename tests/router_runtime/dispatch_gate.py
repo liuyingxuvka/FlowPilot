@@ -11,13 +11,13 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(run_root))
         ledger = router._create_empty_packet_ledger(root, state["run_id"], run_root)
         ledger["active_packet_id"] = "prior-node-packet"
-        ledger["active_packet_holder"] = "worker_a"
+        ledger["active_packet_holder"] = "worker"
         ledger["active_packet_status"] = "active-holder-lease-issued"
         ledger["packets"].append(
             {
                 "packet_id": "prior-node-packet",
                 "packet_family": "current_node",
-                "active_packet_holder": "worker_a",
+                "active_packet_holder": "worker",
                 "active_packet_status": "active-holder-lease-issued",
             }
         )
@@ -26,16 +26,16 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.make_action(
             action_type="relay_current_node_packet",
             actor="controller",
-            label="relay_new_node_packet_to_worker_a",
-            summary="Relay a new current-node packet to worker_a.",
-            to_role="worker_a",
+            label="relay_new_node_packet_to_worker",
+            summary="Relay a new current-node packet to worker.",
+            to_role="worker",
             extra={"packet_id": "new-node-packet", "packet_ids": ["new-node-packet"]},
         )
 
         gated = router._apply_dispatch_recipient_gate(root, state, run_root, action)
 
         self.assertEqual(gated["action_type"], "await_role_decision")
-        self.assertEqual(gated["to_role"], "worker_a")
+        self.assertEqual(gated["to_role"], "worker")
         self.assertIn("worker_current_node_result_returned", gated["allowed_external_events"])
         gate = gated["dispatch_recipient_gate"]
         self.assertFalse(gate["passed"])
@@ -203,24 +203,24 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "request_id": "prior-role-work",
                 "packet_id": "pm-role-work-prior-role-work",
-                "to_role": "worker_b",
+                "to_role": "worker",
                 "status": "result_returned",
             }
         )
         router.write_json(run_root / "pm_work_requests" / "index.json", index)
 
-        worker_action = router.make_action(
+        workerction = router.make_action(
             action_type="relay_pm_role_work_request_packet",
             actor="controller",
-            label="relay_new_role_work_to_worker_b",
-            summary="Relay a new PM role-work packet to worker_b.",
-            to_role="worker_b",
+            label="relay_new_role_work_to_worker",
+            summary="Relay a new PM role-work packet to worker.",
+            to_role="worker",
             extra={"request_id": "new-role-work", "packet_id": "pm-role-work-new-role-work"},
         )
-        gated_worker = router._apply_dispatch_recipient_gate(root, state, run_root, worker_action)
+        gated_worker = router._apply_dispatch_recipient_gate(root, state, run_root, workerction)
         self.assertEqual(gated_worker["action_type"], "relay_pm_role_work_request_packet")
         self.assertTrue(gated_worker["dispatch_recipient_gate"]["passed"])
-        self.assertEqual(gated_worker["dispatch_recipient_gate"]["target_roles"], ["worker_b"])
+        self.assertEqual(gated_worker["dispatch_recipient_gate"]["target_roles"], ["worker"])
 
         pm_action = router.make_action(
             action_type="deliver_mail",
@@ -252,14 +252,14 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "request_id": "old-role-work",
                     "packet_id": "pm-role-work-old-role-work",
-                    "to_role": "worker_b",
+                    "to_role": "worker",
                     "status": "open",
                     "superseded_by_request_id": "replacement-role-work",
                 },
                 {
                     "request_id": "replacement-role-work",
                     "packet_id": "pm-role-work-replacement-role-work",
-                    "to_role": "worker_b",
+                    "to_role": "worker",
                     "status": "open",
                     "supersedes_request_ids": ["old-role-work"],
                     "supersedes_packet_ids": ["pm-role-work-old-role-work"],
@@ -271,9 +271,9 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.make_action(
             action_type="relay_pm_role_work_request_packet",
             actor="controller",
-            label="relay_replacement_role_work_to_worker_b",
-            summary="Relay a replacement PM role-work packet to worker_b.",
-            to_role="worker_b",
+            label="relay_replacement_role_work_to_worker",
+            summary="Relay a replacement PM role-work packet to worker.",
+            to_role="worker",
             extra={"request_id": "replacement-role-work", "packet_id": "pm-role-work-replacement-role-work"},
         )
         gated = router._apply_dispatch_recipient_gate(root, state, run_root, action)
@@ -291,7 +291,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "request_id": "prior-role-work",
                 "packet_id": "pm-role-work-prior-role-work",
-                "to_role": "worker_b",
+                "to_role": "worker",
                 "status": "packet_relayed",
             }
         )
@@ -300,15 +300,15 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.make_action(
             action_type="relay_pm_role_work_request_packet",
             actor="controller",
-            label="relay_new_role_work_to_worker_b",
-            summary="Relay a new PM role-work packet to worker_b.",
-            to_role="worker_b",
+            label="relay_new_role_work_to_worker",
+            summary="Relay a new PM role-work packet to worker.",
+            to_role="worker",
             extra={"request_id": "new-role-work", "packet_id": "pm-role-work-new-role-work"},
         )
         gated = router._apply_dispatch_recipient_gate(root, state, run_root, action)
 
         self.assertEqual(gated["action_type"], "await_role_decision")
-        self.assertEqual(gated["to_role"], "worker_b")
+        self.assertEqual(gated["to_role"], "worker")
         gate = gated["dispatch_recipient_gate"]
         self.assertFalse(gate["passed"])
         self.assertEqual(gate["busy_reason"], "target_role_pm_role_work_unfinished")
@@ -418,7 +418,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.deliver_current_node_cards(root)
 
         packet_paths: dict[str, str] = {}
-        for packet_id, role in (("node-batch-worker-a", "worker_a"), ("node-batch-worker-b", "worker_b")):
+        for packet_id, role in (("node-batch-worker-1", "worker"), ("node-batch-worker-2", "worker")):
             packet = packet_runtime.create_packet(
                 root,
                 packet_id=packet_id,
@@ -448,42 +448,42 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_current_node_packet")
-        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-a", "node-batch-worker-b"])
+        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-1", "node-batch-worker-2"])
         router.apply_action(root, "relay_current_node_packet")
 
         results: dict[str, str] = {}
         agent_a, result_a_path = self.submit_current_node_result_via_active_holder(
             root,
-            packet_id="node-batch-worker-a",
+            packet_id="node-batch-worker-1",
             result_body_text="worker a result",
         )
-        self.assertEqual(agent_a, f"agent-{run_root.name}-worker_a")
-        results["node-batch-worker-a"] = result_a_path
+        self.assertEqual(agent_a, f"agent-{run_root.name}-worker")
+        results["node-batch-worker-1"] = result_a_path
         router.record_external_event(
             root,
             "worker_current_node_result_returned",
-            {"packet_id": "node-batch-worker-a", "result_envelope_path": results["node-batch-worker-a"]},
+            {"packet_id": "node-batch-worker-1", "result_envelope_path": results["node-batch-worker-1"]},
         )
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["worker_current_node_result_returned"])
-        self.assertIn("worker_b", action["to_role"])
+        self.assertIn("worker", action["to_role"])
 
         agent_b, result_b_path = self.submit_current_node_result_via_active_holder(
             root,
-            packet_id="node-batch-worker-b",
+            packet_id="node-batch-worker-2",
             result_body_text="worker b result",
         )
-        self.assertEqual(agent_b, f"agent-{run_root.name}-worker_b")
-        results["node-batch-worker-b"] = result_b_path
+        self.assertEqual(agent_b, f"agent-{run_root.name}-worker")
+        results["node-batch-worker-2"] = result_b_path
         router.record_external_event(
             root,
             "worker_current_node_result_returned",
-            {"packet_id": "node-batch-worker-b", "result_envelope_path": results["node-batch-worker-b"]},
+            {"packet_id": "node-batch-worker-2", "result_envelope_path": results["node-batch-worker-2"]},
         )
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_current_node_result_to_pm")
-        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-a", "node-batch-worker-b"])
+        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-1", "node-batch-worker-2"])
         router.apply_action(root, "relay_current_node_result_to_pm")
 
         for result_path in results.values():
@@ -508,7 +508,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_a: "worker_a", agent_b: "worker_b"},
+                    "agent_role_map": {agent_a: "worker", agent_b: "worker"},
                 },
             ),
         )
@@ -518,7 +518,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(runtime_audit["passed"])
         self.assertEqual(runtime_audit["batch_id"], "node-parallel-batch-001")
         self.assertEqual(runtime_audit["packet_count"], 2)
-        self.assertEqual(sorted(runtime_audit["reviewed_packet_ids"]), ["node-batch-worker-a", "node-batch-worker-b"])
+        self.assertEqual(sorted(runtime_audit["reviewed_packet_ids"]), ["node-batch-worker-1", "node-batch-worker-2"])
     def test_current_node_pre_review_reconciliation_blocks_reviewer_card(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(
@@ -554,7 +554,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {f"agent-{self.run_root_for(root).name}-worker_a": "worker_a"},
+                    "agent_role_map": {f"agent-{self.run_root_for(root).name}-worker": "worker"},
                 },
             ),
         )
@@ -597,7 +597,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {f"agent-{run_root.name}-worker_a": "worker_a"},
+                    "agent_role_map": {f"agent-{run_root.name}-worker": "worker"},
                 },
             ),
         )
@@ -680,7 +680,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "reviews/current_node_result_missing_passed",
                     {
                         "reviewed_by_role": "human_like_reviewer",
-                        "agent_role_map": {"agent-worker-a": "worker_a"},
+                        "agent_role_map": {"agent-worker-1": "worker"},
                     },
                 ),
             )
@@ -726,7 +726,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {"agent-worker-a": "worker_a"},
+                    "agent_role_map": {"agent-worker-1": "worker"},
                 },
             ),
         )

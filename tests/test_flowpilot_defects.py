@@ -158,7 +158,7 @@ class FlowPilotDefectLedgerTests(unittest.TestCase):
                 "--source-kind",
                 "fixture",
                 "--role",
-                "worker_b",
+                "worker",
                 "--reason",
                 "Fixture proves capability but not live project coverage.",
             ]

@@ -101,22 +101,22 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
             "packets.packet_identity_boundary",
             {
                 "packet_identity_marker": "flowpilot_packet_identity",
-                "role": "worker_a",
+                "role": "worker",
             },
         )
         self.assertIn("flowpilot_packet_identity: true", packet_boundary)
-        self.assertIn("recipient_role: worker_a", packet_boundary)
+        self.assertIn("recipient_role: worker", packet_boundary)
         self.assertIn("Packet ACK is receipt only", packet_boundary)
 
         result_boundary = render_prompt_text(
             "packets.result_identity_boundary",
             {
                 "result_identity_marker": "flowpilot_result_identity",
-                "role": "worker_a",
+                "role": "worker",
             },
         )
         self.assertIn("flowpilot_result_identity: true", result_boundary)
-        self.assertIn("completed_by_role: worker_a", result_boundary)
+        self.assertIn("completed_by_role: worker", result_boundary)
 
         output_contract = render_prompt_text(
             "packets.output_contract_section",

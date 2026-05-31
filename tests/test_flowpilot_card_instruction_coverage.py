@@ -115,22 +115,20 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("without overlapping files", text)
                 self.assertIn("evidence duties, or review ownership", text)
                 lowered = text.lower()
-                self.assertNotIn("default `worker_a`", lowered)
-                self.assertNotIn("default worker_a", lowered)
+                self.assertNotIn("default `worker`", lowered)
+                self.assertNotIn("default worker", lowered)
                 self.assertNotIn("do not default", lowered)
 
-    def test_worker_and_officer_packets_carry_soft_pm_note_guidance(self) -> None:
+    def test_worker_and_flowguard_operator_packets_carry_soft_pm_note_guidance(self) -> None:
         guidance_paths = [
             *_card_paths_by_id(
                 "pm.material_scan",
                 "pm.current_node_loop",
                 "pm.research_package",
-                "pm.officer_request_report_loop",
-                "worker_a.core",
-                "worker_b.core",
+                "pm.flowguard_operator_request_report_loop",
+                "worker.core",
                 "worker.research_report",
-                "process_officer.core",
-                "product_officer.core",
+                "flowguard_operator.core",
             ),
             ROOT / "templates/flowpilot/packets/packet_body.template.md",
             ROOT / "templates/flowpilot/packets/result_body.template.md",
@@ -178,8 +176,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             "pm.current_node_loop",
             "pm.review_repair",
             "pm.role_work_request",
-            "worker_a.core",
-            "worker_b.core",
+            "worker.core",
         )
         for path in executable_worker_prompts:
             with self.subTest(path=path.name):
@@ -208,12 +205,11 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("must not repair target implementation", text)
                 self.assertIn("pm suggestion items", text)
 
-        officer_prompts = _card_paths_by_id(
-            "pm.officer_request_report_loop",
-            "process_officer.core",
-            "product_officer.core",
+        flowguard_operator_prompts = _card_paths_by_id(
+            "pm.flowguard_operator_request_report_loop",
+            "flowguard_operator.core",
         )
-        for path in officer_prompts:
+        for path in flowguard_operator_prompts:
             with self.subTest(path=path.name):
                 text = normalized(path)
                 self.assertIn("role-scoped quality repair boundary", text)
@@ -260,8 +256,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("flowguard_decision", suggestion_template["impact_triage"])
 
         worker_cards = _card_paths_by_id(
-            "worker_a.core",
-            "worker_b.core",
+            "worker.core",
             "worker.research_report",
         )
         for path in worker_cards:
@@ -272,8 +267,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("advisory only", text)
                 self.assertIn("must not use `current_gate_blocker`", text)
 
-        officer_cards = _card_paths_by_id("process_officer.core", "product_officer.core")
-        for path in officer_cards:
+        flowguard_operator_cards = _card_paths_by_id("flowguard_operator.core")
+        for path in flowguard_operator_cards:
             with self.subTest(path=path.name):
                 text = path.read_text(encoding="utf-8").lower()
                 self.assertIn("pm suggestion items", text)
@@ -324,21 +319,19 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             "pm.child_skill_gate_manifest",
             "pm.route_skeleton",
             "pm.node_acceptance_plan",
-            "pm.officer_request_report_loop",
+            "pm.flowguard_operator_request_report_loop",
             "pm.current_node_loop",
             "pm.role_work_request",
             "pm.review_repair",
             "pm.final_ledger",
             "pm.closure",
             "pm.resume_decision",
-            "process_officer.core",
-            "product_officer.core",
+            "flowguard_operator.core",
             "reviewer.core",
             "reviewer.worker_result_review",
             "reviewer.strict_gate_obligation_review",
             "reviewer.final_backward_replay",
-            "worker_a.core",
-            "worker_b.core",
+            "worker.core",
             "worker.research_report",
             "pm.event.node_started",
             "pm.event.reviewer_report",
@@ -365,7 +358,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("mutate routes", controller_text)
         self.assertIn("read sealed flowguard report bodies", controller_text)
 
-        for card_id in ("process_officer.core", "product_officer.core"):
+        for card_id in ("flowguard_operator.core",):
             text = " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
             with self.subTest(card_id=card_id):
                 self.assertIn("your flowguard report supports pm and reviewer decisions", text)
@@ -373,7 +366,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("mutate routes", text)
                 self.assertIn("close nodes", text)
 
-        for card_id in ("worker_a.core", "worker_b.core", "worker.research_report"):
+        for card_id in ("worker.core", "worker.research_report"):
             text = " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
             with self.subTest(card_id=card_id):
                 self.assertIn("flowguard obligation coverage", text)
@@ -422,12 +415,10 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         pm_startup_intake_card = _card_path_by_id("pm.startup_intake")
         pm_verified_open_cards = _card_paths_by_id("pm.startup_activation", "pm.review_repair")
         ordinary_role_cards = _card_paths_by_id(
-            "worker_a.core",
-            "worker_b.core",
+            "worker.core",
             "worker.research_report",
             "reviewer.core",
-            "process_officer.core",
-            "product_officer.core",
+            "flowguard_operator.core",
         )
 
         for text in (packet_runtime_text, packet_template, pm_card):
@@ -492,26 +483,26 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         ):
             self.assertIn(term, pm_node_plan)
 
-        officer_loop = normalized(_card_path_by_id("pm.officer_request_report_loop"))
+        flowguard_operator_loop = normalized(_card_path_by_id("pm.flowguard_operator_request_report_loop"))
         for term in (
             "role_skill_use_bindings",
             "flowguard child skill",
             "model-test alignment",
             "testmesh",
-            "officer prose does not close a test gap",
+            "flowguard operator prose does not close a test gap",
         ):
-            self.assertIn(term, officer_loop)
+            self.assertIn(term, flowguard_operator_loop)
 
         pm_role_work = normalized(_card_path_by_id("pm.role_work_request"))
         for term in (
             "test obligation coverage",
             "test_obligation_matrix",
             "maintain ordinary packet-scoped tests",
-            "officers identify obligations and gaps",
+            "flowguard operators identify obligations and gaps",
         ):
             self.assertIn(term, pm_role_work)
 
-        worker_cards = _card_paths_by_id("worker_a.core", "worker_b.core")
+        worker_cards = _card_paths_by_id("worker.core")
         for path in worker_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
@@ -546,8 +537,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             "pm.route_skeleton",
             "pm.node_acceptance_plan",
             "pm.closure",
-            "process_officer.core",
-            "product_officer.core",
+            "flowguard_operator.core",
             "reviewer.core",
         )
         for path in required_cards:

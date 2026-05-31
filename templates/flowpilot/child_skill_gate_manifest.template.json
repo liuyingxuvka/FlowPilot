@@ -30,19 +30,19 @@
         "process_support": "<required|conditional|not_applicable>"
       },
       "supported_flowpilot_process_contexts": [
-        "<pm_planning|pm_route_design|pm_acceptance_writing|worker_execution|reviewer_review|process_officer_modeling|product_officer_modeling|validation|followup>"
+        "<pm_planning|pm_route_design|pm_acceptance_writing|worker_execution|reviewer_review|flowguard_operator_modeling|validation|followup>"
       ],
       "role_skill_use_bindings": [
         {
           "binding_id": "<skill-name>:<role>:<context>:<output-or-gate-id>",
-          "used_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|worker_a|worker_b|followup_officer>",
+          "used_by_role": "<project_manager|human_like_reviewer|flowguard_operator|worker|followup_operator>",
           "use_context": "<planning|route_design|acceptance_writing|execution|review|modeling|validation|followup>",
           "source_skill_path": "<path-to-SKILL.md>",
           "referenced_paths": [],
           "reason": "<why this role needs the skill for this FlowPilot duty or deliverable work>",
           "evidence_required": true,
           "affected_output_or_gate": "<artifact-or-gate-id>",
-          "reviewer_or_checker_role": "<human_like_reviewer|project_manager|process_flowguard_officer|product_flowguard_officer>",
+          "reviewer_or_checker_role": "<human_like_reviewer|project_manager|flowguard_operator>",
           "self_attestation_allowed": false
         }
       ],
@@ -61,11 +61,11 @@
             "default_policy_or_user_override": "<default|user_override|not_applicable>",
             "route_node_ids": [],
             "work_packet_slices": [],
-            "reviewer_or_officer_gate_ids": [],
+            "reviewer_or_flowguard_gate_ids": [],
             "expected_artifact_paths": [],
             "waiver": {
               "status": "<not_waived|waived|not_applicable>",
-              "approved_by_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer|null>",
+              "approved_by_role": "<project_manager|human_like_reviewer|flowguard_operator|null>",
               "reason": "<reason-or-null>"
             }
           }
@@ -75,7 +75,7 @@
       "gates": [
         {
           "gate_id": "<gate-id>",
-          "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+          "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
           "evidence_required": [],
           "controller_can_approve": false
         }
@@ -95,8 +95,8 @@
   ],
   "approval": {
     "reviewer_passed": false,
-    "process_officer_passed": false,
-    "product_officer_passed": false,
+    "flowguard_operator_passed": false,
+    "flowguard_operator_passed": false,
     "pm_approved_for_route": false
   }
 }

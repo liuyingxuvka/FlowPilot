@@ -101,8 +101,8 @@ PROCESS_CONTRACT_BINDING_REQUIRED = frozenset(
     {
         "current_node_work|worker.current_node|project_manager|project_manager",
         "pm_role_work_request|pm.role_work_request|project_manager|project_manager",
-        "officer_model_report|officer.model_report|project_manager|project_manager",
-        "officer_model_miss_report|officer.model_miss_report|project_manager|project_manager",
+        "flowguard_operator_model_report|flowguard_operator.model_report|project_manager|project_manager",
+        "flowguard_operator_model_miss_report|flowguard_operator.model_miss_report|project_manager|project_manager",
         "reviewer_result_review|reviewer.review|project_manager|project_manager",
         "material_scan|worker.material_scan|project_manager|project_manager",
         "research|worker.research|project_manager|project_manager",
@@ -116,7 +116,7 @@ WAIT_EVENT_PRODUCER_REQUIRED = frozenset(
         "pm_records_role_work_result_decision|project_manager",
         "current_node_reviewer_passes_result|human_like_reviewer",
         "current_node_reviewer_blocks_result|human_like_reviewer",
-        "worker_current_node_result_returned|worker_a",
+        "worker_current_node_result_returned|worker",
         "pm_resume_recovery_decision_returned|project_manager",
     }
 )
@@ -1413,8 +1413,8 @@ def collect_source_state(project_root: Path) -> State:
     startup_card_text = (runtime_root / "cards" / "reviewer" / "startup_fact_check.md").read_text(encoding="utf-8")
     pm_core_text = (runtime_root / "cards" / "roles" / "project_manager.md").read_text(encoding="utf-8")
     reviewer_core_text = (runtime_root / "cards" / "roles" / "human_like_reviewer.md").read_text(encoding="utf-8")
-    worker_a_core_text = (runtime_root / "cards" / "roles" / "worker_a.md").read_text(encoding="utf-8")
-    worker_b_core_text = (runtime_root / "cards" / "roles" / "worker_b.md").read_text(encoding="utf-8")
+    worker_core_text = (runtime_root / "cards" / "roles" / "worker.md").read_text(encoding="utf-8")
+    worker_core_text = (runtime_root / "cards" / "roles" / "worker.md").read_text(encoding="utf-8")
     pm_startup_text = (runtime_root / "cards" / "phases" / "pm_startup_activation.md").read_text(encoding="utf-8")
     pm_repair_text = (runtime_root / "cards" / "phases" / "pm_review_repair.md").read_text(encoding="utf-8")
     pm_resume_text = (runtime_root / "cards" / "phases" / "pm_resume_decision.md").read_text(encoding="utf-8")
@@ -1424,8 +1424,8 @@ def collect_source_state(project_root: Path) -> State:
         startup_card_text,
         pm_core_text,
         reviewer_core_text,
-        worker_a_core_text,
-        worker_b_core_text,
+        worker_core_text,
+        worker_core_text,
         pm_repair_text,
     )
 

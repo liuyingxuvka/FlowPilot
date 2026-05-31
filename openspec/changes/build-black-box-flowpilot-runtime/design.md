@@ -12,13 +12,17 @@ written to the ledger is context, not proof.
 
 ## Target Shape
 
-The runtime has stable responsibilities, not permanent people:
+The runtime has requested responsibilities, not permanent people or a fixed
+crew:
 
 - Router: selects the next legal action from the ledger.
 - Planner: creates route versions and task packets.
 - Worker: executes a scoped packet.
 - Reviewer: independently checks packet results.
-- FlowGuard operator: models a named risk and returns a scoped report.
+- Process FlowGuard officer: models development/process/route/evidence risk
+  and returns a scoped report when requested.
+- Product FlowGuard officer: models product/function/modelability risk and
+  returns a scoped report when requested.
 
 Any responsibility may be served by a newly leased background agent. A lease is
 a bounded permission to do one kind of work for one route scope. It may ACK,
@@ -61,9 +65,9 @@ target is blocked.
 
 Review requires an independent lease. It checks role origin, lease state,
 packet id, route version, evidence freshness, result shape, FlowGuard target,
-and body hash. Final closure walks backward from the user goal through the
-active route, accepted packet results, review reports, FlowGuard reports, fresh
-validation evidence, and explicit gaps.
+and body hash. System-owned validation and closure walk backward from the user
+goal through the active route, accepted packet results, review reports,
+FlowGuard reports, fresh validation evidence, and explicit gaps.
 
 ### Console
 

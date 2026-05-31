@@ -65,54 +65,54 @@ def _flowguard_route_classification(skill_name: str) -> dict[str, Any]:
     if name == "model-first-function-flow":
         return {
             "route_description": "Core model-first behavior and route-selection kernel.",
-            "role_fit": ["project_manager", "product_flowguard_officer", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator", "flowguard_operator"],
             "model_family_fit": ["product_behavior", "route_process", "cross_route_coordination"],
         }
     if "ui" in name:
         return {
             "route_description": "UI interaction behavior, visible control topology, and recovery-state modeling.",
-            "role_fit": ["project_manager", "product_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator"],
             "model_family_fit": ["ui_interaction", "product_behavior"],
         }
     if "development-process" in name:
         return {
             "route_description": "Staged development process, validation freshness, and done-claim modeling.",
-            "role_fit": ["project_manager", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator"],
             "model_family_fit": ["route_process", "validation_evidence"],
         }
     if "code-structure" in name or "structure-mesh" in name:
         return {
             "route_description": "Architecture, module ownership, facade, and structure-governance modeling.",
-            "role_fit": ["project_manager", "product_flowguard_officer", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator", "flowguard_operator"],
             "model_family_fit": ["data_state", "route_hierarchy", "architecture"],
         }
     if "model-test" in name:
         return {
             "route_description": "Model obligations compared against ordinary tests and executable evidence.",
-            "role_fit": ["project_manager", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator"],
             "model_family_fit": ["validation_evidence", "model_test_alignment"],
         }
     if "test-mesh" in name:
         return {
             "route_description": "Layered test hierarchy, slow-check freshness, and evidence-mesh modeling.",
-            "role_fit": ["project_manager", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator"],
             "model_family_fit": ["validation_evidence", "test_hierarchy"],
         }
     if "model-mesh" in name:
         return {
             "route_description": "Parent/child model-family split, stale child evidence, and sibling coverage governance.",
-            "role_fit": ["project_manager", "product_flowguard_officer", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator", "flowguard_operator"],
             "model_family_fit": ["model_family_governance"],
         }
     if "model-miss" in name:
         return {
             "route_description": "Post-failure model-miss review and generalized bad-case modeling.",
-            "role_fit": ["project_manager", "product_flowguard_officer", "process_flowguard_officer"],
+            "role_fit": ["project_manager", "flowguard_operator", "flowguard_operator"],
             "model_family_fit": ["failure_recovery", "model_test_alignment"],
         }
     return {
         "route_description": "FlowGuard route available for PM-selected modeling coverage.",
-        "role_fit": ["project_manager", "product_flowguard_officer", "process_flowguard_officer"],
+        "role_fit": ["project_manager", "flowguard_operator", "flowguard_operator"],
         "model_family_fit": ["product_behavior", "route_process"],
     }
 
@@ -203,17 +203,17 @@ def _write_flowguard_capability_snapshot(
         "capability_menu": [
             {"capability_id": "flowguard_startup_capability_snapshot", "required_before": "pm_product_architecture"},
             {"capability_id": "product_modeling_plan", "owned_by": "project_manager"},
-            {"capability_id": "product_model_family_coverage", "owned_by": "product_flowguard_officer"},
+            {"capability_id": "product_model_family_coverage", "owned_by": "flowguard_operator"},
             {"capability_id": "ordinary_child_skill_projection", "owned_by": "project_manager"},
             {"capability_id": "process_modeling_plan", "owned_by": "project_manager"},
-            {"capability_id": "process_model_family_coverage", "owned_by": "process_flowguard_officer"},
+            {"capability_id": "process_model_family_coverage", "owned_by": "flowguard_operator"},
             {"capability_id": "model_test_alignment", "owned_by": "project_manager"},
             {"capability_id": "final_modeling_coverage_ledger", "owned_by": "project_manager"},
         ],
         "skill_routes": routes,
         "pm_summary": {
             "must_read_before_product_modeling": True,
-            "decide_model_family_count_before_product_officer_task": True,
+            "decide_model_family_count_before_flowguard_operator_task": True,
             "ordinary_child_skills_are_selected_after_product_model_family_acceptance": True,
             "process_modeling_plan_required_before_route_activation": True,
             "final_ledger_must_close_all_model_families": True,

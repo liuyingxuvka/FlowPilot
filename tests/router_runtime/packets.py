@@ -21,7 +21,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "relay_material_scan_packets")
         preflight = action["formal_work_packet_ack_preflight"]
         self.assertTrue(preflight["passed"])
-        self.assertEqual(preflight["target_roles"], ["worker_a", "worker_b"])
+        self.assertEqual(preflight["target_roles"], ["worker", "worker"])
         self.assertEqual(preflight["pending_return_count"], 0)
         self.assertTrue(action["ack_is_read_receipt_only"])
         self.assertTrue(action["target_work_completion_evidence_required_separately"])
@@ -169,8 +169,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.record_external_event(root, "worker_scan_packet_bodies_delivered_after_dispatch")
         blocker = raised.exception.control_blocker
         self.assertEqual(blocker["handling_lane"], "control_plane_reissue")
-        self.assertEqual(blocker["target_role"], "worker_a")
-        self.assertEqual(blocker["responsible_role_for_reissue"], "worker_a")
+        self.assertEqual(blocker["target_role"], "worker")
+        self.assertEqual(blocker["responsible_role_for_reissue"], "worker")
         self.assertFalse(blocker["pm_decision_required"])
     def test_current_node_direct_relay_blocks_missing_output_contract(self) -> None:
         root = self.make_project()
@@ -182,7 +182,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-dispatch-block",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -213,15 +213,15 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "card_id": "worker.test",
             "delivery_id": "worker-test-delivery",
             "delivery_attempt_id": "worker-test-delivery-attempt",
-            "target_role": "worker_a",
-            "target_agent_id": "agent-worker-a",
+            "target_role": "worker",
+            "target_agent_id": "agent-worker-1",
             "card_envelope_path": f"{run_root.relative_to(root).as_posix()}/mailbox/system_cards/worker-test.json",
             "card_envelope_hash": "0" * 64,
             "expected_receipt_path": f"{run_root.relative_to(root).as_posix()}/runtime_receipts/card_reads/worker-test.receipt.json",
             "expected_return_path": f"{run_root.relative_to(root).as_posix()}/mailbox/outbox/card_acks/worker-test.ack.json",
             "ack_clearance_scope": {
                 "schema_version": "flowpilot.system_card_ack_clearance_scope.v1",
-                "target_role": "worker_a",
+                "target_role": "worker",
                 "required_before": [
                     "gate_or_node_boundary_transition",
                     "formal_work_packet_relay_to_target_role",
@@ -239,7 +239,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             actor="controller",
             label="test_material_packet_relay",
             summary="Relay test material packet.",
-            to_role="worker_a",
+            to_role="worker",
             extra={"postcondition": "material_scan_packets_relayed"},
         )
 
@@ -298,7 +298,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-without-plan",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -319,7 +319,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-001",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -331,7 +331,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         resume_next = router._derive_resume_next_recipient_from_packet_ledger(self.run_root_for(root))
         self.assertEqual(resume_next["controller_next_action"], "relay_packet_envelope_to_recorded_recipient")
-        self.assertEqual(resume_next["next_recipient_role"], "worker_a")
+        self.assertEqual(resume_next["next_recipient_role"], "worker")
 
         run_root = self.run_root_for(root)
         state_before = read_json(router.run_state_path(run_root))
@@ -349,11 +349,11 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(state_after["ledger_check_requests"], ledger_requests_before + 1)
         self.assertFalse(state_after.get("ledger_check_requested"))
         envelope = read_json(root / packet["body_path"].replace("packet_body.md", "packet_envelope.json"))
-        self.assertEqual(envelope["controller_relay"]["relayed_to_role"], "worker_a")
+        self.assertEqual(envelope["controller_relay"]["relayed_to_role"], "worker")
         self.assertFalse(envelope["controller_relay"]["body_was_read_by_controller"])
         lease = self.active_holder_lease_for_packet(root, "node-packet-001")
-        self.assertEqual(lease["holder_role"], "worker_a")
-        self.assertEqual(lease["holder_agent_id"], f"agent-{run_root.name}-worker_a")
+        self.assertEqual(lease["holder_role"], "worker")
+        self.assertEqual(lease["holder_agent_id"], f"agent-{run_root.name}-worker")
         self.assertEqual(lease["route_version"], 1)
         self.assertEqual(lease["frontier_version"], 1)
     def test_current_node_worker_packet_requires_active_child_skill_binding_projection(self) -> None:
@@ -388,7 +388,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-missing-binding",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -405,7 +405,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-bound",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={
@@ -444,7 +444,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-002",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -478,7 +478,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_id: "worker_a"},
+                    "agent_role_map": {agent_id: "worker"},
                 },
             ),
         )
@@ -539,7 +539,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="unready-leaf-packet",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="leaf-001",
             body_text="unready leaf work",
             metadata={"route_version": 1},
@@ -598,7 +598,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-aliases",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -650,7 +650,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_id: "worker_a"},
+                    "agent_role_map": {agent_id: "worker"},
                 },
             ),
         )
@@ -672,7 +672,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     {
                         "reviewed_by_role": "human_like_reviewer",
                         "passed": True,
-                        "agent_role_map": {"agent-worker-a": "worker_a"},
+                        "agent_role_map": {"agent-worker-1": "worker"},
                     },
                 ),
             )
@@ -689,7 +689,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {"agent-worker-a": "worker_a"},
+                    "agent_role_map": {"agent-worker-1": "worker"},
                 },
             ),
         )
@@ -698,8 +698,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         _run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(
             root,
             packet_id="node-packet-wrong-role",
-            completed_by_role="worker_b",
-            completed_by_agent_id="agent-worker-b",
+            completed_by_role="worker",
+            completed_by_agent_id="agent-worker-2",
             record_result_return=False,
         )
 
@@ -830,12 +830,12 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "packets": [
                     {
                         "packet_id": "material-scan-reconcile-a",
-                        "to_role": "worker_a",
+                        "to_role": "worker",
                         "body_text": "Inspect local materials.",
                     },
                     {
                         "packet_id": "material-scan-reconcile-b",
-                        "to_role": "worker_b",
+                        "to_role": "worker",
                         "body_text": "Inspect repository state.",
                     },
                 ]
@@ -844,8 +844,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.apply_next_packet_action(root, "relay_material_scan_packets")
         lease_a = self.active_holder_lease_for_packet(root, "material-scan-reconcile-a")
         lease_b = self.active_holder_lease_for_packet(root, "material-scan-reconcile-b")
-        self.assertEqual(lease_a["holder_role"], "worker_a")
-        self.assertEqual(lease_b["holder_role"], "worker_b")
+        self.assertEqual(lease_a["holder_role"], "worker")
+        self.assertEqual(lease_b["holder_role"], "worker")
         material_index_path = run_root / "material" / "material_scan_packets.json"
         self.open_packets_and_write_results(root, material_index_path)
 
@@ -875,12 +875,12 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "packets": [
                     {
                         "packet_id": "material-scan-partial-a",
-                        "to_role": "worker_a",
+                        "to_role": "worker",
                         "body_text": "Inspect local materials.",
                     },
                     {
                         "packet_id": "material-scan-partial-b",
-                        "to_role": "worker_b",
+                        "to_role": "worker",
                         "body_text": "Inspect repository state.",
                     },
                 ]
@@ -891,12 +891,12 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         for record in material_index["packets"]:
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
             packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
-            if envelope["to_role"] == "worker_a":
+            if envelope["to_role"] == "worker":
                 packet_runtime.write_result(
                     root,
                     packet_envelope=envelope,
-                    completed_by_role="worker_a",
-                    completed_by_agent_id="worker-a-agent",
+                    completed_by_role="worker",
+                    completed_by_agent_id="worker-1-agent",
                     result_body_text="worker A material scan result",
                     next_recipient="project_manager",
                 )
@@ -904,21 +904,21 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["label"], "controller_waits_for_remaining_material_scan_batch_results")
-        self.assertEqual(action["to_role"], "worker_b")
+        self.assertEqual(action["to_role"], "worker")
         self.assertEqual(action["allowed_external_events"], ["worker_scan_results_returned"])
 
         batch_ref = read_json(run_root / "packet_batches" / "active_material_scan.json")
         batch = read_json(root / batch_ref["batch_path"])
         self.assertEqual(batch["counts"]["results_returned"], 1)
-        self.assertEqual(batch["member_status"]["returned_roles"], ["worker_a"])
-        self.assertEqual(batch["member_status"]["missing_roles"], ["worker_b"])
+        self.assertEqual(batch["member_status"]["returned_roles"], ["worker"])
+        self.assertEqual(batch["member_status"]["missing_roles"], ["worker"])
         status = read_json(run_root / "display" / "current_status_summary.json")
         partial = status["packet"]["active_batch"]["active_partial_batches"][0]
-        self.assertEqual(partial["missing_roles"], ["worker_b"])
-        self.assertEqual(partial["returned_roles"], ["worker_a"])
+        self.assertEqual(partial["missing_roles"], ["worker"])
+        self.assertEqual(partial["returned_roles"], ["worker"])
         self.assertEqual(status["current_work"]["source"], "packet_batch_member_status")
-        self.assertEqual(status["current_work"]["owner_key"], "worker_b")
-        self.assertEqual(status["current_work"]["diagnostics"]["missing_roles"], ["worker_b"])
+        self.assertEqual(status["current_work"]["owner_key"], "worker")
+        self.assertEqual(status["current_work"]["diagnostics"]["missing_roles"], ["worker"])
 
     def test_material_scan_full_batch_wait_current_work_names_all_missing_roles(self) -> None:
         root = self.make_project()
@@ -933,12 +933,12 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "packets": [
                     {
                         "packet_id": "material-scan-wait-all-a",
-                        "to_role": "worker_a",
+                        "to_role": "worker",
                         "body_text": "Inspect local materials.",
                     },
                     {
                         "packet_id": "material-scan-wait-all-b",
-                        "to_role": "worker_b",
+                        "to_role": "worker",
                         "body_text": "Inspect repository state.",
                     },
                 ]
@@ -950,11 +950,11 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "await_role_decision")
         status = read_json(run_root / "display" / "current_status_summary.json")
         batch = status["packet"]["active_batch"]["batches"][0]
-        self.assertEqual(batch["missing_roles"], ["worker_a", "worker_b"])
+        self.assertEqual(batch["missing_roles"], ["worker", "worker"])
         self.assertEqual(batch["returned_roles"], [])
         self.assertEqual(status["current_work"]["source"], "packet_batch_member_status")
-        self.assertEqual(status["current_work"]["owner_key"], "worker_a,worker_b")
-        self.assertEqual(status["current_work"]["diagnostics"]["missing_roles"], ["worker_a", "worker_b"])
+        self.assertEqual(status["current_work"]["owner_key"], "worker,worker")
+        self.assertEqual(status["current_work"]["diagnostics"]["missing_roles"], ["worker", "worker"])
 
     def test_current_node_result_requires_write_grant(self) -> None:
         root = self.make_project()
@@ -998,7 +998,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-dirty-self-interrogation",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},

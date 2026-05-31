@@ -44,7 +44,7 @@ reference adapters or tests.
 - This change does not delete historical FlowPilot files as its first step.
 - This change does not treat old `.flowpilot` state, chat memory, old agent
   ids, or stale result artifacts as current authority.
-- This change does not require a fixed six-agent runtime invariant. Six named
+- This change does not require a fixed named-agent runtime invariant. Named
   roles may remain a default presentation/compatibility vocabulary, but the
   runtime authority is the current lease and responsibility record.
 - This change does not claim full completion from deterministic fake-agent

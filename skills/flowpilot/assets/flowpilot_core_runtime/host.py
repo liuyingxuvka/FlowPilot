@@ -12,8 +12,6 @@ RESPONSIBILITY_ALIASES = {
     "project_manager": "pm",
     "pm": "pm",
     "reviewer": "reviewer",
-    "process_flowguard_officer": "flowguard_operator",
-    "product_flowguard_officer": "flowguard_operator",
     "flowguard_operator": "flowguard_operator",
     "worker": "worker",
     "research_worker": "research_worker",

@@ -40,19 +40,23 @@
       "banner_emitted_after_answers": false,
       "answers": {
         "runtime_role_assistances": {
-          "question": "May FlowPilot use runtime role collaboration for this task?",
+          "question": "May FlowPilot use background collaboration for this task?",
           "answer": null,
           "answered": false
         },
         "scheduled_continuation": {
-          "question": "May FlowPilot create heartbeat or scheduled continuation jobs?",
-          "answer": null,
-          "answered": false
+          "question": "Fixed startup default: manual resume.",
+          "answer": "manual",
+          "answered": true,
+          "fixed_default": true,
+          "user_visible": false
         },
         "display_surface": {
-          "question": "Should FlowPilot open the Cockpit UI when startup state is ready, or use chat route signs?",
-          "answer": null,
-          "answered": false
+          "question": "Fixed startup default: chat route signs.",
+          "answer": "chat",
+          "answered": true,
+          "fixed_default": true,
+          "user_visible": false
         }
       },
       "display_entry_action": {
@@ -259,8 +263,8 @@
       "result_envelope_completed_by_role_checked": false,
       "result_envelope_completed_by_agent_id_checked": false,
       "result_body_hash_checked": false,
-      "expected_executor_role": "<worker_a|worker_b|authorized_non_controller|null>",
-      "actual_result_author_role": "<worker_a|worker_b|authorized_non_controller|controller|unknown|null>",
+      "expected_executor_role": "<worker|authorized_non_controller|null>",
+      "actual_result_author_role": "<worker|authorized_non_controller|controller|unknown|null>",
       "completed_by_agent_id": "<agent-id-or-null>",
       "completed_agent_id_belongs_to_role": false,
       "author_matches_assignment": false,

@@ -79,7 +79,7 @@ Incidents may leave open status only through an explicit closure path:
 ## Completion Boundary
 
 Break-glass can restore the control channel, but it cannot close route gates,
-approve PM/reviewer/officer decisions, mutate routes, or create target-project
+approve PM/reviewer/FlowGuard operator decisions, mutate routes, or create target-project
 evidence. After the control channel is healthy enough to produce a legal next
 action, Controller must return to Router daemon status and Controller action
 ledger processing.

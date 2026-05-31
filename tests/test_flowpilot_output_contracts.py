@@ -109,10 +109,10 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             if item["contract_id"] == "flowpilot.output_contract.reviewer_review_report.v1"
         )
         self.assertIn("pm_suggestion_items", reviewer_contract["required_body_fields"])
-        officer_model_contract = next(
+        flowguard_operator_model_contract = next(
             item
             for item in registry["contracts"]
-            if item["contract_id"] == "flowpilot.output_contract.officer_model_report.v1"
+            if item["contract_id"] == "flowpilot.output_contract.flowguard_operator_model_report.v1"
         )
         for field in (
             "model_obligations",
@@ -123,9 +123,9 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "background_artifact_completion",
             "pm_suggestion_items",
         ):
-            self.assertIn(field, officer_model_contract["required_body_fields"])
+            self.assertIn(field, flowguard_operator_model_contract["required_body_fields"])
         self.assertTrue(
-            officer_model_contract[
+            flowguard_operator_model_contract[
                 "background_artifact_completion_required_when_long_tests_cited"
             ]
         )
@@ -235,10 +235,10 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             self.assertIn(field, model_miss_contract["required_body_fields"])
         self.assertIn("proceed_with_model_backed_repair", model_miss_contract["allowed_decision_values"])
         self.assertIn(
-            "model_backed_repair_requires_officer_report_refs",
+            "model_backed_repair_requires_flowguard_operator_report_refs",
             model_miss_contract["router_mechanical_validation"],
         )
-        officer_model_miss_contract = next(
+        flowguard_operator_model_miss_contract = next(
             item
             for item in registry["contracts"]
             if item["contract_id"] == "flowpilot.output_contract.flowguard_model_miss_report.v1"
@@ -251,7 +251,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "minimal_sufficient_repair_recommendation",
             "post_repair_model_checks_required",
         ):
-            self.assertIn(field, officer_model_miss_contract["required_body_fields"])
+            self.assertIn(field, flowguard_operator_model_miss_contract["required_body_fields"])
 
     def test_router_delivered_reviewer_cards_include_task_report_contracts(self) -> None:
         startup_card = (
@@ -319,7 +319,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertIn("flowpilot.output_contract.pm_model_miss_triage_decision.v1", model_miss_card)
         self.assertIn("same_class_findings", model_miss_card)
         self.assertIn("minimal_sufficient_repair_recommendation", model_miss_card)
-        officer_loop_card = (
+        flowguard_operator_loop_card = (
             ROOT
             / "skills"
             / "flowpilot"
@@ -327,7 +327,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             / "runtime_kit"
             / "cards"
             / "phases"
-            / "pm_officer_request_report_loop.md"
+            / "pm_flowguard_operator_request_report_loop.md"
         ).read_text(encoding="utf-8")
         for term in (
             "model_obligations",
@@ -337,14 +337,14 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "residual_blindspots",
             "background_artifact_completion",
         ):
-            self.assertIn(term, officer_loop_card)
+            self.assertIn(term, flowguard_operator_loop_card)
 
     def test_pm_packet_repeats_output_contract_in_envelope_body_ledger_and_result(self) -> None:
         root = self.make_project()
         default_contract = packet_runtime.default_output_contract(
             packet_type="work_packet",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
         )
         self.assertIn("PM Suggestion Items", default_contract["required_result_body_sections"])  # type: ignore[index]
@@ -353,7 +353,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             "schema_version": "flowpilot.output_contract.v1",
             "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
             "selected_by_role": "project_manager",
-            "recipient_role": "worker_a",
+            "recipient_role": "worker",
             "task_family": "worker.current_node",
             "required_result_body_sections": ["Status", "Evidence", "Contract Self-Check"],
             "contract_self_check_required": True,
@@ -364,7 +364,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             root,
             packet_id="packet-001",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="Build the current node slice.",
             output_contract=contract,
@@ -374,7 +374,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         ledger_path = root / ".flowpilot" / "runs" / "run-test" / "packet_ledger.json"
 
         self.assertEqual(envelope["output_contract_id"], contract["contract_id"])
-        self.assertEqual(envelope["output_contract"]["recipient_role"], "worker_a")
+        self.assertEqual(envelope["output_contract"]["recipient_role"], "worker")
         body_text = body_path.read_text(encoding="utf-8")
         self.assertIn("## Output Contract", body_text)
         self.assertIn("## Report Contract For This Task", body_text)
@@ -393,9 +393,9 @@ class FlowPilotOutputContractTests(unittest.TestCase):
             envelope_path=envelope_path,
             controller_agent_id="controller",
             received_from_role="project_manager",
-            relayed_to_role="worker_a",
+            relayed_to_role="worker",
         )
-        packet_runtime.read_packet_body_for_role(root, relayed, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, relayed, role="worker")
         result_body = (
             "finished\n\n"
             "## Contract Self-Check\n\n"
@@ -405,8 +405,8 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         result = packet_runtime.write_result(
             root,
             packet_envelope=relayed,
-            completed_by_role="worker_a",
-            completed_by_agent_id="worker-a-agent",
+            completed_by_role="worker",
+            completed_by_agent_id="worker-1-agent",
             result_body_text=result_body,
             next_recipient="human_like_reviewer",
         )
@@ -491,14 +491,14 @@ class FlowPilotOutputContractTests(unittest.TestCase):
                 root,
                 packet_id="packet-001",
                 from_role="project_manager",
-                to_role="worker_a",
+                to_role="worker",
                 node_id="node-001",
                 body_text="work",
                 output_contract={
                     "schema_version": "flowpilot.output_contract.v1",
                     "contract_id": "flowpilot.output_contract.worker_current_node_result.v1",
                     "selected_by_role": "project_manager",
-                    "recipient_role": "worker_b",
+                    "recipient_role": "human_like_reviewer",
                 },
             )
 

@@ -4,12 +4,12 @@
 
 This model protects FlowPilot's run-level defect and evidence governance. It is
 not a product-specific model. It covers defects discovered by PM, reviewer,
-FlowGuard officers, workers, or the controller while a formal FlowPilot run
+FlowGuard operators, workers, or the controller while a formal FlowPilot run
 is active.
 
 ## Failure Modes
 
-- A blocker is mentioned in a reviewer or officer report but never enters a
+- A blocker is mentioned in a reviewer or FlowGuard operator report but never enters a
   canonical run ledger.
 - A route advances because the implementation was patched, even though the same
   class of reviewer has not rechecked the fix.
@@ -26,7 +26,7 @@ is active.
 
 ## Hard Invariants
 
-- Every blocking review, officer, or PM finding creates a defect event before
+- Every blocking review, FlowGuard operator, or PM finding creates a defect event before
   route repair or closure can continue.
 - PM triage is required before a blocking defect can be assigned, repaired, or
   closed.

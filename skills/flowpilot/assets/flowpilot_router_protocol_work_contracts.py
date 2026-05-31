@@ -9,7 +9,7 @@ from flowpilot_router_protocol_control_repair import *
 from flowpilot_router_protocol_process_contracts import *
 
 PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES = {
-    "request_officer_model_miss_analysis",
+    "request_flowguard_operator_model_miss_analysis",
     "proceed_with_model_backed_repair",
     "out_of_scope_not_modelable",
     "needs_evidence_before_modeling",
@@ -36,7 +36,7 @@ PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS = (
     "contract_self_check",
 )
 
-MODEL_MISS_OFFICER_REPORT_REQUIRED_FIELDS = (
+MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_REQUIRED_FIELDS = (
     "old_model_miss_reason",
     "bug_class_definition",
     "same_class_findings",
@@ -62,10 +62,8 @@ PARALLEL_PACKET_BATCH_REF_SCHEMA = "flowpilot.parallel_packet_batch_ref.v1"
 
 PM_ROLE_WORK_REQUEST_RECIPIENT_ROLES = {
     "human_like_reviewer",
-    "process_flowguard_officer",
-    "product_flowguard_officer",
-    "worker_a",
-    "worker_b",
+    "flowguard_operator",
+    "worker",
 }
 
 PM_ROLE_WORK_REQUEST_MODES = {"blocking", "advisory", "prep-only"}
@@ -181,7 +179,7 @@ __all__ = (
     'PM_MODEL_MISS_TRIAGE_DECISION_ALLOWED_VALUES',
     'PM_MODEL_MISS_TRIAGE_REPAIR_AUTHORIZED_VALUES',
     'PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS',
-    'MODEL_MISS_OFFICER_REPORT_REQUIRED_FIELDS',
+    'MODEL_MISS_FLOWGUARD_OPERATOR_REPORT_REQUIRED_FIELDS',
     'PM_ROLE_WORK_REQUEST_INDEX_SCHEMA',
     'PM_ROLE_WORK_REQUEST_SCHEMA',
     'PM_ROLE_WORK_RESULT_DECISION_SCHEMA',

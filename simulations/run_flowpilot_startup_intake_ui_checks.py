@@ -26,9 +26,15 @@ HAZARD_EXPECTED_FAILURES = {
     "ui_envelope_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
     "unsupported_historical_bom_json_without_router_fallback": "Router startup intake JSON reader is not BOM-compatible",
     "headless_result_accepted": "formal startup accepted non-interactive startup intake result",
+    "language_visible_on_main_surface": "language selector remained visible on the startup main surface",
+    "settings_panel_missing_language": "settings panel did not contain language selection",
+    "settings_panel_missing_support_url": "settings panel did not contain the canonical support-developer entry",
+    "support_copy_claims_paid_entitlement": "support developer copy implied a paid entitlement",
     "body_bom_leaks_to_pm_packet": "PM intake packet leaked leading UTF-8 BOM marker",
     "bom_repair_bypasses_body_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
     "invalid_toggle_value": "runtime role toggle did not map to a startup answer enum",
+    "obsolete_scheduled_continuation_option_accepted": "scheduled continuation is no longer a visible startup UI option",
+    "obsolete_display_surface_option_accepted": "display surface is no longer a visible startup UI option",
     "single_agent_starts_roles": "runtime role assistance started despite UI single-agent choice",
     "manual_creates_heartbeat": "heartbeat created despite UI manual continuation choice",
     "chat_opens_cockpit": "Cockpit opened despite UI chat display choice",
@@ -41,6 +47,10 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|router={state.router_loaded}|ui={state.ui_opened},{state.ui_result}|"
         f"launch={state.launch_mode},headless={state.headless_result},formal={state.formal_startup_allowed}|"
+        f"settings={state.settings_button_visible},main_lang={state.language_visible_on_main},"
+        f"panel={state.settings_panel_opened},settings_lang={state.language_visible_in_settings},"
+        f"support={state.support_developer_visible_in_settings},{state.support_uses_canonical_url},"
+        f"disclaimer={state.support_entitlement_disclaimer_visible},entitlement={state.support_claims_paid_entitlement}|"
         f"source={state.script_source_contains_non_ascii},{state.script_source_utf8_bom},"
         f"{state.unsupported_historical_powershell_source_parse_safe},{state.source_encoding_contract_verified}|"
         f"artifacts={state.receipt_written},{state.envelope_written},{state.body_written},"

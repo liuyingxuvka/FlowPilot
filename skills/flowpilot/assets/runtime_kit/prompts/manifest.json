@@ -13,7 +13,7 @@
     {
       "id": "startup.heartbeat_resume",
       "path": "prompts/startup/heartbeat_resume.md",
-      "sha256": "bba65a761f65ac744896d66925794cf3bec618beda0c0ba7ca38fedb362add5e",
+      "sha256": "aa5dced414a2ef47b7f9e0ab21bebcc0ee989894e5cc71be135c1ebd71c211e5",
       "strip_trailing_newline": true,
       "template_variables": [
         "project_root",
@@ -44,7 +44,7 @@
     {
       "id": "cards.next_step_source_policy",
       "path": "prompts/cards/next_step_source_policy.md",
-      "sha256": "eff84e3ce8f31408f264864f298e41cb4ae0bee80f6074d274c247a089238ab6",
+      "sha256": "51c497ff57fe5e006e57de7cc17b7a28a3e0b6858553e62f6b07e83db53a0e47",
       "strip_trailing_newline": true,
       "template_variables": []
     },
@@ -65,7 +65,7 @@
     {
       "id": "cards.flowguard_work_order_policy",
       "path": "prompts/cards/flowguard_work_order_policy.md",
-      "sha256": "ceaaf8ac3f1530e23b5012b37f4e5719931d7575be5d50e3d27d30e9c16c3b5a",
+      "sha256": "9bcef1028551c791bb230828b9386361a99210c46459e9fe8fc5b549defa8aca",
       "strip_trailing_newline": true,
       "template_variables": []
     },

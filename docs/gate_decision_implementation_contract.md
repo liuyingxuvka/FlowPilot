@@ -14,7 +14,7 @@ router into a semantic reviewer.
 
 ## Minimal Contract
 
-Every PM, reviewer, or FlowGuard officer gate decision that can pass, block,
+Every PM, reviewer, or FlowGuard operator gate decision that can pass, block,
 waive, skip, repair, mutate, or affect completion must emit a `GateDecision`
 record.
 
@@ -25,7 +25,7 @@ Required fields:
   "gate_decision_version": "flowpilot.gate_decision.v1",
   "gate_id": "string",
   "gate_kind": "quality | repair | parent_replay | resource | stage_advance | completion | other",
-  "owner_role": "project_manager | human_like_reviewer | process_flowguard_officer | product_flowguard_officer",
+  "owner_role": "project_manager | human_like_reviewer | flowguard_operator | flowguard_operator",
   "risk_type": "product_state | visual_quality | mixed_product_visual | documentation_only | composition | resource | control_state | none",
   "gate_strength": "hard | soft | advisory | skip_with_reason",
   "decision": "pass | block | waive | skip | repair_local | mutate_route",
@@ -71,8 +71,8 @@ Reviewer and PM responsibility is semantic sufficiency:
 - the proof method fits the risk type;
 - hard gates have a real risk reduction reason;
 - visual quality gates include reviewer walkthrough evidence;
-- product/state/workflow gates include Product FlowGuard evidence where needed;
-- documentation-only gates are not forced through Product FlowGuard;
+- product/state/workflow gates include product-scope FlowGuard evidence where needed;
+- documentation-only gates are not forced through product-scope FlowGuard;
 - local defects remain local;
 - route-invalidating findings mutate the route and invalidate stale evidence;
 - low-composition-risk parent replay can be waived with a reason;
@@ -87,9 +87,9 @@ mechanically contradictory records.
 
 | Risk type | Required proof path |
 | --- | --- |
-| `product_state` | Product FlowGuard result |
+| `product_state` | product-scope FlowGuard result |
 | `visual_quality` | Reviewer-owned walkthrough |
-| `mixed_product_visual` | Product FlowGuard result and reviewer-owned walkthrough |
+| `mixed_product_visual` | product-scope FlowGuard result and reviewer-owned walkthrough |
 | `documentation_only` | Light review, or `skip_with_reason` with a concrete reason |
 | `none` | `skip_with_reason` with a concrete reason |
 
@@ -138,7 +138,7 @@ authority for later roles.
 ## Existing Model Mapping
 
 Prompt/card instruction models should check that relevant PM, reviewer, and
-FlowGuard officer cards tell the role to emit `GateDecision` fields and explain
+FlowGuard operator cards tell the role to emit `GateDecision` fields and explain
 the meaning of each field.
 
 Router/protocol models should check only mechanical conformance: required
@@ -148,7 +148,7 @@ Runtime recording uses event `role_records_gate_decision` and contract
 `flowpilot.output_contract.gate_decision.v1`.
 
 Reviewer/router scope models should check that semantic sufficiency remains
-owned by PM, reviewer, and FlowGuard officers, while the router stays limited
+owned by PM, reviewer, and FlowGuard operators, while the router stays limited
 to mechanical validation.
 
 Control-plane models should check that accepted gate decisions are registered
@@ -158,8 +158,8 @@ views when they affect route progress or completion.
 ## Minimal Implementation Order
 
 1. Add the `GateDecision` output contract to the contract registry.
-2. Add card instructions for PM, reviewer, process FlowGuard officer, and
-   product FlowGuard officer to emit the required fields.
+2. Add card instructions for PM, reviewer, FlowGuard operator, and
+   FlowGuard operator to emit the required fields.
 3. Add router mechanical validation for the required fields and enum values.
 4. Add reviewer/PM semantic checks for proof-method selection and repair
    classification.

@@ -12,19 +12,19 @@ packet -> lease -> ACK -> result -> ledger side effect -> next packet.
 
 ## What Changes
 
-- Add a symmetric work-packet lifecycle for PM, FlowGuard, Reviewer,
-  Validation, and Closure responsibilities.
+- Add a symmetric work-packet lifecycle for PM, explicit FlowGuard officer,
+  Reviewer, and requested worker-class responsibilities.
 - Add explicit packet kinds so the runtime knows what side effect a packet
   result is allowed to commit.
 - Retire public formal-flow guidance for direct FlowGuard/review/validation/
   close commands.
-- Add FlowGuard model coverage and tests for the exact live-run miss:
-  `flowguard_operator` must be leaseable through a packet, and Reviewer must
-  not leave an empty-packet active lease projection.
+- Add FlowGuard model coverage and tests for the exact live-run miss: explicit
+  FlowGuard officer responsibilities must be leaseable through packets, and
+  Reviewer must not leave an empty-packet active lease projection.
 
 ## Impact
 
 - New formal FlowPilot runs proceed through a chain of role-specific packets.
-- FlowGuard operator and Reviewer are ordinary work-package agents, not
-  command-side exceptions.
+- FlowGuard officer and Reviewer responsibilities are ordinary work-package
+  responsibilities, not command-side exceptions.
 - The live-run failure becomes a regression, not an informal note.

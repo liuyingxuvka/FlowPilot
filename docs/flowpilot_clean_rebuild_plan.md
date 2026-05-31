@@ -22,7 +22,7 @@ user request explicitly asks for it.
    events. It must not infer route progress or inspect sealed bodies.
 5. Deliver system cards only from the copied runtime kit, with
    `from: system`, `issued_by: router`, and `delivered_by: controller`.
-6. Deliver ordinary role mail through the packet ledger. PM, reviewer, officers,
+6. Deliver ordinary role mail through the packet ledger. PM, reviewer, FlowGuard operators,
    and workers communicate through packet envelopes and result envelopes rather
    than broad prompt context.
 7. Use FlowGuard before behavior-bearing protocol changes. Large simulations
@@ -73,7 +73,7 @@ user request explicitly asks for it.
    - Material scan and research package cards.
    - Product-function architecture and route-skeleton cards.
    - Child-skill selection and gate extraction cards.
-   - FlowGuard officer modeling request and report cards.
+   - FlowGuard operator modeling request and report cards.
    - Current-node work, worker implementation, worker repair, and reviewer
      recheck cards.
    - Route mutation and stale-evidence cards.
@@ -143,7 +143,7 @@ with `python scripts\install_flowpilot.py --sync-repo-owned --json`; both
 `audit_local_install_sync.py --json` and `install_flowpilot.py --check --json`
 now report `source_fresh: true`.
 
-The 2026-05-16 runtime-closure pass added explicit officer request lifecycle
+The 2026-05-16 runtime-closure pass added explicit FlowGuard operator request lifecycle
 tracking, current-run continuation quarantine, final user-report metadata, and
 route-display refresh evidence, backed by
 `simulations/flowpilot_runtime_closure_model.py` and focused runtime tests.

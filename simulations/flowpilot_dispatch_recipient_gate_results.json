@@ -119,12 +119,12 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "process_flowguard_officer",
+          "target_role": "process_flowguard_operator",
           "unresolved_ack_for_target": false,
           "wait_exposed": true,
           "wait_obligation_identity_present": false,
           "wait_source_named": true,
-          "wait_target_role": "process_flowguard_officer"
+          "wait_target_role": "process_flowguard_operator"
         }
       },
       "different_idle_parallel_blocked": {
@@ -431,7 +431,7 @@
           "sealed_body_exposed_in_wait": false,
           "status": "complete",
           "target_identity_valid": true,
-          "target_role": "process_flowguard_officer",
+          "target_role": "process_flowguard_operator",
           "unresolved_ack_for_target": false,
           "wait_exposed": false,
           "wait_obligation_identity_present": true,

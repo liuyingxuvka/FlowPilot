@@ -146,9 +146,9 @@ def _role_slots_payload_contract() -> dict[str, Any]:
         },
         structural_requirements=[
             "Provide exactly one non-duplicate role-binding record for each role key requested by the startup action.",
-            "Each live role binding must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
+            "Each live role binding must use a host-supported, addressable, isolated role surface and must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
         ],
-        description="Record fresh live host role bindings when host mechanisms were allowed, using the strongest available role intelligence policy.",
+        description="Record fresh live host role bindings when host-supported isolated role surfaces were allowed, using the strongest available role intelligence policy.",
         reviewer_check="Reviewer checks live role-binding freshness unless each slot carries a host receipt.",
     )
 def _heartbeat_payload_contract(run_id: str, automation_id_hint: str) -> dict[str, Any]:
@@ -247,7 +247,7 @@ def _resume_role_rehydration_payload_contract(
             "Use one liveness_probe_batch_id for the top-level receipt and every role record.",
             "Each record must match the corresponding role_rehydration_request path/hash fields.",
             "Reuse active current-run role bindings after memory/context refresh; open only replacement bindings whose liveness is missing, cancelled, unknown, completed, or timeout_unknown.",
-            "Each restored or replacement live role binding must be bound to the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
+            "Each restored or replacement live role binding must use a host-supported, addressable, isolated role surface and must be bound to the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
             "A wait_agent timeout must be recorded as timeout_unknown and must not justify live_agent_continuity_confirmed.",
             "missing, cancelled, completed, unknown, or timeout_unknown host liveness must open a replacement from current-run memory instead of continuing to wait on the old role.",
         ],

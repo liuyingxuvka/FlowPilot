@@ -22,8 +22,8 @@ listed below.
 | 2 | Upgrade the decision-liveness FlowGuard model | Model an always-open PM role-work-request channel, blocking/advisory requests, report return, PM absorption, controlled user stop, and model-miss decisions mapped to that channel | `python simulations\run_flowpilot_decision_liveness_checks.py --json-out simulations\flowpilot_decision_liveness_results.json` |
 | 3 | Prove hazards are caught before code edits | Known-bad states for dead-end decisions, missing contracts, invalid recipients, lost outstanding requests, premature PM final decisions, duplicate request ids, and Controller body reads must all fail | Hazard section in `flowpilot_decision_liveness_results.json` |
 | 4 | Implement the smallest router primitive | Add PM role-work-request event, request ledger, generic packet creation, next-action relay, result return event, result relay to PM, and PM absorption event | Focused router runtime tests |
-| 5 | Map existing model-miss nonterminal decisions to the primitive | `request_officer_model_miss_analysis` opens a blocking officer model-miss request; `needs_evidence_before_modeling` opens or requires a PM work request; `stop_for_user` records a controlled pause | Model-miss focused tests |
-| 6 | Preserve existing repair behavior | Repair-authorizing decisions still unlock `pm.review_repair` only after required officer report evidence; route mutation still requires closed model-miss triage | Existing model-miss and repair tests |
+| 5 | Map existing model-miss nonterminal decisions to the primitive | `request_flowguard_operator_model_miss_analysis` opens a blocking FlowGuard operator model-miss request; `needs_evidence_before_modeling` opens or requires a PM work request; `stop_for_user` records a controlled pause | Model-miss focused tests |
+| 6 | Preserve existing repair behavior | Repair-authorizing decisions still unlock `pm.review_repair` only after required FlowGuard operator report evidence; route mutation still requires closed model-miss triage | Existing model-miss and repair tests |
 | 7 | Run scoped and broader checks | Compile, focused router tests, decision-liveness checks, adjacent router-loop checks, and practical fast meta/capability checks | Command results recorded in adoption log |
 | 8 | Sync local installation and local git only | Install local FlowPilot skill from this repository and stage/commit locally; do not push to GitHub | `install_flowpilot.py --sync-repo-owned`, install check, local git status/commit |
 
@@ -37,7 +37,7 @@ listed below.
 | Blocking requests block dependent PM final decisions | PM may keep issuing other requests, but cannot claim a blocking request result before it returns and is absorbed. |
 | Advisory requests do not freeze progress | PM can continue, but the returned result must be absorbed, canceled, or superseded before terminal closure. |
 | Results return to PM by default | Role outputs produced for PM work requests go back to PM, not directly to repair, route mutation, reviewer pass, or completion. |
-| Model-miss uses the generic channel | Officer model-miss analysis is one use of the generic channel, not a one-off special patch. |
+| Model-miss uses the generic channel | FlowGuard operator model-miss analysis is one use of the generic channel, not a one-off special patch. |
 | User stop is explicit | `stop_for_user` records a controlled pause/user stop. It must not loop back to the same PM triage event. |
 
 ## Risk List and Model Coverage
@@ -53,10 +53,10 @@ listed below.
 | R7 | Request result is routed to PM before packet-ledger check | Hazard: result relay without ledger check fails |
 | R8 | Result is accepted from the wrong role or for the wrong request id | Hazard: result identity/request mismatch fails |
 | R9 | Duplicate request id overwrites an open request | Hazard: duplicate open request id fails |
-| R10 | `request_officer_model_miss_analysis` becomes a special patch instead of generic PM work request | Static audit: model-miss officer request must be represented as generic PM role-work request |
+| R10 | `request_flowguard_operator_model_miss_analysis` becomes a special patch instead of generic PM work request | Static audit: model-miss FlowGuard operator request must be represented as generic PM role-work request |
 | R11 | `needs_evidence_before_modeling` still loops back to the same PM event | Static audit and hazard: evidence decision must open PM work request or explicit wait channel |
 | R12 | `stop_for_user` still loops back to the same PM event | Static audit and hazard: user stop must create controlled pause |
-| R13 | Repair-authorizing model-miss decisions start repair without officer model-miss evidence | Hazard: model-backed repair without PM-reviewed officer report fails |
+| R13 | Repair-authorizing model-miss decisions start repair without FlowGuard operator model-miss evidence | Hazard: model-backed repair without PM-reviewed FlowGuard operator report fails |
 | R14 | Existing route mutation/repair gates are weakened | Existing router tests and router-loop model must still pass |
 
 ## Minimal Implementation Boundary
@@ -79,4 +79,4 @@ The first production patch should avoid broad architecture churn:
 - Do not push to GitHub in this task.
 - Do not replace all existing material/research/current-node packet flows.
 - Do not allow Controller to open role work without PM request authority.
-- Do not auto-apply officer or worker results to the route without PM decision.
+- Do not auto-apply FlowGuard operator or worker results to the route without PM decision.

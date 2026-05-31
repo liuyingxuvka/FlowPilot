@@ -31,7 +31,7 @@
       "capability_id": "<capability-id>",
       "name": "<capability-name>",
       "role_fit": [
-        "<project_manager|product_flowguard_officer|process_flowguard_officer|human_like_reviewer|worker_a|worker_b>"
+        "<project_manager|flowguard_operator|human_like_reviewer|worker>"
       ],
       "model_family_fit": [
         "<product_behavior|ui_interaction|data_state|failure_recovery|route_process|validation_evidence|terminal_closure>"
@@ -47,7 +47,7 @@
       "search_root": "<resolved-skill-search-root>",
       "route_description": "<when PM should select this FlowGuard route>",
       "role_fit": [
-        "<project_manager|product_flowguard_officer|process_flowguard_officer>"
+        "<project_manager|flowguard_operator>"
       ],
       "model_family_fit": [
         "<product_behavior|ui_interaction|data_state|failure_recovery|route_process|validation_evidence|terminal_closure>"

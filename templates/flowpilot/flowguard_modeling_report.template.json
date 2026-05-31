@@ -5,28 +5,28 @@
   "route_id": "<route-id>",
   "node_id": "<node-id-or-null>",
   "written_at": "<iso-8601-timestamp>",
-  "officer_role_key": "<process_flowguard_officer|product_flowguard_officer>",
+  "flowguard_operator_role_key": "<flowguard_operator>",
   "flowguard_capability_snapshot_path": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
   "pm_modeling_plan_path": ".flowpilot/runs/<run-id>/flowguard/<product-or-process>_modeling_plan.json",
   "execution_ownership": {
-    "model_author_role": "<process_flowguard_officer|product_flowguard_officer>",
-    "model_runner_role": "<process_flowguard_officer|product_flowguard_officer>",
-    "model_interpreter_role": "<process_flowguard_officer|product_flowguard_officer>",
-    "approved_by_role": "<process_flowguard_officer|product_flowguard_officer>",
+    "model_author_role": "<flowguard_operator>",
+    "model_runner_role": "<flowguard_operator>",
+    "model_interpreter_role": "<flowguard_operator>",
+    "approved_by_role": "<flowguard_operator>",
     "report_only_review": false,
     "valid_unchanged_reuse": false,
-    "valid_unchanged_reuse_basis": "<same request, same model files, same inputs, same invariants, same expected answer, and prior officer-owned run still current|none>",
+    "valid_unchanged_reuse_basis": "<same request, same model files, same inputs, same invariants, same expected answer, and prior FlowGuard operator-owned run still current|none>",
     "controller_outputs_used_as_pointers_only": [
       "<path-or-command-output-reference>"
     ],
-    "commands_run_by_officer": [
+    "commands_run_by_flowguard_operator": [
       "<command>"
     ],
     "commands_reviewed_from_existing_outputs": [
       "<command-or-output-path>"
     ],
-    "model_boundary_checked_by_officer": false,
-    "model_files_written_by_officer": [
+    "model_boundary_checked_by_flowguard_operator": false,
+    "model_files_written_by_flowguard_operator": [
       "<path>"
     ],
     "input_snapshot_paths": [

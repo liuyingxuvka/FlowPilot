@@ -69,12 +69,28 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
             ]
         )
     if kind == "task" and scope == "node_acceptance_plan":
+        node_id = envelope.get("route_node_id", "")
         return json.dumps(
             {
-                "route_node_id": envelope.get("route_node_id", ""),
+                "route_node_id": node_id,
                 "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
                 "repair_policy": "same_node_repair_default",
                 "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
+                "node_context_package": {
+                    "node_id": node_id,
+                    "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
+                    "acceptance_criteria": [
+                        "worker result satisfies the node packet",
+                        "pre-work and post-result FlowGuard evidence are current",
+                        "reviewer independently challenges the node outcome",
+                    ],
+                    "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
+                    "evidence_targets": ["worker result body", "FlowGuard report", "reviewer report", "validation output"],
+                    "inspection_targets": ["changed files", "command output", "model artifacts", "runtime ledger"],
+                    "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
+                    "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
+                    "reviewer_starting_points": ["worker result", "node context package", "FlowGuard reports", "validation evidence"],
+                },
             }
         )
     if kind == "task" and scope == "parent_backward_replay":

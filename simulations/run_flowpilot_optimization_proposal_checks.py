@@ -21,7 +21,7 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "lazy_six_roles": "formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings",
+    "lazy_runtime_roles": "formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings",
     "small_task_light_mode": "formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings",
     "controller_reads_sealed_body": "Controller read sealed body or originated project evidence",
     "router_reset_missing_policy_hash": "router-owned controller receipt lacked core delivery, policy hash, role confirmation, or startup reviewer fact check",
@@ -32,8 +32,8 @@ HAZARD_EXPECTED_FAILURES = {
     "ledger_relay_missing_hash": "packet ledger relay transaction skipped ledger, delivery, open, result, role, or hash evidence",
     "mechanical_proof_replaces_semantic_review": "router-owned proof was not trusted, file-backed, current-hash, mechanical-only, or non-self-attested",
     "mechanical_proof_self_attested": "router-owned proof was not trusted, file-backed, current-hash, mechanical-only, or non-self-attested",
-    "parallel_gate_first_pass_advance": "parallel gate optimization advanced before every reviewer/officer pass joined",
-    "parallel_gate_missing_product_architecture_officer": "parallel gate optimization advanced before every reviewer/officer pass joined",
+    "parallel_gate_first_pass_advance": "parallel gate optimization advanced before every reviewer/FlowGuard operator pass joined",
+    "parallel_gate_missing_product_architecture_flowguard_operator": "parallel gate optimization advanced before every reviewer/FlowGuard operator pass joined",
     "artifact_merge_collapses_responsibility": "artifact merge collapsed responsibility, freeze points, required sections, node packet, evidence quality, or final ledger order",
     "artifact_merge_early_root_contract_freeze": "artifact merge collapsed responsibility, freeze points, required sections, node packet, evidence quality, or final ledger order",
     "artifact_merge_without_evidence_quality_review": "artifact merge collapsed responsibility, freeze points, required sections, node packet, evidence quality, or final ledger order",
@@ -48,7 +48,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|profile={state.profile}|steps={state.handoff_steps}|"
-        f"critical={state.critical_path_ticks}|roles={state.six_roles_live}|"
+        f"critical={state.critical_path_ticks}|roles={state.runtime_roles_live}|"
         f"light={state.light_mode_used}|lazy={state.lazy_spawn_used}|"
         f"router_receipt={state.router_owned_controller_receipt},{state.controller_policy_hash_recorded}|"
         f"bundle={state.same_role_card_bundle_used},{state.cross_role_bundle_used},"

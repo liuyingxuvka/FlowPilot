@@ -14,7 +14,7 @@ REQUIRED_OUTPUT_TYPES = {
     "pm_control_blocker_repair_decision",
     "gate_decision",
     "reviewer_review_report",
-    "officer_model_report",
+    "flowguard_operator_model_report",
     "controller_boundary_confirmation",
     "pm_package_result_disposition",
 }
@@ -25,7 +25,7 @@ REQUIRED_CONTRACT_IDS = {
     "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
     "flowpilot.output_contract.gate_decision.v1",
     "flowpilot.output_contract.reviewer_review_report.v1",
-    "flowpilot.output_contract.officer_model_report.v1",
+    "flowpilot.output_contract.flowguard_operator_model_report.v1",
     "flowpilot.output_contract.controller_boundary_confirmation.v1",
     "flowpilot.output_contract.pm_package_result_disposition.v1",
 }
@@ -50,10 +50,8 @@ ROUTER_EVENT_MODES = {"fixed", "router_supplied"}
 ROLE_CARDS = (
     "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
     "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
-    "skills/flowpilot/assets/runtime_kit/cards/roles/process_flowguard_officer.md",
-    "skills/flowpilot/assets/runtime_kit/cards/roles/product_flowguard_officer.md",
-    "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",
-    "skills/flowpilot/assets/runtime_kit/cards/roles/worker_b.md",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+    "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
 )
 
 
@@ -248,25 +246,25 @@ def _source_report(project_root: Path) -> dict[str, object]:
         "controller card": (
             controller_text,
             [
-                "Router-ready evidence preempts foreground role waits",
-                "scan daemon status and the Controller action ledger before",
-                "flowpilot_router.py controller-standby",
+                "Runtime-ready evidence preempts foreground role waits",
+                "flowpilot_new.py patrol",
+                "controller_next_action_notice.json",
             ],
         ),
         "skill launcher": (
             skill_text,
             [
-                "Router-ready state preempts foreground waits",
-                "scan daemon status and the Controller action",
-                "controller-standby",
+                "Runtime-ready state preempts foreground waits",
+                "flowpilot_new.py patrol",
+                "returned foreground duty",
             ],
         ),
         "controller resume reentry card": (
             resume_text,
             [
-                "Router-ready evidence still preempts foreground role waits",
-                "scan daemon status and clear",
-                "controller-standby",
+                "Runtime-ready evidence still preempts foreground role waits",
+                "flowpilot_new.py patrol",
+                "controller_next_action_notice.json",
             ],
         ),
     }

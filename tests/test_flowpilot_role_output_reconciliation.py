@@ -224,7 +224,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             records=[
                 {
                     "packet_id": f"{batch_kind}-packet-a",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "packet_generation_id": "gen-1",
                     "result_envelope_path": "test-result-a.json",
                     "result_body_path": "test-result-a.md",
@@ -232,7 +232,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 },
                 {
                     "packet_id": f"{batch_kind}-packet-b",
-                    "to_role": "worker_b",
+                    "to_role": "worker",
                     "packet_generation_id": "gen-1",
                     "result_envelope_path": "test-result-b.json",
                     "result_body_path": "test-result-b.md",
@@ -272,7 +272,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                     "source": "test_current_node_package_disposition",
                 },
             )
-        role = "worker_a"
+        role = "worker"
         packet = packet_runtime.create_packet(
             root,
             packet_id=packet_id,

@@ -237,8 +237,8 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
         return None
     if report.get('required_role_bindings_ready') is not True or report.get('environment_blocked') is True:
         return None
-    crew_path = run_root / 'role_binding_ledger.json'
-    role_binding = read_json_if_exists(crew_path)
+    runtime_roles_path = run_root / 'role_binding_ledger.json'
+    role_binding = read_json_if_exists(runtime_roles_path)
     slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
     ready_agents: dict[str, str] = {}
     for slot in slots:
@@ -253,7 +253,7 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
     missing_roles = [role for role in RUNTIME_ROLE_KEYS if role not in ready_agents]
     if missing_roles:
         return None
-    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'crew_path': crew_path, 'crew_relpath': project_relative(project_root, crew_path), 'ready_role_keys': list(RUNTIME_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
+    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'runtime_roles_path': runtime_roles_path, 'runtime_roles_relpath': project_relative(project_root, runtime_roles_path), 'ready_role_keys': list(RUNTIME_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
 
 __all__ = (
     '_role_spawn_action_extra',

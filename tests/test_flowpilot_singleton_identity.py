@@ -97,12 +97,12 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
                     "packets": [
                         {
                             "packet_id": "packet-1",
-                            "active_packet_holder": "worker_a",
+                            "active_packet_holder": "worker",
                             "active_packet_status": "active-holder-lease-issued",
                         },
                         {
                             "packet_id": "packet-1",
-                            "active_packet_holder": "worker_b",
+                            "active_packet_holder": "worker",
                             "active_packet_status": "active-holder-acknowledged",
                         },
                     ],

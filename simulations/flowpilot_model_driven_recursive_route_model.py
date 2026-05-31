@@ -2,7 +2,7 @@
 
 Risk purpose:
 - This FlowGuard model reviews the planned FlowPilot upgrade where Product and
-  Process FlowGuard Officers produce first-class models before PM route
+  FlowGuard operator route-scopes produce first-class models before PM route
   activation and before entering every non-leaf node.
 - It guards against route drafting before product modeling, skipped reviewer
   challenges, non-serial execution routes, oversized leaves, stale approvals
@@ -157,8 +157,8 @@ class ModelDrivenRecursiveRouteStep:
     """One transition for model-driven recursive route governance.
 
     Input x State -> Set(Output x State)
-    reads: PM product goal, officer product model, reviewer product challenge,
-      PM route draft, officer process model, node-local model artifacts, parent
+    reads: PM product goal, FlowGuard operator product model, reviewer product challenge,
+      PM route draft, FlowGuard operator process model, node-local model artifacts, parent
       and final backward reviews, and route-display metadata
     writes: accepted/rejected protocol decision
     idempotency: scenario facts are monotonic; terminal states remain terminal.
@@ -321,13 +321,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
 def protocol_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.pm_route_draft_written and not state.product_behavior_model_written:
-        failures.append("route drafted before Product Officer wrote product behavior model")
+        failures.append("route drafted before FlowGuard operator product-scope wrote product behavior model")
     if state.pm_route_draft_written and not state.pm_product_model_decision:
         failures.append("route drafted before PM accepted product behavior model")
     if state.pm_route_draft_written and not state.reviewer_product_model_challenge_passed:
         failures.append("route drafted before reviewer challenged product model")
     if state.route_activated and not state.process_route_execution_model_written:
-        failures.append("route activated without Process Officer serial execution model")
+        failures.append("route activated without FlowGuard operator route-scope serial execution model")
     if state.route_activated and not state.process_route_execution_model_serial:
         failures.append("process route execution model is not serial")
     if state.route_activated and not state.leaf_decomposition_audit_written:

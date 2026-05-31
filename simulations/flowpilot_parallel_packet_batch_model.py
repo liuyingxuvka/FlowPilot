@@ -4,7 +4,7 @@ Risk intent brief:
 - Model the proposed PM-authored parallel packet batch before runtime changes.
 - Protect harms: route stage advancement from partial packet results, reviewer
   pass over only a subset of batch results, role overload, duplicate packet
-  registration, old single-packet bypasses, officer-result join loss,
+  registration, old single-packet bypasses, FlowGuard operator-result join loss,
   Controller sealed-body reads, blocked packet pass-through, repair lineage
   loss, prompt/runtime drift, and static event-producer waits that reject a
   valid remaining batch member.
@@ -29,7 +29,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 TOTAL_PACKETS = 4
 WORKER_PACKETS = 2
-OFFICER_PACKETS = 2
+FLOWGUARD_OPERATOR_PACKETS = 2
 
 
 @dataclass(frozen=True)
@@ -54,8 +54,8 @@ class State:
     old_single_packet_bypass_used: bool = False
 
     worker_packet_count: int = 0
-    officer_packet_count: int = 0
-    officer_packets_counted_in_join: bool = False
+    flowguard_operator_packet_count: int = 0
+    flowguard_operator_packets_counted_in_join: bool = False
 
     role_busy_guard_enabled: bool = False
     role_overload_accepted: bool = False
@@ -108,9 +108,9 @@ def registered_batch_state() -> State:
         batch_registered=True,
         packet_count=TOTAL_PACKETS,
         worker_packet_count=WORKER_PACKETS,
-        officer_packet_count=OFFICER_PACKETS,
+        flowguard_operator_packet_count=FLOWGUARD_OPERATOR_PACKETS,
         all_packets_in_batch_index=True,
-        officer_packets_counted_in_join=True,
+        flowguard_operator_packets_counted_in_join=True,
         role_busy_guard_enabled=True,
         prompt_advertises_batch=True,
         runtime_supports_batch=True,
@@ -286,8 +286,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("batch joined before every packet result returned")
     if not state.dynamic_wait_producer_binding_valid:
         failures.append("dynamic batch wait rejected a valid remaining event producer role")
-    if state.officer_packet_count and not state.officer_packets_counted_in_join:
-        failures.append("officer packet result was not counted in the batch join")
+    if state.flowguard_operator_packet_count and not state.flowguard_operator_packets_counted_in_join:
+        failures.append("FlowGuard operator packet result was not counted in the batch join")
     if state.batch_review_passed and not (
         state.batch_review_done
         and state.reviewed_packet_count == state.packet_count
@@ -377,7 +377,7 @@ def hazard_states() -> dict[str, State]:
         "busy_role_overload": replace(safe, role_overload_accepted=True),
         "duplicate_packet_or_batch": replace(safe, duplicate_active_batch_accepted=True),
         "old_single_packet_bypass": replace(safe, old_single_packet_bypass_used=True),
-        "officer_result_not_joined": replace(safe, officer_packets_counted_in_join=False),
+        "flowguard_operator_result_not_joined": replace(safe, flowguard_operator_packets_counted_in_join=False),
         "controller_reads_body": replace(safe, controller_read_sealed_body=True),
         "blocked_packet_passed": replace(safe, blocked_packet_count=1, batch_review_passed=True),
         "repair_lineage_lost": replace(safe, repair_reissued=True, repair_lineage_recorded=False),

@@ -1049,10 +1049,10 @@ ROUTER_FACADE_MODULES = (
     ModuleStructureEvidence(
         "pm_role_work_lifecycle",
         path="skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle.py",
-        owns_functions=("_load_pm_role_work_request_index", "_record_officer_lifecycle_status"),
-        owns_state=("pm_role_work_request_index", "officer_request_lifecycle"),
+        owns_functions=("_load_pm_role_work_request_index", "_record_flowguard_operator_lifecycle_status"),
+        owns_state=("pm_role_work_request_index", "flowguard_operator_request_lifecycle"),
         dependencies=("router_facade",),
-        behavior_contracts=("PM role-work request indexes and officer lifecycle records",),
+        behavior_contracts=("PM role-work request indexes and FlowGuard operator lifecycle records",),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
         release_required=True,
     ),

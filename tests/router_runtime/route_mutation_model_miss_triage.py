@@ -16,7 +16,7 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 card_action["payload_contract"],
                 "pm_model_miss_triage_decision_role_output",
                 "proceed_with_model_backed_repair",
-                "officer_report_refs",
+                "flowguard_operator_report_refs",
                 "minimal_sufficient_repair_recommendation",
             )
             self.assertFalse(self.flag(root, "pm_review_repair_card_delivered"))
@@ -74,7 +74,7 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     self.assertEqual(pending["card_id"], "pm.event.reviewer_blocked")
 
 
-    def test_model_backed_model_miss_triage_requires_officer_report_refs(self) -> None:
+    def test_model_backed_model_miss_triage_requires_flowguard_operator_report_refs(self) -> None:
             root = self.make_project()
             self.prepare_current_node_result_for_review(root, packet_id="node-packet-model-miss-invalid")
             router.record_external_event(root, "current_node_reviewer_blocks_result")
@@ -82,8 +82,8 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.deliver_expected_card(root, "pm.event.reviewer_blocked")
 
             body = self.model_miss_triage_body(root, decision="proceed_with_model_backed_repair")
-            body.pop("officer_report_refs")
-            with self.assertRaisesRegex(router.RouterError, "officer_report_refs"):
+            body.pop("flowguard_operator_report_refs")
+            with self.assertRaisesRegex(router.RouterError, "flowguard_operator_report_refs"):
                 router.record_external_event(
                     root,
                     "pm_records_model_miss_triage_decision",
@@ -105,7 +105,7 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 self.role_decision_envelope(
                     root,
                     "decisions/model_miss_request",
-                    self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                    self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
                 ),
             )
 
@@ -136,13 +136,13 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 self.role_decision_envelope(
                     root,
                     "decisions/model_miss_role_work_request",
-                    self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                    self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
                 ),
             )
             router.record_external_event(root, "pm_registers_role_work_request", self.pm_role_work_request_payload(root))
             index = read_json(run_root / "pm_work_requests" / "index.json")
             self.assertEqual(index["active_request_id"], "model-miss-followup-001")
-            self.assertEqual(index["requests"][0]["to_role"], "product_flowguard_officer")
+            self.assertEqual(index["requests"][0]["to_role"], "flowguard_operator")
             self.assertEqual(index["requests"][0]["status"], "open")
 
             action = self.next_after_display_sync(root)
@@ -173,7 +173,7 @@ class RouteMutationModelMissTriageRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "decided_by_role": "project_manager",
                     "request_id": "model-miss-followup-001",
                     "decision": "absorbed",
-                    "decision_reason": "PM reviewed the officer model-miss result.",
+                    "decision_reason": "PM reviewed the FlowGuard operator model-miss result.",
                 },
             )
 

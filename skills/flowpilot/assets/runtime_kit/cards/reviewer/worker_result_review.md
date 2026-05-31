@@ -5,14 +5,14 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # Reviewer PM Node-Completion Package Review
 
 ## Role Capability Reminder
 
-- Do not contact workers or officers directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
+- Do not contact workers or FlowGuard operators directly; when another role's work is needed, make it a blocker or PM suggestion for PM to route.
 - Classify findings as hard blockers for this gate, future requirements, or nonblocking notes; only hard current-gate failures should block this gate.
 - Apply the reviewer anti-repair side of the `Role-Scoped Quality Repair Boundary`: do not repair the worker result, PM package, route, evidence, or delivered output under review. You may correct only your own reviewer report before returning it; defects in reviewed work become blockers, repair requests, more-evidence requests, or PM routing suggestions.
 
@@ -100,7 +100,7 @@ Check:
   pre-worker and post-worker matrix refs, and the result body includes
   `Test Obligation Coverage` rows for every packet-scoped test obligation.
   Missing, stale, skipped, failed, not-run, progress-only, unsupported, or
-  undispositioned test rows block pass. Officer `missing_test_kinds` must be
+  undispositioned test rows block pass. FlowGuard operator `missing_test_kinds` must be
   converted into PM dispositions; residual prose is not closure evidence;
 - when the source packet declares FlowGuard-derived obligations, the result
   body includes `FlowGuard Obligation Coverage` rows for every packet-scoped
@@ -115,10 +115,10 @@ Check:
   node slice, or PM-floor downgrades block pass;
 - when the source packet, PM package, node plan, or gate manifest declares
   `role_skill_use_bindings`, the formal output includes `Role Skill Use
-  Evidence` rows for every applicable binding, including PM, reviewer, officer,
+  Evidence` rows for every applicable binding, including PM, reviewer, FlowGuard operator,
   or worker skill use. Missing source opening, missing affected-output evidence,
   self-attested use without artifacts, skipped binding steps without waiver, or
-  unreviewed PM/officer/reviewer skill use blocks pass when the binding is a
+  unreviewed PM/FlowGuard operator/reviewer skill use blocks pass when the binding is a
   current-gate obligation;
 - output satisfies packet acceptance slice;
 - missing packet acceptance slice, missing source output contract, missing or
@@ -137,7 +137,7 @@ Return pass, needs repair, needs more material, or invalid role origin for the
 PM-built node-completion package.
 If validation was already performed by the router or packet runtime, skip only
 the mechanical envelope parsing that is backed by a `router_owned_check_proof`
-sidecar. That proof must have `reviewer_replacement_scope: mechanical_only`,
+companion proof. That proof must have `reviewer_replacement_scope: mechanical_only`,
 must reject self-attested AI claims as proof, and must hash the audit artifact.
 Focus your review on the result's quality, acceptance-slice fit, freshness,
 role origin, contamination risk, and any judgement the router cannot recompute.

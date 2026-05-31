@@ -17,7 +17,7 @@ preventing controller/worker over-execution.
   packets are not sent to reviewer for pre-dispatch approval.
 - Workers: execute only the current packet body addressed to their role and
   return a result envelope/body pair.
-- Simulators/officers: stress-test process and product models; they do not
+- FlowGuard operator: stress-tests requested FlowGuard models; does not
   close implementation or review gates unless explicitly assigned as approver
   for that gate.
 
@@ -96,7 +96,7 @@ completed report.
 Completed work goes to Router first. Mechanical system-card ACKs,
 active-holder packet ACKs, active-holder packet result submission, and formal
 role-output submission are Router-direct check-ins. PM, reviewer, worker, and
-officer roles must not privately pass packet/result bodies or formal
+FlowGuard operator roles must not privately pass packet/result bodies or formal
 review/decision mail to Controller. When Router later instructs Controller to
 relay envelope metadata to another role, each Controller relay writes
 `controller_relay` on the envelope with
@@ -168,7 +168,7 @@ PM responses:
 - require every recipient-role response to repeat a controller-boundary reminder
   and its own role boundary.
 - require the controller to include a `ROLE_REMINDER` whenever it sends a
-  packet or review request to PM, reviewer, worker, simulator/officer, or
+  packet or review request to PM, reviewer, worker, FlowGuard operator, or
   verifier.
 
 ## Packet Schema
@@ -303,8 +303,8 @@ Missing reminders are dispatch/review blockers, not cosmetic formatting gaps.
 Heartbeat and manual resume use the same packet control plane. The waking
 assistant is Controller only. It first records
 `heartbeat_or_manual_resume_requested` to the router, then resolves
-`.flowpilot/current.json`, loads the active run state/frontier/route, crew
-ledger, role memory, latest heartbeat or manual-resume evidence,
+`.flowpilot/current.json`, loads the active run state/frontier/route,
+role-binding ledger, role memory, latest heartbeat or manual-resume evidence,
 `packet_ledger.json`, visible plan projection, and controller relay history.
 Only after that router re-entry may it run the runtime-required role-binding
 liveness preflight, restore or replace required bindings, and ask PM for the

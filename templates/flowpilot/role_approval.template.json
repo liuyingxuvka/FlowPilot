@@ -6,8 +6,8 @@
   "node_id": "<node-id-or-null>",
   "gate_id": "<gate-id>",
   "approval_scope": "<startup_pm_gate|material_sufficiency|product_architecture|child_skill_gate|process_model|product_model|human_review|parent_backward_review|route_mutation|pm_runway|final_ledger|lifecycle|completion>",
-  "approver_role": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
-  "required_approver": "<project_manager|human_like_reviewer|process_flowguard_officer|product_flowguard_officer>",
+  "approver_role": "<project_manager|human_like_reviewer|flowguard_operator>",
+  "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
   "decided_at": "<iso-8601-timestamp-or-null>",
   "completion_report_only": false,
   "report_inputs_used_as_pointers": [
@@ -104,8 +104,8 @@
       "failure_or_edge_cases_probed": false,
       "obligations_classified": false
     },
-    "flowguard_officer_model_audit": {
-      "required_for_officer": "<true|false>",
+    "flowguard_operator_model_audit": {
+      "required_for_flowguard_operator": "<true|false>",
       "model_boundary_checked": false,
       "model_files_checked": [],
       "commands_run_or_valid_reuse_recorded": false,

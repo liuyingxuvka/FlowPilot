@@ -6,7 +6,7 @@ Date: 2026-05-11
 
 This slice upgrades only the first speed tier: make the existing active-holder
 fast lane the default for current-node worker packets. It does not start the
-parallel reviewer/officer gate work.
+parallel reviewer/FlowGuard operator gate work.
 
 Current state after inspection:
 

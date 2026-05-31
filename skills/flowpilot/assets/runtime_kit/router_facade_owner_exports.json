@@ -1040,8 +1040,8 @@
             "target": "_validate_gate_decision"
           },
           {
-            "public": "_validate_model_miss_officer_report_refs",
-            "target": "_validate_model_miss_officer_report_refs"
+            "public": "_validate_model_miss_flowguard_operator_report_refs",
+            "target": "_validate_model_miss_flowguard_operator_report_refs"
           },
           {
             "public": "_validate_repair_outcome_table",
@@ -3581,8 +3581,8 @@
             "target": "_current_node_results_complete"
           },
           {
-            "public": "_empty_officer_request_lifecycle_index",
-            "target": "_empty_officer_request_lifecycle_index"
+            "public": "_empty_flowguard_operator_request_lifecycle_index",
+            "target": "_empty_flowguard_operator_request_lifecycle_index"
           },
           {
             "public": "_empty_pm_role_work_request_index",
@@ -3597,8 +3597,8 @@
             "target": "_issue_packet_active_holder_leases"
           },
           {
-            "public": "_load_officer_request_lifecycle_index",
-            "target": "_load_officer_request_lifecycle_index"
+            "public": "_load_flowguard_operator_request_lifecycle_index",
+            "target": "_load_flowguard_operator_request_lifecycle_index"
           },
           {
             "public": "_load_packet_index",
@@ -3665,12 +3665,12 @@
             "target": "_normalize_pm_role_work_result_recipient"
           },
           {
-            "public": "_officer_lifecycle_entry",
-            "target": "_officer_lifecycle_entry"
+            "public": "_flowguard_operator_lifecycle_entry",
+            "target": "_flowguard_operator_lifecycle_entry"
           },
           {
-            "public": "_officer_request_lifecycle_index_path",
-            "target": "_officer_request_lifecycle_index_path"
+            "public": "_flowguard_operator_request_lifecycle_index_path",
+            "target": "_flowguard_operator_request_lifecycle_index_path"
           },
           {
             "public": "_packet_active_holder_lease_plan",
@@ -3773,20 +3773,20 @@
             "target": "_pm_role_work_target_gate_contract"
           },
           {
-            "public": "_record_officer_lifecycle_pm_decision",
-            "target": "_record_officer_lifecycle_pm_decision"
+            "public": "_record_flowguard_operator_lifecycle_pm_decision",
+            "target": "_record_flowguard_operator_lifecycle_pm_decision"
           },
           {
-            "public": "_record_officer_lifecycle_request",
-            "target": "_record_officer_lifecycle_request"
+            "public": "_record_flowguard_operator_lifecycle_request",
+            "target": "_record_flowguard_operator_lifecycle_request"
           },
           {
-            "public": "_record_officer_lifecycle_result_returned",
-            "target": "_record_officer_lifecycle_result_returned"
+            "public": "_record_flowguard_operator_lifecycle_result_returned",
+            "target": "_record_flowguard_operator_lifecycle_result_returned"
           },
           {
-            "public": "_record_officer_lifecycle_status",
-            "target": "_record_officer_lifecycle_status"
+            "public": "_record_flowguard_operator_lifecycle_status",
+            "target": "_record_flowguard_operator_lifecycle_status"
           },
           {
             "public": "_refresh_all_parallel_packet_batches_from_durable_results",
@@ -3837,8 +3837,8 @@
             "target": "_unresolved_pm_role_work_requests"
           },
           {
-            "public": "_upsert_officer_lifecycle_entry",
-            "target": "_upsert_officer_lifecycle_entry"
+            "public": "_upsert_flowguard_operator_lifecycle_entry",
+            "target": "_upsert_flowguard_operator_lifecycle_entry"
           },
           {
             "public": "_validate_packet_bodies_opened_by_targets",
@@ -3885,8 +3885,8 @@
             "target": "_write_material_understanding"
           },
           {
-            "public": "_write_officer_request_lifecycle_index",
-            "target": "_write_officer_request_lifecycle_index"
+            "public": "_write_flowguard_operator_request_lifecycle_index",
+            "target": "_write_flowguard_operator_request_lifecycle_index"
           },
           {
             "public": "_write_parallel_packet_batch",

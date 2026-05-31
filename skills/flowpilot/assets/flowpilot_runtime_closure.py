@@ -1,6 +1,6 @@
 """Runtime-closure guard helpers for FlowPilot.
 
-These helpers keep the router's closing edges explicit: officer packet loops,
+These helpers keep the router's closing edges explicit: FlowGuard operator packet loops,
 resume-state quarantine, terminal user reporting, and route-display refresh.
 They are pure data builders/validators so the router owns all filesystem writes.
 """
@@ -10,21 +10,21 @@ from __future__ import annotations
 from typing import Any
 
 
-OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA = "flowpilot.officer_request_lifecycle_index.v1"
-OFFICER_REQUEST_LIFECYCLE_ENTRY_SCHEMA = "flowpilot.officer_request_lifecycle_entry.v1"
+FLOWGUARD_OPERATOR_REQUEST_LIFECYCLE_INDEX_SCHEMA = "flowpilot.flowguard_operator_request_lifecycle_index.v1"
+FLOWGUARD_OPERATOR_REQUEST_LIFECYCLE_ENTRY_SCHEMA = "flowpilot.flowguard_operator_request_lifecycle_entry.v1"
 CONTINUATION_QUARANTINE_SCHEMA = "flowpilot.continuation_quarantine.v1"
 FINAL_USER_REPORT_SCHEMA = "flowpilot.final_user_report.v1"
 ROUTE_DISPLAY_REFRESH_SCHEMA = "flowpilot.route_display_refresh.v1"
 
-OFFICER_ROLES = frozenset({"process_flowguard_officer", "product_flowguard_officer"})
-OFFICER_PROCESS_KINDS = frozenset({"officer_model_report", "officer_model_miss_report"})
-OFFICER_OUTPUT_CONTRACT_IDS = frozenset(
+FLOWGUARD_OPERATOR_ROLES = frozenset({"flowguard_operator"})
+FLOWGUARD_OPERATOR_PROCESS_KINDS = frozenset({"flowguard_operator_model_report", "flowguard_operator_model_miss_report"})
+FLOWGUARD_OPERATOR_OUTPUT_CONTRACT_IDS = frozenset(
     {
-        "flowpilot.output_contract.officer_model_report.v1",
+        "flowpilot.output_contract.flowguard_operator_model_report.v1",
         "flowpilot.output_contract.flowguard_model_miss_report.v1",
     }
 )
-OFFICER_PACKET_TYPE = "officer_request"
+FLOWGUARD_OPERATOR_PACKET_TYPE = "flowguard_operator_request"
 PM_ROLE = "project_manager"
 
 
@@ -36,34 +36,34 @@ def _nonempty(value: Any) -> bool:
     return bool(_text(value))
 
 
-def is_officer_request_record(record: dict[str, Any]) -> bool:
+def is_flowguard_operator_request_record(record: dict[str, Any]) -> bool:
     return (
         isinstance(record, dict)
-        and _text(record.get("to_role")) in OFFICER_ROLES
+        and _text(record.get("to_role")) in FLOWGUARD_OPERATOR_ROLES
         and (
-            _text(record.get("process_kind")) in OFFICER_PROCESS_KINDS
-            or _text(record.get("output_contract_id")) in OFFICER_OUTPUT_CONTRACT_IDS
-            or _text(record.get("packet_type")) == OFFICER_PACKET_TYPE
+            _text(record.get("process_kind")) in FLOWGUARD_OPERATOR_PROCESS_KINDS
+            or _text(record.get("output_contract_id")) in FLOWGUARD_OPERATOR_OUTPUT_CONTRACT_IDS
+            or _text(record.get("packet_type")) == FLOWGUARD_OPERATOR_PACKET_TYPE
         )
     )
 
 
-def validate_officer_request_record(record: dict[str, Any]) -> list[str]:
-    if not is_officer_request_record(record):
+def validate_flowguard_operator_request_record(record: dict[str, Any]) -> list[str]:
+    if not is_flowguard_operator_request_record(record):
         return []
     issues: list[str] = []
     binding = record.get("process_contract_binding")
     binding = binding if isinstance(binding, dict) else {}
     if _text(record.get("requested_by_role")) != PM_ROLE:
         issues.append("requested_by_role must be project_manager")
-    if _text(record.get("to_role")) not in OFFICER_ROLES:
-        issues.append("to_role must be a FlowGuard officer")
-    if _text(record.get("process_kind")) not in OFFICER_PROCESS_KINDS:
-        issues.append("process_kind must be an officer process kind")
-    if _text(record.get("output_contract_id")) not in OFFICER_OUTPUT_CONTRACT_IDS:
-        issues.append("output_contract_id must be an officer output contract")
-    if _text(record.get("packet_type")) != OFFICER_PACKET_TYPE:
-        issues.append("packet_type must be officer_request")
+    if _text(record.get("to_role")) not in FLOWGUARD_OPERATOR_ROLES:
+        issues.append("to_role must be flowguard_operator")
+    if _text(record.get("process_kind")) not in FLOWGUARD_OPERATOR_PROCESS_KINDS:
+        issues.append("process_kind must be a FlowGuard operator process kind")
+    if _text(record.get("output_contract_id")) not in FLOWGUARD_OPERATOR_OUTPUT_CONTRACT_IDS:
+        issues.append("output_contract_id must be an FlowGuard operator output contract")
+    if _text(record.get("packet_type")) != FLOWGUARD_OPERATOR_PACKET_TYPE:
+        issues.append("packet_type must be flowguard_operator_request")
     if record.get("strict_process_contract_binding") is not True:
         issues.append("strict_process_contract_binding must be true")
     if _text(record.get("required_result_next_recipient")) != PM_ROLE:
@@ -72,8 +72,8 @@ def validate_officer_request_record(record: dict[str, Any]) -> list[str]:
         issues.append("controller_may_read_packet_body must be false")
     if _text(binding.get("process_kind")) != _text(record.get("process_kind")):
         issues.append("process_contract_binding.process_kind must match record")
-    if _text(binding.get("packet_type")) != OFFICER_PACKET_TYPE:
-        issues.append("process_contract_binding.packet_type must be officer_request")
+    if _text(binding.get("packet_type")) != FLOWGUARD_OPERATOR_PACKET_TYPE:
+        issues.append("process_contract_binding.packet_type must be flowguard_operator_request")
     if _text(binding.get("required_result_next_recipient")) != PM_ROLE:
         issues.append("process_contract_binding.required_result_next_recipient must be project_manager")
     for field in (
@@ -90,14 +90,14 @@ def validate_officer_request_record(record: dict[str, Any]) -> list[str]:
     return issues
 
 
-def validate_officer_result_record(record: dict[str, Any], result: dict[str, Any]) -> list[str]:
-    if not is_officer_request_record(record):
+def validate_flowguard_operator_result_record(record: dict[str, Any], result: dict[str, Any]) -> list[str]:
+    if not is_flowguard_operator_request_record(record):
         return []
-    issues = validate_officer_request_record(record)
+    issues = validate_flowguard_operator_request_record(record)
     if _text(result.get("packet_id")) != _text(record.get("packet_id")):
-        issues.append("result packet_id must match officer request packet")
+        issues.append("result packet_id must match FlowGuard operator request packet")
     if _text(result.get("completed_by_role")) != _text(record.get("to_role")):
-        issues.append("result completed_by_role must match officer role")
+        issues.append("result completed_by_role must match FlowGuard operator role")
     if _text(result.get("next_recipient")) != PM_ROLE:
         issues.append("result next_recipient must be project_manager")
     if not _nonempty(result.get("result_body_path")):
@@ -107,13 +107,13 @@ def validate_officer_result_record(record: dict[str, Any], result: dict[str, Any
     return issues
 
 
-def officer_lifecycle_entry_from_request(record: dict[str, Any], *, now: str) -> dict[str, Any]:
-    issues = validate_officer_request_record(record)
+def flowguard_operator_lifecycle_entry_from_request(record: dict[str, Any], *, now: str) -> dict[str, Any]:
+    issues = validate_flowguard_operator_request_record(record)
     return {
-        "schema_version": OFFICER_REQUEST_LIFECYCLE_ENTRY_SCHEMA,
+        "schema_version": FLOWGUARD_OPERATOR_REQUEST_LIFECYCLE_ENTRY_SCHEMA,
         "request_id": record.get("request_id"),
         "batch_id": record.get("batch_id"),
-        "officer_role": record.get("to_role"),
+        "flowguard_operator_role": record.get("to_role"),
         "output_contract_id": record.get("output_contract_id"),
         "process_kind": record.get("process_kind"),
         "packet_id": record.get("packet_id"),
@@ -145,7 +145,7 @@ def officer_lifecycle_entry_from_request(record: dict[str, Any], *, now: str) ->
     }
 
 
-def officer_lifecycle_status_update(record: dict[str, Any], *, lifecycle_status: str, now: str) -> dict[str, Any]:
+def flowguard_operator_lifecycle_status_update(record: dict[str, Any], *, lifecycle_status: str, now: str) -> dict[str, Any]:
     update = {
         "request_id": record.get("request_id"),
         "request_status": record.get("status"),
@@ -163,8 +163,8 @@ def officer_lifecycle_status_update(record: dict[str, Any], *, lifecycle_status:
     return update
 
 
-def officer_lifecycle_result_update(record: dict[str, Any], result: dict[str, Any], *, now: str) -> dict[str, Any]:
-    issues = validate_officer_result_record(record, result)
+def flowguard_operator_lifecycle_result_update(record: dict[str, Any], result: dict[str, Any], *, now: str) -> dict[str, Any]:
+    issues = validate_flowguard_operator_result_record(record, result)
     return {
         "request_id": record.get("request_id"),
         "request_status": record.get("status"),
@@ -185,7 +185,7 @@ def officer_lifecycle_result_update(record: dict[str, Any], result: dict[str, An
     }
 
 
-def officer_lifecycle_decision_update(record: dict[str, Any], decision_record: dict[str, Any], *, now: str) -> dict[str, Any]:
+def flowguard_operator_lifecycle_decision_update(record: dict[str, Any], decision_record: dict[str, Any], *, now: str) -> dict[str, Any]:
     decision = _text(decision_record.get("decision"))
     return {
         "request_id": record.get("request_id"),

@@ -32,7 +32,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 REQUIRED_LABELS = (
     "startup_answers_recorded",
     "run_shell_created",
-    "six_roles_started_with_core_prompt_receipts",
+    "runtime_roles_started_with_core_prompt_receipts",
     "early_heartbeat_bound_to_current_run",
     "controller_loaded_after_startup_receipts",
     "controller_confirms_boundary",
@@ -66,13 +66,13 @@ class State:
     current_pointer_written: bool = False
     run_index_updated: bool = False
 
-    six_roles_started: bool = False
+    runtime_roles_started: bool = False
     role_ledger_current_run: bool = False
     role_core_prompts_delivered_at_spawn: bool = False
     role_core_prompt_hashes_recorded: bool = False
     role_io_protocol_receipts_current: bool = False
     later_core_injection_required: bool = False
-    fewer_than_six_roles_used: bool = False
+    fewer_than_required_runtime_roles_used: bool = False
 
     heartbeat_created: bool = False
     heartbeat_created_before_run_or_roles: bool = False
@@ -147,12 +147,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
-    if not state.six_roles_started:
+    if not state.runtime_roles_started:
         yield Transition(
-            "six_roles_started_with_core_prompt_receipts",
+            "runtime_roles_started_with_core_prompt_receipts",
             _inc(
                 state,
-                six_roles_started=True,
+                runtime_roles_started=True,
                 role_ledger_current_run=True,
                 role_core_prompts_delivered_at_spawn=True,
                 role_core_prompt_hashes_recorded=True,
@@ -326,8 +326,8 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.status == "new":
         return failures
-    if state.fewer_than_six_roles_used or (
-        state.six_roles_started
+    if state.fewer_than_required_runtime_roles_used or (
+        state.runtime_roles_started
         and not (
             state.role_ledger_current_run
             and state.role_core_prompts_delivered_at_spawn
@@ -345,14 +345,14 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("reviewer startup fact card was dispatched before early heartbeat binding")
         if state.heartbeat_created and not (
             state.run_shell_created
-            and state.six_roles_started
+            and state.runtime_roles_started
             and state.heartbeat_bound_to_current_run
             and state.heartbeat_interval_minutes == 1
             and state.heartbeat_host_proof_verified
         ):
             failures.append("heartbeat lacked current-run one-minute verified host proof")
     if state.controller_loaded and not (
-        state.run_shell_created and state.six_roles_started
+        state.run_shell_created and state.runtime_roles_started
     ):
         failures.append("Controller loaded before run shell and role-binding startup receipts existed")
     if state.controller_read_sealed_body:
@@ -462,7 +462,7 @@ def optimized_plan_state(**changes: object) -> State:
             run_shell_created=True,
             current_pointer_written=True,
             run_index_updated=True,
-            six_roles_started=True,
+            runtime_roles_started=True,
             role_ledger_current_run=True,
             role_core_prompts_delivered_at_spawn=True,
             role_core_prompt_hashes_recorded=True,
@@ -510,7 +510,7 @@ def hazard_states() -> dict[str, State]:
             role_core_prompt_hashes_recorded=False,
         ),
         "later_core_injection_required": replace(safe, later_core_injection_required=True),
-        "fewer_than_six_roles": replace(safe, fewer_than_six_roles_used=True),
+        "fewer_than_required_runtime_roles": replace(safe, fewer_than_required_runtime_roles_used=True),
         "heartbeat_before_run_or_roles": replace(safe, heartbeat_created_before_run_or_roles=True),
         "heartbeat_after_reviewer_dispatch": replace(
             safe,
@@ -521,7 +521,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "heartbeat_wrong_cadence": replace(safe, heartbeat_interval_minutes=30),
         "heartbeat_missing_host_proof": replace(safe, heartbeat_host_proof_verified=False),
-        "controller_loaded_before_roles": replace(safe, six_roles_started=False),
+        "controller_loaded_before_roles": replace(safe, runtime_roles_started=False),
         "controller_reads_sealed_body": replace(safe, controller_read_sealed_body=True),
         "self_attested_proof": replace(safe, self_attested_claim_used_as_proof=True),
         "reviewer_without_mechanical_proof": replace(safe, router_owned_mechanical_proof_current=False),

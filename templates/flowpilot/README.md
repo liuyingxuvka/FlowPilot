@@ -22,25 +22,25 @@ for review.
    `continues_from_run_id` and write a prior-work import packet that treats old
    runs and project files as input materials. Do not reuse old control state,
    old live-agent IDs, old screenshots, or old route gates as current evidence.
-5. Ask the native startup intake options: runtime-role permission,
-   scheduled-continuation permission, and whether to open Cockpit UI. Stop immediately after asking and wait
-   for a later user reply. Do not emit the banner, create route state, load
-   child skills, open sidecar roles, probe heartbeat, run image generation, or
-   start implementation in the question-asking response.
-6. Record all three later user answers explicitly. Do not infer
-   runtime-role authorization, scheduled-continuation authorization,
-   display surface, or fallback execution from invocation text, `.flowpilot/`
-   state, host limits, or previous routes. If the user chose Cockpit, open the
-   Cockpit UI as soon as startup state is ready; if the user chose chat, show
-   the route sign in chat as before.
+5. Ask the native startup intake for the user's work request and the single
+   user-visible option: whether FlowPilot may use background collaboration for this
+   task. Stop immediately after asking and wait for a later user reply. Do not
+   emit the banner, create route state, load child skills, open requested helper
+   responsibilities, probe heartbeat, run image generation, or start
+   implementation in the question-asking response.
+6. Record the later background-collaboration answer explicitly. Do not infer
+   runtime-role authorization from invocation text, `.flowpilot/` state, host
+   limits, or previous routes. Record scheduled continuation as the fixed
+   `manual` default and display surface as the fixed `chat` default.
 7. Emit `startup_banner.template.md` in chat only after the complete explicit
    answer set has been recorded.
 8. Run FlowPilot's internal self-interrogation.
-9. Create a fresh fixed role-binding role binding for the new formal FlowPilot task, write
-   `role_binding_ledger.json`, and write a compact role memory packet for every
-   required runtime responsibility. The default startup target is runtime-requested background
-   sidecar roles freshly opened after the startup answers and current route
-   allocation where the host and current tool policy permit them. Prior-route
+9. Initialize the role-binding ledger for the new formal FlowPilot task and
+   write compact role memory packets only for responsibilities requested by the
+   current runtime. The startup target is runtime-requested role bindings
+   freshly opened after the startup answers and current route allocation through
+   host-supported, addressable, isolated role surfaces where the host and current
+   tool policy permit them. Prior-route
    `agent_id` values are audit history only. If authorization is missing or
    startup fails, pause and ask. Continue with memory-seeded single-agent
    runtime-role continuity only after an explicit user fallback decision.
@@ -68,7 +68,7 @@ for review.
    unacceptable-result review, semantic-fidelity/no-silent-downgrade policy,
    visible-display rationale, missing-feature review, negative scope, and the
    functional acceptance matrix.
-13. Product FlowGuard officer approves modelability and the human-like reviewer
+13. FlowGuard operator approves modelability and the human-like reviewer
    challenges usefulness, ambition, hidden downgrades, placeholder-quality
    output, and missing or unnecessary product behavior.
 14. Project manager writes `root_acceptance_contract.json` for the PM-owned
@@ -81,7 +81,7 @@ for review.
    architecture, capability map, frozen contract, and local skill inventory.
 18. Project manager extracts the child-skill gate manifest only from
    PM-selected child skills, assigns required approvers, and gets
-   reviewer/officer/PM approval before route modeling.
+   reviewer/FlowGuard operator/PM approval before route modeling.
 19. Generate a candidate route tree and freeze it only after root FlowGuard
     checks pass.
 20. Enumerate every effective route node with children as a parent backward
@@ -99,7 +99,7 @@ for review.
    `node_acceptance_plan.json` with root mappings, risk hypotheses, concrete
    experiments, evidence paths, route-sign display proof, and terminal replay
    obligations.
-   PM owns reviewer timing: write a review hold before worker/officer
+   PM owns reviewer timing: write a review hold before worker/FlowGuard operator
    work, receive worker output back to PM, record the package-result
    disposition, and only then release a formal reviewer gate package naming
    evidence paths, scope, and required inspections. Early reviewer work is
@@ -114,12 +114,12 @@ for review.
    Use the physical packet runtime (`skills/flowpilot/assets/packet_runtime.py`
    in the installed skill, `scripts/flowpilot_packets.py` in the repo) to write
    these files and generate controller handoffs from envelope fields only.
-   Reviewer, worker, and FlowGuard officer suggestions that need PM attention
+   Reviewer, worker, and FlowGuard operator suggestions that need PM attention
    are normalized into `pm_suggestion_ledger.jsonl`. Reviewer hard blockers,
-   worker/officer `PM Note` items, model-derived route risks, and useful
+   worker/FlowGuard operator `PM Note` items, model-derived route risks, and useful
    higher-standard or simplification opportunities all use the same PM
    disposition fields, while role authority stays distinct: reviewers block
-   only minimum-standard failures, workers never block gates, and officer
+   only minimum-standard failures, workers never block gates, and FlowGuard operator
    blockers require formal model-gate findings.
    Self-interrogation output is durable evidence, not disposable
    prose. PM writes `self_interrogation/*.json` records and registers them in
@@ -157,7 +157,7 @@ for review.
    any PM-authored worker packet envelope only after router direct-dispatch
    preflight passes.
    The controller replaces the current visible plan projection from the PM
-   runway but does not read or execute worker bodies itself. If the host exposes a native
+   runway but does not read or execute Workerodies itself. If the host exposes a native
    plan/task-list tool such as Codex `update_plan`, call it with that runway
    before packet dispatch; if not, record the fallback projection method and
    show the runway in chat.
@@ -234,11 +234,12 @@ for review.
   authority boundaries, memory paths, recovery rules, and terminal archive
   state.
 - `role_binding_memory/role_memory.template.json`: compact per-role recovery memory
-  packet used to resume or replace unavailable sidecar roles after heartbeat or
+  packet used to resume or replace unavailable requested helper responsibilities after heartbeat or
   manual resume.
-- `role_binding_memory/role_binding_recovery_report.template.json`: resume-time all-role recovery report
-  proving project manager, reviewer, both FlowGuard officers, and both workers
-  were restored from ledger and role memory before PM runway work.
+- `role_binding_memory/role_binding_recovery_report.template.json`: resume-time recovery report
+  proving every currently required requested responsibility was restored,
+  replaced, or blocked from current-run ledger and role memory before PM runway
+  work.
 - `material_intake_packet.template.json`: authorized-worker material inventory,
   local skill and host capability inventory, and source-quality packet
   reviewed before PM planning.
@@ -267,16 +268,16 @@ for review.
   happy paths, edge/failure paths, regressions, lifecycle, and PM-risk cases.
 - `flowguard_modeling_request.template.json`: PM-authored request for proactive
   process/product/object modeling when a decision is uncertain. It records the
-  officer-owned async dispatch mode, officer output root, and what
+  FlowGuard operator-owned async dispatch mode, FlowGuard operator output root, and what
   non-dependent coordination the controller may relay while reports are pending.
-- `flowguard_modeling_report.template.json`: FlowGuard officer report that
+- `flowguard_modeling_report.template.json`: FlowGuard operator report that
   returns modelability, execution ownership provenance, blindspots, failure
   paths, PM risk tiers, model-derived review agenda, toolchain/model
   improvement suggestions, human walkthrough recommendations, recommendation,
   confidence boundary, and route mutation candidate for PM decision. Report
-  templates distinguish officer-run commands from controller outputs used as
+  templates distinguish FlowGuard operator-run commands from controller outputs used as
   pointers and avoid absolute no-risk claims.
-- `role_approval.template.json`: PM, reviewer, or FlowGuard officer
+- `role_approval.template.json`: PM, reviewer, or FlowGuard operator
   independent adversarial approval evidence. It records direct sources checked,
   state fields, probes, adversarial hypotheses, concrete evidence references,
   risk-or-blindspot triage, unresolved residual risk count, and rejects
@@ -306,10 +307,10 @@ for review.
   `flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`, or
   `discarded_with_reason`.
 - `activity_stream.template.json`: append-only progress stream for PM,
-  reviewer, officer, worker, route, checkpoint, heartbeat/manual-resume, and
+  reviewer, FlowGuard operator, worker, route, checkpoint, heartbeat/manual-resume, and
   terminal events consumed by Cockpit/chat progress.
 - `pm_suggestion_ledger_entry.template.json`: JSONL entry shape for reviewer,
-  worker, and FlowGuard officer suggestions that require PM disposition. The
+  worker, and FlowGuard operator suggestions that require PM disposition. The
   ledger records source role, classification, evidence refs, PM disposition,
   and closure without copying sealed packet or result body content.
 - `blocker_repair_policy.template.json`: run-visible policy table that maps

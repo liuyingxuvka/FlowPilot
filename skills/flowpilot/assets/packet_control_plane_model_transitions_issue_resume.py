@@ -76,7 +76,7 @@ class HeartbeatResumeLoad:
             yield FunctionResult(
                 DispatchBlocked(packet_id, "ambiguous_worker_state_requires_pm_reissue"),
                 new_state,
-                "heartbeat_ambiguous_worker_blocked",
+                "heartbeat_ambiguous_workerlocked",
             )
             return
         if packet_id.startswith("heartbeat_worker_result_pending_review"):
@@ -100,7 +100,7 @@ class HeartbeatResumeLoad:
                 result_envelopes=state.result_envelopes + (packet_id,),
                 result_ledger_records=state.result_ledger_records + (packet_id,),
             )
-            yield FunctionResult(NodeResult(packet_id, "worker_a", "agent-worker_a"), new_state, "heartbeat_loaded_worker_result_for_review")
+            yield FunctionResult(NodeResult(packet_id, "worker", "agent-worker"), new_state, "heartbeat_loaded_worker_result_for_review")
             return
 
         has_reminder = not packet_id.startswith("heartbeat_missing_reminder")

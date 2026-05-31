@@ -42,7 +42,7 @@ def _receipt_lifecycle_policy(spec: dict[str, str]) -> dict[str, str] | None:
             "batch_status": "packets_relayed",
             "count_key": "relayed",
             "count_status": "packet_relayed",
-            "officer_lifecycle_status": "packet_relayed",
+            "flowguard_operator_lifecycle_status": "packet_relayed",
         }
     if kind == "result_relay":
         record_status = _result_relay_record_status(spec)
@@ -53,7 +53,7 @@ def _receipt_lifecycle_policy(spec: dict[str, str]) -> dict[str, str] | None:
             "batch_status": _result_relay_batch_status(spec),
             "count_key": "",
             "count_status": "",
-            "officer_lifecycle_status": record_status,
+            "flowguard_operator_lifecycle_status": record_status,
         }
     return None
 
@@ -128,7 +128,7 @@ def _apply_pm_role_work_receipt_lifecycle(
     touched_request_ids: list[str] = []
     target_status = policy["record_status"]
     timestamp_field = policy["pm_timestamp_field"]
-    lifecycle_status = policy["officer_lifecycle_status"]
+    lifecycle_status = policy["flowguard_operator_lifecycle_status"]
     for source in records:
         request_id = str(source.get("request_id") or "").strip()
         if not request_id:
@@ -140,7 +140,7 @@ def _apply_pm_role_work_receipt_lifecycle(
             record["status"] = target_status
             changed = True
         record.setdefault(timestamp_field, now)
-        router._record_officer_lifecycle_status(
+        router._record_flowguard_operator_lifecycle_status(
             project_root,
             run_root,
             run_state,

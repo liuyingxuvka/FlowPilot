@@ -255,8 +255,8 @@ def _selected_state(scenario: str) -> State:
             event_name="role_records_gate_decision",
             family="gate",
             flag_already_true=True,
-            prior_keys=("gate:route-check:v1:process_officer",),
-            incoming_key="gate:route-check:v1:process_officer",
+            prior_keys=("gate:route-check:v1:flowguard_operator_route_scope",),
+            incoming_key="gate:route-check:v1:flowguard_operator_route_scope",
             key_matches_prior=True,
         )
     if scenario == GATE_DECISION_NEW_KEY:
@@ -266,8 +266,8 @@ def _selected_state(scenario: str) -> State:
             event_name="role_records_gate_decision",
             family="gate",
             flag_already_true=True,
-            prior_keys=("gate:route-check:v1:process_officer",),
-            incoming_key="gate:route-check:v2:process_officer",
+            prior_keys=("gate:route-check:v1:flowguard_operator_route_scope",),
+            incoming_key="gate:route-check:v2:flowguard_operator_route_scope",
             route_version_advances=True,
         )
     if scenario == REPAIR_RETRY_BELOW_BUDGET:

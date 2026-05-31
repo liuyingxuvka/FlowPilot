@@ -18,6 +18,7 @@ PM_ONLY_PACKET_CONTRACT = "pm_only_packet_contract"
 ACK_TREATED_AS_RESULT = "ack_treated_as_result"
 ACCEPTED_RESULT_REASSIGNED = "accepted_result_reassigned"
 OLD_GENERATION_RESULT_ACCEPTED = "old_generation_result_accepted"
+UNSUPPORTED_HISTORICAL_POINTER_ACCEPTED = "unsupported_historical_pointer_accepted"
 
 SCENARIOS = (
     SUCCESS,
@@ -28,6 +29,7 @@ SCENARIOS = (
     ACK_TREATED_AS_RESULT,
     ACCEPTED_RESULT_REASSIGNED,
     OLD_GENERATION_RESULT_ACCEPTED,
+    UNSUPPORTED_HISTORICAL_POINTER_ACCEPTED,
 )
 RISK_SCENARIOS = set(SCENARIOS) - {SUCCESS}
 
@@ -56,7 +58,7 @@ class State:
     new_current_fields_present: bool = True
     unsupported_historical_current_fields_present: bool = False
     resolver_accepts_new_fields: bool = True
-    resolver_accepts_unsupported_historical_fields: bool = True
+    resolver_accepts_unsupported_historical_fields: bool = False
     resolver_uses_explicit_run_root: bool = True
     resolver_falls_back_to_project_root: bool = False
     resolver_chooses_newest_run: bool = False
@@ -136,13 +138,21 @@ def _selected_state(scenario: str) -> State:
             result_generation=1,
             stale_generation_quarantined=False,
         )
+    if scenario == UNSUPPORTED_HISTORICAL_POINTER_ACCEPTED:
+        return replace(
+            base,
+            scenario=scenario,
+            unsupported_historical_current_fields_present=True,
+            resolver_accepts_unsupported_historical_fields=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
 def control_surface_ready(state: State) -> bool:
     current_pointer_supported = (
         (not state.new_current_fields_present or state.resolver_accepts_new_fields)
-        and (not state.unsupported_historical_current_fields_present or state.resolver_accepts_unsupported_historical_fields)
+        and not state.unsupported_historical_current_fields_present
+        and not state.resolver_accepts_unsupported_historical_fields
     )
     all_roles_covered = set(ROLE_SET).issubset(set(state.packet_contract_roles))
     fresh_or_quarantined = (
@@ -172,6 +182,8 @@ def control_surface_ready(state: State) -> bool:
 def _block_label(state: State) -> str:
     if state.new_current_fields_present and not state.resolver_accepts_new_fields:
         return "block_new_current_schema_ignored"
+    if state.unsupported_historical_current_fields_present or state.resolver_accepts_unsupported_historical_fields:
+        return "block_unsupported_historical_current_fields"
     if not state.resolver_uses_explicit_run_root or state.resolver_falls_back_to_project_root:
         return "block_implicit_run_root_fallback"
     if state.resolver_chooses_newest_run:

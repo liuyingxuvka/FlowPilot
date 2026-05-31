@@ -53,7 +53,7 @@ class RouteMutationSiblingReplacementRuntimeTests(FlowPilotRouterRuntimeTestBase
                 root,
                 packet_id="node-packet-sibling-replacement",
                 from_role="project_manager",
-                to_role="worker_a",
+                to_role="worker",
                 node_id="node-001",
                 body_text="current node work",
                 metadata={"route_version": 1},

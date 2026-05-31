@@ -1,18 +1,18 @@
-# FlowPilot Officer Model Gate Semantics Plan
+# FlowPilot FlowGuard operator Model Gate Semantics Plan
 
 ## Scope
 
 This plan covers the shared semantic repair for the Product and Process
-FlowGuard Officer model gates.
+FlowGuard operator model gates.
 
-The Product FlowGuard Officer gate is no longer merely a product architecture
+The FlowGuard operator gate is no longer merely a product architecture
 modelability check. It is the canonical product behavior model submission that
 PM must accept before reviewer challenge and route planning use it.
 
-The Process FlowGuard Officer route gate is no longer merely a route process
+The FlowGuard operator route gate is no longer merely a route process
 check. It is the canonical process route model submission that PM must accept
 before Reviewer route challenge uses it. The default route-draft path no longer
-requires a second Product FlowGuard route-product review after PM accepts the
+requires a second product-scope FlowGuard route-product review after PM accepts the
 process route model.
 
 This plan intentionally preserves the broader gate-alignment repair in
@@ -25,9 +25,9 @@ close a gate only by mapping to the concrete active gate outcome.
 | Step | Change | Concrete work | Done when |
 | --- | --- | --- | --- |
 | 1 | Preserve unsupported historical boundary | Keep old Product `product_architecture_modelability` names and old Process `route_process_check` names as aliases. | Old active runs, old events, old artifacts, and focused tests still work. |
-| 2 | Introduce canonical Product model semantics | Add Product Officer submit/block events, flags, and canonical `flowguard/product_behavior_model.json`. | New Product path says "submit product behavior model"; old modelability pass/block only aliases it. |
-| 3 | Introduce canonical Process model semantics | Add Process Officer submit/repair/block events, flags, and canonical `flowguard/process_route_model.json`. | New Process path says "submit process route model"; old route process check pass/repair/block only aliases it. |
-| 4 | Keep PM as model acceptance owner | Require PM acceptance after Product model submission and after Process model submission before downstream roles may use either model. | Officer submission alone cannot advance reviewer/route challenge or activation paths. |
+| 2 | Introduce canonical Product model semantics | Add FlowGuard operator product-scope submit/block events, flags, and canonical `flowguard/product_behavior_model.json`. | New Product path says "submit product behavior model"; old modelability pass/block only aliases it. |
+| 3 | Introduce canonical Process model semantics | Add FlowGuard operator route-scope submit/repair/block events, flags, and canonical `flowguard/process_route_model.json`. | New Process path says "submit process route model"; old route process check pass/repair/block only aliases it. |
+| 4 | Keep PM as model acceptance owner | Require PM acceptance after Product model submission and after Process model submission before downstream roles may use either model. | FlowGuard operator submission alone cannot advance reviewer/route challenge or activation paths. |
 | 5 | Write canonical and unsupported historical artifacts | Write canonical artifacts first, then mirror old unsupported historical artifacts. Read helpers prefer canonical paths and fall back to old paths. | New code has a single canonical source while old source paths remain valid. |
 | 6 | Align pass/block/repair flags | Recording either canonical or unsupported historical event updates both canonical and unsupported historical flags and clears contradictory stale flags. | Wait groups cannot be stuck or contradictory after alias use. |
 | 7 | Update wording and targeted tests | Update card/event summaries and tests for both canonical paths and unsupported historical alias paths. | FlowGuard model checks, router tests, and role-output authority tests pass. |
@@ -46,25 +46,25 @@ close a gate only by mapping to the concrete active gate outcome.
 | 8 | Process model submission skips PM acceptance and lets Product/Reviewer route checks continue. | `process_route_model_submission_skips_pm_acceptance` |
 | 9 | Process writes only the old route process check artifact, not the canonical process route model artifact. | `process_route_model_missing_canonical_artifact` |
 | 10 | Process repair/block aliases leave pass/repair/block flags contradictory. | `process_route_model_block_alias_flags_diverge` |
-| 11 | A unsupported historical/general officer report or PM repair follow-up is recorded but does not satisfy the active gate. | Existing dynamic return-path gate-alignment scenarios |
+| 11 | A unsupported historical/general FlowGuard operator report or PM repair follow-up is recorded but does not satisfy the active gate. | Existing dynamic return-path gate-alignment scenarios |
 | 12 | PM role-work result absorbs a model report without mapping it to the active gate event. | `pm_role_work_result_not_mapped_to_current_gate` |
 
 ## Minimal Runtime Fix Shape
 
 1. Add canonical Product events:
-   `product_officer_submits_product_behavior_model` and
-   `product_officer_blocks_product_behavior_model`.
+   `flowguard_operator_submits_product_behavior_model` and
+   `flowguard_operator_blocks_product_behavior_model`.
 2. Keep Product unsupported historical events:
-   `product_officer_passes_product_architecture_modelability` and
-   `product_officer_blocks_product_architecture_modelability`.
+   `flowguard_operator_passes_product_architecture_modelability` and
+   `flowguard_operator_blocks_product_architecture_modelability`.
 3. Add canonical Process events:
-   `process_officer_submits_process_route_model`,
-   `process_officer_requests_process_route_model_repair`, and
-   `process_officer_blocks_process_route_model`.
+   `flowguard_operator_submits_process_route_model`,
+   `flowguard_operator_requests_process_route_model_repair`, and
+   `flowguard_operator_blocks_process_route_model`.
 4. Keep Process unsupported historical events:
-   `process_officer_passes_route_check`,
-   `process_officer_requires_route_repair`, and
-   `process_officer_blocks_route_check`.
+   `flowguard_operator_passes_route_check`,
+   `flowguard_operator_requires_route_repair`, and
+   `flowguard_operator_blocks_route_check`.
 5. Set both canonical and unsupported historical flags whenever either side is recorded.
 6. Write canonical artifacts first:
    `flowguard/product_behavior_model.json` and

@@ -195,8 +195,8 @@ def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -
         required_object="role_output_body",
         required_fields=list(PM_MODEL_MISS_TRIAGE_REQUIRED_BODY_FIELDS),
         optional_fields=[
-            "officer_request_refs",
-            "officer_report_refs",
+            "flowguard_operator_request_refs",
+            "flowguard_operator_report_refs",
             "same_class_findings_summary",
             "candidate_repairs_considered",
             "minimal_sufficient_repair_recommendation",
@@ -214,8 +214,8 @@ def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -
         conditional_required_fields={
             "when decision=proceed_with_model_backed_repair": [
                 "flowguard_capability.can_model_bug_class=true",
-                "officer_report_refs[].report_path",
-                "officer_report_refs[].report_hash",
+                "flowguard_operator_report_refs[].report_path",
+                "flowguard_operator_report_refs[].report_hash",
                 "same_class_findings_reviewed=true",
                 "repair_recommendation_reviewed=true",
                 "candidate_repairs_considered",
@@ -232,8 +232,8 @@ def _pm_model_miss_triage_payload_contract(project_root: Path, run_root: Path) -
         structural_requirements=[
             "Submit the body directly to Router with `flowpilot_runtime.py submit-output-to-router`; the role_output_envelope must carry body_ref and runtime_receipt_ref metadata.",
             "Do not start pm.review_repair until this decision either authorizes a model-backed repair or records why FlowGuard cannot model the bug class.",
-            "For model-backed repair, officer reports must include old_model_miss_reason, bug_class_definition, same_class_findings, coverage_added, candidate_repairs, minimal_sufficient_repair_recommendation, rejected_larger_repairs, rejected_smaller_repairs, post_repair_model_checks_required, and residual_blindspots.",
-            "PM selects the repair path; officer reports provide model evidence and repair recommendations but do not approve route mutation by themselves.",
+            "For model-backed repair, FlowGuard operator reports must include old_model_miss_reason, bug_class_definition, same_class_findings, coverage_added, candidate_repairs, minimal_sufficient_repair_recommendation, rejected_larger_repairs, rejected_smaller_repairs, post_repair_model_checks_required, and residual_blindspots.",
+            "PM selects the repair path; FlowGuard operator reports provide model evidence and repair recommendations but do not approve route mutation by themselves.",
         ],
         description=(
             "PM model-miss triage decision for reviewer blockers. This closes the obligation to ask why "

@@ -125,7 +125,7 @@
       "expected_outcome": "RoleOutputRuntimeError_before_output_write",
       "gate_id": "hard_gate.role_output.router_supplied_event_mismatch",
       "live_completion_allowed": false,
-      "notes": "Officer/PM outputs using Router-supplied events must be bound to the current pending wait.",
+      "notes": "FlowGuard operator/PM outputs using Router-supplied events must be bound to the current pending wait.",
       "protected_state_invariant": "no_role_output_body_or_ledger_written",
       "recovery_route": "reject_before_router_submission_then_retry_after_router_wait"
     },

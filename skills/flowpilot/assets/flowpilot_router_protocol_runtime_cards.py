@@ -9,11 +9,11 @@ from flowpilot_router_protocol_decision_tables import MODEL_MISS_REVIEW_BLOCK_FL
 
 RUNTIME_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
     {
-        "flag": "process_officer_route_check_card_delivered",
-        "label": "process_officer_route_process_check_card_delivered",
-        "card_id": "process_officer.route_process_check",
+        "flag": "flowguard_operator_route_check_card_delivered",
+        "label": "flowguard_operator_route_process_check_card_delivered",
+        "card_id": "flowguard_operator.route_process_check",
         "requires_flag": "route_draft_written_by_pm",
-        "to_role": "process_flowguard_officer",
+        "to_role": "flowguard_operator",
     },
     {
         "flag": "pm_process_route_model_decision_card_delivered",

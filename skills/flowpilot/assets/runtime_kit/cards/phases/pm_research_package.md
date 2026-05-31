@@ -5,8 +5,8 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Research Package Phase
 
@@ -35,13 +35,13 @@ Before assigning a worker packet, consider worker balance and packet shape. Keep
 
 Register research as one router-owned packet batch with `batch_id` and
 `packets[]`. The batch may include worker research packets and bounded
-FlowGuard officer model packets when those roles can start now from the same
+FlowGuard operator model packets when those roles can start now from the same
 available facts. Use workers for evidence gathering, repository/source
 inspection, experiments, or implementation-grounded research. Use
-`product_flowguard_officer` for product behavior/modelability questions and
-`process_flowguard_officer` for process/state/route questions. Do not ask an
-officer to make PM decisions or reviewer approvals. Router waits for every
-batch result, including officer results, before relaying the complete blocking
+`flowguard_operator` for product behavior/modelability questions and
+`flowguard_operator` for process/state/route questions. Do not ask an
+FlowGuard operator to make PM decisions or reviewer approvals. Router waits for every
+batch result, including FlowGuard operator results, before relaying the complete blocking
 research result set back to PM. Router also tracks partial returns by member and
 may expose only metadata about returned and missing roles, so it waits only for
 the missing member(s) while non-dependent work may continue. PM must open the

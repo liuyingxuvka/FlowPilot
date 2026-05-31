@@ -7,7 +7,7 @@
   "gate_id": "<gate-id-or-null>",
   "suggestion_id": "<suggestion-id>",
   "recorded_at": "<iso-8601-timestamp>",
-  "source_role": "<human_like_reviewer|worker_a|worker_b|process_flowguard_officer|product_flowguard_officer|project_manager>",
+  "source_role": "<human_like_reviewer|worker|flowguard_operator|project_manager>",
   "source_output_ref": {
     "path": "<review-report-result-report-or-envelope-path>",
     "hash": "<sha256-or-null>",
@@ -18,7 +18,7 @@
   "authority_basis": {
     "reviewer_minimum_standard_failure": false,
     "formal_flowguard_model_gate": false,
-    "worker_or_officer_advisory_only": true,
+    "worker_or_flowguard_operator_advisory_only": true,
     "reason": "<why-this-classification-is-allowed-for-this-role>"
   },
   "impact_triage": {

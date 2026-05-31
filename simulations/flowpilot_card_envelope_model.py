@@ -43,7 +43,7 @@ Risk intent brief:
   reminds the role to complete the original card or bundle ACK loop unless the
   original artifact is invalid, stale, lost, or tied to a replaced identity;
   read receipts and ACKs are mechanical proof only and never replace
-  PM/reviewer/officer judgement or worker result completion.
+  PM/reviewer/FlowGuard operator judgement or worker result completion.
 - Blindspot: this is a focused protocol model. It does not judge whether a
   role understood a card after opening it.
 """
@@ -974,7 +974,7 @@ def preload_receipt_cannot_authorize_work(state: State, trace) -> InvariantResul
 def read_receipt_is_not_semantic_gate(state: State, trace) -> InvariantResult:
     del trace
     if state.read_receipt_used_as_semantic_gate:
-        return InvariantResult.fail("system-card read receipt replaced semantic PM/reviewer/officer judgement")
+        return InvariantResult.fail("system-card read receipt replaced semantic PM/reviewer/FlowGuard operator judgement")
     if state.card_ack_used_as_target_work_completion:
         return InvariantResult.fail("system-card ACK was treated as target-role work completion")
     if state.formal_work_packet_relayed and not state.target_work_completion_wait_preserved:

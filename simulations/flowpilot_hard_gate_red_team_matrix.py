@@ -74,7 +74,7 @@ RED_TEAM_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_status": "passed",
         "evidence_current": True,
         "live_completion_allowed": False,
-        "notes": "Officer/PM outputs using Router-supplied events must be bound to the current pending wait.",
+        "notes": "FlowGuard operator/PM outputs using Router-supplied events must be bound to the current pending wait.",
     },
     {
         "gate_id": "hard_gate.packet.wrong_active_holder_identity",

@@ -17,7 +17,7 @@ RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_test_obligation_owne
 
 HAZARD_EXPECTED_FAILURES = {
     "controller_decides_tests": "Controller decided test obligation disposition",
-    "officer_writes_ordinary_tests": "FlowGuard officer maintained ordinary test code by default",
+    "flowguard_operator_writes_ordinary_tests": "FlowGuard operator maintained ordinary test code by default",
     "background_progress_counted": "background progress was counted as passing test evidence",
     "missing_tests_left_as_prose": "missing test kinds were left as residual prose",
     "stale_test_evidence_used": "stale ordinary test evidence was used for closure",
@@ -35,7 +35,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|pre={state.pre_worker_matrix_written}|"
-        f"officer={state.officer_report_absorbed}|worker={state.worker_result_absorbed}|"
+        f"FlowGuard operator={state.flowguard_operator_report_absorbed}|worker={state.worker_result_absorbed}|"
         f"post={state.post_worker_matrix_written}|gap={state.gap_kind}|"
         f"worker_test={state.worker_test_packet_completed},{state.worker_test_coverage_rows_returned}|"
         f"testmesh={state.testmesh_completed}|mta={state.model_test_alignment_completed}|"

@@ -17,7 +17,7 @@ class HeartbeatCase:
 @dataclass(frozen=True)
 class NodePacket:
     packet_id: str
-    to_role: str = "worker_a"
+    to_role: str = "worker"
     physical_files_written: bool = True
     controller_handoff_contains_body_content: bool = False
     has_controller_reminder: bool = True
@@ -26,7 +26,7 @@ class NodePacket:
     body_stale_after_route_mutation: bool = False
     controller_attempts_body_read: bool = False
     controller_attempts_body_execute: bool = False
-    delivered_to_role: str = "worker_a"
+    delivered_to_role: str = "worker"
     cockpit_missing_on_major_node: bool = False
     controller_relay_signature_present: bool = True
     recipient_opens_body_after_relay_check: bool = True
@@ -163,8 +163,8 @@ class State:
     advances: tuple[str, ...] = ()
 
 def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> NodePacket:
-    to_role = "worker_a"
-    delivered_to_role = "worker_b" if packet_id.startswith("wrong_delivery") else to_role
+    to_role = "worker"
+    delivered_to_role = "human_like_reviewer" if packet_id.startswith("wrong_delivery") else to_role
     return NodePacket(
         packet_id,
         to_role=to_role,

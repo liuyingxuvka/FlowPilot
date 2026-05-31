@@ -53,20 +53,14 @@ def _infer_responsible_role(router: ModuleType, event: str | None, payload: dict
         if event.startswith('reviewer_') or 'reviewer' in event:
             return 'human_like_reviewer'
         if event.startswith('worker_') or 'worker_' in event:
-            if 'worker_b' in message or 'worker-b' in message:
-                return 'worker_b'
-            return 'worker_a'
-        if event.startswith('product_officer_'):
-            return 'product_flowguard_officer'
-        if event.startswith('process_officer_'):
-            return 'process_flowguard_officer'
+            return 'worker'
+        if event.startswith('flowguard_operator_'):
+            return 'flowguard_operator'
         if event.startswith('pm_'):
             return 'project_manager'
     lowered = message.lower()
-    if 'product_flowguard_officer' in lowered:
-        return 'product_flowguard_officer'
-    if 'process_flowguard_officer' in lowered:
-        return 'process_flowguard_officer'
+    if 'flowguard_operator' in lowered:
+        return 'flowguard_operator'
     if 'human_like_reviewer' in lowered or 'reviewer' in lowered:
         return 'human_like_reviewer'
     if 'project_manager' in lowered or message.startswith('PM '):
@@ -117,7 +111,7 @@ def _should_materialize_control_blocker(router: ModuleType, message: str, *, eve
     if action_type in {'relay_material_scan_packets', 'relay_material_scan_results_to_reviewer', 'relay_material_scan_results_to_pm', 'relay_research_packet', 'relay_research_result_to_reviewer', 'relay_research_result_to_pm', 'relay_current_node_packet', 'relay_current_node_result_to_reviewer', 'relay_current_node_result_to_pm'}:
         return True
     if isinstance(payload, dict) and any((payload.get(key) for key in ('body_path', 'body_hash', 'report_path', 'report_hash', 'decision_path', 'decision_hash', 'result_body_path', 'result_body_hash', 'body_ref', 'runtime_receipt_ref'))):
-        return event is not None and (event.startswith('reviewer_') or event.startswith('process_officer_') or event.startswith('product_officer_') or (event in {'current_node_reviewer_passes_result', 'pm_resume_recovery_decision_returned', PM_MODEL_MISS_TRIAGE_DECISION_EVENT, 'pm_records_parent_segment_decision'}))
+        return event is not None and (event.startswith('reviewer_') or event.startswith('flowguard_operator_') or (event in {'current_node_reviewer_passes_result', 'pm_resume_recovery_decision_returned', PM_MODEL_MISS_TRIAGE_DECISION_EVENT, 'pm_records_parent_segment_decision'}))
     return False
 
 def _skill_observation_reminder(router: ModuleType, message: str, *, event: str | None=None, action_type: str | None=None, category: str | None=None) -> dict[str, Any]:

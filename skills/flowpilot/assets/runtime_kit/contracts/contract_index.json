@@ -24,8 +24,7 @@
       "task_family": "worker.current_node",
       "packet_type": "work_packet",
       "recipient_roles": [
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "contract_id": "flowpilot.output_contract.worker_current_node_result.v1"
     },
@@ -33,8 +32,7 @@
       "task_family": "worker.material_scan",
       "packet_type": "material_scan",
       "recipient_roles": [
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "contract_id": "flowpilot.output_contract.worker_material_scan_result.v1"
     },
@@ -42,8 +40,7 @@
       "task_family": "worker.research",
       "packet_type": "research",
       "recipient_roles": [
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "contract_id": "flowpilot.output_contract.worker_research_result.v1"
     },
@@ -56,20 +53,18 @@
       "contract_id": "flowpilot.output_contract.reviewer_review_report.v1"
     },
     {
-      "task_family": "officer.model_report",
-      "packet_type": "officer_request",
+      "task_family": "flowguard_operator.model_report",
+      "packet_type": "flowguard_operator_request",
       "recipient_roles": [
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator"
       ],
-      "contract_id": "flowpilot.output_contract.officer_model_report.v1"
+      "contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1"
     },
     {
-      "task_family": "officer.model_miss_report",
-      "packet_type": "officer_request",
+      "task_family": "flowguard_operator.model_miss_report",
+      "packet_type": "flowguard_operator_request",
       "recipient_roles": [
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator"
       ],
       "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1"
     },
@@ -88,8 +83,7 @@
         "controller",
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator"
       ],
       "contract_id": "flowpilot.output_contract.gate_decision.v1"
     },
@@ -98,10 +92,8 @@
       "packet_type": "pm_role_work_request",
       "recipient_roles": [
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b"
+        "flowguard_operator",
+        "worker"
       ],
       "contract_id": "flowpilot.output_contract.pm_role_work_result.v1"
     },
@@ -154,10 +146,8 @@
       "recipient_roles": [
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b"
+        "flowguard_operator",
+        "worker"
       ],
       "required_envelope_fields": [
         "body_ref",
@@ -330,8 +320,7 @@
         "work_packet"
       ],
       "recipient_roles": [
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "expected_return_envelope": "result_envelope",
       "required_result_body_sections": [
@@ -381,10 +370,8 @@
       ],
       "recipient_roles": [
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b"
+        "flowguard_operator",
+        "worker"
       ],
       "expected_return_envelope": "result_envelope",
       "required_result_body_sections": [
@@ -418,8 +405,7 @@
         "material_scan"
       ],
       "recipient_roles": [
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "expected_return_envelope": "result_envelope",
       "required_result_body_sections": [
@@ -460,8 +446,7 @@
         "research"
       ],
       "recipient_roles": [
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "expected_return_envelope": "result_envelope",
       "required_result_body_sections": [
@@ -566,12 +551,11 @@
       ]
     },
     {
-      "contract_id": "flowpilot.output_contract.officer_model_report.v1",
+      "contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1",
       "schema_version": "flowpilot.output_contract.v1",
-      "task_family": "officer.model_report",
+      "task_family": "flowguard_operator.model_report",
       "recipient_roles": [
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator"
       ],
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
@@ -600,10 +584,10 @@
       },
       "contract_self_check_required": true,
       "runtime_channel": "role_output_runtime",
-      "output_type": "officer_model_report",
-      "body_schema_version": "flowpilot.officer_model_report.v1",
-      "default_subdir": "officer_reports",
-      "default_filename_prefix": "officer_model_report",
+      "output_type": "flowguard_operator_model_report",
+      "body_schema_version": "flowpilot.flowguard_operator_model_report.v1",
+      "default_subdir": "flowguard_operator_reports",
+      "default_filename_prefix": "flowguard_operator_model_report",
       "path_key": "report_path",
       "hash_key": "report_hash",
       "router_event_mode": "router_supplied",
@@ -623,10 +607,9 @@
     {
       "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
       "schema_version": "flowpilot.output_contract.v1",
-      "task_family": "officer.model_miss_report",
+      "task_family": "flowguard_operator.model_miss_report",
       "recipient_roles": [
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator"
       ],
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
@@ -649,7 +632,7 @@
       "runtime_channel": "role_output_runtime",
       "output_type": "flowguard_model_miss_report",
       "body_schema_version": "flowpilot.flowguard_model_miss_report.v1",
-      "default_subdir": "officer_reports",
+      "default_subdir": "flowguard_operator_reports",
       "default_filename_prefix": "flowguard_model_miss_report",
       "path_key": "report_path",
       "hash_key": "report_hash",
@@ -691,7 +674,7 @@
         "decided_by_role": "project_manager"
       },
       "allowed_decision_values": [
-        "request_officer_model_miss_analysis",
+        "request_flowguard_operator_model_miss_analysis",
         "proceed_with_model_backed_repair",
         "out_of_scope_not_modelable",
         "needs_evidence_before_modeling",
@@ -700,7 +683,7 @@
       "conditional_required_fields": {
         "decision=proceed_with_model_backed_repair": [
           "flowguard_capability.can_model_bug_class",
-          "officer_report_refs",
+          "flowguard_operator_report_refs",
           "same_class_findings_reviewed",
           "repair_recommendation_reviewed",
           "candidate_repairs_considered",
@@ -715,7 +698,7 @@
       "router_mechanical_validation": [
         "required_fields_present",
         "allowed_decision_value",
-        "model_backed_repair_requires_officer_report_refs",
+        "model_backed_repair_requires_flowguard_operator_report_refs",
         "model_backed_repair_requires_same_class_and_minimal_repair_review",
         "out_of_scope_repair_requires_flowguard_incapability_reason",
         "non_authorizing_decisions_do_not_unlock_review_repair"
@@ -845,8 +828,7 @@
         "flowpilot_router",
         "human_like_reviewer",
         "project_manager",
-        "worker_a",
-        "worker_b"
+        "worker"
       ],
       "expected_return_envelope": "role_output_envelope",
       "runtime_channel": "role_output_runtime",
@@ -1306,8 +1288,7 @@
       "recipient_roles": [
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator"
       ],
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
@@ -1340,8 +1321,8 @@
       "allowed_owner_role_values": [
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator",
+        "flowguard_operator"
       ],
       "allowed_risk_type_values": [
         "product_state",
@@ -1396,8 +1377,8 @@
       "semantic_sufficiency_owner": [
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer"
+        "flowguard_operator",
+        "flowguard_operator"
       ],
       "contract_self_check_required": true,
       "runtime_channel": "role_output_runtime",

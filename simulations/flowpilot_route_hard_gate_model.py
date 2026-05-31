@@ -3,12 +3,12 @@
 Risk intent brief:
 - Validate the reviewer-only route challenge version of the
   product-model-first route workflow before Router or card changes.
-- Protected harms: PM route drafting before Product Officer modeling, Process
-  Officer process passes that fail to check product-model coverage, Reviewer
+- Protected harms: PM route drafting before FlowGuard operator product-scope modeling, Process
+  FlowGuard operator process passes that fail to check product-model coverage, Reviewer
   route challenge before PM accepts the process model, route activation without
   Reviewer challenge, PM ignoring repair_required or blocked verdicts, repair
   nodes that cannot return to the mainline, repair routes that continue without
-  fresh Process Officer checks, and Router overreaching into semantic route
+  fresh FlowGuard operator route-scope checks, and Router overreaching into semantic route
   judgment.
 - Modeled state and side effects: product behavior model report, PM route
   draft, process route pass and product-coverage fields, PM process-model
@@ -21,8 +21,8 @@ Risk intent brief:
   must still prove the concrete Router code and cards enforce the same gates.
 
 Optimization checklist:
-1. Product Officer produces the product behavior model before PM route drafting.
-2. Process Officer gives a route viability verdict before activation and must
+1. FlowGuard operator product-scope produces the product behavior model before PM route drafting.
+2. FlowGuard operator route-scope gives a route viability verdict before activation and must
    check product-model coverage.
 3. PM accepts the process route model before Reviewer route challenge.
 4. Reviewer route challenge passes before activation.
@@ -32,8 +32,8 @@ Optimization checklist:
 
 Risk checklist:
 1. Missing product behavior model.
-2. Process Officer pass without product-model coverage.
-3. Missing Process Officer process verdict.
+2. FlowGuard operator route-scope pass without product-model coverage.
+3. Missing FlowGuard operator route-scope process verdict.
 4. Missing PM process-model acceptance.
 5. Missing Reviewer route challenge.
 6. Reviewer challenge before PM process-model acceptance.
@@ -248,14 +248,14 @@ def route_gate_failures(state: State) -> list[str]:
     failures: list[str] = []
 
     if state.route_draft_written and not state.product_model_report_exists:
-        failures.append("PM route draft requires Product Officer product behavior model report")
+        failures.append("PM route draft requires FlowGuard operator product-scope product behavior model report")
     if state.process_viability_verdict == "pass" and not (
         state.process_product_behavior_model_checked
         and state.process_route_can_reach_product_model
     ):
-        failures.append("Process Officer route pass must check product behavior model coverage")
+        failures.append("FlowGuard operator route-scope route pass must check product behavior model coverage")
     if state.pm_process_model_accepted and state.process_viability_verdict != "pass":
-        failures.append("PM process-model acceptance requires Process Officer process_viability_verdict=pass")
+        failures.append("PM process-model acceptance requires FlowGuard operator route-scope process_viability_verdict=pass")
     if state.reviewer_route_challenge_verdict == "pass" and not state.pm_process_model_accepted:
         failures.append("Reviewer route challenge requires PM-accepted process route model")
     if state.route_activated and not state.pm_process_model_accepted:
@@ -263,7 +263,7 @@ def route_gate_failures(state: State) -> list[str]:
     if state.route_activated and state.reviewer_route_challenge_verdict != "pass":
         failures.append("route activation requires Reviewer route challenge pass")
     if state.route_activated and state.process_viability_verdict != "pass":
-        failures.append("route activation requires Process Officer process_viability_verdict=pass")
+        failures.append("route activation requires FlowGuard operator route-scope process_viability_verdict=pass")
     if state.process_viability_verdict == "repair_required" and state.pm_response_to_process_verdict == "continue":
         failures.append("PM cannot continue normally after process verdict repair_required")
     if state.process_viability_verdict == "blocked" and state.pm_response_to_process_verdict == "continue":
@@ -271,7 +271,7 @@ def route_gate_failures(state: State) -> list[str]:
     if state.repair_node_created and not state.repair_return_to_mainline_defined:
         failures.append("repair mutation requires a mainline return target")
     if state.repair_node_created and not state.fresh_process_recheck_after_repair:
-        failures.append("repair route requires fresh Process Officer recheck before continuing")
+        failures.append("repair route requires fresh FlowGuard operator route-scope recheck before continuing")
     if state.repair_node_created and not state.stale_route_approvals_cleared_after_repair:
         failures.append("repair mutation must clear stale route approvals before continuing")
     if state.router_attempts_semantic_route_judgment:
@@ -313,7 +313,7 @@ def accepts_only_valid_hard_gate_flows(state: State, trace) -> InvariantResult:
 def product_model_precedes_route_activation(state: State, trace) -> InvariantResult:
     del trace
     if state.status == "accepted" and state.route_activated and not state.product_model_report_exists:
-        return InvariantResult.fail("route activated without Product Officer product model")
+        return InvariantResult.fail("route activated without FlowGuard operator product-scope product model")
     return InvariantResult.pass_()
 
 
@@ -363,7 +363,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="product_model_precedes_route_activation",
-        description="Product Officer product behavior model must precede route activation.",
+        description="FlowGuard operator product-scope product behavior model must precede route activation.",
         predicate=product_model_precedes_route_activation,
     ),
     Invariant(

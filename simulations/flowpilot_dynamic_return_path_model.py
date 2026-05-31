@@ -12,8 +12,8 @@ Risk intent brief:
   mistaken for permission to continue.
 - Protect gate-bearing phases from accepting a unsupported/general report or repair
   follow-up that is recorded but does not satisfy the current gate flag.
-- Treat the Product FlowGuard Officer product-architecture gate as a product
-  behavior model submission, and treat the Process FlowGuard Officer route
+- Treat the FlowGuard operator product-scope product-architecture gate as a product
+  behavior model submission, and treat the FlowGuard operator route-scope route
   gate as a process route model submission. Older event names are rejected as
   non-completing unsupported inputs rather than mirrored into current artifacts.
 - Hard invariants: router-supplied contracts require a concrete event from the
@@ -134,18 +134,18 @@ EVENT_SOURCE_STATIC_CARD_TEXT = "static_card_text"
 
 PRODUCT_BEHAVIOR_MODEL_CANONICAL_GATE_EVENTS = frozenset(
     {
-        "product_officer_submits_product_behavior_model",
-        "product_officer_blocks_product_behavior_model",
+        "flowguard_operator_submits_product_behavior_model",
+        "flowguard_operator_blocks_product_behavior_model",
     }
 )
 PRODUCT_BEHAVIOR_MODEL_GATE_EVENTS = PRODUCT_BEHAVIOR_MODEL_CANONICAL_GATE_EVENTS
 PRODUCT_ARCHITECTURE_GATE_EVENTS = PRODUCT_BEHAVIOR_MODEL_GATE_EVENTS
-PRODUCT_ARCHITECTURE_RETIRED_EVENTS = frozenset({"product_officer_model_report"})
+PRODUCT_ARCHITECTURE_RETIRED_EVENTS = frozenset({"flowguard_operator_product_scope_model_report"})
 PROCESS_ROUTE_MODEL_CANONICAL_GATE_EVENTS = frozenset(
     {
-        "process_officer_submits_process_route_model",
-        "process_officer_requests_process_route_model_repair",
-        "process_officer_blocks_process_route_model",
+        "flowguard_operator_submits_process_route_model",
+        "flowguard_operator_requests_process_route_model_repair",
+        "flowguard_operator_blocks_process_route_model",
     }
 )
 PROCESS_ROUTE_MODEL_GATE_EVENTS = PROCESS_ROUTE_MODEL_CANONICAL_GATE_EVENTS
@@ -167,8 +167,8 @@ class State:
     scenario: str = "unset"
 
     assignment_surface: str = ASSIGNMENT_SYSTEM_CARD
-    output_contract_id: str = "officer_model_report"
-    output_type: str = "officer_model_report"
+    output_contract_id: str = "flowguard_operator_model_report"
+    output_type: str = "flowguard_operator_model_report"
     contract_event_mode: str = EVENT_MODE_ROUTER_SUPPLIED
 
     formal_output_requested: bool = True
@@ -261,7 +261,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_submits_product_behavior_model",
+            return_event_name="flowguard_operator_submits_product_behavior_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             direct_router_wait_present=True,
@@ -286,7 +286,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_PM_PACKET_RESULT_CONTRACT,
-            return_event_name="product_officer_submits_product_behavior_model",
+            return_event_name="flowguard_operator_submits_product_behavior_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             pm_role_work_packet_present=True,
@@ -313,7 +313,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_submits_product_behavior_model",
+            return_event_name="flowguard_operator_submits_product_behavior_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             direct_router_wait_present=True,
@@ -342,7 +342,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="process_officer_submits_process_route_model",
+            return_event_name="flowguard_operator_submits_process_route_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             direct_router_wait_present=True,
@@ -393,7 +393,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_blocks_product_architecture_modelability",
+            return_event_name="flowguard_operator_product_scope_blocks_product_architecture_modelability",
             return_event_registered=True,
             return_event_currently_allowed=True,
             direct_router_wait_present=True,
@@ -520,7 +520,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_ROLE_GUESS,
-            return_event_name="product_officer_model_report",
+            return_event_name="flowguard_operator_product_scope_model_report",
             return_event_registered=False,
             return_event_currently_allowed=False,
             router_accepted_event=False,
@@ -538,7 +538,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_ROLE_GUESS,
-            return_event_name="product_officer_blocks_product_architecture_modelability",
+            return_event_name="flowguard_operator_product_scope_blocks_product_architecture_modelability",
             return_event_registered=True,
             return_event_currently_allowed=False,
             router_accepted_event=False,
@@ -556,7 +556,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_ROLE_GUESS,
-            return_event_name="product_officer_blocks_product_architecture_modelability",
+            return_event_name="flowguard_operator_product_scope_blocks_product_architecture_modelability",
             return_event_registered=True,
             return_event_currently_allowed=False,
             router_accepted_event=False,
@@ -592,7 +592,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_ROLE_GUESS,
-            return_event_name="product_officer_blocks_product_architecture_modelability",
+            return_event_name="flowguard_operator_product_scope_blocks_product_architecture_modelability",
             return_event_registered=True,
             return_event_currently_allowed=False,
             pm_role_work_packet_present=True,
@@ -720,7 +720,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_model_report",
+            return_event_name="flowguard_operator_product_scope_model_report",
             return_event_registered=True,
             return_event_currently_allowed=True,
             direct_router_wait_present=True,
@@ -800,7 +800,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_passes_product_architecture_modelability",
+            return_event_name="flowguard_operator_product_scope_passes_product_architecture_modelability",
             return_event_registered=True,
             return_event_currently_allowed=True,
             current_gate_active=True,
@@ -824,7 +824,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_submits_product_behavior_model",
+            return_event_name="flowguard_operator_submits_product_behavior_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             current_gate_active=True,
@@ -851,7 +851,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="product_officer_submits_product_behavior_model",
+            return_event_name="flowguard_operator_submits_product_behavior_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             current_gate_active=True,
@@ -876,12 +876,12 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="process_officer_passes_route_check",
+            return_event_name="flowguard_operator_route_scope_passes_route_check",
             return_event_registered=True,
             return_event_currently_allowed=True,
             current_gate_active=True,
             current_gate_name="route_process_check",
-            current_gate_required_flag="process_officer_route_check_passed",
+            current_gate_required_flag="flowguard_operator_route_scope_route_check_passed",
             return_event_satisfies_current_gate=True,
             current_gate_flag_satisfied=True,
             router_accepted_event=True,
@@ -900,7 +900,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="process_officer_submits_process_route_model",
+            return_event_name="flowguard_operator_submits_process_route_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             current_gate_active=True,
@@ -927,7 +927,7 @@ def _scenario_state(scenario: str) -> State:
             semantic_report_meaningful=True,
             concrete_return_event_present=True,
             return_event_source=EVENT_SOURCE_CURRENT_ROUTER_WAIT,
-            return_event_name="process_officer_submits_process_route_model",
+            return_event_name="flowguard_operator_submits_process_route_model",
             return_event_registered=True,
             return_event_currently_allowed=True,
             current_gate_active=True,
@@ -994,7 +994,7 @@ def return_path_failures(state: State) -> list[str]:
     if state.mechanical_role_output_valid and state.current_run_allowed_to_continue and not state.router_accepted_event:
         failures.append("mechanical role-output validation was treated as Router acceptance")
     if state.unsupported_direct_event_present and state.pm_role_work_packet_present:
-        failures.append("unsupported direct officer event competes with PM role-work result contract")
+        failures.append("unsupported direct FlowGuard operator event competes with PM role-work result contract")
     if state.pm_role_work_packet_present and not state.pm_role_work_result_contract_present:
         failures.append("PM role-work packet has no result contract")
     if state.current_gate_active:
@@ -1250,7 +1250,7 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
     flags = router_state.get("flags", {}) if isinstance(router_state, dict) else {}
 
     for path, data in _iter_json_files(run_root / "mailbox" / "system_cards", "*.json"):
-        if data.get("card_id") != "product_officer.product_architecture_modelability":
+        if data.get("card_id") != "flowguard_operator.product_architecture_modelability":
             continue
         payload_contract = data.get("payload_contract")
         next_step_contract = data.get("next_step_contract")
@@ -1328,7 +1328,7 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
                 projection["current_findings"].append(finding)
 
     if (
-        flags.get("unsupported_product_officer_model_report_received")
+        flags.get("unsupported_flowguard_operator_product_scope_model_report_received")
         and flags.get("product_architecture_modelability_passed")
         and any(
             item.get("kind") == "resolved_no_legal_next_action_without_gate_event"
@@ -1337,14 +1337,14 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
     ):
         projection["historical_gate_alignment_findings"].append(
             {
-                "kind": "unsupported_product_officer_report_preceded_gate_specific_resolution",
+                "kind": "unsupported_flowguard_operator_product_scope_report_preceded_gate_specific_resolution",
                 "unsupported_events": sorted(PRODUCT_ARCHITECTURE_RETIRED_EVENTS),
                 "gate_events": sorted(PRODUCT_ARCHITECTURE_GATE_EVENTS),
-                "unsupported_flag": "unsupported_product_officer_model_report_received",
+                "unsupported_flag": "unsupported_flowguard_operator_product_scope_model_report_received",
                 "gate_flag": "product_architecture_modelability_passed",
                 "model_meaning": (
                     "The run recovered, but it shows the exact class this model protects: a unsupported/general "
-                    "officer report was recorded before the concrete gate event that actually satisfied "
+                    "FlowGuard operator report was recorded before the concrete gate event that actually satisfied "
                     "product_architecture_modelability."
                 ),
             }

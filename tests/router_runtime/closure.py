@@ -5,9 +5,9 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
 
 class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
-    def test_officer_role_work_writes_authorized_lifecycle_index(self) -> None:
+    def test_flowguard_operator_role_work_writes_authorized_lifecycle_index(self) -> None:
         root = self.make_project()
-        self.prepare_current_node_result_for_review(root, packet_id="node-packet-officer-lifecycle")
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-FlowGuard operator-lifecycle")
         run_root = self.run_root_for(root)
         router.record_external_event(root, "current_node_reviewer_blocks_result")
         self.deliver_expected_card(root, "pm.model_miss_triage")
@@ -17,14 +17,14 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "pm_records_model_miss_triage_decision",
             self.role_decision_envelope(
                 root,
-                "decisions/model_miss_officer_lifecycle",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                "decisions/model_miss_flowguard_operator_lifecycle",
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
         router.record_external_event(root, "pm_registers_role_work_request", self.pm_role_work_request_payload(root))
-        lifecycle_path = run_root / "pm_work_requests" / "officer_request_lifecycle_index.json"
+        lifecycle_path = run_root / "pm_work_requests" / "flowguard_operator_request_lifecycle_index.json"
         lifecycle = read_json(lifecycle_path)
-        self.assertEqual(lifecycle["schema_version"], router.OFFICER_REQUEST_LIFECYCLE_INDEX_SCHEMA)
+        self.assertEqual(lifecycle["schema_version"], router.FLOWGUARD_OPERATOR_REQUEST_LIFECYCLE_INDEX_SCHEMA)
         self.assertEqual(lifecycle["active_request_ids"], ["model-miss-followup-001"])
         entry = lifecycle["requests"][0]
         self.assertEqual(entry["lifecycle_status"], "request_registered")
@@ -35,7 +35,7 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_pm_role_work_request_packet")
-        self.assertEqual(action["officer_request_lifecycle_index"], self.rel(root, lifecycle_path))
+        self.assertEqual(action["flowguard_operator_request_lifecycle_index"], self.rel(root, lifecycle_path))
         router.apply_action(root, "relay_pm_role_work_request_packet")
         lifecycle = read_json(lifecycle_path)
         self.assertEqual(lifecycle["requests"][0]["lifecycle_status"], "packet_relayed")
@@ -68,7 +68,7 @@ class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "decided_by_role": "project_manager",
                 "request_id": "model-miss-followup-001",
                 "decision": "absorbed",
-                "decision_reason": "PM reviewed the officer model-miss result.",
+                "decision_reason": "PM reviewed the FlowGuard operator model-miss result.",
             },
         )
         lifecycle = read_json(lifecycle_path)

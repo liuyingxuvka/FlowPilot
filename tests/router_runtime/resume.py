@@ -352,7 +352,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             source="test",
-            error_message="Controller has a deferred blocker while worker_a is missing",
+            error_message="Controller has a deferred blocker while worker is missing",
             action_type="controller_no_legal_next_action",
             payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
         )
@@ -361,7 +361,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             "controller_reports_role_liveness_fault",
             {
-                "role_key": "worker_a",
+                "role_key": "worker",
                 "host_liveness_status": "missing",
                 "detected_by": "controller",
             },
@@ -370,7 +370,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(result["role_recovery_requested"])
         transaction = result["role_recovery_transaction"]
         self.assertEqual(transaction["trigger_source"], "mid_run_liveness_fault")
-        self.assertEqual(transaction["target_role_keys"], ["worker_a"])
+        self.assertEqual(transaction["target_role_keys"], ["worker"])
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "load_role_recovery_state")
@@ -379,11 +379,11 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "recover_role_bindings")
-        self.assertEqual(action["target_role_keys"], ["worker_a"])
+        self.assertEqual(action["target_role_keys"], ["worker"])
         self.assertIn("restore_old_agent", action["recovery_ladder"])
         self.assertIn("full_role_binding_recovery", action["recovery_ladder"])
         self.assertFalse(action["normal_waits_allowed_before_recovery"])
-        router.apply_action(root, "recover_role_bindings", self.role_recovery_agent_payload(root, action, role="worker_a"))
+        router.apply_action(root, "recover_role_bindings", self.role_recovery_agent_payload(root, action, role="worker"))
 
         report = read_json(run_root / "continuation" / "role_recovery_report.json")
         self.assertEqual(report["schema_version"], "flowpilot.role_recovery_report.v1")
@@ -395,7 +395,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(replay["pm_escalation_required"])
         self.assertEqual(report["role_records"][0]["recovery_result"], "targeted_replacement_opened")
         role_binding = read_json(run_root / "role_binding_ledger.json")
-        worker_slot = next(slot for slot in role_binding["role_slots"] if slot["role_key"] == "worker_a")
+        worker_slot = next(slot for slot in role_binding["role_slots"] if slot["role_key"] == "worker")
         self.assertEqual(worker_slot["last_role_recovery_result"], "targeted_replacement_opened")
         self.assertTrue(worker_slot["superseded_agent_output_quarantined"])
 
@@ -407,7 +407,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
 
-        report = self.recover_worker_a_after_liveness_fault(root)
+        report = self.recover_worker_after_liveness_fault(root)
         self.assertTrue(report["required_role_bindings_ready"])
 
         state = read_json(router.run_state_path(run_root))
@@ -473,7 +473,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
 
-        first_report = self.recover_worker_a_after_liveness_fault(root)
+        first_report = self.recover_worker_after_liveness_fault(root)
         self.assertTrue(first_report["required_role_bindings_ready"])
         first_transaction_id = first_report["transaction_id"]
 
@@ -527,7 +527,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
 
-        report = self.recover_worker_a_after_liveness_fault(root)
+        report = self.recover_worker_after_liveness_fault(root)
         self.assertFalse(report["pm_decision_required_before_normal_work"])
 
         state = read_json(router.run_state_path(run_root))
@@ -821,7 +821,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         router.save_run_state(run_root, state)
 
-        report = self.recover_worker_a_after_liveness_fault(root)
+        report = self.recover_worker_after_liveness_fault(root)
         replay = read_json(root / report["role_recovery_obligation_replay_path"])
         self.assertEqual(replay["settled_existing_count"], 1)
         self.assertEqual(replay["replacement_count"], 0)
@@ -847,10 +847,10 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             action_type="await_card_return_event",
             actor="controller",
             label="controller_waits_for_worker_existing_ack",
-            summary="Controller waits for worker_a card ACK before recovery.",
+            summary="Controller waits for worker card ACK before recovery.",
             allowed_reads=[envelope_rel],
             allowed_writes=[],
-            to_role="worker_a",
+            to_role="worker",
             extra={
                 "delivery_attempt_id": "worker-existing-delivery",
                 "card_id": "worker.research_report",
@@ -871,7 +871,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "card_id": "worker.research_report",
                 "delivery_attempt_id": "worker-existing-delivery",
                 "card_return_event": "worker_existing_card_ack",
-                "target_role": "worker_a",
+                "target_role": "worker",
                 "expected_return_path": ack_rel,
                 "card_envelope_path": envelope_rel,
             }
@@ -884,7 +884,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             "validate_card_ack",
             return_value={"ack_path": ack_rel, "ack_hash": "valid-existing-ack", "receipt_ref_count": 1},
         ):
-            report = self.recover_worker_a_after_liveness_fault(root)
+            report = self.recover_worker_after_liveness_fault(root)
 
         replay = read_json(root / report["role_recovery_obligation_replay_path"])
         self.assertEqual(replay["settled_existing_count"], 1)
@@ -901,7 +901,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         first = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_output_first")
         second = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_output_second")
 
-        report = self.recover_worker_a_after_liveness_fault(root)
+        report = self.recover_worker_after_liveness_fault(root)
         replay = read_json(root / report["role_recovery_obligation_replay_path"])
         self.assertEqual(replay["replacement_count"], 2)
         self.assertEqual([item["original_order"] for item in replay["replacement_order"]], [1, 2])
@@ -922,14 +922,14 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_ambiguous_state_blocks_continue_without_recovery_evidence(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        (run_root / "role_binding_memory" / "worker_b.json").unlink()
+        (run_root / "role_binding_memory" / "worker.json").unlink()
 
         router.record_external_event(root, "heartbeat_or_manual_resume_requested")
         self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "rehydrate_role_bindings")
-        self.assertEqual(action["memory_missing_role_keys"], ["worker_b"])
+        self.assertEqual(action["memory_missing_role_keys"], ["worker"])
         router.apply_action(root, "rehydrate_role_bindings", self.resume_role_agent_payload(root, action))
         self.deliver_expected_card(root, "controller.resume_reentry")
         self.deliver_expected_card(root, "pm.role_binding_recovery_freshness")

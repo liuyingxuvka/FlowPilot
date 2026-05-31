@@ -358,5 +358,3 @@ def submit_controller_boundary_confirmation(
         output_path=output_path,
         controller_status_packet_path=controller_status_packet_path,
     )
-
-

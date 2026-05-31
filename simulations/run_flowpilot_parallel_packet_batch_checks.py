@@ -28,7 +28,7 @@ HAZARD_EXPECTED_FAILURES = {
     "busy_role_overload": "router assigned a second open packet to a busy role",
     "duplicate_packet_or_batch": "duplicate active batch or batch id was accepted",
     "old_single_packet_bypass": "old single-packet path bypassed the batch index",
-    "officer_result_not_joined": "officer packet result was not counted in the batch join",
+    "flowguard_operator_result_not_joined": "FlowGuard operator packet result was not counted in the batch join",
     "controller_reads_body": "Controller read sealed body or lost envelope-only boundary",
     "blocked_packet_passed": "batch passed even though at least one packet was blocked",
     "repair_lineage_lost": "replacement batch lost parent batch or packet lineage",
@@ -51,7 +51,7 @@ def _state_id(state: model.State) -> str:
         f"{state.missing_role_summary_valid}|joined={state.batch_joined}|"
         f"review={state.batch_review_done},{state.reviewed_packet_count},{state.batch_review_passed}|"
         f"pm={state.pm_absorbed_batch}|advanced={state.stage_advanced}|"
-        f"officer_join={state.officer_packets_counted_in_join}|"
+        f"flowguard_operator_join={state.flowguard_operator_packets_counted_in_join}|"
         f"nondep={state.non_dependent_action_executed},"
         f"{state.non_dependent_action_depends_on_missing_blocker}|"
         f"dynamic_wait={state.dynamic_wait_producer_binding_valid}|"

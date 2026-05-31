@@ -21,9 +21,9 @@ REQUIRED_LABELS = (
     "pm_classifies_visual_quality_risk",
     "pm_classifies_mixed_product_visual_risk",
     "pm_classifies_documentation_only_risk",
-    "product_flowguard_runs_for_product_state_risk",
+    "product_scope_flowguard_runs_for_product_state_risk",
     "reviewer_walkthrough_runs_for_visual_quality_risk",
-    "product_flowguard_runs_for_mixed_risk",
+    "product_scope_flowguard_runs_for_mixed_risk",
     "reviewer_walkthrough_runs_for_mixed_risk",
     "light_review_runs_for_documentation_only_risk",
     "pm_records_no_blocking_issue",
@@ -45,14 +45,14 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "small_task_enters_formal_flowpilot": "formal FlowPilot was started for a small or nonformal task",
-    "formal_flowpilot_without_six_roles": "formal FlowPilot started without required runtime role-binding authority",
+    "formal_flowpilot_without_runtime_roles": "formal FlowPilot started without required runtime role-binding authority",
     "startup_text_invalidated_without_side_effect": "startup boundary treated side-effect-free explanatory text as a protocol violation",
     "startup_side_effects_before_answers": "startup wait boundary allowed startup side effects before answers",
     "completion_without_quality_decision": "completion recorded before mandatory quality-risk decision",
-    "product_state_without_product_flowguard": "product-state risk completed without Product FlowGuard",
+    "product_state_without_product_scope_flowguard": "product-state risk completed without product-scope FlowGuard",
     "visual_quality_flowguard_only": "visual-quality risk used FlowGuard as the only quality proof",
     "mixed_quality_without_reviewer": "mixed product/visual risk completed without both FlowGuard and reviewer walkthrough",
-    "documentation_only_forced_product_flowguard": "documentation-only risk was forced through Product FlowGuard",
+    "documentation_only_forced_product_scope_flowguard": "documentation-only risk was forced through product-scope FlowGuard",
     "quality_not_needed_without_reason": "quality gate was skipped without a recorded reason",
     "advisory_blocks_completion": "advisory or nonblocking record blocked completion",
     "local_defect_forces_route_mutation": "local defect forced structural route mutation",
@@ -69,11 +69,11 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|scale={state.task_scale}|formal={state.formal_flowpilot_started},"
-        f"six={state.six_role_crew_started}|startup={state.startup_intake_ui_completed},"
+        f"six={state.runtime_role_bindings_started}|startup={state.startup_intake_ui_completed},"
         f"side_effect={state.startup_side_effects_before_answers},"
         f"text_invalid={state.startup_boundary_invalidated_for_text}|risk={state.risk_type},"
         f"method={state.selected_quality_method},decision={state.quality_risk_decision_done},"
-        f"pfg={state.product_flowguard_done},reviewer={state.reviewer_walkthrough_done},"
+        f"pfg={state.product_scope_flowguard_done},reviewer={state.reviewer_walkthrough_done},"
         f"light={state.light_review_done},reason={state.not_needed_reason_recorded}|"
         f"advisory_block={state.advisory_blocks_completion}|issue={state.issue_type},"
         f"repair={state.repair_strategy},local={state.local_repair_done},"

@@ -23,7 +23,7 @@ REQUIRED_SURFACES = {
     "installed_launcher",
     "crash_recovery",
     "peer_conflict",
-    "upgrade_migration",
+    "current_pointer",
     "malformed_packages",
     "bounded_soak",
 }

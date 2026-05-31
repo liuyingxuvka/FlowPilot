@@ -27,7 +27,7 @@ The core rule is:
 | System/role cards | Can explain duties and sometimes ask for concrete work. | A task-like card can look like work but lack a formal return path. |
 | Role output runtime | Can prepare and submit role-output envelopes. | For `router_supplied` outputs, a role can still provide an event name manually. |
 | Router | Rejects unknown or not-currently-allowed events. | The rejection happens after the role already produced a misleading formal output attempt. |
-| PM role-work packet | Already carries strict contract binding and result recipient. | It is not yet the universal path for PM-requested officer/reviewer formal reports. |
+| PM role-work packet | Already carries strict contract binding and result recipient. | It is not yet the universal path for PM-requested FlowGuard operator/reviewer formal reports. |
 
 ## Target Behavior
 
@@ -35,7 +35,7 @@ The core rule is:
 | --- | --- | --- |
 | Identity card | May require ACK only. | "I received my role rules." |
 | Task card or packet | Must carry Router-registered work authority. | "This specific job is assigned to you now." |
-| PM-requested officer/reviewer work | Uses PM role-work request and strict output contract binding. | PM asks; Router validates and registers the task. |
+| PM-requested FlowGuard operator/reviewer work | Uses PM role-work request and strict output contract binding. | PM asks; Router validates and registers the task. |
 | Router-flow task work | Uses Router current wait or packet/active-holder authority. | Router is currently waiting for this role's result. |
 | `router_supplied` formal output | May not use role-guessed event names. | AI cannot invent the return door. |
 | Formal return | Must prove role, contract, result recipient, and current authority. | Router checks the ticket before accepting the report. |
@@ -48,7 +48,7 @@ The core rule is:
 | 2 | Add risk scenarios for task-like system cards without work authority, identity cards carrying hidden work, role-guessed router events, wrong-role packet use, wrong contract, stale authority, and mechanical green used as Router acceptance. | Model must catch each listed bug before implementation. |
 | 3 | Run the upgraded model and the existing role-output/runtime mesh checks. | Do not treat skipped or stale checks as passes. |
 | 4 | Tighten the runtime boundary for `router_supplied` role outputs so a manually supplied event name is accepted only when it is the live Router wait authority; otherwise require packet/work authority. | No new registry. Reuse existing contract and wait state facts. |
-| 5 | Tighten PM role-work/packet result handling so PM-requested officer/reviewer reports remain the default formal path and always return to PM. | Preserve existing PM role-work packet format. |
+| 5 | Tighten PM role-work/packet result handling so PM-requested FlowGuard operator/reviewer reports remain the default formal path and always return to PM. | Preserve existing PM role-work packet format. |
 | 6 | Update card/runtime instructions so identity cards say "ACK only" and task-like cards say "use the registered packet/current wait; if missing, report a protocol blocker." | Generated instruction text only; avoid adding long bespoke prompt prose to every card. |
 | 7 | Add focused tests for the new boundary: valid PM packet result, valid current wait event, invalid guessed event, task card without authority, wrong role, wrong contract, stale authority. | Keep tests narrow and compatible with other agents' work. |
 | 8 | Run installation, smoke, targeted runtime tests, upgraded FlowGuard model, and local sync audit. | Remote GitHub sync is explicitly out of scope. |
@@ -66,7 +66,7 @@ The core rule is:
 | R7 | Wrong role uses a packet/result authority. | Packet holder role mismatch accepted. |
 | R8 | A packet uses the wrong output contract for the addressed role/task. | Contract/task/role mismatch accepted. |
 | R9 | Stale route/frontier/holder authority is reused after state changed. | Stale authority accepted. |
-| R10 | Unsupported historical direct officer events remain the default path and compete with PM packets. | Unsupported historical direct event accepted while PM packet authority exists. |
+| R10 | Unsupported historical direct FlowGuard operator events remain the default path and compete with PM packets. | Unsupported historical direct event accepted while PM packet authority exists. |
 | R11 | The fix blocks valid fixed-event contracts. | Fixed-event contract falsely rejected. |
 | R12 | The fix blocks valid current Router waits. | Direct live Router wait falsely rejected. |
 | R13 | The fix blocks valid PM role-work packet results. | PM packet result falsely rejected. |

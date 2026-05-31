@@ -27,7 +27,7 @@ REQUIRED_LABELS = (
     "gate_outcome_contracts_cover_non_pass_paths",
     "node_completion_idempotency_scoped_to_active_node",
     "install_policy_accepts_first_class_cockpit_source",
-    "standard_six_roles_ready_or_blocked_before_route_work",
+    "standard_runtime_roles_ready_or_blocked_before_route_work",
     "active_task_catalog_uses_focus_pointer_and_explicit_active_set",
     "minimal_repair_strategy_satisfies_cross_plane_invariants",
 )
@@ -50,11 +50,11 @@ HAZARD_EXPECTED_FAILURES = {
     "cockpit_closed_run_exposed_as_active_tab": "Cockpit projection is missing closed runs hidden from active tabs",
     "reviewer_block_event_taxonomy_gap": "reviewer blocker events are outside EXTERNAL_EVENTS taxonomy",
     "role_output_event_artifact_scan_missing": "role output event artifacts were not scanned during event taxonomy audit",
-    "reviewer_officer_gate_outcome_pass_only": "reviewer/officer gate outcome contracts have pass-only paths",
+    "reviewer_flowguard_operator_gate_outcome_pass_only": "reviewer/FlowGuard operator gate outcome contracts have pass-only paths",
     "node_completion_idempotency_global_only": "node completion idempotency is not scoped to the active node",
     "install_audit_layout_policy_conflict": "install audit still rejects first-class flowpilot_cockpit source",
     "installed_skill_source_drift": "installed FlowPilot skill source differs from repository source",
-    "six_role_liveness_unproven": "runtime-requested role bindings have neither readiness proof nor an early blocker",
+    "runtime_role_liveness_unproven": "runtime-requested role bindings have neither readiness proof nor an early blocker",
     "active_history_visible_by_default": "completed, abandoned, or stale history is visible by default",
     "current_pointer_used_as_daemon_authority": "current pointer is not limited to UI focus/default target",
     "active_task_set_missing_explicit_authority": "active UI task set lacks explicit run-index authority",
@@ -92,7 +92,7 @@ def _state_id(state: model.State) -> str:
         f"install={state.cockpit_source_present_in_tree},"
         f"{state.install_audit_policy_accepts_first_class_cockpit},"
         f"{state.installed_skill_matches_repository_source}|"
-        f"roles={state.standard_six_roles_requested},{state.role_liveness_ready_or_blocked}|"
+        f"roles={state.runtime_requested_roles_requested},{state.role_liveness_ready_or_blocked}|"
         f"active_tasks={state.active_task_policy_observed},"
         f"{state.history_default_hidden},{state.current_pointer_is_ui_focus_only},"
         f"{state.active_task_set_has_explicit_authority}|"

@@ -222,7 +222,7 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
                     "schema_version": packet_runtime.PACKET_ENVELOPE_SCHEMA,
                     "packet_id": "packet-1",
                     "from_role": "project_manager",
-                    "to_role": "worker_a",
+                    "to_role": "worker",
                     "node_id": "node-1",
                     "body_path": "body.md",
                     "body_hash": hashlib.sha256(b"different").hexdigest(),

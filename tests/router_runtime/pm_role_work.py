@@ -18,7 +18,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "decisions/model_miss_role_work_reconcile",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
         router.record_external_event(root, "pm_registers_role_work_request", self.pm_role_work_request_payload(root))
@@ -28,7 +28,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         index_after_relay = read_json(run_root / "pm_work_requests" / "index.json")
         packet_id = index_after_relay["requests"][0]["packet_id"]
         lease = self.active_holder_lease_for_packet(root, packet_id)
-        self.assertEqual(lease["holder_role"], "product_flowguard_officer")
+        self.assertEqual(lease["holder_role"], "flowguard_operator")
 
         self.open_role_work_packet_and_write_result(root)
         action = self.next_after_display_sync(root)
@@ -58,7 +58,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "decisions/model_miss_role_work_advisory",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
         router.record_external_event(
@@ -93,7 +93,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "decisions/gate_targeted_model_miss_role_work",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
         request = self.pm_role_work_request_payload(
@@ -134,7 +134,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "decided_by_role": "project_manager",
                     "request_id": "gate-modelability-followup-001",
                     "decision": "absorbed",
-                    "decision_reason": "PM reviewed the officer result.",
+                    "decision_reason": "PM reviewed the FlowGuard operator result.",
                 },
             )
         router.record_external_event(
@@ -144,8 +144,8 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "decided_by_role": "project_manager",
                 "request_id": "gate-modelability-followup-001",
                 "decision": "absorbed",
-                "decision_reason": "PM reviewed the officer result and maps it to the gate pass event.",
-                "mapped_gate_event": "product_officer_submits_product_behavior_model",
+                "decision_reason": "PM reviewed the FlowGuard operator result and maps it to the gate pass event.",
+                "mapped_gate_event": "flowguard_operator_submits_product_behavior_model",
             },
         )
 
@@ -155,13 +155,13 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse((run_root / "flowguard" / "product_architecture_modelability.json").exists())
         self.assertTrue(
             any(
-                item.get("event") == "product_officer_submits_product_behavior_model"
+                item.get("event") == "flowguard_operator_submits_product_behavior_model"
                 and item.get("payload", {}).get("mapped_from_event") == "pm_records_role_work_result_decision"
                 for item in state["events"]
                 if isinstance(item, dict)
             )
         )
-    def test_pm_role_work_batch_waits_for_all_officer_results_before_pm_relay(self) -> None:
+    def test_pm_role_work_batch_waits_for_all_flowguard_operator_results_before_pm_relay(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-batch")
         run_root = self.run_root_for(root)
@@ -174,7 +174,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "decisions/model_miss_role_work_batch",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
         router.record_external_event(
@@ -187,12 +187,12 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     self.pm_role_work_request_payload(
                         root,
                         request_id="model-miss-product-001",
-                        to_role="product_flowguard_officer",
+                        to_role="flowguard_operator",
                     ),
                     self.pm_role_work_request_payload(
                         root,
                         request_id="model-miss-process-001",
-                        to_role="process_flowguard_officer",
+                        to_role="flowguard_operator",
                         body_text="Analyze the missed process invariant and recommend a minimal model repair.",
                     ),
                 ],
@@ -220,7 +220,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["role_work_result_returned"])
-        self.assertIn("process_flowguard_officer", action["to_role"])
+        self.assertIn("flowguard_operator", action["to_role"])
 
         process_result_path = self.open_role_work_packet_and_write_result(root, request_id="model-miss-process-001")
         router.record_external_event(
@@ -243,7 +243,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "decided_by_role": "project_manager",
                 "batch_id": "pm-model-miss-batch-001",
                 "decision": "absorbed",
-                "decision_reason": "PM reviewed the complete officer batch.",
+                "decision_reason": "PM reviewed the complete FlowGuard operator batch.",
             },
         )
 
@@ -262,7 +262,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "decisions/model_miss_role_work_invalid",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
 
@@ -287,7 +287,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.role_decision_envelope(
                 root,
                 "decisions/model_miss_role_work_supersede",
-                self.model_miss_triage_body(root, decision="request_officer_model_miss_analysis"),
+                self.model_miss_triage_body(root, decision="request_flowguard_operator_model_miss_analysis"),
             ),
         )
         router.record_external_event(
@@ -296,7 +296,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.pm_role_work_request_payload(
                 root,
                 request_id="model-miss-process-001",
-                to_role="process_flowguard_officer",
+                to_role="flowguard_operator",
                 body_text="Analyze the process invariant miss.",
             ),
         )
@@ -306,7 +306,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.pm_role_work_request_payload(
                 root,
                 request_id="model-miss-process-002",
-                to_role="process_flowguard_officer",
+                to_role="flowguard_operator",
                 body_text="Replacement analysis with clarified process invariant scope.",
                 supersedes_request_id="model-miss-process-001",
             ),
@@ -323,7 +323,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(new_record["supersedes_request_ids"], ["model-miss-process-001"])
         self.assertEqual(new_record["replacement_for_packet_id"], "pm-role-work-model-miss-process-001")
 
-        lifecycle = read_json(run_root / "pm_work_requests" / "officer_request_lifecycle_index.json")
+        lifecycle = read_json(run_root / "pm_work_requests" / "flowguard_operator_request_lifecycle_index.json")
         old_lifecycle = next(record for record in lifecycle["requests"] if record["request_id"] == "model-miss-process-001")
         self.assertEqual(old_lifecycle["lifecycle_status"], "superseded")
         self.assertEqual(lifecycle["active_request_ids"], ["model-miss-process-002"])
@@ -353,7 +353,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         bad_contract = self.pm_role_work_request_payload(
             root,
             request_id="bad-current-node-contract",
-            to_role="worker_a",
+            to_role="worker",
             request_kind="implementation",
             output_contract_id="flowpilot.output_contract.worker_current_node_result.v1",
             body_text="Do a delegated PM repair task.",
@@ -374,7 +374,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.pm_role_work_request_payload(
                 root,
                 request_id="strict-role-work-001",
-                to_role="worker_a",
+                to_role="worker",
                 request_kind="implementation",
                 output_contract_id="flowpilot.output_contract.pm_role_work_result.v1",
                 body_text="Do a delegated PM repair task.",
@@ -387,12 +387,12 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         index = read_json(run_root / "pm_work_requests" / "index.json")
         record = index["requests"][0]
         envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
-        packet_runtime.read_packet_body_for_role(root, envelope, role="worker_a")
+        packet_runtime.read_packet_body_for_role(root, envelope, role="worker")
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role="worker_a",
-            completed_by_agent_id="worker-a-agent",
+            completed_by_role="worker",
+            completed_by_agent_id="worker-1-agent",
             result_body_text="Status\n\nComplete\n\nContract Self-Check\n\nPassed.",
             next_recipient="human_like_reviewer",
         )

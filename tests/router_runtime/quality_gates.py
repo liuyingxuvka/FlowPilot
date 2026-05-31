@@ -69,20 +69,20 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             },
         )
 
-        with self.assertRaisesRegex(router.RouterError, "process_officer_route_check_card_delivered"):
+        with self.assertRaisesRegex(router.RouterError, "flowguard_operator_route_scope_route_check_card_delivered"):
             router.record_external_event(
                 root,
-                "process_officer_submits_process_route_model",
+                "flowguard_operator_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/process_route_model",
                     self.route_process_pass_body(),
                 ),
             )
-        self.deliver_expected_card(root, "process_officer.route_process_check")
+        self.deliver_expected_card(root, "flowguard_operator.route_process_check")
         router.record_external_event(
             root,
-            "process_officer_submits_process_route_model",
+            "flowguard_operator_submits_process_route_model",
             self.role_report_envelope(
                 root,
                 "flowguard/process_route_model",
@@ -151,15 +151,15 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             },
         )
 
-        self.deliver_expected_card(root, "process_officer.route_process_check")
+        self.deliver_expected_card(root, "flowguard_operator.route_process_check")
         with self.assertRaisesRegex(router.RouterError, "process_viability_verdict=pass"):
             router.record_external_event(
                 root,
-                "process_officer_submits_process_route_model",
+                "flowguard_operator_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check_missing_verdict",
-                    {"reviewed_by_role": "process_flowguard_officer", "passed": True},
+                    {"reviewed_by_role": "flowguard_operator", "passed": True},
                 ),
             )
 
@@ -179,16 +179,16 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 **self.prior_path_context_review(root, "Route draft considered prior context before route checks."),
             },
         )
-        self.deliver_expected_card(root, "process_officer.route_process_check")
+        self.deliver_expected_card(root, "flowguard_operator.route_process_check")
         with self.assertRaisesRegex(router.RouterError, "product_behavior_model_checked=true"):
             router.record_external_event(
                 root,
-                "process_officer_submits_process_route_model",
+                "flowguard_operator_submits_process_route_model",
                 self.role_report_envelope(
                     root,
                     "flowguard/route_process_check_missing_product_coverage",
                     {
-                        "reviewed_by_role": "process_flowguard_officer",
+                        "reviewed_by_role": "flowguard_operator",
                         "passed": True,
                         "process_viability_verdict": "pass",
                         "repair_return_policy_checked": True,
@@ -215,15 +215,15 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 **self.prior_path_context_review(root, "Route draft considered prior context before process check."),
             },
         )
-        self.deliver_expected_card(root, "process_officer.route_process_check")
+        self.deliver_expected_card(root, "flowguard_operator.route_process_check")
         router.record_external_event(
             root,
-            "process_officer_requests_process_route_model_repair",
+            "flowguard_operator_requests_process_route_model_repair",
             self.role_report_envelope(
                 root,
                 "flowguard/route_process_repair_required",
                 {
-                    "reviewed_by_role": "process_flowguard_officer",
+                    "reviewed_by_role": "flowguard_operator",
                     "passed": False,
                     "process_viability_verdict": "repair_required",
                     "product_behavior_model_checked": True,
@@ -416,7 +416,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 check_name="unit_proof_check",
                 audit_path=audit_path,
             )
-    def test_reviewer_and_officer_gate_event_groups_have_non_pass_outcomes(self) -> None:
+    def test_reviewer_and_flowguard_operator_gate_event_groups_have_non_pass_outcomes(self) -> None:
         pass_markers = ("passes", "passed", "approves", "allows", "sufficient")
         non_pass_markers = ("blocks", "blocked", "insufficient", "requires_repair", "requests_repair", "protocol_dead_end")
         groups: dict[str, list[str]] = {}
@@ -425,7 +425,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             if not required_flag:
                 continue
             role_events = groups.setdefault(required_flag, [])
-            if event_name.startswith(("reviewer_", "current_node_reviewer_", "process_officer_", "product_officer_")):
+            if event_name.startswith(("reviewer_", "current_node_reviewer_", "flowguard_operator_route_scope_", "flowguard_operator_product_scope_")):
                 role_events.append(event_name)
 
         pass_only: dict[str, list[str]] = {}
@@ -470,7 +470,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "gates": [
                     {
                         "gate_id": "process-model",
-                        "required_approver": "process_flowguard_officer",
+                        "required_approver": "flowguard_operator",
                         "controller_can_approve": False,
                     }
                 ],
@@ -508,8 +508,8 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(state["flags"]["child_skill_manifest_reviewer_blocked"])
         self.assertFalse(state["flags"]["child_skill_manifest_reviewer_passed"])
         self.assertFalse(state["flags"]["child_skill_gate_manifest_written"])
-        self.assertFalse(state["flags"]["child_skill_process_officer_passed"])
-        self.assertFalse(state["flags"]["child_skill_product_officer_passed"])
+        self.assertFalse(state["flags"]["child_skill_flowguard_operator_route_scope_passed"])
+        self.assertFalse(state["flags"]["child_skill_flowguard_operator_product_scope_passed"])
         self.assertFalse(state["flags"]["child_skill_manifest_pm_approved_for_route"])
         self.assertTrue((run_root / "reviews" / "child_skill_gate_manifest_block.json").exists())
 
@@ -531,7 +531,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "gates": [
                     {
                         "gate_id": "process-model",
-                        "required_approver": "process_flowguard_officer",
+                        "required_approver": "flowguard_operator",
                         "evidence_required": ["model-check-result"],
                         "controller_can_approve": False,
                     }
@@ -622,7 +622,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 packet_id=packet_id,
                 from_role="project_manager",
-                to_role="worker_a",
+                to_role="worker",
                 node_id=node_id,
                 body_text=f"{node_id} work",
                 metadata={"route_version": 1},
@@ -647,7 +647,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     {
                         "reviewed_by_role": "human_like_reviewer",
                         "passed": True,
-                        "agent_role_map": {agent_id: "worker_a"},
+                        "agent_role_map": {agent_id: "worker"},
                     },
                 ),
             )
@@ -814,7 +814,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             packet_id="node-packet-quality",
             from_role="project_manager",
-            to_role="worker_a",
+            to_role="worker",
             node_id="node-001",
             body_text="current node work",
             metadata={"route_version": 1},
@@ -839,7 +839,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_id: "worker_a"},
+                    "agent_role_map": {agent_id: "worker"},
                 },
             ),
         )
@@ -966,11 +966,11 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("pm.product_architecture", card_ids)
         self.assertIn("pm.root_contract", card_ids)
         self.assertIn("reviewer.research_direct_source_check", card_ids)
-        self.assertIn("product_officer.root_contract_modelability", card_ids)
+        self.assertIn("flowguard_operator_product_scope.root_contract_modelability", card_ids)
         self.assertIn("reviewer.worker_result_review", card_ids)
     def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
         self.assertNotIn("reviewer_blocks_current_node_dispatch", router.EXTERNAL_EVENTS)
-        self.assertNotIn("product_officer_model_report", router.EXTERNAL_EVENTS)
+        self.assertNotIn("flowguard_operator_product_scope_model_report", router.EXTERNAL_EVENTS)
         self.assertEqual(
             router.EXTERNAL_EVENTS["router_direct_material_scan_dispatch_recheck_blocked"]["flag"],
             "material_scan_dispatch_recheck_blocked",

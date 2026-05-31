@@ -5,8 +5,8 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Route Skeleton Phase
 
@@ -17,7 +17,7 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If PM lacks basis, or the suggestion may affect route, product target, acceptance, process safety, replay, repair return path, or risk boundary, PM may request bounded consultation through an allowed role-work request, then must record a final PM disposition after reading the advice artifact.
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
-- Put reviewer, worker, and officer advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
+- Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial route, decomposition, process, validation, repair-return, child-skill conformance, or closure-readiness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 - In mature FlowGuard projects, read `docs/flowguard_project_topology.md` as background architecture before route decomposition. It guides relevant model/test/code/evidence inspection, but it is not a FlowGuard Report and is not gate evidence. If this phase changes topology sources, rebuild and check the topology before claiming done.
 
@@ -30,7 +30,7 @@ Before drafting, read the latest
 contains no completed or superseded nodes yet. Do not draft from chat history,
 old route files, or Controller summaries.
 
-Before asking Process FlowGuard Officer to model the route, write
+Before asking FlowGuard operator to model the route, write
 `.flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json`. The plan must
 reference the startup FlowGuard capability snapshot, the PM-accepted product
 model family, and the child-skill gate manifest. It must name each required
@@ -41,7 +41,7 @@ merge/skip reasons.
 The Process Modeling Plan is the FlowGuard Work Order source for route
 viability. It must assign `flowguard_work_order_id`, expected report path,
 freshness rule, affected gate, and the FlowGuard route PM expects the Process
-Officer to consider. Route activation may use the Process Officer's FlowGuard
+FlowGuard operator to consider. Route activation may use the FlowGuard operator's FlowGuard
 Report only after PM records `flowguard_pm_acceptance`.
 
 Route requirements:
@@ -52,7 +52,7 @@ Route requirements:
   `research_writing`, `release_delivery`, `debug_repair`, or
   `long_running_multi_role`. The profile chooses domain-specific modules, not
   a lighter FlowPilot mode. A formal FlowPilot run always keeps the full
-  protocol, runtime-requested role authority, PM-owned contracts, reviewer/officer gates,
+  protocol, runtime-requested role authority, PM-owned contracts, reviewer/FlowGuard operator gates,
   node acceptance, mutation invalidation, and final route-wide closure. If a
   task is too small to justify that, the correct decision is not to use
   FlowPilot for it, not to create a light/simple FlowPilot path;
@@ -83,12 +83,12 @@ Route requirements:
   acceptance standard;
 - Minimum Sufficient Complexity: choose the smallest route structure that can
   satisfy the frozen contract with the required proof strength;
-- use the Product FlowGuard Officer's product behavior model as route input:
+- use the FlowGuard operator's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
 - use only a PM-accepted product behavior model. If PM has not accepted the
-  Product FlowGuard model, return to product-model decision before drafting;
-- use only a PM-authored Process Modeling Plan for Process FlowGuard. If the
+  FlowGuard operator product model, return to product-model decision before drafting;
+- use only a PM-authored Process Modeling Plan for FlowGuard operator process-model. If the
   plan is missing, does not reference the accepted product model family, or
   treats the child-skill manifest as model coverage, block route activation and
   return to PM process planning;
@@ -109,9 +109,9 @@ Route requirements:
   risks block activation. A new node created only because a risk was named, but
   without distinct evidence, role authority, failure isolation, or user-visible
   milestone value, is unjustified route bloat and should be merged or waived;
-- Router will not activate the route unless the Product Officer's product
+- Router will not activate the route unless the FlowGuard operator's product
   behavior model report already exists, the route receives a role-owned
-  product-model review pass, and Process Officer returns
+  product-model review pass, and FlowGuard operator returns
   `process_viability_verdict: "pass"`;
 - large nodes expanded horizontally;
 - each large node owns concrete checklist items;
@@ -132,14 +132,14 @@ Route requirements:
   concrete worker-ready task with clear input, output, evidence, dependencies,
   failure boundary, and proof. Parent/module nodes are composition and review
   boundaries, not worker packets;
-- arrange the Process FlowGuard execution model as a single serial line. Parent
+- arrange the FlowGuard operator process-model execution model as a single serial line. Parent
   A precedes parent B, children A1/A2/A3 are ordered inside A, and deeper
   children are ordered the same way. Do not use parallel graph branches as the
   canonical process route unless PM records a non-execution display-only
   projection;
 - before entering any non-leaf node, plan that local subtree with the same
-  pattern: PM local product goal, Product FlowGuard local product model, PM
-  decision, Reviewer product challenge, Process FlowGuard serial child route,
+  pattern: PM local product goal, FlowGuard operator product-model local product model, PM
+  decision, Reviewer product challenge, FlowGuard operator serial child-route model,
   PM decision, Reviewer route challenge, then child execution;
 - at apparent leaf entry, PM may decide the leaf is still too broad. In that
   case, promote it to a parent/module, add deeper child nodes, invalidate stale
@@ -152,8 +152,8 @@ Route requirements:
   reviewed execution result, parent backward replay, or other post-work review
   failure proves that repair is actually needed;
 - if PM decides new capability is required before the route can work, add the
-  capability through the capability/child-skill path first. Product FlowGuard
-  must review the capability's product fit before Process FlowGuard checks the
+  capability through the capability/child-skill path first. FlowGuard operator product-model
+  must review the capability's product fit before FlowGuard operator process-model checks the
   updated process route, and the changed route must then return to the normal
   reviewer route challenge;
 - each node must include `node_kind` (`parent`, `module`, `leaf`, or `repair`),
@@ -177,17 +177,17 @@ Route requirements:
 - worker-capable nodes must close with all checklist items complete;
 - human manual checks belong in final reports or review gates, not as fake
   unfinished worker nodes;
-- Process FlowGuard must produce a serial route execution model that checks
+- FlowGuard operator process-model must produce a serial route execution model that checks
   product-behavior coverage, child-skill conformance, and all PM-planned
   process model families, and PM must explicitly accept it before Reviewer
   route challenge can proceed;
-- Product FlowGuard owns the upstream product behavior model; the default route
-  draft path does not require a second Product FlowGuard route-product check;
-- Process Officer, PM model-decision, and Reviewer route checks are required
+- FlowGuard operator product-model owns the upstream product behavior model; the default route
+  draft path does not require a second FlowGuard operator product-model route-product check;
+- FlowGuard operator, PM model-decision, and Reviewer route checks are required
   before activation.
 
-Do not activate a route until Product Officer model-family coverage is accepted,
-ordinary child-skill projection is recorded, Process Officer model-family
+Do not activate a route until FlowGuard operator model-family coverage is accepted,
+ordinary child-skill projection is recorded, FlowGuard operator model-family
 coverage is accepted, and Reviewer checks pass.
 
 Return `prior_path_context_review` with the route-memory source paths and how

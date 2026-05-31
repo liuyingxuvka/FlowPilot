@@ -108,22 +108,58 @@ def _complete_planning(ledger: dict) -> None:
     )
 
 
+def _node_context_body(ledger: dict) -> str:
+    node_id = ledger["execution_frontier"]["active_node_id"]
+    node = ledger["route_nodes"][node_id]
+    return json.dumps(
+        {
+            "repair_policy": "same_node_repair_default",
+            "node_context_package": {
+                "node_id": node_id,
+                "purpose": f"Execute and verify {node['title']}",
+                "acceptance_criteria": list(node.get("acceptance_criteria") or []),
+                "relevant_references": [
+                    {"kind": "route_node", "id": node_id},
+                    {"kind": "node_acceptance_plan_packet", "id": _open_packets(ledger, scope="node_acceptance_plan")[0]},
+                ],
+                "evidence_targets": ["current-run result evidence", "fresh validation output"],
+                "inspection_targets": ["changed files or product surface", "test and FlowGuard evidence"],
+                "known_risks": ["thin evidence", "wrong FlowGuard target", "stale repair-generation evidence"],
+                "flowguard_targets": [str(node.get("modeled_target") or "development_process")],
+                "reviewer_starting_points": ["subject result", "post-result FlowGuard report", "node acceptance criteria"],
+            },
+        }
+    )
+
+
 def _complete_node_acceptance_plan(ledger: dict) -> None:
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="node_acceptance_plan")[0],
-        json.dumps({"repair_policy": "same_node_repair_default"}),
+        _node_context_body(ledger),
     )
+
+
+def _complete_prework_flowguard(ledger: dict) -> str:
+    packet_id = _open_packets(ledger, scope="node_prework_flowguard")[0]
+    _complete_open_packet(
+        ledger,
+        packet_id,
+        json.dumps({"decision": "pass", "selected_routes": ["flowguard-development-process-flow"]}),
+    )
+    return packet_id
 
 
 def _complete_active_node_packet_loop(ledger: dict) -> str:
     node_id = ledger["execution_frontier"]["active_node_id"]
+    if _open_packets(ledger, scope="node_prework_flowguard"):
+        _complete_prework_flowguard(ledger)
     _complete_task_chain(ledger, _open_packets(ledger, scope="node")[0], f"SEALED_RESULT_BODY: {node_id}")
     return node_id
 
 
 class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
-    def test_reviewer_pass_auto_closes_without_closure_officer_packet(self) -> None:
+    def test_reviewer_pass_auto_closes_without_closure_flowguard_operator_packet(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
         _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
@@ -188,8 +224,139 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         _complete_node_acceptance_plan(ledger)
 
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "requires accepted pre-work FlowGuard"):
+            runtime.ensure_next_node_task_packet(ledger)
+        self.assertEqual(ledger["packets"][_open_packets(ledger, scope="node_prework_flowguard")[0]]["envelope"]["route_node_id"], node_id)
+        _complete_prework_flowguard(ledger)
+
         self.assertEqual(ledger["packets"][_open_packets(ledger, scope="node")[0]]["envelope"]["route_node_id"], node_id)
         self.assertTrue(ledger["route_nodes"][node_id]["node_acceptance_plan_id"])
+
+    def test_node_task_requires_prework_flowguard_gate(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        context_id = ledger["route_nodes"][node_id]["node_context_package_id"]
+        self.assertTrue(context_id)
+        self.assertTrue(runtime._node_context_package_current(ledger, node_id))
+        self.assertFalse(_open_packets(ledger, scope="node"))
+        prework_packet = _open_packets(ledger, scope="node_prework_flowguard")[0]
+        body = json.loads(ledger["packets"][prework_packet]["body"])
+
+        self.assertEqual(body["route_node_id"], node_id)
+        self.assertEqual(body["node_context_package_id"], context_id)
+        self.assertEqual(ledger["packets"][prework_packet]["envelope"]["node_context_package_id"], context_id)
+        self.assertTrue(body["minimum_starting_context_not_boundary"])
+        self.assertTrue(body["route_selection_policy"]["multiple_routes_allowed"])
+        self.assertFalse(body["route_selection_policy"]["pm_skip_decision_allowed"])
+        self.assertIn("selected_routes", body["route_selection_policy"]["required_output_fields"])
+        self.assertTrue(body["pm_visibility_policy"]["pm_can_read_model_artifacts"])
+        self.assertIn(f"/evidence/flowguard/{prework_packet}", body["pm_visibility_policy"]["run_local_evidence_root"])
+
+        _complete_prework_flowguard(ledger)
+
+        node = ledger["route_nodes"][node_id]
+        self.assertTrue(runtime._node_prework_flowguard_accepted(ledger, node_id))
+        self.assertEqual(node["prework_flowguard_packet_id"], prework_packet)
+        self.assertEqual(node["prework_flowguard_repair_generation"], node["repair_generation"])
+        self.assertEqual(_open_packets(ledger, scope="node"), [_open_packets(ledger, scope="node")[0]])
+
+    def test_node_acceptance_plan_requires_node_context_package(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+
+        packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "missing node_context_package"):
+            _complete_task_chain(ledger, packet_id, json.dumps({"repair_policy": "same_node_repair_default"}))
+
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        self.assertFalse(runtime._node_context_package_current(ledger, node_id))
+        self.assertFalse(_open_packets(ledger, scope="node_prework_flowguard"))
+        self.assertFalse(_open_packets(ledger, scope="node"))
+
+    def test_node_context_package_follows_flowguard_worker_and_reviewer_packets(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        context_id = ledger["route_nodes"][node_id]["node_context_package_id"]
+        prework_packet = _open_packets(ledger, scope="node_prework_flowguard")[0]
+        self.assertEqual(ledger["packets"][prework_packet]["envelope"]["node_context_package_id"], context_id)
+        self.assertEqual(json.loads(ledger["packets"][prework_packet]["body"])["node_context_package_id"], context_id)
+
+        _complete_prework_flowguard(ledger)
+        worker_packet = _open_packets(ledger, scope="node")[0]
+        worker_body = json.loads(ledger["packets"][worker_packet]["body"])
+        self.assertEqual(ledger["packets"][worker_packet]["envelope"]["node_context_package_id"], context_id)
+        self.assertEqual(worker_body["node_context_package_id"], context_id)
+        self.assertIn("minimum baseline", worker_body["instruction"])
+
+        _complete_open_packet(ledger, worker_packet, f"SEALED_RESULT_BODY: completed {node_id}")
+        post_flowguard = _open_packets(ledger, kind="flowguard_check")[0]
+        post_body = json.loads(ledger["packets"][post_flowguard]["body"])
+        self.assertEqual(ledger["packets"][post_flowguard]["envelope"]["node_context_package_id"], context_id)
+        self.assertEqual(post_body["node_context_package_id"], context_id)
+
+        _complete_open_packet(ledger, post_flowguard, json.dumps({"decision": "pass"}))
+        review_packet = _open_packets(ledger, kind="review")[0]
+        review_body = json.loads(ledger["packets"][review_packet]["body"])
+        self.assertEqual(ledger["packets"][review_packet]["envelope"]["node_context_package_id"], context_id)
+        self.assertEqual(review_body["node_context_package_id"], context_id)
+        self.assertIn("as the review boundary", review_body["instruction"])
+
+    def test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        first_prework = _open_packets(ledger, scope="node_prework_flowguard")[0]
+
+        _complete_open_packet(
+            ledger,
+            first_prework,
+            json.dumps(
+                {
+                    "decision": "block",
+                    "blocker_class": "node_design_risk",
+                    "recommended_resolution": "PM must tighten node acceptance before worker execution.",
+                }
+            ),
+        )
+
+        self.assertEqual(ledger["packets"][first_prework]["status"], "flowguard_blocked")
+        self.assertFalse(_open_packets(ledger, scope="node"))
+        blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
+        self.assertEqual(blocker["required_recheck_role"], "flowguard_operator")
+        self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
+
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="pm_repair_decision")[0],
+            json.dumps({"decision": "same_node_repair", "reason": "repair node design from FlowGuard report"}),
+        )
+
+        self.assertEqual(ledger["route_nodes"][node_id]["repair_generation"], 1)
+        self.assertFalse(runtime._node_prework_flowguard_accepted(ledger, node_id))
+        self.assertFalse(runtime._node_context_package_current(ledger, node_id))
+        self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
+        self.assertFalse(_open_packets(ledger, scope="node"))
+
+        _complete_node_acceptance_plan(ledger)
+        fresh_prework = _open_packets(ledger, scope="node_prework_flowguard")[0]
+        self.assertNotEqual(fresh_prework, first_prework)
+        _complete_prework_flowguard(ledger)
+
+        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "cleared")
+        self.assertEqual(ledger["packets"][first_prework]["status"], "superseded_after_repair")
+        self.assertTrue(runtime._node_prework_flowguard_accepted(ledger, node_id))
+        self.assertTrue(_open_packets(ledger, scope="node"))
 
     def test_pm_repair_reuses_same_node_and_repair_generation(self) -> None:
         ledger = _ledger()
@@ -202,6 +369,10 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(ledger["active_route_version"], 1)
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], node_id)
         self.assertEqual(ledger["route_nodes"][node_id]["repair_generation"], 1)
+        self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
+        self.assertFalse(_open_packets(ledger, scope="node"))
+        _complete_node_acceptance_plan(ledger)
+        _complete_prework_flowguard(ledger)
         self.assertEqual(ledger["packets"][_open_packets(ledger, scope="node")[0]]["envelope"]["route_node_id"], node_id)
 
     def test_reviewer_block_routes_to_pm_repair_and_requires_recheck(self) -> None:
@@ -262,9 +433,9 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertFalse(_open_packets(ledger, kind="closure"))
         self.assertTrue(ledger["system_closures"])
 
-    def test_validator_and_closure_officer_are_not_runtime_roles(self) -> None:
+    def test_validator_and_closure_flowguard_operator_are_not_runtime_roles(self) -> None:
         ledger = _ledger()
-        for responsibility in ("validator", "closure_officer"):
+        for responsibility in ("validator", "closure_flowguard_operator"):
             with self.subTest(responsibility=responsibility):
                 with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "unknown responsibility"):
                     runtime.issue_task_packet(
@@ -318,6 +489,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_planning(ledger)
         _complete_node_acceptance_plan(ledger)
         node_id = ledger["execution_frontier"]["active_node_id"]
+        _complete_prework_flowguard(ledger)
         node_packet = _open_packets(ledger, scope="node")[0]
         _complete_open_packet(
             ledger,
@@ -375,7 +547,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
         self.assertFalse(_open_packets(ledger, kind="closure"))
 
-    def test_worker_blocked_result_routes_pm_repair_without_flowguard_pass(self) -> None:
+    def test_workerlocked_result_routes_pm_repair_without_flowguard_pass(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
 
@@ -412,6 +584,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ledger["route_nodes"][node_id]["status"] = "accepted"
         ledger["route_nodes"][node_id]["pm_disposition_id"] = "pm-disposition"
         ledger["route_nodes"][node_id]["accepted_result_id"] = "node-result"
+        ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = "prework-flowguard-1"
+        ledger["route_nodes"][node_id]["prework_flowguard_repair_generation"] = 0
+        ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
+            "order_id": "prework-flowguard-1",
+            "status": "complete",
+            "decision": "pass",
+        }
         ledger["route_nodes"][node_id]["flowguard_order_ids"] = ["flowguard-1"]
         ledger["route_nodes"][node_id]["review_ids"] = ["review-1"]
         ledger["route_nodes"][node_id]["validation_evidence_ids"] = ["validation-1"]

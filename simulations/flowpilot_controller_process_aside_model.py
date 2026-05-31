@@ -29,7 +29,7 @@ NEGATIVE_SCENARIOS = (
     "aside_replaces_formal_body",
     "aside_becomes_evidence",
     "aside_drives_router_event",
-    "worker_to_worker_aside",
+    "worker_to_workerside",
     "missing_aside_blocks_flow",
     "controller_reports_formal_content_from_aside",
     "routine_aside_relayed_to_user",
@@ -73,8 +73,8 @@ class State:
     controller_uses_aside_for_formal_content: bool = False
     user_visible_message_emitted_from_aside: bool = False
     formal_state_independently_user_visible: bool = False
-    worker_aside_controller_only: bool = True
-    worker_aside_visible_to_sibling_worker: bool = False
+    workerside_controller_only: bool = True
+    workerside_visible_to_sibling_worker: bool = False
     missing_aside_blocks_flow: bool = False
 
 
@@ -182,13 +182,13 @@ def scenario_state(scenario: str) -> State:
             router_semantically_inspected_aside=True,
             router_event_derived_from_aside=True,
         )
-    if scenario == "worker_to_worker_aside":
+    if scenario == "worker_to_workerside":
         return _rejected(
             scenario,
             aside_present=True,
             aside_labeled_process_only=True,
-            worker_aside_controller_only=False,
-            worker_aside_visible_to_sibling_worker=True,
+            workerside_controller_only=False,
+            workerside_visible_to_sibling_worker=True,
         )
     if scenario == "missing_aside_blocks_flow":
         return _rejected(
@@ -291,7 +291,7 @@ def process_aside_failures(state: State) -> list[str]:
         and not state.formal_state_independently_user_visible
     ):
         failures.append("routine process aside was automatically relayed to the user")
-    if state.status == "accepted" and state.worker_aside_visible_to_sibling_worker:
+    if state.status == "accepted" and state.workerside_visible_to_sibling_worker:
         failures.append("worker process aside became Worker-to-Worker communication")
     if state.status == "accepted" and state.missing_aside_blocks_flow:
         failures.append("missing optional process aside blocked formal flow")

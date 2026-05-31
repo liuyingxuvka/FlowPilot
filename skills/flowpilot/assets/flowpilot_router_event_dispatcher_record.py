@@ -222,7 +222,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _write_product_function_architecture(project_root, run_root, run_state, payload)
     elif event == 'reviewer_passes_product_architecture':
         _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'product_architecture_challenge.json', schema_version='flowpilot.product_architecture_review.v1', checked_paths=[run_root / 'product_function_architecture.json', router._require_product_behavior_model_report(project_root, run_root), run_root / 'flowguard' / 'product_behavior_model_pm_decision.json'])
-    elif event == 'product_officer_submits_product_behavior_model':
+    elif event == 'flowguard_operator_submits_product_behavior_model':
         _write_product_behavior_model_report(project_root, run_root, run_state, payload)
     elif event == 'pm_accepts_product_behavior_model':
         _write_pm_product_behavior_model_decision(project_root, run_root, run_state, payload, accepted=True)
@@ -253,15 +253,15 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         if run_state['flags'].get(flag) and (not run_state['flags'].get('route_activated_by_pm')):
             router._reset_route_review_after_route_draft_repair(run_state)
         router._write_route_draft(project_root, run_root, run_state, payload)
-    elif event == 'process_officer_submits_process_route_model':
+    elif event == 'flowguard_operator_submits_process_route_model':
         _write_route_process_pass_report(project_root, run_root, run_state, payload)
     elif event == 'pm_accepts_process_route_model':
         _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=True)
     elif event == 'pm_requests_process_route_model_rebuild':
         _write_pm_process_route_model_decision(project_root, run_root, run_state, payload, accepted=False)
-    elif event == 'process_officer_requests_process_route_model_repair':
+    elif event == 'flowguard_operator_requests_process_route_model_repair':
         _write_route_process_issue_report(project_root, run_root, run_state, payload, expected_verdict='repair_required')
-    elif event == 'process_officer_blocks_process_route_model':
+    elif event == 'flowguard_operator_blocks_process_route_model':
         _write_route_process_issue_report(project_root, run_root, run_state, payload, expected_verdict='blocked')
     elif event == 'reviewer_passes_route_check':
         _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'route_challenge.json', schema_version='flowpilot.route_review.v1', checked_paths=[router._current_route_draft_path(run_root), router._require_product_behavior_model_report(project_root, run_root), router._require_process_route_model_report(project_root, run_root), run_root / 'flowguard' / 'process_route_model_pm_decision.json'])

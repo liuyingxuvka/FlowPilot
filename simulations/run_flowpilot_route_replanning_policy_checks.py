@@ -25,9 +25,9 @@ HAZARD_EXPECTED_FAILURES = {
     model.PLANNING_REPAIR_NODE_CREATED: "planning-phase issue used a repair node instead of route draft rewrite or ordinary node expansion",
     model.ROOT_REPAIR_BEFORE_CHILD_EXECUTION: "root planning created a repair node before any child execution",
     model.ORDINARY_NODE_MISSING_FIELDS: "added ordinary node lacks owner input output evidence or acceptance fields",
-    model.CAPABILITY_CHANGE_WITHOUT_PRODUCT_CHECK: "product capability change lacks Product FlowGuard check",
-    model.PROCESS_BEFORE_PRODUCT_FOR_CAPABILITY_CHANGE: "Process FlowGuard ran before Product FlowGuard for a product capability change",
-    model.STRUCTURE_CHANGE_WITHOUT_PROCESS_CHECK: "route structure change lacks Process FlowGuard check",
+    model.CAPABILITY_CHANGE_WITHOUT_PRODUCT_CHECK: "product capability change lacks product-scope FlowGuard check",
+    model.PROCESS_BEFORE_PRODUCT_FOR_CAPABILITY_CHANGE: "route-scope FlowGuard ran before product-scope FlowGuard for a product capability change",
+    model.STRUCTURE_CHANGE_WITHOUT_PROCESS_CHECK: "route structure change lacks route-scope FlowGuard check",
     model.CHANGED_ROUTE_WITHOUT_REVIEWER: "changed route was used before Reviewer approval",
     model.NODE_ENTRY_REPAIR_BEFORE_WORK: "node-entry capability gap used a repair node before node work started",
     model.IN_PROGRESS_REPAIR_BEFORE_REVIEW_FAILURE: "in-progress capability gap used a repair node before reviewed failure",
@@ -47,8 +47,8 @@ def _state_id(state: model.State) -> str:
         f"completed={state.completed_nodes}|node={state.current_node_kind}|"
         f"change={state.change_kind}|repair={state.repair_node_created}|"
         f"product_changed={state.product_capability_changed}|"
-        f"product_fg={state.product_flowguard_checked}|"
-        f"process_fg={state.process_flowguard_checked}|"
+        f"product_fg={state.product_scope_flowguard_checked}|"
+        f"process_fg={state.route_scope_flowguard_checked}|"
         f"reviewer={state.reviewer_approved_changed_route}|"
         f"active_exec={state.active_node_executable}|reason={state.terminal_reason}"
     )

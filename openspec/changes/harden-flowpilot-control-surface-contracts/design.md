@@ -8,7 +8,7 @@ The remaining miss happened below normal route logic. Some tools still expected
 old current-pointer field names; one live audit crashed on a non-UTF-8 JSON file
 instead of reporting unreadable evidence; and packet symmetry must be enforced
 at the shared envelope boundary so a PM fix also protects reviewer, FlowGuard,
-validator, worker, and closure packets.
+requested worker packets plus system validation and system closure outcomes.
 
 ## Decisions
 

@@ -14,7 +14,7 @@
   },
   "ok": true,
   "skipped_checks": {
-    "semantic_sufficiency": "skipped_with_reason: role_output_runtime is a mechanical submission runtime; PM/reviewer/officer gates own semantics"
+    "semantic_sufficiency": "skipped_with_reason: role_output_runtime is a mechanical submission runtime; PM/reviewer/FlowGuard operator gates own semantics"
   },
   "source": {
     "facts": {
@@ -26,9 +26,9 @@
             "controller_boundary_confirmation",
             "current_node_result_review_pass",
             "flowguard_model_miss_report",
+            "flowguard_operator_model_report",
             "gate_decision",
             "material_sufficiency_report",
-            "officer_model_report",
             "pm_control_blocker_repair_decision",
             "pm_model_miss_triage_decision",
             "pm_package_result_disposition",
@@ -48,8 +48,8 @@
       },
       "contract_ids_present": [
         "flowpilot.output_contract.controller_boundary_confirmation.v1",
+        "flowpilot.output_contract.flowguard_operator_model_report.v1",
         "flowpilot.output_contract.gate_decision.v1",
-        "flowpilot.output_contract.officer_model_report.v1",
         "flowpilot.output_contract.pm_control_blocker_repair_decision.v1",
         "flowpilot.output_contract.pm_package_result_disposition.v1",
         "flowpilot.output_contract.pm_resume_decision.v1",
@@ -60,9 +60,9 @@
         "controller_boundary_confirmation",
         "current_node_result_review_pass",
         "flowguard_model_miss_report",
+        "flowguard_operator_model_report",
         "gate_decision",
         "material_sufficiency_report",
-        "officer_model_report",
         "pm_control_blocker_repair_decision",
         "pm_model_miss_triage_decision",
         "pm_package_result_disposition",

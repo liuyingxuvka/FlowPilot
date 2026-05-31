@@ -14,8 +14,8 @@ review or can be satisfied by reading worker/PM summaries.
 1. Startup activation previously depended on a separate runtime startup check.
    That path is removed. Startup now has only a human-like reviewer factual
    report and a PM-owned startup opening decision. The reviewer must check real
-   state/frontier/route, crew, role memory, heartbeat or manual-resume
-   evidence, runtime role-assistance user decision versus actual role-binding state, current
+   state/frontier/route, runtime roles, role memory, heartbeat or manual-resume
+   evidence, background-collaboration user decision versus actual role-binding state, current
    binding coverage plus current-task freshness or explicit fallback
    authorization, and cleanup boundary. PM may open only from a clean factual
    report.
@@ -49,7 +49,7 @@ review or can be satisfied by reading worker/PM summaries.
    walkthrough evidence, reachability checks, overlap/clipping checks,
    whitespace/density/crowding review, and concrete design recommendations.
 9. The same weakness existed outside UI: some PM, reviewer, and FlowGuard
-   officer approvals could still read as "approve after reviewing the evidence
+   FlowGuard operator approvals could still read as "approve after reviewing the evidence
    packet." All role approvals now require independent adversarial validation:
    direct source/state probes, concrete evidence references, failure
    hypotheses tested, and residual blindspots. Startup PM opening, material
@@ -68,7 +68,7 @@ mechanical checks; live facts, user-intent authenticity without a host receipt,
 source quality, product/visual judgement, and backward replay remain reviewer
 owned.
 
-Reviewer, PM, and FlowGuard officer decisions that cite only worker, PM, or
+Reviewer, PM, and FlowGuard operator decisions that cite only worker, PM, or
 other-role summaries are invalid. Reports can point to evidence, but
 role-owned gates must name the direct facts checked, adversarial hypotheses
 tested, and concrete evidence references used for the decision.

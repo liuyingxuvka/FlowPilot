@@ -39,7 +39,7 @@ class RouterLoopStep:
     reads = (
         "controller_boundary",
         "route_activation",
-        "officer_packet_loop",
+        "flowguard_operator_packet_loop",
         "packet_loop",
         "repair_recheck_loop",
         "reviewer_decision",
@@ -73,15 +73,15 @@ def _clear_current_node_cycle(state: State, **changes: object) -> State:
         state,
         route_activated=False,
         active_node_kind="leaf",
-        officer_packet_card_delivered=False,
-        officer_packet_relayed=False,
-        officer_packet_identity_boundary_present=False,
-        officer_result_returned=False,
-        officer_result_identity_boundary_present=False,
-        officer_result_ledger_checked=False,
-        officer_result_routed_to_pm=False,
-        pm_absorbed_officer_result=False,
-        officer_lifecycle_flags_current=False,
+        flowguard_operator_packet_card_delivered=False,
+        flowguard_operator_packet_relayed=False,
+        flowguard_operator_packet_identity_boundary_present=False,
+        flowguard_operator_result_returned=False,
+        flowguard_operator_result_identity_boundary_present=False,
+        flowguard_operator_result_ledger_checked=False,
+        flowguard_operator_result_routed_to_pm=False,
+        pm_absorbed_flowguard_operator_result=False,
+        flowguard_operator_lifecycle_flags_current=False,
         route_history_context_refreshed=False,
         pm_prior_path_context_reviewed=False,
         route_history_context_stale=True,
@@ -302,62 +302,62 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if not state.officer_lifecycle_flags_current:
+    if not state.flowguard_operator_lifecycle_flags_current:
         yield Transition(
-            "officer_lifecycle_flags_reconciled_before_model_packet",
-            replace(state, holder="pm", officer_lifecycle_flags_current=True),
+            "flowguard_operator_lifecycle_flags_reconciled_before_model_packet",
+            replace(state, holder="pm", flowguard_operator_lifecycle_flags_current=True),
         )
         return
 
-    if not state.officer_packet_card_delivered:
+    if not state.flowguard_operator_packet_card_delivered:
         yield Transition(
-            "officer_packet_card_delivered_before_controller_relay",
-            replace(state, holder="officer", officer_packet_card_delivered=True),
+            "flowguard_operator_packet_card_delivered_before_controller_relay",
+            replace(state, holder="FlowGuard operator", flowguard_operator_packet_card_delivered=True),
         )
         return
 
-    if not state.officer_packet_relayed:
+    if not state.flowguard_operator_packet_relayed:
         yield Transition(
-            "officer_packet_relayed_after_officer_card",
+            "flowguard_operator_packet_relayed_after_flowguard_operator_card",
             replace(
                 state,
-                holder="officer",
-                officer_packet_relayed=True,
-                officer_packet_identity_boundary_present=True,
+                holder="FlowGuard operator",
+                flowguard_operator_packet_relayed=True,
+                flowguard_operator_packet_identity_boundary_present=True,
             ),
         )
         return
 
-    if not state.officer_result_returned:
+    if not state.flowguard_operator_result_returned:
         yield Transition(
-            "officer_result_returned_to_packet_ledger",
+            "flowguard_operator_result_returned_to_packet_ledger",
             replace(
                 state,
                 holder="controller",
-                officer_result_returned=True,
-                officer_result_identity_boundary_present=True,
+                flowguard_operator_result_returned=True,
+                flowguard_operator_result_identity_boundary_present=True,
             ),
         )
         return
 
-    if not state.officer_result_ledger_checked:
+    if not state.flowguard_operator_result_ledger_checked:
         yield Transition(
-            "officer_result_ledger_checked_before_pm_relay",
-            replace(state, holder="controller", officer_result_ledger_checked=True),
+            "flowguard_operator_result_ledger_checked_before_pm_relay",
+            replace(state, holder="controller", flowguard_operator_result_ledger_checked=True),
         )
         return
 
-    if not state.officer_result_routed_to_pm:
+    if not state.flowguard_operator_result_routed_to_pm:
         yield Transition(
-            "officer_result_routed_to_pm_after_ledger_check",
-            replace(state, holder="pm", officer_result_routed_to_pm=True),
+            "flowguard_operator_result_routed_to_pm_after_ledger_check",
+            replace(state, holder="pm", flowguard_operator_result_routed_to_pm=True),
         )
         return
 
-    if not state.pm_absorbed_officer_result:
+    if not state.pm_absorbed_flowguard_operator_result:
         yield Transition(
-            "pm_absorbs_officer_result_before_node_packet",
-            replace(state, holder="pm", pm_absorbed_officer_result=True),
+            "pm_absorbs_flowguard_operator_result_before_node_packet",
+            replace(state, holder="pm", pm_absorbed_flowguard_operator_result=True),
         )
         return
 

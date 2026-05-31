@@ -11,7 +11,7 @@
   "hazard_detection": {
     "expected": [
       "closure_before_system_validation",
-      "closure_officer_required_on_ordinary_path",
+      "closure_flowguard_operator_required_on_ordinary_path",
       "high_risk_pm_applied_before_gate",
       "low_risk_repair_forced_through_gate",
       "old_closure_packet_accepted",
@@ -28,7 +28,7 @@
       "closure_before_system_validation": [
         "closure before system validation"
       ],
-      "closure_officer_required_on_ordinary_path": [
+      "closure_flowguard_operator_required_on_ordinary_path": [
         "ordinary path still required Closure Officer AI"
       ],
       "high_risk_pm_applied_before_gate": [
@@ -81,7 +81,7 @@
       "old_validation_closure_packets_rejected": true,
       "old_validator_closure_roles_removed": true,
       "pm_decision_gate_ledger": true,
-      "reviewer_pass_no_closure_officer_packet": true,
+      "reviewer_pass_no_closure_flowguard_operator_packet": true,
       "system_closure_helper": true,
       "system_closure_ledger": true,
       "system_validation_failure_routes_pm": true,

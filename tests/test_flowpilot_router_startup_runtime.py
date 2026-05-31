@@ -41,6 +41,12 @@ class FlowPilotRouterStartupRuntimeTests(unittest.TestCase):
                 data = script.read_bytes()
                 self.assertTrue(any(byte >= 0x80 for byte in data), "test requires non-ASCII script source")
                 self.assertTrue(data.startswith(b"\xef\xbb\xbf"), "non-ASCII .ps1 source must be UTF-8 BOM for Windows PowerShell 5.1")
+                text = script.read_text(encoding="utf-8-sig")
+                self.assertIn("Settings", text)
+                self.assertIn("设置", text)
+                self.assertIn("Support developer", text)
+                self.assertIn("支持开发者", text)
+                self.assertIn("https://paypal.me/Yingxuliu", text)
 
     def test_startup_intake_ui_writes_utf8_without_bom(self) -> None:
         if sys.platform != "win32" or shutil.which("powershell") is None:
@@ -86,6 +92,9 @@ class FlowPilotRouterStartupRuntimeTests(unittest.TestCase):
         self.assertEqual(result_payload["launch_mode"], "headless")
         self.assertTrue(result_payload["headless"])
         self.assertFalse(result_payload["formal_startup_allowed"])
+        self.assertEqual(result_payload["startup_answers"]["runtime_role_assistances"], "allow")
+        self.assertEqual(result_payload["startup_answers"]["scheduled_continuation"], "manual")
+        self.assertEqual(result_payload["startup_answers"]["display_surface"], "chat")
 
     def test_startup_intake_ui_runs_from_installed_skill_without_repo_assets(self) -> None:
         if sys.platform != "win32" or shutil.which("powershell") is None:

@@ -2,12 +2,12 @@
 recipient_role: controller
 recipient_identity: FlowPilot controller role
 allowed_scope: Use this card only while acting as Controller for a current FlowPilot run whose normal control flow appears broken.
-forbidden_scope: Do not treat this card as authority for project implementation, gate approval, route mutation, PM decisions, reviewer decisions, officer decisions, worker output, sealed packet/result body access, publication, deployment, secret handling, or any run other than the current run.
+forbidden_scope: Do not treat this card as authority for project implementation, gate approval, route mutation, PM decisions, reviewer decisions, FlowGuard operator decisions, worker output, sealed packet/result body access, publication, deployment, secret handling, or any run other than the current run.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an incident record, patch record, validation record, output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path.
-work_authority: This emergency playbook may be used only after the current Router/Controller flow cannot produce a legal next action and normal PM/control-blocker/packet repair is unavailable or contradictory. It does not authorize PM, reviewer, officer, worker, route, gate, product, release, or sealed-body work.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only. If an active-holder lane is present, wait for Router's controller_next_action_notice.json before relaying or resuming normal work.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node, execution_frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; record a protocol blocker or break-glass incident only from current-run Controller-visible control-plane sources.
+work_authority: This emergency playbook may be used only after the current Router/Controller flow cannot produce a legal next action and normal PM/control-blocker/packet repair is unavailable or contradictory. It does not authorize PM, reviewer, FlowGuard operator, worker, route, gate, product, release, or sealed-body work.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only. If an active-holder lane is present, wait for Router's controller_next_action_notice.json before relaying or resuming normal work.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node, execution_frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; record a protocol blocker or break-glass incident only from current-run Controller-visible control-plane sources.
 -->
 # Controller Break-Glass Repair Playbook
 
@@ -27,7 +27,7 @@ must cite a current FlowGuard Work Order and FlowGuard Report, or a scoped
 record ids, paths, hashes, freshness status, and PM/Recovery Supervisor
 acceptance metadata only. A break-glass record is not route evidence, and a
 FlowGuard report does not let Controller approve gates, mutate routes, close
-nodes, read sealed bodies, or replace PM/Reviewer/Officer authority.
+nodes, read sealed bodies, or replace PM/Reviewer/FlowGuard operator authority.
 
 For severe failures, break-glass has two identities:
 
@@ -49,10 +49,11 @@ generation as invalid until reinjection is recorded.
 Use break-glass only when current-run evidence shows one of these control-plane
 failures:
 
-- Router and Controller action ledger cannot produce a legal next action.
-- `runtime/router_daemon_status.json` and
-  `runtime/controller_action_ledger.json` are stuck, contradictory, looping, or
-  waiting on each other with no valid release condition.
+- The current `flowpilot_new.py` lifecycle guard and foreground duty cannot
+  produce a legal next action.
+- Current-run lifecycle guard, packet/lease state, status projection, and
+  foreground duty are stuck, contradictory, looping, or waiting on each other
+  with no valid release condition.
 - A `control_blocker` exists but the PM repair, packet, or role-output channel
   needed to handle it is itself unavailable or contradictory.
 - A prompt/card requires a return event that Router's current
@@ -85,8 +86,8 @@ Do not use break-glass for:
 Before opening break-glass, load and check only Controller-visible control-plane
 sources:
 
-- `runtime/controller_action_ledger.json`;
-- `runtime/router_daemon_status.json`;
+- the current `flowpilot_new.py` lifecycle guard/status output;
+- public packet/result envelopes and lease/status metadata;
 - Controller receipts under `runtime/controller_receipts/`;
 - `skills/flowpilot/assets/runtime_kit/manifest.json`;
 - `skills/flowpilot/assets/runtime_kit/contracts/contract_index.json`;
@@ -95,15 +96,15 @@ sources:
 - public blocker metadata and policy rows, not sealed repair packet bodies.
 
 Record which normal lane failed: PM repair, control-blocker first handler,
-packet routing, event authority, role-output runtime, daemon status, or
-Controller action ledger.
+packet routing, event authority, role-output runtime, lifecycle guard, or
+foreground duty.
 
 ## Allowed Actions
 
 Controller may:
 
 - diagnose FlowPilot control-plane code, prompt, manifest, contract, schema,
-  ledger, daemon, or event-authority defects;
+  ledger, lifecycle guard, or event-authority defects;
 - create a run-scoped break-glass incident record;
 - call the standalone break-glass helper to record the incident or patch when
   the normal Router repair loop is unavailable;
@@ -125,7 +126,7 @@ Recovery Supervisor may additionally:
 - restore or replace broken role lanes through the existing Router/host
   recovery path;
 - request a scoped, audited body-access grant only when metadata is
-  insufficient and the PM, Reviewer, or Officer lane that should read the body
+  insufficient and the PM, Reviewer, or FlowGuard operator lane that should read the body
   is unavailable or contradictory;
 - record Controller reinjection proof and invalidate the old Controller
   generation before normal flow resumes.
@@ -136,7 +137,7 @@ Controller must not:
 
 - read, summarize, copy, repair, or execute sealed packet/result/report bodies;
 - implement or repair target-project product work;
-- approve gates, node completion, reviewer decisions, PM decisions, officer
+- approve gates, node completion, reviewer decisions, PM decisions, FlowGuard operator
   decisions, or worker completion;
 - mutate routes or change acceptance criteria;
 - turn break-glass artifacts into route evidence;
@@ -148,7 +149,7 @@ Recovery Supervisor must not:
 
 - count scoped body access as ordinary Controller body access;
 - approve gates, terminal completion, route mutation, PM decisions, reviewer
-  decisions, officer decisions, or worker completion;
+  decisions, FlowGuard operator decisions, or worker completion;
 - use historical blockers as live current work unless a current recovery
   transaction explicitly reopens the blocker;
 - close recovery while current blockers remain open, same-family FlowGuard proof
@@ -202,7 +203,7 @@ body-access grant under:
 `.flowpilot/runs/<run-id>/controller_break_glass/body_access_grants/`
 
 The grant must name the exact body path, why metadata is insufficient, which
-PM/Reviewer/Officer lanes are unavailable or contradictory, and who must review
+PM/Reviewer/FlowGuard operator lanes are unavailable or contradictory, and who must review
 the access after recovery. The access is read-only diagnosis and cannot approve
 completion or route work.
 
@@ -258,7 +259,8 @@ The patch must record:
 ## Exit Rule
 
 Exit break-glass as soon as the control channel can produce a legal normal next
-action. Return to Router daemon status and Controller action ledger processing.
+action. Return to `flowpilot_new.py` lifecycle guard and foreground-duty
+processing.
 Do not mark any route gate complete from break-glass evidence alone.
 
 An incident may leave open status only through one of these closure paths:

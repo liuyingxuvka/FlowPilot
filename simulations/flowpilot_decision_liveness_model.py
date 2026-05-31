@@ -13,7 +13,7 @@ Risk intent brief:
   request ids, wrong-role or wrong-request results, result relay before ledger
   check, Controller body reads, blocking requests ignored by PM final decisions,
   unresolved advisory results at terminal closure, and special-cased
-  model-miss officer requests that bypass the generic PM work-request channel.
+  model-miss FlowGuard operator requests that bypass the generic PM work-request channel.
 - Hard invariants: PM can open role-work requests whenever PM owns a decision;
   every accepted nonterminal PM decision opens a distinct role/user channel;
   PM work requests must have recipient, contract, id, and ledger state; results
@@ -32,7 +32,7 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-DECISION_REQUEST_OFFICER = "request_officer_model_miss_analysis"
+DECISION_REQUEST_OFFICER = "request_flowguard_operator_model_miss_analysis"
 DECISION_PROCEED_REPAIR = "proceed_with_model_backed_repair"
 DECISION_OUT_OF_SCOPE = "out_of_scope_not_modelable"
 DECISION_NEEDS_EVIDENCE = "needs_evidence_before_modeling"
@@ -55,10 +55,10 @@ PM_REQUEST_TARGET_ROLES = frozenset(
     {
         "project_manager",
         "human_like_reviewer",
-        "process_flowguard_officer",
-        "product_flowguard_officer",
-        "worker_a",
-        "worker_b",
+        "flowguard_operator",
+        "flowguard_operator",
+        "worker",
+        "worker",
     }
 )
 CONTRACT_MODEL_MISS = "flowpilot.output_contract.flowguard_model_miss_report.v1"
@@ -329,7 +329,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if state.request_registered and state.request_status == "absorbed":
         if state.decision == DECISION_REQUEST_OFFICER and not state.repair_authorized:
             yield Transition(
-                "pm_authorizes_model_backed_repair_after_generic_officer_result",
+                "pm_authorizes_model_backed_repair_after_generic_flowguard_operator_result",
                 _clear_absorbed_request(
                     state,
                     holder="pm",
@@ -398,9 +398,9 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             )
         yield _register_pm_work_request(
             state,
-            label="pm_requests_model_miss_officer_analysis_via_generic_work_request",
+            label="pm_requests_model_miss_flowguard_operator_analysis_via_generic_work_request",
             request_id="pm-model-miss-001",
-            recipient="product_flowguard_officer",
+            recipient="flowguard_operator",
             contract=CONTRACT_MODEL_MISS,
             mode="blocking",
             kind="model_miss",
@@ -410,7 +410,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             state,
             label="pm_requests_evidence_before_modeling_via_generic_work_request",
             request_id="pm-evidence-001",
-            recipient="worker_a",
+            recipient="worker",
             contract=CONTRACT_WORKER_RESEARCH,
             mode="blocking",
             kind="evidence",
@@ -638,7 +638,7 @@ def _valid_open_request(**changes: object) -> State:
         next_channel_opened=True,
         request_id="pm-model-miss-001",
         request_registered=True,
-        request_recipient_role="product_flowguard_officer",
+        request_recipient_role="flowguard_operator",
         request_output_contract_id=CONTRACT_MODEL_MISS,
         request_mode="blocking",
         request_kind="model_miss",
@@ -650,7 +650,7 @@ def _valid_open_request(**changes: object) -> State:
 
 def hazard_states() -> dict[str, State]:
     return {
-        "request_officer_decision_dead_ends_on_same_pm_event": _open_pm_context(
+        "request_flowguard_operator_decision_dead_ends_on_same_pm_event": _open_pm_context(
             decision=DECISION_REQUEST_OFFICER,
             decision_recorded=True,
             same_event_wait_materialized=True,
@@ -732,7 +732,7 @@ def hazard_states() -> dict[str, State]:
         "prep_only_request_blocks_gate": _open_pm_context(
             request_id="pm-prep-001",
             request_registered=True,
-            request_recipient_role="worker_b",
+            request_recipient_role="worker",
             request_output_contract_id=CONTRACT_WORKER_RESEARCH,
             request_mode="prep-only",
             request_kind="evidence",

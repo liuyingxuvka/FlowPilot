@@ -5,8 +5,8 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
 # PM Current Node Loop Phase
 
@@ -44,8 +44,8 @@ For each active route node:
 Before assigning a worker packet, consider worker balance and packet shape. Keep worker opportunities roughly balanced across the current run. When scope naturally splits, use bounded separate packets for disjoint work without overlapping files, evidence duties, or review ownership.
 
 Register current-node work as one router-owned packet batch with `batch_id` and
-`packets[]`. The batch may include separate `worker_a` and `worker_b` packets,
-plus bounded `product_flowguard_officer` or `process_flowguard_officer` packets
+`packets[]`. The batch may include multiple requested worker packets,
+plus bounded `flowguard_operator` or `flowguard_operator` packets
 when modeling work belongs inside the active node and can start now. Router
 records every packet in the batch, gives each packet its own write grant, waits
 only for the missing member(s) when a partial batch returns, then relays the
@@ -74,8 +74,8 @@ whose readiness gate is missing or failed, or for a node whose acceptance plan
 still says the worker must decide the decomposition.
 If PM discovers at entry that an apparent leaf is still too broad for one
 bounded worker packet, promote it to a parent/module, add ordered child nodes,
-invalidate stale approvals for that subtree, and rerun local Product FlowGuard,
-Process FlowGuard, PM decision, and Reviewer gates before any worker dispatch.
+invalidate stale approvals for that subtree, and rerun local FlowGuard operator product-model,
+FlowGuard operator process-model, PM decision, and Reviewer gates before any worker dispatch.
 The packet body must also include the generated `Report Contract For This Task`
 block, including required result sections, required return envelope fields,
 blocked/needs-PM behavior, and the rule that field names and section names must

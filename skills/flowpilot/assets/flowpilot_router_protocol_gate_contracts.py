@@ -22,16 +22,16 @@ GATE_CONTRACTS: dict[str, dict[str, Any]] = {
     "product_behavior_model": {
         "schema_version": GATE_CONTRACT_SCHEMA,
         "gate_id": "product_behavior_model",
-        "card_id": "product_officer.product_architecture_modelability",
+        "card_id": "flowguard_operator.product_architecture_modelability",
         "required_flag": "product_behavior_model_submitted",
-        "wait_requires_flag": "product_officer_product_architecture_card_delivered",
-        "target_role": "product_flowguard_officer",
-        "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
+        "wait_requires_flag": "flowguard_operator_product_architecture_card_delivered",
+        "target_role": "flowguard_operator",
+        "output_contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1",
         "pass_events": (
-            "product_officer_submits_product_behavior_model",
+            "flowguard_operator_submits_product_behavior_model",
         ),
         "block_events": (
-            "product_officer_blocks_product_behavior_model",
+            "flowguard_operator_blocks_product_behavior_model",
         ),
         "completion_rule": "pass_or_block_event_required",
         "canonical_artifact": "flowguard/product_behavior_model.json",
@@ -39,17 +39,17 @@ GATE_CONTRACTS: dict[str, dict[str, Any]] = {
     "process_route_model": {
         "schema_version": GATE_CONTRACT_SCHEMA,
         "gate_id": "process_route_model",
-        "card_id": "process_officer.route_process_check",
+        "card_id": "flowguard_operator.route_process_check",
         "required_flag": "process_route_model_submitted",
-        "wait_requires_flag": "process_officer_route_check_card_delivered",
-        "target_role": "process_flowguard_officer",
-        "output_contract_id": "flowpilot.output_contract.officer_model_report.v1",
+        "wait_requires_flag": "flowguard_operator_route_check_card_delivered",
+        "target_role": "flowguard_operator",
+        "output_contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1",
         "pass_events": (
-            "process_officer_submits_process_route_model",
+            "flowguard_operator_submits_process_route_model",
         ),
         "block_events": (
-            "process_officer_requests_process_route_model_repair",
-            "process_officer_blocks_process_route_model",
+            "flowguard_operator_requests_process_route_model_repair",
+            "flowguard_operator_blocks_process_route_model",
         ),
         "completion_rule": "pass_repair_or_block_event_required",
         "canonical_artifact": "flowguard/process_route_model.json",
@@ -124,31 +124,31 @@ def _gate_completion_wait_group(group: list[tuple[str, dict[str, Any]]]) -> list
 
 PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS = frozenset(
     {
-        "product_officer_submits_product_behavior_model",
+        "flowguard_operator_submits_product_behavior_model",
     }
 )
 
 PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS = frozenset(
     {
-        "product_officer_blocks_product_behavior_model",
+        "flowguard_operator_blocks_product_behavior_model",
     }
 )
 
 PROCESS_ROUTE_MODEL_PASS_EVENTS = frozenset(
     {
-        "process_officer_submits_process_route_model",
+        "flowguard_operator_submits_process_route_model",
     }
 )
 
 PROCESS_ROUTE_MODEL_REPAIR_EVENTS = frozenset(
     {
-        "process_officer_requests_process_route_model_repair",
+        "flowguard_operator_requests_process_route_model_repair",
     }
 )
 
 PROCESS_ROUTE_MODEL_BLOCK_EVENTS = frozenset(
     {
-        "process_officer_blocks_process_route_model",
+        "flowguard_operator_blocks_process_route_model",
     }
 )
 

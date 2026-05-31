@@ -127,7 +127,7 @@ def _write_startup_repair_request(router: ModuleType, project_root: Path, run_ro
     if payload.get('decision') not in {'startup_repair_requested', 'repair_requested'}:
         raise RouterError('startup repair request requires decision=startup_repair_requested')
     target = str(payload.get('target_role_or_system') or '').strip()
-    allowed_targets = {'flowpilot_router', 'human_like_reviewer', 'project_manager', 'worker_a', 'worker_b'}
+    allowed_targets = {'flowpilot_router', 'human_like_reviewer', 'project_manager', 'worker'}
     if target not in allowed_targets:
         raise RouterError(f"startup repair request target_role_or_system must be one of: {', '.join(sorted(allowed_targets))}")
     repair_action = str(payload.get('repair_action') or '').strip()

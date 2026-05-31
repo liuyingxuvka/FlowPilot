@@ -161,12 +161,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     yield Transition(
         "dispatch_idle_work_packet",
-        _gate_pass(_base_candidate("work_packet", "worker_a")),
+        _gate_pass(_base_candidate("work_packet", "worker")),
     )
 
     yield Transition(
         "wait_for_busy_active_packet_before_dispatch",
-        _gate_wait(replace(_base_candidate("work_packet", "worker_a"), active_packet_held_by_target=True)),
+        _gate_wait(replace(_base_candidate("work_packet", "worker"), active_packet_held_by_target=True)),
     )
 
     yield Transition(
@@ -178,7 +178,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         "wait_for_passive_role_result_before_dispatch",
         _gate_wait(
             replace(
-                _base_candidate("system_card", "process_flowguard_officer"),
+                _base_candidate("system_card", "flowguard_operator"),
                 passive_wait_for_target=True,
                 passive_wait_source="role_output",
                 passive_wait_durable_status="open",
@@ -283,7 +283,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         "allow_different_idle_roles_parallel",
         _gate_pass(
             replace(
-                _base_candidate("parallel_work_packet_batch", "worker_a,worker_b"),
+                _base_candidate("parallel_work_packet_batch", "worker,worker"),
                 different_idle_roles_parallel=True,
                 parallel_roles_unique=True,
             )
@@ -294,7 +294,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         "block_duplicate_same_role_batch",
         _gate_block(
             replace(
-                _base_candidate("parallel_work_packet_batch", "worker_a"),
+                _base_candidate("parallel_work_packet_batch", "worker"),
                 parallel_roles_unique=False,
             )
         ),
@@ -302,14 +302,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     yield Transition(
         "block_illegal_packet_even_when_idle",
-        _gate_block(replace(_base_candidate("work_packet", "worker_b"), packet_legal=False)),
+        _gate_block(replace(_base_candidate("work_packet", "worker"), packet_legal=False)),
     )
 
     yield Transition(
         "allow_worker_after_role_work_result_returned",
         _gate_pass(
             replace(
-                _base_candidate("work_packet", "worker_b"),
+                _base_candidate("work_packet", "worker"),
                 pm_role_work_status_for_target="result_returned",
                 pm_disposition_pending=True,
             )
@@ -508,11 +508,11 @@ def is_success(state: State) -> bool:
 
 
 def implementation_plan_state() -> State:
-    return _gate_wait(replace(_base_candidate("work_packet", "worker_a"), active_packet_held_by_target=True))
+    return _gate_wait(replace(_base_candidate("work_packet", "worker"), active_packet_held_by_target=True))
 
 
 def hazard_states() -> dict[str, State]:
-    safe = _gate_pass(_base_candidate("work_packet", "worker_a"))
+    safe = _gate_pass(_base_candidate("work_packet", "worker"))
     return {
         "busy_active_packet_dispatch_exposed": replace(safe, active_packet_held_by_target=True),
         "missing_ack_dispatch_exposed": replace(
@@ -522,7 +522,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "passive_wait_dispatch_exposed": replace(
             safe,
-            target_role="process_flowguard_officer",
+            target_role="flowguard_operator",
             passive_wait_for_target=True,
             passive_wait_source="role_output",
             passive_wait_durable_status="open",
@@ -549,7 +549,7 @@ def hazard_states() -> dict[str, State]:
         "busy_wait_without_concrete_obligation": replace(
             _gate_wait(
                 replace(
-                    _base_candidate("system_card", "process_flowguard_officer"),
+                    _base_candidate("system_card", "flowguard_operator"),
                     passive_wait_for_target=True,
                     passive_wait_source="role_output",
                     passive_wait_durable_status="open",
@@ -607,14 +607,14 @@ def hazard_states() -> dict[str, State]:
         ),
         "different_idle_parallel_blocked": _gate_block(
             replace(
-                _base_candidate("parallel_work_packet_batch", "worker_a,worker_b"),
+                _base_candidate("parallel_work_packet_batch", "worker,worker"),
                 different_idle_roles_parallel=True,
                 parallel_roles_unique=True,
             )
         ),
         "returned_worker_result_still_blocks_worker": _gate_wait(
             replace(
-                _base_candidate("work_packet", "worker_b"),
+                _base_candidate("work_packet", "worker"),
                 pm_role_work_status_for_target="result_returned",
                 pm_disposition_pending=True,
             )
@@ -626,7 +626,7 @@ def hazard_states() -> dict[str, State]:
             pm_disposition_pending=True,
         ),
         "wait_leaks_sealed_body": replace(
-            _gate_wait(replace(_base_candidate("work_packet", "worker_a"), active_packet_held_by_target=True)),
+            _gate_wait(replace(_base_candidate("work_packet", "worker"), active_packet_held_by_target=True)),
             sealed_body_exposed_in_wait=True,
         ),
     }

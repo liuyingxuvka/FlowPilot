@@ -1,14 +1,15 @@
 ## ADDED Requirements
 
-### Requirement: Current-run resolution is schema-compatible and explicit
+### Requirement: Current-run resolution is current-schema explicit
 FlowPilot SHALL resolve the current run through one shared resolver that accepts
-new and legacy pointer field names while rejecting implicit project-root or
-newest-run fallback.
+the current `run_id` and `run_root` pointer fields while rejecting legacy
+pointer field names, implicit project-root fallback, or newest-run fallback.
 
 #### Scenario: New current pointer schema is accepted
 - **WHEN** `.flowpilot/current.json` contains `run_id` and `run_root`
 - **THEN** runtime and audit code MUST resolve that exact run root
-- **AND** MUST NOT require `current_run_id` or `current_run_root`.
+- **AND** MUST reject `current_run_id`, `current_run_root`, `active_run_id`, or
+  `active_run_root` as current inputs.
 
 #### Scenario: Missing pointer does not scan the project root
 - **WHEN** the current pointer is missing, unreadable, or lacks a resolvable run
@@ -26,12 +27,13 @@ UTF-8 into structured read outcomes instead of uncaught exceptions.
 
 ### Requirement: Role packets share one symmetric control-surface contract
 FlowPilot SHALL validate packet and result authority through a role-neutral
-contract that applies to PM, reviewer, FlowGuard operator, validator, closure,
-and worker packets.
+contract that applies to PM, reviewer, explicit FlowGuard officer, and
+requested worker packets. System validation and closure are ledger outcomes,
+not role packets.
 
 #### Scenario: PM-only contract coverage is insufficient
 - **WHEN** PM packets carry full envelope/output authority but reviewer or
-  FlowGuard packets lack equivalent fields
+  FlowGuard officer packets lack equivalent fields
 - **THEN** the control-surface contract MUST fail.
 
 #### Scenario: ACK, result, and acceptance remain separate

@@ -5,7 +5,7 @@ Risk intent brief:
   change lands.
 - Protect harms: losing required live role bindings, silently introducing light mode,
   letting Controller read bodies or originate evidence, replacing PM/reviewer/
-  officer judgement with router proofs, advancing after partial parallel gates,
+  FlowGuard operator judgement with router proofs, advancing after partial parallel gates,
   freezing merged artifacts too early, or closing terminal lifecycle before the
   final ledger/replay contract is complete.
 - Modeled state and side effects: controller authority receipt, system-card
@@ -50,13 +50,13 @@ class State:
     handoff_steps: int = 0
     critical_path_ticks: int = 0
 
-    six_roles_live: bool = False
+    runtime_roles_live: bool = False
     lazy_spawn_used: bool = False
     light_mode_used: bool = False
     pm_ownership_kept: bool = False
     reviewer_judgement_kept: bool = False
-    process_officer_judgement_kept: bool = False
-    product_officer_judgement_kept: bool = False
+    flowguard_operator_route_scope_judgement_kept: bool = False
+    flowguard_operator_product_scope_judgement_kept: bool = False
     child_skill_gate_evidence_obligations_kept: bool = False
 
     controller_core_delivered: bool = False
@@ -97,11 +97,11 @@ class State:
 
     parallel_gate_checks_used: bool = False
     product_architecture_reviewer_passed: bool = False
-    product_architecture_officer_passed: bool = False
+    product_architecture_flowguard_operator_passed: bool = False
     root_contract_reviewer_passed: bool = False
     child_manifest_reviewer_passed: bool = False
     route_reviewer_passed: bool = False
-    route_process_officer_passed: bool = False
+    route_flowguard_operator_route_scope_passed: bool = False
     pm_waited_for_all_parallel_passes: bool = False
     advanced_after_first_parallel_pass: bool = False
 
@@ -145,11 +145,11 @@ def _full_strength_base(**changes: object) -> State:
     return replace(
         State(
             status="running",
-            six_roles_live=True,
+            runtime_roles_live=True,
             pm_ownership_kept=True,
             reviewer_judgement_kept=True,
-            process_officer_judgement_kept=True,
-            product_officer_judgement_kept=True,
+            flowguard_operator_route_scope_judgement_kept=True,
+            flowguard_operator_product_scope_judgement_kept=True,
             child_skill_gate_evidence_obligations_kept=True,
             controller_core_delivered=True,
             controller_role_confirmed=True,
@@ -189,11 +189,11 @@ def baseline_state() -> State:
         role_identity_checked=True,
         body_hash_verified=True,
         product_architecture_reviewer_passed=True,
-        product_architecture_officer_passed=True,
+        product_architecture_flowguard_operator_passed=True,
         root_contract_reviewer_passed=True,
         child_manifest_reviewer_passed=True,
         route_reviewer_passed=True,
-        route_process_officer_passed=True,
+        route_flowguard_operator_route_scope_passed=True,
         pm_waited_for_all_parallel_passes=True,
         root_contract_freeze_separate=True,
     )
@@ -224,11 +224,11 @@ def safe_phase1_state() -> State:
         router_mechanical_proof_hash_current=True,
         reviewer_replacement_scope_mechanical_only=True,
         product_architecture_reviewer_passed=True,
-        product_architecture_officer_passed=True,
+        product_architecture_flowguard_operator_passed=True,
         root_contract_reviewer_passed=True,
         child_manifest_reviewer_passed=True,
         route_reviewer_passed=True,
-        route_process_officer_passed=True,
+        route_flowguard_operator_route_scope_passed=True,
         pm_waited_for_all_parallel_passes=True,
         root_contract_freeze_separate=True,
     )
@@ -312,11 +312,11 @@ class OptimizationProposalStep:
 def _all_parallel_gate_passes(state: State) -> bool:
     return (
         state.product_architecture_reviewer_passed
-        and state.product_architecture_officer_passed
+        and state.product_architecture_flowguard_operator_passed
         and state.root_contract_reviewer_passed
         and state.child_manifest_reviewer_passed
         and state.route_reviewer_passed
-        and state.route_process_officer_passed
+        and state.route_flowguard_operator_route_scope_passed
     )
 
 
@@ -324,13 +324,13 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.status == "new":
         return failures
-    if state.lazy_spawn_used or state.light_mode_used or not state.six_roles_live:
+    if state.lazy_spawn_used or state.light_mode_used or not state.runtime_roles_live:
         failures.append("formal FlowPilot optimization used lazy roles, light mode, or fewer than required live role bindings")
     if not (
         state.pm_ownership_kept
         and state.reviewer_judgement_kept
-        and state.process_officer_judgement_kept
-        and state.product_officer_judgement_kept
+        and state.flowguard_operator_route_scope_judgement_kept
+        and state.flowguard_operator_product_scope_judgement_kept
     ):
         failures.append("role judgement ownership was weakened by an optimization")
     if not state.child_skill_gate_evidence_obligations_kept:
@@ -385,7 +385,7 @@ def invariant_failures(state: State) -> list[str]:
         and state.pm_waited_for_all_parallel_passes
         and not state.advanced_after_first_parallel_pass
     ):
-        failures.append("parallel gate optimization advanced before every reviewer/officer pass joined")
+        failures.append("parallel gate optimization advanced before every reviewer/FlowGuard operator pass joined")
 
     if state.artifact_merge_used and not (
         state.merged_artifact_has_typed_sections
@@ -473,7 +473,7 @@ def is_success(state: State) -> bool:
 def hazard_states() -> dict[str, State]:
     safe = guarded_phase3_state()
     return {
-        "lazy_six_roles": replace(safe, lazy_spawn_used=True, six_roles_live=False),
+        "lazy_runtime_roles": replace(safe, lazy_spawn_used=True, runtime_roles_live=False),
         "small_task_light_mode": replace(safe, light_mode_used=True),
         "controller_reads_sealed_body": replace(safe, controller_read_sealed_body=True),
         "router_reset_missing_policy_hash": replace(
@@ -515,10 +515,10 @@ def hazard_states() -> dict[str, State]:
             pm_waited_for_all_parallel_passes=False,
             advanced_after_first_parallel_pass=True,
         ),
-        "parallel_gate_missing_product_architecture_officer": replace(
+        "parallel_gate_missing_product_architecture_flowguard_operator": replace(
             safe,
             parallel_gate_checks_used=True,
-            product_architecture_officer_passed=False,
+            product_architecture_flowguard_operator_passed=False,
         ),
         "artifact_merge_collapses_responsibility": replace(
             safe,
@@ -574,7 +574,7 @@ def proposal_catalog() -> dict[str, dict[str, object]]:
         "phase2_parallel_gates": {
             "profile": safe_phase2_state(),
             "interpretation": "conditional_safe_under_join_guards",
-            "scope": "parallel reviewer/officer checks with PM waiting for every required pass",
+            "scope": "parallel reviewer/FlowGuard operator checks with PM waiting for every required pass",
             "runtime_readiness": "needs_wait_join_runtime_model_and tests_before_implementation",
         },
         "phase3_artifact_clean_pass": {

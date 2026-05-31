@@ -5,10 +5,10 @@ allowed_scope: Use this card only while acting as the recipient role named above
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
 post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly to Router through their runtime commands. Controller must follow Router daemon status and the Controller action ledger; flowpilot_router.py next/run-until-wait are diagnostic or explicit repair tools only.
-runtime_context: Treat the router delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
 -->
-# PM Officer Request-Report Loop
+# PM FlowGuard Operator Request-Report Loop
 
 ## Role Capability Reminder
 
@@ -18,10 +18,10 @@ runtime_context: Treat the router delivery envelope as the live source for the c
 - If a PM-owned decision still lacks evidence, modeling, research, review, or implementation support, register a bounded `pm_registers_role_work_request` only when the router's current `allowed_external_events` includes that event; otherwise record the limitation or blocker instead of emitting it.
 - Treat the router's current `allowed_external_events` as the active authority for what this card may return.
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
-- Officer modeling requests are FlowGuard Work Orders. Every non-trivial request must carry `flowguard_work_order_id`, expected `flowguard_report_id` or report path, `flowguard_report_freshness`, affected gate, and PM acceptance expectations.
+- FlowGuard operator modeling requests are FlowGuard Work Orders. Every non-trivial request must carry `flowguard_work_order_id`, expected `flowguard_report_id` or report path, `flowguard_report_freshness`, affected gate, and PM acceptance expectations.
 
 
-Use FlowGuard officers through bounded request and report packets.
+Use the FlowGuard operator through bounded request and report packets.
 
 This loop is the common FlowGuard Work Order / FlowGuard Report mechanism for
 formal product, process, validation, model-test, TestMesh, StructureMesh,
@@ -30,32 +30,32 @@ separate phase prose replace the work-order id, report id, report freshness,
 route used, skipped-check reasoning, background completion evidence, or PM
 acceptance record.
 
-Each officer request packet must include the registry `output_contract`
-`flowpilot.output_contract.officer_model_report.v1` in both the packet envelope
+Each FlowGuard operator request packet must include the registry `output_contract`
+`flowpilot.output_contract.flowguard_operator_model_report.v1` in both the packet envelope
 and packet body's `Output Contract` section.
 The packet body must also include the generated `Report Contract For This Task`
-block so the officer sees the exact report fields before modeling.
-The packet body must also ask the officer to include a soft `PM Note` in the
+block so the FlowGuard operator sees the exact report fields before modeling.
+The packet body must also ask the FlowGuard operator to include a soft `PM Note` in the
 sealed report body with exactly these labels: `In-scope quality choice` and
 `PM consideration`. This note is PM decision-support, not a reviewer hard gate:
-the officer should use the simplest high-quality modeling boundary that answers
+the FlowGuard operator should use the simplest high-quality modeling boundary that answers
 PM's request, and report out-of-scope better ideas, route risks, or model
 improvements to PM without expanding the packet.
-The packet body must include the officer version of the
-`Role-Scoped Quality Repair Boundary`: the officer must correct defects in the
-officer's own model, report, check command, counterexample interpretation,
+The packet body must include the FlowGuard operator version of the
+`Role-Scoped Quality Repair Boundary`: the FlowGuard operator must correct defects in the
+FlowGuard operator's own model, report, check command, counterexample interpretation,
 skipped-check reasoning, and evidence before returning. Product, process, route,
 implementation, or authority defects are formal findings, model blockers, or
 PM Suggestion Items unless PM explicitly granted bounded target repair in
 allowed writes.
-The packet body must also require a `PM Suggestion Items` section. Officer
+The packet body must also require a `PM Suggestion Items` section. FlowGuard operator
 suggestions are candidate `flowpilot.pm_suggestion_item.v1` items for PM's
 ledger disposition. They become `current_gate_blocker` items only for formal
 model-gate findings inside PM's requested model boundary.
 
 For each modeling need, write a request that states:
 
-- process, product, or joint officer ownership;
+- process-model, product-model, or joint FlowGuard operator ownership;
 - modeling kind: process, product, object/reference-system, migration
   equivalence, experiment-derived behavior, or combined;
 - for model-miss work, the bug class definition, why the old model may have
@@ -67,25 +67,25 @@ For each modeling need, write a request that states:
   `ordinary_test_evidence`, `missing_test_kinds`, `conformance_boundary`,
   `residual_blindspots`, and `background_artifact_completion`;
 - `role_skill_use_bindings` for every FlowGuard child skill or satellite route
-  PM expects the officer to use when deriving test obligations or validation
+  PM expects the FlowGuard operator to use when deriving test obligations or validation
   gaps. Use the smallest applicable route: Existing Model Preflight for model
   ownership, DevelopmentProcessFlow for validation freshness and staged
   process risk, Model-Test Alignment for model/code/test comparison, and
   TestMesh for broad, slow, layered, stale, skipped, progress-only, or
   release-only validation;
-- for product-model-first route design, whether the officer report should
+- for product-model-first route design, whether the FlowGuard operator report should
   define product behavior for PM route drafting, validate PM route viability
   against that behavior, or check a repair branch's return to the mainline;
 - required commands or replay checks;
 - evidence paths, source materials, samples, traces, or experiment outputs the
-  officer may inspect;
+  FlowGuard operator may inspect;
 - how the report can change the route.
 
-The officer report body must include these fields exactly:
+The FlowGuard operator report body must include these fields exactly:
 
 ```json
 {
-  "schema_version": "flowpilot.officer_model_report.v1",
+  "schema_version": "flowpilot.flowguard_operator_model_report.v1",
   "run_id": "<current run id>",
   "flowguard_work_order_id": "<work-order id>",
   "flowguard_report_id": "<report id>",
@@ -122,15 +122,15 @@ must list the log root, stdout, stderr, combined, exit, and meta paths, exit
 code, latest update time, completion status, and whether a valid proof was
 reused. Progress lines alone are not completion evidence.
 
-The officer report supports PM decisions; it cannot approve completion, waive
+The FlowGuard operator report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.
 
-After PM receives an officer report, PM must copy every relevant
+After PM receives a FlowGuard operator report, PM must copy every relevant
 `model_obligations`, `ordinary_test_evidence`, and `missing_test_kinds` row into
 the current `test_obligation_matrix`. Missing, stale, skipped, failed,
 not-run, or progress-only evidence must be dispositioned by PM before the
 dependent node, evidence-quality package, final ledger, or closure gate can
-pass. Officer prose does not close a test gap.
+pass. FlowGuard operator prose does not close a test gap.
 
 PM must convert the report into a concrete route decision: continue, repair,
 add evidence, split a node, mutate the route, or block. A report that only says

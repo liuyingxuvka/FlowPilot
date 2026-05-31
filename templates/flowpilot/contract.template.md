@@ -23,7 +23,7 @@
 - Root acceptance contract: `.flowpilot/runs/<run-id>/root_acceptance_contract.json`
 - Standard scenario pack: `.flowpilot/runs/<run-id>/standard_scenario_pack.json`
 - PM synthesis: `<path-or-null>`
-- Product FlowGuard officer modelability approval: `<path-or-null>`
+- FlowGuard operator modelability approval: `<path-or-null>`
 - Human-like reviewer usefulness challenge: `<path-or-null>`
 
 The acceptance criteria below are frozen from the approved product-function
@@ -42,7 +42,7 @@ decisions, display rationale, or negative scope.
   checkpoint.
 - Required capability evidence written.
 - Formal chunks verified.
-- Sidecar role work, if any, merged through an authorized integration/review packet.
+- requested helper responsibility work, if any, merged through an authorized integration/review packet.
 - Final verification passed.
 - Residual risk triage completed with zero unresolved residual risks.
 - Terminal closure suite passed after final state/evidence refresh.

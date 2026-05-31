@@ -76,7 +76,7 @@ class RouteMutationParentBackwardRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 root,
                 packet_id="parent-node-packet",
                 from_role="project_manager",
-                to_role="worker_a",
+                to_role="worker",
                 node_id="parent-001",
                 body_text="parent node work",
                 metadata={"route_version": 1},

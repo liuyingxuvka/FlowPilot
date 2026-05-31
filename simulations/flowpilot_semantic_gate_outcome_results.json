@@ -11,8 +11,12 @@
   "hazard_detection": {
     "expected": [
       "blocker_without_pm_repair",
+      "context_word_overread",
+      "current_unresolved_packet_hidden",
+      "final_ledger_counts_historical_packet",
       "pm_impersonated_reviewer_pass",
       "semantic_block_treated_as_pass",
+      "stale_accepted_node_blocker_projected_active",
       "stale_failed_evidence_used_as_pass",
       "validation_fail_issued_closure",
       "wrong_role_recheck_cleared_blocker"
@@ -21,11 +25,23 @@
       "blocker_without_pm_repair": [
         "blocker lacked PM repair decision packet"
       ],
+      "context_word_overread": [
+        "contextual prose word overrode declared outcome"
+      ],
+      "current_unresolved_packet_hidden": [
+        "current unresolved packet was hidden from final ledger"
+      ],
+      "final_ledger_counts_historical_packet": [
+        "final ledger counted historical packet as unresolved"
+      ],
       "pm_impersonated_reviewer_pass": [
         "PM repair decision impersonated reviewer pass"
       ],
       "semantic_block_treated_as_pass": [
         "semantic block treated as pass"
+      ],
+      "stale_accepted_node_blocker_projected_active": [
+        "stale accepted-node blocker projected as current"
       ],
       "stale_failed_evidence_used_as_pass": [
         "stale failed evidence used as pass"
@@ -43,11 +59,20 @@
   "model_test_alignment": {
     "evidence": [
       "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-      "tests/test_flowpilot_high_standard_control_flow.py"
+      "tests/test_flowpilot_core_runtime.py",
+      "tests/test_flowpilot_high_standard_control_flow.py",
+      "tests/test_flowpilot_recursive_route_execution_runtime.py"
     ],
     "missing": [],
     "obligations": {
       "active_blocker_ledger": true,
+      "declared_block_line_test": true,
+      "declared_outcome_line_parser": true,
+      "declared_pass_context_words_test": true,
+      "effective_blocker_view": true,
+      "effective_packet_final_view": true,
+      "final_ledger_effective_packets": true,
+      "no_whole_body_nonpass_scan": true,
       "pm_repair_decision_packet": true,
       "reviewer_block_no_validation": true,
       "same_class_recheck": true,
@@ -65,6 +90,8 @@
     "labels": [
       "record_mechanically_valid_result",
       "parse_semantic_outcome",
+      "check_declared_outcome_authority",
+      "preserve_declared_pass_over_context_words",
       "advance_on_pass_outcome",
       "record_nonpass_outcome",
       "record_active_blocker",
@@ -75,16 +102,24 @@
       "require_same_class_recheck",
       "record_same_class_pass",
       "clear_blocker_by_same_class_pass",
+      "build_effective_current_view",
+      "filter_stale_accepted_node_blocker",
+      "use_effective_packets_for_final_ledger",
       "release_downstream_after_clear"
     ],
     "ok": true,
     "state": {
       "active_blocker_recorded": true,
       "blocker_cleared_by_same_class_pass": true,
+      "declared_outcome_authority_checked": true,
+      "declared_pass_preserved_over_context_words": true,
       "downstream_released_after_clear": true,
+      "effective_current_view_built": true,
+      "final_ledger_uses_effective_packets": true,
       "pm_repair_decision_recorded": true,
       "same_class_recheck_required": true,
       "semantic_outcome_parsed": true,
+      "stale_accepted_node_blocker_filtered": true,
       "status": "complete"
     }
   },
@@ -104,7 +139,7 @@
       },
       {
         "evidence": [
-          "openspec/changes/enforce-new-flowpilot-semantic-gate-outcomes/tasks.md"
+          "openspec/changes/harden-new-flowpilot-effective-outcomes/tasks.md"
         ],
         "freshness": "current",
         "id": "semantic_gate_outcome_target_plan",
@@ -123,7 +158,9 @@
       {
         "evidence": [
           "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-          "tests/test_flowpilot_high_standard_control_flow.py"
+          "tests/test_flowpilot_core_runtime.py",
+          "tests/test_flowpilot_high_standard_control_flow.py",
+          "tests/test_flowpilot_recursive_route_execution_runtime.py"
         ],
         "freshness": "current",
         "id": "semantic_gate_outcome_model_test_alignment",

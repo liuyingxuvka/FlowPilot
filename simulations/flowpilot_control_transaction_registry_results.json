@@ -61,7 +61,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": true,
@@ -69,7 +68,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "route_progression"
+          "transaction_type": "route_progression",
+          "unsupported_transaction_name": false
         }
       },
       "atomic_commit_target_missing": {
@@ -105,7 +105,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -113,7 +112,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "result_absorption"
+          "transaction_type": "result_absorption",
+          "unsupported_transaction_name": false
         }
       },
       "collapsed_repair_outcomes": {
@@ -150,7 +150,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": true,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -158,7 +157,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "control_blocker_repair"
+          "transaction_type": "control_blocker_repair",
+          "unsupported_transaction_name": false
         }
       },
       "completed_agent_invalid": {
@@ -196,7 +196,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -204,7 +203,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "result_absorption"
+          "transaction_type": "result_absorption",
+          "unsupported_transaction_name": false
         }
       },
       "contract_pass_event_capability_missing": {
@@ -240,7 +240,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -248,7 +247,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "route_progression"
+          "transaction_type": "route_progression",
+          "unsupported_transaction_name": false
         }
       },
       "control_plane_reissue_without_delivery_authority": {
@@ -285,7 +285,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -293,7 +292,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "control_plane_reissue"
+          "transaction_type": "control_plane_reissue",
+          "unsupported_transaction_name": false
         }
       },
       "event_pass_contract_missing": {
@@ -329,7 +329,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -337,7 +336,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "route_progression"
+          "transaction_type": "route_progression",
+          "unsupported_transaction_name": false
         }
       },
       "packet_authority_missing": {
@@ -375,7 +375,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": false,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -383,7 +382,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "result_absorption"
+          "transaction_type": "result_absorption",
+          "unsupported_transaction_name": false
         }
       },
       "parent_repair_leaf_event": {
@@ -420,7 +420,6 @@
           "repair_target_is_leaf_event": true,
           "repair_transaction_present": true,
           "repair_transaction_required": true,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -428,7 +427,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "control_blocker_repair"
+          "transaction_type": "control_blocker_repair",
+          "unsupported_transaction_name": false
         }
       },
       "partial_commit_targets": {
@@ -463,7 +463,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": true,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -471,7 +470,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "control_blocker_repair"
+          "transaction_type": "control_blocker_repair",
+          "unsupported_transaction_name": false
         }
       },
       "pm_package_disposition_partial_commit": {
@@ -508,7 +508,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -516,7 +515,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "result_absorption"
+          "transaction_type": "result_absorption",
+          "unsupported_transaction_name": false
         }
       },
       "registry_reference_missing": {
@@ -552,7 +552,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -560,7 +559,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "packet_dispatch"
+          "transaction_type": "packet_dispatch",
+          "unsupported_transaction_name": false
         }
       },
       "repair_without_transaction": {
@@ -597,7 +597,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": false,
           "repair_transaction_required": true,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -605,52 +604,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "control_blocker_repair"
-        }
-      },
-      "unsupported_reconcile_transaction_continues": {
-        "detected": true,
-        "expected_failure": "transaction type is not registered",
-        "failures": [
-          "transaction type is not registered"
-        ],
-        "state": {
-          "active_blocker_present": false,
-          "atomic_commit_declared": true,
-          "commit_targets": [
-            "repair_transaction",
-            "blocker_index",
-            "run_state",
-            "status_summary"
-          ],
-          "completed_agent_id_belongs_to_role": true,
-          "completed_agent_id_is_role_key": false,
-          "contract_binding_ok": true,
-          "contract_required": true,
-          "control_plane_reissue": false,
-          "event_capability_ok": true,
-          "event_capability_required": true,
-          "non_success_uses_success_event": false,
-          "original_event_flag_currently_set": true,
-          "outcome_events_distinct": true,
-          "outcome_policy": "three_distinct_outcomes",
-          "packet_authority_required": false,
-          "parent_repair": false,
-          "registry_references_exist": true,
-          "registry_row_present": false,
-          "reissue_delivery_authority_present": false,
-          "repair_target_is_leaf_event": false,
-          "repair_transaction_present": true,
-          "repair_transaction_required": true,
-          "unsupported_transaction_name": true,
-          "role_origin_checked": true,
-          "route_mutation": false,
-          "safe_to_continue_claimed": true,
-          "scenario": "unsupported_reconcile_transaction_continues",
-          "stale_evidence_policy_applied": false,
-          "status": "selected",
-          "terminal_reason": "none",
-          "transaction_type": "unsupported historical_reconcile"
+          "transaction_type": "control_blocker_repair",
+          "unsupported_transaction_name": false
         }
       },
       "reviewer_non_success_uses_success_event": {
@@ -686,7 +641,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -694,7 +648,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "reviewer_gate_result"
+          "transaction_type": "reviewer_gate_result",
+          "unsupported_transaction_name": false
         }
       },
       "route_mutation_without_stale_policy": {
@@ -732,7 +687,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": true,
           "safe_to_continue_claimed": false,
@@ -740,7 +694,8 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "route_mutation"
+          "transaction_type": "route_mutation",
+          "unsupported_transaction_name": false
         }
       },
       "unregistered_transaction_type": {
@@ -776,7 +731,6 @@
           "repair_target_is_leaf_event": false,
           "repair_transaction_present": true,
           "repair_transaction_required": false,
-          "unsupported_transaction_name": false,
           "role_origin_checked": true,
           "route_mutation": false,
           "safe_to_continue_claimed": false,
@@ -784,7 +738,53 @@
           "stale_evidence_policy_applied": false,
           "status": "selected",
           "terminal_reason": "none",
-          "transaction_type": "ad_hoc_next_step"
+          "transaction_type": "ad_hoc_next_step",
+          "unsupported_transaction_name": false
+        }
+      },
+      "unsupported_reconcile_transaction_continues": {
+        "detected": true,
+        "expected_failure": "transaction type is not registered",
+        "failures": [
+          "transaction type is not registered"
+        ],
+        "state": {
+          "active_blocker_present": false,
+          "atomic_commit_declared": true,
+          "commit_targets": [
+            "repair_transaction",
+            "blocker_index",
+            "run_state",
+            "status_summary"
+          ],
+          "completed_agent_id_belongs_to_role": true,
+          "completed_agent_id_is_role_key": false,
+          "contract_binding_ok": true,
+          "contract_required": true,
+          "control_plane_reissue": false,
+          "event_capability_ok": true,
+          "event_capability_required": true,
+          "non_success_uses_success_event": false,
+          "original_event_flag_currently_set": true,
+          "outcome_events_distinct": true,
+          "outcome_policy": "three_distinct_outcomes",
+          "packet_authority_required": false,
+          "parent_repair": false,
+          "registry_references_exist": true,
+          "registry_row_present": false,
+          "reissue_delivery_authority_present": false,
+          "repair_target_is_leaf_event": false,
+          "repair_transaction_present": true,
+          "repair_transaction_required": true,
+          "role_origin_checked": true,
+          "route_mutation": false,
+          "safe_to_continue_claimed": true,
+          "scenario": "unsupported_reconcile_transaction_continues",
+          "stale_evidence_policy_applied": false,
+          "status": "selected",
+          "terminal_reason": "none",
+          "transaction_type": "unsupported_historical_reconcile",
+          "unsupported_transaction_name": true
         }
       }
     },
@@ -827,10 +827,10 @@
       "pm_package_disposition_partial_commit",
       "registry_reference_missing",
       "repair_without_transaction",
-      "unsupported_reconcile_transaction_continues",
       "reviewer_non_success_uses_success_event",
       "route_mutation_without_stale_policy",
-      "unregistered_transaction_type"
+      "unregistered_transaction_type",
+      "unsupported_reconcile_transaction_continues"
     ],
     "state_count": 51
   }

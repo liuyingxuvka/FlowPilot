@@ -54,7 +54,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-30T21:28:13.199035+00:00",
+        "created_at": "2026-05-31T08:18:15.358581+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -86,7 +86,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-05-30T21:28:13.200033+00:00",
+        "created_at": "2026-05-31T08:18:15.359586+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -257,7 +257,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-30T21:28:13.204038+00:00",
+        "created_at": "2026-05-31T08:18:15.364580+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -268,6 +268,7 @@
           {
             "accepted_result_id": "result-0001",
             "body_hash": "bca1f899e7cd7b55aec0f1d84f7954830f2eaeeb17e29acee0c6d211ef3b1f51",
+            "node_context_package_id": "",
             "objective": "Implement runtime slice",
             "packet_id": "packet-0001",
             "packet_kind": "task",
@@ -282,7 +283,8 @@
           },
           {
             "accepted_result_id": "result-0002",
-            "body_hash": "e7ece1f4ea1449f5f43a01855db5403477f3cb899adbad5dce99777af0e01203",
+            "body_hash": "bf7befb8f2cad525d82c6c1ed2760826455f69fa95fb9863f61a24abef4a9fd1",
+            "node_context_package_id": "",
             "objective": "Run FlowGuard evidence for packet-0001",
             "packet_id": "packet-0002",
             "packet_kind": "flowguard_check",
@@ -297,7 +299,8 @@
           },
           {
             "accepted_result_id": "result-0003",
-            "body_hash": "1b01c45f251f2db01917f17f0ab5a93ef5d8b6b6bedff79620ca57313ccdeeaf",
+            "body_hash": "787b49fd5d4527f8f9cd1cc7bb4120d1a5a69bd4546a4194135e61b301b9e4a4",
+            "node_context_package_id": "",
             "objective": "Review result and FlowGuard evidence for packet-0001",
             "packet_id": "packet-0003",
             "packet_kind": "review",

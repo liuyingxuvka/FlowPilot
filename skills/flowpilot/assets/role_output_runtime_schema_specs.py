@@ -35,10 +35,8 @@ ROLE_KEYS = {
     "controller",
     "project_manager",
     "human_like_reviewer",
-    "process_flowguard_officer",
-    "product_flowguard_officer",
-    "worker_a",
-    "worker_b",
+    "flowguard_operator",
+    "worker",
 }
 
 FORBIDDEN_CONTROLLER_VISIBLE_BODY_FIELDS = {
@@ -132,7 +130,7 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
     "gate_decision": OutputTypeSpec(
         output_type="gate_decision",
         contract_id="flowpilot.output_contract.gate_decision.v1",
-        allowed_roles=("project_manager", "human_like_reviewer", "process_flowguard_officer", "product_flowguard_officer"),
+        allowed_roles=("project_manager", "human_like_reviewer", "flowguard_operator"),
         path_key="decision_path",
         hash_key="decision_hash",
         default_subdir="gate_decisions",
@@ -164,15 +162,15 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
             "independent_challenge.challenge_waivers",
         ),
     ),
-    "officer_model_report": OutputTypeSpec(
-        output_type="officer_model_report",
-        contract_id="flowpilot.output_contract.officer_model_report.v1",
-        allowed_roles=("process_flowguard_officer", "product_flowguard_officer"),
+    "flowguard_operator_model_report": OutputTypeSpec(
+        output_type="flowguard_operator_model_report",
+        contract_id="flowpilot.output_contract.flowguard_operator_model_report.v1",
+        allowed_roles=("flowguard_operator",),
         path_key="report_path",
         hash_key="report_hash",
-        default_subdir="officer_reports",
-        default_filename_prefix="officer_model_report",
-        body_schema_version="flowpilot.officer_model_report.v1",
+        default_subdir="flowguard_operator_reports",
+        default_filename_prefix="flowguard_operator_model_report",
+        body_schema_version="flowpilot.flowguard_operator_model_report.v1",
         explicit_array_fields=(
             "commands_run",
             "counterexamples_or_absence",
