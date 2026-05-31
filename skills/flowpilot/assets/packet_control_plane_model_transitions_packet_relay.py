@@ -131,7 +131,7 @@ class ControllerEnvelopeRelay:
         "controller_body_access_blocks",
         "controller_body_execution_blocks",
         "controller_return_to_sender",
-        "controller_relay_signatures",
+        "current_assignments",
         "private_delivery_blocks",
         "pm_repair_requirements",
         "holder_changes",
@@ -167,7 +167,7 @@ class ControllerEnvelopeRelay:
             yield FunctionResult(
                 DispatchBlocked(input_obj.packet_id, "missing_visible_mutual_role_reminder"),
                 new_state,
-                "controller_relay_missing_mutual_role_reminder_blocked",
+                "current_assignment_missing_mutual_role_reminder_blocked",
             )
             return
         if input_obj.controller_attempts_body_read:
@@ -215,9 +215,9 @@ class ControllerEnvelopeRelay:
             if input_obj.packet_id in state.controller_envelope_reads
             else state.controller_envelope_reads + (input_obj.packet_id,)
         )
-        controller_relay_signatures = state.controller_relay_signatures
-        if input_obj.controller_relay_signature_present and input_obj.packet_id not in controller_relay_signatures:
-            controller_relay_signatures = controller_relay_signatures + (input_obj.packet_id,)
+        current_assignments = state.current_assignments
+        if input_obj.current_assignment_present and input_obj.packet_id not in current_assignments:
+            current_assignments = current_assignments + (input_obj.packet_id,)
         envelope_only_handoffs = (
             state.controller_handoff_envelope_only
             if input_obj.packet_id in state.controller_handoff_envelope_only
@@ -238,7 +238,7 @@ class ControllerEnvelopeRelay:
         )
         cockpit_missing = state.cockpit_missing_major_nodes
         chat_mermaid = state.chat_mermaid_displays
-        label = "controller_relayed_envelope_with_holder_status_update"
+        label = "current_assignment_delivered_envelope_with_holder_status_update"
         if input_obj.cockpit_missing_on_major_node:
             cockpit_missing = (
                 cockpit_missing if input_obj.packet_id in cockpit_missing else cockpit_missing + (input_obj.packet_id,)
@@ -249,7 +249,7 @@ class ControllerEnvelopeRelay:
         new_state = replace(
             state,
             controller_envelope_reads=envelope_reads,
-            controller_relay_signatures=controller_relay_signatures,
+            current_assignments=current_assignments,
             controller_handoff_envelope_only=envelope_only_handoffs,
             controller_handoff_mutual_role_reminders=mutual_role_reminders,
             holder_changes=holder_changes,
@@ -257,8 +257,8 @@ class ControllerEnvelopeRelay:
             cockpit_missing_major_nodes=cockpit_missing,
             chat_mermaid_displays=chat_mermaid,
         )
-        if input_obj.controller_relay_signature_present and label == "controller_relayed_envelope_with_holder_status_update":
-            label = "controller_relay_signature_recorded"
+        if input_obj.current_assignment_present and label == "current_assignment_delivered_envelope_with_holder_status_update":
+            label = "current_assignment_recorded"
         yield FunctionResult(input_obj, new_state, label)
 
 __all__ = [

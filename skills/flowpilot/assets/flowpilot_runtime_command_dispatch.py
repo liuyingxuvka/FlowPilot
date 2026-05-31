@@ -17,19 +17,11 @@ def execute_runtime_command(
     execute_role_output_command: Callable[..., dict[str, Any]],
     read_text_arg: Callable[[str, str], str],
     read_body_json: Callable[[Path, str, str], dict[str, Any] | None],
-    relay_envelope: Callable[[Path, Any], dict[str, Any]],
     record_router_event_or_blocked_next_action: Callable[[Path, str, dict[str, Any]], dict[str, Any]],
     receive_card: Callable[[Path, Any], dict[str, Any]],
     receive_card_bundle: Callable[[Path, Any], dict[str, Any]],
 ) -> dict[str, Any]:
-    if args.command == "open-packet":
-        result = packet_runtime.begin_role_packet_session(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-        )
-    elif args.command == "open-card":
+    if args.command == "open-card":
         result = card_runtime.open_card(
             root,
             envelope_path=args.envelope_path,
@@ -73,18 +65,6 @@ def execute_runtime_command(
             next_recipient=args.next_recipient,
             controller_aside=args.controller_aside or None,
         )
-    elif args.command == "run-packet":
-        result = packet_runtime.run_role_packet_session(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            result_body_text=read_text_arg(args.result_body_text, args.result_body_file),
-            next_recipient=args.next_recipient,
-            controller_aside=args.controller_aside or None,
-        )
-    elif args.command == "relay-envelope":
-        result = relay_envelope(root, args)
     elif args.command == "issue-active-holder-lease":
         envelope = packet_runtime.load_envelope(root, args.envelope_path)
         result = packet_runtime.issue_active_holder_lease(

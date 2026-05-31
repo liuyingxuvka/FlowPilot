@@ -182,63 +182,8 @@ def _runtime_relay_missing_deliverables(
     spec: dict[str, str],
     failures: list[dict[str, Any]],
 ) -> list[dict[str, Any]]:
-    repairable_reasons = {
-        "packet_runtime_relay_evidence_missing",
-        "packet_ledger_controller_relay_missing",
-        "packet_ledger_record_missing",
-        "packet_ledger_relay_holder_mismatch",
-        "packet_ledger_relay_status_mismatch",
-        "active_holder_lease_path_missing",
-        "active_holder_lease_missing_or_unreadable",
-        "active_holder_lease_packet_mismatch",
-        "active_holder_lease_role_mismatch",
-        "active_holder_lease_agent_mismatch",
-        "active_holder_lease_not_active",
-        "active_holder_lease_liveness_missing",
-        "result_relay_evidence_missing",
-        "result_ledger_controller_relay_missing",
-        "result_ledger_record_missing",
-        "result_ledger_relay_holder_mismatch",
-    }
-    failed_packet_ids = {
-        str(item.get("packet_id") or "")
-        for item in failures
-        if isinstance(item, dict) and str(item.get("reason") or "") in repairable_reasons
-    }
-    if not failed_packet_ids:
-        return []
-    operations = [
-        item
-        for item in action.get("runtime_relay_operations") or []
-        if isinstance(item, dict) and str(item.get("packet_id") or "") in failed_packet_ids
-    ]
-    deliverables: list[dict[str, Any]] = []
-    for operation in operations:
-        packet_id = str(operation.get("packet_id") or "")
-        envelope_kind = str(operation.get("envelope_kind") or "")
-        path = str(operation.get("envelope_path") or "").strip()
-        if not packet_id or not path:
-            continue
-        deliverables.append(
-            {
-                "deliverable_id": f"runtime_relay:{spec['postcondition']}:{packet_id}:{envelope_kind}",
-                "artifact_kind": str(operation.get("expected_relay_kind") or "controller_relay"),
-                "path": path,
-                "postcondition": spec["postcondition"],
-                "runtime_channel": "flowpilot_runtime.py relay-envelope",
-                "output_type": "runtime_relay_evidence",
-                "output_contract_id": "flowpilot.runtime_relay_operation.v1",
-                "path_key": "envelope_path",
-                "hash_key": "controller_relay_envelope_hash",
-                "required_role": "controller",
-                "controller_may_read_sealed_bodies": False,
-                "required_before_router_reconciles_done_receipt": True,
-                "runtime_relay_operation": operation,
-                "expected_writes": operation.get("expected_writes") or [],
-                "path_only_handoff_is_not_completion": True,
-            }
-        )
-    return deliverables
+    del action, spec, failures
+    return []
 
 __all__ = (
     "_active_holder_fast_lane_item",

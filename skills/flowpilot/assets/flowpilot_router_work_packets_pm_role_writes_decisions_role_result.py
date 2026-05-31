@@ -47,7 +47,7 @@ def _write_pm_role_work_result_decision(router: ModuleType, project_root: Path, 
     if not records:
         raise RouterError('PM role-work result decision references unknown request_id or batch_id')
     if decision == 'absorbed' and any((record.get('status') != 'result_relayed_to_pm' for record in records)):
-        raise RouterError('PM may absorb role-work batch only after Controller relays every result to PM')
+        raise RouterError('PM may absorb role-work batch only after every result reaches PM')
     if decision in {'canceled', 'superseded'} and any((record.get('status') not in PM_ROLE_WORK_OPEN_STATUSES for record in records)):
         raise RouterError('PM role-work result decision can cancel or supersede only unresolved requests')
     gate_mappings = router._pm_role_work_gate_mappings_for_decision(decision_payload, records, decision=decision)
@@ -81,8 +81,8 @@ def _validate_result_bodies_opened_by_pm(router: ModuleType, project_root: Path,
         result_path = router._result_envelope_path_from_packet_record(project_root, run_state, record)
         result = packet_runtime.load_envelope(project_root, result_path)
         opened = result.get('result_body_opened_by_role')
-        if not (isinstance(opened, dict) and opened.get('role') == 'project_manager' and (opened.get('controller_relay_verified') is True) and (opened.get('body_hash_verified') is True)):
-            raise RouterError(f"PM result disposition requires project_manager to open result body after Controller relay: {result.get('packet_id')}")
+        if not (isinstance(opened, dict) and opened.get('role') == 'project_manager' and (opened.get('body_hash_verified') is True)):
+            raise RouterError(f"PM result disposition requires project_manager to open result body after current assignment: {result.get('packet_id')}")
 
 
 __all__ = (

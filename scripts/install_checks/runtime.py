@@ -261,9 +261,9 @@ def run_checks(result: dict[str, object]) -> None:
                 [
                     "--root",
                     str(ROOT),
-                    "open-packet",
-                    "--envelope-path",
-                    ".flowpilot/runs/run-test/packets/packet-001/packet_envelope.json",
+                    "active-holder-ack",
+                    "--lease-path",
+                    ".flowpilot/runs/run-test/packets/packet-001/active_holder_lease.json",
                     "--role",
                     "worker",
                     "--agent-id",

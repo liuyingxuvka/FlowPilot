@@ -5,7 +5,7 @@ preventing controller/worker over-execution.
 
 ## Roles
 
-- Controller: main assistant. Relays only Router-authorized packet/result or
+- Controller: main assistant. Delivers only Router-authorized packet/result or
   role-output envelope metadata after Router status changes, records live
   status, waits for Router next-action notices, and keeps the loop moving. It
   is not the implementation worker and it does not submit mechanical ACKs or
@@ -25,20 +25,20 @@ preventing controller/worker over-execution.
 
 ```text
 Controller bootstraps only user-approved startup options
--> Controller writes USER_INTAKE envelope/body and relays envelope to PM
+-> Controller writes USER_INTAKE envelope/body and delivers envelope metadata to PM
 -> PM asks Reviewer for startup-readiness review through Controller
 -> PM issues PACKET_ENVELOPE + PACKET_BODY after startup gate opens
--> Controller signs relay and sends only the envelope to the target role
--> Recipient verifies controller relay signature before opening the body
+-> Router assigns the packet through the current assignment and ACK path
+-> Recipient verifies assignment, target role, and hash before opening the body
 -> Worker reads and executes exactly its packet body
 -> Worker ACKs the active-holder lease directly to Router when a lease exists
 -> Worker submits packet-local completion directly to Router through the lease
 -> Router writes controller_next_action_notice.json after mechanical checks pass
--> Controller signs relay and sends only the result envelope to Reviewer
+-> Router routes the result envelope to Reviewer through the current assignment path
 -> Reviewer audits mail chain, role origin, hashes, and evidence
 -> Reviewer submits review output directly to Router through the runtime
 -> Router records the review event and writes Controller-visible next status
--> Controller relays only the Router-authorized PM-facing envelope if instructed
+-> Controller delivers only the Router-authorized PM-facing envelope metadata if instructed
 -> PM issues next packet, repair packet, route mutation, user block, or complete
 -> Controller continues internally unless PM says stop_for_user: true
 ```
@@ -86,7 +86,7 @@ the controller and the router direct-dispatch preflight allowed that assignment.
 Packets, results, and formal role outputs use an envelope/body split. The
 controller may read only `packet_envelope`, `result_envelope`, role-output
 envelope metadata, Router status packets, and Router next-action notices. It
-may update holder/status, relay Router-authorized envelopes, display required
+may update holder/status, deliver Router-authorized envelope metadata, display required
 Mermaid route signs, and call Router for the next decision. The controller
 must not read or execute `packet_body`, `result_body`, or role-output bodies,
 generate worker artifacts, run product validation, approve gates, close nodes,
@@ -97,15 +97,11 @@ Completed work goes to Router first. Mechanical system-card ACKs,
 active-holder packet ACKs, active-holder packet result submission, and formal
 role-output submission are Router-direct check-ins. PM, reviewer, worker, and
 FlowGuard operator roles must not privately pass packet/result bodies or formal
-review/decision mail to Controller. When Router later instructs Controller to
-relay envelope metadata to another role, each Controller relay writes
-`controller_relay` on the envelope with
-`delivered_via_controller: true`, `controller_agent_id`, `received_from_role`,
-`relayed_to_role`, holder before/after, `envelope_hash`,
-`body_was_read_by_controller: false`, and `body_was_executed_by_controller:
-false`. The recipient verifies this signature before opening any body. Missing
-signatures, wrong recipients, hash mismatch, private delivery, or missing
-no-read/no-execute declarations block body open and force sender reissue via PM.
+review/decision mail to Controller. The current formal path is Router-first:
+`flowpilot_new.py lease-agent`, role `ack`, and `submit-result`. The recipient
+verifies current assignment, addressed role, and body hash before opening any
+body. Wrong recipients, hash mismatch, private delivery, contaminated mail, or
+missing assignment evidence block body open and force sender reissue via PM.
 
 If Controller discovers it has opened or executed a sealed internal body, it
 must not continue relaying that mail. It records a contaminated
@@ -124,8 +120,8 @@ result paths, or body text in controller context blocks dispatch before the
 target role receives the packet.
 
 Before dispatch, the router checks the PM packet envelope, body hash, ledger
-identity, target role, controller no-read/no-execute declarations, output
-contract, and run-scoped result paths. The reviewer then checks role origin and
+identity, target role, current assignment, output contract, and run-scoped
+result paths. The reviewer then checks role origin and
 body integrity on every result, not only when a mismatch is obvious. The result
 audit compares the PM packet envelope, router direct-dispatch evidence,
 `packet_envelope.to_role`, packet body hash, assigned worker or authorized role,
@@ -140,8 +136,8 @@ Wrong-role completion cannot be cosigned, relabelled, or accepted as "good
 enough."
 
 At every subnode and every major-node closure, reviewer also audits the full
-mail chain for that node: controller relay signatures, recipient pre-open
-checks, holder continuity, no private mail, and replacement coverage for
+mail chain for that node: current assignment, recipient pre-open checks,
+holder continuity, no private mail, and replacement coverage for
 contaminated, rejected, missing, or unopened mail. If any required letter was
 not opened when needed, reviewer sends the chain audit to PM. PM chooses
 `restart_node`, `create_repair_node`, or `request_sender_reissue`.
@@ -163,7 +159,7 @@ PM responses:
 - quarantine or restart if contamination affects route trust;
 - never advance using invalid role-origin evidence.
 - include `controller_reminder` in every PM response to the controller:
-  `Controller: relay and coordinate only. Do not implement, install, edit,
+  `Controller: deliver metadata and coordinate only. Do not implement, install, edit,
   test, approve, or advance from your own evidence.`
 - require every recipient-role response to repeat a controller-boundary reminder
   and its own role boundary.
@@ -184,7 +180,6 @@ PACKET_ENVELOPE:
   body_path:
   body_hash:
   body_visibility:
-  controller_relay:
   replacement_for:
   supersedes:
   return_to:
@@ -214,7 +209,6 @@ RESULT_ENVELOPE:
   node_id:
   result_body_path:
   result_body_hash:
-  controller_relay:
   next_recipient:
 ```
 
@@ -234,10 +228,8 @@ REVIEW_DECISION:
   decision: pass | block | needs_repair | needs_user | block_invalid_role_origin
   can_pm_advance: true | false
   role_origin_audit:
-    packet_controller_relay_signature_checked:
-    result_controller_relay_signature_checked:
-    controller_signed_body_unread_and_unexecuted:
-    recipient_pre_open_relay_check_verified:
+    current_assignment_checked:
+    recipient_pre_open_assignment_check_verified:
     private_role_to_role_delivery_absent:
     contaminated_or_rejected_packets_have_sender_replacements:
     unopened_or_missing_mail_sent_to_pm:
@@ -305,7 +297,7 @@ assistant is Controller only. It first records
 `heartbeat_or_manual_resume_requested` to the router, then resolves
 `.flowpilot/current.json`, loads the active run state/frontier/route,
 role-binding ledger, role memory, latest heartbeat or manual-resume evidence,
-`packet_ledger.json`, visible plan projection, and controller relay history.
+`packet_ledger.json`, visible plan projection, and current assignment history.
 Only after that router re-entry may it run the runtime-required role-binding
 liveness preflight, restore or replace required bindings, and ask PM for the
 current decision. It must
@@ -323,14 +315,14 @@ instead of continuing to wait on the old role.
 Resume rules:
 
 - If no current packet exists, ask PM for `PM_DECISION`.
-- Before normal continuation, audit the packet ledger for missing relay
-  signatures, private role-to-role mail, controller contamination, unopened
+- Before normal continuation, audit the packet ledger for missing current
+  assignment evidence, private role-to-role mail, controller contamination, unopened
   bodies, holder-chain breaks, and invalid stale/replacement chains. If any are
   present, ask PM for restart, repair node, or sender reissue instead of
   continuing.
 - If PM issues or reissues `PACKET_ENVELOPE` and `PACKET_BODY`, require
-  `controller_reminder`, verify router direct-dispatch preflight, sign the
-  controller relay, then send only the envelope to the target role.
+  `controller_reminder`, verify router direct-dispatch preflight, then use the
+  current assignment and ACK path for the target role.
 - If the packet is already with a worker and an active-holder lease is open,
   wait for the packet-id-specific Router-authored
   `controller_next_action_notice.json`; do not infer completion from worker

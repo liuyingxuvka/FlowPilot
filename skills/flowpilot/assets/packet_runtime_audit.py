@@ -54,11 +54,11 @@ from packet_runtime_paths import (
 from packet_runtime_relay import (
     _completed_agent_id_is_role_key,
     _same_project_path,
-    controller_relay_envelope,
+    deliver_envelope_metadata,
     mark_controller_contamination,
     validate_packet_ready_for_direct_relay,
     validate_result_ready_for_reviewer_relay,
-    verify_controller_relay,
+    verify_addressed_envelope,
     verify_packet_open_receipt,
     verify_router_startup_release,
 )
@@ -69,7 +69,6 @@ from packet_runtime_schema import (
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
-    CONTROLLER_RELAY_SCHEMA,
     DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
     DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
     DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS,
@@ -178,20 +177,16 @@ def audit_packet_chain(project_root: Path, *, run_id: str | None = None, node_id
             continue
         if record.get("private_role_to_role_delivery_detected"):
             add_blocker(record, "private_delivery_detected", "formal packet/result did not route through controller")
-        if not record.get("packet_controller_relay"):
-            add_blocker(record, "missing_packet_controller_relay", "packet envelope was not signed and relayed by controller")
         if not record.get("packet_body_opened_by_role"):
-            add_blocker(record, "packet_body_unopened_by_recipient", "target role did not record a post-relay packet body open")
+            add_blocker(record, "packet_body_unopened_by_recipient", "target role did not record a packet body open")
 
         result_exists = bool(record.get("result_body_hash")) or bool(record.get("result_envelope", {}).get("completed_by_role"))
         result_path = record.get("result_envelope_path")
         if result_path:
             result_exists = result_exists or resolve_project_path(project_root, str(result_path)).exists()
         if result_exists:
-            if not record.get("result_controller_relay"):
-                add_blocker(record, "missing_result_controller_relay", "result envelope was not signed and relayed by controller")
             if not record.get("result_body_opened_by_role"):
-                add_blocker(record, "result_body_unopened_by_recipient", "reviewer or PM did not record a post-relay result body open")
+                add_blocker(record, "result_body_unopened_by_recipient", "reviewer or PM did not record a result body open")
 
     audit = {
         "schema_version": CHAIN_AUDIT_SCHEMA,
@@ -199,9 +194,9 @@ def audit_packet_chain(project_root: Path, *, run_id: str | None = None, node_id
         "node_id": node_id,
         "ledger_path": project_relative(project_root, ledger_path),
         "checked_packet_count": len(scoped_records),
-        "all_formal_mail_must_route_through_controller": True,
-        "controller_no_body_read_signature_required": True,
-        "recipient_pre_open_relay_check_required": True,
+        "all_formal_mail_must_route_through_controller": False,
+        "controller_no_body_read_signature_required": False,
+        "recipient_pre_open_relay_check_required": False,
         "contaminated_or_private_mail_requires_sender_reissue": True,
         "unopened_or_missing_mail_sent_to_pm": bool(blockers),
         "pm_decision_required": bool(blockers),

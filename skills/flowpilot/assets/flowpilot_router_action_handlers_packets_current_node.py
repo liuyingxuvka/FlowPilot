@@ -56,7 +56,7 @@ def _apply_relay_current_node_packet(
         )
         if not audit.get("passed"):
             raise router.RouterError(f"current-node packet envelope is not ready for direct relay: {audit.get('blockers')}")
-        router.packet_runtime.controller_relay_envelope(
+        router.packet_runtime.deliver_envelope_metadata(
             project_root,
             envelope=envelope,
             envelope_path=envelope_path,

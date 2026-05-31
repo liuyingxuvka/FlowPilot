@@ -88,17 +88,15 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("router", text)
                 self.assertIn("event", text)
 
-    def test_controller_relay_rows_require_runtime_relay_evidence(self) -> None:
+    def test_current_packet_rows_use_lease_ack_result_authority(self) -> None:
         action_table = (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower()
         controller_card = _card_path_by_id("controller.core").read_text(encoding="utf-8").lower()
         for text in (action_table, controller_card):
-            self.assertIn("flowpilot_runtime.py relay-envelope", text)
-            self.assertIn("runtime_relay_operations", text)
-            self.assertIn("path-only", text)
-            self.assertIn("controller_relay", text)
-            self.assertIn("packet_controller_relay", text)
-            self.assertIn("result_controller_relay", text)
-            self.assertIn("active_holder_fast_lane", text)
+            self.assertNotIn("flowpilot_runtime.py relay-envelope", text)
+            self.assertNotIn("controller_relay", text)
+            self.assertIn("flowpilot_new.py lease-agent", text)
+            self.assertIn("flowpilot_new.py ack", text)
+            self.assertIn("flowpilot_new.py submit-result", text)
 
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
@@ -421,32 +419,36 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             "flowguard_operator.core",
         )
 
-        for text in (packet_runtime_text, packet_template, pm_card):
+        self.assertIn("successful", packet_runtime_text)
+        self.assertIn("current assignment", packet_runtime_text)
+        for text in (packet_template, pm_card):
             self.assertIn("successful", text)
-            self.assertIn("open-packet", text)
-            self.assertIn("do not wait for another relay", text)
+            self.assertIn("flowpilot_new.py lease-agent", text)
+            self.assertIn("flowpilot_new.py ack", text)
+            self.assertIn("flowpilot_new.py submit-result", text)
             self.assertIn("pm_startup_repair_request", text)
             self.assertIn("pm_startup_protocol_dead_end", text)
             self.assertIn("pm_control_blocker_repair_decision", text)
             self.assertIn("ordinary blocker back to pm", text)
 
         intake_text = normalized(pm_startup_intake_card)
-        self.assertIn("do not run `open-packet`", intake_text)
+        self.assertIn("do not use a separate packet-open command", intake_text)
         self.assertIn("full `user_intake` body remains router-held until pm approves startup activation", intake_text)
         self.assertIn("ordinary blocker back to pm", intake_text)
 
         for path in pm_verified_open_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
-                self.assertIn("verified open", text)
-                self.assertIn("controller relay", text)
+                self.assertIn("current", text)
+                self.assertIn("lease", text)
                 self.assertIn("ordinary blocker back to pm", text)
 
         for path in ordinary_role_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
-                self.assertIn("successful packet-open session is sufficient authority", text)
-                self.assertIn("do not wait for another relay", text)
+                self.assertIn("flowpilot_new.py lease-agent", text)
+                self.assertIn("flowpilot_new.py ack", text)
+                self.assertIn("flowpilot_new.py submit-result", text)
                 self.assertIn("formal blocker", text)
                 self.assertIn("pm or router can decide", text)
 

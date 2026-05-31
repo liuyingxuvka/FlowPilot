@@ -17,7 +17,6 @@ from flowpilot_runtime_gateway import GATEWAY_PACKET_RUNTIME, assert_runtime_gat
 PACKET_ENVELOPE_SCHEMA = "flowpilot.packet_envelope.v1"
 RESULT_ENVELOPE_SCHEMA = "flowpilot.result_envelope.v1"
 CONTROLLER_HANDOFF_SCHEMA = "flowpilot.controller_handoff.v1"
-CONTROLLER_RELAY_SCHEMA = "flowpilot.controller_relay.v1"
 ROUTER_STARTUP_RELEASE_SCHEMA = "flowpilot.router_startup_release.v1"
 MUTUAL_ROLE_REMINDER_SCHEMA = "flowpilot.mutual_role_reminder.v1"
 CHAIN_AUDIT_SCHEMA = "flowpilot.packet_chain_audit.v1"
@@ -36,8 +35,6 @@ USER_INTAKE_BODY_VISIBILITY = "external_user_input_controller_visible"
 ENVELOPE_HASH_EXCLUDED_KEYS = {
     "body_opened_by_role",
     "packet_open_work_authority",
-    "controller_relay",
-    "controller_relay_history",
     "router_startup_release",
     "router_startup_release_history",
     "controller_return_to_sender",

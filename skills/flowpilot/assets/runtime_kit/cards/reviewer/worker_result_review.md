@@ -70,17 +70,17 @@ disposition before this gate. The sealed review body must identify `batch_id`,
 Check:
 
 - packet envelope and result envelope exist;
-- packet ledger shows the worker opened the packet through the runtime after
-  Controller relay and the result envelope was absorbed into the ledger;
-- PM opened each result body through the runtime after Controller relayed the
-  result to `project_manager`, and PM recorded an absorbed disposition before
+- packet ledger shows the worker opened the packet through the current
+  assignment path and the result envelope was absorbed into the ledger;
+- PM opened each result body through the current assignment path to
+  `project_manager`, and PM recorded an absorbed disposition before
   this reviewer gate;
 - the PM formal gate package's `result_envelopes` entries identify the existing
   result envelope and, when known, the source packet envelope and
   `source_output_contract_id` needed to recover the source packet acceptance
   slice and output contract;
 - router or packet-runtime validation has accepted required envelope fields,
-  Controller relay signatures, body hashes, result author role, and packet
+  current assignment evidence, body hashes, result author role, and packet
   target role;
 - no Controller-origin project evidence closes the gate;
 - no wrong-role relabeling, private mail, stale body, or contaminated body was used;

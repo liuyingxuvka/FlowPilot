@@ -30,7 +30,7 @@ REQUIRED_LABELS = (
 
 HAZARD_EXPECTED_FAILURES = {
     "verified_open_without_authority": "verified open did not record work authority",
-    "path_only_handoff_authorized_open": "path-only handoff authorized packet open without controller relay signature",
+    "verified_open_without_assignment_ack": "verified open did not record current assignment ACK",
     "pm_waits_for_extra_relay_after_verified_open": "verified open waited for additional relay",
     "pm_self_blocker_loop": "PM routed a blocker back to PM",
     "pm_custom_repair_flow": "PM invented a custom recovery flow",
@@ -42,7 +42,7 @@ def _state_id(state: model.State) -> str:
     return (
         f"life={state.lifecycle}|role={state.role_kind}|pm_context={state.pm_context}|"
         f"open_verified={state.open_verified}|authority={state.authority_recorded}|"
-        f"relay_sig={state.controller_relay_signature_recorded}|path_only={state.path_only_handoff_reported}|"
+        f"assignment_ack={state.assignment_ack_recorded}|"
         f"exit={state.formal_exit}"
     )
 

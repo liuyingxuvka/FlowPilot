@@ -170,7 +170,7 @@ def _apply_registered_controller_receipt_evidence_fold(
         run_state["ledger_check_requested"] = False
     append_history(
         run_state,
-        "router_folded_controller_relay_receipt_evidence",
+        "router_folded_controller_delivery_receipt_evidence",
         {
             "action_type": action_type,
             "postcondition": flag,

@@ -11,8 +11,7 @@ from packet_runtime_paths import (
     read_json,
     verify_body_hash,
 )
-from packet_runtime_relay import _completed_agent_id_is_role_key, _same_project_path, verify_controller_relay
-from packet_runtime_schema import PacketRuntimeError
+from packet_runtime_relay import _completed_agent_id_is_role_key, _same_project_path
 
 
 def validate_for_reviewer(
@@ -40,13 +39,10 @@ def validate_for_reviewer(
         if agent_role_map is not None and str(completed_by_agent_id) in agent_role_map
         else completed_by_role != "controller"
     )
-    packet_relay_valid = True
-    result_relay_valid = True
     packet_open_record = packet_envelope.get("body_opened_by_role")
     packet_opened_by_target = (
         isinstance(packet_open_record, dict)
         and packet_open_record.get("role") == expected_role
-        and packet_open_record.get("controller_relay_verified") is True
         and packet_open_record.get("body_hash_verified") is True
     )
     result_open_record = result_envelope.get("result_body_opened_by_role")
@@ -54,7 +50,7 @@ def validate_for_reviewer(
         result_envelope.get("next_recipient"),
         "human_like_reviewer",
         "project_manager",
-    } and result_open_record.get("controller_relay_verified") is True and result_open_record.get("body_hash_verified") is True
+    } and result_open_record.get("body_hash_verified") is True
     ledger_packet_opened_by_target = False
     ledger_result_opened_by_recipient = False
     ledger_result_absorbed = False
@@ -76,12 +72,10 @@ def validate_for_reviewer(
             ledger_record_found = True
             ledger_packet_opened_by_target = (
                 ledger_record.get("packet_body_opened_by_role") == expected_role
-                and ledger_record.get("packet_body_opened_after_controller_relay_check") is True
             )
             ledger_result_opened_by_recipient = (
                 ledger_record.get("result_body_opened_by_role")
                 in {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
-                and ledger_record.get("result_body_opened_after_controller_relay_check") is True
             )
             ledger_result_absorbed = (
                 ledger_record.get("result_body_hash") == result_envelope.get("result_body_hash")
@@ -98,17 +92,6 @@ def validate_for_reviewer(
             )
     except Exception:
         ledger_record_found = False
-
-    try:
-        verify_controller_relay(packet_envelope, recipient_role=str(expected_role))
-    except PacketRuntimeError:
-        packet_relay_valid = False
-        blockers.append("missing_or_invalid_packet_controller_relay")
-    try:
-        verify_controller_relay(result_envelope, recipient_role=str(result_envelope.get("next_recipient")))
-    except PacketRuntimeError:
-        result_relay_valid = False
-        blockers.append("missing_or_invalid_result_controller_relay")
 
     if not packet_body_hash_matches:
         blockers.append("packet_body_hash_mismatch")
@@ -142,15 +125,12 @@ def validate_for_reviewer(
         "packet_envelope_checked": True,
         "packet_runtime_physical_files_checked": True,
         "controller_context_body_exclusion_checked": True,
-        "controller_relay_signature_checked": True,
-        "packet_controller_relay_valid": packet_relay_valid,
-        "result_controller_relay_valid": result_relay_valid,
-        "packet_body_opened_by_target_after_relay_check": packet_opened_by_target,
-        "result_body_opened_by_reviewer_or_pm_after_relay_check": result_opened_by_recipient,
+        "packet_body_opened_by_target": packet_opened_by_target,
+        "result_body_opened_by_reviewer_or_pm": result_opened_by_recipient,
         "packet_ledger_record_found": ledger_record_found,
-        "packet_ledger_packet_body_opened_by_target_after_relay_check": ledger_packet_opened_by_target,
+        "packet_ledger_packet_body_opened_by_target": ledger_packet_opened_by_target,
         "packet_ledger_result_absorbed": ledger_result_absorbed,
-        "packet_ledger_result_body_opened_by_reviewer_or_pm_after_relay_check": ledger_result_opened_by_recipient,
+        "packet_ledger_result_body_opened_by_reviewer_or_pm": ledger_result_opened_by_recipient,
         "packet_envelope_to_role_checked": True,
         "packet_body_hash_checked": True,
         "packet_body_hash_matches_envelope": packet_body_hash_matches,

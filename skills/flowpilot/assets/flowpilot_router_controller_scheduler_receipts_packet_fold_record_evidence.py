@@ -50,13 +50,13 @@ def _packet_dispatch_record_evidence(
     if not expected_role:
         return {"ok": False, "packet_id": packet_id, "reason": "packet_record_missing_target_role"}
     try:
-        relay = packet_runtime.verify_controller_relay(envelope, recipient_role=expected_role)
+        addressed = packet_runtime.verify_addressed_envelope(envelope, recipient_role=expected_role)
     except packet_runtime.PacketRuntimeError as exc:
         return {
             "ok": False,
             "packet_id": packet_id,
-            "reason": "packet_runtime_relay_evidence_missing",
-            "controller_relay_error": str(exc),
+            "reason": "packet_runtime_address_evidence_missing",
+            "addressed_envelope_error": str(exc),
             "packet_envelope_path": project_relative(project_root, envelope_path),
         }
     try:
@@ -71,13 +71,6 @@ def _packet_dispatch_record_evidence(
         }
     if not isinstance(ledger_record, dict):
         return {"ok": False, "packet_id": packet_id, "reason": "packet_ledger_record_missing"}
-    if not isinstance(ledger_record.get("packet_controller_relay"), dict):
-        return {
-            "ok": False,
-            "packet_id": packet_id,
-            "reason": "packet_ledger_controller_relay_missing",
-            "packet_ledger_path": project_relative(project_root, ledger_path),
-        }
     holder_matches = str(ledger_record.get("active_packet_holder") or "") == expected_role
     opened_by_expected = str(ledger_record.get("packet_body_opened_by_role") or "") == expected_role
     result_recorded = bool(ledger_record.get("result_envelope_path") or ledger_record.get("result_body_path"))
@@ -94,9 +87,9 @@ def _packet_dispatch_record_evidence(
     if lease_evidence.get("required") and not lease_evidence.get("ok"):
         return {"ok": False, "packet_id": packet_id, **lease_evidence}
     evidence: list[dict[str, Any]] = [
-        {"source": "packet_controller_relay", "relayed_at": relay.get("relayed_at")},
+        {"source": "addressed_packet_envelope", "addressed_role": addressed.get("addressed_role")},
         {
-            "source": "packet_ledger_controller_relay",
+            "source": "packet_ledger_current_assignment",
             "active_packet_holder": ledger_record.get("active_packet_holder"),
             "active_packet_status": ledger_record.get("active_packet_status"),
             "packet_ledger_path": project_relative(project_root, ledger_path),
@@ -149,13 +142,13 @@ def _result_relay_record_evidence(
             "actual_recipient": result.get("next_recipient"),
         }
     try:
-        relay = packet_runtime.verify_controller_relay(result, recipient_role=expected_role)
+        addressed = packet_runtime.verify_addressed_envelope(result, recipient_role=expected_role)
     except packet_runtime.PacketRuntimeError as exc:
         return {
             "ok": False,
             "packet_id": packet_id,
-            "reason": "result_relay_evidence_missing",
-            "controller_relay_error": str(exc),
+            "reason": "result_address_evidence_missing",
+            "addressed_envelope_error": str(exc),
         }
     try:
         ledger_record, ledger_path = _packet_ledger_record_for_envelope(project_root, result)
@@ -169,13 +162,6 @@ def _result_relay_record_evidence(
         }
     if not isinstance(ledger_record, dict):
         return {"ok": False, "packet_id": packet_id, "reason": "result_ledger_record_missing"}
-    if not isinstance(ledger_record.get("result_controller_relay"), dict):
-        return {
-            "ok": False,
-            "packet_id": packet_id,
-            "reason": "result_ledger_controller_relay_missing",
-            "packet_ledger_path": project_relative(project_root, ledger_path),
-        }
     holder_matches = str(ledger_record.get("active_packet_holder") or "") == expected_role
     opened_by_expected = str(ledger_record.get("result_body_opened_by_role") or "") == expected_role
     if not (holder_matches or opened_by_expected):
@@ -193,9 +179,9 @@ def _result_relay_record_evidence(
         "target_role": expected_role,
         "result_envelope_path": project_relative(project_root, result_path),
         "evidence": [
-            {"source": "result_controller_relay", "relayed_at": relay.get("relayed_at")},
+            {"source": "addressed_result_envelope", "addressed_role": addressed.get("addressed_role")},
             {
-                "source": "packet_ledger_result_controller_relay",
+                "source": "packet_ledger_current_assignment",
                 "active_packet_holder": ledger_record.get("active_packet_holder"),
                 "active_packet_status": ledger_record.get("active_packet_status"),
                 "packet_ledger_path": project_relative(project_root, ledger_path),

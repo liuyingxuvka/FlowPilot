@@ -23,9 +23,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
     sub = parser.add_subparsers(dest="command", required=True)
 
-    open_packet = sub.add_parser("open-packet", help="Open a packet through the packet runtime session.")
-    _add_card_identity_args(open_packet)
-
     open_card = sub.add_parser("open-card", help="Open a system-card envelope and write a read receipt.")
     _add_card_identity_args(open_card)
 
@@ -56,31 +53,6 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     complete_packet.add_argument("--result-body-file", default="")
     complete_packet.add_argument("--next-recipient", required=True)
     complete_packet.add_argument("--controller-aside", default="")
-
-    run_packet = sub.add_parser("run-packet", help="Open and complete a packet in one runtime call.")
-    _add_card_identity_args(run_packet)
-    run_packet.add_argument("--result-body-text", default="")
-    run_packet.add_argument("--result-body-file", default="")
-    run_packet.add_argument("--next-recipient", required=True)
-    run_packet.add_argument("--controller-aside", default="")
-
-    relay_envelope = sub.add_parser(
-        "relay-envelope",
-        help="Controller signs and relays a packet or result envelope without opening the sealed body.",
-    )
-    relay_envelope.add_argument("--envelope-path", required=True)
-    relay_envelope.add_argument("--controller-agent-id", default="controller")
-    relay_envelope.add_argument("--received-from-role", default="")
-    relay_envelope.add_argument("--relayed-to-role", default="")
-    relay_envelope.add_argument("--holder-before", default="")
-    relay_envelope.add_argument("--holder-after", default="")
-    relay_envelope.add_argument("--body-was-read-by-controller", action="store_true")
-    relay_envelope.add_argument("--body-was-executed-by-controller", action="store_true")
-    relay_envelope.add_argument("--private-role-to-role-delivery-detected", action="store_true")
-    relay_envelope.add_argument("--holder-agent-id", default="")
-    relay_envelope.add_argument("--route-version", type=int, default=None)
-    relay_envelope.add_argument("--frontier-version", type=int, default=None)
-    relay_envelope.add_argument("--allowed-action", action="append", default=[])
 
     issue_active = sub.add_parser("issue-active-holder-lease", help="Issue a scoped fast-lane lease to the current packet holder.")
     issue_active.add_argument("--envelope-path", required=True)

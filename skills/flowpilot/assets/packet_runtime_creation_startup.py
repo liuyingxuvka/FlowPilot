@@ -54,11 +54,11 @@ from packet_runtime_paths import (
 from packet_runtime_relay import (
     _completed_agent_id_is_role_key,
     _same_project_path,
-    controller_relay_envelope,
+    deliver_envelope_metadata,
     mark_controller_contamination,
     validate_packet_ready_for_direct_relay,
     validate_result_ready_for_reviewer_relay,
-    verify_controller_relay,
+    verify_addressed_envelope,
     verify_packet_open_receipt,
     verify_router_startup_release,
 )
@@ -69,7 +69,6 @@ from packet_runtime_schema import (
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
-    CONTROLLER_RELAY_SCHEMA,
     DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
     DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
     DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS,
@@ -180,11 +179,9 @@ def router_release_startup_user_intake(
         "body_was_executed_by_router": False,
         "body_visibility": envelope.get("body_visibility", SEALED_BODY_VISIBILITY),
         "startup_release_condition": "startup_intake_router_release_only",
-        "recipient_must_verify_before_body_open": True,
         "controller_bypass_scope": "startup_user_intake_only",
-        "normal_role_packet_relay_unchanged": True,
         "deprecated_for_open_authority": True,
-        "recipient_open_authority": "controller_relay_required",
+        "recipient_open_authority": "current_assignment_required",
         "envelope_hash": envelope_hash(envelope),
     }
     envelope["router_startup_release"] = release
@@ -220,7 +217,7 @@ def router_release_startup_user_intake(
         envelope,
         holder=released_to_role,
         status="envelope-relayed",
-        message=f"Router startup release recorded for {released_to_role}; Controller relay remains required before body open.",
+        message=f"Router startup release recorded for {released_to_role}; current assignment and body hash checks authorize body open.",
         progress=0,
     )
     return envelope

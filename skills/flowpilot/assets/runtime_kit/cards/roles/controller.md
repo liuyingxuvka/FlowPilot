@@ -58,7 +58,7 @@ acceptance status when Router exposes it. Do not interpret FlowGuard reports,
 judge whether a model is sufficient, approve gates, mutate routes, close
 nodes, waive missing reports, or read sealed FlowGuard report bodies.
 
-Controller uses the packet runtime only for envelope relay, holder/status
+Controller uses the packet runtime only for envelope metadata delivery, holder/status
 updates, and controller-visible audit commands. Controller must never call a
 packet/result body open session for itself, and a failed open attempt is not
 project evidence.
@@ -127,25 +127,20 @@ Allowed actions:
   daemon files, or Controller action ledgers only for explicit old-run
   diagnostics or unsupported-run repair. They are not the normal runtime path
   for a fresh `flowpilot_new.py` run;
-- rely on runtime-owned manifest and packet-ledger checks; if the runtime
-  exposes a card, mail, packet, or result relay action, perform only the relay
-  work described by that action;
+- rely on runtime-owned manifest and packet-ledger checks; current work-packet
+  authority is the current `flowpilot_new.py lease-agent`,
+  `flowpilot_new.py ack`, and `flowpilot_new.py submit-result` path, not a
+  separate delivery step;
 - for `deliver_mail`, a chat message or self-attested done receipt is not
-  delivery. Relay the packet envelope through the packet runtime holder/status
+  delivery. Deliver the packet envelope through the packet runtime holder/status
   path named by the Router action, then write the Controller receipt with
   mail id, packet id, target role, and delivery confirmation metadata. Router
-  will accept the receipt only after the packet ledger proves the packet was
-  released to the addressed role with a controller relay signature;
-- for any `relay_*packet*` or `relay_*result*` Controller row, run every
-  `flowpilot_runtime.py relay-envelope` operation listed in
-  `runtime_relay_operations` before writing the done receipt. A path-only
-  handoff, chatting the path to a role, or saying the envelope was relayed is
-  not completion. Valid relay evidence means the envelope contains
-  `controller_relay`, the packet ledger records the matching
-  `packet_controller_relay` or `result_controller_relay`, holder/status moved
-  to the target role, and any declared `active_holder_fast_lane` lease was
-  issued. Send only the envelope path and Controller-safe metadata to the role
-  after that runtime relay; never open sealed packet or result bodies;
+  will accept the receipt only after the current runtime ledger proves the
+  packet was released or assigned to the addressed role;
+- do not run separate delivery operations or wait for extra delivery evidence
+  for current work packets. Send only Router-authorized envelope paths and
+  Controller-safe metadata to the role; never open sealed packet or result
+  bodies;
 - relay envelopes only, update holder/status ledgers, and request role
   decisions;
 - when returning a role/event envelope to the router, pass the envelope file
@@ -276,8 +271,8 @@ Controller-visible receipts. If a foreground duty exists, perform that duty and
 write its required receipt. If no ready action exists and the run is
 nonterminal, continue `wait_patrol`. Only an explicit old-run diagnostic or
 unsupported-run repair instruction may call old Router commands. If a packet or
-card is missing, contaminated, addressed to the wrong role, or lacks relay
-evidence, stop packet flow and ask PM for a corrected decision.
+card is missing, contaminated, addressed to the wrong role, or lacks current
+assignment evidence, stop packet flow and ask PM for a corrected decision.
 
 ## Skill-Observation Reminders
 

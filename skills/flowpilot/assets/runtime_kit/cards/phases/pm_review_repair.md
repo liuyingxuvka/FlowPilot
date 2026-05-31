@@ -25,7 +25,7 @@ Current state contains a reviewer block.
 
 If PM opened the delivered review/blocker packet through the runtime and the
 open succeeded, that verified open is enough authority to make the repair
-decision required by this card. Do not wait for another Controller relay or
+decision required by this card. Do not wait for another Controller delivery or
 corrected prompt. If PM cannot proceed, choose an existing repair transaction
 or terminal stop through the PM decision contract; do not route an ordinary
 blocker back to PM.

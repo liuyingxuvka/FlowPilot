@@ -56,25 +56,25 @@ def missing_mutual_role_reminder_never_advances(state: State, trace) -> Invarian
         return InvariantResult.fail(f"missing result mutual-role reminder advanced: {sorted(result_unsafe)!r}")
     return InvariantResult.pass_()
 
-def controller_relay_requires_physical_files_and_envelope_only_handoff(state: State, trace) -> InvariantResult:
+def current_assignment_requires_physical_files_and_envelope_only_handoff(state: State, trace) -> InvariantResult:
     del trace
     relayed = set(state.controller_envelope_reads)
     missing_files = relayed - set(state.physical_packet_files)
     if missing_files:
-        return InvariantResult.fail(f"controller relayed without physical packet files: {sorted(missing_files)!r}")
+        return InvariantResult.fail(f"current assignmented without physical packet files: {sorted(missing_files)!r}")
     missing_handoff = relayed - set(state.controller_handoff_envelope_only)
     if missing_handoff:
-        return InvariantResult.fail(f"controller relayed without envelope-only handoff: {sorted(missing_handoff)!r}")
+        return InvariantResult.fail(f"current assignmented without envelope-only handoff: {sorted(missing_handoff)!r}")
     missing_mutual_reminder = relayed - set(state.controller_handoff_mutual_role_reminders)
     if missing_mutual_reminder:
         return InvariantResult.fail(
-            f"controller relayed without visible mutual-role reminder: {sorted(missing_mutual_reminder)!r}"
+            f"current assignmented without visible mutual-role reminder: {sorted(missing_mutual_reminder)!r}"
         )
-    result_relayed = set(state.result_controller_relay_signatures)
+    result_relayed = set(state.result_current_assignments)
     missing_result_mutual_reminder = result_relayed - set(state.result_mutual_role_reminders)
     if missing_result_mutual_reminder:
         return InvariantResult.fail(
-            f"controller relayed result without visible mutual-role reminder: {sorted(missing_result_mutual_reminder)!r}"
+            f"current assignmented result without visible mutual-role reminder: {sorted(missing_result_mutual_reminder)!r}"
         )
     return InvariantResult.pass_()
 
@@ -96,7 +96,7 @@ __all__ = (
     'controller_body_boundary_blocks_never_advance',
     'controller_handoff_body_leak_never_advances',
     'missing_mutual_role_reminder_never_advances',
-    'controller_relay_requires_physical_files_and_envelope_only_handoff',
+    'current_assignment_requires_physical_files_and_envelope_only_handoff',
     'holder_change_requires_user_status_update',
     'cockpit_missing_major_node_requires_chat_mermaid',
 )

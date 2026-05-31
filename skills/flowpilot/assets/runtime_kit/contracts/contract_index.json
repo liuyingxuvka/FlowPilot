@@ -302,7 +302,7 @@
       "contract_self_check_required": true,
       "controller_may_read_sealed_bodies": false,
       "controller_visibility": "role_output_envelope_only",
-      "pm_must_open_result_bodies_after_controller_relay": true,
+      "pm_must_open_result_bodies_after_current_assignment": true,
       "pm_disposition_is_control_transaction": true,
       "semantic_identity_fields": [
         "router_event",

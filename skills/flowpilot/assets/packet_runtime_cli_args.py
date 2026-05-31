@@ -36,50 +36,9 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     handoff = subparsers.add_parser("handoff", help="Print controller-visible envelope handoff only")
     handoff.add_argument("--envelope-path", required=True)
 
-    relay = subparsers.add_parser("relay", help="Controller signs and relays an envelope without opening body")
-    relay.add_argument("--envelope-path", required=True)
-    relay.add_argument("--controller-agent-id", default="controller")
-    relay.add_argument("--received-from-role", default="")
-    relay.add_argument("--relayed-to-role", default="")
-    relay.add_argument("--holder-before", default="")
-    relay.add_argument("--holder-after", default="")
-    relay.add_argument("--body-was-read-by-controller", action="store_true")
-    relay.add_argument("--body-was-executed-by-controller", action="store_true")
-    relay.add_argument("--private-role-to-role-delivery-detected", action="store_true")
-
-    read_packet = subparsers.add_parser("read-packet", help="Target role verifies relay and opens packet body")
+    read_packet = subparsers.add_parser("read-packet", help="Target role opens the addressed packet body")
     read_packet.add_argument("--envelope-path", required=True)
     read_packet.add_argument("--role", required=True)
-
-    open_packet_session = subparsers.add_parser(
-        "open-packet-session",
-        help="Target role opens a packet through the runtime session entrypoint",
-    )
-    open_packet_session.add_argument("--envelope-path", required=True)
-    open_packet_session.add_argument("--role", required=True)
-    open_packet_session.add_argument("--agent-id", required=True)
-
-    complete_packet_session = subparsers.add_parser(
-        "complete-packet-session",
-        help="Complete a previously opened role packet session and generate the result envelope",
-    )
-    complete_packet_session.add_argument("--session-path", required=True)
-    complete_packet_session.add_argument("--result-body-text", default="")
-    complete_packet_session.add_argument("--result-body-file", default="")
-    complete_packet_session.add_argument("--next-recipient", required=True)
-    complete_packet_session.add_argument("--controller-aside", default="")
-
-    run_packet_session = subparsers.add_parser(
-        "run-packet-session",
-        help="Open a packet session and complete it in one runtime call",
-    )
-    run_packet_session.add_argument("--envelope-path", required=True)
-    run_packet_session.add_argument("--role", required=True)
-    run_packet_session.add_argument("--agent-id", required=True)
-    run_packet_session.add_argument("--result-body-text", default="")
-    run_packet_session.add_argument("--result-body-file", default="")
-    run_packet_session.add_argument("--next-recipient", required=True)
-    run_packet_session.add_argument("--controller-aside", default="")
 
     progress = subparsers.add_parser("progress", help="Target role updates Controller-visible packet progress")
     progress.add_argument("--envelope-path", required=True)
@@ -160,7 +119,7 @@ def parse_args(argv: list[str]) -> argparse.Namespace:
     review.add_argument("--result-envelope-path", required=True)
     review.add_argument("--agent-role-map-json", default="")
 
-    read_result = subparsers.add_parser("read-result", help="Reviewer/PM verifies relay and opens result body")
+    read_result = subparsers.add_parser("read-result", help="Reviewer/PM opens the addressed result body")
     read_result.add_argument("--result-envelope-path", required=True)
     read_result.add_argument("--role", required=True)
 

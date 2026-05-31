@@ -122,7 +122,7 @@ def run_fake_e2e(
     shell = run_shell.load_run_shell(root, run_id=start_result["run"]["run_id"])
     ledger = run_shell.load_run_ledger(shell)
 
-    def complete_open_packet(packet_id: str, *, agent_id: str, body: str) -> tuple[str, str]:
+    def complete_leased_packet(packet_id: str, *, agent_id: str, body: str) -> tuple[str, str]:
         packet = ledger["packets"][packet_id]
         responsibility = packet["envelope"]["responsibility"]
         lease_id = host.lease_responsibility(
@@ -152,7 +152,7 @@ def run_fake_e2e(
         packet_id = str(action_json.get("subject_id") or "")
         packet = ledger["packets"][packet_id]
         kind = packet["envelope"].get("packet_kind", "task")
-        lease_id, result_id = complete_open_packet(
+        lease_id, result_id = complete_leased_packet(
             packet_id,
             agent_id=f"fake-{kind}-{index}",
             body=_body_for_packet(packet),

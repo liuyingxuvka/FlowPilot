@@ -68,18 +68,18 @@ def _apply_stateful_receipt_postcondition(router: ModuleType, project_root: Path
             original_entry = read_json_if_exists(_controller_action_path(run_root, original_id)) if original_id else {}
             original_action = original_entry.get('action') if isinstance(original_entry.get('action'), dict) else {}
             if not original_action:
-                return {'applied': False, 'reason': 'controller_relay_repair_missing_original_action', 'repair_target_action_type': repair_target_action_type, 'repair_of_controller_action_id': original_id}
-            relay_repair_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, original_action, receipt_payload)
-            if relay_repair_fold.get('applied'):
-                relay_repair_fold = dict(relay_repair_fold)
-                relay_repair_fold['source'] = 'controller_relay_deliverable_repair_fold'
-                relay_repair_fold['repair_action_type'] = action_type
-                relay_repair_fold['repair_target_action_type'] = repair_target_action_type
-                relay_repair_fold['repair_of_controller_action_id'] = original_id
-            return relay_repair_fold
-    relay_evidence_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, pending_action, receipt_payload)
-    if relay_evidence_fold.get('applied') or relay_evidence_fold.get('reason') != 'not_registered_controller_receipt_evidence_fold':
-        return relay_evidence_fold
+                return {'applied': False, 'reason': 'controller_delivery_repair_missing_original_action', 'repair_target_action_type': repair_target_action_type, 'repair_of_controller_action_id': original_id}
+            delivery_repair_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, original_action, receipt_payload)
+            if delivery_repair_fold.get('applied'):
+                delivery_repair_fold = dict(delivery_repair_fold)
+                delivery_repair_fold['source'] = 'controller_delivery_repair_fold'
+                delivery_repair_fold['repair_action_type'] = action_type
+                delivery_repair_fold['repair_target_action_type'] = repair_target_action_type
+                delivery_repair_fold['repair_of_controller_action_id'] = original_id
+            return delivery_repair_fold
+    delivery_evidence_fold = _apply_registered_controller_receipt_evidence_fold(router, project_root, run_root, run_state, pending_action, receipt_payload)
+    if delivery_evidence_fold.get('applied') or delivery_evidence_fold.get('reason') != 'not_registered_controller_receipt_evidence_fold':
+        return delivery_evidence_fold
     if action_type in ROUTER_OWNED_STATE_REPLAY_ACTION_TYPES:
         outcome = flowpilot_router_action_handlers.apply_registered_action(
             router,

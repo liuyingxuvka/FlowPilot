@@ -35,7 +35,7 @@ scan, product architecture, or route work.
 
 If PM opened the relevant startup packet or control-blocker packet through the
 runtime and the open succeeded, that verified open is enough authority to make
-the PM decision required by this card. Do not wait for another Controller relay
+the PM decision required by this card. Do not wait for another Controller delivery
 or corrected prompt. If PM cannot proceed, choose the existing repair or stop
 contract below; do not route an ordinary blocker back to PM.
 

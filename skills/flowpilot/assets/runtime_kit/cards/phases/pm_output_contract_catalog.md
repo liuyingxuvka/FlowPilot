@@ -23,7 +23,7 @@ Selection rules:
 - reviewer formal gate review request: `flowpilot.output_contract.reviewer_review_report.v1`;
 - FlowGuard operator request: `flowpilot.output_contract.flowguard_operator_model_report.v1`;
 - PM, reviewer, or FlowGuard operator gate decision: `flowpilot.output_contract.gate_decision.v1`;
-- PM package result disposition after Controller relays worker/material/research/current-node results to PM: `flowpilot.output_contract.pm_package_result_disposition.v1`;
+- PM package result disposition after worker/material/research/current-node results reach PM through current assignment: `flowpilot.output_contract.pm_package_result_disposition.v1`;
 - PM startup, repair, resume, segment, route, or closure decision: the matching `flowpilot.output_contract.pm_*` contract from the registry.
 
 Every PM-authored dispatch packet must include `output_contract` copied from

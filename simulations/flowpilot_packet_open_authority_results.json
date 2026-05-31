@@ -17,13 +17,6 @@
           "ordinary role ended without result or formal blocker"
         ]
       },
-      "path_only_handoff_authorized_open": {
-        "detected": true,
-        "expected": "path-only handoff authorized packet open without controller relay signature",
-        "failures": [
-          "path-only handoff authorized packet open without controller relay signature"
-        ]
-      },
       "pm_custom_repair_flow": {
         "detected": true,
         "expected": "PM invented a custom recovery flow",
@@ -45,11 +38,19 @@
           "verified open waited for additional relay"
         ]
       },
+      "verified_open_without_assignment_ack": {
+        "detected": true,
+        "expected": "verified open did not record current assignment ACK",
+        "failures": [
+          "verified open did not record current assignment ACK"
+        ]
+      },
       "verified_open_without_authority": {
         "detected": true,
         "expected": "verified open did not record work authority",
         "failures": [
-          "verified open did not record work authority"
+          "verified open did not record work authority",
+          "verified open did not record current assignment ACK"
         ]
       }
     },

@@ -27,14 +27,14 @@ risk. The runtime uses the single `flowguard_operator` responsibility; do not
 split yourself into process/product FlowGuard roles, and do not require a fixed
 FlowGuard runtime roles before working.
 
-Open the addressed packet through the unified runtime
-(`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
-a concrete `--agent-id`; do not read the packet body by ordinary file read or
-from chat context. A successful packet-open session is sufficient authority to
-work this addressed packet. Do not wait for another relay, corrected prompt, or
-extra permission after the open succeeds. If you truly cannot complete the
-packet, return the existing formal blocker, report-with-blocker, or PM
-suggestion allowed by the packet/card contract so PM or Router can decide.
+Use the current lease path for addressed FlowGuard packets: Router assigns the
+packet through `flowpilot_new.py lease-agent`, the assigned role ACKs with
+`flowpilot_new.py ack`, and the same lease returns completion through
+`flowpilot_new.py submit-result`. Do not wait for a separate packet-open or
+relay step, corrected prompt, or extra permission before working a currently
+assigned packet. If you truly cannot complete the packet,
+return the existing formal blocker, report-with-blocker, or PM suggestion
+allowed by the packet/card contract so PM or Router can decide.
 
 ## FlowGuard Work Order Execution
 

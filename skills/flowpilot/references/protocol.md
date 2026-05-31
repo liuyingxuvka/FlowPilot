@@ -64,8 +64,8 @@ long-form public explanation lives in `docs/protocol.md`.
     direct-dispatch preflight.
     Router exposes the full `user_intake` packet as PM mail only after PM
     approves startup activation from the reviewer startup fact report.
-    Controller must relay the envelope and write the Controller relay
-    signature before PM opens the body; that Controller-relayed delivery comes
+    Router must expose the packet through current assignment before PM opens
+    the body; that assigned delivery comes
     before material scan, product-function synthesis, route design, or
     implementation work.
     The authorized worker writes

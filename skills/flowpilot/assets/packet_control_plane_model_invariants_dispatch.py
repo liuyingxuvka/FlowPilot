@@ -88,7 +88,7 @@ def result_body_integrity_blocks_never_advance(state: State, trace) -> Invariant
 
 def result_relay_requires_packet_open_and_result_ledger(state: State, trace) -> InvariantResult:
     del trace
-    relayed = set(state.result_controller_relay_signatures)
+    relayed = set(state.result_current_assignments)
     missing_packet_open_envelope = relayed - set(state.packet_body_open_envelope_records)
     if missing_packet_open_envelope:
         return InvariantResult.fail(

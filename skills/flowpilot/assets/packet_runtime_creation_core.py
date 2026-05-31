@@ -55,11 +55,9 @@ from packet_runtime_paths import (
 from packet_runtime_relay import (
     _completed_agent_id_is_role_key,
     _same_project_path,
-    controller_relay_envelope,
     mark_controller_contamination,
     validate_packet_ready_for_direct_relay,
     validate_result_ready_for_reviewer_relay,
-    verify_controller_relay,
     verify_packet_open_receipt,
     verify_router_startup_release,
 )
@@ -70,7 +68,6 @@ from packet_runtime_schema import (
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
-    CONTROLLER_RELAY_SCHEMA,
     DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
     DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
     DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS,
@@ -221,7 +218,6 @@ def create_packet(
             "target_role_can_read_body": True,
             "body_hash_required": True,
             "body_hash_mismatch_blocks_dispatch": True,
-            "recipient_must_verify_controller_relay_before_body_open": True,
         },
         "identity_boundary": {
             "schema_version": "flowpilot.packet_identity_boundary.v1",
@@ -249,7 +245,7 @@ def create_packet(
         message=(
             f"Packet {packet_id} is held by Router as startup material for {to_role}."
             if router_owned_startup_material
-            else f"Packet {packet_id} envelope is ready for relay to {to_role}."
+            else f"Packet {packet_id} envelope is ready for assignment to {to_role}."
         ),
         progress=0,
     )
@@ -271,8 +267,6 @@ def create_packet(
         "packet_body_hash_verified": False,
         "controller_packet_body_access_detected": False,
         "controller_packet_body_execution_detected": False,
-        "controller_relay_signature_required": True,
-        "recipient_must_verify_controller_relay_before_body_open": True,
         "packet_body_identity_boundary_required": True,
         "packet_body_identity_boundary_marker": PACKET_IDENTITY_MARKER,
         "packet_envelope": {

@@ -54,11 +54,9 @@ from packet_runtime_paths import (
 from packet_runtime_relay import (
     _completed_agent_id_is_role_key,
     _same_project_path,
-    controller_relay_envelope,
     mark_controller_contamination,
     validate_packet_ready_for_direct_relay,
     validate_result_ready_for_reviewer_relay,
-    verify_controller_relay,
     verify_packet_open_receipt,
     verify_router_startup_release,
 )
@@ -69,7 +67,6 @@ from packet_runtime_schema import (
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
-    CONTROLLER_RELAY_SCHEMA,
     DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
     DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
     DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS,
@@ -183,13 +180,11 @@ def build_controller_handoff(envelope: dict[str, Any], *, envelope_path: str) ->
         "body_visibility": envelope.get("body_visibility", SEALED_BODY_VISIBILITY),
         "source_output_contract_id": envelope.get("source_output_contract_id") or output_contract_id(output_contract),
         "output_contract": output_contract,
-        "controller_relay_signature_required": True,
-        "recipient_must_verify_controller_relay_before_body_open": True,
         "return_to": envelope.get("return_to", "controller"),
         "next_holder": envelope.get("next_holder", to_role),
         "controller_allowed_actions": allowed_actions,
         "controller_forbidden_actions": forbidden_actions,
-        "instruction": "Relay this envelope only. Do not read, summarize, execute, edit, or quote the sealed body.",
+        "instruction": "Deliver this envelope metadata only. Do not read, summarize, execute, edit, or quote the sealed body.",
         "mutual_role_reminder": mutual_reminder,
         "controller_identity": mutual_reminder["controller_reminder"],
         "recipient_identity_required": mutual_reminder["recipient_reminder"],
@@ -209,8 +204,7 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
-    verify_controller_relay(envelope, recipient_role=role)
-    open_source = "controller_relay"
+    open_source = "current_assignment"
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
     output_contract = envelope.get("output_contract")
@@ -229,7 +223,6 @@ def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, r
     opened = {
         "role": role,
         "opened_at": utc_now(),
-        "controller_relay_verified": True,
         "body_hash_verified": True,
         "work_authority": work_authority,
     }
@@ -243,7 +236,6 @@ def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, r
         envelope["packet_id"],
         {
             "packet_body_opened_by_role": role,
-            "packet_body_opened_after_controller_relay_check": True,
             "packet_body_open_record": opened,
             "packet_open_authorizes_work": True,
             "packet_open_work_authority": work_authority,

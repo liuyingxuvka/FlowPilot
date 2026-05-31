@@ -148,9 +148,6 @@ def control_plane_router_owned_state_replay_action(action_type: Any) -> bool:
 
 
 def control_plane_envelope_is_hash_bound(envelope: dict[str, Any]) -> bool:
-    relay = envelope.get("controller_relay")
-    if isinstance(relay, dict) and relay.get("envelope_hash"):
-        return True
     startup_release = envelope.get("router_startup_release")
     return isinstance(startup_release, dict) and bool(startup_release.get("envelope_hash"))
 

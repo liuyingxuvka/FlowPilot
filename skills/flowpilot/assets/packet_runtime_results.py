@@ -58,11 +58,9 @@ from packet_runtime_paths import (
 from packet_runtime_relay import (
     _completed_agent_id_is_role_key,
     _same_project_path,
-    controller_relay_envelope,
     mark_controller_contamination,
     validate_packet_ready_for_direct_relay,
     validate_result_ready_for_reviewer_relay,
-    verify_controller_relay,
     verify_packet_open_receipt,
     verify_router_startup_release,
 )
@@ -73,7 +71,6 @@ from packet_runtime_schema import (
     CHAIN_AUDIT_SCHEMA,
     CONTROLLER_HANDOFF_SCHEMA,
     CONTROLLER_NEXT_ACTION_NOTICE_SCHEMA,
-    CONTROLLER_RELAY_SCHEMA,
     DEFAULT_CONTROLLER_ALLOWED_ACTIONS,
     DEFAULT_CONTROLLER_FORBIDDEN_ACTIONS,
     DIRECT_DISPATCH_FORBIDDEN_ALLOWED_ACTIONS,
@@ -160,7 +157,6 @@ def write_result(
             f"completed_by_role {completed_by_role!r} does not match packet to_role {packet_envelope.get('to_role')!r}"
         )
     if strict_role:
-        verify_controller_relay(packet_envelope, recipient_role=completed_by_role)
         verify_packet_open_receipt(project_root, packet_envelope, role=completed_by_role)
     paths = packet_paths_from_envelope(project_root, packet_envelope)
     result_body_path = paths["result_body"]
@@ -202,7 +198,6 @@ def write_result(
             "reviewer_or_pm_can_read_body": True,
             "result_body_hash_required": True,
             "result_body_hash_mismatch_blocks_review_pass": True,
-            "recipient_must_verify_controller_relay_before_body_open": True,
         },
         "identity_boundary": {
             "schema_version": "flowpilot.result_identity_boundary.v1",
@@ -254,7 +249,6 @@ def write_result(
             "next_recipient": next_recipient,
             "source_output_contract_id": output_contract_id(output_contract),
             "contract_self_check": contract_self_check,
-            "controller_relay_signature_required": True,
             "result_body_identity_boundary_required": True,
             "result_body_identity_boundary_marker": RESULT_IDENTITY_MARKER,
             "controller_process_aside_contract": result_envelope["controller_process_aside_contract"],
@@ -270,7 +264,6 @@ def write_result(
     return result_envelope
 
 def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any], *, role: str) -> str:
-    verify_controller_relay(result_envelope, recipient_role=role)
     allowed = {result_envelope.get("next_recipient"), "human_like_reviewer", "project_manager"}
     if role not in allowed:
         raise PacketRuntimeError(f"result body may only be read by {sorted(value for value in allowed if value)}, not {role!r}")
@@ -282,7 +275,6 @@ def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any
     opened = {
         "role": role,
         "opened_at": utc_now(),
-        "controller_relay_verified": True,
         "body_hash_verified": True,
     }
     result_envelope["result_body_opened_by_role"] = opened
@@ -294,7 +286,6 @@ def read_result_body_for_role(project_root: Path, result_envelope: dict[str, Any
         result_envelope["packet_id"],
         {
             "result_body_opened_by_role": role,
-            "result_body_opened_after_controller_relay_check": True,
             "result_body_open_record": opened,
             "active_packet_status": "result-body-opened-by-recipient",
             "active_packet_holder": role,

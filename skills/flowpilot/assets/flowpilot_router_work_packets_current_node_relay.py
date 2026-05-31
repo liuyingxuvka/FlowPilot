@@ -59,7 +59,7 @@ def _relay_packet_records(router: ModuleType, project_root: Path, run_state: dic
         audit = packet_runtime.validate_packet_ready_for_direct_relay(project_root, packet_envelope=envelope, envelope_path=envelope_path)
         if not audit.get('passed'):
             raise RouterError(f"packet envelope is not ready for direct relay: {audit.get('blockers')}")
-        packet_runtime.controller_relay_envelope(project_root, envelope=envelope, envelope_path=envelope_path, controller_agent_id=controller_agent_id, received_from_role=str(envelope.get('from_role') or 'project_manager'), relayed_to_role=str(envelope.get('to_role')))
+        packet_runtime.deliver_envelope_metadata(project_root, envelope=envelope, envelope_path=envelope_path, controller_agent_id=controller_agent_id, received_from_role=str(envelope.get('from_role') or 'project_manager'), relayed_to_role=str(envelope.get('to_role')))
         relayed_ids.append(str(envelope['packet_id']))
     return relayed_ids
 
@@ -81,7 +81,7 @@ def _relay_result_records(router: ModuleType, project_root: Path, run_state: dic
         audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=agent_role_map)
         if not audit.get('passed'):
             raise RouterError(f"result envelope is not ready for recipient relay: {audit.get('blockers')}")
-        packet_runtime.controller_relay_envelope(project_root, envelope=result, envelope_path=result_path, controller_agent_id=controller_agent_id, received_from_role=str(result.get('completed_by_role') or 'unknown'), relayed_to_role=to_role)
+        packet_runtime.deliver_envelope_metadata(project_root, envelope=result, envelope_path=result_path, controller_agent_id=controller_agent_id, received_from_role=str(result.get('completed_by_role') or 'unknown'), relayed_to_role=to_role)
         relayed_ids.append(str(result['packet_id']))
     return relayed_ids
 
@@ -115,7 +115,7 @@ def _validate_packet_bodies_opened_by_targets(router: ModuleType, project_root: 
         envelope = packet_runtime.load_envelope(project_root, envelope_path)
         expected_role = envelope.get('to_role')
         if envelope.get('body_opened_by_role', {}).get('role') != expected_role:
-            raise RouterError(f"packet {envelope.get('packet_id')} for role={expected_role} body was not opened by target role after Controller relay")
+            raise RouterError(f"packet {envelope.get('packet_id')} for role={expected_role} body was not opened by target role")
         try:
             packet_runtime.verify_packet_open_receipt(project_root, envelope, role=str(expected_role))
         except packet_runtime.PacketRuntimeError as exc:
@@ -138,7 +138,7 @@ def _validate_results_exist_for_packets(router: ModuleType, project_root: Path, 
         packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
         audit = packet_runtime.validate_result_ready_for_recipient_relay(project_root, packet_envelope=packet_envelope, result_envelope=result, agent_role_map=agent_role_map)
         if not audit.get('passed'):
-            raise RouterError(f"result envelope for packet {result.get('packet_id')} for role={audit.get('expected_role')} failed pre-relay audit: {audit.get('blockers')}")
+            raise RouterError(f"result envelope for packet {result.get('packet_id')} for role={audit.get('expected_role')} failed packet runtime audit: {audit.get('blockers')}")
 
 def _validate_packet_group_for_reviewer(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, audit_path: Path, agent_role_map: dict[str, str] | None=None) -> None:
     _bind_router(router)

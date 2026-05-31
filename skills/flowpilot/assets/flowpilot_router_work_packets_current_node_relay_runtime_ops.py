@@ -1,4 +1,4 @@
-"""Runtime relay operation builders for current-node packet relays."""
+"""Runtime delivery operation builders for current-node packet handoffs."""
 
 from __future__ import annotations
 
@@ -36,29 +36,22 @@ def _flowpilot_runtime_relay_operation(
 ) -> dict[str, Any]:
     _bind_router(router)
     envelope_rel = project_relative(project_root, envelope_path)
-    args = [
-        'relay-envelope',
-        '--envelope-path',
-        envelope_rel,
-        '--controller-agent-id',
-        'controller',
-        '--received-from-role',
-        source_role,
-        '--relayed-to-role',
-        target_role,
-    ]
     holder_agent_id = ''
     if isinstance(active_holder_item, dict):
         holder_agent_id = str(active_holder_item.get('target_agent_id') or '').strip()
+    args: list[str] = []
     if holder_agent_id:
-        args.extend(
+        args = (
             [
-                '--holder-agent-id',
+                'lease-agent',
+                '--packet-id',
+                packet_id,
+                '--responsibility',
+                target_role,
+                '--agent-id',
                 holder_agent_id,
-                '--route-version',
-                str(int(active_holder_item.get('route_version') or 0)),
-                '--frontier-version',
-                str(int(active_holder_item.get('frontier_version') or 0)),
+                '--host-kind',
+                'live',
             ]
         )
     packet_dir = envelope_path.parent
@@ -73,18 +66,18 @@ def _flowpilot_runtime_relay_operation(
                 expected_writes.append(value)
     expected_writes = [item for item in expected_writes if item]
     return {
-        'schema_version': 'flowpilot.runtime_relay_operation.v1',
-        'operation_type': 'controller_runtime_relay_envelope',
-        'runtime_entrypoint': 'flowpilot_runtime.py relay-envelope',
+        'schema_version': 'flowpilot.runtime_delivery_operation.v1',
+        'operation_type': 'current_assignment_lease',
+        'runtime_entrypoint': 'flowpilot_new.py lease-agent',
         'runtime_args': args,
         'packet_id': packet_id,
         'packet_family': packet_family,
         'envelope_kind': envelope_kind,
         'envelope_path': envelope_rel,
         'received_from_role': source_role,
-        'relayed_to_role': target_role,
+        'assigned_to_role': target_role,
         'postcondition': postcondition,
-        'expected_relay_kind': 'packet_controller_relay' if envelope_kind == 'packet_envelope' else 'result_controller_relay',
+        'expected_delivery_kind': 'current_assignment',
         'expected_writes': sorted(dict.fromkeys(expected_writes)),
         'active_holder_lease_required': bool(holder_agent_id),
         'active_holder_lease_path': str(active_holder_item.get('active_holder_lease_path') or '') if isinstance(active_holder_item, dict) else '',

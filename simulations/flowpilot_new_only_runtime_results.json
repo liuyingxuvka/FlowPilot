@@ -36,8 +36,8 @@
           "current_startup_intake_seen": true,
           "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "unsupported_prompt_path_offered": false,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_prompt_path_offered": false
         }
       },
       "prior_authority_quarantine_removed": {
@@ -57,8 +57,8 @@
           "current_startup_intake_seen": true,
           "migrated_unsupported_input": false,
           "prior_authority_quarantined": false,
-          "unsupported_prompt_path_offered": false,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_prompt_path_offered": false
         }
       },
       "unsupported_event_canonicalized": {
@@ -78,8 +78,8 @@
           "current_startup_intake_seen": true,
           "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "unsupported_prompt_path_offered": false,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_prompt_path_offered": false
         }
       },
       "unsupported_input_accepted": {
@@ -99,8 +99,8 @@
           "current_startup_intake_seen": true,
           "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "unsupported_prompt_path_offered": false,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_prompt_path_offered": false
         }
       },
       "unsupported_input_migrated": {
@@ -120,8 +120,8 @@
           "current_startup_intake_seen": true,
           "migrated_unsupported_input": true,
           "prior_authority_quarantined": true,
-          "unsupported_prompt_path_offered": false,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_prompt_path_offered": false
         }
       },
       "unsupported_prompt_path_offered": {
@@ -141,8 +141,8 @@
           "current_startup_intake_seen": true,
           "migrated_unsupported_input": false,
           "prior_authority_quarantined": true,
-          "unsupported_prompt_path_offered": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_prompt_path_offered": true
         }
       }
     },
@@ -168,15 +168,15 @@
       "current_startup_intake_recorded",
       "unsupported_event_replay_transaction_rejected",
       "unsupported_next_new_invocation_alias_rejected",
+      "unsupported_run_until_wait_new_invocation_alias_rejected",
       "unsupported_unsupported_chat_startup_payload_rejected",
+      "unsupported_unsupported_flowguard_operator_event_alias_rejected",
       "unsupported_unsupported_layout_root_rejected",
       "unsupported_unsupported_material_packet_contract_rejected",
-      "unsupported_unsupported_flowguard_operator_event_alias_rejected",
       "unsupported_unsupported_output_type_alias_rejected",
       "unsupported_unsupported_reconcile_transaction_rejected",
       "unsupported_unsupported_reviewer_event_alias_rejected",
-      "unsupported_unsupported_startup_answer_record_rejected",
-      "unsupported_run_until_wait_new_invocation_alias_rejected"
+      "unsupported_unsupported_startup_answer_record_rejected"
     ],
     "missing_labels": [],
     "ok": true,

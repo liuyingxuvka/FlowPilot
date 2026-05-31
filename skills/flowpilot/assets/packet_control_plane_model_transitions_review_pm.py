@@ -70,16 +70,16 @@ class ReviewerResultEnvelopeCheck:
             result_body_hash_checks=body_hash_checks,
             completed_agent_role_checks=agent_checks,
         )
-        if input_obj.packet_id not in state.result_controller_relay_signatures:
+        if input_obj.packet_id not in state.result_current_assignments:
             new_state = replace(
                 checked_state,
                 review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
                 pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
-                ReviewBlock(input_obj.packet_id, "missing_result_controller_relay_signature"),
+                ReviewBlock(input_obj.packet_id, "missing_result_current_assignment_signature"),
                 new_state,
-                "missing_result_controller_relay_signature_blocked",
+                "missing_result_current_assignment_signature_blocked",
             )
             return
         if input_obj.packet_id not in state.result_ledger_records:
@@ -95,7 +95,7 @@ class ReviewerResultEnvelopeCheck:
                 "result_ledger_absorption_missing_blocked",
             )
             return
-        if not input_obj.result_body_opened_after_relay_check:
+        if not input_obj.result_body_opened_after_assignment_check:
             new_state = replace(
                 checked_state,
                 unopened_result_blocks=checked_state.unopened_result_blocks + (input_obj.packet_id,),
@@ -103,7 +103,7 @@ class ReviewerResultEnvelopeCheck:
                 pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
-                ReviewBlock(input_obj.packet_id, "result_body_unopened_after_controller_relay"),
+                ReviewBlock(input_obj.packet_id, "result_body_unopened_after_current_assignment"),
                 new_state,
                 "unopened_result_letter_sent_to_pm_for_restart_or_repair",
             )

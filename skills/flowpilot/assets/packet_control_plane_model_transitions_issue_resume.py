@@ -87,7 +87,7 @@ class HeartbeatResumeLoad:
                 physical_packet_files=state.physical_packet_files + (packet_id,),
                 controller_handoff_envelope_only=state.controller_handoff_envelope_only + (packet_id,),
                 controller_handoff_mutual_role_reminders=state.controller_handoff_mutual_role_reminders + (packet_id,),
-                controller_relay_signatures=state.controller_relay_signatures + (packet_id,),
+                current_assignments=state.current_assignments + (packet_id,),
                 packet_envelope_checks=state.packet_envelope_checks + (packet_id,),
                 packet_body_hash_checks=state.packet_body_hash_checks + (packet_id,),
                 output_contract_checks=state.output_contract_checks + (packet_id,),

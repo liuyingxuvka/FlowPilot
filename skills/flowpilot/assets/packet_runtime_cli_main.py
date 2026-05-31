@@ -24,15 +24,11 @@ from packet_runtime_creation import (
 )
 from packet_runtime_paths import load_envelope
 from packet_runtime_progress import update_controller_progress
-from packet_runtime_relay import controller_relay_envelope
 from packet_runtime_results import read_result_body_for_role, write_result
 from packet_runtime_reviewer import validate_for_reviewer
 from packet_runtime_schema import PacketRuntimeError
 from packet_runtime_sessions import (
     begin_result_review_session,
-    begin_role_packet_session,
-    complete_role_packet_session,
-    run_role_packet_session,
 )
 
 
@@ -84,57 +80,9 @@ def main(argv: list[str] | None = None) -> int:
         handoff = build_controller_handoff(envelope, envelope_path=args.envelope_path)
         print(controller_handoff_text(handoff))
         return 0
-    if args.command == "relay":
-        envelope = load_envelope(root, args.envelope_path)
-        relayed = controller_relay_envelope(
-            root,
-            envelope=envelope,
-            envelope_path=args.envelope_path,
-            controller_agent_id=args.controller_agent_id,
-            received_from_role=args.received_from_role or None,
-            relayed_to_role=args.relayed_to_role or None,
-            holder_before=args.holder_before or None,
-            holder_after=args.holder_after or None,
-            body_was_read_by_controller=bool(args.body_was_read_by_controller),
-            body_was_executed_by_controller=bool(args.body_was_executed_by_controller),
-            private_role_to_role_delivery_detected=bool(args.private_role_to_role_delivery_detected),
-        )
-        print(json.dumps(relayed, indent=2, sort_keys=True))
-        return 0
     if args.command == "read-packet":
         envelope = load_envelope(root, args.envelope_path)
         print(read_packet_body_for_role(root, envelope, role=args.role))
-        return 0
-    if args.command == "open-packet-session":
-        session = begin_role_packet_session(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-        )
-        print(json.dumps(session, indent=2, sort_keys=True))
-        return 0
-    if args.command == "complete-packet-session":
-        result = complete_role_packet_session(
-            root,
-            session_path=args.session_path,
-            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
-            next_recipient=args.next_recipient,
-            controller_aside=args.controller_aside or None,
-        )
-        print(json.dumps(result, indent=2, sort_keys=True))
-        return 0
-    if args.command == "run-packet-session":
-        output = run_role_packet_session(
-            root,
-            envelope_path=args.envelope_path,
-            role=args.role,
-            agent_id=args.agent_id,
-            result_body_text=_read_text_arg(args.result_body_text, args.result_body_file),
-            next_recipient=args.next_recipient,
-            controller_aside=args.controller_aside or None,
-        )
-        print(json.dumps(output, indent=2, sort_keys=True))
         return 0
     if args.command == "progress":
         status = update_controller_progress(

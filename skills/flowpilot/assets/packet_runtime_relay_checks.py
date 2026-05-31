@@ -43,14 +43,13 @@ def verify_packet_open_receipt(project_root: Path, packet_envelope: dict[str, An
     if (
         not isinstance(opened, dict)
         or opened.get("role") != role
-        or opened.get("controller_relay_verified") is not True
         or opened.get("body_hash_verified") is not True
     ):
         raise PacketRuntimeError("packet envelope missing verified packet body open receipt")
     record = packet_ledger_record_for_envelope(project_root, packet_envelope)
     if not isinstance(record, dict):
         raise PacketRuntimeError("packet ledger record missing for packet body open receipt")
-    if record.get("packet_body_opened_by_role") != role or record.get("packet_body_opened_after_controller_relay_check") is not True:
+    if record.get("packet_body_opened_by_role") != role:
         raise PacketRuntimeError("packet ledger missing packet body open receipt")
     if record.get("packet_body_hash") != packet_envelope.get("body_hash"):
         raise PacketRuntimeError("packet ledger packet body hash does not match packet envelope")
@@ -253,11 +252,6 @@ def validate_result_ready_for_recipient_relay(
         blockers.append("packet_body_hash_mismatch")
     if not result_body_hash_matches:
         blockers.append("result_body_hash_mismatch")
-    try:
-        verify_controller_relay(packet_envelope, recipient_role=str(expected_role))
-    except PacketRuntimeError:
-        blockers.append("missing_or_invalid_packet_controller_relay")
-
     result_paths = packet_paths_from_result_envelope(project_root, result_envelope)
     ledger_record = packet_ledger_record_for_envelope(project_root, result_envelope)
     ledger_record_found = isinstance(ledger_record, dict)
@@ -266,7 +260,6 @@ def validate_result_ready_for_recipient_relay(
     if ledger_record_found:
         ledger_packet_opened = (
             ledger_record.get("packet_body_opened_by_role") == expected_role
-            and ledger_record.get("packet_body_opened_after_controller_relay_check") is True
             and ledger_record.get("packet_body_hash") == packet_envelope.get("body_hash")
         )
         result_ledger_absorbed = (
@@ -308,7 +301,7 @@ def validate_result_ready_for_recipient_relay(
         "packet_body_hash_matches_envelope": packet_body_hash_matches,
         "result_body_hash_matches_envelope": result_body_hash_matches,
         "packet_ledger_record_found": ledger_record_found,
-        "packet_ledger_packet_body_opened_by_target_after_relay_check": ledger_packet_opened,
+        "packet_ledger_packet_body_opened_by_target": ledger_packet_opened,
         "packet_ledger_result_absorbed": result_ledger_absorbed,
         "expected_role": expected_role,
         "completed_by_role": completed_by_role,
@@ -368,30 +361,18 @@ def verify_router_startup_release(
     return release
 
 
-def verify_controller_relay(
+def verify_addressed_envelope(
     envelope: dict[str, Any],
     *,
     recipient_role: str,
 ) -> dict[str, Any]:
-    relay = envelope.get("controller_relay")
     if envelope.get("controller_return_to_sender", {}).get("contaminated"):
         raise PacketRuntimeError("contaminated envelope cannot be opened; sender must reissue a new packet")
-    if not isinstance(relay, dict):
-        raise PacketRuntimeError("missing controller relay signature")
-    if relay.get("delivered_via_controller") is not True:
-        raise PacketRuntimeError("envelope was not delivered via controller")
-    if relay.get("relayed_to_role") != recipient_role:
-        raise PacketRuntimeError(
-            f"controller relay target {relay.get('relayed_to_role')!r} does not match recipient {recipient_role!r}"
-        )
-    if relay.get("body_was_read_by_controller") is not False:
-        raise PacketRuntimeError("controller did not sign that body was unread")
-    if relay.get("body_was_executed_by_controller") is not False:
-        raise PacketRuntimeError("controller did not sign that body was unexecuted")
-    if relay.get("private_role_to_role_delivery_detected"):
-        raise PacketRuntimeError("private role-to-role delivery detected")
-    if relay.get("envelope_hash") != envelope_hash(envelope):
-        raise PacketRuntimeError("controller relay envelope hash mismatch")
-    if not relay.get("holder_before") or not relay.get("holder_after"):
-        raise PacketRuntimeError("controller relay holder chain is incomplete")
-    return relay
+    target = str(envelope.get("to_role") or envelope.get("next_recipient") or "")
+    if target and target != recipient_role:
+        raise PacketRuntimeError(f"envelope target {target!r} does not match recipient {recipient_role!r}")
+    return {
+        "schema_version": "flowpilot.addressed_envelope_check.v1",
+        "recipient_role": recipient_role,
+        "addressed_role": target,
+    }

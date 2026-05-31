@@ -91,9 +91,8 @@ def _empty_packet_ledger(project_root: Path, run_id: str, run_root: Path) -> dic
             "controller_may_execute_worker_packet": False,
             "controller_may_advance_from_own_evidence": False,
             "controller_may_relabel_wrong_role_origin": False,
-            "all_formal_mail_must_route_through_controller": True,
-            "recipient_must_verify_controller_relay_before_body_open": True,
-            "controller_relay_signature_required": True,
+            "all_formal_mail_must_use_current_assignment": True,
+            "recipient_must_verify_current_assignment_before_body_open": True,
             "contaminated_mail_requires_sender_reissue": True,
             "pm_controller_reminder_required": True,
             "router_direct_dispatch_required_before_worker": True,
@@ -153,7 +152,7 @@ def _update_packet_record(project_root: Path, ledger_path: Path, packet_id: str,
     for record in packets:
         if isinstance(record, dict) and record.get("packet_id") == packet_id:
             for key, value in updates.items():
-                if key in {"holder_history", "controller_relay_history", "router_startup_release_history"}:
+                if key in {"holder_history", "router_startup_release_history"}:
                     existing = record.setdefault(key, [])
                     if isinstance(existing, list):
                         existing.extend(value if isinstance(value, list) else [value])

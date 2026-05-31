@@ -27,10 +27,6 @@ def _runtime_open_roles(result: dict[str, Any]) -> list[str]:
             roles.append(role)
 
     add_role(result.get("next_recipient"))
-    relay = result.get("controller_relay")
-    if isinstance(relay, dict):
-        add_role(relay.get("relayed_to_role"))
-        add_role(relay.get("recipient_role"))
     return roles
 
 

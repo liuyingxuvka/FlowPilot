@@ -71,17 +71,16 @@ decision boundary. Do not include work that depends on a future result from the
 same batch. Router owns busy/idle enforcement, result joining, review routing,
 and stage advancement.
 
-When PM is the addressed packet recipient, open the sealed packet through
-the unified runtime (`flowpilot_runtime.py open-packet`) with a concrete
-`--agent-id`; do not read packet bodies by ordinary file read or from chat
-context. When PM is authorized to inspect a sealed result body, open it through
-`flowpilot_runtime.py open-result`. These runtime sessions are PM's read
-receipts. Use the unified runtime as the live packet/result entrypoint.
-If `open-packet` succeeds and the runtime records verified relay or startup
-release plus body-hash checks, that successful open is sufficient authority for
-PM to work the addressed packet. Do not wait for another relay,
-corrected prompt, or extra permission. PM must either submit the expected PM
-output or choose an existing PM repair/stop exit.
+When PM is the addressed packet recipient, successful current work authority comes from
+Router's current-run packet assignment, the matching `flowpilot_new.py
+lease-agent` record, PM's `flowpilot_new.py ack`, and the matching
+`flowpilot_new.py submit-result` return. Do not wait for a separate packet-open
+or relay step before working a currently assigned packet. When PM is
+authorized to inspect a sealed result body, use only the
+Router-provided result body path/hash and addressed-role permission; do not
+read packet or result bodies by ordinary file read outside that current
+authority. PM must either submit the expected PM output or choose an existing
+PM repair/stop exit.
 PM may not use any entrypoint to peek at a worker/FlowGuard operator/reviewer packet that
 is addressed to another role.
 
@@ -431,7 +430,7 @@ Every PM decision body must include:
 - evidence or reviewed report ids used;
 - next packet or requested system action when applicable;
 - stop-for-user flag;
-- `controller_reminder`: Controller relays and records only. Controller must
+- `controller_reminder`: Controller delivers metadata and records status only. Controller must
   not implement, read sealed bodies, approve gates, advance routes, or close
   nodes from Controller-origin evidence.
 

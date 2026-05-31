@@ -68,9 +68,8 @@
     "user_intake_body_visibility": "external_user_input_controller_visible",
     "controller_bootstrap_scope_limited_to_user_options": "<true|false>",
     "pm_requested_startup_reviewer_gate_by_packet": "<true|false>",
-    "all_formal_mail_routed_through_controller": "<true|false>",
-    "controller_relay_signatures_checked": "<true|false>",
-    "controller_no_body_read_no_execute_signatures_checked": "<true|false>",
+    "all_formal_mail_uses_current_assignment": "<true|false>",
+    "current_assignment_checked": "<true|false>",
     "recipient_pre_open_checks_required": true,
     "private_role_to_role_mail_detected": "<true|false>",
     "contaminated_or_unopened_mail_sent_to_pm": "<true|false>"

@@ -33,14 +33,14 @@ def review_pass_requires_mail_chain_audit(state: State, trace) -> InvariantResul
         return InvariantResult.fail(f"review pass without packet mail-chain audit: {sorted(missing)!r}")
     return InvariantResult.pass_()
 
-def recipient_body_open_requires_controller_relay_signature(state: State, trace) -> InvariantResult:
+def recipient_body_open_requires_current_assignment(state: State, trace) -> InvariantResult:
     del trace
-    packet_missing = set(state.packet_body_open_events) - set(state.controller_relay_signatures)
+    packet_missing = set(state.packet_body_open_events) - set(state.current_assignments)
     if packet_missing:
-        return InvariantResult.fail(f"packet body opened without controller relay signature: {sorted(packet_missing)!r}")
-    result_missing = set(state.result_body_open_events) - set(state.result_controller_relay_signatures)
+        return InvariantResult.fail(f"packet body opened without current assignment signature: {sorted(packet_missing)!r}")
+    result_missing = set(state.result_body_open_events) - set(state.result_current_assignments)
     if result_missing:
-        return InvariantResult.fail(f"result body opened without controller relay signature: {sorted(result_missing)!r}")
+        return InvariantResult.fail(f"result body opened without current assignment signature: {sorted(result_missing)!r}")
     return InvariantResult.pass_()
 
 def missing_or_unopened_mail_requires_pm_restart_or_repair(state: State, trace) -> InvariantResult:
@@ -71,7 +71,7 @@ __all__ = (
     'advance_requires_review_pass',
     'review_pass_requires_role_origin_audit',
     'review_pass_requires_mail_chain_audit',
-    'recipient_body_open_requires_controller_relay_signature',
+    'recipient_body_open_requires_current_assignment',
     'missing_or_unopened_mail_requires_pm_restart_or_repair',
     'invalid_origin_block_requires_warning',
 )

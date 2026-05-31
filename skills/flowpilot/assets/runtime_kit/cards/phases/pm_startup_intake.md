@@ -26,12 +26,12 @@ request body. Before startup activation, PM may use
 `startup_intake/startup_intake_record.json`, startup answers, route/run
 identity, display evidence, role/continuation evidence, and user-intake
 envelope path/hash metadata. The full `user_intake` body remains Router-held
-until PM approves startup activation, then Controller relays it as the first
+until PM approves startup activation, then Router exposes it as the first
 post-startup PM mail item.
 
-Do not run `open-packet` for the full `user_intake` packet from this phase. Do
+Do not use a separate packet-open command for the full `user_intake` packet from this phase. Do
 not ask Controller to recover the user's work request from chat history;
-Controller may relay only paths, hashes, status, and envelopes.
+Controller may deliver only paths, hashes, status, and envelopes.
 
 If startup metadata cannot legally support the later startup-activation
 decision, submit an existing PM exit after the startup fact report:
@@ -51,7 +51,7 @@ Allowed PM decisions:
 Forbidden:
 
 - do not open the full `user_intake` body before startup activation and
-  Controller relay;
+  current assignment;
 - do not request material or capability scan packets yet;
 - do not write the final route yet;
 - do not issue implementation packets;

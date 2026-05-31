@@ -23,8 +23,7 @@
   "active_holder_return_path": {
     "lease_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/active_holder_lease.json",
     "events_path": ".flowpilot/runs/<run-id>/packets/<packet-id>/active_holder_events.jsonl",
-    "use_when_router_issues_lease": true,
-    "fallback_to_controller_relay_when_no_live_agent": true
+    "use_when_router_issues_lease": true
   },
   "router_mailbox_return": {
     "ack_and_result_events_go_to_router_mailbox": true,
@@ -74,41 +73,9 @@
   "supersedes": [],
   "stale_after_route_version": 0,
   "controller_visibility": "envelope_only",
-  "controller_relay": {
-    "schema_version": "flowpilot.controller_relay.v1",
-    "delivered_via_controller": true,
-    "controller_agent_id": "<controller-agent-id>",
-    "received_from_role": "<from_role>",
-    "relayed_to_role": "<to_role>",
-    "received_at": "<iso-8601-timestamp>",
-    "relayed_at": "<iso-8601-timestamp>",
-    "envelope_hash": "<sha256-stable-envelope-hash>",
-    "body_was_read_by_controller": false,
-    "body_was_executed_by_controller": false,
-    "body_visibility": "<sealed_target_role_only|external_user_input_controller_visible>",
-    "external_user_input_visible_to_controller": false,
-    "holder_before": "<from_role>",
-    "holder_after": "<to_role>",
-    "private_role_to_role_delivery_detected": false,
-    "recipient_must_verify_before_body_open": true,
-    "mutual_role_reminder": {
-      "schema_version": "flowpilot.mutual_role_reminder.v1",
-      "controller_reminder": "You are Controller only. Relay and record this packet_envelope; do not open, summarize, execute, approve gates, mutate routes, close nodes, or issue free-text work instructions.",
-      "sender_reminder": "The sender/producer for this envelope is `<from_role>`.",
-      "recipient_reminder": "The recipient is `<to_role>` for this envelope only. Open the body only after verifying Controller relay, role target, and hash; act only inside the addressed role and packet/result scope.",
-      "reply_continuation_reminder": "When returning or relaying the next envelope, include this same visible mutual-role reminder so Controller and the next recipient are reminded again.",
-      "body_boundary_reminder": "Keep sealed body content out of Controller-visible chat; submit envelope metadata to Router."
-    },
-    "reply_continuation_reminder": "When returning or relaying the next envelope, include this same visible mutual-role reminder so Controller and the next recipient are reminded again.",
-    "recipient_role_reminder": "This mail is for `<to_role>` only.",
-    "mail_only_reminder": "The recipient must answer through a file-backed packet/result/report body and submit the runtime envelope to Router; Controller sees only Router-authorized metadata.",
-    "chat_response_body_allowed": false
-  },
-  "controller_relay_history": [],
   "body_opened_by_role": {
     "role": "<to_role-or-null>",
     "opened_at": "<iso-8601-timestamp-or-null>",
-    "controller_relay_verified": false,
     "body_hash_verified": false
   },
   "controller_allowed_actions": [
@@ -143,14 +110,13 @@
     "reviewer_can_read_body_only_when_packet_addressed_to_reviewer": true,
     "reviewer_reviews_pm_formal_gate_package_after_result_disposition": true,
     "pm_can_read_worker_result_body_for_disposition": true,
-    "recipient_must_verify_controller_relay_before_body_open": true
+    "recipient_must_verify_current_assignment_before_body_open": true
   },
   "integrity_policy": {
     "body_hash_required": true,
     "body_hash_mismatch_blocks_dispatch": true,
     "stale_body_after_route_mutation_blocks_dispatch": true,
     "wrong_holder_blocks_dispatch": true,
-    "missing_controller_relay_signature_blocks_body_open": true,
     "controller_read_or_execute_body_requires_sender_reissue": true,
     "private_role_to_role_delivery_blocks_body_open": true
   },

@@ -33,7 +33,7 @@ def mutual_role_reminder(*, source_role: str, target_role: str, envelope_kind: s
         "sender_reminder": f"The sender/producer for this envelope is `{source_role}`.",
         "recipient_reminder": (
             f"The recipient is `{target_role}` for this envelope only. Open the body only "
-            "after verifying Controller relay, role target, and hash; act only inside the "
+            "after verifying current assignment, role target, and hash; act only inside the "
             "addressed role and packet/result scope."
         ),
         "reply_continuation_reminder": (
@@ -48,7 +48,7 @@ def mutual_role_reminder(*, source_role: str, target_role: str, envelope_kind: s
 
 
 def packet_open_work_authority(*, role: str, packet_type: str, source: str) -> dict[str, Any]:
-    """Successful open-packet authority: do not wait for another relay.
+    """Successful current assignment authority: do not wait for another prompt.
 
     PM packets may exit through pm_startup_repair_request,
     pm_startup_protocol_dead_end, or pm_control_blocker_repair_decision;
@@ -77,9 +77,9 @@ def packet_open_work_authority(*, role: str, packet_type: str, source: str) -> d
         "packet_type": packet_type,
         "scope": "addressed_packet_only",
         "source": source,
-        "controller_relay_or_startup_release_verified": True,
+        "current_assignment_or_startup_release_verified": True,
         "body_hash_verified": True,
-        "do_not_wait_for_additional_controller_relay": True,
+        "do_not_wait_for_additional_delivery": True,
         "required_exit": required_exit,
         "legal_exits": legal_exits,
     }

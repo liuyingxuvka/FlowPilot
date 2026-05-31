@@ -25,15 +25,15 @@ mismatched, or contains inline body fields, return
 `unauthorized_direct_message` and wait for a corrected runtime-delivered
 envelope.
 
-Open the addressed packet through the unified runtime
-(`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
-a concrete `--agent-id`; do not read the packet body by ordinary file read or
-from chat context. The runtime session verifies Controller relay, target
-responsibility, body hash, and output contract, then writes the packet-open
-receipt. A successful packet-open session is sufficient authority to work that
-addressed packet. Do not wait for another relay after a successful open unless
-the packet itself requires it. If the open fails, return a formal blocker; PM
-or Router can decide the next authorized repair path.
+Use the current lease path for addressed work packets: Router assigns the
+packet through `flowpilot_new.py lease-agent`, the assigned role ACKs with
+`flowpilot_new.py ack`, and the same lease returns completion through
+`flowpilot_new.py submit-result`. Do not wait for a separate packet-open or
+relay step before working a currently assigned packet.
+Verify the packet is addressed to your requested responsibility and that any
+body path/hash metadata matches before using it. If current assignment or hash
+metadata is missing, return a formal blocker; PM or Router can decide the next
+authorized repair path.
 
 Your packet may be one member of a PM-authored parallel batch. Complete only
 the packet addressed to your requested responsibility. Do not wait for sibling

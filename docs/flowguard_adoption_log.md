@@ -21035,6 +21035,66 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## remove-controller-relay-protocol - FlowPilot current assignment protocol cleanup
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested direct removal of the obsolete Controller relay field/signature path, no audit-field retention, no old-compatibility layer, and local installed-skill sync.
+- Status: implemented, validated, installed, and synced
+- Skill decision: predictive KB preflight + OpenSpec + FlowGuard existing-model preflight + DevelopmentProcessFlow + Model/Test Alignment + Model Miss Review
+- Started: 2026-05-31T20:50:20+02:00
+- Ended: 2026-05-31T20:50:20+02:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_packet_open_authority_model.py`
+- `simulations/run_flowpilot_packet_open_authority_checks.py`
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+- `skills/flowpilot/assets/run_packet_control_plane_checks.py`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- OK: `python simulations/run_flowpilot_packet_open_authority_checks.py`
+- OK: `python skills/flowpilot/assets/run_packet_control_plane_checks.py`
+- OK: `python simulations/run_new_only_runtime_checks.py`
+- OK: `python -m unittest tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_current_packet_rows_use_lease_ack_result_authority tests.test_flowpilot_card_instruction_coverage.FlowPilotCardInstructionCoverageTests.test_packet_open_success_requires_work_or_existing_exit`
+- OK: `python -m compileall -q skills/flowpilot/assets simulations`
+- OK: `openspec validate remove-controller-relay-protocol --strict`
+- OK: `python scripts/flowguard_project_topology.py build`
+- OK: `python scripts/flowguard_project_topology.py check`
+- OK: `python scripts/check_install.py --json`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: installed skill grep for obsolete `controller_relay`, `relay-envelope`, `open-packet`, and `run-packet` returned no matches.
+
+### Findings
+- Current FlowPilot packet authority is now documented and checked as `flowpilot_new.py lease-agent -> flowpilot_new.py ack -> flowpilot_new.py submit-result`.
+- `controller_relay` was removed from current packet/result templates, runtime ledger defaults, body-open checks, role cards, reference docs, and local installed skill content.
+- The old strict command exposure for `relay-envelope`, `open-packet`, and `run-packet` was removed from current runtime command surfaces.
+- The packet-open authority model still catches the important hazard: a verified current assignment/ACK path waiting for an extra delivery step.
+- Repository-owned installed FlowPilot skill has zero sync drift after final audit.
+
+### Counterexamples
+- verified_open_without_assignment_ack
+- pm_waits_for_extra_relay_after_verified_open
+- verified_open_without_authority
+- pm_self_blocker_loop
+- pm_custom_repair_flow
+- ordinary_role_silent_terminal_wait
+
+### Friction Points
+- The older packet control-plane model still carried obsolete names and had to be mechanically renamed to current-assignment terminology before it could remain useful as a regression surface.
+- The install audit correctly caught stale topology after source/model edits; topology was rebuilt and checked before final sync.
+
+### Skipped Steps
+- No compatibility shim or retained audit-only Controller relay field was added, per user instruction.
+- No OpenSpec archive was performed because this turn implemented and synced the change; archival can be a separate closeout step.
+- No GitHub push, tag, release, deploy, or public publication was performed.
+
+### Next Actions
+- If a future FlowPilot run blocks on packet-opening authority again, inspect only current assignment, ACK, target role, and body hash evidence first; do not reintroduce Controller relay signatures.
+
+
 ## harden-flowpilot-shallow-completion-20260531 - FlowPilot shallow-completion guard hardening
 
 - Project: FlowGuardProjectAutopilot_20260430

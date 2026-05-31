@@ -19,7 +19,6 @@ from packet_runtime_paths import (
 )
 from packet_runtime_relay import (
     validate_packet_ready_for_direct_relay,
-    verify_controller_relay,
 )
 
 
@@ -114,7 +113,6 @@ def issue_active_holder_lease(
         holder_role=holder_role,
         holder_agent_id=resolved_agent_id,
     )
-    verify_controller_relay(packet_envelope, recipient_role=holder_role)
     audit = validate_packet_ready_for_direct_relay(
         project_root,
         packet_envelope=packet_envelope,

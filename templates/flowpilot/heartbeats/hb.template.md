@@ -66,8 +66,8 @@ Wakeup sequence:
    is diagnostic only and must not skip resume re-entry.
 2. Resolve `.flowpilot/current.json`, then load the active run state,
    execution frontier, active route, role-binding ledger, role-binding memory, latest
-   heartbeat/manual-resume evidence, packet/status ledger, and controller relay
-   history. Do not open any `packet_body.md` or `result_body.md`.
+   heartbeat/manual-resume evidence, packet/status ledger, and current
+   assignment history. Do not open any `packet_body.md` or `result_body.md`.
 3. Refresh the current lifecycle guard and foreground duty. If the guard
    returns work, follow that duty; if it returns a wait, run the runtime refresh
    command and continue from the next guard result.
@@ -78,24 +78,24 @@ Wakeup sequence:
    unknown, or timeout-unknown roles must be replaced or blocked before asking
    for route decisions.
 6. Audit the mail chain before doing normal continuation: every formal
-   packet/result/review/PM decision must have controller relay signatures,
-   `body_was_read_by_controller: false`, `body_was_executed_by_controller:
-   false`, holder continuity, no private role-to-role delivery, and recipient
-   body-open records after relay verification. If any packet/result is
-   contaminated, unsigned, privately delivered, missing, or unopened, do not
+   packet/result/review/PM decision must have current assignment evidence,
+   holder continuity, no private role-to-role delivery, and recipient
+   body-open records after assignment verification. If any packet/result is
+   contaminated, privately delivered, missing, or unopened, do not
    continue it; send an audit envelope to PM asking for `restart_node`,
    `create_repair_node`, or `request_sender_reissue`.
 7. Ask PM for `PM_DECISION` from the current frontier. PM must include
    `controller_reminder` and must not open the startup gate until reviewer has
    audited startup readiness through the same envelope/body path.
-8. If PM issues a packet envelope/body pair, sign and relay only the envelope to
-   the addressed role. The recipient must verify the controller signature before
-   opening the body. Include `ROLE_REMINDER`.
+8. If PM issues a packet envelope/body pair, route it through the current
+   assignment and ACK path. The recipient must verify assignment, role target,
+   and hash before opening the body. Include `ROLE_REMINDER`.
 9. If a Workerlready has an unfinished packet, resume that exact packet only
-   when controller relay signature, holder chain, prior router direct-dispatch
+   when current assignment, holder chain, prior router direct-dispatch
    preflight, body open record, and worker identity are clear. If unclear, ask PM for
    repair/reissue/quarantine; Controller must not finish it.
-10. If a worker result exists, sign and route only the `RESULT_ENVELOPE` to PM.
+10. If a worker result exists, route the result through the current assignment
+   and ACK path to PM.
    Controller must not read or execute packet/result bodies. PM opens the
    result body, records a package-result disposition, and only an absorbed
    result may be included in a PM-built formal gate package for reviewer
@@ -104,7 +104,7 @@ Wakeup sequence:
    reissue, or route mutation.
 11. Continue the internal packet loop only when PM says `stop_for_user: false`;
    otherwise write the controlled stop notice.
-12. If the holder, worker identity, prior router direct-dispatch preflight, relay signature,
+12. If the holder, worker identity, prior router direct-dispatch preflight, current assignment,
    body-open record, or worker result is ambiguous after wakeup, block and ask
    PM for recovery/reissue/reassignment. Controller must not infer the missing
    work or finish it.

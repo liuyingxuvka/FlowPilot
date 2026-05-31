@@ -23,16 +23,17 @@ missing, mismatched, or contains inline body fields, return
 `unauthorized_direct_message` and wait for a corrected router-delivered
 envelope.
 
-Open the addressed research packet through the unified runtime
-(`flowpilot_runtime.py open-packet` or `flowpilot_runtime.py run-packet`) with
-a concrete `--agent-id`; do not read the packet body by ordinary file read or
-from chat context. Use the unified runtime as the live packet execution entrypoint.
-A successful packet-open session is sufficient authority to work this addressed
-research packet. Do not wait for another relay, corrected prompt, or extra
-permission after the open succeeds. If you truly cannot complete the packet,
-return the existing formal blocker, result-with-blocker, or PM suggestion
-allowed by the packet/card contract so PM or Router can decide. Return only the
-bounded research result requested by the PM.
+Use the current lease path for addressed research packets: Router assigns the
+packet through `flowpilot_new.py lease-agent`, the assigned role ACKs with
+`flowpilot_new.py ack`, and the same lease returns completion through
+`flowpilot_new.py submit-result`. Do not wait for a separate packet-open or
+relay step, corrected prompt, or extra permission before working a currently
+assigned packet. Verify the packet is addressed to your
+requested responsibility and that any body path/hash metadata matches before
+using it. If you truly cannot complete the packet, return the existing formal
+blocker, result-with-blocker, or PM suggestion allowed by the packet/card
+contract so PM or Router can decide. Return only the bounded research result
+requested by the PM.
 
 The PM packet boundary is a hard scope boundary, not a low-standard target.
 Within the requested research boundary, use the simplest high-quality evidence
@@ -62,9 +63,8 @@ for PM, Reviewer, or FlowGuard operator judgement. These rows are packet-scoped 
 only; they do not approve gates, mutate routes, close nodes, waive missing
 FlowGuard reports, or replace PM decisions.
 
-Submit the full research body through `flowpilot_runtime.py complete-packet` or
-`flowpilot_runtime.py run-packet` and submit the runtime-generated result directly to Router
-envelope to Controller. Do not hand-write the result envelope unless the
+Submit the full research body through the current `flowpilot_new.py
+submit-result` lease return. Do not hand-write the result envelope unless the
 runtime is unavailable and you are returning a protocol blocker.
 
 Include:

@@ -28,8 +28,8 @@ class NodePacket:
     controller_attempts_body_execute: bool = False
     delivered_to_role: str = "worker"
     cockpit_missing_on_major_node: bool = False
-    controller_relay_signature_present: bool = True
-    recipient_opens_body_after_relay_check: bool = True
+    current_assignment_present: bool = True
+    recipient_opens_body_after_assignment_check: bool = True
     recipient_open_records_envelope: bool = True
     recipient_open_records_ledger: bool = True
     body_hash_identity_matches_ledger: bool = True
@@ -60,9 +60,9 @@ class NodeResult:
     completed_by_agent_id: str
     result_body_hash_valid: bool = True
     result_body_stale_after_route_mutation: bool = False
-    result_controller_relay_signature_present: bool = True
+    result_current_assignment_present: bool = True
     result_has_mutual_role_reminder: bool = True
-    result_body_opened_after_relay_check: bool = True
+    result_body_opened_after_assignment_check: bool = True
     result_body_open_records_envelope: bool = True
     result_body_open_records_ledger: bool = True
     result_ledger_record_present: bool = True
@@ -113,7 +113,7 @@ class State:
     controller_body_access_blocks: tuple[str, ...] = ()
     controller_body_execution_blocks: tuple[str, ...] = ()
     controller_return_to_sender: tuple[str, ...] = ()
-    controller_relay_signatures: tuple[str, ...] = ()
+    current_assignments: tuple[str, ...] = ()
     recipient_pre_open_checks: tuple[str, ...] = ()
     packet_body_open_events: tuple[str, ...] = ()
     packet_body_open_envelope_records: tuple[str, ...] = ()
@@ -140,7 +140,7 @@ class State:
     result_envelopes: tuple[str, ...] = ()
     result_ledger_records: tuple[str, ...] = ()
     result_ledger_blocks: tuple[str, ...] = ()
-    result_controller_relay_signatures: tuple[str, ...] = ()
+    result_current_assignments: tuple[str, ...] = ()
     result_mutual_role_reminders: tuple[str, ...] = ()
     result_mutual_role_reminder_blocks: tuple[str, ...] = ()
     result_body_open_events: tuple[str, ...] = ()
@@ -178,8 +178,8 @@ def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> 
         controller_attempts_body_execute=packet_id.startswith("controller_executes_body"),
         delivered_to_role=delivered_to_role,
         cockpit_missing_on_major_node=packet_id.startswith("cockpit_missing_major"),
-        controller_relay_signature_present=not packet_id.startswith("missing_controller_relay"),
-        recipient_opens_body_after_relay_check=not packet_id.startswith("unopened_packet"),
+        current_assignment_present=not packet_id.startswith("missing_current_assignment"),
+        recipient_opens_body_after_assignment_check=not packet_id.startswith("unopened_packet"),
         recipient_open_records_envelope=not packet_id.startswith("packet_open_ledger_only"),
         recipient_open_records_ledger=not packet_id.startswith("packet_open_envelope_only"),
         body_hash_identity_matches_ledger=not packet_id.startswith("body_hash_identity_stale"),

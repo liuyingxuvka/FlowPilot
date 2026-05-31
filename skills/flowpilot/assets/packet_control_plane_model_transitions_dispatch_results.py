@@ -76,16 +76,16 @@ class RouterDirectDispatch:
             output_contract_checks=output_contract_checks,
             result_path_scope_checks=result_path_scope_checks,
         )
-        if input_obj.packet_id not in state.controller_relay_signatures:
+        if input_obj.packet_id not in state.current_assignments:
             new_state = replace(
                 checked_state,
                 review_blocks=checked_state.review_blocks + (input_obj.packet_id,),
                 pm_repair_requirements=checked_state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
-                DispatchBlocked(input_obj.packet_id, "missing_controller_relay_signature"),
+                DispatchBlocked(input_obj.packet_id, "missing_current_assignment_signature"),
                 new_state,
-                "missing_controller_relay_signature_blocked",
+                "missing_current_assignment_signature_blocked",
             )
             return
         if input_obj.delivered_to_role != input_obj.to_role:
@@ -225,7 +225,7 @@ class WorkerOrControllerResult:
                 pm_repair_requirements=state.pm_repair_requirements + (input_obj.packet_id,),
             )
             yield FunctionResult(
-                DispatchBlocked(input_obj.packet_id, "packet_body_unopened_after_controller_relay"),
+                DispatchBlocked(input_obj.packet_id, "packet_body_unopened_after_current_assignment"),
                 new_state,
                 "unopened_letter_sent_to_pm_for_restart_or_repair",
             )
@@ -291,9 +291,9 @@ class WorkerOrControllerResult:
         completed_by_agent_id = completed_by_role if input_obj.packet_id.startswith("agent_id_role_string") else f"agent-{completed_by_role}"
         result_body_hash_valid = not input_obj.packet_id.startswith("result_body_hash_mismatch")
         result_body_stale = input_obj.packet_id.startswith("stale_result_body")
-        result_controller_relay_signature_present = not input_obj.packet_id.startswith("missing_result_controller_relay")
+        result_current_assignment_present = not input_obj.packet_id.startswith("missing_result_current_assignment")
         result_has_mutual_role_reminder = not input_obj.packet_id.startswith("missing_result_mutual_reminder")
-        result_body_opened_after_relay_check = not input_obj.packet_id.startswith("unopened_result")
+        result_body_opened_after_assignment_check = not input_obj.packet_id.startswith("unopened_result")
         result_ledger_present = not input_obj.packet_id.startswith("result_without_ledger")
         result_body_open_records_envelope = not input_obj.packet_id.startswith("result_open_ledger_only")
         result_body_open_records_ledger = not input_obj.packet_id.startswith("result_open_envelope_only")
@@ -317,9 +317,9 @@ class WorkerOrControllerResult:
                 completed_by_agent_id,
                 result_body_hash_valid=result_body_hash_valid,
                 result_body_stale_after_route_mutation=result_body_stale,
-                result_controller_relay_signature_present=result_controller_relay_signature_present,
+                result_current_assignment_present=result_current_assignment_present,
                 result_has_mutual_role_reminder=result_has_mutual_role_reminder,
-                result_body_opened_after_relay_check=result_body_opened_after_relay_check,
+                result_body_opened_after_assignment_check=result_body_opened_after_assignment_check,
                 result_body_open_records_envelope=result_body_open_records_envelope,
                 result_body_open_records_ledger=result_body_open_records_ledger,
                 result_ledger_record_present=result_ledger_present,
@@ -334,7 +334,7 @@ class ControllerResultRelay:
     accepted_input_type = NodeResult
     reads = ("result_envelopes", "result_ledger_records")
     writes = (
-        "result_controller_relay_signatures",
+        "result_current_assignments",
         "result_mutual_role_reminders",
         "result_mutual_role_reminder_blocks",
         "result_ledger_blocks",
@@ -345,7 +345,7 @@ class ControllerResultRelay:
     )
     input_description = "worker/reviewer/FlowGuard operator result envelope"
     output_description = "result envelope relayed by controller or left unsigned for reviewer block"
-    idempotency = "Result relay signatures are keyed by packet ID."
+    idempotency = "Result assignment records are keyed by packet ID."
 
     def apply(self, input_obj: NodeResult, state: State) -> Iterable[FunctionResult]:
         if not isinstance(input_obj, NodeResult):
@@ -364,8 +364,8 @@ class ControllerResultRelay:
                 "result_without_ledger_absorption_blocked_before_reviewer_relay",
             )
             return
-        if not input_obj.result_controller_relay_signature_present:
-            yield FunctionResult(input_obj, state, "result_controller_relay_signature_missing")
+        if not input_obj.result_current_assignment_present:
+            yield FunctionResult(input_obj, state, "result_current_assignment_missing")
             return
         if not input_obj.result_has_mutual_role_reminder:
             new_state = replace(
@@ -375,9 +375,9 @@ class ControllerResultRelay:
             yield FunctionResult(input_obj, new_state, "result_mutual_role_reminder_missing")
             return
         relay_signatures = (
-            state.result_controller_relay_signatures
-            if input_obj.packet_id in state.result_controller_relay_signatures
-            else state.result_controller_relay_signatures + (input_obj.packet_id,)
+            state.result_current_assignments
+            if input_obj.packet_id in state.result_current_assignments
+            else state.result_current_assignments + (input_obj.packet_id,)
         )
         holder_changes = (
             state.holder_changes if input_obj.packet_id in state.holder_changes else state.holder_changes + (input_obj.packet_id,)
@@ -394,12 +394,12 @@ class ControllerResultRelay:
         )
         new_state = replace(
             state,
-            result_controller_relay_signatures=relay_signatures,
+            result_current_assignments=relay_signatures,
             result_mutual_role_reminders=result_mutual_role_reminders,
             holder_changes=holder_changes,
             holder_status_updates=holder_status_updates,
         )
-        yield FunctionResult(input_obj, new_state, "controller_relayed_result_envelope_with_holder_status_update")
+        yield FunctionResult(input_obj, new_state, "current_assignment_delivered_result_envelope_with_holder_status_update")
 
 __all__ = [
     "RouterDirectDispatch",

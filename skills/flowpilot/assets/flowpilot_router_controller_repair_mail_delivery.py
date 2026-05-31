@@ -132,17 +132,9 @@ def _mail_delivery_action_envelope_path(
 def _mail_delivery_packet_released(record: dict[str, Any] | None, *, to_role: str) -> bool:
     if not isinstance(record, dict):
         return False
-    relay = record.get("packet_controller_relay")
-    if not isinstance(relay, dict):
-        relay = record.get("controller_relay")
     return (
         str(record.get("active_packet_holder") or "") == to_role
         and str(record.get("active_packet_status") or "") == "envelope-relayed"
-        and isinstance(relay, dict)
-        and relay.get("delivered_via_controller") is True
-        and str(relay.get("relayed_to_role") or "") == to_role
-        and relay.get("body_was_read_by_controller") is False
-        and relay.get("body_was_executed_by_controller") is False
     )
 
 def _ensure_mail_delivery_packet_released(
@@ -184,7 +176,7 @@ def _ensure_mail_delivery_packet_released(
             f"mail delivery packet target mismatch: expected {to_role}, got {envelope.get('to_role')!r}"
         )
 
-    relayed = packet_runtime.controller_relay_envelope(
+    delivered = packet_runtime.deliver_envelope_metadata(
         project_root,
         envelope=envelope,
         envelope_path=packet_envelope_path,
@@ -199,7 +191,7 @@ def _ensure_mail_delivery_packet_released(
     )
     action_envelope_path = _mail_delivery_action_envelope_path(project_root, pending_action, receipt_payload)
     if action_envelope_path is not None and action_envelope_path.resolve() != packet_envelope_path.resolve():
-        write_json(action_envelope_path, relayed)
+        write_json(action_envelope_path, delivered)
 
     updated_ledger_path = run_root / "packet_ledger.json"
     _raise_if_runtime_write_active(updated_ledger_path)
