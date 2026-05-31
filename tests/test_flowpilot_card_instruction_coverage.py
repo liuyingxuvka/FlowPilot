@@ -95,7 +95,9 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertNotIn("flowpilot_runtime.py relay-envelope", text)
             self.assertNotIn("controller_relay", text)
             self.assertIn("flowpilot_new.py lease-agent", text)
+            self.assertIn("flowpilot_new.py role-handoff", text)
             self.assertIn("flowpilot_new.py ack", text)
+            self.assertIn("flowpilot_new.py open-packet", text)
             self.assertIn("flowpilot_new.py submit-result", text)
 
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
@@ -424,7 +426,9 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for text in (packet_template, pm_card):
             self.assertIn("successful", text)
             self.assertIn("flowpilot_new.py lease-agent", text)
+            self.assertIn("flowpilot_new.py role-handoff", text)
             self.assertIn("flowpilot_new.py ack", text)
+            self.assertIn("flowpilot_new.py open-packet", text)
             self.assertIn("flowpilot_new.py submit-result", text)
             self.assertIn("pm_startup_repair_request", text)
             self.assertIn("pm_startup_protocol_dead_end", text)
@@ -432,7 +436,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("ordinary blocker back to pm", text)
 
         intake_text = normalized(pm_startup_intake_card)
-        self.assertIn("do not use a separate packet-open command", intake_text)
+        self.assertIn("flowpilot_new.py open-packet", intake_text)
+        self.assertIn("runtime-generated", intake_text)
         self.assertIn("full `user_intake` body remains router-held until pm approves startup activation", intake_text)
         self.assertIn("ordinary blocker back to pm", intake_text)
 
@@ -448,6 +453,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 text = normalized(path)
                 self.assertIn("flowpilot_new.py lease-agent", text)
                 self.assertIn("flowpilot_new.py ack", text)
+                self.assertIn("flowpilot_new.py open-packet", text)
                 self.assertIn("flowpilot_new.py submit-result", text)
                 self.assertIn("formal blocker", text)
                 self.assertIn("pm or router can decide", text)

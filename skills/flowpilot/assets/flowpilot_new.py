@@ -33,10 +33,10 @@ HOST_KIND_HELP = (
 )
 
 try:  # pragma: no cover - direct script fallback.
-    from flowpilot_core_runtime import cockpit, fake_e2e, host, router, run_shell, runtime
+    from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime
 except ImportError:  # pragma: no cover
     sys.path.insert(0, str(ASSETS_ROOT))
-    from flowpilot_core_runtime import cockpit, fake_e2e, host, router, run_shell, runtime  # type: ignore
+    from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime  # type: ignore
 
 
 def _print(payload: object) -> None:
@@ -238,9 +238,19 @@ def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: st
     )
     runtime.assign_packet(ledger, packet_id, lease_id)
     run_shell.save_run_ledger(shell, ledger, guard_trigger="lease_agent")
+    handoff = role_handoff.render_current_packet_handoff(
+        ledger,
+        root=root,
+        script_path=Path(__file__),
+        run_id=shell.run_id,
+        packet_id=packet_id,
+        lease_id=lease_id,
+    )
     return {
         "ok": True,
         "lease_id": lease_id,
+        "role_handoff": handoff,
+        "role_handoff_text": handoff["text"],
         **_runtime_state(ledger),
     }
 
@@ -251,6 +261,60 @@ def ack(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     runtime.ack_lease(ledger, lease_id, packet_id)
     run_shell.save_run_ledger(shell, ledger, guard_trigger="ack")
     return {"ok": True, **_runtime_state(ledger)}
+
+
+def role_handoff_payload(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    handoff = role_handoff.render_current_packet_handoff(
+        ledger,
+        root=root,
+        script_path=Path(__file__),
+        run_id=shell.run_id,
+        packet_id=packet_id,
+        lease_id=lease_id,
+    )
+    return {"ok": True, "role_handoff": handoff, "role_handoff_text": handoff["text"], **_runtime_state(ledger)}
+
+
+def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    body = packets.open_sealed_body_for_role(ledger, packet_id, lease_id)
+    packet = ledger["packets"][packet_id]
+    lease = ledger["leases"][lease_id]
+    envelope = packet["envelope"]
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="open_packet")
+    return {
+        "ok": True,
+        "schema_version": "black_box_flowpilot.open_packet_result.v1",
+        "run_id": shell.run_id,
+        "packet": {
+            "packet_id": packet_id,
+            "packet_kind": envelope.get("packet_kind", "task"),
+            "responsibility": envelope["responsibility"],
+            "objective": envelope["objective"],
+            "route_version": envelope["route_version"],
+            "body_hash": envelope["body_hash"],
+            "output_contract": envelope.get("output_contract", {}),
+        },
+        "lease": {
+            "lease_id": lease_id,
+            "agent_id": lease.get("agent_id", ""),
+            "responsibility": lease.get("responsibility", ""),
+            "ack_received": bool(lease.get("ack_received")),
+        },
+        "sealed_packet_body": body,
+        "sealed_body_visibility": "assigned_role_only",
+        "controller_may_read_packet_body": False,
+        "sealed_body_text_included": True,
+        "open_receipt": {
+            "event_type": "sealed_packet_body_opened",
+            "packet_id": packet_id,
+            "lease_id": lease_id,
+            "body_hash": envelope["body_hash"],
+        },
+    }
 
 
 def progress(root: Path, *, lease_id: str, packet_id: str, status: str) -> dict[str, Any]:
@@ -452,6 +516,14 @@ def main(argv: list[str] | None = None) -> int:
     ack_parser.add_argument("--lease-id", required=True)
     ack_parser.add_argument("--packet-id", required=True)
 
+    handoff_parser = sub.add_parser("role-handoff", help="Render the Controller-safe handoff for an assigned role packet")
+    handoff_parser.add_argument("--lease-id", required=True)
+    handoff_parser.add_argument("--packet-id", required=True)
+
+    open_parser = sub.add_parser("open-packet", help="Open the sealed body for the assigned ACKed role packet")
+    open_parser.add_argument("--lease-id", required=True)
+    open_parser.add_argument("--packet-id", required=True)
+
     progress_parser = sub.add_parser("progress", help="Record current-run lease progress without completing the packet")
     progress_parser.add_argument("--lease-id", required=True)
     progress_parser.add_argument("--packet-id", required=True)
@@ -509,6 +581,10 @@ def main(argv: list[str] | None = None) -> int:
             )
         elif args.command == "ack":
             payload = ack(root, lease_id=args.lease_id, packet_id=args.packet_id)
+        elif args.command == "role-handoff":
+            payload = role_handoff_payload(root, lease_id=args.lease_id, packet_id=args.packet_id)
+        elif args.command == "open-packet":
+            payload = open_packet(root, lease_id=args.lease_id, packet_id=args.packet_id)
         elif args.command == "progress":
             payload = progress(root, lease_id=args.lease_id, packet_id=args.packet_id, status=args.status)
         elif args.command == "host-liveness":

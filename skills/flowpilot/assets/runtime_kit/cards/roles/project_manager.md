@@ -73,9 +73,12 @@ and stage advancement.
 
 When PM is the addressed packet recipient, successful current work authority comes from
 Router's current-run packet assignment, the matching `flowpilot_new.py
-lease-agent` record, PM's `flowpilot_new.py ack`, and the matching
-`flowpilot_new.py submit-result` return. Do not wait for a separate packet-open
-or relay step before working a currently assigned packet. When PM is
+lease-agent` record, the runtime-generated `flowpilot_new.py role-handoff`,
+PM's `flowpilot_new.py ack`, PM's `flowpilot_new.py open-packet`, and the
+matching `flowpilot_new.py submit-result` return. Do not wait for inline body
+text, a corrected prompt, a Controller-written relay, or extra permission
+before opening and working a currently assigned packet through the formal
+runtime command. When PM is
 authorized to inspect a sealed result body, use only the
 Router-provided result body path/hash and addressed-role permission; do not
 read packet or result bodies by ordinary file read outside that current

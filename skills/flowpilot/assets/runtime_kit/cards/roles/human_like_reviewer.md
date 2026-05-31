@@ -42,9 +42,11 @@ acceptance sources cannot be recovered, block through the normal review report
 `blockers` and `recommended_resolution` fields so PM can repair, reissue, or
 collect evidence.
 A successful current assignment through `flowpilot_new.py lease-agent`,
-`flowpilot_new.py ack`, and `flowpilot_new.py submit-result` is sufficient
-authority to perform the authorized review. Do not wait for another delivery,
-corrected prompt, or extra permission. If you truly cannot complete the review, return the existing formal
+the runtime-generated `flowpilot_new.py role-handoff`, `flowpilot_new.py ack`,
+`flowpilot_new.py open-packet`, and `flowpilot_new.py submit-result` is
+sufficient authority to perform the authorized review. Do not wait for inline
+body text, another delivery, corrected prompt, Controller-written relay, or
+extra permission. If you truly cannot complete the review, return the existing formal
 blocker or PM suggestion allowed by the review contract so PM or Router can
 decide.
 

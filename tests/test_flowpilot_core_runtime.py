@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import copy
 import json
 import sys
 import tempfile
@@ -9,7 +10,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
+ASSETS_ROOT = ROOT / "skills" / "flowpilot" / "assets"
 RUNTIME_ROOT = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime"
+if str(ASSETS_ROOT) not in sys.path:
+    sys.path.insert(0, str(ASSETS_ROOT))
+
+from flowpilot_core_runtime import packets, role_handoff  # noqa: E402
 
 
 def load_module(name: str, path: Path):
@@ -69,6 +75,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "review_closure.py",
             "cockpit.py",
             "migration.py",
+            "role_handoff.py",
         }:
             with self.subTest(required_file=required_file):
                 self.assertIn(required_file, runtime_files)
@@ -294,6 +301,86 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertTrue(result["envelope"]["ack_result_accepted_separate"])
         self.assertEqual(result["envelope"]["output_contract"]["packet_id"], packet_id)
         self.assertEqual(control_surface.audit_packet_contracts(ledger), [])
+
+    def test_generated_role_handoff_and_packet_open_are_role_symmetric(self) -> None:
+        for role in sorted(runtime.RESPONSIBILITIES):
+            with self.subTest(role=role):
+                ledger = runtime.new_ledger("Goal", "Contract")
+                runtime.create_route(ledger, "Route", ["Do work"])
+                body = f"SEALED_BODY_FOR_{role}"
+                packet_id = runtime.issue_task_packet(
+                    ledger,
+                    role,
+                    f"{role} objective",
+                    body,
+                    packet_kind="flowguard_check" if role == "flowguard_operator" else "task",
+                )
+                lease_id = runtime.lease_agent(ledger, role, agent_id=f"{role}-agent", packet_id=packet_id)
+                runtime.assign_packet(ledger, packet_id, lease_id)
+
+                handoff = role_handoff.render_current_packet_handoff(
+                    ledger,
+                    root=ROOT,
+                    script_path=ASSETS_ROOT / "flowpilot_new.py",
+                    run_id="run-test",
+                    packet_id=packet_id,
+                    lease_id=lease_id,
+                )
+
+                rendered = json.dumps(handoff, sort_keys=True)
+                self.assertTrue(handoff["controller_may_read"])
+                self.assertFalse(handoff["controller_may_read_packet_body"])
+                self.assertFalse(handoff["sealed_body_text_included"])
+                self.assertIn("flowpilot_new.py", handoff["commands"]["ack"])
+                self.assertIn("open-packet", handoff["commands"]["open_packet"])
+                self.assertIn("submit-result", handoff["commands"]["submit_result"])
+                self.assertNotIn(body, rendered)
+
+                with self.assertRaises(Exception):
+                    packets.open_sealed_body_for_role(ledger, packet_id, lease_id)
+
+                runtime.ack_lease(ledger, lease_id, packet_id)
+                opened = packets.open_sealed_body_for_role(ledger, packet_id, lease_id)
+
+                self.assertEqual(opened, body)
+                open_events = [
+                    event
+                    for event in ledger["events"]
+                    if event["event_type"] == "sealed_packet_body_opened"
+                    and event["payload"]["packet_id"] == packet_id
+                    and event["payload"]["lease_id"] == lease_id
+                ]
+                self.assertEqual(len(open_events), 1)
+
+    def test_packet_open_rejects_wrong_stale_or_tampered_authority(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed")
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-1", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        wrong_lease = runtime.lease_agent(ledger, "worker", agent_id="worker-2", packet_id=packet_id)
+        with self.assertRaises(Exception):
+            packets.open_sealed_body_for_role(ledger, packet_id, wrong_lease)
+
+        wrong_role = copy.deepcopy(ledger)
+        wrong_role_lease = runtime.lease_agent(wrong_role, "pm", agent_id="pm-1", packet_id=packet_id)
+        wrong_role["packets"][packet_id]["assigned_lease_id"] = wrong_role_lease
+        wrong_role["leases"][wrong_role_lease]["ack_received"] = True
+        with self.assertRaises(Exception):
+            packets.open_sealed_body_for_role(wrong_role, packet_id, wrong_role_lease)
+
+        accepted = copy.deepcopy(ledger)
+        accepted["packets"][packet_id]["status"] = "accepted"
+        accepted["packets"][packet_id]["accepted_result_id"] = "result-accepted"
+        with self.assertRaises(Exception):
+            packets.open_sealed_body_for_role(accepted, packet_id, lease_id)
+
+        tampered = copy.deepcopy(ledger)
+        tampered["packets"][packet_id]["body"] = "changed after envelope hash"
+        with self.assertRaises(Exception):
+            packets.open_sealed_body_for_role(tampered, packet_id, lease_id)
 
     def test_declared_pass_ignores_contextual_failure_words(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()

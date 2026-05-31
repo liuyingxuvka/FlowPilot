@@ -1,0 +1,359 @@
+{
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=36",
+    "violation_count": 0
+  },
+  "hazard_checks": {
+    "hazards": {
+      "ad_hoc_waits_for_runtime_body": {
+        "detected": true,
+        "expected_failure": "generated handoff told role to wait for ACK/runtime body exposure",
+        "failures": [
+          "generated handoff told role to wait for ACK/runtime body exposure"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": false,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": true,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "controller_body_leak": {
+        "detected": true,
+        "expected_failure": "Controller saw sealed body during role packet open",
+        "failures": [
+          "Controller saw sealed body during role packet open"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": true,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "handoff_leaks_body": {
+        "detected": true,
+        "expected_failure": "generated handoff leaked sealed body content",
+        "failures": [
+          "generated handoff leaked sealed body content"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": false,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "handoff_pm_only_for_other_role": {
+        "detected": true,
+        "expected_failure": "generated handoff used role-specific wording outside the requested responsibility",
+        "failures": [
+          "generated handoff used role-specific wording outside the requested responsibility"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": false,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "missing_open_event": {
+        "detected": true,
+        "expected_failure": "open-packet returned body without sealed open audit event",
+        "failures": [
+          "open-packet returned body without sealed open audit event"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": false,
+          "status": "running"
+        }
+      },
+      "open_accepted_packet": {
+        "detected": true,
+        "expected_failure": "open-packet returned body for accepted or stale packet",
+        "failures": [
+          "open-packet returned body for accepted or stale packet"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": false,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "open_hash_mismatch": {
+        "detected": true,
+        "expected_failure": "open-packet returned body after body hash mismatch",
+        "failures": [
+          "open-packet returned body after body hash mismatch"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": false,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "open_inactive_lease": {
+        "detected": true,
+        "expected_failure": "open-packet returned body for inactive lease",
+        "failures": [
+          "open-packet returned body for inactive lease"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": false,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "open_without_ack": {
+        "detected": true,
+        "expected_failure": "open-packet returned body before ACK",
+        "failures": [
+          "open-packet returned body before ACK"
+        ],
+        "state": {
+          "ack_received": false,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "open_wrong_lease": {
+        "detected": true,
+        "expected_failure": "open-packet returned body for wrong lease or unassigned packet",
+        "failures": [
+          "open-packet returned body for wrong lease or unassigned packet"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": false,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "open_wrong_role": {
+        "detected": true,
+        "expected_failure": "open-packet returned body for mismatched responsibility",
+        "failures": [
+          "open-packet returned body for mismatched responsibility"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": true,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": false,
+          "result_submitted": false,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      },
+      "result_without_open": {
+        "detected": true,
+        "expected_failure": "role result submitted without formal packet open evidence",
+        "failures": [
+          "role result submitted without formal packet open evidence"
+        ],
+        "state": {
+          "ack_received": true,
+          "body_hash_matches": true,
+          "body_returned_to_role": false,
+          "controller_saw_body": false,
+          "handoff_ad_hoc_waits_for_ack_body": false,
+          "handoff_body_free": true,
+          "handoff_generated": true,
+          "handoff_names_ack": true,
+          "handoff_names_open_packet": true,
+          "handoff_names_submit_result": true,
+          "handoff_role_generic": true,
+          "lease_active": true,
+          "packet_assigned_to_lease": true,
+          "packet_unaccepted": true,
+          "responsibility_matches": true,
+          "result_submitted": true,
+          "sealed_open_event_recorded": true,
+          "status": "running"
+        }
+      }
+    },
+    "ok": true
+  },
+  "model_obligations": {
+    "bad_case": "role waits for ACK/runtime body exposure instead of formal open-packet",
+    "safe_path": "generated handoff -> ACK -> open-packet -> submit-result"
+  },
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "safe_graph": {
+    "edge_count": 5,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "state_count": 6
+  }
+}

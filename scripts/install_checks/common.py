@@ -94,6 +94,7 @@ REQUIRED_FILES = [
     "skills/flowpilot/assets/flowpilot_core_runtime/migration.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/packets.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/review_closure.py",
+    "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/router.py",
     "skills/flowpilot/assets/flowpilot_core_runtime/run_shell.py",
     "skills/flowpilot/assets/flowpilot_new.py",

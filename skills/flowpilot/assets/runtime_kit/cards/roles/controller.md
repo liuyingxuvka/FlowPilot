@@ -67,7 +67,7 @@ Allowed actions:
 
 - run the current `flowpilot_new.py` command named by the lifecycle guard or
   foreground duty. Fresh runs use `flowpilot_new.py start`, `status`, `patrol`,
-  `resume`, `lease-agent`, `ack`, `progress`, `host-liveness`,
+  `resume`, `lease-agent`, `role-handoff`, `ack`, `progress`, `host-liveness`,
   `submit-result`, `repair-accepted-packet`, `stop`, `cancel`, and
   `final-preflight` as the public control surface;
 - load only Controller-visible current-run metadata: lifecycle guard,
@@ -129,8 +129,10 @@ Allowed actions:
   for a fresh `flowpilot_new.py` run;
 - rely on runtime-owned manifest and packet-ledger checks; current work-packet
   authority is the current `flowpilot_new.py lease-agent`,
-  `flowpilot_new.py ack`, and `flowpilot_new.py submit-result` path, not a
-  separate delivery step;
+  runtime-generated `flowpilot_new.py role-handoff`, addressed-role
+  `flowpilot_new.py ack`, addressed-role `flowpilot_new.py open-packet`, and
+  `flowpilot_new.py submit-result` path. Controller may relay only the
+  body-free handoff text and must never run `open-packet`;
 - for `deliver_mail`, a chat message or self-attested done receipt is not
   delivery. Deliver the packet envelope through the packet runtime holder/status
   path named by the Router action, then write the Controller receipt with
@@ -200,6 +202,8 @@ Forbidden actions:
 - do not install or run stateful commands for a worker packet;
 - do not approve gates, mark nodes complete, mutate routes, or decide evidence sufficiency;
 - do not read, summarize, execute, edit, or repair sealed packet/result bodies;
+- do not run `flowpilot_new.py open-packet` for Controller or to preview a role
+  packet;
 - do not create project evidence for PM, reviewer, FlowGuard operator, or worker gates.
 - do not invent, preserve, or restore visible route-plan items from chat
   history, ordinary Codex planning, or Controller summaries.

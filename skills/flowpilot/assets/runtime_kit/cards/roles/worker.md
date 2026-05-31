@@ -27,9 +27,11 @@ envelope.
 
 Use the current lease path for addressed work packets: Router assigns the
 packet through `flowpilot_new.py lease-agent`, the assigned role ACKs with
-`flowpilot_new.py ack`, and the same lease returns completion through
-`flowpilot_new.py submit-result`. Do not wait for a separate packet-open or
-relay step before working a currently assigned packet.
+`flowpilot_new.py ack`, the assigned role opens only that packet with
+`flowpilot_new.py open-packet`, and the same lease returns completion through
+`flowpilot_new.py submit-result`. Do not wait for inline body text, a corrected
+prompt, a Controller-written relay, or extra permission before opening and
+working a currently assigned packet through the formal runtime command.
 Verify the packet is addressed to your requested responsibility and that any
 body path/hash metadata matches before using it. If current assignment or hash
 metadata is missing, return a formal blocker; PM or Router can decide the next

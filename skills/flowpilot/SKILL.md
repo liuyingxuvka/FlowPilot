@@ -45,7 +45,9 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json pat
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resume --reason manual_resume
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --agent-id <agent_id> --host-kind live
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json role-handoff --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json open-packet --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json progress --lease-id <lease_id> --packet-id <packet_id> --status still_working
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json submit-result --lease-id <lease_id> --packet-id <packet_id> --body <sealed_result_summary>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json repair-accepted-packet --packet-id <packet_id>
@@ -88,7 +90,7 @@ When `flowpilot_new.py start` opens the native startup intake UI, formal startup
 
 After startup, the new runtime materializes the first PM-bound high-standard contract packet. PM route planning is not legal until the high-standard contract, current discovery, and selected skill standard gates are accepted.
 
-When the new runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface, record the actual surface and addressable host `agent_id` with `flowpilot_new.py lease-agent`, and then wait for ACK/result through runtime commands. Every opened role binding must be explicitly requested with the strongest available host model and highest available reasoning effort.
+When the new runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface, record the actual surface and addressable host `agent_id` with `flowpilot_new.py lease-agent`, and relay only the runtime-generated `role_handoff_text` to that role. The handoff is body-free and tells the role to ACK, run `flowpilot_new.py open-packet` inside the addressed role surface, and return through `flowpilot_new.py submit-result`. If a handoff must be re-rendered, use `flowpilot_new.py role-handoff`; do not hand-write a substitute from memory. Every opened role binding must be explicitly requested with the strongest available host model and highest available reasoning effort.
 
 All new formal runtime roles are requested packet responsibilities, but not every gate is a dispatched role. PM, reviewer, explicit FlowGuard operator responsibilities, and route-node worker responsibilities follow the same lifecycle when the runtime requests them: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. System validation and system closure are runtime-owned ledger facts after accepted review evidence; do not open Validator or Closure FlowGuard operator workers, and do not complete FlowGuard or review through side-command shortcuts.
 
@@ -104,7 +106,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit unsupported-run inspection/recovery.
 
-Controller must not implement product work, write project evidence for a worker node, approve gates, mark route nodes complete, mutate the route from its own judgement, read sealed packet/result bodies, or receive/submit formal role outputs. Role outputs go directly to Router through the runtime command named by the packet.
+Controller must not implement product work, write project evidence for a worker node, approve gates, mark route nodes complete, mutate the route from its own judgement, run `flowpilot_new.py open-packet`, read sealed packet/result bodies, or receive/submit formal role outputs. Role outputs go directly to Router through the runtime command named by the packet.
 
 When the router returns a control blocker, Controller may deliver only the public blocker id plus sealed repair packet path/hash to the target role. When the user asks to stop or cancel the active run, record the requested terminal event and follow the lifecycle action; do not continue route work after that.
 

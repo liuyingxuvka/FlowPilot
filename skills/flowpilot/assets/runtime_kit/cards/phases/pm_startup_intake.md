@@ -29,9 +29,11 @@ envelope path/hash metadata. The full `user_intake` body remains Router-held
 until PM approves startup activation, then Router exposes it as the first
 post-startup PM mail item.
 
-Do not use a separate packet-open command for the full `user_intake` packet from this phase. Do
-not ask Controller to recover the user's work request from chat history;
-Controller may deliver only paths, hashes, status, and envelopes.
+Do not use `flowpilot_new.py open-packet` for the full `user_intake` packet
+from this phase. That command is only for a later runtime-generated role
+handoff after a current lease and ACK assign an actual packet to PM. Do not ask
+Controller to recover the user's work request from chat history; Controller
+may deliver only paths, hashes, status, and envelopes.
 
 If startup metadata cannot legally support the later startup-activation
 decision, submit an existing PM exit after the startup fact report:
