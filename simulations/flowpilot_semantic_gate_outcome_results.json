@@ -72,13 +72,15 @@
       "effective_blocker_view": true,
       "effective_packet_final_view": true,
       "final_ledger_effective_packets": true,
+      "nested_flowguard_report_failure_parser": true,
       "no_whole_body_nonpass_scan": true,
       "pm_repair_decision_packet": true,
       "reviewer_block_no_validation": true,
       "same_class_recheck": true,
       "semantic_outcome_parser": true,
+      "structured_verdict_parser": true,
       "system_validation_failure_routes_pm": true,
-      "worker_block_no_flowguard": true
+      "workerlock_no_flowguard": true
     },
     "ok": true
   },

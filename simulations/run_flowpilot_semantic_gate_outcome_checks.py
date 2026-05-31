@@ -78,6 +78,10 @@ def _model_test_alignment_report() -> dict[str, Any]:
     runtime_text = runtime.read_text(encoding="utf-8")
     obligations = {
         "semantic_outcome_parser": "_parse_packet_outcome" in runtime_text,
+        "structured_verdict_parser": '"verdict"' in runtime_text
+        and "test_structured_verdict_blocked_routes_to_semantic_repair" in core_test_text,
+        "nested_flowguard_report_failure_parser": '"flowguard_report"' in runtime_text
+        and "test_nested_flowguard_report_not_ok_routes_to_semantic_repair" in core_test_text,
         "declared_outcome_line_parser": "_declared_outcome_token_from_body" in runtime_text,
         "no_whole_body_nonpass_scan": "_NONPASS_TEXT_RE" not in runtime_text,
         "declared_pass_context_words_test": "test_declared_pass_ignores_contextual_failure_words" in core_test_text,

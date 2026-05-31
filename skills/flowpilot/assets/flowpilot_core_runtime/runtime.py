@@ -1819,7 +1819,7 @@ _BLOCKING_OUTCOME_DECISIONS = {
 }
 _OUTCOME_DECLARATION_RE = re.compile(
     r"^\s*(?:[-*]\s*)?(?:\*\*)?"
-    r"(decision|status|outcome|result|pass[_ -]?or[_ -]?block|validation[_ -]?status|flowguard[_ -]?decision|worker[_ -]?status|passed)"
+    r"(decision|verdict|status|outcome|result|pass[_ -]?or[_ -]?block|validation[_ -]?status|flowguard[_ -]?decision|worker[_ -]?status|passed)"
     r"(?:\*\*)?\s*[:=]\s*`?([A-Za-z0-9_-]+|true|false)`?\b",
     re.IGNORECASE,
 )
@@ -1884,6 +1884,9 @@ def _normalize_outcome_token(value: Any) -> str:
 
 
 def _payload_outcome_token(payload: Mapping[str, Any], packet_kind: str) -> str:
+    flowguard_report = payload.get("flowguard_report")
+    if isinstance(flowguard_report, Mapping) and flowguard_report.get("ok") is False:
+        return "block"
     if isinstance(payload.get("passed"), bool):
         return "pass" if payload["passed"] else "block"
     challenge = payload.get("independent_challenge")
@@ -1893,6 +1896,7 @@ def _payload_outcome_token(payload: Mapping[str, Any], packet_kind: str) -> str:
             return nested
     for key in (
         "decision",
+        "verdict",
         "status",
         "outcome",
         "result",
@@ -3607,7 +3611,8 @@ def _ensure_flowguard_packet_for_task_result(
                 **node_context,
                 "instruction": (
                     "Produce current-run FlowGuard evidence for the subject packet result. Start from node_context_package "
-                    "when present, then independently model the result, evidence, skipped checks, and residual risks."
+                    "when present, then independently select or create suitable FlowGuard evidence for the result, "
+                    "skipped checks, and residual risks."
                 ),
                 "evidence_output_policy": {
                     "run_local_evidence_root": evidence_root,
@@ -3624,10 +3629,6 @@ def _ensure_flowguard_packet_for_task_result(
                         "unless the packet explicitly requests a baseline refresh."
                     ),
                 },
-                "recommended_runner_commands": [
-                    f"python simulations/run_meta_checks.py --fast --json-out {evidence_root}/meta_thin_parent_results.json",
-                    f"python simulations/run_capability_checks.py --fast --json-out {evidence_root}/capability_thin_parent_results.json",
-                ],
             },
             indent=2,
             sort_keys=True,

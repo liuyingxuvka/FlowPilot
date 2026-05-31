@@ -181,7 +181,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn(f"/evidence/flowguard/{flowguard_packet}", policy["run_local_evidence_root"])
             self.assertTrue(policy["required_for_formal_run"])
             self.assertIn("simulations/meta_thin_parent_results.json", policy["tracked_baseline_paths_forbidden_unless_explicit_baseline_update"])
-            self.assertIn("--json-out", " ".join(flowguard_body["recommended_runner_commands"]))
+            self.assertNotIn("recommended_runner_commands", flowguard_body)
+            self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
 
     def test_flowguard_operator_is_leased_through_its_own_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -226,7 +227,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             ledger = run_shell.load_run_ledger(shell)
             flowguard_body = json.loads(ledger["packets"][flowguard_packet]["body"])
             self.assertIn(f"/evidence/flowguard/{flowguard_packet}", flowguard_body["evidence_output_policy"]["run_local_evidence_root"])
-            self.assertIn("--json-out", " ".join(flowguard_body["recommended_runner_commands"]))
+            self.assertNotIn("recommended_runner_commands", flowguard_body)
+            self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
             flowguard_lease = flowpilot_new.lease_agent(
                 root,
                 packet_id=flowguard_packet,

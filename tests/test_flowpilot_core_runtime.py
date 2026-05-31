@@ -423,6 +423,47 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(action.action_type, "lease_agent")
         self.assertEqual(action.responsibility, "pm")
 
+    def test_structured_verdict_blocked_routes_to_semantic_repair(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            json.dumps({"verdict": "blocked", "recommended_resolution": "fresh FlowGuard evidence required"}),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["semantic_decision"], "block")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_blocked")
+        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
+        self.assertEqual(len(active), 1)
+
+    def test_nested_flowguard_report_not_ok_routes_to_semantic_repair(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            json.dumps(
+                {
+                    "decision": "pass",
+                    "flowguard_report": {
+                        "ok": False,
+                        "findings": ["missing_validation_evidence"],
+                    },
+                    "recommended_resolution": "rerun with current-run evidence",
+                }
+            ),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["semantic_decision"], "block")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_blocked")
+        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
+        self.assertEqual(len(active), 1)
+
     def test_run_until_wait_folds_internal_action_to_role_boundary(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         ledger["startup_intake"] = {"sealed": True}

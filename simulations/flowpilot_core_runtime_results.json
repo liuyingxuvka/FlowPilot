@@ -1,5 +1,5 @@
 {
-  "mode": "routine",
+  "mode": "release",
   "ok": true,
   "result_type": "flowpilot_core_runtime_checks",
   "scenarios": [
@@ -54,7 +54,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-31T19:41:53.042927+00:00",
+        "created_at": "2026-05-31T21:00:55.323142+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -86,7 +86,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-05-31T19:41:53.043926+00:00",
+        "created_at": "2026-05-31T21:00:55.324137+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -257,7 +257,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-31T19:41:53.045933+00:00",
+        "created_at": "2026-05-31T21:00:55.327067+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -283,7 +283,7 @@
           },
           {
             "accepted_result_id": "result-0002",
-            "body_hash": "bf7befb8f2cad525d82c6c1ed2760826455f69fa95fb9863f61a24abef4a9fd1",
+            "body_hash": "1f1a4bceab9075a7147e8341f0e6174b5c2f7b3589a8c6b6b40d4ced46d758d0",
             "node_context_package_id": "",
             "objective": "Run FlowGuard evidence for packet-0001",
             "packet_id": "packet-0002",
@@ -330,7 +330,7 @@
   "test_mesh": {
     "parent_gates": {
       "release_runtime_gate": {
-        "ok": false,
+        "ok": true,
         "required_rows": [
           "runtime_scenarios",
           "runtime_console_isolation",
@@ -375,10 +375,10 @@
           "tmp/flowguard_background/run_meta_checks.*",
           "tmp/flowguard_background/run_capability_checks.*"
         ],
-        "freshness": "not_run",
+        "freshness": "current",
         "id": "background_meta_capability",
         "scope": "release",
-        "status": "not_run"
+        "status": "passed"
       },
       {
         "details": {},
@@ -387,10 +387,10 @@
           "scripts/audit_local_install_sync.py",
           "scripts/check_install.py"
         ],
-        "freshness": "not_run",
+        "freshness": "current",
         "id": "install_surface_parity",
         "scope": "release",
-        "status": "not_run"
+        "status": "passed"
       }
     ]
   }
