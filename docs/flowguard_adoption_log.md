@@ -22442,3 +22442,41 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Future FlowPilot fixes should fail closed and add a negative test instead of adding compatibility fallback unless an explicit temporary migration is approved with owner, expiry, telemetry, and removal tests.
+
+## FlowPilot current-assignment no-legacy-relay cleanup - 2026-06-01T14:26:45Z
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User clarified that future FlowPilot runs are clean new-format runs and no compatibility surfaces for old formats should be retained.
+- Status: implemented, validated, installed, and committed with this change.
+- Route: predictive KB preflight, OpenSpec apply, FlowGuard existing-model preflight, DevelopmentProcessFlow, Model/Test Alignment.
+- OpenSpec changes: `harden-new-runtime-health-recovery`, `strict-route-plan-schema`.
+
+### Findings
+
+- Runtime assets now have no `controller_relay`, `relay-envelope`, `open-packet-session`, or `controller_relay_signature` matches.
+- Startup current pointers now write `run_id` and `run_root`; old current pointer fields were not reintroduced as accepted runtime protocol.
+- Packet delivery evidence now uses `current_assignment`, active-holder leases, and direct metadata delivery instead of old controller-relay envelopes.
+- Reviewer and PM result-body reads remain allowed runtime-backed audit reads; controller/status body exposure remains a hard boundary.
+- Material scan and role-output replay tests keep current assignment relay actions explicit instead of scheduling old missing-deliverable compatibility repair.
+
+### Commands
+
+- OK: `rg -n "controller_relay|relay-envelope|open-packet-session|controller_relay_signature" skills/flowpilot/assets -S` -> no matches.
+- OK: focused packet/control/reconciliation tests -> 68 tests passed.
+- OK: broad current-runtime unit sweep -> 156 tests passed.
+- OK: boundary, structure, facade, control-gate, diagnostic, coverage, and historical replay modules -> passed.
+- OK: synthetic trace replay module run in focused chunks -> passed.
+- OK: `python simulations/run_meta_checks.py --full --force ...` -> layered full parent current.
+- OK: `python simulations/run_capability_checks.py --full --force ...` -> layered full parent current.
+- OK: release runtime gate, known-friction regression matrix, and model-test alignment checks.
+- OK: topology build/check, OpenSpec strict validation, installed skill sync, install audit, install check, and fast smoke.
+
+### Skipped Or Bounded Evidence
+
+- No old controller relay shim, old open-packet CLI path, relay-envelope parser, legacy current-pointer authority, or result-body controller projection compatibility was kept.
+- `python -m unittest discover tests` timed out after 10 minutes; the slow synthetic module was run in focused chunks and passed.
+- Model-test full coverage still reports medium deferred structure split findings for `flowpilot_new.py` and `scripts/flowguard_project_topology.py`; these are later StructureMesh work, not a blocker for the clean current-assignment protocol.
+
+### Next Action
+
+- Treat future old-format pressure as a negative test and hard rejection unless a named temporary migration is explicitly approved with owner, expiry, telemetry, and deletion tests.

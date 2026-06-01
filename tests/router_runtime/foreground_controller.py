@@ -1549,8 +1549,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(packet_ledger["packets"][0]["active_packet_holder"], "project_manager")
         self.assertEqual(packet_ledger["packets"][0]["active_packet_status"], "envelope-relayed")
         self.assertNotIn("packet_router_release", packet_ledger["packets"][0])
-        self.assertIn("packet_controller_relay", packet_ledger["packets"][0])
-        self.assertEqual(packet_ledger["packets"][0]["packet_controller_relay"]["relayed_to_role"], "project_manager")
+        self.assertNotIn("packet_controller_relay", packet_ledger["packets"][0])
         self.assertIsNone(state.get("active_control_blocker"))
         self.assertEqual(len(packet_ledger["packets"][0]["holder_history"]), 2)
     def test_controller_action_reconciliation_ignores_transient_temp_files(self) -> None:

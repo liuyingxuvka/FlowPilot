@@ -128,11 +128,10 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
         self.assertTrue(result["single_canonical_body"])
         self.assertTrue(result["packet_details"][0]["pm_spec_body_materialized"])
 
-    def test_daemon_projection_treats_recipient_opened_result_status_as_controller_relayed(self) -> None:
+    def test_daemon_projection_treats_recipient_opened_result_status_as_released(self) -> None:
         packet = {
             "packet_holder": "project_manager",
             "packet_status": "packet-body-opened-by-recipient",
-            "controller_relay_recorded": True,
             "terminal_lifecycle": None,
         }
         packet_ledger = {

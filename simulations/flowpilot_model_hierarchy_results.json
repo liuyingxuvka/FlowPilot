@@ -282,7 +282,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-06-01T12:30:45.692182+00:00",
+            "created_at": "2026-06-01T14:23:04.609136+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -296,7 +296,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-01T12:30:45.692182+00:00",
+          "created_at": "2026-06-01T14:23:04.609136+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -317,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-01T13:10:29.594778+00:00",
+            "created_at": "2026-06-01T14:23:06.812512+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -343,7 +343,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-06-01T12:30:45.736726+00:00",
+            "created_at": "2026-06-01T14:23:04.577138+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -357,7 +357,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-01T12:30:45.736726+00:00",
+          "created_at": "2026-06-01T14:23:04.577138+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -378,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-01T13:10:29.502235+00:00",
+            "created_at": "2026-06-01T14:23:06.735982+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",

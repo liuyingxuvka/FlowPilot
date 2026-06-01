@@ -453,7 +453,6 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             "validate_packet_ready_for_direct_relay": packet_runtime_relay,
             "validate_result_ready_for_recipient_relay": packet_runtime_relay,
             "validate_result_ready_for_reviewer_relay": packet_runtime_relay,
-            "verify_controller_relay": packet_runtime_relay,
             "verify_packet_open_receipt": packet_runtime_relay,
             "verify_router_startup_release": packet_runtime_relay,
         }

@@ -27,6 +27,8 @@ def _runtime_open_roles(result: dict[str, Any]) -> list[str]:
             roles.append(role)
 
     add_role(result.get("next_recipient"))
+    add_role("project_manager")
+    add_role("human_like_reviewer")
     return roles
 
 

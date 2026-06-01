@@ -262,7 +262,6 @@ def _user_intake_router_released(packet: dict[str, Any] | None, packet_ledger: d
     return (
         str(packet.get("packet_holder") or "") == "project_manager"
         and packet_status in released_statuses
-        and packet.get("controller_relay_recorded") is True
         and (
             (
                 packet_ledger.get("active_packet_holder") == "project_manager"

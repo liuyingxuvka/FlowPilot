@@ -85,7 +85,7 @@ def _write_run_lifecycle_request(
 
     current_path = project_root / ".flowpilot" / "current.json"
     current = read_json_if_exists(current_path) or {}
-    if current.get("current_run_id") == run_state.get("run_id"):
+    if (current.get("run_id") or current.get("current_run_id")) == run_state.get("run_id"):
         current["status"] = mode
         current["updated_at"] = utc_now()
         write_json(current_path, current)
@@ -144,7 +144,7 @@ def _write_protocol_dead_end_lifecycle(
 
     current_path = project_root / ".flowpilot" / "current.json"
     current = read_json_if_exists(current_path) or {}
-    if current.get("current_run_id") == run_state.get("run_id"):
+    if (current.get("run_id") or current.get("current_run_id")) == run_state.get("run_id"):
         current["status"] = mode
         current["updated_at"] = utc_now()
         write_json(current_path, current)

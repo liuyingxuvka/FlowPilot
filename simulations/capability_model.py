@@ -389,8 +389,8 @@ class State:
     pm_released_reviewer_for_current_gate: bool = False
     packet_runtime_physical_files_written: bool = False
     controller_context_body_exclusion_verified: bool = False
-    controller_relay_signature_audit_done: bool = False
-    recipient_pre_open_relay_check_done: bool = False
+    current_assignment_audit_done: bool = False
+    recipient_pre_open_current_assignment_check_done: bool = False
     packet_mail_chain_audit_done: bool = False
     unopened_mail_pm_recovery_policy_recorded: bool = False
     router_hard_rejection_seen: bool = False
@@ -540,8 +540,8 @@ def _reset_human_inspection_gates() -> dict[str, object]:
         "pm_released_reviewer_for_current_gate": False,
         "packet_runtime_physical_files_written": False,
         "controller_context_body_exclusion_verified": False,
-        "controller_relay_signature_audit_done": False,
-        "recipient_pre_open_relay_check_done": False,
+        "current_assignment_audit_done": False,
+        "recipient_pre_open_current_assignment_check_done": False,
         "packet_mail_chain_audit_done": False,
         "unopened_mail_pm_recovery_policy_recorded": False,
         "packet_envelope_body_audit_done": False,
@@ -1915,8 +1915,8 @@ class CapabilityRouterStep:
         "pm_released_reviewer_for_current_gate",
         "packet_runtime_physical_files_written",
         "controller_context_body_exclusion_verified",
-        "controller_relay_signature_audit_done",
-        "recipient_pre_open_relay_check_done",
+        "current_assignment_audit_done",
+        "recipient_pre_open_current_assignment_check_done",
         "packet_mail_chain_audit_done",
         "unopened_mail_pm_recovery_policy_recorded",
         "packet_envelope_body_audit_done",
@@ -2283,8 +2283,8 @@ class CapabilityRouterStep:
         "pm_released_reviewer_for_current_gate",
         "packet_runtime_physical_files_written",
         "controller_context_body_exclusion_verified",
-        "controller_relay_signature_audit_done",
-        "recipient_pre_open_relay_check_done",
+        "current_assignment_audit_done",
+        "recipient_pre_open_current_assignment_check_done",
         "packet_mail_chain_audit_done",
         "unopened_mail_pm_recovery_policy_recorded",
         "packet_envelope_body_audit_done",
@@ -3489,8 +3489,8 @@ def pm_review_release_controls_reviewer_start(
         and (explicit_pm_release_ready or disposition_pm_release_ready)
         and state.packet_runtime_physical_files_written
         and state.controller_context_body_exclusion_verified
-        and state.controller_relay_signature_audit_done
-        and state.recipient_pre_open_relay_check_done
+        and state.current_assignment_audit_done
+        and state.recipient_pre_open_current_assignment_check_done
         and state.packet_mail_chain_audit_done
         and state.unopened_mail_pm_recovery_policy_recorded
         and state.packet_envelope_body_audit_done

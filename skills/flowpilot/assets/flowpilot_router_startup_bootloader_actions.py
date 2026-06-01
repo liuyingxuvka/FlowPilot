@@ -100,7 +100,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
     elif action_type == 'write_current_pointer':
         if not state.get('run_id') or not state.get('run_root'):
             raise RouterError('cannot write current pointer before run shell exists')
-        write_json(project_root / '.flowpilot' / 'current.json', {'schema_version': 'flowpilot.current.v1', 'current_run_id': state['run_id'], 'current_run_root': state['run_root'], 'startup_bootstrap_path': project_relative(project_root, bootstrap_state_path(project_root, state)), 'status': 'running', 'updated_at': utc_now()})
+        write_json(project_root / '.flowpilot' / 'current.json', {'schema_version': 'flowpilot.current.v1', 'run_id': state['run_id'], 'run_root': state['run_root'], 'startup_bootstrap_path': project_relative(project_root, bootstrap_state_path(project_root, state)), 'status': 'running', 'updated_at': utc_now()})
     elif action_type == 'update_run_index':
         if not state.get('run_id') or not state.get('run_root'):
             raise RouterError('cannot update index before run shell exists')

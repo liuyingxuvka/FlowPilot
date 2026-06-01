@@ -19,8 +19,8 @@ TEST_NAMES = (
     "test_pm_repair_decision_side_effect_exposes_flag_before_wait_events",
     "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer",
     "test_material_scan_mechanical_agent_id_gap_reissues_to_worker",
-    "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
-    "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
+    "test_material_scan_path_only_done_receipt_keeps_current_assignment_relay_pending",
+    "test_material_scan_path_only_receipt_folds_after_current_assignment_relay_action",
     "test_material_insufficient_event_records_insufficient_state",
 )
 

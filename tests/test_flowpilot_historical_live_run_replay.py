@@ -40,7 +40,7 @@ def _package_background_proof_is_current(root: Path, proof_root: Path, name: str
     meta_path = test_tier_background.artifact_paths(proof_root, name)["meta"]
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
     reasons = list(evidence.get("reasons") or [])
-    current_run_id = current.get("current_run_id")
+    current_run_id = current.get("run_id") or current.get("current_run_id")
     if meta.get("run_id") != current_run_id:
         reasons.append("proof_run_id_not_current")
     return {
@@ -55,7 +55,7 @@ def _package_background_proof_is_current(root: Path, proof_root: Path, name: str
 def _historical_snapshot_claim_is_authoritative(root: Path, snapshot: dict[str, Any]) -> dict[str, Any]:
     current = read_json(root / ".flowpilot" / "current.json")
     reasons: list[str] = []
-    if snapshot.get("run_id") != current.get("current_run_id"):
+    if snapshot.get("run_id") != (current.get("run_id") or current.get("current_run_id")):
         reasons.append("snapshot_run_id_not_current")
     if snapshot.get("display_status") == "complete" and snapshot.get("router_pending_action"):
         reasons.append("display_projection_conflicts_with_router_pending_action")
@@ -66,18 +66,14 @@ def _historical_snapshot_claim_is_authoritative(root: Path, snapshot: dict[str, 
 
 def _package_completion_claim_is_mechanically_supported(replay) -> dict[str, Any]:
     record = replay.packet_record()
-    relay = record.get("packet_controller_relay") or {}
     missing = []
-    if not relay.get("delivered_via_controller"):
-        missing.append("packet_controller_relay_missing")
+    if not record.get("active_holder_lease_issued"):
+        missing.append("packet_current_assignment_missing")
     if not record.get("active_holder_ack_recorded"):
         missing.append("active_holder_ack_missing")
     if replay.result_envelope is None:
         missing.append("result_envelope_missing")
     else:
-        result_relay = replay.result_envelope.get("controller_relay") or {}
-        if not result_relay.get("delivered_via_controller"):
-            missing.append("result_controller_relay_missing")
         result_open = replay.result_envelope.get("result_body_opened_by_role") or {}
         if not result_open.get("body_hash_verified"):
             missing.append("result_body_hash_not_verified")
@@ -298,7 +294,7 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
         replay.submit_result()
         submitted_claim = _package_completion_claim_is_mechanically_supported(replay)
         self.assertFalse(submitted_claim["ok"])
-        self.assertIn("result_controller_relay_missing", submitted_claim["missing"])
+        self.assertIn("result_body_hash_not_verified", submitted_claim["missing"])
 
         replay.relay_result()
         replay.open_result_body(role="project_manager")

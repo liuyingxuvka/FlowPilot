@@ -83,8 +83,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             root / ".flowpilot" / "current.json",
             {
                 "schema_version": "flowpilot.current.v1",
-                "current_run_id": run_root.name,
-                "current_run_root": router.project_relative(root, run_root),
+                "run_id": run_root.name,
+                "run_root": router.project_relative(root, run_root),
                 "status": "running",
                 "updated_at": router.utc_now(),
             },
@@ -99,7 +99,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         return router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
     def run_root_for(self, root: Path) -> Path:
         current = read_json(root / ".flowpilot" / "current.json")
-        return root / current["current_run_root"]
+        return root / (current.get("run_root") or current["current_run_root"])
     def active_holder_lease_for_packet(self, root: Path, packet_id: str) -> dict:
         run_root = self.run_root_for(root)
         ledger = read_json(run_root / "packet_ledger.json")
@@ -1036,7 +1036,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             else:
                 router.apply_action(root, action_type, self.payload_for_action(action))
         current = read_json(root / ".flowpilot" / "current.json")
-        return root / current["current_run_root"]
+        return root / (current.get("run_root") or current["current_run_root"])
     def controller_boundary_recovery_action(self, root: Path) -> tuple[Path, dict, dict]:
         run_root = self.run_root_for(root)
         state = read_json(router.run_state_path(run_root))

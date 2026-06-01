@@ -143,8 +143,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         index = read_json(material_index_path)
         relayed_result = packet_runtime.load_envelope(root, index["packets"][0]["result_envelope_path"])
-        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "project_manager")
-        self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
+        self.assertEqual(relayed_result["next_recipient"], "project_manager")
+        self.assertNotIn("controller_relay", relayed_result)
     def test_material_scan_packet_body_event_requires_packet_ledger_open_receipt(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -162,7 +162,7 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         ledger = read_json(ledger_path)
         packet_record = next(record for record in ledger["packets"] if record.get("packet_id") == envelope["packet_id"])
         packet_record.pop("packet_body_opened_by_role", None)
-        packet_record["packet_body_opened_after_controller_relay_check"] = False
+        packet_record["packet_open_authorizes_work"] = False
         router.write_json(ledger_path, ledger)
 
         with self.assertRaisesRegex(router.RouterError, "ledger open receipt") as raised:
@@ -349,8 +349,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(state_after["ledger_check_requests"], ledger_requests_before + 1)
         self.assertFalse(state_after.get("ledger_check_requested"))
         envelope = read_json(root / packet["body_path"].replace("packet_body.md", "packet_envelope.json"))
-        self.assertEqual(envelope["controller_relay"]["relayed_to_role"], "worker")
-        self.assertFalse(envelope["controller_relay"]["body_was_read_by_controller"])
+        self.assertEqual(envelope["to_role"], "worker")
+        self.assertNotIn("controller_relay", envelope)
         lease = self.active_holder_lease_for_packet(root, "node-packet-001")
         self.assertEqual(lease["holder_role"], "worker")
         self.assertEqual(lease["holder_agent_id"], f"agent-{run_root.name}-worker")
@@ -585,8 +585,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(state_after["flags"]["current_node_result_relayed_to_pm"])
 
         relayed_result = packet_runtime.load_envelope(root, result_path)
-        self.assertEqual(relayed_result["controller_relay"]["relayed_to_role"], "project_manager")
-        self.assertFalse(relayed_result["controller_relay"]["body_was_read_by_controller"])
+        self.assertEqual(relayed_result["next_recipient"], "project_manager")
+        self.assertNotIn("controller_relay", relayed_result)
     def test_current_node_packet_and_result_reject_envelope_aliases(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)

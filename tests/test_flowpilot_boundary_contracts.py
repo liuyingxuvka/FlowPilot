@@ -164,13 +164,13 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         self.assertTrue(result_entry["requires_runtime_open"])
         self.assertTrue(result_entry["body_refs"])
         self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in result_entry["body_refs"]))
-        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager"])
-        self.assertFalse(result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
+        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager", "human_like_reviewer"])
+        self.assertTrue(result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
 
-        result_envelope["controller_relay"] = {
-            "verified": True,
-            "relayed_to_role": "human_like_reviewer",
-            "body_was_read_by_controller": False,
+        result_envelope["result_body_opened_by_role"] = {
+            "role": "human_like_reviewer",
+            "opened_at": "2026-06-01T00:00:00Z",
+            "body_hash_verified": True,
         }
         packet_runtime.write_json_atomic(result_envelope_path, result_envelope)
         relayed_doc = material_map.refresh_material_artifact_map(project_root, run_root, {"run_id": "run-boundary"})
@@ -354,17 +354,29 @@ class FlowPilotBoundaryContractTests(unittest.TestCase):
         self.assertTrue(
             current_work_pending._pending_role_wait_should_use_batch_projection(
                 router,
-                {"action_type": "await_role_decision", "to_role": "worker"},
+                {
+                    "action_type": "await_role_decision",
+                    "to_role": "worker",
+                    "allowed_external_events": ["worker_scan_results_returned"],
+                },
             )
         )
         self.assertEqual(
             current_work_pending._pending_role_wait_should_use_batch_projection(
                 router,
-                {"action_type": "await_role_decision", "to_role": "worker"},
+                {
+                    "action_type": "await_role_decision",
+                    "to_role": "worker",
+                    "allowed_external_events": ["worker_scan_results_returned"],
+                },
             ),
             current_work._pending_role_wait_should_use_batch_projection(
                 router,
-                {"action_type": "await_role_decision", "to_role": "worker"},
+                {
+                    "action_type": "await_role_decision",
+                    "to_role": "worker",
+                    "allowed_external_events": ["worker_scan_results_returned"],
+                },
             ),
         )
 

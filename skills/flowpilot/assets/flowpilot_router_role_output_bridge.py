@@ -286,7 +286,7 @@ def _sync_current_and_index_status(project_root: Path, run_state: dict[str, Any]
     now = utc_now()
     current_path = project_root / ".flowpilot" / "current.json"
     current = read_json_if_exists(current_path) or {}
-    if current.get("current_run_id") == run_state.get("run_id"):
+    if (current.get("run_id") or current.get("current_run_id")) == run_state.get("run_id"):
         current["status"] = run_state.get("status") or current.get("status")
         current["updated_at"] = now
         write_json(current_path, current)

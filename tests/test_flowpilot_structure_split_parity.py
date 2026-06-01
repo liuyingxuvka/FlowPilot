@@ -58,10 +58,10 @@ class FlowPilotStructureSplitParityTests(unittest.TestCase):
         self.assertIn("main", runtime_commands.__all__)
         self.assertIn("execute_runtime_command", runtime_command_dispatch.__all__)
 
-    def test_runtime_dispatch_uses_injected_relay_helper(self) -> None:
+    def test_runtime_dispatch_uses_injected_receive_card_helper(self) -> None:
         result = runtime_command_dispatch.execute_runtime_command(
             Path("."),
-            SimpleNamespace(command="relay-envelope"),
+            SimpleNamespace(command="receive-card"),
             packet_runtime=object(),
             card_runtime=object(),
             flowpilot_router=object(),
@@ -69,13 +69,12 @@ class FlowPilotStructureSplitParityTests(unittest.TestCase):
             execute_role_output_command=lambda *args, **kwargs: {"unexpected": True},
             read_text_arg=lambda text_value, file_value: text_value,
             read_body_json=lambda root, raw_json, body_file: None,
-            relay_envelope=lambda root, args: {"ok": True, "helper": "relay"},
             record_router_event_or_blocked_next_action=lambda root, event_name, envelope: {},
-            receive_card=lambda root, args: {"unexpected": True},
+            receive_card=lambda root, args: {"ok": True, "helper": "receive-card"},
             receive_card_bundle=lambda root, args: {"unexpected": True},
         )
 
-        self.assertEqual(result, {"ok": True, "helper": "relay"})
+        self.assertEqual(result, {"ok": True, "helper": "receive-card"})
 
 
 if __name__ == "__main__":

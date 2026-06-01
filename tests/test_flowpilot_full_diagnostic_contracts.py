@@ -2096,9 +2096,23 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
     def test_packet_control_plane_and_reviewer_external_contracts(self) -> None:
         runtime_args = flowpilot_runtime_cli.parse_args(
-            ["--root", ".", "open-packet", "--envelope-path", "packet.json", "--role", "worker", "--agent-id", "agent-a"]
+            [
+                "--root",
+                ".",
+                "issue-active-holder-lease",
+                "--envelope-path",
+                "packet.json",
+                "--holder-role",
+                "worker",
+                "--holder-agent-id",
+                "agent-a",
+                "--route-version",
+                "1",
+                "--frontier-version",
+                "1",
+            ]
         )
-        self.assertEqual(runtime_args.command, "open-packet")
+        self.assertEqual(runtime_args.command, "issue-active-holder-lease")
         self.assertIs(flowpilot_runtime_cli.parse_args, flowpilot_runtime_args.parse_args)
         self.assertIs(flowpilot_runtime_cli._read_body_json, flowpilot_runtime_commands._read_body_json)
         self.assertIs(flowpilot_runtime_cli._receive_card, flowpilot_runtime_commands._receive_card)
@@ -2113,16 +2127,16 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
 
         state = State()
         issued = list(packet_issue_resume.PMIssuePacket().apply(NodeCase("packet-1", "dispatch", "worker"), state))
-        runtime_written = list(packet_relay.PacketRuntimeWrite().apply(issued[0].output, issued[0].state))
-        reminder_checked = list(packet_relay.ControllerReminderCheck().apply(runtime_written[0].output, runtime_written[0].state))
-        relayed = list(packet_relay.ControllerEnvelopeOnlyHandoff().apply(reminder_checked[0].output, reminder_checked[0].state))
-        dispatch_state = replace(relayed[0].state, controller_relay_signatures=("packet-1",))
+        runtime_written = list(packet_relay.PacketRuntimeWrite().apply(issued[0].output, issued[0].new_state))
+        reminder_checked = list(packet_relay.ControllerReminderCheck().apply(runtime_written[0].output, runtime_written[0].new_state))
+        relayed = list(packet_relay.ControllerEnvelopeOnlyHandoff().apply(reminder_checked[0].output, reminder_checked[0].new_state))
+        dispatch_state = replace(relayed[0].new_state, current_assignments=("packet-1",))
         dispatched = list(packet_dispatch_results.RouterDirectDispatch().apply(relayed[0].output, dispatch_state))
         resumed = list(packet_issue_resume.HeartbeatResumeLoad().apply(HeartbeatCase("heartbeat-packet"), state))
         reviewed = list(
             packet_review_pm.ReviewerResultEnvelopeCheck().apply(
                 NodeResult("packet-1", "worker", "agent-worker"),
-                State(result_controller_relay_signatures=("packet-1",), result_ledger_records=("packet-1",)),
+                State(result_current_assignments=("packet-1",), result_ledger_records=("packet-1",)),
             )
         )
         invariant = packet_invariants.controller_handoff_body_leak_never_advances(State(), [])
@@ -2142,10 +2156,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "body_hash": hashlib.sha256(b"packet body").hexdigest(),
                 "body_opened_by_role": {
                     "role": "worker",
-                    "controller_relay_verified": True,
                     "body_hash_verified": True,
                 },
-                "controller_relay": {"verified": True, "recipient_role": "worker"},
             }
             result_envelope = {
                 "packet_id": "packet-1",
@@ -2156,10 +2168,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "result_body_hash": hashlib.sha256(b"result body").hexdigest(),
                 "result_body_opened_by_role": {
                     "role": "human_like_reviewer",
-                    "controller_relay_verified": True,
                     "body_hash_verified": True,
                 },
-                "controller_relay": {"verified": True, "recipient_role": "human_like_reviewer"},
             }
             paths = packet_runtime.packet_paths(project_root, "packet-1", "run-test")
             write_json(
@@ -2171,9 +2181,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                         {
                             "packet_id": "packet-1",
                             "packet_body_opened_by_role": "worker",
-                            "packet_body_opened_after_controller_relay_check": True,
                             "result_body_opened_by_role": "human_like_reviewer",
-                            "result_body_opened_after_controller_relay_check": True,
                             "result_body_hash": result_envelope["result_body_hash"],
                             "result_body_path": result_envelope["result_body_path"],
                             "result_envelope_path": str(paths["result_envelope"].relative_to(project_root)),
@@ -2213,13 +2221,13 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "advance_requires_review_pass",
                 "review_pass_requires_role_origin_audit",
                 "review_pass_requires_mail_chain_audit",
-                "recipient_body_open_requires_controller_relay_signature",
+                "recipient_body_open_requires_current_assignment",
                 "missing_or_unopened_mail_requires_pm_restart_or_repair",
                 "invalid_origin_block_requires_warning",
                 "controller_body_boundary_blocks_never_advance",
                 "controller_handoff_body_leak_never_advances",
                 "missing_mutual_role_reminder_never_advances",
-                "controller_relay_requires_physical_files_and_envelope_only_handoff",
+                "current_assignment_requires_physical_files_and_envelope_only_handoff",
                 "holder_change_requires_user_status_update",
                 "cockpit_missing_major_node_requires_chat_mermaid",
                 "dispatch_requires_packet_envelope_and_hash_checks",

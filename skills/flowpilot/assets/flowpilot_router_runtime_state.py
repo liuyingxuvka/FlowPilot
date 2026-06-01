@@ -94,7 +94,7 @@ def _create_startup_bootstrap_state(router: ModuleType, project_root: Path) -> d
         raise RouterError(f'could not allocate unique startup run id from {base_run_id}')
     run_root_rel = project_relative(project_root, run_root)
     state = router.new_bootstrap_state(run_id=run_id, run_root_rel=run_root_rel)
-    write_json(project_root / '.flowpilot' / 'current.json', {'schema_version': 'flowpilot.current.v1', 'current_run_id': run_id, 'current_run_root': run_root_rel, 'status': 'startup_bootstrap', 'startup_bootstrap_path': project_relative(project_root, run_bootstrap_state_path(run_root)), 'updated_at': utc_now()})
+    write_json(project_root / '.flowpilot' / 'current.json', {'schema_version': 'flowpilot.current.v1', 'run_id': run_id, 'run_root': run_root_rel, 'status': 'startup_bootstrap', 'startup_bootstrap_path': project_relative(project_root, run_bootstrap_state_path(run_root)), 'updated_at': utc_now()})
     return state
 
 def _load_existing_bootstrap_state(router: ModuleType, project_root: Path) -> dict[str, Any] | None:

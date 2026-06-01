@@ -166,7 +166,7 @@ def _write_terminal_summary(router: ModuleType, project_root: Path, run_root: Pa
     write_json(index_path, index)
     current_path = project_root / '.flowpilot' / 'current.json'
     current = read_json_if_exists(current_path) or {}
-    if current.get('current_run_id') == run_id:
+    if (current.get('run_id') or current.get('current_run_id')) == run_id:
         current['status'] = mode
         current['final_summary_path'] = markdown_rel
         current['final_summary_json_path'] = json_rel

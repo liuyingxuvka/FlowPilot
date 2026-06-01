@@ -46,7 +46,7 @@ def _recover_terminal_status_from_run_authorities(router: ModuleType, project_ro
     if status in recoverable_statuses:
         return status
     current = read_json_if_exists(project_root / '.flowpilot' / 'current.json') or {}
-    if str(current.get('current_run_id') or current.get('active_run_id') or '') == run_id:
+    if str(current.get('run_id') or current.get('current_run_id') or current.get('active_run_id') or '') == run_id:
         current_status = str(current.get('status') or '')
         if current_status in recoverable_statuses:
             return current_status

@@ -15,6 +15,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
+import flowpilot_router as router  # noqa: E402
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
@@ -44,7 +45,7 @@ class SyntheticTracePackage:
     expected_outcome: str = "pm_disposition_required"
     actions: tuple[str, ...] = (
         "issue_packet",
-        "controller_relay_packet",
+        "current_assignment_packet",
         "issue_active_holder_lease",
         "ack_packet",
         "open_packet_body",
@@ -115,7 +116,7 @@ class SyntheticTraceReplay:
             received_from_role="project_manager",
             relayed_to_role=self.package.role,
         )
-        self.steps.append("controller_relay_packet")
+        self.steps.append("current_assignment_packet")
         return self.packet_envelope
 
     def issue_lease(self) -> dict[str, Any]:
@@ -185,7 +186,7 @@ class SyntheticTraceReplay:
             received_from_role=self.package.role,
             relayed_to_role=target,
         )
-        self.steps.append(f"controller_relay_result:{target}")
+        self.steps.append(f"current_assignment_result:{target}")
         return self.result_envelope
 
     def open_result_body(self, *, role: str | None = None) -> str:
@@ -238,12 +239,13 @@ def make_trace_project() -> Path:
     write_json(
         root / ".flowpilot" / "current.json",
         {
-            "current_run_id": "run-test",
-            "current_run_root": ".flowpilot/runs/run-test",
+            "run_id": "run-test",
+            "run_root": ".flowpilot/runs/run-test",
             "status": "running",
         },
     )
     run_root = root / ".flowpilot" / "runs" / "run-test"
+    router._copy_runtime_kit_into_run_root(run_root)  # type: ignore[attr-defined]
     write_json(run_root / "run.json", {"schema_version": "flowpilot.run.v1", "run_id": "run-test"})
     write_json(
         run_root / "state.json",

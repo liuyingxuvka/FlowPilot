@@ -48,7 +48,7 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
         record = replay.packet_record()
         self.assertTrue(record["active_holder_ack_recorded"])
         self.assertEqual(record["packet_body_opened_by_role"], "worker")
-        self.assertTrue(record["packet_body_opened_after_controller_relay_check"])
+        self.assertEqual(record["packet_open_work_authority"]["source"], "current_assignment")
         self.assertTrue(record["fast_lane_result_mechanics_passed"])
         self.assertEqual(record["result_envelope"]["next_recipient"], "project_manager")
 
@@ -137,7 +137,7 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
 
         with self.assertRaisesRegex(
             packet_runtime.PacketRuntimeError,
-            "controller relay target .* does not match recipient 'controller'",
+            "packet body may only be read by to_role='worker', not 'controller'",
         ):
             packet_runtime.read_packet_body_for_role(
                 replay.root,
@@ -192,8 +192,8 @@ class FlowPilotSyntheticAgentTraceReplayTests(unittest.TestCase):
             result_envelope=read_json(replay.result_envelope_path),
             agent_role_map={"agent-worker-1-1": "worker"},
         )
-        self.assertFalse(audit["passed"])
-        self.assertIn("missing_or_invalid_result_controller_relay", audit["blockers"])
+        self.assertTrue(audit["passed"])
+        self.assertEqual(audit["blockers"], [])
 
     def test_fixture_evidence_is_disclosed_but_not_live_completion_evidence(self) -> None:
         replay = start_worker_trace(
@@ -863,7 +863,8 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         stopped = router.stop_router_daemon(root, reason="systemic_peer_stop", run_root=run_a)
 
         self.assertEqual(stopped["run_id"], "run-a")
-        self.assertEqual(read_json(root / ".flowpilot" / "current.json")["current_run_id"], "run-b")
+        current = read_json(root / ".flowpilot" / "current.json")
+        self.assertEqual(current.get("run_id") or current.get("current_run_id"), "run-b")
         self.assertEqual(read_json(run_a / "runtime" / "router_daemon.lock")["status"], "released")
         self.assertEqual(read_json(run_b / "runtime" / "router_daemon.lock")["status"], "active")
         self.assertFalse(read_json(router.run_state_path(run_a))["daemon_mode_enabled"])

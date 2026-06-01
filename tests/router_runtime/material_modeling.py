@@ -1074,7 +1074,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(refreshed_entry["router_reconciliation"]["source"], "controller_receipt_evidence_fold")
         self.assertFalse(refreshed_entry["router_reconciliation"]["sealed_body_reads"])
         self.assertNotEqual(router.next_action(root)["action_type"], "relay_material_scan_packets")
-    def test_material_scan_path_only_done_receipt_schedules_controller_relay_repair(self) -> None:
+    def test_material_scan_path_only_done_receipt_keeps_current_assignment_relay_pending(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -1104,18 +1104,16 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"].get("material_scan_packets_relayed", False))
         self.assertIsNone(state.get("active_control_blocker"))
-        repair_action = state["pending_action"]
-        self.assertEqual(repair_action["action_type"], "complete_missing_controller_deliverable")
-        self.assertEqual(repair_action["repair_target_action_type"], "relay_material_scan_packets")
-        self.assertEqual(repair_action["repair_of_controller_action_id"], entry["action_id"])
-        self.assertEqual(len(repair_action["runtime_relay_operations"]), len(relay_action["runtime_relay_operations"]))
-        self.assertTrue(repair_action["missing_deliverables"])
-        self.assertIn("flowpilot_runtime.py relay-envelope", repair_action["runtime_output_contracts"][0]["runtime_channel"])
+        pending_action = state["pending_action"]
+        self.assertEqual(pending_action["action_type"], "relay_material_scan_packets")
+        self.assertEqual(pending_action["postcondition"], "material_scan_packets_relayed")
+        self.assertEqual(len(pending_action["runtime_relay_operations"]), len(relay_action["runtime_relay_operations"]))
+        self.assertNotIn("missing_deliverables", pending_action)
+        self.assertNotIn("runtime_output_contracts", pending_action)
 
         original_entry = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
-        self.assertEqual(original_entry["router_reconciliation_status"], "repair_pending")
-        self.assertEqual(original_entry["last_apply_result"]["reason"], "controller_receipt_evidence_fold_not_satisfied")
-    def test_material_scan_relay_repair_receipt_folds_after_runtime_relay(self) -> None:
+        self.assertEqual(original_entry["router_reconciliation_status"], "retry_pending")
+    def test_material_scan_path_only_receipt_folds_after_current_assignment_relay_action(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_activation(root)
@@ -1134,33 +1132,14 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
 
         state = read_json(router.run_state_path(run_root))
-        repair_action = state["pending_action"]
-        self.assertEqual(repair_action["action_type"], "complete_missing_controller_deliverable")
-        relay_results = []
-        for operation in repair_action["runtime_relay_operations"]:
-            output = io.StringIO()
-            with contextlib.redirect_stdout(output):
-                rc = flowpilot_runtime.main(["--root", str(root), *operation["runtime_args"]])
-            self.assertEqual(rc, 0)
-            relay_results.append(json.loads(output.getvalue()))
-        self.assertTrue(all(item["controller_relay_signature_recorded"] for item in relay_results))
-
-        receipt_result = router.record_controller_action_receipt(
-            root,
-            action_id=repair_action["controller_action_id"],
-            status="done",
-            payload={"sealed_body_reads": False, "runtime_relay_operation_count": len(relay_results)},
-        )
-        self.assertTrue(receipt_result["ok"])
+        pending_action = state["pending_action"]
+        self.assertEqual(pending_action["action_type"], "relay_material_scan_packets")
+        router.apply_action(root, "relay_material_scan_packets")
 
         state = read_json(router.run_state_path(run_root))
         self.assertTrue(state["flags"]["material_scan_packets_relayed"])
         original_entry = read_json(run_root / "runtime" / "controller_actions" / f"{entry['action_id']}.json")
-        self.assertEqual(original_entry["deliverable_status"], "resolved")
-        self.assertEqual(original_entry["router_reconciliation_status"], "reconciled")
-        repair_entry = read_json(run_root / "runtime" / "controller_actions" / f"{repair_action['controller_action_id']}.json")
-        self.assertEqual(repair_entry["router_reconciliation_status"], "reconciled")
-        self.assertEqual(repair_entry["router_reconciliation"]["source"], "controller_relay_deliverable_repair_fold")
+        self.assertEqual(original_entry["router_reconciliation_status"], "retry_pending")
     def test_material_scan_result_receipt_folds_batch_lifecycle(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
