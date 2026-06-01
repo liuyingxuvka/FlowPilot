@@ -16,7 +16,7 @@
   },
   "active_holder_submission": {
     "submitted_through_active_holder_lease": false,
-    "lease_id": "<active-holder-lease-id-or-null>",
+    "lease_id": "<current packet holder-lease-id-or-null>",
     "controller_visibility": "metadata_only"
   },
   "router_mailbox_return": {

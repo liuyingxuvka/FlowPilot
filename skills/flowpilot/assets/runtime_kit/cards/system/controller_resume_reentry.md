@@ -3,11 +3,11 @@ recipient_role: controller
 recipient_identity: FlowPilot controller role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the Router-directed runtime path. The task remains unfinished until Router receives that output or blocker.
-work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current Router wait authority, PM role-work packet/result contract, or active-holder lease; otherwise stop and return a protocol blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
-runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
+work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current runtime wait authority, PM role-work packet/result contract, or current packet lease; otherwise stop and return a protocol blocker.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
 # Controller Resume Reentry Card
 
@@ -16,7 +16,7 @@ recovery. Heartbeat/manual wakeups and mid-run role liveness faults use the
 same recovery entry principle: record the wake or fault through
 `flowpilot_new.py resume` or the runtime-provided recovery command, then follow
 the returned lifecycle guard and foreground duty. Do not classify the old work
-chain as alive from `role_binding_ledger`, route state, old Router files, chat
+chain as alive from `role_binding_ledger`, route state, stale runtime files, chat
 history, or a remembered "awaiting role" note.
 
 If any runtime-required role binding is missing, cancelled, unknown, timed out,
@@ -58,8 +58,8 @@ Also check continuation authority:
 - startup answers allow heartbeat or manual resume for this run;
 - latest heartbeat/manual-resume evidence belongs to this run;
 - required role memory and role freshness are visible to PM.
-- lifecycle guard status belongs to this run. Do not attach to old Router
-  daemon locks or Controller action ledgers as fresh-run authority.
+- lifecycle guard status belongs to this run. Do not attach to stale runtime
+  locks or Controller action ledgers as fresh-run authority.
 
 Do not read `packet_body.md`, `result_body.md`, old route files, old screenshots,
 old icons, old concept assets, or chat history as route authority.
@@ -94,14 +94,14 @@ stale, contaminated, or ambiguous, block packet flow and ask PM for a recovery
 decision through Controller. Do not repair, finish, or advance project work as
 Controller.
 
-If an active-holder packet lease is open, wait for the packet-id-specific
-runtime-authored `controller_next_action_notice.json` before relaying or
+If a current packet lease is open, wait for the packet-id-specific
+runtime-authored `current runtime next-action notice` before relaying or
 requesting anything else. That notice is Controller-visible metadata only; it
 does not authorize Controller to read sealed packet or result bodies.
 
 Runtime-ready evidence still preempts foreground role waits during resume. If
 resume state, packet ledgers, return ledgers, status packets, lifecycle guard,
-or `controller_next_action_notice.json` show that the runtime can expose or has
+or `current runtime next-action notice` show that the runtime can expose or has
 already exposed the next action, refresh the lifecycle guard before any
 foreground role wait. If the run is nonterminal and only waiting for a role
 output, run `flowpilot_new.py patrol` or the runtime-provided refresh command

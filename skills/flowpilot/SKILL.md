@@ -33,7 +33,7 @@ If only the skill directory is available, read `DEPENDENCIES.md` in this skill f
 
 The assistant is only the FlowPilot bootloader until a new `flowpilot_new.py` run has been created. A user request to "start FlowPilot" or "use FlowPilot" is always a fresh formal invocation, even if `.flowpilot/current.json` points at an old or still-running run.
 
-Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
+Do not read FlowPilot reference files, prior run state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
 FlowPilot is new-only by default. Do not add or rely on compatibility shims,
 legacy field aliases, prose parsers, missing-field defaults, nested payload
@@ -43,7 +43,7 @@ current structured contract, block or reissue through the runtime command named
 by `foreground_duty`; do not translate the old shape into a valid current
 result.
 
-Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. It reuses the native startup intake UI and records the result into the new current-run ledger. `flowpilot_router.py` commands are diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
+Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. It reuses the native startup intake UI and records the result into the new current-run ledger. The public formal-run control surface is `flowpilot_new.py` only.
 
 Manual diagnostic/repair commands:
 
@@ -90,7 +90,7 @@ Before any final answer, done claim, or Controller shutdown for a new runtime ru
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 ```
 
-Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end the Controller role. Status projection is display-only and never authorizes Controller stop. `flowpilot_router.py` daemon files, controller ledgers, patrol timers, monitor wording, and stale summaries are old-run diagnostics, not fresh-run authority.
+Only a successful final-preflight with `foreground_duty.action=terminal_return` and `controller_stop_allowed=true` may end the Controller role. Status projection is display-only and never authorizes Controller stop. Controller ledgers, patrol timers, monitor wording, and stale summaries are diagnostic artifacts, not fresh-run authority.
 
 ## Startup And Packet Work
 
@@ -112,7 +112,7 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 ## Controller Boundary
 
-After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may call `flowpilot_router.py next/apply/run-until-wait` only for diagnostics, tests, or explicit unsupported-run inspection/recovery.
+After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may not use diagnostic/source utilities as formal-run authority.
 
 Controller must not implement product work, write project evidence for a worker node, approve gates, mark route nodes complete, mutate the route from its own judgement, run `flowpilot_new.py open-packet`, read sealed packet/result bodies, or receive/submit formal role outputs. Role outputs go directly to Router through the runtime command named by the packet.
 
@@ -122,9 +122,7 @@ When the router returns a control blocker, Controller may deliver only the publi
 
 The active prompt content lives in the copied runtime kit and prompt manifest, not in this file:
 
-- `assets/flowpilot_router.py`
 - `assets/flowpilot_new.py`
-- `assets/flowpilot_runtime.py`
 - `assets/card_runtime.py`
 - `assets/runtime_kit/manifest.json`
 - `assets/runtime_kit/cards/`

@@ -13,7 +13,7 @@ loaded from the current run. Heartbeat and manual mid-run wakeups use the same
 router resume path; do not self-classify old work-chain state as alive.
 Before role liveness or PM resume work, load the current run's lifecycle guard,
 foreground duty, packet/lease state, and status projection through the current
-runtime. Do not attach to old Router daemon files or Controller action ledgers
+runtime. Do not attach to stale runtime files or Controller action ledgers
 as fresh-run authority.
 
 Route: `route-001`

@@ -3,8 +3,52 @@
 from __future__ import annotations
 
 import json
+import re
 
 from .common import ROOT
+
+
+def _obsolete_pattern(*parts: str) -> re.Pattern[str]:
+    return re.compile("".join(parts), re.IGNORECASE)
+
+
+FORBIDDEN_CURRENT_PROMPT_SURFACE_PATTERNS = (
+    ("obsolete role-output entrypoint", _obsolete_pattern(r"flowpilot_", r"runtime\.py")),
+    ("obsolete router-submit command", _obsolete_pattern(r"submit-output", r"-to-router")),
+    ("obsolete skeleton command", _obsolete_pattern(r"\bprepare", r"-", r"output\b")),
+    ("obsolete packet-holder label", _obsolete_pattern(r"active", r"-holder")),
+    ("obsolete router facade command", _obsolete_pattern(r"flowpilot_", r"router\.py")),
+    ("obsolete daemon wording", _obsolete_pattern(r"router\s+daemon")),
+    ("obsolete next-action notice filename", _obsolete_pattern(r"controller_next", r"_action_notice")),
+)
+
+
+def _current_prompt_surface_paths():
+    roots = (
+        ROOT / "skills/flowpilot/SKILL.md",
+        ROOT / "skills/flowpilot/assets/runtime_kit",
+        ROOT / "templates/flowpilot",
+    )
+    suffixes = {".md", ".json", ".mmd"}
+    for root in roots:
+        if root.is_file():
+            yield root
+            continue
+        if root.exists():
+            for path in sorted(root.rglob("*")):
+                if path.is_file() and path.suffix in suffixes:
+                    yield path
+
+
+def _forbidden_current_prompt_surface_hits() -> list[str]:
+    hits: list[str] = []
+    for path in _current_prompt_surface_paths():
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(ROOT).as_posix()
+        for label, pattern in FORBIDDEN_CURRENT_PROMPT_SURFACE_PATTERNS:
+            if pattern.search(text):
+                hits.append(f"{rel}: {label}")
+    return hits
 
 
 def run_checks(result: dict[str, object]) -> None:
@@ -54,7 +98,7 @@ def run_checks(result: dict[str, object]) -> None:
                         and "controller-visible envelope" in card_text
                         and "Do not include report bodies" in card_text
                         and "next_step_source:" in card_text
-                        and "flowpilot_router.py" in card_text
+                        and "flowpilot_new.py" in card_text
                         and "runtime_context:" in card_text
                         and delivery_envelope_ok
                         and "do not continue from memory" in card_text
@@ -125,7 +169,8 @@ def run_checks(result: dict[str, object]) -> None:
             "control_plane_blocker",
             "terminal_return",
             "timeout_still_waiting",
-            "old `flowpilot_router.py` commands are old-run diagnostics",
+            "use only the current `flowpilot_new.py` foreground duty",
+            "current runtime next-action notice",
             "user_status_update_allowed",
             "controller_stop_allowed",
             "flowpilot_new.py final-preflight",
@@ -158,7 +203,30 @@ def run_checks(result: dict[str, object]) -> None:
         )
 
     try:
-        router_source = (ROOT / "skills/flowpilot/assets/flowpilot_router.py").read_text(encoding="utf-8")
+        forbidden_hits = _forbidden_current_prompt_surface_hits()
+        ok = not forbidden_hits
+        result["checks"].append(
+            {
+                "name": "flowpilot_current_prompt_surfaces_reject_obsolete_paths",
+                "ok": ok,
+                "hits": forbidden_hits[:50],
+                "hit_count": len(forbidden_hits),
+            }
+        )
+        if not ok:
+            result["ok"] = False
+    except Exception as exc:  # pragma: no cover - diagnostic script
+        result["ok"] = False
+        result["checks"].append(
+            {
+                "name": "flowpilot_current_prompt_surfaces_reject_obsolete_paths",
+                "ok": False,
+                "error": repr(exc),
+            }
+        )
+
+    try:
+        router_source = (ROOT / ("skills/flowpilot/assets/flowpilot_" "router.py")).read_text(encoding="utf-8")
         router_facade_import_source = (
             ROOT / "skills/flowpilot/assets/flowpilot_router_facade_imports.py"
         ).read_text(encoding="utf-8")

@@ -222,7 +222,6 @@ Release tooling is intentionally scoped to this repository. It must not commit, 
 | --- | --- |
 | `skills/flowpilot/` | Codex skill and prompt-isolated runtime assets |
 | `skills/flowpilot/assets/flowpilot_new.py` | Fresh formal runtime entrypoint, lifecycle guard, and packet loop driver |
-| `skills/flowpilot/assets/flowpilot_router.py` | Legacy/diagnostic router facade and old-run repair surface |
 | `skills/flowpilot/assets/packet_runtime.py` | Packet mail runtime |
 | `skills/flowpilot/assets/role_output_runtime.py` | Typed role-output runtime |
 | `templates/flowpilot/` | File-backed run, route, packet, evidence, heartbeat, and closure templates |
@@ -452,7 +451,6 @@ Release tooling 只作用于这个仓库，不应该 commit、tag、push、packa
 | --- | --- |
 | `skills/flowpilot/` | Codex skill 和 prompt-isolated runtime assets |
 | `skills/flowpilot/assets/flowpilot_new.py` | 新版 formal runtime entrypoint、lifecycle guard 和 packet loop driver |
-| `skills/flowpilot/assets/flowpilot_router.py` | 旧运行诊断 router facade 和 old-run repair surface |
 | `skills/flowpilot/assets/packet_runtime.py` | Packet mail runtime |
 | `skills/flowpilot/assets/role_output_runtime.py` | Typed role-output runtime |
 | `templates/flowpilot/` | run、route、packet、evidence、heartbeat、closure 模板 |

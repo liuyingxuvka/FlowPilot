@@ -13,7 +13,7 @@
     {
       "id": "startup.heartbeat_resume",
       "path": "prompts/startup/heartbeat_resume.md",
-      "sha256": "aa5dced414a2ef47b7f9e0ab21bebcc0ee989894e5cc71be135c1ebd71c211e5",
+      "sha256": "bbbbe2e7b6a4da418695213a566ef4f644ecf6c9c01e672e490444818463c01a",
       "strip_trailing_newline": true,
       "template_variables": [
         "project_root",
@@ -37,14 +37,14 @@
     {
       "id": "cards.required_return_policy",
       "path": "prompts/cards/required_return_policy.md",
-      "sha256": "1dd0873cf075aa11a11258bd7a24016b99e5a6ee41b5c35fa2cc6846a21c0e89",
+      "sha256": "5a254a879e0baaacaa66bfb0879e7a7900d6f4f70bc0475e0bb3f916599ed75e",
       "strip_trailing_newline": true,
       "template_variables": []
     },
     {
       "id": "cards.next_step_source_policy",
       "path": "prompts/cards/next_step_source_policy.md",
-      "sha256": "51c497ff57fe5e006e57de7cc17b7a28a3e0b6858553e62f6b07e83db53a0e47",
+      "sha256": "ae9d6fa111169c9af5541fb9e3687bbbda947800549da2f51ec52ac6403313dc",
       "strip_trailing_newline": true,
       "template_variables": []
     },
@@ -58,7 +58,7 @@
     {
       "id": "cards.role_scope_policy",
       "path": "prompts/cards/role_scope_policy.md",
-      "sha256": "106965925ceffbf56db6f3e73b10e4a99ca2ae5504c67dd94575add06c928dd4",
+      "sha256": "e5c51f878c6813341d25113335ecff5a23a17aeda7dc41539d433d79eba362db",
       "strip_trailing_newline": true,
       "template_variables": []
     },
@@ -72,7 +72,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "e1beb3a825a2bd9c1b8638b8d529173e5a27c8918ee3b0a24b74385d56a5d862",
+      "sha256": "fe1976273ccdc84197f9648035a079762bc4fafb04a49e24d625b61d725ddd5a",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",
@@ -82,7 +82,7 @@
     {
       "id": "packets.result_identity_boundary",
       "path": "prompts/packets/result_identity_boundary.md",
-      "sha256": "e0f42dc67ace4a90cbe854e6e9db0779ba7d376f451237482c454b4778ea2599",
+      "sha256": "fa4662738d562f8eaab17ae0e46b55d046b8b1d28b4a82419b79a64bb788c80c",
       "strip_trailing_newline": false,
       "template_variables": [
         "result_identity_marker",

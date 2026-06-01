@@ -16,10 +16,9 @@ Rules:
   GateDecision bodies use `role_output_runtime.py` for skeleton generation,
   mechanical validation, receipts, ledgers, hashes, and controller-visible
   envelopes.
-- `flowpilot_runtime.py` is the preferred unified role entrypoint. It delegates
-  system-card check-in to `card_runtime.py`, packet/result opens and
-  completions to `packet_runtime.py`, and formal reports/decisions to
-  `role_output_runtime.py`.
+- `flowpilot_new.py` is the public role entrypoint. It delegates system-card
+  check-in, packet/result opens, packet completion, and formal report/decision
+  submission through the current runtime ledger.
 - An ACK-only system card is complete when Router receives the matching ACK.
   That clears the card ACK wait only.
 - Any card, mail, or packet that asks for a report, result, decision, packet

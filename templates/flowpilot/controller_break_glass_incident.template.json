@@ -44,7 +44,7 @@
   "exit_criteria": [
     "normal FlowPilot control flow can produce a legal next action",
     "break-glass incident and any temporary patch records are written",
-    "Controller returns to Router daemon status and action ledger processing"
+    "Controller returns to runtime daemon status and action ledger processing"
   ],
   "related_patch_ids": [],
   "closed_at": "<iso-8601-timestamp-or-null>",

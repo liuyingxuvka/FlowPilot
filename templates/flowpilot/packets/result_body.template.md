@@ -17,23 +17,23 @@ completed_by_role: <completed_by_role>
 recipient_role: <same-as-result-envelope-next_recipient>
 recipient_identity: I completed this as `<completed_by_role>` for this packet result only; the next recipient must read it only as the result envelope recipient.
 allowed_scope: Read and review only this result body, its result envelope, and the source packet evidence after verifying current assignment, body hash, and completed_by_role identity.
-forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass Router, hide unresolved issues, or relabel this result.
-required_return: If this is the current active-holder packet result, submit completion directly to Router through the active-holder lease. Later review, PM decision, FlowGuard operator response, blocker, or reissue/repair mail follows the Router-directed FlowPilot packet path. Result envelopes land in the Router mailbox; the Router daemon consumes valid evidence on its one-second tick, and result producers do not advance route state directly.
-controller_aside: The result envelope may include an optional `controller_aside` for a short Controller-only process/status note. It is not evidence, not a finding, not a recommendation, not an approval, and not a Router event source.
+forbidden_scope: I did not approve gates unless my role is the approver; do not act as another role, bypass the current runtime, hide unresolved issues, or relabel this result.
+required_return: If this is the current packet result, submit completion through `flowpilot_new.py submit-result` for the assigned lease and packet. Later review, PM decision, FlowGuard operator response, blocker, or reissue/repair mail follows the current FlowPilot packet path. Result producers do not advance route state directly.
+controller_aside: The result envelope may include an optional `controller_aside` for a short Controller-only process/status note. It is not evidence, not a finding, not a recommendation, not an approval, and not a runtime event source.
 ---
 
 # Result Body
 
 This file contains the detailed result for the packet. The controller must not
 read, summarize, repair, execute, or complete this result body. The controller
-only handles Router-authorized result envelope metadata after Router tells it
-to. Current active-holder packet completion is submitted to Router first, not
-to Controller.
+only handles runtime-authorized result envelope metadata after the current
+runtime exposes it. Current packet completion is submitted through the runtime
+lifecycle, not to Controller.
 
 The result envelope may carry an optional `controller_aside` for brief
 Controller process/status context only. Do not use it for formal work content,
 evidence, findings, recommendations, decisions, approvals, or report details.
-Router preserves the field as metadata and must not use it to satisfy waits or
+The runtime preserves the field as metadata and must not use it to satisfy waits or
 derive events.
 
 Before reading this file, reviewer, PM, or FlowGuard operator must verify that

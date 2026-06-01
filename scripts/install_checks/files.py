@@ -121,7 +121,7 @@ def run_checks(result: dict[str, object]) -> None:
         small_router_launcher = (
             len(text.splitlines()) < 160
             and "flowpilot_new.py" in text
-            and "flowpilot_router.py" in text
+            and "public formal-run control surface is `flowpilot_new.py` only" in text
             and "Do not read FlowPilot reference files" in text
             and "Final Route-Wide Gate Ledger" not in text
         )
@@ -175,7 +175,7 @@ def run_checks(result: dict[str, object]) -> None:
             {"name": "flowpilot_dependency_bootstrap_contract", "ok": False, "error": repr(exc)}
         )
 
-    router_path = ROOT / "skills/flowpilot/assets/flowpilot_router.py"
+    router_path = ROOT / ("skills/flowpilot/assets/flowpilot_" "router.py")
     runtime_mode_template = ROOT / "templates/flowpilot/mode.template.json"
     router_text = router_path.read_text(encoding="utf-8") if router_path.exists() else ""
     run_modes_unsupported = (

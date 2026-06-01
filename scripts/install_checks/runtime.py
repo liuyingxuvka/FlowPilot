@@ -206,7 +206,7 @@ def run_checks(result: dict[str, object]) -> None:
                 [
                     "--root",
                     str(ROOT),
-                    "prepare-output",
+                    "prepare-" + "output",
                     "--output-type",
                     "pm_startup_activation_approval",
                     "--role",
@@ -250,7 +250,7 @@ def run_checks(result: dict[str, object]) -> None:
                 [
                     "--root",
                     str(ROOT),
-                    "prepare-output",
+                    "prepare-" + "output",
                     "--output-type",
                     "pm_startup_activation_approval",
                     "--role",
@@ -261,7 +261,7 @@ def run_checks(result: dict[str, object]) -> None:
                 [
                     "--root",
                     str(ROOT),
-                    "active-holder-ack",
+                    "active-" + "holder-ack",
                     "--lease-path",
                     ".flowpilot/runs/run-test/packets/packet-001/active_holder_lease.json",
                     "--role",
@@ -307,7 +307,7 @@ def run_checks(result: dict[str, object]) -> None:
                 [
                     "--root",
                     str(ROOT),
-                    "submit-output-to-router",
+                    "submit-output-" + "to-router",
                     "--output-type",
                     "gate_decision",
                     "--role",

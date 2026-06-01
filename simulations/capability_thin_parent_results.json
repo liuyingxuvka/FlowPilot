@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-01T14:23:06.724981+00:00",
+  "created_at": "2026-06-01T15:46:42.450544+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-01T14:23:04.577138+00:00",
+      "created_at": "2026-06-01T15:46:40.432341+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -172,7 +172,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/card_instruction_coverage_results.json",
-            "result_fingerprint": "44add30c3a528dcd4258035386967a824f55419ec6c92bc3fd266600e49747f3",
+            "result_fingerprint": "e297c749834e5e1d97a2176cc8a1c2fc1a9ca6eb06ad1bd95d0cc154f705b6d1",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 65

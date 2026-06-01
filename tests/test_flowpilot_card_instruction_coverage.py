@@ -85,14 +85,18 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("process/status", text)
                 self.assertIn("not", text)
                 self.assertIn("evidence", text)
-                self.assertIn("router", text)
+                self.assertIn("runtime", text)
                 self.assertIn("event", text)
+
+    def test_current_prompt_surfaces_reject_obsolete_runtime_paths(self) -> None:
+        self.assertFalse(model.forbidden_current_prompt_surface_errors(ROOT))
 
     def test_current_packet_rows_use_lease_ack_result_authority(self) -> None:
         action_table = (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower()
         controller_card = _card_path_by_id("controller.core").read_text(encoding="utf-8").lower()
         for text in (action_table, controller_card):
-            self.assertNotIn("flowpilot_runtime.py relay-envelope", text)
+            obsolete_relay = "flowpilot_" + "runtime.py relay-envelope"
+            self.assertNotIn(obsolete_relay, text)
             self.assertNotIn("controller_relay", text)
             self.assertIn("flowpilot_new.py lease-agent", text)
             self.assertIn("flowpilot_new.py role-handoff", text)

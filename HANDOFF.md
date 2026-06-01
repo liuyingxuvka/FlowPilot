@@ -84,8 +84,6 @@ It covers two ownership surfaces:
 
 - fresh-runtime ownership, where `flowpilot_new.py` owns current formal runs,
   lifecycle guard state, and requested-responsibility packet routing;
-- legacy router split ownership, where `flowpilot_router.py` remains a
-  diagnostic and old-run repair facade;
 - split FlowGuard model scripts backed by focused state, transition,
   invariant, hazard, audit, and strategy helpers as applicable.
 
@@ -609,7 +607,7 @@ FlowGuard caught and fixed these design issues:
   `simulations/run_flowpilot_route_mutation_activation_checks.py`.
 - The Python structure simplification passes keep current public entrypoints and
   protocol semantics stable while reducing several heavy active files.
-  `flowpilot_router.py` remains the legacy diagnostic Router entrypoint, while event dispatch,
+  The internal router facade remains a source-level diagnostic entrypoint, while event dispatch,
   event finalization, event intake, Controller action providers, Controller
   action handlers, route activation/mutation, and heartbeat/resume helpers now
   live in focused modules:
@@ -635,7 +633,7 @@ FlowGuard caught and fixed these design issues:
   packet dispatch, route frontier, and terminal ledger helpers remain deferred
   until their state-owner contracts are independently modeled.
 - `packet_runtime.py` remains the public facade and delegates schema, path,
-  contract, ledger, relay, active-holder, session, and reviewer responsibilities
+  contract, ledger, relay, current-packet-holder, session, and reviewer responsibilities
   to `packet_runtime_*` helper modules.
 - `role_output_runtime.py` remains the public facade and delegates schema,
   contract, progress, envelope, and CLI responsibilities to

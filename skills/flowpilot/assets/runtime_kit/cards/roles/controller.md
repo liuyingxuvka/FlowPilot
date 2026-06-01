@@ -3,11 +3,11 @@ recipient_role: controller
 recipient_identity: FlowPilot controller role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
-required_return: System-card ACKs go directly to Router through the card check-in command; this is the router-directed return path for card ACKs. Current work-package ACKs and completion outputs go directly to Router through the active-holder lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, or decision file, then submit it with `flowpilot_runtime.py submit-output-to-router` so Router records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. If an output contract has a fixed Router event, a local receipt or `submit-output` record is only local storage and must not be treated as wait completion until `submit-output-to-router` records the Router event. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, active-holder lease, or runtime-authorized output contract before task work.
-work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current Router wait authority, PM role-work packet/result contract, or active-holder lease; otherwise stop and return a protocol blocker.
-next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; old `flowpilot_router.py` commands are old-run diagnostics or explicit unsupported-run repair tools only.
-runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node, execution_frontier, user_request_path, and source paths. If that live context is missing or stale, do not switch to another run from `.flowpilot/current.json` and do not continue from memory; submit a protocol blocker through the Router-directed runtime path.
+required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
+post_ack: ACK is receipt only; ACK is not completion. After role-card ACK, wait for a phase card, event card, work packet, current packet lease, or runtime-authorized output contract before task work.
+work_authority: Identity/system cards may ACK or explain routing, but they do not by themselves authorize formal report work. Any card that asks a role to produce a formal output must carry current runtime wait authority, PM role-work packet/result contract, or current packet lease; otherwise stop and return a protocol blocker.
+next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
+runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
 # Controller Core Card
 
@@ -73,7 +73,7 @@ Allowed actions:
 - load only Controller-visible current-run metadata: lifecycle guard,
   foreground duty, public packet/result envelopes, leases, status projection,
   run id, route/frontier identifiers, allowed commands, paths, and hashes. Do
-  not use old Router daemon files, Controller action ledgers, old route state,
+  not use stale runtime files, Controller action ledgers, prior run state,
   chat memory, or status summaries as current authority for a fresh run;
 - before every continued wait, refresh the lifecycle guard through the
   runtime-provided refresh command or `flowpilot_new.py patrol --sleep-seconds
@@ -123,10 +123,9 @@ Allowed actions:
   `flowpilot_new.py final-preflight` may end the Controller role. The current
   status summary is display-only; stale `next_step` or completed display
   action projections never override lifecycle guard authority;
-- use old `flowpilot_router.py next/apply/run-until-wait`, `controller-standby`,
-  daemon files, or Controller action ledgers only for explicit old-run
-  diagnostics or unsupported-run repair. They are not the normal runtime path
-  for a fresh `flowpilot_new.py` run;
+- use only the current `flowpilot_new.py` foreground duty as formal-run
+  authority. Diagnostic/source utilities, standby projections, stale runtime
+  files, and Controller action ledgers are not authority for a fresh run;
 - rely on runtime-owned manifest and packet-ledger checks; current work-packet
   authority is the current `flowpilot_new.py lease-agent`,
   runtime-generated `flowpilot_new.py role-handoff`, addressed-role
@@ -171,17 +170,17 @@ Allowed actions:
 - replace the host visible plan only from the router-provided
   `display_plan.json` projection. If no PM display plan exists yet, clear any
   pre-FlowPilot assistant plan to the router's waiting-for-PM placeholder.
-- when Router has issued an active-holder packet lease, wait on the
-  packet-id-specific router-authored `controller_next_action_notice.json`
-  instead of asking the holder to chat through every mechanical retry. The
-  notice is controller-visible metadata only; after reading it, call Router or
-  relay the named envelope exactly as instructed.
+- when the runtime has issued a current packet lease, wait on the
+  packet-id-specific `current runtime next-action notice` instead of asking the
+  holder to chat through every mechanical retry. The notice is
+  controller-visible metadata only; after reading it, refresh the lifecycle
+  guard or relay the named envelope exactly as instructed.
 - Runtime-ready evidence preempts foreground role waits. After any
   runtime-authored card, card bundle, packet, result envelope, status packet,
-  or `controller_next_action_notice.json` is relayed or observed, refresh the
+  or `current runtime next-action notice` is relayed or observed, refresh the
   lifecycle guard before waiting on role chat, `wait_agent`, or role-binding
   output completion. Use `flowpilot_new.py patrol` or the guard's refresh
-  command to consume ready duties first. Use old Router commands only when an
+  command to consume ready duties first. Use unsupported diagnostic commands only when an
   explicit diagnostic or repair instruction names that old-run fallback.
 - if any runtime-required role binding is missing, cancelled, unknown, timed
   out, no longer addressable, or otherwise cannot be found, immediately record
@@ -207,12 +206,12 @@ Forbidden actions:
 - do not create project evidence for PM, reviewer, FlowGuard operator, or worker gates.
 - do not invent, preserve, or restore visible route-plan items from chat
   history, ordinary Codex planning, or Controller summaries.
-- do not infer packet completion from holder chat while an active-holder lease
-  is open. Only a router-authored next-action notice, PM blocker, timeout, or
-  explicit router action can end Controller's wait.
+- do not infer packet completion from holder chat while a current packet lease
+  is open. Only a runtime-authored next-action notice, PM blocker, timeout, or
+  explicit runtime action can end Controller's wait.
 - do not keep the foreground turn blocked on ordinary role-binding waiting
   when Router-ready evidence, a pending router action, a resolved direct ACK,
-  a returned result envelope, or `controller_next_action_notice.json` exists.
+  a returned result envelope, or `current runtime next-action notice` exists.
   Bounded `wait_agent` checks are liveness/recovery only when Router requests
   them; timeout is `timeout_unknown`, never active work proof.
 - do not treat a `controller_aside`, chat note, or self-attested "done" comment
@@ -273,8 +272,8 @@ the packet ledger.
 If the next step is unclear, refresh lifecycle guard/status and reread
 Controller-visible receipts. If a foreground duty exists, perform that duty and
 write its required receipt. If no ready action exists and the run is
-nonterminal, continue `wait_patrol`. Only an explicit old-run diagnostic or
-unsupported-run repair instruction may call old Router commands. If a packet or
+nonterminal, continue `wait_patrol`. Only an explicit diagnostic or
+unsupported-run repair instruction may call unsupported diagnostic commands. If a packet or
 card is missing, contaminated, addressed to the wrong role, or lacks current
 assignment evidence, stop packet flow and ask PM for a corrected decision.
 
