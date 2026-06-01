@@ -108,7 +108,7 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "orphan_evidence_recovery": (
             "test_orphan_runner_summary_routes_recovery_without_accepting_packet" in lifecycle_text
             and "orphan_runner_summary_recovery" in fake_text
-            and "recover_orphan_evidence" in fake_text
+            and "reissue_or_replace_lease" in fake_text
         ),
     }
     missing = [name for name, ok in obligations.items() if not ok]

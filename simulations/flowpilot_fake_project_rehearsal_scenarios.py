@@ -36,6 +36,50 @@ except ImportError:  # pragma: no cover
     )
 
 
+ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
+
+
+def _route_plan_body() -> str:
+    return json.dumps(
+        {
+            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": [
+                {
+                    "node_id": "node-001",
+                    "title": "Implement fake calculator CLI behavior",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "The fake calculator behavior is implemented in the bounded scenario.",
+                        "Worker evidence names current files and command results.",
+                    ],
+                },
+                {
+                    "node_id": "node-002",
+                    "title": "Validate fake project evidence",
+                    "responsibility": "worker",
+                    "modeled_target": "model_test_alignment",
+                    "acceptance_criteria": [
+                        "FlowGuard and ordinary validation evidence are current.",
+                        "Evidence can be challenged by an independent reviewer.",
+                    ],
+                },
+                {
+                    "node_id": "node-003",
+                    "title": "Assemble final closure package",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "The final route-wide ledger accounts for all effective nodes.",
+                        "The public status remains body-free at terminal completion.",
+                    ],
+                },
+            ],
+        },
+        sort_keys=True,
+    )
+
+
 def scenario_normal(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "normal_full_path")
@@ -346,13 +390,7 @@ def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = 
             }
         )
     if packet_kind == "task" and route_scope == "planning":
-        return "\n".join(
-            [
-                "1. Plan architecture and acceptance contracts",
-                "2. Implement the fake calculator CLI behavior",
-                "3. Validate tests, evidence, and route-wide closure",
-            ]
-        )
+        return _route_plan_body()
     if packet_kind == "task" and route_scope == "node_acceptance_plan":
         return json.dumps(
             {
@@ -692,7 +730,7 @@ def scenario_orphan_runner_summary_recovery(work_root: Path) -> dict[str, Any]:
     )
     patrol = run_cli(root, command_log, "patrol")
     guard = patrol.get("lifecycle_guard", {})
-    ensure(guard.get("decision") == "recover_orphan_evidence", f"orphan evidence did not route recovery: {guard}")
+    ensure(guard.get("decision") == "reissue_or_replace_lease", f"orphan evidence did not route reissue recovery: {guard}")
     ensure(patrol.get("foreground_duty", {}).get("action") == "recover_or_reissue", f"orphan evidence lost duty: {patrol}")
     projection = status_projection(root, command_log)
     packet = packet_row(projection, pm_packet)

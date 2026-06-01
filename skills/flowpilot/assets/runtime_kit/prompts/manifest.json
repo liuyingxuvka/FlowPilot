@@ -3,7 +3,7 @@
     {
       "id": "controller.action_ledger_table",
       "path": "prompts/controller/action_ledger_table.md",
-      "sha256": "4774110dfff1d53563b82f8ceb7e63a8fbe4cd6807dc79c7b9d3b324abe9166a",
+      "sha256": "65f28b3cd83bf728ca8a9c8c7bd32db1e260bbf7b1aa817a5d99ba7f85d00da1",
       "strip_trailing_newline": true,
       "template_variables": [
         "break_glass_text",
@@ -72,7 +72,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "af6d38dc19d3580ebb3d3925f3fcf58d1a6da6e4d52a16583e5f4c169b7ffaef",
+      "sha256": "e1beb3a825a2bd9c1b8638b8d529173e5a27c8918ee3b0a24b74385d56a5d862",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",

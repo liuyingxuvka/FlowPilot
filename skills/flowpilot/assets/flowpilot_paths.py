@@ -8,12 +8,14 @@ from typing import Any
 
 
 CURRENT_RUN_POINTER_KEYS = (
-    "current_run_id",
-    "active_run_id",
     "run_id",
-    "current_run_root",
-    "active_run_root",
     "run_root",
+)
+UNSUPPORTED_CURRENT_RUN_POINTER_KEYS = (
+    "current_run_id",
+    "current_run_root",
+    "active_run_id",
+    "active_run_root",
 )
 
 
@@ -57,27 +59,39 @@ def resolve_flowpilot_paths(project_root: Path) -> dict[str, Any]:
     index_path = flowpilot_root / "index.json"
     current = read_json_if_exists(current_path)
 
+    unsupported_pointer_keys = [
+        key for key in UNSUPPORTED_CURRENT_RUN_POINTER_KEYS if current.get(key)
+    ]
     current_declares_run = any(current.get(key) for key in CURRENT_RUN_POINTER_KEYS)
-    run_id = current.get("current_run_id") or current.get("active_run_id") or current.get("run_id")
+    run_id = current.get("run_id")
     run_root = _resolve_under_project(
         root,
         flowpilot_root,
-        current.get("current_run_root") or current.get("active_run_root") or current.get("run_root"),
+        current.get("run_root"),
     )
-    if run_root is None and run_id:
-        run_root = flowpilot_root / "runs" / str(run_id)
 
     layout = "run_scoped"
     active_root = run_root or (flowpilot_root / "runs" / "__missing_current_pointer__")
     path_findings: list[str] = []
     active_run_root_valid = False
-    if not current_declares_run:
+    if unsupported_pointer_keys:
+        path_findings.append(
+            ".flowpilot/current.json uses unsupported current-run pointer fields: "
+            + ", ".join(unsupported_pointer_keys)
+        )
+    elif not current_declares_run:
         path_findings.append(".flowpilot/current.json does not declare a current run.")
+    elif not run_id or not isinstance(run_id, str):
+        path_findings.append(".flowpilot/current.json must declare run_id.")
     elif run_root is None:
-        path_findings.append(".flowpilot/current.json declares an active/current run without a usable run root or run id.")
+        path_findings.append(".flowpilot/current.json must declare run_root.")
     elif not _is_relative_to(run_root, flowpilot_root / "runs"):
         path_findings.append(
             f".flowpilot/current.json points outside .flowpilot/runs: {run_root}"
+        )
+    elif run_root.name != str(run_id):
+        path_findings.append(
+            f".flowpilot/current.json run_id does not match run_root name: {run_id} != {run_root.name}"
         )
     elif not run_root.exists():
         path_findings.append(f"Active FlowPilot run root is missing: {run_root}")

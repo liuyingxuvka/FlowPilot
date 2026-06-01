@@ -21035,6 +21035,73 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## strict-route-plan-schema-20260601 - Strict route-plan schema and deliverable closure checks
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested no fallback/compatibility route planning, formal schema, system-owned terminal checks, OpenSpec plus FlowGuard repair, installed skill sync, and preservation of parallel AI work.
+- Status: implemented_validated_installed_synced_local_git_pending
+- Skill decision: predictive KB preflight + OpenSpec + FlowGuard existing-model preflight + DevelopmentProcessFlow + Model-Test Alignment
+- FlowGuard schema: 1.0
+- FlowGuard package version: 0.39.3
+
+### Model And Runtime Files
+- `openspec/changes/strict-route-plan-schema/`
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `simulations/run_flowpilot_core_runtime_checks.py`
+- `simulations/flowpilot_core_runtime_results.json`
+- `simulations/flowpilot_core_runtime_development_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok; schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - ok; version 0.39.3.
+- `python -m flowguard project-audit --root .` - ok.
+- `openspec validate strict-route-plan-schema --strict --json` - ok.
+- `python -m py_compile <changed runtime/model/test files>` - ok.
+- `python -m pytest tests/test_flowpilot_recursive_route_execution_runtime.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_prompt_store.py tests/test_flowpilot_output_contracts.py tests/test_flowpilot_model_test_alignment.py -q` - ok; 98 passed, 447 subtests passed.
+- `python simulations/run_flowpilot_core_runtime_checks.py --release-evidence --install-ok --json-out simulations/flowpilot_core_runtime_results.json` - ok; release runtime gate passed.
+- `python simulations/run_flowpilot_core_runtime_development_checks.py --json-out simulations/flowpilot_core_runtime_development_results.json` - ok.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - ok; findings empty, deferred structure split advisories only.
+- `python simulations/run_meta_checks.py --full --force` - ok.
+- `python simulations/run_capability_checks.py --full --force` - ok.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - ok.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok; installed FlowPilot skill source is fresh.
+- `python scripts/audit_local_install_sync.py --json` - ok.
+- `python scripts/install_flowpilot.py --check --json` - ok.
+- `python scripts/check_install.py --json` - ok after final serialized topology/check-install pass.
+
+### Findings
+- Route materialization now requires `flowpilot.route_plan.v1` JSON and rejects numbered prose, `route_nodes` compatibility input, missing node identity, duplicate node IDs, and malformed deliverable checks.
+- Route nodes now preserve required outputs, deliverable checks, validation checks, high-standard requirement IDs, skill-standard obligation IDs, and schema provenance.
+- Final route-wide ledger and requirement evidence matrix now evaluate system-owned deliverable checks and block terminal closure when a required deliverable check is missing or failed.
+- Prompt manifest hash drift was repaired for packet identity and controller action ledger prompts.
+- Model-test alignment now points to current `packet.deliver_envelope_metadata` instead of the removed Controller relay contract.
+- Local installed FlowPilot is fresh against repository source.
+
+### Counterexamples
+- prose numbered route plan accepted as route
+- `route_nodes` compatibility field accepted
+- route closes with missing required deliverable
+- route closes with failed JSON parse deliverable
+- prompt manifest hash drift blocks packet creation
+- stale source contract points to removed Controller relay
+
+### Friction Points
+- A broader packet/control/role-output pytest sweep still has 17 failures from stale parallel packet-protocol expectations such as removed `open-packet-session`/`relay-envelope` command paths and duplicate-role batch assumptions.
+- Topology and install checks must be run serially after result JSON refreshes; parallel topology build plus install check can report stale source mtimes.
+
+### Skipped Steps
+- No route-plan fallback, prose parser, `route_nodes` compatibility shim, or generated identity fallback was added.
+- No OpenSpec archive, GitHub push, tag, release, deploy, or public publication was performed.
+- No git commit was made because the worktree contains substantial peer-agent and same-file changes that should not be staged wholesale.
+
+### Next Actions
+- Fix the stale packet/control/role-output test suite in the separate current-assignment/relay-removal workstream before claiming all packet-era tests are green.
+- When prompt assets change, update prompt manifest hashes in the same patch and run `tests/test_flowpilot_prompt_store.py` before broader packet tests.
+
+
 ## remove-controller-relay-protocol - FlowPilot current assignment protocol cleanup
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -22291,3 +22358,71 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## remove-flowpilot-fallback-compat-surfaces-20260601 - Codified FlowPilot no-compatibility default and removed targeted fallback paths from the new runtime, prompt store, current pointer handling, PM decision parsing, and node context package intake.
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a clean new FlowPilot with no fallback or compatibility surfaces by default, using OpenSpec and FlowGuard, preserving parallel AI work, and syncing the installed local version.
+- Status: completed
+- Skill decision: predictive_kb_preflight+openspec_explore/propose/apply+flowguard_existing_model_preflight+flowguard_development_process_flow+flowguard_model_test_alignment
+- Started: 2026-06-01T13:12:59+00:00
+- Ended: 2026-06-01T13:12:59+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- openspec/changes/harden-new-runtime-health-recovery/
+- openspec/changes/harden-new-flowpilot-control-plane-duty/
+- simulations/run_flowpilot_new_control_plane_duty_checks.py
+- simulations/run_flowpilot_lifecycle_guard_checks.py
+- simulations/run_flowpilot_core_runtime_checks.py
+- docs/flowguard_project_topology.json
+- docs/flowguard_project_topology.md
+
+### Commands
+- OK (0.000s): `python -c import flowguard; print(flowguard.SCHEMA_VERSION) -> schema 1.0`
+- OK (0.000s): `python -m flowguard project-audit --root . -> pass`
+- OK (0.000s): `openspec validate harden-new-runtime-health-recovery --strict -> valid and complete`
+- OK (0.000s): `openspec validate harden-new-flowpilot-control-plane-duty --strict -> valid`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_core_runtime.py -q -> 30 passed, 28 subtests`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_lifecycle_guard.py -q -> 18 passed`
+- OK (0.000s): `python -m pytest tests/test_flowpilot_prompt_store.py -q -> 7 passed, 12 subtests`
+- OK (0.000s): `python simulations/run_flowpilot_new_control_plane_duty_checks.py --json-out simulations/flowpilot_new_control_plane_duty_results.json -> ok`
+- OK (0.000s): `python simulations/run_flowpilot_lifecycle_guard_checks.py --json-out simulations/flowpilot_lifecycle_guard_results.json -> ok`
+- OK (0.000s): `python simulations/run_flowpilot_core_runtime_checks.py --json-out simulations/flowpilot_core_runtime_results.json -> ok`
+- OK (0.000s): `python simulations/flowpilot_fake_project_rehearsal_scenarios.py via run_flowpilot_fake_project_rehearsal_checks.py -> ok`
+- OK (0.000s): `background python simulations/run_meta_checks.py -> exit 0, no proof reused`
+- OK (0.000s): `background python simulations/run_capability_checks.py -> exit 0, no proof reused`
+- OK (0.000s): `python scripts/smoke_flowpilot.py --fast -> exit 0`
+- OK (0.000s): `python scripts/flowguard_project_topology.py build && check -> ok`
+- OK (0.000s): `python scripts/install_flowpilot.py --install-missing --sync-repo-owned --json -> ok`
+- OK (0.000s): `python scripts/audit_local_install_sync.py --json -> ok`
+- OK (0.000s): `python scripts/check_install.py --json -> ok`
+
+### Findings
+- AGENTS.md, HANDOFF.md, and skills/flowpilot/SKILL.md now state that compatibility shims, legacy aliases, prose guessing, missing-default derivation, and repo-root fallback kits are not allowed by default.
+- New runtime now rejects legacy current pointer fields instead of resolving them, requires top-level node_context_package, requires JSON PM repair decision with top-level decision, and treats orphan completed runner evidence as audit-only reissue/replace evidence rather than auto-submitted result recovery.
+- PromptStore now requires the copied run runtime kit and copied manifest; repository fallback kit input is intentionally ignored so missing runtime kit is a hard error.
+- OpenSpec wording was tightened so completed specs do not instruct future agents to reintroduce repair_decision/recovery_option/key-value decision compatibility.
+
+### Counterexamples
+- legacy current_run_id/current_run_root accepted as active pointer
+- nested node_acceptance_plan.node_context_package normalized into current context
+- PM repair decision inferred from prose or alias fields
+- missing run runtime kit loaded from repo fallback
+- orphan completed evidence converted into submit-result recovery
+
+### Friction Points
+- Parallel AI wrote additional skill files during validation, so topology and installed-skill sync had to be rerun serially after the latest source mtimes.
+- Broad repository scans still show older router/test surfaces using current_run_id terminology; this task cleaned and enforced the new core/runtime/packet/path surfaces without reverting peer-owned legacy-router work.
+
+### Skipped Steps
+- No compatibility shim, alias bridge, prose parser, repository fallback runtime kit, legacy pointer defaulting, or automatic orphan-result recovery path was kept.
+- No GitHub push, tag, release, deploy, or public publication was performed.
+
+### Risk Evidence Summary
+- Final confidence covers the new FlowPilot core runtime and local installed skill sync; broad legacy-router cleanup remains a separate peer workstream.
+
+### Next Actions
+- Future FlowPilot fixes should fail closed and add a negative test instead of adding compatibility fallback unless an explicit temporary migration is approved with owner, expiry, telemetry, and removal tests.

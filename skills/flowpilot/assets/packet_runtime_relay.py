@@ -25,7 +25,6 @@ from packet_runtime_relay_checks import (
 )
 from packet_runtime_schema import (
     RESULT_ENVELOPE_SCHEMA,
-    SEALED_BODY_VISIBILITY,
     PacketRuntimeError,
     utc_now,
     write_json_atomic,

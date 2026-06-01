@@ -8,7 +8,7 @@
     "summary": "sequences=2 initial_states=1 traces=39",
     "violation_count": 0
   },
-  "generated_at": "2026-05-31T09:17:40.326646+00:00",
+  "generated_at": "2026-06-01T13:09:46.706730+00:00",
   "hazard_detection": {
     "expected": [
       "ack_only_timeout_forced_accepted",

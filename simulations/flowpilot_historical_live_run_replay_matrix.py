@@ -191,7 +191,7 @@ HISTORICAL_LIVE_RUN_REPLAY_ROWS: tuple[dict[str, Any], ...] = (
         "surface": "relay_receipt_mechanics",
         "source_records": ["packet_ledger", "controller_action_ledger", "runtime_receipt"],
         "phase_sequence": ["issue_packet", "controller_relay", "done_receipt", "runtime_state_audit"],
-        "entrypoints": ["packet_runtime", "controller_relay_envelope", "controller_receipt", "packet_ledger"],
+        "entrypoints": ["packet_runtime", "deliver_envelope_metadata", "controller_receipt", "packet_ledger"],
         "fake_ai_artifacts": ["done_receipt_without_relay_mutation", "packet_envelope_only"],
         "failure_package": "Controller marks relay done while packet ledger or runtime envelope was not mutated",
         "expected_standard_state": "completion remains blocked until runtime relay evidence and Router ledger agree",

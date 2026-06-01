@@ -204,9 +204,9 @@ def controller_handoff_text(handoff: dict[str, Any]) -> str:
 
 
 def read_packet_body_for_role(project_root: Path, envelope: dict[str, Any], *, role: str) -> str:
-    open_source = "current_assignment"
     if role != envelope.get("to_role"):
         raise PacketRuntimeError(f"packet body may only be read by to_role={envelope.get('to_role')!r}, not {role!r}")
+    open_source = "current_assignment"
     output_contract = envelope.get("output_contract")
     if isinstance(output_contract, dict) and output_contract.get("recipient_role") != role:
         raise PacketRuntimeError("output_contract.recipient_role does not match packet reader role")

@@ -74,6 +74,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         state = router.new_run_state(run_id, run_root_rel)
         state["status"] = status
         state["daemon_mode_enabled"] = True
+        router._copy_runtime_kit_into_run_root(run_root)  # type: ignore[attr-defined]
         router.write_json(run_root / "run.json", {"schema_version": "flowpilot.run.v1", "run_id": run_id})
         router.write_json(router.run_state_path(run_root), state)
         return run_root
@@ -1009,9 +1010,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         self.assertEqual(record["active_packet_holder"], "project_manager")
         self.assertEqual(record["active_packet_status"], "envelope-relayed")
         self.assertNotIn("packet_router_release", record)
-        self.assertIn("packet_controller_relay", record)
-        self.assertTrue(record["packet_controller_relay"]["delivered_via_controller"])
-        self.assertEqual(record["packet_controller_relay"]["relayed_to_role"], "project_manager")
+        self.assertNotIn("packet_controller_relay", record)
         self.assertEqual(packet_ledger["mail"][0]["mail_id"], "user_intake")
         self.assertEqual(packet_ledger["mail"][0]["delivered_by"], "controller")
     def boot_to_controller(self, root: Path, startup_answers: dict | None = None) -> Path:

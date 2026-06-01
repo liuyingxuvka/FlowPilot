@@ -23,6 +23,7 @@ except ImportError:  # pragma: no cover
 
 
 SCHEMA_VERSION = "black_box_flowpilot_runtime.v1"
+ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
 DEFAULT_PROJECT_ID = "project-001"
 REQUIRED_FLOWGUARD_TARGET = "development_process"
 RESPONSIBILITIES = {
@@ -145,7 +146,6 @@ _RECOVERY_DUTY_DECISIONS = {
     "quarantine_stale_result",
     "recover_packet",
     "repair_assignment_race",
-    "recover_orphan_evidence",
 }
 _WAIT_LIVENESS_FAILURE_STATUSES = {
     "missing",
@@ -417,6 +417,43 @@ def load_ledger(path: Path) -> dict[str, Any]:
     if payload.get("schema_version") != SCHEMA_VERSION:
         raise BlackBoxRuntimeError("unsupported ledger schema")
     return payload
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def finalize_evidence_summary_manifest(evidence_root: str | Path) -> dict[str, Any]:
+    root = Path(evidence_root)
+    if not root.exists() or not root.is_dir():
+        raise BlackBoxRuntimeError(f"evidence root not found: {root}")
+    skipped_names = {"evidence_summary.json", "evidence_summary.md"}
+    evidence_files = []
+    for path in sorted(root.rglob("*"), key=lambda item: item.relative_to(root).as_posix()):
+        if not path.is_file() or path.name in skipped_names:
+            continue
+        evidence_files.append(
+            {
+                "path": path.relative_to(root).as_posix(),
+                "sha256": _sha256_file(path),
+                "bytes": path.stat().st_size,
+            }
+        )
+    manifest = {
+        "schema_version": "black_box_flowpilot.evidence_summary_manifest.v1",
+        "evidence_root": str(root),
+        "generated_at": now_iso(),
+        "file_count": len(evidence_files),
+        "evidence_files": evidence_files,
+        "excluded_summary_artifacts": sorted(skipped_names),
+        "sealed_bodies_visible": False,
+    }
+    (root / "evidence_summary.json").write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
 
 
 def terminal_lifecycle_status(ledger: Mapping[str, Any]) -> str:
@@ -834,8 +871,6 @@ def _startup_body_ref_from_ledger(ledger: Mapping[str, Any]) -> dict[str, str]:
 def materialize_route_from_planning_result(
     ledger: dict[str, Any],
     planning_result_id: str,
-    *,
-    nodes: list[dict[str, Any]] | None = None,
 ) -> list[str]:
     """Create executable route nodes and initialize the frontier from a PM plan."""
 
@@ -845,20 +880,18 @@ def materialize_route_from_planning_result(
         raise BlackBoxRuntimeError("cannot materialize route nodes before high-standard preplanning gates")
     route_version = int(ledger["active_route_version"])
     plan_result = ledger.get("results", {}).get(planning_result_id, {})
+    if not isinstance(plan_result, Mapping):
+        raise BlackBoxRuntimeError("strict route plan schema violation: planning result is missing")
     plan_text = str(plan_result.get("body", ""))
-    node_specs = nodes or _extract_route_nodes(plan_text)
-    if not node_specs:
-        active_route = ledger.get("routes", {}).get(str(route_version), {})
-        node_specs = _fallback_route_nodes(active_route.get("steps") or [])
+    route_plan = _parse_strict_route_plan(plan_text)
+    node_specs = _normalize_strict_route_plan_nodes(route_plan)
 
     route_nodes: dict[str, Any] = ledger.setdefault("route_nodes", {})
     materialized_ids: list[str] = []
     for index, spec in enumerate(node_specs, start=1):
-        node_id = str(spec.get("node_id") or f"node-{index:03d}")
-        title = str(spec.get("title") or spec.get("summary") or f"Route node {index}")
+        node_id = str(spec["node_id"])
+        title = str(spec["title"])
         criteria = spec.get("acceptance_criteria")
-        if not isinstance(criteria, list) or not criteria:
-            criteria = [f"Node '{title}' has current accepted work, FlowGuard evidence, review, validation, and PM disposition."]
         route_nodes[node_id] = {
             "node_id": node_id,
             "route_version": route_version,
@@ -869,6 +902,9 @@ def materialize_route_from_planning_result(
             "responsibility": _normalize_node_responsibility(str(spec.get("responsibility") or "")),
             "modeled_target": _normalize_modeled_target(str(spec.get("modeled_target") or ""), title),
             "acceptance_criteria": [str(item) for item in criteria],
+            "required_outputs": list(spec.get("required_outputs") or []),
+            "deliverable_checks": list(spec.get("deliverable_checks") or []),
+            "validation_checks": list(spec.get("validation_checks") or []),
             "status": "pending",
             "repair_generation": 0,
             "packet_ids": [],
@@ -889,11 +925,12 @@ def materialize_route_from_planning_result(
             "node_context_package_repair_generation": None,
             "parent_backward_replay_id": "",
             "parent_backward_waiver": "",
-            "high_standard_requirement_ids": [],
-            "skill_standard_obligation_ids": [],
+            "high_standard_requirement_ids": [str(item) for item in spec.get("high_standard_requirement_ids") or []],
+            "skill_standard_obligation_ids": [str(item) for item in spec.get("skill_standard_obligation_ids") or []],
             "superseded_by": "",
             "stale_evidence": [],
             "created_from_result_id": planning_result_id,
+            "route_plan_schema_version": route_plan.get("schema_version", ""),
             "created_at": now_iso(),
         }
         materialized_ids.append(node_id)
@@ -1061,7 +1098,7 @@ def _node_context_package_from_pm_result(
     payload = _parse_json_object(str(result.get("body", "")))
     raw_package = payload.get("node_context_package")
     if not isinstance(raw_package, Mapping):
-        raise BlackBoxRuntimeError("node acceptance plan result missing node_context_package")
+        raise BlackBoxRuntimeError("node acceptance plan result missing top-level node_context_package")
 
     missing = [
         field
@@ -1094,6 +1131,7 @@ def _node_context_package_from_pm_result(
         "reviewer_starting_points": _normalize_context_items(raw_package.get("reviewer_starting_points"), "reviewer_starting_points"),
         "source_packet_id": str(subject_packet.get("packet_id") or ""),
         "source_result_id": result_id,
+        "source_package_path": "node_context_package",
         "sealed_body_boundary": "references_only_authorized_runtime_open_required",
         "minimum_starting_context_not_boundary": True,
         "created_at": now_iso(),
@@ -1437,11 +1475,146 @@ def _prepare_same_node_repair(ledger: dict[str, Any], node_id: str, *, dispositi
         ensure_node_prework_flowguard_packet(ledger, node_id)
 
 
+def _evaluate_route_deliverable_checks(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> list[dict[str, Any]]:
+    node_id = str(node.get("node_id") or "")
+    results: list[dict[str, Any]] = []
+    for raw_check in node.get("deliverable_checks") or []:
+        if not isinstance(raw_check, Mapping):
+            results.append(
+                {
+                    "node_id": node_id,
+                    "check_id": "<invalid>",
+                    "kind": "invalid",
+                    "required": True,
+                    "status": "failed",
+                    "reason": "deliverable check is not an object",
+                    "summary": f"Node {node_id} has an invalid route deliverable check",
+                    "evidence": [],
+                }
+            )
+            continue
+        check = dict(raw_check)
+        check_id = str(check.get("check_id") or "").strip()
+        kind = str(check.get("kind") or "").strip()
+        required = check.get("required", True) is not False
+        result = {
+            "node_id": node_id,
+            "check_id": check_id,
+            "kind": kind,
+            "required": required,
+            "path": str(check.get("path") or ""),
+            "pattern": str(check.get("pattern") or ""),
+            "status": "failed",
+            "reason": "",
+            "summary": "",
+            "evidence": [],
+        }
+        if not check_id or kind not in {"path_exists", "path_glob_exists", "json_parse"}:
+            result["reason"] = "invalid_deliverable_check_contract"
+            result["summary"] = f"Node {node_id} deliverable check contract is invalid"
+            results.append(result)
+            continue
+        if kind == "path_glob_exists":
+            pattern = str(check.get("pattern") or check.get("path") or "").strip()
+            matches, reason = _route_deliverable_glob_matches(ledger, pattern)
+            if matches:
+                result["status"] = "passed"
+                result["reason"] = "matched"
+                result["summary"] = f"Node {node_id} deliverable glob matched {len(matches)} path(s)"
+                result["evidence"] = [f"path:{item}" for item in matches]
+            else:
+                result["reason"] = reason or "missing"
+                result["summary"] = f"Node {node_id} deliverable glob did not match"
+            result["pattern"] = pattern
+            results.append(result)
+            continue
+        resolved, reason = _resolve_route_deliverable_path(ledger, str(check.get("path") or ""))
+        if resolved is None:
+            result["reason"] = reason
+            result["summary"] = f"Node {node_id} deliverable path is not valid"
+            results.append(result)
+            continue
+        result["path"] = resolved.as_posix()
+        result["evidence"] = [f"path:{resolved.as_posix()}"]
+        if kind == "path_exists":
+            if resolved.exists():
+                result["status"] = "passed"
+                result["reason"] = "exists"
+                result["summary"] = f"Node {node_id} deliverable path exists"
+            else:
+                result["reason"] = "missing"
+                result["summary"] = f"Node {node_id} deliverable path is missing"
+        elif kind == "json_parse":
+            if not resolved.exists():
+                result["reason"] = "missing"
+                result["summary"] = f"Node {node_id} JSON deliverable path is missing"
+            else:
+                try:
+                    json.loads(resolved.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    result["reason"] = "json_parse_failed"
+                    result["summary"] = f"Node {node_id} JSON deliverable is not parseable"
+                else:
+                    result["status"] = "passed"
+                    result["reason"] = "json_parse_passed"
+                    result["summary"] = f"Node {node_id} JSON deliverable is parseable"
+        results.append(result)
+    return results
+
+
+def _route_deliverable_project_root(ledger: Mapping[str, Any]) -> Path:
+    for field in ("project_root", "workspace_root", "root"):
+        raw_root = str(ledger.get(field) or "").strip()
+        if raw_root:
+            return Path(raw_root).resolve()
+    raw_run_root = str(ledger.get("run_root") or "").strip()
+    if raw_run_root:
+        run_root = Path(raw_run_root).resolve()
+        if run_root.parent.name == "runs" and run_root.parent.parent.name == ".flowpilot":
+            return run_root.parent.parent.parent.resolve()
+        return run_root
+    return Path.cwd().resolve()
+
+
+def _resolve_route_deliverable_path(ledger: Mapping[str, Any], raw_path: str) -> tuple[Path | None, str]:
+    if not raw_path.strip():
+        return None, "missing_path"
+    root = _route_deliverable_project_root(ledger)
+    candidate = Path(raw_path)
+    resolved = candidate.resolve() if candidate.is_absolute() else (root / candidate).resolve()
+    if not _path_is_within_root(resolved, root):
+        return None, "outside_project_root"
+    return resolved, ""
+
+
+def _route_deliverable_glob_matches(ledger: Mapping[str, Any], pattern: str) -> tuple[list[str], str]:
+    if not pattern.strip():
+        return [], "missing_pattern"
+    pattern_path = Path(pattern)
+    if pattern_path.is_absolute() or ".." in pattern_path.parts:
+        return [], "outside_project_root"
+    root = _route_deliverable_project_root(ledger)
+    try:
+        matches = sorted(path.resolve().as_posix() for path in root.glob(pattern) if _path_is_within_root(path.resolve(), root))
+    except (OSError, ValueError):
+        return [], "invalid_pattern"
+    return matches, "missing"
+
+
+def _path_is_within_root(path: Path, root: Path) -> bool:
+    try:
+        path.relative_to(root.resolve())
+    except ValueError:
+        return False
+    return True
+
+
 def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]:
     nodes = list(ledger.get("route_nodes", {}).values())
     effective_nodes = [node for node in nodes if node.get("status") != "superseded"]
     unresolved: list[str] = []
     stale: list[str] = []
+    deliverable_results: list[dict[str, Any]] = []
     for node in effective_nodes:
         node_id = str(node.get("node_id", ""))
         if node.get("status") not in {"accepted", "waived"}:
@@ -1452,6 +1625,15 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
             unresolved.append(f"node_prework_flowguard_missing:{node_id}")
         if node.get("stale_evidence"):
             stale.append(node_id)
+        if node.get("required_outputs") and not node.get("deliverable_checks"):
+            unresolved.append(f"route_deliverable_checks_missing:{node_id}")
+        for check_result in _evaluate_route_deliverable_checks(ledger, node):
+            deliverable_results.append(check_result)
+            if check_result.get("required") and check_result.get("status") != "passed":
+                unresolved.append(
+                    "route_deliverable:"
+                    f"{node_id}:{check_result.get('check_id', '')}:{check_result.get('status', 'failed')}"
+                )
     for packet in ledger.get("packets", {}).values():
         if not isinstance(packet, Mapping) or not _packet_requires_current_acceptance(ledger, packet):
             continue
@@ -1469,6 +1651,7 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
         "effective_node_ids": [str(node.get("node_id", "")) for node in effective_nodes],
         "accepted_node_ids": [str(node.get("node_id", "")) for node in effective_nodes if node.get("status") == "accepted"],
         "superseded_node_ids": [str(node.get("node_id", "")) for node in nodes if node.get("status") == "superseded"],
+        "deliverable_checks": deliverable_results,
         "unresolved": sorted(set(unresolved)),
         "stale_node_ids": sorted(set(stale)),
         "unresolved_count": len(set(unresolved)),
@@ -1633,6 +1816,24 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             [str(item) for item in node.get("validation_evidence_ids") or []],
             f"Node {node_id} has validation evidence",
         )
+        if node.get("required_outputs") and not node.get("deliverable_checks"):
+            add_row(
+                f"{node_id}:deliverable-checks",
+                "route_deliverable",
+                "missing",
+                [],
+                f"Node {node_id} declares required outputs but no system deliverable checks",
+            )
+        for check_result in _evaluate_route_deliverable_checks(ledger, node):
+            row_status = "covered" if check_result.get("status") == "passed" else str(check_result.get("status") or "failed")
+            evidence_ids = [str(item) for item in check_result.get("evidence", [])]
+            add_row(
+                f"{node_id}:{check_result.get('check_id', '')}",
+                "route_deliverable",
+                row_status,
+                evidence_ids,
+                str(check_result.get("summary") or check_result.get("reason") or "Route deliverable check"),
+            )
 
     matrix = {
         "schema_version": "black_box_flowpilot.final_requirement_evidence_matrix.v1",
@@ -1649,46 +1850,128 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
     return matrix
 
 
-def _extract_route_nodes(plan_text: str) -> list[dict[str, Any]]:
-    nodes: list[dict[str, Any]] = []
-    for line in plan_text.splitlines():
-        stripped = line.strip()
-        match = re.match(r"^(?:[-*]\s*)?(\d+)[.)]\s+(.+)$", stripped)
-        if not match:
-            continue
-        title = match.group(2).strip()
+def _parse_strict_route_plan(plan_text: str) -> dict[str, Any]:
+    try:
+        payload = json.loads(plan_text)
+    except json.JSONDecodeError as exc:
+        raise BlackBoxRuntimeError(
+            f"strict route plan schema violation: PM planning result must be JSON with schema_version {ROUTE_PLAN_SCHEMA_VERSION}"
+        ) from exc
+    if not isinstance(payload, dict):
+        raise BlackBoxRuntimeError("strict route plan schema violation: PM route plan body must be a JSON object")
+    if payload.get("schema_version") != ROUTE_PLAN_SCHEMA_VERSION:
+        raise BlackBoxRuntimeError(
+            f"strict route plan schema violation: schema_version must be {ROUTE_PLAN_SCHEMA_VERSION}"
+        )
+    if "route_nodes" in payload:
+        raise BlackBoxRuntimeError("strict route plan schema violation: use nodes, not route_nodes")
+    nodes = payload.get("nodes")
+    if not isinstance(nodes, list) or not nodes:
+        raise BlackBoxRuntimeError("strict route plan schema violation: nodes must be a non-empty list")
+    return payload
+
+
+def _normalize_strict_route_plan_nodes(route_plan: Mapping[str, Any]) -> list[dict[str, Any]]:
+    nodes = route_plan.get("nodes")
+    if not isinstance(nodes, list) or not nodes:
+        raise BlackBoxRuntimeError("strict route plan schema violation: nodes must be a non-empty list")
+    normalized: list[dict[str, Any]] = []
+    seen_ids: set[str] = set()
+    for index, raw_node in enumerate(nodes, start=1):
+        if not isinstance(raw_node, Mapping):
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: node {index} must be an object")
+        node_id = str(raw_node.get("node_id") or "").strip()
+        title = str(raw_node.get("title") or "").strip()
+        if not node_id:
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: node {index} missing node_id")
         if not title:
-            continue
-        nodes.append(
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: node {node_id} missing title")
+        if node_id in seen_ids:
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: duplicate node_id {node_id}")
+        seen_ids.add(node_id)
+        normalized.append(
             {
-                "node_id": f"node-{len(nodes) + 1:03d}",
-                "title": title[:160],
-                "responsibility": _responsibility_for_title(title),
-                "modeled_target": _normalize_modeled_target("", title),
-                "acceptance_criteria": [f"Complete and validate: {title[:180]}"],
+                "node_id": node_id,
+                "title": title,
+                "node_kind": _strict_optional_string(raw_node, "node_kind", "leaf"),
+                "parent_node_id": _strict_optional_string(raw_node, "parent_node_id", ""),
+                "child_node_ids": _strict_string_list(raw_node, "child_node_ids", node_id),
+                "responsibility": _strict_optional_string(raw_node, "responsibility", ""),
+                "modeled_target": _strict_optional_string(raw_node, "modeled_target", ""),
+                "acceptance_criteria": _strict_string_list(raw_node, "acceptance_criteria", node_id),
+                "required_outputs": _strict_json_list(raw_node, "required_outputs", node_id),
+                "deliverable_checks": _strict_deliverable_checks(raw_node, node_id),
+                "validation_checks": _strict_json_list(raw_node, "validation_checks", node_id),
+                "high_standard_requirement_ids": _strict_string_list(raw_node, "high_standard_requirement_ids", node_id),
+                "skill_standard_obligation_ids": _strict_string_list(raw_node, "skill_standard_obligation_ids", node_id),
             }
         )
-    return nodes[:8]
+    return normalized
 
 
-def _fallback_route_nodes(steps: list[Any]) -> list[dict[str, Any]]:
-    titles = [str(step) for step in steps if str(step).strip()]
-    if len(titles) < 3:
-        titles = [
-            "Plan executable route and acceptance boundaries",
-            "Execute implementation or target project work",
-            "Validate evidence and prepare final closure",
-        ]
-    return [
-        {
-            "node_id": f"node-{index:03d}",
-            "title": title[:160],
-            "responsibility": _responsibility_for_title(title),
-            "modeled_target": _normalize_modeled_target("", title),
-            "acceptance_criteria": [f"Complete and validate: {title[:180]}"],
-        }
-        for index, title in enumerate(titles[:8], start=1)
-    ]
+def _strict_optional_string(raw_node: Mapping[str, Any], field: str, default: str) -> str:
+    if field not in raw_node or raw_node.get(field) is None:
+        return default
+    value = raw_node.get(field)
+    if not isinstance(value, str):
+        node_id = str(raw_node.get("node_id") or "<unknown>")
+        raise BlackBoxRuntimeError(f"strict route plan schema violation: {node_id}.{field} must be a string")
+    return value.strip()
+
+
+def _strict_string_list(raw_node: Mapping[str, Any], field: str, node_id: str) -> list[str]:
+    if field not in raw_node or raw_node.get(field) is None:
+        return []
+    value = raw_node.get(field)
+    if not isinstance(value, list):
+        raise BlackBoxRuntimeError(f"strict route plan schema violation: {node_id}.{field} must be a list")
+    rows: list[str] = []
+    for index, item in enumerate(value, start=1):
+        if not isinstance(item, str) or not item.strip():
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.{field}[{index}] must be a non-empty string"
+            )
+        rows.append(item.strip())
+    return rows
+
+
+def _strict_json_list(raw_node: Mapping[str, Any], field: str, node_id: str) -> list[Any]:
+    if field not in raw_node or raw_node.get(field) is None:
+        return []
+    value = raw_node.get(field)
+    if not isinstance(value, list):
+        raise BlackBoxRuntimeError(f"strict route plan schema violation: {node_id}.{field} must be a list")
+    return json.loads(json.dumps(value, sort_keys=True))
+
+
+def _strict_deliverable_checks(raw_node: Mapping[str, Any], node_id: str) -> list[dict[str, Any]]:
+    checks = _strict_json_list(raw_node, "deliverable_checks", node_id)
+    normalized: list[dict[str, Any]] = []
+    for index, check in enumerate(checks, start=1):
+        if not isinstance(check, Mapping):
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{index}] must be an object"
+            )
+        check_id = str(check.get("check_id") or "").strip()
+        kind = str(check.get("kind") or "").strip()
+        if not check_id:
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{index}] missing check_id"
+            )
+        if kind not in {"path_exists", "path_glob_exists", "json_parse"}:
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] has unsupported kind"
+            )
+        if kind in {"path_exists", "json_parse"} and not str(check.get("path") or "").strip():
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing path"
+            )
+        if kind == "path_glob_exists" and not str(check.get("pattern") or check.get("path") or "").strip():
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing pattern"
+            )
+        normalized.append(json.loads(json.dumps(check, sort_keys=True)))
+    return normalized
 
 
 def _responsibility_for_title(title: str) -> str:
@@ -1788,17 +2071,15 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
 def _decision_from_pm_body(body: str) -> tuple[str, str]:
     try:
         payload = json.loads(body)
-    except json.JSONDecodeError:
-        payload = None
-    if isinstance(payload, dict):
-        decision = str(payload.get("decision") or payload.get("pm_disposition") or "accept")
-        reason = str(payload.get("reason") or payload.get("summary") or "")
-        return decision, reason
-    lowered = body.lower()
-    for decision in ("mutate_route", "repair", "block", "stop", "accept"):
-        if decision in lowered:
-            return decision, body[:240]
-    return "accept", body[:240]
+    except json.JSONDecodeError as exc:
+        raise BlackBoxRuntimeError("PM disposition requires a structured JSON object") from exc
+    if not isinstance(payload, dict):
+        raise BlackBoxRuntimeError("PM disposition requires a structured JSON object")
+    decision = _normalize_outcome_token(payload.get("decision"))
+    if decision not in {"accept", "repair", "mutate_route", "block", "stop"}:
+        raise BlackBoxRuntimeError("PM disposition requires an explicit allowed decision")
+    reason = str(payload.get("reason") or payload.get("summary") or "")
+    return decision, reason
 
 
 _PASSING_OUTCOME_DECISIONS = {"accept", "accepted", "pass", "passed", "complete", "completed", "success", "ok"}
@@ -1844,24 +2125,6 @@ _PM_REPAIR_DECISIONS = {
 }
 _HIGH_RISK_PM_REPAIR_DECISIONS = {"mutate_route", "waive_with_authority"}
 _HIGH_RISK_PM_DISPOSITION_DECISIONS = {"mutate_route"}
-_PM_REPAIR_ALIASES = {
-    "repair": "same_node_repair",
-    "local_repair": "same_node_repair",
-    "repair_local": "same_node_repair",
-    "reissue": "sender_reissue",
-    "request_sender_reissue": "sender_reissue",
-    "more_evidence": "collect_more_evidence",
-    "collect_evidence": "collect_more_evidence",
-    "route_mutation": "mutate_route",
-    "quarantine": "quarantine_evidence",
-    "waive": "waive_with_authority",
-}
-_PM_REPAIR_DECISION_FIELD_RE = re.compile(
-    r"(?:^|[\n;])\s*(decision|repair_decision|recovery_option)\s*[:=]\s*([A-Za-z0-9_-]+)\b",
-    re.IGNORECASE,
-)
-
-
 def _json_payload_from_body(body: str) -> dict[str, Any] | None:
     stripped = body.strip()
     candidates = [stripped]
@@ -2298,17 +2561,16 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
 
 
 def _parse_pm_repair_decision_body(body: str) -> tuple[str, str]:
-    payload = _json_payload_from_body(body)
-    if payload:
-        raw = _normalize_outcome_token(payload.get("decision") or payload.get("repair_decision") or payload.get("recovery_option"))
-        reason = str(payload.get("reason") or payload.get("summary") or payload.get("recommended_resolution") or "")
-    else:
-        match = _PM_REPAIR_DECISION_FIELD_RE.search(body)
-        raw = _normalize_outcome_token(match.group(2)) if match else ""
-        reason = body.strip()[:500]
-    decision = _PM_REPAIR_ALIASES.get(raw, raw)
+    try:
+        payload = json.loads(body)
+    except json.JSONDecodeError as exc:
+        raise BlackBoxRuntimeError("PM repair decision requires a structured JSON object") from exc
+    if not isinstance(payload, dict):
+        raise BlackBoxRuntimeError("PM repair decision requires a structured JSON object")
+    decision = _normalize_outcome_token(payload.get("decision"))
+    reason = str(payload.get("reason") or payload.get("summary") or payload.get("recommended_resolution") or "")
     if decision not in _PM_REPAIR_DECISIONS:
-        raise BlackBoxRuntimeError("PM repair decision requires a structured allowed decision field")
+        raise BlackBoxRuntimeError("PM repair decision requires an explicit allowed decision")
     return decision, reason
 
 
@@ -2803,6 +3065,39 @@ def supersede_lease(ledger: dict[str, Any], lease_id: str, replacement_lease_id:
     _event(ledger, "lease_superseded", lease_id=lease_id, replacement_lease_id=replacement_lease_id, reason=reason)
 
 
+def _active_packet_lease_ids(ledger: Mapping[str, Any], packet_id: str) -> list[str]:
+    return [
+        str(lease_id)
+        for lease_id, lease in ledger.get("leases", {}).items()
+        if isinstance(lease, Mapping)
+        and str(lease.get("packet_id") or "") == packet_id
+        and str(lease.get("status") or "") == "active"
+    ]
+
+
+def _supersede_older_active_packet_leases(
+    ledger: dict[str, Any],
+    packet_id: str,
+    replacement_lease_id: str,
+    *,
+    reason: str,
+) -> list[str]:
+    replacement = _require(ledger["leases"], replacement_lease_id, "lease")
+    superseded: list[str] = []
+    closed: list[str] = []
+    for lease_id in list(_active_packet_lease_ids(ledger, packet_id)):
+        if lease_id == replacement_lease_id:
+            continue
+        lease = _require(ledger["leases"], lease_id, "lease")
+        if lease.get("responsibility") == replacement.get("responsibility"):
+            supersede_lease(ledger, lease_id, replacement_lease_id, reason)
+            superseded.append(lease_id)
+        else:
+            close_lease(ledger, lease_id, f"{reason}:wrong_responsibility")
+            closed.append(lease_id)
+    return superseded + closed
+
+
 def issue_task_packet(
     ledger: dict[str, Any],
     responsibility: str,
@@ -2881,10 +3176,22 @@ def assign_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> None
         raise BlackBoxRuntimeError("cannot assign packet to inactive lease")
     if lease["responsibility"] != packet["envelope"]["responsibility"]:
         raise BlackBoxRuntimeError("lease responsibility does not match packet")
+    superseded_lease_ids = _supersede_older_active_packet_leases(
+        ledger,
+        packet_id,
+        lease_id,
+        reason="packet_reassigned",
+    )
     packet["assigned_lease_id"] = lease_id
     packet["status"] = "assigned"
     lease["packet_id"] = packet_id
-    _event(ledger, "packet_assigned", packet_id=packet_id, lease_id=lease_id)
+    _event(
+        ledger,
+        "packet_assigned",
+        packet_id=packet_id,
+        lease_id=lease_id,
+        superseded_active_lease_ids=superseded_lease_ids,
+    )
 
 
 def ack_lease(ledger: dict[str, Any], lease_id: str, packet_id: str) -> None:
@@ -3561,6 +3868,13 @@ def _accept_packet_result(
     result["accepted"] = True
     packet["status"] = "accepted"
     packet["accepted_result_id"] = result["result_id"]
+    _supersede_older_active_packet_leases(
+        ledger,
+        str(packet.get("packet_id") or ""),
+        str(lease.get("lease_id") or ""),
+        reason="accepted_result_superseded_stale_lease",
+    )
+    packet["assigned_lease_id"] = lease["lease_id"]
     close_lease(ledger, lease["lease_id"], reason)
 
 
@@ -4206,7 +4520,7 @@ def attempt_final_closure(
 ) -> dict[str, Any]:
     if recursive_route_required(ledger):
         build_final_route_wide_gate_ledger(ledger)
-    if high_standard_flow_required(ledger):
+    if high_standard_flow_required(ledger) or recursive_route_required(ledger):
         build_final_requirement_evidence_matrix(ledger)
     blockers = _closure_blockers(
         ledger,
@@ -4610,6 +4924,38 @@ def _accepted_packet_repair_needed(ledger: Mapping[str, Any], packet: Mapping[st
     return bool(_accepted_packet_repair_details(ledger, packet).get("needs_repair"))
 
 
+def accepted_packet_lease_health(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    findings: list[dict[str, Any]] = []
+    for packet in ledger.get("packets", {}).values():
+        if not isinstance(packet, Mapping) or not packet.get("accepted_result_id"):
+            continue
+        details = _accepted_packet_repair_details(ledger, packet)
+        active_lease_ids = _active_packet_lease_ids(ledger, str(packet.get("packet_id") or ""))
+        original_lease_id = str(details.get("original_lease_id") or "")
+        assigned_lease_id = str(details.get("assigned_lease_id") or "")
+        stale_assigned = bool(original_lease_id and assigned_lease_id and assigned_lease_id != original_lease_id)
+        if active_lease_ids or stale_assigned or packet.get("status") != "accepted":
+            findings.append(
+                {
+                    "packet_id": str(packet.get("packet_id") or ""),
+                    "accepted_result_id": str(packet.get("accepted_result_id") or ""),
+                    "original_lease_id": original_lease_id,
+                    "assigned_lease_id": assigned_lease_id,
+                    "active_lease_ids": active_lease_ids,
+                    "active_replacement_lease_ids": list(details.get("active_replacement_lease_ids") or []),
+                    "stale_assigned_lease": stale_assigned,
+                    "packet_status": str(packet.get("status") or ""),
+                }
+            )
+    return {
+        "schema_version": "black_box_flowpilot.accepted_packet_lease_health.v1",
+        "ok": not findings,
+        "finding_count": len(findings),
+        "findings": findings,
+        "sealed_bodies_visible": False,
+    }
+
+
 def repair_accepted_packet_assignment(
     ledger: dict[str, Any],
     packet_id: str,
@@ -4734,9 +5080,9 @@ def _guard_wait_recovery(
             return {
                 **base,
                 "state": "orphan_evidence",
-                "decision_override": "recover_orphan_evidence",
-                "reason": "completed runner evidence exists without a formal accepted result",
-                "replacement_eligible": False,
+                "decision_override": "reissue_or_replace_lease",
+                "reason": "completed runner evidence is audit-only; formal current result must be reissued",
+                "replacement_eligible": True,
                 "orphan_evidence": orphan_evidence,
             }
     if last_liveness_status in _WAIT_LIVENESS_FAILURE_STATUSES or last_liveness_status in _WAIT_NO_OUTPUT_STATUSES:
@@ -4928,7 +5274,12 @@ def final_return_preflight(
     next_action = guard_map.get("next_action") if isinstance(guard_map.get("next_action"), Mapping) else {}
     closure = ledger.get("closure") if isinstance(ledger.get("closure"), Mapping) else {}
     terminal_status = terminal_lifecycle_status(ledger)
+    accepted_health = accepted_packet_lease_health(ledger)
     blockers: list[str] = []
+    for finding in accepted_health.get("findings", []):
+        if not isinstance(finding, Mapping):
+            continue
+        blockers.append(f"accepted_packet_lease_health:{finding.get('packet_id', 'unknown')}")
     if guard_map.get("controller_stop_allowed") is not True:
         blockers.append("lifecycle_guard_disallows_stop")
     if guard_map.get("decision") != "terminal_return":
@@ -4951,6 +5302,7 @@ def final_return_preflight(
         "next_action_type": str(next_action.get("action_type", "")),
         "closure_decision": str(closure.get("decision", "not_attempted")),
         "terminal_lifecycle_status": terminal_status,
+        "accepted_packet_lease_health": accepted_health,
         "sealed_bodies_visible": False,
     }
 
@@ -4993,6 +5345,74 @@ def _foreground_wait_patrol(
     }
 
 
+def _packet_recovery_responsibility(ledger: Mapping[str, Any], packet_id: str, fallback: str = "") -> str:
+    packet = ledger.get("packets", {}).get(packet_id)
+    if isinstance(packet, Mapping):
+        envelope = packet.get("envelope") if isinstance(packet.get("envelope"), Mapping) else {}
+        responsibility = str(envelope.get("responsibility") or "")
+        if responsibility:
+            return responsibility
+    return fallback
+
+
+def _foreground_recovery_command(
+    ledger: Mapping[str, Any],
+    guard: Mapping[str, Any],
+) -> dict[str, Any]:
+    next_action = guard.get("next_action") if isinstance(guard.get("next_action"), Mapping) else {}
+    wait_subject = guard.get("wait_subject") if isinstance(guard.get("wait_subject"), Mapping) else {}
+    wait_recovery = guard.get("wait_recovery") if isinstance(guard.get("wait_recovery"), Mapping) else {}
+    decision = str(guard.get("decision") or "")
+    packet_id = str(wait_subject.get("packet_id") or next_action.get("subject_id") or "")
+    responsibility = str(next_action.get("responsibility") or "")
+    if packet_id:
+        responsibility = _packet_recovery_responsibility(ledger, packet_id, responsibility)
+    stale_lease_ids: list[str] = []
+    repair = wait_recovery.get("repair") if isinstance(wait_recovery.get("repair"), Mapping) else {}
+    if isinstance(repair, Mapping):
+        stale_lease_ids.extend(str(item) for item in repair.get("active_replacement_lease_ids", []) if item)
+    lease_id = str(wait_recovery.get("lease_id") or wait_subject.get("lease_id") or "")
+    if lease_id and lease_id not in stale_lease_ids:
+        stale_lease_ids.append(lease_id)
+
+    if decision == "repair_assignment_race":
+        command = "repair-accepted-packet"
+        args = {"packet_id": packet_id}
+        cli_args = ["repair-accepted-packet", "--packet-id", packet_id]
+    else:
+        command = "lease-agent"
+        args = {
+            "packet_id": packet_id,
+            "responsibility": responsibility,
+            "agent_id": "<new-agent-id>",
+            "host_kind": "live",
+        }
+        cli_args = [
+            "lease-agent",
+            "--packet-id",
+            packet_id,
+            "--responsibility",
+            responsibility,
+            "--agent-id",
+            "<new-agent-id>",
+            "--host-kind",
+            "live",
+        ]
+    return {
+        "schema_version": "black_box_flowpilot.recovery_command.v1",
+        "command": command,
+        "args": args,
+        "cli": "python skills\\flowpilot\\assets\\flowpilot_new.py --root <project-root> --json " + " ".join(cli_args),
+        "packet_id": packet_id,
+        "responsibility": responsibility,
+        "host_kind": str(args.get("host_kind", "")),
+        "stale_lease_ids": stale_lease_ids,
+        "cleanup_action": "supersede_previous_active_leases_on_assignment",
+        "reason": str(guard.get("reason", "")),
+        "sealed_bodies_visible": False,
+    }
+
+
 def preview_foreground_duty(
     ledger: Mapping[str, Any],
     *,
@@ -5027,6 +5447,7 @@ def preview_foreground_duty(
             "decision": str(guard_map.get("decision", "")),
             "reason": str(guard_map.get("reason", "")),
             "subject_id": str(next_action.get("subject_id", "")),
+            "recommended_command": _foreground_recovery_command(ledger, guard_map),
             "wait_recovery": _copy_jsonable(
                 guard_map.get("wait_recovery") if isinstance(guard_map.get("wait_recovery"), Mapping) else {}
             ),
@@ -5154,7 +5575,7 @@ def _closure_blockers(
         frontier = ledger.get("execution_frontier") or {}
         if frontier.get("active_node_id"):
             blockers.append(f"frontier_has_active_node:{frontier.get('active_node_id')}")
-    if high_standard_flow_required(ledger):
+    if high_standard_flow_required(ledger) or recursive_route_required(ledger):
         matrix = ledger.get("final_requirement_evidence_matrix")
         if not isinstance(matrix, dict):
             blockers.append("missing_final_requirement_evidence_matrix")
@@ -5277,6 +5698,13 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         for packet in ledger.get("packets", {}).values()
         if packet["envelope"]["route_version"] == active_route and not _packet_is_noncurrent_for_routing(ledger, packet)
     ]
+    for finding in accepted_packet_lease_health(ledger).get("findings", []):
+        if isinstance(finding, Mapping) and finding.get("packet_id"):
+            return RuntimeAction(
+                "repair_accepted_packet",
+                "accepted packet has stale assignment or active replacement lease",
+                str(finding.get("packet_id")),
+            )
     closure = ledger.get("closure") or {}
     if closure.get("decision") == "complete":
         return RuntimeAction("terminal_complete", "final backward chain is complete")
@@ -5538,6 +5966,8 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
                 "status": node.get("status", ""),
                 "responsibility": node.get("responsibility", ""),
                 "modeled_target": node.get("modeled_target", ""),
+                "required_outputs": list(node.get("required_outputs", [])),
+                "deliverable_check_count": len(node.get("deliverable_checks", []) or []),
                 "repair_generation": node.get("repair_generation", 0),
                 "packet_ids": list(node.get("packet_ids", [])),
                 "node_acceptance_plan_id": node.get("node_acceptance_plan_id", ""),
@@ -5566,6 +5996,116 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "cutover_gate": _copy_jsonable(ledger.get("cutover_gate") or {"decision": "not_evaluated"}),
         "display_surface": _copy_jsonable(ledger.get("display_surface") or {}),
         "closure": _copy_jsonable(ledger.get("closure") or {"decision": "not_attempted"}),
+    }
+
+
+def render_redacted_ledger_projection(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    projection = render_console(ledger)
+    projection["projection"] = "redacted_ledger"
+    projection["sealed_bodies_visible"] = False
+    return projection
+
+
+def render_compact_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    full = render_console(ledger)
+    packets = list(full.get("packets", []))
+    leases = list(full.get("leases", []))
+    active_leases = [lease for lease in leases if isinstance(lease, Mapping) and lease.get("status") == "active"]
+    active_packets = [
+        packet
+        for packet in packets
+        if isinstance(packet, Mapping) and packet.get("status") not in {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
+    ]
+    foreground = full.get("foreground_duty") if isinstance(full.get("foreground_duty"), Mapping) else {}
+    compact_foreground = {
+        "action": str(foreground.get("action", "")),
+        "reason": str(foreground.get("reason", "")),
+        "subject_id": str(foreground.get("subject_id", "")),
+        "lifecycle_guard_decision": str(foreground.get("lifecycle_guard_decision", "")),
+        "controller_stop_allowed": bool(foreground.get("controller_stop_allowed") is True),
+        "final_return_preflight": _copy_jsonable(
+            foreground.get("final_return_preflight") if isinstance(foreground.get("final_return_preflight"), Mapping) else {}
+        ),
+        "sealed_bodies_visible": False,
+    }
+    if isinstance(foreground.get("recovery"), Mapping):
+        recovery = foreground["recovery"]
+        compact_foreground["recovery"] = {
+            "required": bool(recovery.get("required") is True),
+            "decision": str(recovery.get("decision", "")),
+            "reason": str(recovery.get("reason", "")),
+            "recommended_command": _copy_jsonable(
+                recovery.get("recommended_command") if isinstance(recovery.get("recommended_command"), Mapping) else {}
+            ),
+            "sealed_bodies_visible": False,
+        }
+    if isinstance(foreground.get("wait_patrol"), Mapping):
+        compact_foreground["wait_patrol"] = _copy_jsonable(foreground["wait_patrol"])
+    return {
+        "schema_version": "black_box_flowpilot.compact_status.v1",
+        "projection": "compact_controller_status",
+        "project_id": full.get("project_id"),
+        "goal": full.get("goal"),
+        "lifecycle": full.get("lifecycle", {}),
+        "route_stage": full.get("route_stage", ""),
+        "active_route_version": full.get("active_route_version"),
+        "source_generation": full.get("source_generation"),
+        "next_action": full.get("next_action", {}),
+        "lifecycle_guard": {
+            "decision": str((full.get("lifecycle_guard") or {}).get("decision", "")),
+            "controller_stop_allowed": bool((full.get("lifecycle_guard") or {}).get("controller_stop_allowed") is True),
+            "reason": str((full.get("lifecycle_guard") or {}).get("reason", "")),
+            "sealed_bodies_visible": False,
+        },
+        "foreground_duty": compact_foreground,
+        "final_return_preflight": full.get("foreground_duty", {}).get("final_return_preflight", {}),
+        "counts": {
+            "packets": len(packets),
+            "active_packets": len(active_packets),
+            "leases": len(leases),
+            "active_leases": len(active_leases),
+            "flowguard_orders": len(full.get("flowguard", [])),
+            "active_blockers": len(full.get("active_blockers", [])),
+        },
+        "packets": packets,
+        "leases": leases,
+        "active_packets": active_packets,
+        "active_leases": active_leases,
+        "flowguard": full.get("flowguard", []),
+        "validation_evidence": full.get("validation_evidence", []),
+        "system_closures": full.get("system_closures", []),
+        "packet_outcomes": full.get("packet_outcomes", []),
+        "active_blockers": full.get("active_blockers", []),
+        "blockers": sorted(
+            {
+                str(blocker.get("blocker_class") or blocker.get("blocker_id") or "")
+                for blocker in full.get("active_blockers", [])
+                if isinstance(blocker, Mapping)
+            }
+            | {
+                str(outcome.get("blocker_class") or outcome.get("outcome_id") or "")
+                for outcome in full.get("packet_outcomes", [])
+                if isinstance(outcome, Mapping) and outcome.get("blocking") is True
+            }
+            | {
+                str(blocker)
+                for result in ledger.get("results", {}).values()
+                if isinstance(result, Mapping) and str(result.get("status") or "") == "blocked"
+                for blocker in result.get("mechanical_blockers", [])
+            }
+        ),
+        "pm_decision_gates": full.get("pm_decision_gates", []),
+        "orphan_evidence": full.get("orphan_evidence", []),
+        "route_nodes": full.get("route_nodes", []),
+        "high_standard_control_flow": full.get("high_standard_control_flow", {}),
+        "execution_frontier": full.get("execution_frontier", {}),
+        "final_route_wide_gate_ledger": full.get("final_route_wide_gate_ledger", {"decision": "not_built"}),
+        "final_requirement_evidence_matrix": full.get("final_requirement_evidence_matrix", {"decision": "not_built"}),
+        "closure": full.get("closure", {"decision": "not_attempted"}),
+        "status_projection_authority": "display_only",
+        "runtime_authority": full.get("runtime_authority", "current_run_ledger_lifecycle_guard_foreground_duty"),
+        "sealed_bodies_visible": False,
+        "body_policy": "default_status_is_body_free; authorized PM/reviewer body-open is a soft reading boundary",
     }
 
 

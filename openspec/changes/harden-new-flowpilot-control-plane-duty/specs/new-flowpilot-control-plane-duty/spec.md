@@ -26,18 +26,31 @@ The new FlowPilot runtime SHALL provide a bounded process loop that applies only
 - **THEN** the loop MUST stop with an explicit control-plane error after the configured maximum steps
 - **AND** it MUST report the folded actions already applied.
 
-### Requirement: PM repair lifecycle decisions are structured
-PM repair decisions SHALL be accepted only from structured decision fields, not from incidental free-text rationale words.
+### Requirement: PM repair lifecycle decisions are top-level JSON decisions
+PM repair decisions SHALL be accepted only from a JSON object with a top-level
+`decision` field, not from incidental free-text rationale words or historical
+alias fields.
 
 #### Scenario: Structured same-node repair survives adversarial rationale
-- **WHEN** a PM repair result body contains `decision=same_node_repair` and rationale text containing words such as `blocked`, `blocker`, or `stop for user`
+- **WHEN** a PM repair result body is a JSON object with
+  `decision: same_node_repair` and rationale text containing words such as
+  `blocked`, `blocker`, or `stop for user`
 - **THEN** the runtime MUST record the decision as `same_node_repair`
 - **AND** it MUST NOT map those rationale words to `stop_for_user`.
 
 #### Scenario: Missing structured decision is blocked
-- **WHEN** a PM repair result body contains rationale text but no structured decision field
+- **WHEN** a PM repair result body contains rationale text but no top-level JSON
+  `decision` field
 - **THEN** the runtime MUST reject or block the PM repair result as a payload contract error
 - **AND** it MUST NOT guess a lifecycle decision from words such as `block`, `blocked`, `repair`, or `stop`.
+
+#### Scenario: Historical alias fields are rejected as execution authority
+- **WHEN** a PM repair result body provides only `repair_decision` or
+  `recovery_option`
+- **THEN** the runtime MUST reject or block the PM repair result as a payload
+  contract error
+- **AND** it MUST NOT translate those historical fields into a lifecycle
+  decision.
 
 ### Requirement: Blocker lifecycle has a single source of truth
 The new FlowPilot runtime SHALL keep semantic blocker lifecycle state consistent with the PM repair decision applied to it.

@@ -35,6 +35,14 @@ The assistant is only the FlowPilot bootloader until a new `flowpilot_new.py` ru
 
 Do not read FlowPilot reference files, old route state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the router action explicitly names them.
 
+FlowPilot is new-only by default. Do not add or rely on compatibility shims,
+legacy field aliases, prose parsers, missing-field defaults, nested payload
+normalization, old-router fallback, newest-run fallback, or historical-artifact
+promotion during a formal run. If a returned packet/result does not satisfy the
+current structured contract, block or reissue through the runtime command named
+by `foreground_duty`; do not translate the old shape into a valid current
+result.
+
 Fresh formal invocation: `python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json start`. It reuses the native startup intake UI and records the result into the new current-run ledger. `flowpilot_router.py` commands are diagnostic/reference material unless the user explicitly asks to inspect or repair an old run.
 
 Manual diagnostic/repair commands:

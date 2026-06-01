@@ -38,17 +38,27 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
         catalog_src = ASSETS / "runtime_kit" / "quality_pack_catalog.json"
         catalog_dst = root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "quality_pack_catalog.json"
         shutil.copyfile(catalog_src, catalog_dst)
+        run_root = root / ".flowpilot" / "runs" / "run-test"
+        shutil.copytree(ASSETS / "runtime_kit", run_root / "runtime_kit", ignore=shutil.ignore_patterns("__pycache__"))
         _write_json(
             root / ".flowpilot" / "current.json",
             {
-                "current_run_id": "run-test",
-                "current_run_root": ".flowpilot/runs/run-test",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
             },
         )
         return root
 
     def read_json(self, path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
+
+    def test_missing_project_contract_registry_is_rejected_without_package_fallback(self) -> None:
+        root = Path(tempfile.mkdtemp(prefix="flowpilot-role-output-missing-registry-"))
+        try:
+            with self.assertRaisesRegex(role_output_runtime_schema.RoleOutputRuntimeError, "output contract registry is missing"):
+                role_output_runtime_schema.load_contract_registry(root)
+        finally:
+            shutil.rmtree(root, ignore_errors=True)
 
     def test_pm_resume_submit_fills_mechanical_fields_and_returns_direct_router_envelope(self) -> None:
         root = self.make_project()

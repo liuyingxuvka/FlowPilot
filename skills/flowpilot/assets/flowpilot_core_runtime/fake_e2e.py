@@ -12,6 +12,47 @@ from . import cockpit, host, router, run_shell, runtime
 StartRun = Callable[..., dict[str, Any]]
 
 
+def _route_plan_body() -> str:
+    return json.dumps(
+        {
+            "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": [
+                {
+                    "node_id": "node-001",
+                    "title": "Implement target behavior",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "Target behavior is implemented in the bounded project scope.",
+                        "Worker result references current changed files and evidence.",
+                    ],
+                },
+                {
+                    "node_id": "node-002",
+                    "title": "Validate implementation evidence",
+                    "responsibility": "worker",
+                    "modeled_target": "model_test_alignment",
+                    "acceptance_criteria": [
+                        "FlowGuard and ordinary checks are current for the node.",
+                        "Evidence is sufficient for independent review.",
+                    ],
+                },
+                {
+                    "node_id": "node-003",
+                    "title": "Prepare final closure package",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "Final route-wide ledger can account for every effective node.",
+                        "Closure evidence is body-free and reviewable from public status.",
+                    ],
+                },
+            ],
+        },
+        sort_keys=True,
+    )
+
+
 def _body_for_packet(packet: dict[str, Any]) -> str:
     envelope = packet["envelope"]
     kind = envelope.get("packet_kind", "task")
@@ -61,13 +102,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
             }
         )
     if kind == "task" and scope == "planning":
-        return "\n".join(
-            [
-                "1. Plan architecture and acceptance contracts",
-                "2. Implement the target behavior through node work",
-                "3. Validate evidence and final route-wide closure",
-            ]
-        )
+        return _route_plan_body()
     if kind == "task" and scope == "node_acceptance_plan":
         node_id = envelope.get("route_node_id", "")
         return json.dumps(

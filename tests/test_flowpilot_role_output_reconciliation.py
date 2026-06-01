@@ -232,7 +232,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
                 },
                 {
                     "packet_id": f"{batch_kind}-packet-b",
-                    "to_role": "worker",
+                    "to_role": "human_like_reviewer",
                     "packet_generation_id": "gen-1",
                     "result_envelope_path": "test-result-b.json",
                     "result_body_path": "test-result-b.md",
@@ -282,7 +282,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             body_text=f"Inspect {batch_kind} sources before formal gate review.",
         )
         packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
-        packet = packet_runtime.controller_relay_envelope(
+        packet = packet_runtime.deliver_envelope_metadata(
             root,
             envelope=packet,
             envelope_path=packet_path,
@@ -304,7 +304,7 @@ class RoleOutputReconciliationTests(FlowPilotRouterRuntimeTestBase):
             next_recipient="project_manager",
         )
         result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
-        result = packet_runtime.controller_relay_envelope(
+        result = packet_runtime.deliver_envelope_metadata(
             root,
             envelope=result,
             envelope_path=result_path,

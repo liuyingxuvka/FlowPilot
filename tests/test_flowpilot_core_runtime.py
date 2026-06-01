@@ -15,7 +15,7 @@ RUNTIME_ROOT = ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtim
 if str(ASSETS_ROOT) not in sys.path:
     sys.path.insert(0, str(ASSETS_ROOT))
 
-from flowpilot_core_runtime import packets, role_handoff  # noqa: E402
+from flowpilot_core_runtime import packets, role_handoff, run_shell  # noqa: E402
 
 
 def load_module(name: str, path: Path):
@@ -121,6 +121,127 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertNotIn("SEALED_TASK_BODY", rendered)
         self.assertNotIn("SEALED_RESULT_BODY", rendered)
 
+    def test_reassignment_supersedes_older_active_packet_lease(self) -> None:
+        ledger, packet_id, first_lease = runtime_runner._base_ledger()
+        second_lease = runtime.lease_agent(ledger, "worker", agent_id="worker-2", packet_id=packet_id)
+
+        runtime.assign_packet(ledger, packet_id, second_lease)
+
+        self.assertEqual(ledger["packets"][packet_id]["assigned_lease_id"], second_lease)
+        self.assertEqual(ledger["leases"][first_lease]["status"], "superseded")
+        self.assertEqual(ledger["leases"][first_lease]["superseded_by"], second_lease)
+        self.assertEqual(ledger["leases"][second_lease]["status"], "active")
+        self.assertEqual(ledger["leases"][second_lease]["packet_id"], packet_id)
+
+    def test_final_preflight_blocks_stale_active_accepted_packet_lease(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime_runner._complete_happy_path(ledger, packet_id, worker)
+        stale_lease = runtime.lease_agent(ledger, "worker", agent_id="stale-worker", packet_id=packet_id)
+
+        health = runtime.accepted_packet_lease_health(ledger)
+        preflight = runtime.final_return_preflight(ledger)
+
+        self.assertFalse(health["ok"])
+        self.assertEqual(health["findings"][0]["active_lease_ids"], [stale_lease])
+        self.assertFalse(preflight["allowed"])
+        self.assertIn(f"accepted_packet_lease_health:{packet_id}", preflight["blockers"])
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "repair_accepted_packet")
+
+    def test_compact_status_projection_hides_sealed_bodies(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime_runner._complete_happy_path(ledger, packet_id, worker)
+
+        compact = runtime.render_compact_console(ledger)
+        rendered = json.dumps(compact, sort_keys=True)
+
+        self.assertEqual(compact["projection"], "compact_controller_status")
+        self.assertFalse(compact["sealed_bodies_visible"])
+        self.assertNotIn("SEALED_TASK_BODY", rendered)
+        self.assertNotIn("SEALED_RESULT_BODY", rendered)
+        self.assertIn("body_free", compact["body_policy"])
+
+    def test_recover_or_reissue_payload_names_concrete_command(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        ledger["leases"][worker]["liveness_status"] = "not_found"
+        ledger["leases"][worker]["liveness_checked_at"] = runtime.now_iso()
+
+        guard = runtime.preview_lifecycle_guard(ledger, trigger="patrol")
+        duty = runtime.preview_foreground_duty(ledger, guard=guard, trigger="patrol")
+        command = duty["recovery"]["recommended_command"]
+
+        self.assertEqual(duty["action"], "recover_or_reissue")
+        self.assertEqual(command["command"], "lease-agent")
+        self.assertEqual(command["packet_id"], packet_id)
+        self.assertEqual(command["responsibility"], "worker")
+        self.assertEqual(command["host_kind"], "live")
+        self.assertIn(worker, command["stale_lease_ids"])
+        self.assertFalse(command["sealed_bodies_visible"])
+
+    def test_nested_node_context_package_is_rejected(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        node = {"node_id": "node-1", "title": "Node One", "repair_generation": 0}
+        ledger["route_nodes"]["node-1"] = node
+        package = {
+            "node_id": "node-1",
+            "purpose": "Give every role enough starting context without granting command authority.",
+            "acceptance_criteria": ["criterion"],
+            "relevant_references": ["reference"],
+            "evidence_targets": ["evidence"],
+            "inspection_targets": ["inspection"],
+            "known_risks": ["risk"],
+            "flowguard_targets": ["development_process"],
+            "reviewer_starting_points": ["start here"],
+        }
+        ledger["results"]["result-node"] = {
+            "result_id": "result-node",
+            "body": json.dumps({"node_acceptance_plan": {"node_context_package": package}}),
+        }
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "top-level node_context_package"):
+            runtime._node_context_package_from_pm_result(
+                ledger,
+                node,
+                {"packet_id": "packet-node", "accepted_result_id": "result-node"},
+                "result-node",
+            )
+        self.assertFalse(
+            [event for event in ledger["events"] if event["event_type"] == "node_context_package_accepted"]
+        )
+
+    def test_evidence_summary_finalizer_excludes_self_artifacts(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "a.txt").write_text("A", encoding="utf-8")
+            nested = root / "nested"
+            nested.mkdir()
+            (nested / "b.txt").write_text("B", encoding="utf-8")
+            (root / "evidence_summary.md").write_text("summary", encoding="utf-8")
+            (root / "evidence_summary.json").write_text("old", encoding="utf-8")
+
+            manifest = runtime.finalize_evidence_summary_manifest(root)
+            second_manifest = runtime.finalize_evidence_summary_manifest(root)
+
+            paths = [item["path"] for item in manifest["evidence_files"]]
+            self.assertEqual(paths, ["a.txt", "nested/b.txt"])
+            self.assertEqual(second_manifest["evidence_files"], manifest["evidence_files"])
+            self.assertEqual(json.loads((root / "evidence_summary.json").read_text(encoding="utf-8"))["file_count"], 2)
+
+    def test_terminal_current_pointer_status_uses_final_preflight(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shell = run_shell.create_run_shell(root, "Goal", "Acceptance", run_id="run-terminal")
+            ledger, packet_id, worker = runtime_runner._base_ledger()
+            runtime_runner._complete_happy_path(ledger, packet_id, worker)
+
+            run_shell.save_run_ledger(shell, ledger, guard_trigger="final_preflight")
+            current = json.loads((root / ".flowpilot" / "current.json").read_text(encoding="utf-8"))
+
+            self.assertEqual(current["lifecycle_state"], "terminal_complete")
+            self.assertEqual(current["ledger_lifecycle_state"], "contract_frozen")
+            self.assertTrue(current["final_return_allowed"])
+            self.assertEqual(current["closure_decision"], "complete")
+
     def test_router_closes_only_after_backward_chain_and_validation(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime_runner._complete_happy_path(ledger, packet_id, worker)
@@ -196,6 +317,15 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
             self.assertFalse(invalid.ok)
             self.assertEqual(invalid.error_code, "invalid_run_root")
+
+            current_path.write_text(
+                json.dumps({"current_run_id": "run-new", "current_run_root": str(run_root)}),
+                encoding="utf-8",
+            )
+            legacy = control_surface.resolve_current_run(root)
+
+            self.assertFalse(legacy.ok)
+            self.assertEqual(legacy.error_code, "unsupported_run_pointer_fields")
 
     def test_current_run_resolver_missing_pointer_returns_structured_error(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -476,7 +606,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(boundary["folded_applied_count"], 1)
         self.assertEqual(boundary["folded_applied_actions"][0]["action_type"], "issue_task_packet")
 
-    def test_pm_repair_decision_ignores_hostile_prose_when_structured_decision_is_present(self) -> None:
+    def test_pm_repair_decision_ignores_hostile_prose_when_json_decision_is_present(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         runtime.submit_result(
@@ -495,7 +625,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ledger,
             pm_lease,
             pm_packet,
-            "decision=same_node_repair\nReason: this prose mentions stop_for_user and block, but they are not the decision.",
+            json.dumps(
+                {
+                    "decision": "same_node_repair",
+                    "reason": "This prose mentions stop_for_user and block, but they are not the decision.",
+                }
+            ),
         )
 
         decision = next(iter(ledger["pm_repair_decisions"].values()))

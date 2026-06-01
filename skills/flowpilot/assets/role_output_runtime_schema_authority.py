@@ -9,16 +9,16 @@ from role_output_runtime_schema_io import _read_json, _require_concrete_agent_id
 from role_output_runtime_schema_specs import RoleOutputRuntimeError, _role_allowed, _spec_for
 
 
-def _contract_by_id(project_root: Path, contract_id: str) -> dict[str, Any]:
-    registry = load_contract_registry(project_root)
+def _contract_by_id(project_root: Path, contract_id: str, run_root: Path | None = None) -> dict[str, Any]:
+    registry = load_contract_registry(project_root, run_root)
     for item in registry.get("contracts", []):
         if isinstance(item, dict) and item.get("contract_id") == contract_id:
             return item
     raise RoleOutputRuntimeError(f"output contract is missing from registry: {contract_id}")
 
 
-def _contract_router_event_mode(project_root: Path, contract_id: str) -> str:
-    contract = _contract_by_id(project_root, contract_id)
+def _contract_router_event_mode(project_root: Path, contract_id: str, run_root: Path | None = None) -> str:
+    contract = _contract_by_id(project_root, contract_id, run_root)
     mode = str(contract.get("router_event_mode") or "").strip()
     if mode not in {"fixed", "router_supplied"}:
         raise RoleOutputRuntimeError(f"{contract_id} has unsupported router_event_mode: {mode!r}")
@@ -79,7 +79,7 @@ def validate_direct_router_submission_authority(
     if not _role_allowed(spec, role):
         raise RoleOutputRuntimeError(f"{output_type} may be submitted only by {', '.join(spec.allowed_roles)}")
 
-    mode = _contract_router_event_mode(project_root, spec.contract_id)
+    mode = _contract_router_event_mode(project_root, spec.contract_id, run_root)
     resolved_event = resolved_event or spec.event_name
     if mode == "fixed":
         if not resolved_event:

@@ -66,8 +66,12 @@ def _source_contract_report() -> dict[str, Any]:
         "run_until_wait_present": "def run_until_wait(" in runtime_text and "def run_until_wait(root:" in entrypoint_text,
         "router_internal_whitelist_present": "ROUTER_INTERNAL_ACTION_TYPES" in runtime_text,
         "status_read_only": 'guard_trigger="status"' not in entrypoint_text,
-        "structured_pm_parser_present": "_PM_REPAIR_DECISION_FIELD_RE" in runtime_text,
-        "hostile_aliases_removed": '"stop": "stop_for_user"' not in runtime_text and '"block": "stop_for_user"' not in runtime_text,
+        "structured_pm_parser_present": "def _parse_pm_repair_decision_body" in runtime_text
+        and "json.loads(body)" in runtime_text
+        and "_PM_REPAIR_DECISION_FIELD_RE" not in runtime_text,
+        "hostile_aliases_removed": "_PM_REPAIR_ALIASES" not in runtime_text
+        and '"stop": "stop_for_user"' not in runtime_text
+        and '"block": "stop_for_user"' not in runtime_text,
         "pm_stop_blocks_route": "_stopped_semantic_blockers" in runtime_text and "PM stopped a semantic blocker" in runtime_text,
         "fake_e2e_public_fold": "runtime.run_until_wait(ledger)" in fake_text,
         "runtime_tests_cover_parser_and_fold": "test_pm_repair_decision_ignores_hostile_prose" in runtime_tests

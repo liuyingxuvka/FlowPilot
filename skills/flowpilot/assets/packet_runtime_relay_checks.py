@@ -23,7 +23,6 @@ from packet_runtime_schema import (
     ROUTER_STARTUP_RELEASE_SCHEMA,
     SEALED_BODY_VISIBILITY,
     PacketRuntimeError,
-    envelope_hash,
     validate_packet_id,
 )
 

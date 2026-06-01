@@ -1,7 +1,7 @@
 {
   "checks": {
     "classification": {
-      "candidate_count": 926,
+      "candidate_count": 989,
       "candidates": [
         {
           "action": "keep_negative_rejection_evidence",
@@ -1035,7 +1035,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "active_spec",
-          "text": "unsupported, stale, or contradicted by worker/FlowGuard operator evidence."
+          "text": "unsupported, stale, or contradicted by worker/officer evidence."
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2337,14 +2337,25 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "scripts/install_checks/manifests.py:116",
+          "candidate_id": "scripts/install_checks/manifests.py:119",
           "delete_required": false,
-          "line": 116,
+          "line": 119,
           "path": "scripts/install_checks/manifests.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "maintenance_script",
           "text": "\"Do not trust an old \\\"alive\\\" status\","
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "scripts/install_checks/manifests.py:128",
+          "delete_required": false,
+          "line": 128,
+          "path": "scripts/install_checks/manifests.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "maintenance_script",
+          "text": "\"old `flowpilot_router.py` commands are old-run diagnostics\","
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2381,9 +2392,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/capability_model.py:2567",
+          "candidate_id": "simulations/capability_model.py:2563",
           "delete_required": false,
-          "line": 2567,
+          "line": 2563,
           "path": "simulations/capability_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -2392,9 +2403,9 @@
         },
         {
           "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/capability_model.py:2789",
+          "candidate_id": "simulations/capability_model.py:2785",
           "delete_required": false,
-          "line": 2789,
+          "line": 2785,
           "path": "simulations/capability_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -2491,9 +2502,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/card_instruction_coverage_model.py:637",
+          "candidate_id": "simulations/card_instruction_coverage_model.py:629",
           "delete_required": false,
-          "line": 637,
+          "line": 629,
           "path": "simulations/card_instruction_coverage_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -2963,17 +2974,6 @@
           "text": "\"missing or invalid evidence, not unsupported known action families\""
         },
         {
-          "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_core_runtime_development_model.py:194",
-          "delete_required": false,
-          "line": 194,
-          "path": "simulations/flowpilot_core_runtime_development_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "failures.append(\"old runtime state was used as current authority\")"
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "simulations/flowpilot_cross_plane_friction_model.py:1",
           "delete_required": false,
@@ -3305,9 +3305,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:689",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:760",
           "delete_required": false,
-          "line": 689,
+          "line": 760,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3316,9 +3316,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:690",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:761",
           "delete_required": false,
-          "line": 690,
+          "line": 761,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3327,9 +3327,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:693",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:764",
           "delete_required": false,
-          "line": 693,
+          "line": 764,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3338,9 +3338,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:694",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:765",
           "delete_required": false,
-          "line": 694,
+          "line": 765,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3382,9 +3382,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:279",
+          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:280",
           "delete_required": false,
-          "line": 279,
+          "line": 280,
           "path": "simulations/flowpilot_known_friction_regression_matrix.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3393,9 +3393,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:280",
+          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:281",
           "delete_required": false,
-          "line": 280,
+          "line": 281,
           "path": "simulations/flowpilot_known_friction_regression_matrix.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3404,9 +3404,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:475",
+          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:476",
           "delete_required": false,
-          "line": 475,
+          "line": 476,
           "path": "simulations/flowpilot_known_friction_regression_matrix.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3415,9 +3415,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:541",
+          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:542",
           "delete_required": false,
-          "line": 541,
+          "line": 542,
           "path": "simulations/flowpilot_known_friction_regression_matrix.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3426,9 +3426,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:542",
+          "candidate_id": "simulations/flowpilot_known_friction_regression_matrix.py:543",
           "delete_required": false,
-          "line": 542,
+          "line": 543,
           "path": "simulations/flowpilot_known_friction_regression_matrix.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5142,9 +5142,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:13",
+          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:17",
           "delete_required": false,
-          "line": 13,
+          "line": 17,
           "path": "simulations/flowpilot_startup_intake_ui_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5153,9 +5153,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:389",
+          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:432",
           "delete_required": false,
-          "line": 389,
+          "line": 432,
           "path": "simulations/flowpilot_startup_intake_ui_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5164,9 +5164,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:391",
+          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:434",
           "delete_required": false,
-          "line": 391,
+          "line": 434,
           "path": "simulations/flowpilot_startup_intake_ui_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5175,9 +5175,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:408",
+          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:467",
           "delete_required": false,
-          "line": 408,
+          "line": 467,
           "path": "simulations/flowpilot_startup_intake_ui_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5186,9 +5186,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:425",
+          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:488",
           "delete_required": false,
-          "line": 425,
+          "line": 488,
           "path": "simulations/flowpilot_startup_intake_ui_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5197,9 +5197,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:434",
+          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:497",
           "delete_required": false,
-          "line": 434,
+          "line": 497,
           "path": "simulations/flowpilot_startup_intake_ui_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5238,6 +5238,28 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "\"The model-script target structure keeps unsupported_historical simulation import \""
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/flowpilot_structure_maintenance_model.py:282",
+          "delete_required": false,
+          "line": 282,
+          "path": "simulations/flowpilot_structure_maintenance_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "replace(entrypoint, compatibility_preserved=False, facade_available=False)"
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/flowpilot_structure_maintenance_model.py:352",
+          "delete_required": false,
+          "line": 352,
+          "path": "simulations/flowpilot_structure_maintenance_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "replace(entrypoint, compatibility_preserved=False, facade_available=False)"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -5769,9 +5791,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/meta_model.py:2074",
+          "candidate_id": "simulations/meta_model.py:2070",
           "delete_required": false,
-          "line": 2074,
+          "line": 2070,
           "path": "simulations/meta_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5780,9 +5802,9 @@
         },
         {
           "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/meta_model.py:2223",
+          "candidate_id": "simulations/meta_model.py:2219",
           "delete_required": false,
-          "line": 2223,
+          "line": 2219,
           "path": "simulations/meta_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -6583,9 +6605,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/run_flowpilot_startup_intake_ui_checks.py:36",
+          "candidate_id": "simulations/run_flowpilot_startup_intake_ui_checks.py:42",
           "delete_required": false,
-          "line": 36,
+          "line": 42,
           "path": "simulations/run_flowpilot_startup_intake_ui_checks.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -6594,9 +6616,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_startup_intake_ui_checks.py:58",
+          "candidate_id": "simulations/run_flowpilot_startup_intake_ui_checks.py:68",
           "delete_required": false,
-          "line": 58,
+          "line": 68,
           "path": "simulations/run_flowpilot_startup_intake_ui_checks.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7177,20 +7199,42 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:67",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:153",
           "delete_required": false,
-          "line": 67,
+          "line": 153,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
-          "text": "\"minimal_fix\": \"Write a current pointer with run_id/run_root or unsupported_historical current_run_id/current_run_root fields.\","
+          "text": "unsupported = sorted(field for field in UNSUPPORTED_RUN_POINTER_FIELDS if field in current)"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:154",
+          "delete_required": false,
+          "line": 154,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "if unsupported:"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:160",
+          "delete_required": false,
+          "line": 160,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "message=f\"current pointer contains unsupported fields: {', '.join(unsupported)}\","
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:185",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:192",
           "delete_required": false,
-          "line": 185,
+          "line": 192,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7199,9 +7243,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:336",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:343",
           "delete_required": false,
-          "line": 336,
+          "line": 343,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7220,59 +7264,15 @@
           "text": "raise runtime.BlackBoxRuntimeError(f\"unsupported old artifact disposition: {disposition}\")"
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/README.md:4",
-          "delete_required": false,
-          "line": 4,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "protocol. It is additive: the unsupported historical FlowPilot router remains available as"
-        },
-        {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/README.md:5",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py:117",
           "delete_required": false,
-          "line": 5,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/README.md",
+          "line": 117,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
-          "text": "reference material, but this runtime does not use old `.flowpilot` state,"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/README.md:42",
-          "delete_required": false,
-          "line": 42,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "## Unsupported historical Reuse"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/README.md:47",
-          "delete_required": false,
-          "line": 47,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "Forbidden authority: old runtime state, historical role topology, old chat"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/README.md:48",
-          "delete_required": false,
-          "line": 48,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "memory, stale validation artifacts, or unsupported historical paths that bypass the new"
+          "text": "\"Do not access sibling packets, old-run packets, or sealed bodies addressed to another role.\","
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -7284,17 +7284,6 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise runtime.BlackBoxRuntimeError(f\"unsupported router event: {event_type}\")"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:3",
-          "delete_required": false,
-          "line": 3,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "The runtime is deliberately small and serializable. It is not the old"
         },
         {
           "action": "keep_current_structural_term",
@@ -7309,9 +7298,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:405",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:418",
           "delete_required": false,
-          "line": 405,
+          "line": 418,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7320,9 +7309,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:437",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:487",
           "delete_required": false,
-          "line": 437,
+          "line": 487,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7331,14 +7320,58 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:3790",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:1085",
           "delete_required": false,
-          "line": 3790,
+          "line": 1085,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "raise BlackBoxRuntimeError(f\"node context package field has unsupported item: {field_name}\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:1963",
+          "delete_required": false,
+          "line": 1963,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "f\"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] has unsupported kind\""
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:4664",
+          "delete_required": false,
+          "line": 4664,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise BlackBoxRuntimeError(f\"unsupported router-internal action: {action_type}\")"
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5348",
+          "delete_required": false,
+          "line": 5348,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "def _packet_recovery_responsibility(ledger: Mapping[str, Any], packet_id: str, fallback: str = \"\") -> str:"
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5355",
+          "delete_required": false,
+          "line": 5355,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "return fallback"
         },
         {
           "action": "manual_review",
@@ -7364,9 +7397,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_new.py:532",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_new.py:619",
           "delete_required": false,
-          "line": 532,
+          "line": 619,
           "path": "skills/flowpilot/assets/flowpilot_new.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7374,92 +7407,15 @@
           "text": "raise runtime.BlackBoxRuntimeError(f\"unsupported command: {args.command}\")"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_prompt_store.py:29",
-          "delete_required": false,
-          "line": 29,
-          "path": "skills/flowpilot/assets/flowpilot_prompt_store.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "\"\"\"Strict prompt loader for a copied run runtime kit or repo fallback kit.\"\"\""
-        },
-        {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_prompt_store.py:90",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_prompt_store.py:91",
           "delete_required": false,
-          "line": 90,
+          "line": 91,
           "path": "skills/flowpilot/assets/flowpilot_prompt_store.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise PromptStoreError(\"prompt manifest has unsupported schema_version\")"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/protocol_contract.md:6",
-          "delete_required": false,
-          "line": 6,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/protocol_contract.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "old run folders, and progress messages are useful context only when they are"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/protocol_contract.md:122",
-          "delete_required": false,
-          "line": 122,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/protocol_contract.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "- Result from an old route version silently accepted into a new route."
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md:5",
-          "delete_required": false,
-          "line": 5,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "state and unsupported historical routes."
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md:24",
-          "delete_required": false,
-          "line": 24,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "## Unsupported historical Boundary"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md:26",
-          "delete_required": false,
-          "line": 26,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "The old FlowPilot source is backed up under"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md:27",
-          "delete_required": false,
-          "line": 27,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "`backups/ai-project-protocol-unsupported historical-snapshot-20260529/`. Old startup visuals,"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -7470,29 +7426,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
-          "text": "Old runtime state, old route unsupported historical logic, historical role topologies,"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md:31",
-          "delete_required": false,
-          "line": 31,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/README.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "and old validation evidence are not source of truth for this protocol."
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md:29",
-          "delete_required": false,
-          "line": 29,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "- route mutation with old packets still visible;"
+          "text": "Prior runtime state, unsupported transition logic, fixed role topologies, and"
         },
         {
           "action": "manual_review",
@@ -7504,50 +7438,6 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "- route mutation receives old-route output;"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md:54",
-          "delete_required": false,
-          "line": 54,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "old bad work can be closed or quarantined, a replacement lease can receive a"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md:78",
-          "delete_required": false,
-          "line": 78,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "- focused kernel unsupported historical;"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md:94",
-          "delete_required": false,
-          "line": 94,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "The replay pack keeps known old failure families executable:"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md:107",
-          "delete_required": false,
-          "line": 107,
-          "path": "skills/flowpilot/assets/flowpilot_protocol_kernel/stress_testing.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "old failure modes back into accepted completion evidence."
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8112,9 +8002,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_capabilities.py:117",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_capabilities.py:116",
           "delete_required": false,
-          "line": 117,
+          "line": 116,
           "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_capabilities.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8563,17 +8453,6 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py:59",
-          "delete_required": false,
-          "line": 59,
-          "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "raise RouterError('PM role-work request index has unsupported schema')"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py:58",
           "delete_required": false,
           "line": 58,
@@ -8582,6 +8461,17 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise RouterError('FlowGuard operator request lifecycle index has unsupported schema')"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py:59",
+          "delete_required": false,
+          "line": 59,
+          "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "raise RouterError('PM role-work request index has unsupported schema')"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8629,9 +8519,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_runtime_commands.py:138",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_runtime_commands.py:69",
           "delete_required": false,
-          "line": 138,
+          "line": 69,
           "path": "skills/flowpilot/assets/flowpilot_runtime_commands.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8717,9 +8607,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/role_output_runtime_schema_specs.py:285",
+          "candidate_id": "skills/flowpilot/assets/role_output_runtime_schema_specs.py:283",
           "delete_required": false,
-          "line": 285,
+          "line": 283,
           "path": "skills/flowpilot/assets/role_output_runtime_schema_specs.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8728,14 +8618,58 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/role_output_runtime_schema_specs.py:356",
+          "candidate_id": "skills/flowpilot/assets/role_output_runtime_schema_specs.py:354",
           "delete_required": false,
-          "line": 356,
+          "line": 354,
           "path": "skills/flowpilot/assets/role_output_runtime_schema_specs.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise RoleOutputRuntimeError(f\"unsupported output_type {output_type!r}; supported: {supported}\") from exc"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/events/pm_node_started.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/events/pm_node_started.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_report.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_report.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_conformance_model.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_conformance_model.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8747,6 +8681,28 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "- process risks from skipped steps, missing approvers, or unsupported tools;"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_product_fit.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/child_skill_product_fit.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/product_architecture_modelability.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -8761,6 +8717,28 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/root_contract_modelability.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/root_contract_modelability.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/flowguard_operator/route_process_check.md:84",
           "delete_required": false,
           "line": 84,
@@ -8769,6 +8747,50 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "child cannot accidentally advance the old parent/module path;"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_gate_manifest.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_selection.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_child_skill_selection.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -8793,6 +8815,39 @@
           "text": "- unsupported continuation capability becomes a PM blocker or manual-resume plan."
         },
         {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_controller_reset_duty.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_controller_reset_duty.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_current_node_loop.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_dependency_policy.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_dependency_policy.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
           "action": "manual_review",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_dependency_policy.md:32",
           "delete_required": false,
@@ -8802,6 +8857,17 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "- unapproved installs, stale dependencies, old assets, private-account"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_evidence_quality_package.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -8815,6 +8881,17 @@
           "text": "concept images, and visual assets must have terminal disposition. Old visuals"
         },
         {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
           "action": "manual_review",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_final_ledger.md:92",
           "delete_required": false,
@@ -8826,37 +8903,15 @@
           "text": "- old evidence that attempts to close a changed or superseded requirement;"
         },
         {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md:33",
-          "delete_required": false,
-          "line": 33,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "- require the FlowGuard operator report to state why the old model missed it, what same"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:114",
-          "delete_required": false,
-          "line": 114,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "- when a leaf is promoted to parent/module, mark old leaf approvals stale,"
-        },
-        {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:167",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md:8",
           "delete_required": false,
-          "line": 167,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "refs, and required rerun models/checks. Old evidence cannot close a changed or"
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -8882,6 +8937,127 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_absorb_or_research.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_absorb_or_research.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_scan.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_understanding.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_material_understanding.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md:33",
+          "delete_required": false,
+          "line": 33,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_model_miss_triage.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "- require the FlowGuard operator report to state why the old model missed it, what same"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:114",
+          "delete_required": false,
+          "line": 114,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "- when a leaf is promoted to parent/module, mark old leaf approvals stale,"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:167",
+          "delete_required": false,
+          "line": 167,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "refs, and required rerun models/checks. Old evidence cannot close a changed or"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_output_contract_catalog.md:9",
+          "delete_required": false,
+          "line": 9,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_output_contract_catalog.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_backward_targets.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_parent_segment_decision.md:44",
           "delete_required": false,
           "line": 44,
@@ -8890,6 +9066,94 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "those stale scopes now so the final ledger cannot count old passes as current."
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_phase_map.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_phase_map.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_prior_path_context.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_prior_path_context.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_process_route_model_decision.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_process_route_model_decision.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_architecture.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_behavior_model_decision.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_product_behavior_model_decision.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_absorb_or_mutate.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_absorb_or_mutate.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_research_package.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -8912,6 +9176,17 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "run `agent_id` values, old role slots, or unrehydrated memory packets cannot"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -8944,7 +9219,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "route-check boundary: old Process/Product/Reviewer route approvals become"
+          "text": "route-check boundary: old FlowGuard operator/Reviewer route approvals become"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8967,6 +9242,17 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "aliases are not valid repair plan kinds."
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "keep_current_structural_term",
@@ -9002,6 +9288,39 @@
           "text": "Controller must not continue waiting on that old role unless a later bounded"
         },
         {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_work_request.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_root_contract.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
           "action": "manual_review",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md:31",
           "delete_required": false,
@@ -9025,14 +9344,25 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md:176",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md:187",
           "delete_required": false,
-          "line": 176,
+          "line": 187,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_route_skeleton.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "checks. Old evidence must not close a changed or superseded requirement;"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -9068,6 +9398,39 @@
           "text": "- old-state and old-asset quarantine."
         },
         {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/child_skill_gate_manifest_review.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/child_skill_gate_manifest_review.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
           "action": "manual_review",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/evidence_quality_review.md:49",
           "delete_required": false,
@@ -9077,6 +9440,17 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "- old screenshots, old icons, old concept images, or old assets are not reused"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/final_backward_replay.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -9099,6 +9473,94 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "- generated resources have terminal disposition and no old asset is reused as"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/material_sufficiency.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/material_sufficiency.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/parent_backward_replay.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/product_architecture_challenge.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/research_direct_source_check.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/research_direct_source_check.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/root_contract_challenge.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/root_contract_challenge.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/route_challenge.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "keep_current_safety_fallback",
@@ -9124,6 +9586,28 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:8",
+          "delete_required": false,
+          "line": 8,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:102",
           "delete_required": false,
           "line": 102,
@@ -9134,10 +9618,32 @@
           "text": "Missing, stale, skipped, failed, not-run, progress-only, unsupported, or"
         },
         {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:101",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:9",
           "delete_required": false,
-          "line": 101,
+          "line": 9,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:76",
+          "delete_required": false,
+          "line": 76,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "not use old Router daemon files, Controller action ledgers, old route state,"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:105",
+          "delete_required": false,
+          "line": 105,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9145,21 +9651,120 @@
           "text": "target role every reminder cycle. Do not trust an old \"alive\" status as a"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:221",
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:126",
           "delete_required": false,
-          "line": 221,
+          "line": 126,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "instruction names that fallback, never as the ordinary standby or row-to-row"
+          "text": "- use old `flowpilot_router.py next/apply/run-until-wait`, `controller-standby`,"
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:108",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:127",
           "delete_required": false,
-          "line": 108,
+          "line": 127,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "daemon files, or Controller action ledgers only for explicit old-run"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:128",
+          "delete_required": false,
+          "line": 128,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "diagnostics or unsupported-run repair. They are not the normal runtime path"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:184",
+          "delete_required": false,
+          "line": 184,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "command to consume ready duties first. Use old Router commands only when an"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:185",
+          "delete_required": false,
+          "line": 185,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "explicit diagnostic or repair instruction names that old-run fallback."
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:276",
+          "delete_required": false,
+          "line": 276,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "nonterminal, continue `wait_patrol`. Only an explicit old-run diagnostic or"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:277",
+          "delete_required": false,
+          "line": 277,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "unsupported-run repair instruction may call old Router commands. If a packet or"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md:10",
+          "delete_required": false,
+          "line": 10,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md:10",
+          "delete_required": false,
+          "line": 10,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:10",
+          "delete_required": false,
+          "line": 10,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:110",
+          "delete_required": false,
+          "line": 110,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9167,26 +9772,48 @@
           "text": "disposition for the old package."
         },
         {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md:40",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md:10",
           "delete_required": false,
-          "line": 40,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_a.md",
+          "line": 10,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "downstream plan, old screenshots, old assets, or private role context unless"
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md:59",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md:9",
           "delete_required": false,
-          "line": 59,
+          "line": 9,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md:62",
+          "delete_required": false,
+          "line": 62,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "ids, sources inspected, evidence freshness, skipped checks, unsupported"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:9",
+          "delete_required": false,
+          "line": 9,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
           "action": "manual_review",
@@ -9201,9 +9828,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:130",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:131",
           "delete_required": false,
-          "line": 130,
+          "line": 131,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9212,9 +9839,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:167",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:168",
           "delete_required": false,
-          "line": 167,
+          "line": 168,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9222,15 +9849,37 @@
           "text": "- old Controller generation id;"
         },
         {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:17",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:9",
           "delete_required": false,
-          "line": 17,
+          "line": 9,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "follow the router's resume or role-recovery actions. Do not classify the old"
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:18",
+          "delete_required": false,
+          "line": 18,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "the returned lifecycle guard and foreground duty. Do not classify the old work"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:19",
+          "delete_required": false,
+          "line": 19,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "chain as alive from `role_binding_ledger`, route state, old Router files, chat"
         },
         {
           "action": "manual_review",
@@ -9245,9 +9894,20 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:66",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:61",
           "delete_required": false,
-          "line": 66,
+          "line": 61,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "- lifecycle guard status belongs to this run. Do not attach to old Router"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:64",
+          "delete_required": false,
+          "line": 64,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9256,9 +9916,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:67",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:65",
           "delete_required": false,
-          "line": 67,
+          "line": 65,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9267,14 +9927,36 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:81",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:79",
           "delete_required": false,
-          "line": 81,
+          "line": 79,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "For mid-run role recovery, follow the same ladder in order: restore the old"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/startup_banner.md:9",
+          "delete_required": false,
+          "line": 9,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/system/startup_banner.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/prompts/cards/next_step_source_policy.md:1",
+          "delete_required": false,
+          "line": 1,
+          "path": "skills/flowpilot/assets/runtime_kit/prompts/cards/next_step_source_policy.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_prompt",
+          "text": "Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must foll"
         },
         {
           "action": "keep_current_safety_fallback",
@@ -9318,7 +10000,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_prompt",
-          "text": "Wake the active FlowPilot run ${run_id} in ${project_root} by recording the heartbeat/manual resume request and then attach to daemon status and the Controller action ledger. Every heartbeat wake must record heartbeat_or_manual_resume_reque"
+          "text": "Wake the active FlowPilot run ${run_id} in ${project_root} by recording the heartbeat/manual resume request through `flowpilot_new.py resume --reason <reason>`, then follow the returned lifecycle guard and foreground duty. Every heartbeat w"
         },
         {
           "action": "keep_current_structural_term",
@@ -9860,15 +10542,26 @@
           "text": "self.assertTrue(fallback[\"fallback\"][\"route_sign_required\"])"
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "tests/test_flowpilot_core_runtime.py:80",
+          "action": "manual_review",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:220",
           "delete_required": false,
-          "line": 80,
+          "line": 220,
           "path": "tests/test_flowpilot_core_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "\"Forbidden authority: old runtime state\","
+          "text": "(root / \"evidence_summary.json\").write_text(\"old\", encoding=\"utf-8\")"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:526",
+          "delete_required": false,
+          "line": 526,
+          "path": "tests/test_flowpilot_core_runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"The old topology check failed before this repair.\","
         },
         {
           "action": "manual_review",
@@ -9905,9 +10598,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:273",
+          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:479",
           "delete_required": false,
-          "line": 273,
+          "line": 479,
           "path": "tests/test_flowpilot_high_standard_control_flow.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9916,9 +10609,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:285",
+          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:491",
           "delete_required": false,
-          "line": 285,
+          "line": 491,
           "path": "tests/test_flowpilot_high_standard_control_flow.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9949,9 +10642,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_packet_runtime.py:801",
+          "candidate_id": "tests/test_flowpilot_packet_runtime.py:793",
           "delete_required": false,
-          "line": 801,
+          "line": 793,
           "path": "tests/test_flowpilot_packet_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9960,9 +10653,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_packet_runtime.py:806",
+          "candidate_id": "tests/test_flowpilot_packet_runtime.py:798",
           "delete_required": false,
-          "line": 806,
+          "line": 798,
           "path": "tests/test_flowpilot_packet_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9971,9 +10664,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_packet_runtime.py:820",
+          "candidate_id": "tests/test_flowpilot_packet_runtime.py:812",
           "delete_required": false,
-          "line": 820,
+          "line": 812,
           "path": "tests/test_flowpilot_packet_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9982,9 +10675,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_router_boundaries.py:513",
+          "candidate_id": "tests/test_flowpilot_router_boundaries.py:533",
           "delete_required": false,
-          "line": 513,
+          "line": 533,
           "path": "tests/test_flowpilot_router_boundaries.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9993,9 +10686,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_router_boundaries.py:514",
+          "candidate_id": "tests/test_flowpilot_router_boundaries.py:534",
           "delete_required": false,
-          "line": 514,
+          "line": 534,
           "path": "tests/test_flowpilot_router_boundaries.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10193,9 +10886,9 @@
       "counts": {
         "keep_change_rationale_or_historical_note": 34,
         "keep_current_safety_fallback": 27,
-        "keep_current_structural_term": 105,
-        "keep_negative_rejection_evidence": 447,
-        "manual_review": 278,
+        "keep_current_structural_term": 107,
+        "keep_negative_rejection_evidence": 507,
+        "manual_review": 279,
         "needs_structuremesh_before_facade_delete": 35
       },
       "invariant_failures": [],
@@ -10215,7 +10908,7 @@
       "ok": true,
       "reachability_failure_count": 0,
       "reachability_failures": [],
-      "summary": "sequences=926 initial_states=1 traces=926",
+      "summary": "sequences=989 initial_states=1 traces=989",
       "violation_count": 0
     },
     "hazards": {
@@ -10320,7 +11013,7 @@
       "stuck_state_samples": []
     },
     "safe_graph": {
-      "edge_count": 926,
+      "edge_count": 989,
       "invariant_failure_count": 0,
       "invariant_failures": [],
       "labels": [
@@ -10332,8 +11025,8 @@
         "needs_structuremesh_before_facade_delete"
       ],
       "ok": true,
-      "state_count": 927,
-      "terminal_count": 926
+      "state_count": 990,
+      "terminal_count": 989
     }
   },
   "immediate_cleanup_count": 0,

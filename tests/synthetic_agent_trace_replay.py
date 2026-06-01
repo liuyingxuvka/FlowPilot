@@ -107,7 +107,7 @@ class SyntheticTraceReplay:
 
     def relay_packet(self) -> dict[str, Any]:
         assert self.packet_envelope is not None
-        self.packet_envelope = packet_runtime.controller_relay_envelope(
+        self.packet_envelope = packet_runtime.deliver_envelope_metadata(
             self.root,
             envelope=self.packet_envelope,
             envelope_path=self.packet_envelope_path,
@@ -177,7 +177,7 @@ class SyntheticTraceReplay:
     def relay_result(self, *, to_role: str | None = None) -> dict[str, Any]:
         assert self.result_envelope is not None
         target = to_role or str(self.result_envelope.get("next_recipient"))
-        self.result_envelope = packet_runtime.controller_relay_envelope(
+        self.result_envelope = packet_runtime.deliver_envelope_metadata(
             self.root,
             envelope=self.result_envelope,
             envelope_path=self.result_envelope_path,

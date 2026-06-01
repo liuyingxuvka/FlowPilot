@@ -20,8 +20,8 @@ STATE_MUTATING_KEYS = {
 }
 
 
-def render_status(ledger: dict[str, Any]) -> dict[str, Any]:
-    projection = runtime.render_console(ledger)
+def render_status(ledger: dict[str, Any], *, compact: bool = False) -> dict[str, Any]:
+    projection = runtime.render_compact_console(ledger) if compact else runtime.render_console(ledger)
     projection["surface"] = "cockpit"
     projection["projection_only"] = True
     projection["sealed_bodies_visible"] = False

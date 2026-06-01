@@ -1255,7 +1255,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             command="python -m unittest tests.test_flowpilot_output_contracts",
             test_kind=HAPPY,
             covers=("output_contract.packet_binding",),
-            code_contracts=("packet.create_packet", "packet.controller_relay_envelope", "packet.write_result"),
+            code_contracts=("packet.create_packet", "packet.deliver_envelope_metadata", "packet.write_result"),
         ),
         _evidence(
             "source.router.direct",

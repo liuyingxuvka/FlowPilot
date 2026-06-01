@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import sys
+import tempfile
 from pathlib import Path
 from typing import Any, Callable
 
@@ -27,6 +28,12 @@ def _base_ledger() -> tuple[dict[str, Any], str, str]:
         "Ship the clean black-box FlowPilot runtime",
         "Complete only with accepted current-route work, independent review, matching FlowGuard, and fresh validation.",
     )
+    ledger["startup_intake"] = {
+        "status": "confirmed",
+        "current_run_authority": True,
+        "controller_may_read_body": False,
+        "body_text_included": False,
+    }
     runtime.create_route(ledger, "Runtime implementation route", ["implement runtime"])
     packet_id = runtime.issue_task_packet(
         ledger,
@@ -91,6 +98,52 @@ def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) ->
     return result_id
 
 
+def _route_plan_body(nodes: list[dict[str, Any]]) -> str:
+    return json.dumps({"schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION, "nodes": nodes})
+
+
+def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> str:
+    packet_id = runtime.issue_task_packet(
+        ledger,
+        "worker",
+        "Accepted node work",
+        "SEALED_NODE_PACKET",
+        route_node_id=node_id,
+        route_scope="node",
+    )
+    ledger["packets"][packet_id]["status"] = "accepted"
+    ledger["packets"][packet_id]["accepted_result_id"] = "node-result"
+    ledger["results"]["node-result"] = {"result_id": "node-result", "review_id": "review-1"}
+    ledger["reviews"]["review-1"] = {"review_id": "review-1", "decision": "accept"}
+    ledger["route_nodes"][node_id]["packet_ids"].append(packet_id)
+    ledger["route_nodes"][node_id]["status"] = "accepted"
+    ledger["route_nodes"][node_id]["accepted_result_id"] = "node-result"
+    ledger["route_nodes"][node_id]["pm_disposition_id"] = "pm-disposition"
+    ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = "prework-flowguard-1"
+    ledger["route_nodes"][node_id]["prework_flowguard_repair_generation"] = 0
+    ledger["route_nodes"][node_id]["flowguard_order_ids"] = ["flowguard-1"]
+    ledger["route_nodes"][node_id]["review_ids"] = ["review-1"]
+    ledger["route_nodes"][node_id]["validation_evidence_ids"] = ["runtime-validation"]
+    ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
+        "order_id": "prework-flowguard-1",
+        "status": "complete",
+        "decision": "pass",
+    }
+    ledger["flowguard_work_orders"]["flowguard-1"] = {
+        "order_id": "flowguard-1",
+        "subject_id": packet_id,
+        "modeled_target": "development_process",
+        "status": "complete",
+        "decision": "pass",
+        "proof_artifact": "flowguard-report",
+        "source_generation": ledger["source_generation"],
+    }
+    ledger["execution_frontier"]["active_node_id"] = ""
+    ledger["execution_frontier"]["status"] = "ready_for_final_closure"
+    runtime.record_validation_evidence(ledger, "runtime-validation", subject_packet_id=packet_id)
+    return packet_id
+
+
 def replacement_worker_success() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
@@ -141,6 +194,76 @@ def wrong_flowguard_target_blocks() -> dict[str, Any]:
         expected=False,
         details={"blockers": blockers},
     )
+
+
+def strict_route_plan_rejects_numbered_text() -> dict[str, Any]:
+    ledger = runtime.new_ledger(
+        "Ship the clean black-box FlowPilot runtime",
+        "Route planning must use strict schema.",
+    )
+    ledger["startup_intake"] = {"status": "confirmed"}
+    ledger["recursive_route_execution_required"] = True
+    runtime.create_route(ledger, "Runtime implementation route", ["bootstrap planning", "bootstrap implementation"])
+    ledger["results"]["planning-result"] = {
+        "result_id": "planning-result",
+        "body": "1. Bootstrap planning\n2. Bootstrap implementation",
+    }
+    try:
+        runtime.materialize_route_from_planning_result(ledger, "planning-result")
+    except runtime.BlackBoxRuntimeError as exc:
+        blocked = "strict route plan schema" in str(exc)
+    else:
+        blocked = False
+    return _scenario_result(
+        "strict_route_plan_rejects_numbered_text",
+        ledger,
+        accepted=blocked and ledger["route_nodes"] == {},
+        expected=True,
+        details={"route_nodes": ledger["route_nodes"]},
+    )
+
+
+def route_deliverable_blocks_terminal_closure() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory() as tmp:
+        ledger = runtime.new_ledger(
+            "Ship the clean black-box FlowPilot runtime",
+            "Terminal closure must verify concrete route deliverables.",
+        )
+        ledger["startup_intake"] = {"status": "confirmed"}
+        ledger["recursive_route_execution_required"] = True
+        ledger["project_root"] = tmp
+        runtime.create_route(ledger, "Runtime implementation route", ["implementation"])
+        ledger["results"]["planning-result"] = {
+            "result_id": "planning-result",
+            "body": _route_plan_body(
+                [
+                    {
+                        "node_id": "node-001",
+                        "title": "Implementation",
+                        "acceptance_criteria": ["Implementation accepted."],
+                        "required_outputs": [{"path": "data/product.json", "kind": "json"}],
+                        "deliverable_checks": [
+                            {"check_id": "product-json", "kind": "json_parse", "path": "data/product.json"}
+                        ],
+                    }
+                ]
+            ),
+        }
+        runtime.materialize_route_from_planning_result(ledger, "planning-result")
+        _mark_node_ready_for_final_closure(ledger, "node-001")
+        closure = runtime.attempt_final_closure(ledger, "runtime-validation")
+        blocked = (
+            closure["decision"] == "blocked"
+            and "route_deliverable:node-001:product-json:failed" in closure["blockers"]
+            and ledger["final_route_wide_gate_ledger"]["deliverable_checks"][0]["status"] == "failed"
+        )
+        return _scenario_result(
+            "route_deliverable_blocks_terminal_closure",
+            ledger,
+            accepted=blocked,
+            expected=True,
+            details={"blockers": closure["blockers"]},
+        )
 
 
 def self_review_blocks() -> dict[str, Any]:
@@ -227,14 +350,106 @@ def console_does_not_leak_sealed_bodies() -> dict[str, Any]:
     )
 
 
+def reassignment_supersedes_active_packet_lease() -> dict[str, Any]:
+    ledger, packet_id, first_lease = _base_ledger()
+    replacement = runtime.lease_agent(ledger, "worker", agent_id="worker-2", packet_id=packet_id)
+    runtime.assign_packet(ledger, packet_id, replacement)
+    safe = (
+        ledger["packets"][packet_id]["assigned_lease_id"] == replacement
+        and ledger["leases"][first_lease]["status"] == "superseded"
+        and ledger["leases"][first_lease].get("superseded_by") == replacement
+    )
+    return _scenario_result(
+        "reassignment_supersedes_active_packet_lease",
+        ledger,
+        accepted=safe,
+        expected=True,
+        details={
+            "first_lease_status": ledger["leases"][first_lease]["status"],
+            "first_lease_superseded_by": ledger["leases"][first_lease].get("superseded_by", ""),
+            "replacement_lease": replacement,
+        },
+    )
+
+
+def final_preflight_blocks_accepted_packet_stale_lease() -> dict[str, Any]:
+    ledger, packet_id, worker = _base_ledger()
+    _complete_happy_path(ledger, packet_id, worker)
+    stale_lease = runtime.lease_agent(ledger, "worker", agent_id="stale-worker", packet_id=packet_id)
+    preflight = runtime.final_return_preflight(ledger)
+    blocked = (
+        preflight["allowed"] is False
+        and f"accepted_packet_lease_health:{packet_id}" in preflight["blockers"]
+        and runtime.router_next_action(ledger).action_type == "repair_accepted_packet"
+    )
+    return _scenario_result(
+        "final_preflight_blocks_accepted_packet_stale_lease",
+        ledger,
+        accepted=blocked,
+        expected=True,
+        details={
+            "stale_lease": stale_lease,
+            "preflight": preflight,
+            "accepted_packet_lease_health": runtime.accepted_packet_lease_health(ledger),
+        },
+    )
+
+
+def compact_status_does_not_leak_sealed_bodies() -> dict[str, Any]:
+    ledger, packet_id, worker = _base_ledger()
+    _complete_happy_path(ledger, packet_id, worker)
+    compact = runtime.render_compact_console(ledger)
+    rendered = json.dumps(compact, sort_keys=True)
+    leaked = "SEALED_TASK_BODY" in rendered or "SEALED_RESULT_BODY" in rendered
+    return _scenario_result(
+        "compact_status_does_not_leak_sealed_bodies",
+        ledger,
+        accepted=not leaked and compact.get("projection") == "compact_controller_status",
+        expected=True,
+        details={"leaked": leaked, "projection": compact.get("projection"), "counts": compact.get("counts", {})},
+    )
+
+
+def recovery_duty_names_command_payload() -> dict[str, Any]:
+    ledger, packet_id, worker = _base_ledger()
+    runtime.ack_lease(ledger, worker, packet_id)
+    ledger["leases"][worker]["liveness_status"] = "not_found"
+    ledger["leases"][worker]["liveness_checked_at"] = runtime.now_iso()
+    guard = runtime.preview_lifecycle_guard(ledger, trigger="patrol")
+    duty = runtime.preview_foreground_duty(ledger, guard=guard, trigger="patrol")
+    command = duty.get("recovery", {}).get("recommended_command", {})
+    ok = (
+        duty.get("action") == "recover_or_reissue"
+        and command.get("command") == "lease-agent"
+        and command.get("packet_id") == packet_id
+        and command.get("responsibility") == "worker"
+        and command.get("host_kind") == "live"
+        and worker in command.get("stale_lease_ids", [])
+        and command.get("sealed_bodies_visible") is False
+    )
+    return _scenario_result(
+        "recovery_duty_names_command_payload",
+        ledger,
+        accepted=ok,
+        expected=True,
+        details={"duty": duty},
+    )
+
+
 SCENARIOS: dict[str, ScenarioFn] = {
     "replacement_worker_success": replacement_worker_success,
     "wrong_flowguard_target_blocks": wrong_flowguard_target_blocks,
+    "strict_route_plan_rejects_numbered_text": strict_route_plan_rejects_numbered_text,
+    "route_deliverable_blocks_terminal_closure": route_deliverable_blocks_terminal_closure,
     "self_review_blocks": self_review_blocks,
     "stale_route_output_blocks": stale_route_output_blocks,
     "stale_evidence_blocks": stale_evidence_blocks,
     "ack_only_timeout_stays_incomplete": ack_only_timeout_stays_incomplete,
     "console_does_not_leak_sealed_bodies": console_does_not_leak_sealed_bodies,
+    "reassignment_supersedes_active_packet_lease": reassignment_supersedes_active_packet_lease,
+    "final_preflight_blocks_accepted_packet_stale_lease": final_preflight_blocks_accepted_packet_stale_lease,
+    "compact_status_does_not_leak_sealed_bodies": compact_status_does_not_leak_sealed_bodies,
+    "recovery_duty_names_command_payload": recovery_duty_names_command_payload,
 }
 
 
@@ -278,6 +493,17 @@ def _row(
 def run_checks(*, release_evidence: bool = False, install_ok: bool = False) -> dict[str, Any]:
     scenarios = [fn() for fn in SCENARIOS.values()]
     scenario_ok = all(item["ok"] for item in scenarios)
+    health_family_names = {
+        "reassignment_supersedes_active_packet_lease",
+        "final_preflight_blocks_accepted_packet_stale_lease",
+        "compact_status_does_not_leak_sealed_bodies",
+        "recovery_duty_names_command_payload",
+    }
+    health_family_ok = all(
+        item["ok"]
+        for item in scenarios
+        if item["name"] in health_family_names
+    )
     rows = [
         _row(
             "runtime_scenarios",
@@ -293,6 +519,17 @@ def run_checks(*, release_evidence: bool = False, install_ok: bool = False) -> d
             "current",
             "routine",
             ["skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"],
+        ),
+        _row(
+            "run_20260531_210441_health_family",
+            "passed" if health_family_ok else "failed",
+            "current",
+            "routine",
+            ["tests/test_flowpilot_core_runtime.py", "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"],
+            {
+                "covered_sources": sorted(health_family_names),
+                "body_policy": "reviewer_body_reading_is_soft; controller_projection_leakage_and_cross_role_execution_are_hard",
+            },
         ),
         _row(
             "background_meta_capability",

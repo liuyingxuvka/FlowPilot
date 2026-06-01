@@ -92,8 +92,8 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
             write_json(
                 project_root / ".flowpilot" / "current.json",
                 {
-                    "current_run_id": "run-test",
-                    "current_run_root": ".flowpilot/runs/run-test",
+                    "run_id": "run-test",
+                    "run_root": ".flowpilot/runs/run-test",
                 },
             )
 
@@ -108,6 +108,17 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
             self.assertEqual(resolved["path_status"], "ok")
             self.assertEqual(resolved["run_root"], run_root.resolve())
             self.assertEqual(relative, project_root.resolve() / ".flowpilot" / "runs" / "run-test" / "state.json")
+
+            write_json(
+                project_root / ".flowpilot" / "current.json",
+                {
+                    "current_run_id": "run-test",
+                    "current_run_root": ".flowpilot/runs/run-test",
+                },
+            )
+            rejected = flowpilot_paths.resolve_flowpilot_paths(project_root)
+            self.assertEqual(rejected["path_status"], "blocked")
+            self.assertIn("unsupported current-run pointer fields", rejected["path_findings"][0])
 
         manifest = prompt_store.load_prompt_manifest()
         text = prompt_store.load_prompt_text("cards.post_ack_policy")
@@ -131,8 +142,8 @@ class FlowPilotRuntimeOwnerContractTests(unittest.TestCase):
             write_json(
                 project_root / ".flowpilot" / "current.json",
                 {
-                    "current_run_id": "run-test",
-                    "current_run_root": ".flowpilot/runs/run-test",
+                    "run_id": "run-test",
+                    "run_root": ".flowpilot/runs/run-test",
                 },
             )
             write_json(

@@ -100,11 +100,46 @@ def _complete_preplanning(ledger: dict) -> None:
     )
 
 
+def _route_plan_body(nodes: list[dict] | None = None) -> str:
+    return json.dumps(
+        {
+            "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": nodes
+            or [
+                {
+                    "node_id": "node-001",
+                    "title": "Plan architecture",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Architecture plan is accepted with high-standard evidence."],
+                    "high_standard_requirement_ids": ["hsr-001"],
+                    "skill_standard_obligation_ids": ["skill-std-001"],
+                },
+                {
+                    "node_id": "node-002",
+                    "title": "Implement behavior",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Behavior implementation is accepted with high-standard evidence."],
+                    "high_standard_requirement_ids": ["hsr-001"],
+                    "skill_standard_obligation_ids": ["skill-std-001"],
+                },
+                {
+                    "node_id": "node-003",
+                    "title": "Validate evidence",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Validation evidence is accepted with high-standard evidence."],
+                    "high_standard_requirement_ids": ["hsr-001"],
+                    "skill_standard_obligation_ids": ["skill-std-001"],
+                },
+            ],
+        }
+    )
+
+
 def _complete_planning(ledger: dict) -> None:
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="planning")[0],
-        "1. Plan architecture\n2. Implement behavior\n3. Validate evidence",
+        _route_plan_body(),
     )
 
 
@@ -270,7 +305,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_planning(ledger)
 
         packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
-        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "missing node_context_package"):
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "top-level node_context_package"):
             _complete_task_chain(ledger, packet_id, json.dumps({"repair_policy": "same_node_repair_default"}))
 
         node_id = ledger["execution_frontier"]["active_node_id"]
@@ -577,7 +612,17 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         planning_result = "planning-result"
         ledger["results"][planning_result] = {
             "result_id": planning_result,
-            "body": "1. Implement behavior",
+            "body": _route_plan_body(
+                [
+                    {
+                        "node_id": "node-001",
+                        "title": "Implement behavior",
+                        "acceptance_criteria": ["Behavior implementation accepted."],
+                        "high_standard_requirement_ids": ["hsr-001"],
+                        "skill_standard_obligation_ids": ["skill-std-001"],
+                    }
+                ]
+            ),
         }
         runtime.materialize_route_from_planning_result(ledger, planning_result)
         node_id = ledger["execution_frontier"]["active_node_id"]
@@ -605,20 +650,23 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ledger = _ledger()
         _complete_preplanning(ledger)
         planning_result = "planning-result"
-        ledger["results"][planning_result] = {"result_id": planning_result, "body": "parent plan"}
-        runtime.materialize_route_from_planning_result(
-            ledger,
-            planning_result,
-            nodes=[
-                {
-                    "node_id": "parent-001",
-                    "title": "Parent feature",
-                    "node_kind": "parent",
-                    "child_node_ids": ["node-001"],
-                    "acceptance_criteria": ["Parent composes child evidence"],
-                }
-            ],
-        )
+        ledger["results"][planning_result] = {
+            "result_id": planning_result,
+            "body": _route_plan_body(
+                [
+                    {
+                        "node_id": "parent-001",
+                        "title": "Parent feature",
+                        "node_kind": "parent",
+                        "child_node_ids": ["node-001"],
+                        "acceptance_criteria": ["Parent composes child evidence"],
+                        "high_standard_requirement_ids": ["hsr-001"],
+                        "skill_standard_obligation_ids": ["skill-std-001"],
+                    }
+                ]
+            ),
+        }
+        runtime.materialize_route_from_planning_result(ledger, planning_result)
         runtime.ensure_node_acceptance_plan_packet(ledger, "parent-001")
         _complete_node_acceptance_plan(ledger)
         node_id = _complete_active_node_packet_loop(ledger)

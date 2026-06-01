@@ -310,11 +310,23 @@ def _refresh_current_pointer_status(shell: RunShell, ledger: dict[str, Any]) -> 
     if not isinstance(current, dict) or current.get("run_id") != shell.run_id:
         return
     guard = ledger.get("lifecycle_guard") if isinstance(ledger.get("lifecycle_guard"), dict) else {}
+    preflight = runtime.final_return_preflight(ledger, guard=guard)
+    closure = ledger.get("closure") if isinstance(ledger.get("closure"), dict) else {}
+    terminal_status = runtime.terminal_lifecycle_status(ledger)
+    lifecycle_state = str((ledger.get("lifecycle") or {}).get("state", ""))
+    derived_status = lifecycle_state
+    if terminal_status:
+        derived_status = terminal_status
+    elif preflight.get("allowed") is True and closure.get("decision") == "complete":
+        derived_status = "terminal_complete"
     current.update(
         {
-            "lifecycle_state": str((ledger.get("lifecycle") or {}).get("state", "")),
-            "terminal_lifecycle_status": runtime.terminal_lifecycle_status(ledger),
-            "controller_stop_allowed": bool(guard.get("controller_stop_allowed") is True),
+            "lifecycle_state": derived_status,
+            "ledger_lifecycle_state": lifecycle_state,
+            "terminal_lifecycle_status": terminal_status,
+            "controller_stop_allowed": bool(preflight.get("controller_stop_allowed") is True),
+            "final_return_allowed": bool(preflight.get("allowed") is True),
+            "closure_decision": str(closure.get("decision", "not_attempted")),
             "updated_at": runtime.now_iso(),
         }
     )

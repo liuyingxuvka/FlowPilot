@@ -225,8 +225,8 @@ def continuation_quarantine_record(
                 "authority": "history_only",
             }
         )
-    current_run_id = _text(current_pointer.get("current_run_id") or current_pointer.get("active_run_id"))
-    current_run_root = _text(current_pointer.get("current_run_root") or current_pointer.get("active_run_root"))
+    current_run_id = _text(current_pointer.get("run_id"))
+    current_run_root = _text(current_pointer.get("run_root"))
     return {
         "schema_version": CONTINUATION_QUARANTINE_SCHEMA,
         "run_id": run_id,

@@ -120,7 +120,7 @@ def build_output_skeleton(
     if not _role_allowed(spec, role):
         raise RoleOutputRuntimeError(f"{output_type} may be submitted only by {', '.join(spec.allowed_roles)}")
     _resolved_run_id, run_root = _run_paths(project_root, run_id)
-    contract = _contract_by_id(project_root, spec.contract_id)
+    contract = _contract_by_id(project_root, spec.contract_id, run_root)
     skeleton: dict[str, Any] = {}
     if spec.body_schema_version:
         skeleton["schema_version"] = spec.body_schema_version
@@ -334,7 +334,7 @@ def validate_output_body(
 ) -> dict[str, Any]:
     spec = _spec_for(output_type)
     _resolved_run_id, run_root = _run_paths(project_root, run_id)
-    contract = _contract_by_id(project_root, spec.contract_id)
+    contract = _contract_by_id(project_root, spec.contract_id, run_root)
     issues: list[dict[str, str]] = []
     if not _role_allowed(spec, role):
         issues.append({"field": "role", "message": f"{role} may not submit {output_type}"})

@@ -13317,8 +13317,7 @@
       "name": "missing_ack_block",
       "observations": {
         "blockers": [
-          "packet_blocked:packet-0001",
-          "result-0001:missing_ack"
+          "missing_ack"
         ],
         "next_action": "repair_packet",
         "result_status": "result_blocked"
@@ -14820,7 +14819,7 @@
       ],
       "name": "orphan_runner_summary_recovery",
       "observations": {
-        "decision": "recover_orphan_evidence",
+        "decision": "reissue_or_replace_lease",
         "orphan_count": 1,
         "packet_status": "acknowledged"
       },
@@ -14835,7 +14834,7 @@
           ],
           "returncode": 0,
           "stderr_excerpt": "",
-          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,run-until-wait,status,patrol,final-preflight,resume,lease-agent,ack,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n                        ...\n\nFormal entrypoint for the new blac"
+          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,run-until-wait,status,patrol,final-preflight,resume,lease-agent,ack,role-handoff,open-packet,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n                        ...\n\nFormal en"
         },
         {
           "args": [
@@ -14843,7 +14842,7 @@
             "complete-flowguard"
           ],
           "returncode": 2,
-          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,run-until-wait,status,patrol,final-preflight,resume,lease-agent,ack,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n                        ...\nflowpilot_new.py: error: argument c",
+          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,run-until-wait,status,patrol,final-preflight,resume,lease-agent,ack,role-handoff,open-packet,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n                        ...\nflowpilot_",
           "stdout_excerpt": ""
         }
       ],

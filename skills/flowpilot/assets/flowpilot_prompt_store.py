@@ -26,22 +26,17 @@ class PromptStoreError(RuntimeError):
 
 
 class PromptStore:
-    """Strict prompt loader for a copied run runtime kit or repo fallback kit."""
+    """Strict prompt loader for a copied run runtime kit."""
 
     def __init__(self, runtime_kit_root: Path | None = None) -> None:
         self.runtime_kit_root = Path(runtime_kit_root) if runtime_kit_root is not None else runtime_kit_source()
 
     @classmethod
-    def from_run_root(
-        cls,
-        run_root: Path,
-        *,
-        fallback_runtime_kit: Path | None = None,
-    ) -> "PromptStore":
+    def from_run_root(cls, run_root: Path) -> "PromptStore":
         copied = Path(run_root) / "runtime_kit"
         if copied.exists():
             return cls(copied)
-        return cls(fallback_runtime_kit)
+        raise PromptStoreError(f"run runtime kit missing: {copied}")
 
     def manifest_path(self) -> Path:
         return prompt_manifest_path(self.runtime_kit_root)
@@ -119,14 +114,11 @@ def load_card_manifest(runtime_kit_root: Path | None = None) -> dict[str, Any]:
     return manifest
 
 
-def load_card_manifest_from_run(
-    run_root: Path,
-    fallback_runtime_kit: Path | None = None,
-) -> dict[str, Any]:
+def load_card_manifest_from_run(run_root: Path) -> dict[str, Any]:
     manifest_path = Path(run_root) / "runtime_kit" / "manifest.json"
     if manifest_path.exists():
         return load_card_manifest(manifest_path.parent)
-    return load_card_manifest(fallback_runtime_kit)
+    raise PromptStoreError(f"run card manifest missing: {manifest_path}")
 
 
 def card_manifest_entry(manifest: dict[str, Any], card_id: str) -> dict[str, Any]:

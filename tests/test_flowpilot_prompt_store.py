@@ -48,9 +48,19 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
         try:
             run_root = temp_root / ".flowpilot" / "runs" / "run-test"
             shutil.copytree(ASSETS / "runtime_kit", run_root / "runtime_kit", ignore=shutil.ignore_patterns("__pycache__"))
-            store = PromptStore.from_run_root(run_root, fallback_runtime_kit=ASSETS / "runtime_kit")
+            store = PromptStore.from_run_root(run_root)
             self.assertEqual(store.manifest_path(), run_root / "runtime_kit" / "prompts" / "manifest.json")
             self.assertIn("ACK is receipt only", store.render("cards.post_ack_policy"))
+        finally:
+            shutil.rmtree(temp_root, ignore_errors=True)
+
+    def test_run_root_store_rejects_missing_copied_runtime_kit(self) -> None:
+        temp_root = Path(tempfile.mkdtemp(prefix="flowpilot-prompt-store-missing-kit-"))
+        try:
+            run_root = temp_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            with self.assertRaisesRegex(PromptStoreError, "run runtime kit missing"):
+                PromptStore.from_run_root(run_root)
         finally:
             shutil.rmtree(temp_root, ignore_errors=True)
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -61,18 +62,40 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str = "SEALED_RESU
     return host.submit_host_result(ledger, lease_id, packet_id, body)
 
 
-def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
-    _complete_open_packet(
-        ledger,
-        pm_packet,
-        "\n".join(
-            [
-                "1. Plan architecture and contracts",
-                "2. Implement UI and runtime behavior",
-                "3. Validate evidence and closure",
-            ]
-        ),
+def _route_plan_body(nodes: list[dict] | None = None) -> str:
+    return json.dumps(
+        {
+            "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": nodes
+            or [
+                {
+                    "node_id": "node-001",
+                    "title": "Plan architecture and contracts",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Architecture and contract work is accepted with current evidence."],
+                },
+                {
+                    "node_id": "node-002",
+                    "title": "Implement UI and runtime behavior",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Implementation work is accepted with current evidence."],
+                },
+                {
+                    "node_id": "node-003",
+                    "title": "Validate evidence and closure",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": ["Validation and closure work is accepted with current evidence."],
+                },
+            ],
+        }
     )
+
+
+def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
+    _complete_open_packet(ledger, pm_packet, _route_plan_body())
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
         _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: {kind}")
@@ -101,6 +124,47 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
     return node_id
 
 
+def _mark_node_ready_for_final_closure(ledger: dict, node_id: str) -> None:
+    packet_id = runtime.issue_task_packet(
+        ledger,
+        "worker",
+        "Accepted node work",
+        "SEALED_NODE_PACKET",
+        route_node_id=node_id,
+        route_scope="node",
+    )
+    ledger["packets"][packet_id]["status"] = "accepted"
+    ledger["packets"][packet_id]["accepted_result_id"] = "node-result"
+    ledger["results"]["node-result"] = {"result_id": "node-result", "review_id": "review-1"}
+    ledger["reviews"]["review-1"] = {"review_id": "review-1", "decision": "accept"}
+    ledger["route_nodes"][node_id]["packet_ids"].append(packet_id)
+    ledger["route_nodes"][node_id]["status"] = "accepted"
+    ledger["route_nodes"][node_id]["accepted_result_id"] = "node-result"
+    ledger["route_nodes"][node_id]["pm_disposition_id"] = "pm-disposition"
+    ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = "prework-flowguard-1"
+    ledger["route_nodes"][node_id]["prework_flowguard_repair_generation"] = 0
+    ledger["route_nodes"][node_id]["flowguard_order_ids"] = ["flowguard-1"]
+    ledger["route_nodes"][node_id]["review_ids"] = ["review-1"]
+    ledger["route_nodes"][node_id]["validation_evidence_ids"] = ["runtime-validation"]
+    ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
+        "order_id": "prework-flowguard-1",
+        "status": "complete",
+        "decision": "pass",
+    }
+    ledger["flowguard_work_orders"]["flowguard-1"] = {
+        "order_id": "flowguard-1",
+        "subject_id": packet_id,
+        "modeled_target": "development_process",
+        "status": "complete",
+        "decision": "pass",
+        "proof_artifact": "flowguard-report",
+        "source_generation": ledger["source_generation"],
+    }
+    ledger["execution_frontier"]["active_node_id"] = ""
+    ledger["execution_frontier"]["status"] = "ready_for_final_closure"
+    runtime.record_validation_evidence(ledger, "runtime-validation", subject_packet_id=packet_id)
+
+
 class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
     def test_pm_planning_chain_materializes_nodes_instead_of_terminal_completion(self) -> None:
         ledger, pm_packet = _recursive_ledger()
@@ -112,6 +176,64 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         action = runtime.router_next_action(ledger).to_json()
         self.assertEqual(action["action_type"], "lease_agent")
         self.assertEqual(action["subject_id"], _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0])
+
+    def test_numbered_text_plan_is_rejected_without_route_fallback(self) -> None:
+        ledger, _pm_packet = _recursive_ledger()
+        ledger["results"]["planning-result"] = {
+            "result_id": "planning-result",
+            "body": "1. Plan architecture\n2. Implement behavior\n3. Validate evidence",
+        }
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "strict route plan schema"):
+            runtime.materialize_route_from_planning_result(ledger, "planning-result")
+
+        self.assertEqual(ledger["route_nodes"], {})
+
+    def test_route_nodes_compatibility_field_is_rejected(self) -> None:
+        ledger, _pm_packet = _recursive_ledger()
+        ledger["results"]["planning-result"] = {
+            "result_id": "planning-result",
+            "body": json.dumps(
+                {
+                    "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                    "route_nodes": [{"node_id": "node-001", "title": "Implementation"}],
+                }
+            ),
+        }
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "use nodes, not route_nodes"):
+            runtime.materialize_route_from_planning_result(ledger, "planning-result")
+
+        self.assertEqual(ledger["route_nodes"], {})
+
+    def test_structured_route_plan_preserves_deliverable_metadata(self) -> None:
+        ledger, _pm_packet = _recursive_ledger()
+        ledger["results"]["planning-result"] = {
+            "result_id": "planning-result",
+            "body": _route_plan_body(
+                [
+                    {
+                        "node_id": "node-001",
+                        "title": "Implementation",
+                        "acceptance_criteria": ["Implementation accepted."],
+                        "required_outputs": [{"path": "data/product.json", "kind": "json"}],
+                        "deliverable_checks": [
+                            {"check_id": "product-json", "kind": "json_parse", "path": "data/product.json"}
+                        ],
+                        "validation_checks": [{"check_id": "pytest", "kind": "command_record"}],
+                    }
+                ]
+            ),
+        }
+
+        node_ids = runtime.materialize_route_from_planning_result(ledger, "planning-result")
+
+        self.assertEqual(node_ids, ["node-001"])
+        node = ledger["route_nodes"]["node-001"]
+        self.assertEqual(node["route_plan_schema_version"], runtime.ROUTE_PLAN_SCHEMA_VERSION)
+        self.assertEqual(node["required_outputs"][0]["path"], "data/product.json")
+        self.assertEqual(node["deliverable_checks"][0]["check_id"], "product-json")
+        self.assertEqual(node["validation_checks"][0]["check_id"], "pytest")
 
     def test_all_nodes_accept_before_terminal_completion(self) -> None:
         ledger, pm_packet = _recursive_ledger()
@@ -169,12 +291,13 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         ledger["startup_intake"] = {"sealed": True}
         ledger["recursive_route_execution_required"] = True
         runtime.create_route(ledger, "Recursive route", ["implementation"])
-        ledger["results"]["planning-result"] = {"result_id": "planning-result", "body": "plan"}
-        runtime.materialize_route_from_planning_result(
-            ledger,
-            "planning-result",
-            nodes=[{"node_id": "node-001", "title": "Implementation"}],
-        )
+        ledger["results"]["planning-result"] = {
+            "result_id": "planning-result",
+            "body": _route_plan_body(
+                [{"node_id": "node-001", "title": "Implementation", "acceptance_criteria": ["Implementation accepted."]}]
+            ),
+        }
+        runtime.materialize_route_from_planning_result(ledger, "planning-result")
         packet_id = runtime.issue_task_packet(
             ledger,
             "worker",
@@ -220,6 +343,72 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         current_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
 
         self.assertIn(f"packet_not_accepted:{packet_id}", current_ledger["unresolved"])
+
+    def test_missing_route_deliverable_blocks_final_closure(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = runtime.new_ledger("Build target", "Require concrete product output.")
+            ledger["startup_intake"] = {"sealed": True}
+            ledger["recursive_route_execution_required"] = True
+            ledger["project_root"] = tmp
+            runtime.create_route(ledger, "Recursive route", ["implementation"])
+            ledger["results"]["planning-result"] = {
+                "result_id": "planning-result",
+                "body": _route_plan_body(
+                    [
+                        {
+                            "node_id": "node-001",
+                            "title": "Implementation",
+                            "acceptance_criteria": ["Implementation accepted."],
+                            "required_outputs": [{"path": "data/product.json", "kind": "json"}],
+                            "deliverable_checks": [
+                                {"check_id": "product-json", "kind": "json_parse", "path": "data/product.json"}
+                            ],
+                        }
+                    ]
+                ),
+            }
+            runtime.materialize_route_from_planning_result(ledger, "planning-result")
+            _mark_node_ready_for_final_closure(ledger, "node-001")
+
+            closure = runtime.attempt_final_closure(ledger, "runtime-validation")
+
+            self.assertEqual(closure["decision"], "blocked")
+            self.assertIn("route_deliverable:node-001:product-json:failed", closure["blockers"])
+            self.assertEqual(ledger["final_requirement_evidence_matrix"]["status"], "blocked")
+
+    def test_existing_route_deliverable_allows_final_ledger(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            product_path = Path(tmp) / "data" / "product.json"
+            product_path.parent.mkdir(parents=True)
+            product_path.write_text('{"ok": true}', encoding="utf-8")
+            ledger = runtime.new_ledger("Build target", "Require concrete product output.")
+            ledger["startup_intake"] = {"sealed": True}
+            ledger["recursive_route_execution_required"] = True
+            ledger["project_root"] = tmp
+            runtime.create_route(ledger, "Recursive route", ["implementation"])
+            ledger["results"]["planning-result"] = {
+                "result_id": "planning-result",
+                "body": _route_plan_body(
+                    [
+                        {
+                            "node_id": "node-001",
+                            "title": "Implementation",
+                            "acceptance_criteria": ["Implementation accepted."],
+                            "required_outputs": [{"path": "data/product.json", "kind": "json"}],
+                            "deliverable_checks": [
+                                {"check_id": "product-json", "kind": "json_parse", "path": "data/product.json"}
+                            ],
+                        }
+                    ]
+                ),
+            }
+            runtime.materialize_route_from_planning_result(ledger, "planning-result")
+            _mark_node_ready_for_final_closure(ledger, "node-001")
+
+            final_ledger = runtime.build_final_route_wide_gate_ledger(ledger)
+
+            self.assertNotIn("route_deliverable:node-001:product-json:failed", final_ledger["unresolved"])
+            self.assertEqual(final_ledger["deliverable_checks"][0]["status"], "passed")
 
 if __name__ == "__main__":
     unittest.main()

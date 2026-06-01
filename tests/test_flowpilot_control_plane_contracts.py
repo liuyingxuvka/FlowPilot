@@ -395,7 +395,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 body_text=f"material scan {packet_id}",
             )
             packet_path = root / packet["body_path"].replace("packet_body.md", "packet_envelope.json")
-            packet = packet_runtime.controller_relay_envelope(
+            packet = packet_runtime.deliver_envelope_metadata(
                 root,
                 envelope=packet,
                 envelope_path=packet_path,
@@ -413,7 +413,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 next_recipient="project_manager",
             )
             result_path = root / result["result_body_path"].replace("result_body.md", "result_envelope.json")
-            result = packet_runtime.controller_relay_envelope(
+            result = packet_runtime.deliver_envelope_metadata(
                 root,
                 envelope=result,
                 envelope_path=result_path,

@@ -15,6 +15,7 @@ REPO_ROOT = ROOT.parent
 ENTRYPOINT = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_new.py"
 FAKE_STARTUP_TEXT = "Build a fake calculator CLI with docs, tests, FlowGuard evidence, review, validation, and closure."
 MIN_ACCEPTED_ROUTE_NODES = 3
+ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
 PLANNING_CHAIN = (
     ("task", "pm"),
     ("flowguard_check", "flowguard_operator"),
@@ -150,6 +151,47 @@ def assert_public_projection_is_sealed(projection: dict[str, Any]) -> None:
         ensure(packet.get("sealed_body_hidden") is True, f"packet body is not marked hidden: {packet}")
 
 
+def _route_plan_body() -> str:
+    return json.dumps(
+        {
+            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+            "nodes": [
+                {
+                    "node_id": "node-001",
+                    "title": "Implement fake calculator CLI behavior",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "The fake calculator behavior is implemented in the bounded scenario.",
+                        "Worker evidence names current files and command results.",
+                    ],
+                },
+                {
+                    "node_id": "node-002",
+                    "title": "Validate fake project evidence",
+                    "responsibility": "worker",
+                    "modeled_target": "model_test_alignment",
+                    "acceptance_criteria": [
+                        "FlowGuard and ordinary validation evidence are current.",
+                        "Evidence can be challenged by an independent reviewer.",
+                    ],
+                },
+                {
+                    "node_id": "node-003",
+                    "title": "Assemble final closure package",
+                    "responsibility": "worker",
+                    "modeled_target": "development_process",
+                    "acceptance_criteria": [
+                        "The final route-wide ledger accounts for all effective nodes.",
+                        "The public status remains body-free at terminal completion.",
+                    ],
+                },
+            ],
+        },
+        sort_keys=True,
+    )
+
+
 def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
     node_id = str(packet.get("route_node_id") or "")
     return json.dumps(
@@ -225,13 +267,7 @@ def complete_full_packet_chain(
         ack_payload = run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
         ensure(ack_payload["next_action"]["action_type"] == "wait_for_result", f"expected wait_for_result: {ack_payload}")
         if packet_kind == "task" and packet.get("route_scope") == "planning":
-            body = "\n".join(
-                [
-                    "1. Plan architecture and acceptance contracts",
-                    "2. Implement the fake calculator CLI behavior",
-                    "3. Validate tests, evidence, and route-wide closure",
-                ]
-            )
+            body = _route_plan_body()
         elif packet_kind == "task" and packet.get("route_scope") == "node_acceptance_plan":
             body = _node_acceptance_plan_body(packet)
         elif packet_kind == "pm_disposition":
@@ -361,13 +397,7 @@ def complete_planning_chain_only(
                 }
             )
         elif packet_kind == "task" and route_scope == "planning":
-            body = "\n".join(
-                [
-                    "1. Plan architecture and acceptance contracts",
-                    "2. Implement the fake calculator CLI behavior",
-                    "3. Validate tests, evidence, and route-wide closure",
-                ]
-            )
+            body = _route_plan_body()
         elif packet_kind == "task" and route_scope == "node_acceptance_plan":
             body = _node_acceptance_plan_body(packet)
         else:

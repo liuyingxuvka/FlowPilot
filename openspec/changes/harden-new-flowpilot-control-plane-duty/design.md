@@ -60,10 +60,15 @@ Internal black-box work is not a user-facing wait. It is folded immediately by t
 
 PM repair decisions are hard lifecycle inputs. The parser will accept only:
 
-- a JSON object with `decision`, `repair_decision`, or `recovery_option`;
-- or a strict key-value token such as `decision=same_node_repair` or `decision: same_node_repair`.
+- a JSON object with a top-level `decision` field whose value is one of the
+  allowed lifecycle decisions.
 
-Rationale text is never scanned for lifecycle aliases. If the body lacks a structured decision, the PM repair result is blocked as a payload contract error and routed back through the same PM repair packet family instead of guessing. `block` and `stop` in prose no longer map to `stop_for_user`.
+Rationale text is never scanned for lifecycle aliases, and historical fields
+such as `repair_decision` or `recovery_option` are policy context only, not
+execution authority. If the body lacks a top-level `decision`, the PM repair
+result is blocked as a payload contract error and routed back through the same
+PM repair packet family instead of guessing. `block` and `stop` in prose no
+longer map to `stop_for_user`.
 
 ### Decision: Stopped and repairing blocker states are mutually exclusive
 

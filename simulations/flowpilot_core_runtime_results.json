@@ -54,7 +54,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-31T21:00:55.323142+00:00",
+        "created_at": "2026-06-01T13:12:49.445973+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -86,7 +86,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-05-31T21:00:55.324137+00:00",
+        "created_at": "2026-06-01T13:12:49.446972+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -107,6 +107,58 @@
         "reason": "packet has no assigned lease",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "route_nodes": {}
+      },
+      "expected_acceptance": true,
+      "name": "strict_route_plan_rejects_numbered_text",
+      "next_action": {
+        "action_type": "issue_task_packet",
+        "modeled_target": "",
+        "reason": "active route has no task packets",
+        "responsibility": "worker",
+        "subject_id": ""
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [],
+        "blockers": [
+          "final_requirement_evidence_matrix_unresolved",
+          "final_route_wide_gate_ledger_unresolved",
+          "route_deliverable:node-001:product-json:failed"
+        ],
+        "created_at": "2026-06-01T13:12:49.456974+00:00",
+        "decision": "blocked",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "runtime-validation"
+      },
+      "details": {
+        "blockers": [
+          "final_requirement_evidence_matrix_unresolved",
+          "final_route_wide_gate_ledger_unresolved",
+          "route_deliverable:node-001:product-json:failed"
+        ]
+      },
+      "expected_acceptance": true,
+      "name": "route_deliverable_blocks_terminal_closure",
+      "next_action": {
+        "action_type": "close_project",
+        "modeled_target": "",
+        "reason": "all route nodes are resolved; final route-wide closure is required",
+        "responsibility": "",
+        "subject_id": ""
       },
       "ok": true
     },
@@ -257,7 +309,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-31T21:00:55.327067+00:00",
+        "created_at": "2026-06-01T13:12:49.460977+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -325,6 +377,344 @@
         "subject_id": ""
       },
       "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "first_lease_status": "superseded",
+        "first_lease_superseded_by": "lease-0002",
+        "replacement_lease": "lease-0002"
+      },
+      "expected_acceptance": true,
+      "name": "reassignment_supersedes_active_packet_lease",
+      "next_action": {
+        "action_type": "wait_for_ack",
+        "modeled_target": "",
+        "reason": "assigned lease has not acknowledged",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [
+          {
+            "id": "project-001",
+            "kind": "goal",
+            "summary": "Ship the clean black-box FlowPilot runtime"
+          },
+          {
+            "id": "route-v1",
+            "kind": "route"
+          },
+          {
+            "id": "packet-0001",
+            "kind": "packet",
+            "packet_kind": "task"
+          },
+          {
+            "id": "result-0001",
+            "kind": "result"
+          },
+          {
+            "id": "review-0001",
+            "kind": "review"
+          },
+          {
+            "id": "flowguard-0001",
+            "kind": "flowguard"
+          },
+          {
+            "id": "packet-0002",
+            "kind": "packet",
+            "packet_kind": "flowguard_check"
+          },
+          {
+            "id": "result-0002",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0003",
+            "kind": "packet",
+            "packet_kind": "review"
+          },
+          {
+            "id": "result-0003",
+            "kind": "result"
+          }
+        ],
+        "blockers": [],
+        "created_at": "2026-06-01T13:12:49.462972+00:00",
+        "decision": "complete",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "validation-result-0003"
+      },
+      "details": {
+        "accepted_packet_lease_health": {
+          "finding_count": 1,
+          "findings": [
+            {
+              "accepted_result_id": "result-0001",
+              "active_lease_ids": [
+                "lease-0004"
+              ],
+              "active_replacement_lease_ids": [
+                "lease-0004"
+              ],
+              "assigned_lease_id": "lease-0001",
+              "original_lease_id": "lease-0001",
+              "packet_id": "packet-0001",
+              "packet_status": "accepted",
+              "stale_assigned_lease": false
+            }
+          ],
+          "ok": false,
+          "schema_version": "black_box_flowpilot.accepted_packet_lease_health.v1",
+          "sealed_bodies_visible": false
+        },
+        "preflight": {
+          "accepted_packet_lease_health": {
+            "finding_count": 1,
+            "findings": [
+              {
+                "accepted_result_id": "result-0001",
+                "active_lease_ids": [
+                  "lease-0004"
+                ],
+                "active_replacement_lease_ids": [
+                  "lease-0004"
+                ],
+                "assigned_lease_id": "lease-0001",
+                "original_lease_id": "lease-0001",
+                "packet_id": "packet-0001",
+                "packet_status": "accepted",
+                "stale_assigned_lease": false
+              }
+            ],
+            "ok": false,
+            "schema_version": "black_box_flowpilot.accepted_packet_lease_health.v1",
+            "sealed_bodies_visible": false
+          },
+          "allowed": false,
+          "blockers": [
+            "accepted_packet_lease_health:packet-0001",
+            "guard_decision:repair_assignment_race",
+            "lifecycle_guard_disallows_stop",
+            "next_action:repair_accepted_packet"
+          ],
+          "checked_at": "2026-06-01T13:12:49.462972+00:00",
+          "closure_decision": "complete",
+          "controller_stop_allowed": false,
+          "guard_decision": "repair_assignment_race",
+          "next_action_type": "repair_accepted_packet",
+          "schema_version": "black_box_flowpilot.final_return_preflight.v1",
+          "sealed_bodies_visible": false,
+          "terminal_lifecycle_status": ""
+        },
+        "stale_lease": "lease-0004"
+      },
+      "expected_acceptance": true,
+      "name": "final_preflight_blocks_accepted_packet_stale_lease",
+      "next_action": {
+        "action_type": "repair_accepted_packet",
+        "modeled_target": "",
+        "reason": "accepted packet has stale assignment or active replacement lease",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [
+          {
+            "id": "project-001",
+            "kind": "goal",
+            "summary": "Ship the clean black-box FlowPilot runtime"
+          },
+          {
+            "id": "route-v1",
+            "kind": "route"
+          },
+          {
+            "id": "packet-0001",
+            "kind": "packet",
+            "packet_kind": "task"
+          },
+          {
+            "id": "result-0001",
+            "kind": "result"
+          },
+          {
+            "id": "review-0001",
+            "kind": "review"
+          },
+          {
+            "id": "flowguard-0001",
+            "kind": "flowguard"
+          },
+          {
+            "id": "packet-0002",
+            "kind": "packet",
+            "packet_kind": "flowguard_check"
+          },
+          {
+            "id": "result-0002",
+            "kind": "result"
+          },
+          {
+            "id": "packet-0003",
+            "kind": "packet",
+            "packet_kind": "review"
+          },
+          {
+            "id": "result-0003",
+            "kind": "result"
+          }
+        ],
+        "blockers": [],
+        "created_at": "2026-06-01T13:12:49.463978+00:00",
+        "decision": "complete",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "validation-result-0003"
+      },
+      "details": {
+        "counts": {
+          "active_blockers": 0,
+          "active_leases": 0,
+          "active_packets": 0,
+          "flowguard_orders": 1,
+          "leases": 3,
+          "packets": 3
+        },
+        "leaked": false,
+        "projection": "compact_controller_status"
+      },
+      "expected_acceptance": true,
+      "name": "compact_status_does_not_leak_sealed_bodies",
+      "next_action": {
+        "action_type": "terminal_complete",
+        "modeled_target": "",
+        "reason": "final backward chain is complete",
+        "responsibility": "",
+        "subject_id": ""
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "decision": "not_attempted"
+      },
+      "details": {
+        "duty": {
+          "action": "recover_or_reissue",
+          "controller_stop_allowed": false,
+          "created_at": "2026-06-01T13:12:49.464973+00:00",
+          "final_return_preflight": {
+            "accepted_packet_lease_health": {
+              "finding_count": 0,
+              "findings": [],
+              "ok": true,
+              "schema_version": "black_box_flowpilot.accepted_packet_lease_health.v1",
+              "sealed_bodies_visible": false
+            },
+            "allowed": false,
+            "blockers": [
+              "closure:not_attempted",
+              "guard_decision:reissue_or_replace_lease",
+              "lifecycle_guard_disallows_stop",
+              "next_action:wait_for_result"
+            ],
+            "checked_at": "2026-06-01T13:12:49.464973+00:00",
+            "closure_decision": "not_attempted",
+            "controller_stop_allowed": false,
+            "guard_decision": "reissue_or_replace_lease",
+            "next_action_type": "wait_for_result",
+            "schema_version": "black_box_flowpilot.final_return_preflight.v1",
+            "sealed_bodies_visible": false,
+            "terminal_lifecycle_status": ""
+          },
+          "lifecycle_guard_decision": "reissue_or_replace_lease",
+          "next_action": {
+            "action_type": "wait_for_result",
+            "modeled_target": "",
+            "reason": "ACK is liveness only",
+            "responsibility": "",
+            "subject_id": "packet-0001"
+          },
+          "reason": "current liveness status is not_found",
+          "recovery": {
+            "decision": "reissue_or_replace_lease",
+            "reason": "current liveness status is not_found",
+            "recommended_command": {
+              "args": {
+                "agent_id": "<new-agent-id>",
+                "host_kind": "live",
+                "packet_id": "packet-0001",
+                "responsibility": "worker"
+              },
+              "cleanup_action": "supersede_previous_active_leases_on_assignment",
+              "cli": "python skills\\flowpilot\\assets\\flowpilot_new.py --root <project-root> --json lease-agent --packet-id packet-0001 --responsibility worker --agent-id <new-agent-id> --host-kind live",
+              "command": "lease-agent",
+              "host_kind": "live",
+              "packet_id": "packet-0001",
+              "reason": "current liveness status is not_found",
+              "responsibility": "worker",
+              "schema_version": "black_box_flowpilot.recovery_command.v1",
+              "sealed_bodies_visible": false,
+              "stale_lease_ids": [
+                "lease-0001"
+              ]
+            },
+            "required": true,
+            "subject_id": "packet-0001",
+            "wait_recovery": {
+              "decision_override": "reissue_or_replace_lease",
+              "last_liveness_checked_at": "2026-06-01T13:12:49.464973+00:00",
+              "last_liveness_elapsed_seconds": 0,
+              "last_liveness_status": "not_found",
+              "last_progress_elapsed_seconds": null,
+              "last_progress_status": "",
+              "lease_id": "lease-0001",
+              "lease_status": "active",
+              "old_router_authority_used": false,
+              "progress_count": 0,
+              "progress_grace_seconds": 600,
+              "reason": "current liveness status is not_found",
+              "repeated_count": 1,
+              "replacement_eligible": true,
+              "state": "current_liveness_failure",
+              "trigger": "patrol"
+            }
+          },
+          "run_id": "project-001",
+          "schema_version": "black_box_flowpilot.foreground_duty.v1",
+          "sealed_bodies_visible": false,
+          "status_projection_stop_authority": false,
+          "subject_id": "packet-0001",
+          "trigger": "patrol",
+          "unsupported_historical_monitor_required": false
+        }
+      },
+      "expected_acceptance": true,
+      "name": "recovery_duty_names_command_payload",
+      "next_action": {
+        "action_type": "wait_for_result",
+        "modeled_target": "",
+        "reason": "ACK is liveness only",
+        "responsibility": "",
+        "subject_id": "packet-0001"
+      },
+      "ok": true
     }
   ],
   "test_mesh": {
@@ -334,6 +724,7 @@
         "required_rows": [
           "runtime_scenarios",
           "runtime_console_isolation",
+          "run_20260531_210441_health_family",
           "background_meta_capability",
           "install_surface_parity"
         ]
@@ -342,14 +733,15 @@
         "ok": true,
         "required_rows": [
           "runtime_scenarios",
-          "runtime_console_isolation"
+          "runtime_console_isolation",
+          "run_20260531_210441_health_family"
         ]
       }
     },
     "rows": [
       {
         "details": {
-          "case_count": 7
+          "case_count": 13
         },
         "evidence": [
           "simulations/run_flowpilot_core_runtime_checks.py"
@@ -366,6 +758,25 @@
         ],
         "freshness": "current",
         "id": "runtime_console_isolation",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "details": {
+          "body_policy": "reviewer_body_reading_is_soft; controller_projection_leakage_and_cross_role_execution_are_hard",
+          "covered_sources": [
+            "compact_status_does_not_leak_sealed_bodies",
+            "final_preflight_blocks_accepted_packet_stale_lease",
+            "reassignment_supersedes_active_packet_lease",
+            "recovery_duty_names_command_payload"
+          ]
+        },
+        "evidence": [
+          "tests/test_flowpilot_core_runtime.py",
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
+        ],
+        "freshness": "current",
+        "id": "run_20260531_210441_health_family",
         "scope": "routine",
         "status": "passed"
       },

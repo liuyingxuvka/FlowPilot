@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=48",
+    "summary": "sequences=3 initial_states=1 traces=54",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -29,7 +29,6 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -37,8 +36,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -46,7 +45,8 @@
           "result_seen": true,
           "scenario": "accepted_result_reassigned",
           "stale_generation_quarantined": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "ack_treated_as_result_accepted": {
@@ -68,7 +68,6 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -76,8 +75,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -85,7 +84,8 @@
           "result_seen": false,
           "scenario": "ack_treated_as_result",
           "stale_generation_quarantined": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "fallback_scans_project_root_accepted": {
@@ -107,7 +107,6 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -115,8 +114,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": true,
           "resolver_uses_explicit_run_root": false,
@@ -124,7 +123,8 @@
           "result_seen": true,
           "scenario": "fallback_scans_project_root",
           "stale_generation_quarantined": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "invalid_utf8_crashes_audit_accepted": {
@@ -146,7 +146,6 @@
           "evidence_reader_crashes_on_decode": true,
           "evidence_reader_returns_structured_error": false,
           "invalid_utf8_observed": true,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -154,8 +153,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -163,7 +162,8 @@
           "result_seen": true,
           "scenario": "invalid_utf8_crashes_audit",
           "stale_generation_quarantined": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "new_current_schema_ignored_accepted": {
@@ -185,7 +185,6 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -193,8 +192,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": false,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -202,7 +201,8 @@
           "result_seen": true,
           "scenario": "new_current_schema_ignored",
           "stale_generation_quarantined": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "old_generation_result_accepted_accepted": {
@@ -224,7 +224,6 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -232,8 +231,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -241,7 +240,8 @@
           "result_seen": true,
           "scenario": "old_generation_result_accepted",
           "stale_generation_quarantined": false,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "pm_only_packet_contract_accepted": {
@@ -263,13 +263,12 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -277,7 +276,8 @@
           "result_seen": true,
           "scenario": "pm_only_packet_contract",
           "stale_generation_quarantined": true,
-          "status": "complete"
+          "status": "complete",
+          "unsupported_historical_current_fields_present": false
         }
       },
       "success_overblocked": {
@@ -298,7 +298,6 @@
           "evidence_reader_crashes_on_decode": false,
           "evidence_reader_returns_structured_error": true,
           "invalid_utf8_observed": false,
-          "unsupported historical_current_fields_present": false,
           "new_current_fields_present": true,
           "packet_contract_roles": [
             "pm",
@@ -306,8 +305,8 @@
             "reviewer",
             "flowguard_operator"
           ],
-          "resolver_accepts_unsupported historical_fields": true,
           "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": false,
           "resolver_chooses_newest_run": false,
           "resolver_falls_back_to_project_root": false,
           "resolver_uses_explicit_run_root": true,
@@ -315,7 +314,47 @@
           "result_seen": true,
           "scenario": "success",
           "stale_generation_quarantined": true,
-          "status": "blocked"
+          "status": "blocked",
+          "unsupported_historical_current_fields_present": false
+        }
+      },
+      "unsupported_historical_pointer_accepted_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: unsupported_historical_pointer_accepted",
+        "failures": [
+          "control surface was accepted without the full contract",
+          "risk scenario was accepted: unsupported_historical_pointer_accepted"
+        ],
+        "state": {
+          "accepted_packet_ack_regressed": false,
+          "accepted_packet_reassigned": false,
+          "accepted_seen": true,
+          "ack_result_accepted_separate": true,
+          "ack_seen": true,
+          "classification": "",
+          "current_generation": 2,
+          "envelope_has_output_authority": true,
+          "evidence_reader_crashes_on_decode": false,
+          "evidence_reader_returns_structured_error": true,
+          "invalid_utf8_observed": false,
+          "new_current_fields_present": true,
+          "packet_contract_roles": [
+            "pm",
+            "worker",
+            "reviewer",
+            "flowguard_operator"
+          ],
+          "resolver_accepts_new_fields": true,
+          "resolver_accepts_unsupported_historical_fields": true,
+          "resolver_chooses_newest_run": false,
+          "resolver_falls_back_to_project_root": false,
+          "resolver_uses_explicit_run_root": true,
+          "result_generation": 2,
+          "result_seen": true,
+          "scenario": "unsupported_historical_pointer_accepted",
+          "stale_generation_quarantined": true,
+          "status": "complete",
+          "unsupported_historical_current_fields_present": true
         }
       }
     },
@@ -330,11 +369,11 @@
     "stuck_state_samples": []
   },
   "safe_graph": {
-    "edge_count": 16,
+    "edge_count": 18,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "state_count": 17
+    "state_count": 19
   },
   "scenario_matrix": {
     "accepted_result_reassigned": "block_accepted_packet_mutated",
@@ -344,7 +383,8 @@
     "new_current_schema_ignored": "block_new_current_schema_ignored",
     "old_generation_result_accepted": "block_old_generation_result_accepted",
     "pm_only_packet_contract": "block_packet_contract_not_role_symmetric",
-    "success": "accept_control_surface_contract"
+    "success": "accept_control_surface_contract",
+    "unsupported_historical_pointer_accepted": "block_unsupported_historical_current_fields"
   },
   "skipped_checks": {}
 }

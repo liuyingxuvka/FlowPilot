@@ -372,7 +372,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
 
             patrol = flowpilot_new.patrol(root)
 
-            self.assertEqual(patrol["lifecycle_guard"]["decision"], "recover_orphan_evidence")
+            self.assertEqual(patrol["lifecycle_guard"]["decision"], "reissue_or_replace_lease")
             self.assertEqual(patrol["lifecycle_guard"]["wait_recovery"]["state"], "orphan_evidence")
             self.assertEqual(patrol["foreground_duty"]["action"], "recover_or_reissue")
             ledger = run_shell.load_run_ledger(shell)

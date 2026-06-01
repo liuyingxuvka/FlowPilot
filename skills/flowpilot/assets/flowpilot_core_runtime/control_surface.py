@@ -8,11 +8,13 @@ from pathlib import Path
 from typing import Any, Mapping
 
 
-RUN_POINTER_FIELD_SETS = (
-    ("run_id", "run_root"),
-    ("current_run_id", "current_run_root"),
-    ("active_run_id", "active_run_root"),
-)
+RUN_POINTER_FIELD_SET = ("run_id", "run_root")
+UNSUPPORTED_RUN_POINTER_FIELDS = {
+    "current_run_id",
+    "current_run_root",
+    "active_run_id",
+    "active_run_root",
+}
 CONTROL_SURFACE_SCHEMA = "black_box_flowpilot.control_surface.v1"
 
 
@@ -64,7 +66,7 @@ class CurrentRunResolution:
                 "run_root": self.run_root.as_posix() if self.run_root else "",
                 "error_code": self.error_code,
             },
-            "minimal_fix": "Write a current pointer with run_id/run_root or unsupported_historical current_run_id/current_run_root fields.",
+            "minimal_fix": "Write a current pointer with run_id/run_root only.",
         }
 
 
@@ -148,24 +150,29 @@ def resolve_current_run(root: str | Path, *, run_id: str | None = None) -> Curre
     current = current_read.value
     assert isinstance(current, dict)
 
-    selected_fields: tuple[str, str] | None = None
-    selected_run_id = ""
-    selected_run_root_raw = ""
-    for run_id_field, run_root_field in RUN_POINTER_FIELD_SETS:
-        raw_run_id = current.get(run_id_field)
-        raw_run_root = current.get(run_root_field)
-        if isinstance(raw_run_id, str) and raw_run_id.strip():
-            selected_fields = (run_id_field, run_root_field)
-            selected_run_id = raw_run_id.strip()
-            selected_run_root_raw = str(raw_run_root or "").strip()
-            break
+    unsupported = sorted(field for field in UNSUPPORTED_RUN_POINTER_FIELDS if field in current)
+    if unsupported:
+        return CurrentRunResolution(
+            resolved_root,
+            False,
+            pointer_path=pointer_path,
+            error_code="unsupported_run_pointer_fields",
+            message=f"current pointer contains unsupported fields: {', '.join(unsupported)}",
+        )
+
+    run_id_field, run_root_field = RUN_POINTER_FIELD_SET
+    selected_fields: tuple[str, str] | None = RUN_POINTER_FIELD_SET
+    raw_run_id = current.get(run_id_field)
+    raw_run_root = current.get(run_root_field)
+    selected_run_id = raw_run_id.strip() if isinstance(raw_run_id, str) else ""
+    selected_run_root_raw = str(raw_run_root or "").strip()
     if not selected_run_id:
         return CurrentRunResolution(
             resolved_root,
             False,
             pointer_path=pointer_path,
             error_code="missing_run_id",
-            message="current pointer does not contain run_id, current_run_id, or active_run_id",
+            message="current pointer does not contain run_id",
         )
 
     if selected_run_root_raw:

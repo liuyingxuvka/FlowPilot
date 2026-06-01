@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-05-31T16:45:28.229047+00:00",
+  "created_at": "2026-06-01T13:10:29.489237+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-05-31T16:45:25.230524+00:00",
+      "created_at": "2026-06-01T12:30:45.736726+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -257,7 +257,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_packet_open_authority_results.json",
-            "result_fingerprint": "5c89ae49922797c31896ebc1b4b1d0c5e727ad134e1642a1800b72af49f2f8c5",
+            "result_fingerprint": "46192394674b3297ed40f0a96bea32418f721d906fd470fe05984d6c4b29eac2",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 10

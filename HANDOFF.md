@@ -24,6 +24,16 @@ model-backed project-control runtime:
 
 ## Current Maintenance Gate
 
+The current new-only maintenance rule is no compatibility or fallback surfaces
+by default. FlowPilot runtime, prompt, OpenSpec, and test changes should keep a
+single structured current path for each behavior. Legacy aliases, old pointer
+fields, prose parsers, missing-field defaults, nested shape normalization,
+old-router active execution fallback, and automatic historical artifact
+promotion are unsupported unless a future OpenSpec change explicitly approves a
+named migration. Runtime recovery is still allowed when it is current-run,
+owner-scoped, packet/node-scoped, and blocks or reissues instead of translating
+old input into valid current evidence.
+
 The current structure-maintenance baseline uses a FlowGuard StructureMesh /
 TestMesh gate before broad router or model-script refactors. The gate lives in
 `simulations/flowpilot_structure_maintenance_model.py` and is checked by

@@ -270,9 +270,9 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("handoff",),
         ),
         _contract(
-            "packet.controller_relay_envelope",
+            "packet.deliver_envelope_metadata",
             path="skills/flowpilot/assets/packet_runtime_relay.py",
-            symbol="controller_relay_envelope",
+            symbol="deliver_envelope_metadata",
             implements=("output_contract.packet_binding",),
             external_inputs=("project_root", "envelope", "envelope_path"),
             side_effects=("write_json_atomic",),

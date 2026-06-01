@@ -71,27 +71,17 @@ def _run_paths(project_root: Path, run_id: str | None = None) -> tuple[str, Path
     return str(resolved_run_id), run_root
 
 
-def _registry_path(project_root: Path) -> Path:
+def _registry_path(project_root: Path, run_root: Path | None = None) -> Path:
+    if run_root is not None:
+        return Path(run_root) / "runtime_kit" / "contracts" / "contract_index.json"
     return project_root.resolve() / CONTRACT_REGISTRY_PATH
 
 
-def load_contract_registry(project_root: Path) -> dict[str, Any]:
-    path = _registry_path(project_root)
+def load_contract_registry(project_root: Path, run_root: Path | None = None) -> dict[str, Any]:
+    path = _registry_path(project_root, run_root)
     if not path.exists():
-        from role_output_runtime_schema_specs import _default_contract_registry_path
-
-        fallback = _default_contract_registry_path()
-        if fallback.exists():
-            return _read_json(fallback)
         raise RoleOutputRuntimeError(f"output contract registry is missing: {_project_relative(project_root, path)}")
     return _read_json(path)
-
-
-def _runtime_kit_source(project_root: Path) -> Path:
-    project_runtime_kit = project_root.resolve() / "skills" / "flowpilot" / "assets" / "runtime_kit"
-    if project_runtime_kit.exists():
-        return project_runtime_kit
-    return Path(__file__).resolve().parent / "runtime_kit"
 
 
 def _json_sha256(payload: dict[str, Any]) -> str:
@@ -102,7 +92,9 @@ def _run_manifest_path(project_root: Path, run_root: Path) -> Path:
     manifest_path = run_root / "runtime_kit" / "manifest.json"
     if manifest_path.exists():
         return manifest_path
-    return _runtime_kit_source(project_root) / "manifest.json"
+    raise RoleOutputRuntimeError(
+        f"run prompt manifest is missing: {_project_relative(project_root, manifest_path)}"
+    )
 
 
 def _manifest_card(manifest: dict[str, Any], card_id: str) -> dict[str, Any]:

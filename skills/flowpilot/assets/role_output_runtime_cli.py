@@ -110,14 +110,15 @@ def main(argv: list[str] | None = None) -> int:
         skeleton = build_output_skeleton(root, output_type=args.output_type, role=args.role, run_id=args.run_id or None)
         merged = _deep_merge(skeleton, body)
         spec = _spec_for(args.output_type)
-        contract = _contract_by_id(root, spec.contract_id)
+        run_root = _run_paths(root, args.run_id or None)[1]
+        contract = _contract_by_id(root, spec.contract_id, run_root)
         _apply_runtime_fixed_values(
             root,
             merged,
             spec=spec,
             contract=contract,
             role=args.role,
-            run_root=_run_paths(root, args.run_id or None)[1],
+            run_root=run_root,
         )
         result = validate_output_body(
             root,

@@ -33,9 +33,12 @@ HOST_KIND_HELP = (
 )
 
 try:  # pragma: no cover - direct script fallback.
+    if str(ASSETS_ROOT) not in sys.path:
+        sys.path.insert(0, str(ASSETS_ROOT))
     from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime
 except ImportError:  # pragma: no cover
-    sys.path.insert(0, str(ASSETS_ROOT))
+    if str(ASSETS_ROOT) not in sys.path:
+        sys.path.insert(0, str(ASSETS_ROOT))
     from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime  # type: ignore
 
 
@@ -126,6 +129,12 @@ def _runtime_state(ledger: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _status_projection(ledger: dict[str, Any], *, full: bool = False) -> dict[str, Any]:
+    if full:
+        return cockpit.render_status(ledger, compact=False)
+    return runtime.render_compact_console(ledger)
+
+
 def _run_until_wait_and_save(
     shell: run_shell.RunShell,
     ledger: dict[str, Any],
@@ -206,7 +215,7 @@ def start_run(
             "body_text_included": startup_record["body_text_included"],
         },
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -358,7 +367,7 @@ def stop_run(root: Path, *, reason: str = "manual_stop") -> dict[str, Any]:
         "terminal_lifecycle": terminal,
         "run": shell.to_json(),
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -372,7 +381,7 @@ def cancel_run(root: Path, *, reason: str = "manual_cancel") -> dict[str, Any]:
         "terminal_lifecycle": terminal,
         "run": shell.to_json(),
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -393,14 +402,15 @@ def run_fake_e2e(root: Path, *, run_id: str | None = None, startup_text: str) ->
     return fake_e2e.run_fake_e2e(root, run_id=run_id, startup_text=startup_text, start_run=start_run)
 
 
-def status(root: Path) -> dict[str, Any]:
+def status(root: Path, *, full: bool = False) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     return {
         "ok": True,
         "run": shell.to_json(),
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger, full=full),
+        "status_mode": "full" if full else "compact",
     }
 
 
@@ -415,7 +425,7 @@ def patrol(root: Path, *, sleep_seconds: int = 0) -> dict[str, Any]:
         "run": shell.to_json(),
         "run_until_wait": folded,
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -430,7 +440,7 @@ def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
         "run": shell.to_json(),
         "run_until_wait": folded,
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -460,7 +470,7 @@ def repair_accepted_packet(root: Path, *, packet_id: str) -> dict[str, Any]:
         "repair": repair,
         "run_until_wait": folded,
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -473,7 +483,7 @@ def run_until_wait(root: Path, *, max_steps: int = runtime.RUN_UNTIL_WAIT_MAX_ST
         "run": shell.to_json(),
         "run_until_wait": folded,
         **_runtime_state(ledger),
-        "status": cockpit.render_status(ledger),
+        "status": _status_projection(ledger),
     }
 
 
@@ -493,7 +503,8 @@ def main(argv: list[str] | None = None) -> int:
 
     run_wait = sub.add_parser("run-until-wait", help="Fold safe black-box mechanics until the next foreground boundary")
     run_wait.add_argument("--max-steps", type=int, default=runtime.RUN_UNTIL_WAIT_MAX_STEPS)
-    sub.add_parser("status", help="Render public status for the current new FlowPilot run")
+    status_parser = sub.add_parser("status", help="Render public status for the current new FlowPilot run")
+    status_parser.add_argument("--full", action="store_true", help="Render the full body-free debug projection instead of compact status")
     patrol_parser = sub.add_parser("patrol", help="Refresh lifecycle guard and foreground duty status for the current run")
     patrol_parser.add_argument("--sleep-seconds", type=int, default=0, help="Optional foreground duty delay before refreshing")
     sub.add_parser("final-preflight", help="Fail unless current foreground duty allows terminal return")
@@ -564,7 +575,7 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "run-until-wait":
             payload = run_until_wait(root, max_steps=args.max_steps)
         elif args.command == "status":
-            payload = status(root)
+            payload = status(root, full=args.full)
         elif args.command == "patrol":
             payload = patrol(root, sleep_seconds=args.sleep_seconds)
         elif args.command == "final-preflight":

@@ -28,7 +28,6 @@ from role_output_runtime_schema_io import (
     _resolve_project_path,
     _run_manifest_path,
     _run_paths,
-    _runtime_kit_source,
     _sha256_file,
     _write_json,
     controller_boundary_constraints,

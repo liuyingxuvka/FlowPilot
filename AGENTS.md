@@ -18,6 +18,25 @@ Before implementation work, read:
 
 Use real FlowGuard. Do not create a fake mini-framework.
 
+## No Compatibility Or Fallback Surfaces By Default
+
+FlowPilot is a current-contract runtime. New planning, repair, prompt,
+runtime, and validation work must keep one explicit structured path per
+behavior. Do not add compatibility shims, legacy aliases, prose/shape guessing,
+missing-field defaults, old-router fallback, newest-run fallback, repo-root
+fallback, dual-authority paths, or automatic translation from old field names
+unless the user explicitly approves a named migration.
+
+Allowed recovery must stay current-runtime and model-owned: it must name the
+single owner, current run, current packet or node, blocking state, required
+repair command, and validation evidence. Recovery may reissue, block, or ask
+for a current structured result; it must not silently convert old input into a
+valid current result or treat historical artifacts as completion evidence.
+
+When fixing a failure, delete or reject the unsupported path rather than
+teaching the runtime to accept both old and new forms. Add a negative test for
+each removed compatibility surface.
+
 ## FlowGuard Project Topology
 
 This mature FlowGuard project maintains an automatically generated project

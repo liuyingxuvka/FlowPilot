@@ -131,7 +131,7 @@ def _active_agent_id_for_role(run_root: Path, role: str) -> str | None:
 
 def load_manifest_from_run(run_root: Path) -> dict[str, Any]:
     try:
-        return load_card_manifest_from_run(run_root, runtime_kit_source())
+        return load_card_manifest_from_run(run_root)
     except PromptStoreError as exc:
         raise RouterError(str(exc)) from exc
 

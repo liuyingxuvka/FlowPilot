@@ -184,7 +184,7 @@ def submit_output(
         session_id = str(session.get("session_id") or "")
     if not _role_allowed(spec, role):
         raise RoleOutputRuntimeError(f"{output_type} may be submitted only by {', '.join(spec.allowed_roles)}")
-    contract = _contract_by_id(project_root, spec.contract_id)
+    contract = _contract_by_id(project_root, spec.contract_id, run_root)
     router_event_mode = str(contract.get("router_event_mode") or "").strip()
     fixed_router_event = router_event_mode == "fixed" and bool(spec.event_name)
     if fixed_router_event and not router_directed_submission:

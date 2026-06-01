@@ -25,8 +25,8 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         _write_json(
             root / ".flowpilot" / "current.json",
             {
-                "current_run_id": "run-test",
-                "current_run_root": ".flowpilot/runs/run-test",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
             },
         )
         return root
@@ -387,7 +387,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][0]["output_contract_id"], contract["contract_id"])
         self.assertEqual(ledger["packets"][0]["packet_envelope"]["output_contract_id"], contract["contract_id"])
 
-        relayed = packet_runtime.controller_relay_envelope(
+        relayed = packet_runtime.deliver_envelope_metadata(
             root,
             envelope=envelope,
             envelope_path=envelope_path,

@@ -346,11 +346,16 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             before_events = len(before.get("events") or [])
 
             flowpilot_new.status(root)
-            flowpilot_new.status(root)
+            compact_status = flowpilot_new.status(root)
+            full_status = flowpilot_new.status(root, full=True)
             after_status = run_shell.load_run_ledger(shell)
 
             self.assertEqual(len(after_status.get("lifecycle_guard_history") or []), before_history)
             self.assertEqual(len(after_status.get("events") or []), before_events)
+            self.assertEqual(compact_status["status_mode"], "compact")
+            self.assertEqual(compact_status["status"]["projection"], "compact_controller_status")
+            self.assertEqual(full_status["status_mode"], "full")
+            self.assertNotEqual(full_status["status"].get("projection"), "compact_controller_status")
 
             flowpilot_new.patrol(root, sleep_seconds=0)
             after_patrol = run_shell.load_run_ledger(shell)
