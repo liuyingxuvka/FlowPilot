@@ -50,6 +50,9 @@
   },
   "evidence_integrity": {
     "generated_resource_lineage_resolved": false,
+    "structure_debt_dispositions_checked": false,
+    "negative_rejection_evidence_separated": false,
+    "old_path_completion_evidence_rejected": false,
     "stale_evidence_checked": false,
     "superseded_nodes_explained": false,
     "unused_complexity_disposition_checked": false,
@@ -92,6 +95,9 @@
     "unresolved_resource_count": 0,
     "unresolved_residual_risk_count": 0,
     "unresolved_low_quality_success_risk_count": 0,
+    "structure_debt_count": 0,
+    "resolved_structure_debt_count": 0,
+    "unresolved_structure_debt_count": 0,
     "unresolved_model_family_count": 0,
     "self_interrogation_record_count": 0,
     "self_interrogation_issue_count": 0,
@@ -156,6 +162,21 @@
       "disposition": "<used_for_current_gate|superseded|quarantined|discarded_with_reason|deferred_with_revisit_condition>",
       "reason": "<why-this-item-is-still-needed-or-how-it-was-resolved>",
       "unresolved_complexity": false
+    }
+  ],
+  "structure_debt_dispositions": [
+    {
+      "surface_id": "<surface-id>",
+      "surface_type": "<patch_stack|fallback_like_path|compatibility_branch|duplicate_adapter|stale_generated_artifact|old_route_evidence|newest_run_fallback|repo_root_fallback|maintenance_layer>",
+      "source_node_or_packet_id": "<node-or-packet-id-or-null>",
+      "disposition": "<removed|rejected|preserved_negative_rejection_evidence|retained_owned_current_runtime_recovery|retained_owned_maintenance|superseded|blocked>",
+      "owner_role": "<role-or-null>",
+      "scope": "<scope-or-null>",
+      "validation_evidence_refs": [],
+      "sunset_or_next_disposition": "<condition-or-null>",
+      "old_artifacts_used_as_current_completion_evidence": false,
+      "unresolved": false,
+      "reason": "<why-this-disposition-is-valid-or-blocked>"
     }
   ],
   "low_quality_success_risk_dispositions": [

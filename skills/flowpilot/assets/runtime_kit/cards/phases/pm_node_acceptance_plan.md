@@ -61,6 +61,13 @@ route-memory prior path context. The plan must state:
   thin-success shortcut most likely to make the node look complete while still
   being low quality, warning signs PM and Reviewer should distrust, and proof
   of depth that must appear in the worker/FlowGuard operator result;
+- `structure_hygiene_expectation`: the node-local expectation for patch stacks,
+  fallback-like paths, compatibility branches, duplicate adapters, generated
+  leftovers, and maintenance layers. State whether the node must remove,
+  reject, preserve as negative rejection evidence, retain as owned
+  current-runtime recovery, retain as an owned maintenance layer, or block on
+  each surface. Any retained surface must have owner, scope, validation
+  evidence, and sunset or next-disposition criteria;
 - inherited `skill_standard_projection`: every child-skill standard relevant
   to this node, grouped by `MUST`, `DEFAULT`, `FORBID`, `VERIFY`, `LOOP`,
   `ARTIFACT`, and `WAIVER`, with standard ids, source skill, source path,
@@ -88,7 +95,9 @@ route-memory prior path context. The plan must state:
   recipient must return. When the node declares test obligations, copy the
   relevant `test_obligation_matrix.pre_worker` rows into the worker or FlowGuard operator
   packet and require `Test Obligation Coverage` rows in the result for every
-  packet-scoped test obligation. Do not issue a work packet if this projection
+  packet-scoped test obligation. Also copy the relevant
+  `structure_hygiene_expectation` rows into every worker or repair packet and
+  require `Structure Hygiene Delta` in the result. Do not issue a work packet if this projection
   is missing for a selected child skill or required test obligation;
 - minimum sufficient complexity review for this node;
 - experiments, checks, fixtures, and evidence paths;
@@ -181,6 +190,10 @@ for this node without unnecessary complexity.
 It must also include a concrete low-quality-success mapping for this node:
 hard parts, thin-success shortcut, proof of depth, reviewer probe, and whether
 the concern is a hard current requirement or PM decision-support.
+It must also include `structure_hygiene_expectation`, even when the expected
+answer is that no fallback-like path, compatibility branch, stale generated
+artifact, duplicate adapter, or maintenance layer is expected. A missing
+structure hygiene expectation blocks packet dispatch.
 Classify every higher-standard opportunity as hard current requirement,
 current-node improvement, future-route candidate, nonblocking note, or rejected
 with reason. Do not turn a nonessential improvement into a hard blocker unless

@@ -21035,6 +21035,71 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-structural-convergence-guard-20260602 - FlowPilot structure debt convergence hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested OpenSpec plus FlowGuard repair so long-running FlowPilot routes stay clear, simple, maintainable, and free of accumulating fallback or compatibility residue
+- Status: completed_validated_installed_synced_local_git_ready
+- Skill decision: predictive_kb_preflight + openspec_propose/apply + flowguard_existing_model_preflight + flowguard_development_process_flow + flowguard_model_test_alignment
+- Started: 2026-06-02T11:36:50+00:00
+- Ended: 2026-06-02T14:42:39+02:00
+- Duration seconds: not recorded
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_planning_quality_model.py
+- simulations/run_flowpilot_planning_quality_checks.py
+- simulations/flowpilot_planning_quality_results.json
+- simulations/flowpilot_unsupported_transition_pruning_results.json
+- tmp/flowguard_background/run_meta_checks.meta.json
+- tmp/flowguard_background/run_capability_checks.meta.json
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)" -> 1.0`
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))" -> 0.40.5`
+- OK: `python -m flowguard project-audit --root .`
+- OK: `openspec validate --changes "harden-flowpilot-structural-convergence" --strict --json --no-interactive`
+- OK: `python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json`
+- OK: `python simulations/run_flowpilot_unsupported_transition_pruning_checks.py --json-out simulations/flowpilot_unsupported_transition_pruning_results.json`
+- OK: `python -m unittest tests.test_flowpilot_planning_quality tests.test_flowpilot_output_contracts tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_recursive_decomposition tests.test_flowpilot_asset_surface_contracts`
+- OK: `python simulations/run_meta_checks.py` through `tmp/flowguard_background/run_meta_checks.*`
+- OK: `python simulations/run_capability_checks.py` through `tmp/flowguard_background/run_capability_checks.*`
+- OK: `python scripts/flowguard_project_topology.py build`
+- OK: `python scripts/flowguard_project_topology.py check`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/check_install.py --json`
+- OK: `python scripts/smoke_flowpilot.py --fast`
+
+### Findings
+- FlowPilot PM route planning now requires a route-level structure convergence review that names cleanup targets, current-runtime recovery, explicitly allowed maintenance layers, and rejected old-path completion evidence.
+- Node plans, work packets, worker results, reviewer cards, final ledgers, and terminal closure now carry structure-hygiene expectations and dispositions instead of leaving fallback or compatibility branches unowned.
+- The planning-quality FlowGuard model now catches missing route/node structure gates, missing packet/result deltas, repair paths that leave compatibility branches, and final ledgers with unresolved structure debt.
+- The local installed FlowPilot skill was stale before sync and is source-fresh after `--sync-repo-owned`.
+
+### Counterexamples
+- PM route planning without structure convergence review.
+- Node plan without structure hygiene expectation.
+- Worker result leaving an unowned fallback or compatibility branch.
+- Repair that keeps an old compatibility path alive.
+- Final ledger closing with unresolved structure debt.
+
+### Friction Points
+- The first full `smoke_flowpilot.py` run exceeded the default timeout; after fresh heavy model checks, the repository-supported `--fast` smoke path passed.
+- A focused recursive-decomposition test referenced a retired card path and was updated to the current `flowguard_operator` card path rather than adding a compatibility alias.
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or public publication was performed.
+- No VERSION bump was made; this is recorded under the current local 0.10.1 maintenance version and committed as local git evidence.
+
+### Risk Evidence Summary
+- OpenSpec validation, focused FlowGuard planning-quality checks, unsupported-transition pruning checks, prompt/template unit tests, background meta/capability regressions, topology build/check, install sync/audit/check, and fast smoke all passed.
+
+### Next Actions
+- Archive the OpenSpec change only after the implementation evidence is accepted.
+
+
 ## strict-route-plan-schema-20260601 - Strict route-plan schema and deliverable closure checks
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -22777,3 +22842,42 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Commit and push the README/dependency correction without creating a new release version unless the user explicitly asks for one
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-02T11:36:50+00:00
+- Ended: 2026-06-02T11:36:50+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.5
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.

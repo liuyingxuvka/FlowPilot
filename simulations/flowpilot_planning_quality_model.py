@@ -33,6 +33,10 @@ Risk intent brief:
   executable workers to fix in-scope defects before completion while preventing
   reviewer, FlowGuard operator, PM, or generic packet prompts from granting silent target
   repair authority.
+- 2026-06-02 extension: route, node, packet, result, repair, and final ledger
+  surfaces must converge structure by disposing of fallback-like paths,
+  compatibility branches, duplicate adapters, stale generated artifacts, and
+  intentionally retained maintenance layers before completion.
 """
 
 from __future__ import annotations
@@ -87,6 +91,12 @@ EVIDENCE_PACKET_REPAIRS_TARGET_ARTIFACT = "evidence_packet_repairs_target_artifa
 FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT = "flowguard_operator_packet_repairs_target_artifact"
 REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR = "reviewer_prompt_grants_direct_repair"
 GENERIC_TEMPLATE_USES_BLANKET_REPAIR = "generic_template_uses_blanket_repair"
+PM_STRUCTURE_CONVERGENCE_REVIEW_MISSING = "pm_structure_convergence_review_missing"
+NODE_PLAN_MISSING_STRUCTURE_HYGIENE_EXPECTATION = "node_plan_missing_structure_hygiene_expectation"
+WORK_PACKET_MISSING_STRUCTURE_HYGIENE_DELTA = "work_packet_missing_structure_hygiene_delta"
+WORKER_RESULT_LEAVES_UNOWNED_FALLBACK = "worker_result_leaves_unowned_fallback"
+REPAIR_LEAVES_COMPAT_BRANCH = "repair_leaves_compat_branch"
+FINAL_LEDGER_STRUCTURE_DEBT_UNRESOLVED = "final_ledger_structure_debt_unresolved"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -132,6 +142,12 @@ NEGATIVE_SCENARIOS = (
     FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT,
     REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR,
     GENERIC_TEMPLATE_USES_BLANKET_REPAIR,
+    PM_STRUCTURE_CONVERGENCE_REVIEW_MISSING,
+    NODE_PLAN_MISSING_STRUCTURE_HYGIENE_EXPECTATION,
+    WORK_PACKET_MISSING_STRUCTURE_HYGIENE_DELTA,
+    WORKER_RESULT_LEAVES_UNOWNED_FALLBACK,
+    REPAIR_LEAVES_COMPAT_BRANCH,
+    FINAL_LEDGER_STRUCTURE_DEBT_UNRESOLVED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -203,6 +219,17 @@ class State:
     flowguard_operator_packet_self_corrects_model_only: bool = False
     reviewer_prompt_forbids_direct_artifact_repair: bool = False
     generic_packet_template_role_scoped: bool = False
+    route_structure_convergence_review_written: bool = False
+    route_structure_cleanup_targets_named: bool = False
+    allowed_current_runtime_recovery_owned: bool = False
+    node_structure_hygiene_expectation_written: bool = False
+    work_packet_carries_structure_hygiene_delta: bool = False
+    worker_result_reports_structure_hygiene_delta: bool = False
+    worker_result_retains_unowned_fallback: bool = False
+    repair_path_retains_compatibility_branch: bool = False
+    final_structure_debt_dispositions_done: bool = False
+    final_structure_debt_has_unresolved_entries: bool = False
+    negative_rejection_evidence_separated: bool = False
     final_low_quality_risks_disposition_done: bool = False
     final_shallow_completion_traps_disposition_done: bool = False
     final_output_practical_next_step_confirmed: bool = False
@@ -322,6 +349,14 @@ def _valid_ui_state() -> State:
         flowguard_operator_packet_self_corrects_model_only=True,
         reviewer_prompt_forbids_direct_artifact_repair=True,
         generic_packet_template_role_scoped=True,
+        route_structure_convergence_review_written=True,
+        route_structure_cleanup_targets_named=True,
+        allowed_current_runtime_recovery_owned=True,
+        node_structure_hygiene_expectation_written=True,
+        work_packet_carries_structure_hygiene_delta=True,
+        worker_result_reports_structure_hygiene_delta=True,
+        final_structure_debt_dispositions_done=True,
+        negative_rejection_evidence_separated=True,
         final_low_quality_risks_disposition_done=True,
         final_shallow_completion_traps_disposition_done=True,
         final_output_practical_next_step_confirmed=True,
@@ -525,6 +560,32 @@ def _scenario_state(scenario: str) -> State:
         return replace(state, reviewer_prompt_forbids_direct_artifact_repair=False)
     if scenario == GENERIC_TEMPLATE_USES_BLANKET_REPAIR:
         return replace(state, generic_packet_template_role_scoped=False)
+    if scenario == PM_STRUCTURE_CONVERGENCE_REVIEW_MISSING:
+        return replace(
+            state,
+            route_structure_convergence_review_written=False,
+            route_structure_cleanup_targets_named=False,
+            allowed_current_runtime_recovery_owned=False,
+        )
+    if scenario == NODE_PLAN_MISSING_STRUCTURE_HYGIENE_EXPECTATION:
+        return replace(state, node_structure_hygiene_expectation_written=False)
+    if scenario == WORK_PACKET_MISSING_STRUCTURE_HYGIENE_DELTA:
+        return replace(
+            state,
+            work_packet_carries_structure_hygiene_delta=False,
+            worker_result_reports_structure_hygiene_delta=False,
+        )
+    if scenario == WORKER_RESULT_LEAVES_UNOWNED_FALLBACK:
+        return replace(state, worker_result_retains_unowned_fallback=True)
+    if scenario == REPAIR_LEAVES_COMPAT_BRANCH:
+        return replace(state, repair_path_retains_compatibility_branch=True)
+    if scenario == FINAL_LEDGER_STRUCTURE_DEBT_UNRESOLVED:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            final_structure_debt_dispositions_done=False,
+            final_structure_debt_has_unresolved_entries=True,
+        )
     return state
 
 
@@ -613,6 +674,24 @@ def planning_failures(state: State) -> list[str]:
         failures.append("reviewer prompt grants direct repair authority over the reviewed artifact")
     if complex_task and not state.generic_packet_template_role_scoped:
         failures.append("generic packet template uses blanket repair wording instead of role-scoped authority")
+    if complex_task and not (
+        state.route_structure_convergence_review_written
+        and state.route_structure_cleanup_targets_named
+        and state.allowed_current_runtime_recovery_owned
+    ):
+        failures.append("PM route lacks structural convergence review for cleanup targets and owned current-runtime recovery")
+    if complex_task and not state.node_structure_hygiene_expectation_written:
+        failures.append("node acceptance plan lacks structure hygiene expectation")
+    if complex_task and not state.work_packet_carries_structure_hygiene_delta:
+        failures.append("work packet lacks structure hygiene delta obligation")
+    if complex_task and not state.worker_result_reports_structure_hygiene_delta:
+        failures.append("worker result lacks structure hygiene delta")
+    if state.worker_result_retains_unowned_fallback:
+        failures.append("worker result retained an unowned fallback or compatibility path")
+    if state.repair_path_retains_compatibility_branch:
+        failures.append("repair path retained a compatibility branch instead of reissuing or blocking current structured work")
+    if complex_task and not state.negative_rejection_evidence_separated:
+        failures.append("negative rejection evidence is not separated from current completion evidence")
     if (
         complex_task
         and state.closure_or_final_ledger_decision
@@ -635,6 +714,15 @@ def planning_failures(state: State) -> list[str]:
         )
     ):
         failures.append("PM closure leaves shallow-completion traps unresolved for the final user")
+    if (
+        complex_task
+        and state.closure_or_final_ledger_decision
+        and (
+            not state.final_structure_debt_dispositions_done
+            or state.final_structure_debt_has_unresolved_entries
+        )
+    ):
+        failures.append("final ledger leaves structural debt unresolved")
 
     if state.child_skill_selected:
         if not state.skill_standard_contract_compiled:
@@ -844,6 +932,23 @@ def role_skill_use_is_evidence_bound(state: State, trace) -> InvariantResult:
     return InvariantResult.pass_()
 
 
+def structure_hygiene_converges_before_closure(state: State, trace) -> InvariantResult:
+    del trace
+    if state.status != "accepted":
+        return InvariantResult.pass_()
+    for failure in planning_failures(state):
+        if (
+            "structural convergence" in failure
+            or "structure hygiene" in failure
+            or "structure debt" in failure
+            or "unowned fallback" in failure
+            or "compatibility branch" in failure
+            or "negative rejection evidence" in failure
+        ):
+            return InvariantResult.fail(failure)
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepts_only_valid_plans",
@@ -899,6 +1004,11 @@ INVARIANTS = (
         name="role_skill_use_is_evidence_bound",
         description="Process-support child skills must be considered by PM and bound to role-specific evidence and reviewer checks when selected.",
         predicate=role_skill_use_is_evidence_bound,
+    ),
+    Invariant(
+        name="structure_hygiene_converges_before_closure",
+        description="Route, node, packet, result, repair, and final ledger surfaces must dispose of fallback-like structural debt before acceptance.",
+        predicate=structure_hygiene_converges_before_closure,
     ),
 )
 

@@ -61,6 +61,14 @@ for this check; use the existing `final_user_outcome_replay`,
 mutation paths to disposition each current trap. If the route was explicitly
 planning-only, the final report must preserve that boundary and must not claim
 runnable, operational, or implementation-ready completion.
+PM must also self-check structural convergence. Closure is blocked while the
+final ledger has unresolved structure debt, unowned fallback-like paths,
+compatibility branches, duplicate adapters, stale generated artifacts,
+newest-run fallback, repo-root fallback, or maintenance layers without owner,
+scope, validation evidence, and sunset or next-disposition criteria. Old
+artifacts, old route fields, and historical evidence may appear only as
+negative rejection evidence or historical context; they cannot close current
+completion.
 
 Closure order:
 
@@ -137,6 +145,15 @@ paths from the router delivery envelope.
     "existence_only_hard_part_closures": [],
     "hard_user_intent_failures": [],
     "nonblocking_higher_standard_opportunities_dispositioned": true
+  },
+  "structure_convergence_replay": {
+    "reviewed": true,
+    "final_ledger_structure_debt_dispositions_present": true,
+    "unresolved_structure_debt_count": 0,
+    "unowned_fallback_like_paths": [],
+    "compatibility_branches_retained": [],
+    "old_artifacts_used_as_current_completion_evidence": false,
+    "retained_surfaces_have_owner_scope_validation_and_sunset": true
   },
   "final_report": {},
   "contract_self_check": {

@@ -78,6 +78,25 @@ guard classification is `none`.
 - depth_evidence_refs: <paths-commands-screenshots-direct-review-or-not-applicable>
 - why_existence_only_evidence_is_not_the_claim: <brief-explanation-or-not-applicable>
 
+## Structure Hygiene Delta
+
+When the source packet includes a `Structure Hygiene Delta Requirement`, report
+what changed structurally inside this packet boundary. Use `none` only when the
+source packet explicitly declared no expected surfaces and no fallback-like path,
+compatibility branch, duplicate adapter, stale generated artifact, or
+maintenance layer was introduced, touched, or retained.
+
+- introduced_surfaces: <surface-ids-or-none>
+- removed_surfaces: <surface-ids-or-none>
+- rejected_surfaces: <surface-ids-or-none>
+- preserved_negative_rejection_evidence: <surface-ids-or-none>
+- retained_owned_current_runtime_recovery: <surface-ids-or-none>
+- retained_owned_maintenance_layers: <surface-ids-or-none>
+- unowned_or_unvalidated_surfaces: <must-be-none-or-list-blocking-items>
+- old_artifacts_used_as_current_completion_evidence: false
+- validation_evidence_refs: <paths-commands-review-or-none>
+- sunset_or_next_disposition: <criteria-or-not-applicable>
+
 ## Findings
 
 - <finding-or-observation>

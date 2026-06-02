@@ -328,6 +328,7 @@
         "Evidence",
         "Open Issues",
         "Artifact Handoff",
+        "Structure Hygiene Delta",
         "PM Suggestion Items",
         "Contract Self-Check"
       ],
@@ -1239,7 +1240,8 @@
         "prior_path_context_review.stale_evidence_considered",
         "prior_path_context_review.prior_blocks_or_experiments_considered",
         "prior_path_context_review.impact_on_decision",
-        "prior_path_context_review.controller_summary_used_as_evidence"
+        "prior_path_context_review.controller_summary_used_as_evidence",
+        "structure_convergence_replay"
       ],
       "required_body_values": {
         "approved_by_role": "project_manager",

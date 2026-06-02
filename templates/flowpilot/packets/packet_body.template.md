@@ -110,6 +110,24 @@ instead of guessing.
 - reviewer_probe_to_expect: <task-specific-reviewer-challenge-action-or-none>
 - classification: <hard_current_requirement|current_node_improvement|future_route_candidate|nonblocking_note|rejected_with_reason|none>
 
+## Structure Hygiene Delta Requirement
+
+Copy this section from
+`node_acceptance_plan.structure_hygiene_expectation` for this packet slice. If
+the node plan does not define it, return `blocked` for PM plan repair instead
+of guessing.
+
+- expected_surfaces: <surface-ids-or-none_expected>
+- required_dispositions: <remove|reject|preserve_negative_rejection_evidence|retain_owned_current_runtime_recovery|retain_owned_maintenance_layer|block|not_applicable>
+- old_artifacts_may_close_current_completion: false
+- retained_surface_requires: owner, scope, validation evidence, and sunset or next-disposition criteria
+
+The result body must include `Structure Hygiene Delta`. If this packet creates,
+removes, rejects, preserves, or intentionally retains any fallback-like path,
+compatibility branch, duplicate adapter, stale generated artifact, or
+maintenance layer, report it there. Do not silently keep a compatibility path
+as a convenience fallback.
+
 ## Artifact-Backed Handoff Requirements
 
 The packet recipient's work product must be written to formal files or project

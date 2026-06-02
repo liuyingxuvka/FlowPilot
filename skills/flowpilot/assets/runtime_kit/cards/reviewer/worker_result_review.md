@@ -132,6 +132,17 @@ Check:
   part. Block if the result only proves that an artifact exists, a command ran,
   a report was written, or a screenshot was produced while the thin-success
   shortcut remains plausible.
+- when the source packet includes a `Structure Hygiene Delta Requirement`, the
+  result contains `Structure Hygiene Delta` and reports introduced, removed,
+  rejected, preserved-negative-evidence, retained-current-runtime-recovery, and
+  retained-maintenance surfaces. Block if the result keeps an unowned fallback,
+  compatibility branch, duplicate adapter, stale generated artifact, or
+  maintenance layer, or if any retained surface lacks owner, scope, validation
+  evidence, and sunset or next-disposition criteria.
+- block any worker result that uses old artifacts, old route fields,
+  newest-run fallback, repo-root fallback, or historical evidence as current
+  completion evidence. Negative rejection evidence is allowed only when it is
+  clearly separated from completion evidence.
 - when the PM package, node plan, route, or source packet identifies
   shallow-completion traps, challenge them from the final user's point of view.
   Block if any current trap remains plausible because the evidence is only a

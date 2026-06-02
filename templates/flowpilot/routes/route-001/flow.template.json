@@ -6,6 +6,32 @@
     "rejected_extra_route_complexity": [],
     "route_complexity_justifications": []
   },
+  "structure_convergence_review": {
+    "schema_version": "flowpilot.structure_convergence_review.v1",
+    "required_before_route_activation": true,
+    "cleanup_targets": [],
+    "fallback_like_paths_to_reject_or_remove": [],
+    "allowed_current_runtime_recovery": [
+      {
+        "owner_role": "<project_manager|controller|worker|human_like_reviewer|flowguard_operator>",
+        "current_run_id": "<run-id>",
+        "current_packet_or_node_id": "<packet-or-node-id>",
+        "blocking_state": "<state-that-triggered-recovery>",
+        "required_repair_command_or_event": "<runtime-command-or-event>",
+        "validation_evidence": []
+      }
+    ],
+    "owned_maintenance_layers_retained": [
+      {
+        "owner_role": "<role>",
+        "scope": "<why-this-layer-is-current-runtime-maintenance-not-legacy-compatibility>",
+        "validation_evidence": [],
+        "sunset_or_next_disposition": "<condition-or-null>"
+      }
+    ],
+    "old_artifacts_may_close_current_completion": false,
+    "unresolved_structure_debt_blocks_activation": true
+  },
   "display_depth": 1,
   "decomposition_policy": {
     "recursive_decomposition_allowed": true,

@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=258",
+    "summary": "sequences=3 initial_states=1 traces=294",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -23,6 +23,14 @@
         "expected_failure": "research or material-scan packet grants target artifact repair instead of report self-correction",
         "failures": [
           "research or material-scan packet grants target artifact repair instead of report self-correction"
+        ]
+      },
+      "final_ledger_structure_debt_unresolved": {
+        "detected": true,
+        "expected_failure": "final ledger leaves structural debt unresolved",
+        "failures": [
+          "PM closure lacks final-user outcome replay",
+          "final ledger leaves structural debt unresolved"
         ]
       },
       "flowguard_operator_packet_repairs_target_artifact": {
@@ -79,6 +87,13 @@
         "expected_failure": "node acceptance plan lacks skill-standard projection",
         "failures": [
           "node acceptance plan lacks skill-standard projection"
+        ]
+      },
+      "node_plan_missing_structure_hygiene_expectation": {
+        "detected": true,
+        "expected_failure": "node acceptance plan lacks structure hygiene expectation",
+        "failures": [
+          "node acceptance plan lacks structure hygiene expectation"
         ]
       },
       "node_plan_not_mapped_to_product_model": {
@@ -168,6 +183,13 @@
           "PM did not name the task-specific shallow-completion traps"
         ]
       },
+      "pm_structure_convergence_review_missing": {
+        "detected": true,
+        "expected_failure": "PM route lacks structural convergence review for cleanup targets and owned current-runtime recovery",
+        "failures": [
+          "PM route lacks structural convergence review for cleanup targets and owned current-runtime recovery"
+        ]
+      },
       "pm_user_intent_self_check_missing": {
         "detected": true,
         "expected_failure": "PM plan lacks final-user intent and product usefulness self-check",
@@ -202,6 +224,13 @@
         "expected_failure": "interactive UI route lacks required convergence loop",
         "failures": [
           "interactive UI route lacks required convergence loop"
+        ]
+      },
+      "repair_leaves_compat_branch": {
+        "detected": true,
+        "expected_failure": "repair path retained a compatibility branch instead of reissuing or blocking current structured work",
+        "failures": [
+          "repair path retained a compatibility branch instead of reissuing or blocking current structured work"
         ]
       },
       "repair_node_no_mainline_return": {
@@ -303,6 +332,14 @@
           "work packet or result matrix lacks skill-standard projection"
         ]
       },
+      "work_packet_missing_structure_hygiene_delta": {
+        "detected": true,
+        "expected_failure": "work packet lacks structure hygiene delta obligation",
+        "failures": [
+          "work packet lacks structure hygiene delta obligation",
+          "worker result lacks structure hygiene delta"
+        ]
+      },
       "worker_packet_missing_in_scope_repair": {
         "detected": true,
         "expected_failure": "executable worker packet lacks in-scope quality repair obligation",
@@ -315,6 +352,13 @@
         "expected_failure": "worker packet does not escalate out-of-scope defects to PM",
         "failures": [
           "worker packet does not escalate out-of-scope defects to PM"
+        ]
+      },
+      "worker_result_leaves_unowned_fallback": {
+        "detected": true,
+        "expected_failure": "worker result retained an unowned fallback or compatibility path",
+        "failures": [
+          "worker result retained an unowned fallback or compatibility path"
         ]
       }
     },
@@ -331,11 +375,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 86,
+    "edge_count": 98,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 42,
-    "state_count": 87
+    "rejected_state_count": 48,
+    "state_count": 99
   }
 }

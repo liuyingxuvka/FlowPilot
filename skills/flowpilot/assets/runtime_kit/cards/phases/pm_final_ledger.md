@@ -87,6 +87,15 @@ Resolve:
   logs without exit/meta artifacts;
 - minimum sufficient complexity dispositions for route nodes, skills, and
   artifacts that were considered, superseded, deferred, or discarded;
+- structure debt dispositions for patch stacks, fallback-like paths,
+  compatibility branches, duplicate adapters, stale generated artifacts,
+  old-route evidence, newest-run fallbacks, repo-root fallbacks, and retained
+  maintenance layers. Each item must be removed, rejected, preserved as
+  negative rejection evidence, retained as owned current-runtime recovery,
+  retained as owned maintenance, superseded, or blocked. Any retained surface
+  must name owner, scope, validation evidence, and sunset or
+  next-disposition criteria. Unowned, unresolved, or compatibility-by-default
+  paths keep the ledger open;
 - generated-resource lineage;
 - stale, invalid, missing, waived, blocked, or superseded evidence;
 - old evidence that attempts to close a changed or superseded requirement;

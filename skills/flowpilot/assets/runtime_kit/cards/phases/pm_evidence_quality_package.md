@@ -57,5 +57,15 @@ left as unresolved complexity for the final ledger. Unnecessary evidence
 surfaces are not quality; they are maintenance cost unless they prove a current
 gate.
 
+Also include structure debt dispositions as evidence hygiene. Patch stacks,
+fallback-like paths, compatibility branches, duplicate adapters, stale
+generated artifacts, old-route evidence, newest-run fallbacks, repo-root
+fallbacks, and intentionally retained maintenance layers must be marked
+removed, rejected, preserved as negative rejection evidence, retained as owned
+current-runtime recovery, retained as an owned maintenance layer, or blocked.
+Retained current-runtime or maintenance surfaces must cite owner, scope,
+validation evidence, and sunset or next-disposition criteria. Block final
+ledger work while any structure debt disposition is missing or unresolved.
+
 If the route includes UI or visual work, include screenshot paths and visual
 review notes. If it does not, mark UI/visual evidence as not applicable.

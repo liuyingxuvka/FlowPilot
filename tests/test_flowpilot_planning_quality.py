@@ -41,6 +41,12 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.FLOWGUARD_OPERATOR_PACKET_REPAIRS_TARGET_ARTIFACT]["detected"])
         self.assertTrue(hazards[model.REVIEWER_PROMPT_GRANTS_DIRECT_REPAIR]["detected"])
         self.assertTrue(hazards[model.GENERIC_TEMPLATE_USES_BLANKET_REPAIR]["detected"])
+        self.assertTrue(hazards[model.PM_STRUCTURE_CONVERGENCE_REVIEW_MISSING]["detected"])
+        self.assertTrue(hazards[model.NODE_PLAN_MISSING_STRUCTURE_HYGIENE_EXPECTATION]["detected"])
+        self.assertTrue(hazards[model.WORK_PACKET_MISSING_STRUCTURE_HYGIENE_DELTA]["detected"])
+        self.assertTrue(hazards[model.WORKER_RESULT_LEAVES_UNOWNED_FALLBACK]["detected"])
+        self.assertTrue(hazards[model.REPAIR_LEAVES_COMPAT_BRANCH]["detected"])
+        self.assertTrue(hazards[model.FINAL_LEDGER_STRUCTURE_DEBT_UNRESOLVED]["detected"])
         self.assertTrue(hazards[model.PM_CLOSURE_LOW_QUALITY_RISK_DISPOSITION_MISSING]["detected"])
         self.assertTrue(hazards[model.PM_CLOSURE_SHALLOW_COMPLETION_TRAPS_UNRESOLVED]["detected"])
         self.assertTrue(hazards[model.PROCESS_SUPPORT_SKILL_IGNORED]["detected"])
@@ -57,6 +63,16 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             / "cards"
             / "phases"
             / "pm_route_skeleton.md"
+        ).read_text(encoding="utf-8")
+        pm_core_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "roles"
+            / "project_manager.md"
         ).read_text(encoding="utf-8")
         child_manifest_card = (
             ROOT
@@ -108,6 +124,16 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             / "phases"
             / "pm_final_ledger.md"
         ).read_text(encoding="utf-8")
+        evidence_quality_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "phases"
+            / "pm_evidence_quality_package.md"
+        ).read_text(encoding="utf-8")
         closure_card = (
             ROOT
             / "skills"
@@ -117,6 +143,26 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             / "cards"
             / "phases"
             / "pm_closure.md"
+        ).read_text(encoding="utf-8")
+        node_plan_review_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "reviewer"
+            / "node_acceptance_plan_review.md"
+        ).read_text(encoding="utf-8")
+        worker_result_review_card = (
+            ROOT
+            / "skills"
+            / "flowpilot"
+            / "assets"
+            / "runtime_kit"
+            / "cards"
+            / "reviewer"
+            / "worker_result_review.md"
         ).read_text(encoding="utf-8")
         route_review_card = (
             ROOT
@@ -154,6 +200,21 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
                 encoding="utf-8"
             )
         )
+        route_template = json.loads(
+            (ROOT / "templates" / "flowpilot" / "routes" / "route-001" / "flow.template.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        final_ledger_template = json.loads(
+            (ROOT / "templates" / "flowpilot" / "final_route_wide_gate_ledger.template.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        closure_template = json.loads(
+            (ROOT / "templates" / "flowpilot" / "terminal_closure_suite.template.json").read_text(
+                encoding="utf-8"
+            )
+        )
         contracts = json.loads(
             (
                 ROOT
@@ -168,6 +229,9 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
 
         self.assertIn("planning_profile", route_card)
         self.assertIn("interactive_software_ui_product", route_card)
+        self.assertIn("Structural convergence", pm_core_card)
+        self.assertIn("structure_convergence_review", route_card)
+        self.assertIn("Old artifacts", route_card)
         self.assertIn("PM user-intent self-check", route_card)
         self.assertIn("product usefulness failures", route_card)
         self.assertIn("PM low-quality-success ownership check", route_card)
@@ -190,15 +254,24 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("nonessential improvement", node_plan_card)
         self.assertIn("low-quality-success self-check", node_plan_card)
         self.assertIn("proof of depth", node_plan_card)
+        self.assertIn("structure_hygiene_expectation", node_plan_card)
+        self.assertIn("Structure Hygiene Delta", packet_template)
+        self.assertIn("Structure Hygiene Delta", result_template)
+        self.assertIn("structure_hygiene_expectation", node_plan_review_card)
+        self.assertIn("unowned fallback", worker_result_review_card)
+        self.assertIn("Negative rejection evidence", worker_result_review_card)
         self.assertIn("final-user intent and product usefulness assumptions", product_architecture_card)
         self.assertIn("low-quality-success review", product_architecture_card)
         self.assertIn("thin-success shortcuts", product_architecture_card)
         self.assertIn("final-user intent and delivered-product usefulness claims", final_ledger_card)
         self.assertIn("low-quality-success risks", final_ledger_card)
+        self.assertIn("structure debt dispositions", final_ledger_card)
+        self.assertIn("structure debt dispositions", evidence_quality_card)
         self.assertIn("final_user_outcome_replay", closure_card)
         self.assertIn("hard low-quality-success risks", closure_card)
         self.assertIn("shallow-completion traps", closure_card)
         self.assertIn("practical next step", closure_card)
+        self.assertIn("structural convergence", closure_card)
         self.assertIn("hard block", route_review_card)
         self.assertIn("Inherited Skill Standards", packet_template)
         self.assertIn("Active Child Skill Bindings", packet_template)
@@ -229,10 +302,12 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("reviewer_or_flowguard_gate_ids", standard)
         self.assertIn("expected_artifact_paths", standard)
         self.assertIn("skill_standard_projection", node_template)
+        self.assertIn("structure_hygiene_expectation", node_template)
         self.assertIn("active_child_skill_bindings", node_template)
         self.assertIn("role_skill_use_bindings", node_template)
         self.assertFalse(node_template["role_skill_use_bindings"][0]["self_attestation_allowed"])
         self.assertIn("work_packet_projection", node_template)
+        self.assertIn("structure_hygiene_delta_required", node_template["work_packet_projection"][0])
         self.assertIn("role_skill_use_binding_ids", node_template["work_packet_projection"][0])
         self.assertIn("role_skill_use_evidence_required", node_template["work_packet_projection"][0])
         self.assertIn("local_low_quality_success_risk", node_template["pm_current_node_high_standard_recheck"])
@@ -240,6 +315,11 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             "proof_of_depth_required",
             node_template["pm_current_node_high_standard_recheck"]["local_low_quality_success_risk"],
         )
+        self.assertIn("structure_convergence_review", route_template)
+        self.assertFalse(route_template["structure_convergence_review"]["old_artifacts_may_close_current_completion"])
+        self.assertIn("structure_debt_dispositions", final_ledger_template)
+        self.assertIn("unresolved_structure_debt_count", final_ledger_template["counts"])
+        self.assertIn("structure_debt_triage", closure_template)
 
         worker_contract = next(
             item
@@ -247,6 +327,7 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
             if item["contract_id"] == "flowpilot.output_contract.worker_current_node_result.v1"
         )
         self.assertIn("conditional_required_result_body_sections", worker_contract)
+        self.assertIn("Structure Hygiene Delta", worker_contract["required_result_body_sections"])
         self.assertIn(
             "Skill Standard Result Matrix",
             worker_contract["conditional_required_result_body_sections"][

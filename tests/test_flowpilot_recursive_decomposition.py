@@ -72,7 +72,7 @@ class FlowPilotRecursiveDecompositionTests(unittest.TestCase):
             / "assets"
             / "runtime_kit"
             / "cards"
-            / "FlowGuard operators"
+            / "flowguard_operator"
             / "route_process_check.md"
         ).read_text(encoding="utf-8")
         route_template = json.loads(

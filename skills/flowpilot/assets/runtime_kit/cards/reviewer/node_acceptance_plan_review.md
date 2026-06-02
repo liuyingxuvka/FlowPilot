@@ -56,6 +56,12 @@ Check:
   thin-success shortcut, warning signs, existence-only evidence to reject,
   proof of depth, reviewer probe, and classification as hard requirement or PM
   decision-support;
+- the plan contains `structure_hygiene_expectation` for this node, including
+  the expected disposition for patch stacks, fallback-like paths,
+  compatibility branches, duplicate adapters, stale generated artifacts, and
+  maintenance layers. A retained current-runtime recovery or maintenance layer
+  must name owner, scope, validation evidence, and sunset or next-disposition
+  criteria. Missing structure hygiene expectation blocks packet dispatch;
 - the plan states whether parent backward replay is structurally required;
 - if the active node has children, the plan blocks direct worker packet
   dispatch and routes execution into child subtree entry or parent backward

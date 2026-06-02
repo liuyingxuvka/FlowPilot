@@ -92,6 +92,23 @@
     ],
     "unjustified_complexity_removed_or_deferred": []
   },
+  "structure_hygiene_expectation": {
+    "schema_version": "flowpilot.structure_hygiene_expectation.v1",
+    "required_before_packet_dispatch": true,
+    "expected_surfaces": [
+      {
+        "surface_id": "<fallback-compat-duplicate-generated-resource-or-maintenance-layer>",
+        "surface_type": "<patch_stack|fallback_like_path|compatibility_branch|duplicate_adapter|stale_generated_artifact|maintenance_layer|none_expected>",
+        "expected_disposition": "<remove|reject|preserve_negative_rejection_evidence|retain_owned_current_runtime_recovery|retain_owned_maintenance_layer|block|not_applicable>",
+        "owner_role": "<role-or-null>",
+        "scope": "<scope-or-null>",
+        "validation_evidence_required": [],
+        "sunset_or_next_disposition": "<condition-or-null>"
+      }
+    ],
+    "old_artifacts_may_close_current_completion": false,
+    "missing_disposition_blocks_dispatch": true
+  },
   "node_structure": {
     "node_kind": "<leaf|parent|composite>",
     "has_children": "<true|false>",
@@ -184,6 +201,8 @@
       "covers_requirement_ids": [],
       "inherited_standard_ids": [],
       "role_skill_use_binding_ids": [],
+      "structure_hygiene_delta_required": true,
+      "expected_structure_disposition_surface_ids": [],
       "result_matrix_required": true,
       "role_skill_use_evidence_required": "<true-when-role_skill_use_binding_ids-is-nonempty-else-false>",
       "result_matrix_required_fields": [

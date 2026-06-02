@@ -13,6 +13,10 @@ All notable changes to FlowPilot will be documented in this file.
 - Published the latest no-compatibility FlowPilot runtime cleanup, including
   legacy prompt-surface removal, relay-protocol cleanup, role packet access
   hardening, and refreshed FlowGuard topology/evidence artifacts.
+- Added structural convergence gates across FlowPilot PM planning, worker
+  packet/result surfaces, reviewer checks, final ledgers, terminal closure, and
+  the planning-quality FlowGuard model so long-running routes must dispose of
+  structure debt instead of accumulating fallback or compatibility residue.
 
 ## 0.10.0 - 2026-05-31
 

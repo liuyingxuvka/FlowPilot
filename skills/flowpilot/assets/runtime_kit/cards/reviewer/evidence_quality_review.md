@@ -46,6 +46,13 @@ Check:
 - low-quality-success hard parts have proof of depth. Evidence that only shows
   a file, report, command, screenshot, or ledger row exists must not close a
   hard-part claim unless it directly disproves the named thin-success shortcut;
+- structure debt dispositions are complete. Patch stacks, fallback-like paths,
+  compatibility branches, duplicate adapters, stale generated artifacts,
+  old-route evidence, newest-run fallbacks, repo-root fallbacks, and retained
+  maintenance layers must be removed, rejected, preserved only as negative
+  rejection evidence, retained as owned current-runtime recovery, retained as
+  owned maintenance, or blocked. Block if a retained surface lacks owner, scope,
+  validation evidence, and sunset or next-disposition criteria;
 - old screenshots, old icons, old concept images, or old assets are not reused
   as current evidence;
 - completion report-only evidence is not closing a gate that needs direct

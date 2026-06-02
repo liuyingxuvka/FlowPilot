@@ -83,6 +83,14 @@ Route requirements:
   acceptance standard;
 - Minimum Sufficient Complexity: choose the smallest route structure that can
   satisfy the frozen contract with the required proof strength;
+- include a `structure_convergence_review`: name the route-level cleanup
+  targets, fallback-like or compatibility paths that must be rejected or
+  removed, any allowed current-runtime recovery with owner/current run/current
+  packet or node/blocking state/repair command/validation evidence, and any
+  intentionally retained maintenance layer with owner, scope, validation
+  evidence, and sunset or next-disposition criteria. Old artifacts, old field
+  names, newest-run fallbacks, repo-root fallbacks, or historical evidence must
+  not become current completion evidence;
 - use the FlowGuard operator's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
@@ -222,6 +230,11 @@ Also return a complexity review. If a node could have been merged with an
 adjacent node, record why separation is still necessary. If two routes produce
 the same outcome and proof strength, choose the one with fewer nodes, handoffs,
 artifacts, and dependencies.
+
+Also return `structure_convergence_review`. If no route-level structure debt is
+expected, say that explicitly and still name how worker packets and final
+ledger will prove that no fallback-like path, compatibility branch, stale
+generated artifact, duplicate adapter, or unclear maintenance layer survived.
 
 For repair or route-mutation paths, state which mainline node the repair
 returns to and which product-model checks or evidence must be rerun before

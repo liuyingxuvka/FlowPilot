@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-02T05:51:22.823034+00:00",
+  "created_at": "2026-06-02T12:41:43.709282+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -165,17 +165,17 @@
       {
         "evidence": [
           {
-            "edge_count": 86,
+            "edge_count": 98,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "76bc79aee4d61af2ef0fad4809dc06421ad1c10eb5290c648dca03b3f3fab844",
+            "result_fingerprint": "369c8f91c35b7cd0cb865a51343334aa9cb7a543fec57f571c130d14acc01bc1",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 87
+            "state_count": 99
           },
           {
             "edge_count": 40,

@@ -147,6 +147,19 @@ reviewer review, FlowGuard operator modeling, validation, or worker execution, r
 who must check the evidence. PM's own skill use must leave the same reviewable
 evidence trail as worker skill use; self-attestation is not enough.
 
+Structural convergence is part of minimum sufficient complexity. Before route
+drafts, node plans, work packets, repair decisions, final ledgers, and closure,
+PM must ask whether the route is leaving patch stacks, compatibility branches,
+fallback-like paths, duplicate adapters, stale generated artifacts, or unclear
+maintenance layers behind. Each such surface must be dispositioned as removed,
+rejected, retained as negative rejection evidence, retained as owned
+current-runtime recovery, retained as an explicitly owned maintenance layer, or
+blocked. Current-runtime recovery is allowed only when it names the owner,
+current run, current packet or node, blocking state, required repair command,
+and validation evidence. Do not silently translate old artifacts, old field
+names, newest-run fallbacks, repo-root fallbacks, or historical evidence into
+current completion evidence.
+
 If Controller delivers a router `control_blocker` artifact, read the artifact
 path and its `policy_row_id` before deciding. The policy row gives the first
 handler, direct retry budget, retry count, PM recovery options, return policy,

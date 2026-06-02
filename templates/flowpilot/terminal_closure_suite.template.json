@@ -12,6 +12,7 @@
     "defect_ledger_zero_blocking_and_pending_recheck",
     "evidence_credibility_ledger_reconciled",
     "risk_triage_zero_unresolved",
+    "structure_debt_dispositions_zero_unresolved",
     "terminal_human_backward_replay_passed",
     "terminal_closure_reconciliation_clean",
     "sync_terminal_state_files",
@@ -47,6 +48,17 @@
     "hard_risks_closed_by_proof_of_depth": false,
     "existence_only_hard_part_closures_zero": false,
     "nonessential_quality_improvements_dispositioned": false
+  },
+  "structure_debt_triage": {
+    "source": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json#structure_debt_dispositions",
+    "required": true,
+    "unresolved_structure_debt_count": null,
+    "unowned_fallback_like_path_count": null,
+    "compatibility_branch_retained_count": null,
+    "old_artifacts_used_as_current_completion_evidence": false,
+    "negative_rejection_evidence_separated": false,
+    "retained_surfaces_have_owner_scope_validation_and_sunset": false,
+    "completion_blocked_until_unresolved_zero": true
   },
   "defect_ledger": {
     "path": ".flowpilot/runs/<run-id>/defects/defect_ledger.json",
