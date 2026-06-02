@@ -18,9 +18,9 @@ state.
 | `flowpilot` | `https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot` |
 | `model-first-function-flow` | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
 | `autonomous-concept-ui-redesign` | `https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign` |
-| `frontend-design` | `https://github.com/anthropics/skills/tree/main/skills/frontend-design` |
-| `design-iterator` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-iterator` |
-| `design-implementation-reviewer` | `https://github.com/ratacat/claude-skills/tree/main/skills/design-implementation-reviewer` |
+
+The autonomous UI child skill owns any internal UI helper composition.
+FlowPilot records only direct FlowPilot dependencies here.
 
 ## FlowGuard Source
 

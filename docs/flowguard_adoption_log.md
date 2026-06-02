@@ -22728,3 +22728,52 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - If the user approves the visual layout, regenerate the README startup screenshot to avoid stale public imagery
+
+
+## flowpilot-readme-screenshot-dependency-correction-20260602 - Correct FlowPilot README screenshot quality and direct child-skill dependency table
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User reported README screenshot quality issues and stale child-skill dependency rows after the FlowPilot README refresh
+- Status: completed
+- Skill decision: existing_model_preflight+development_process_flow+logicguard_structured_artifact
+- Started: 2026-06-02T06:52:40+00:00
+- Ended: 2026-06-02T06:52:40+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- tmp/flowpilot_readme_logicguard_model.yaml
+- docs/flowguard_project_topology.md
+
+### Commands
+- OK (0.000s): `python -c import flowguard; print(flowguard.SCHEMA_VERSION) -> 1.0`
+- OK (0.000s): `python -c import importlib.metadata as m; print(m.version('flowguard')) -> 0.40.4`
+- OK (0.000s): `python -m flowguard project-audit --root . -> ok`
+- OK (0.000s): `python -m logicguard validate/evaluate tmp/flowpilot_readme_logicguard_model.yaml -> ok`
+- OK (0.000s): `python scripts/install_flowpilot.py --sync-repo-owned -> ok`
+- OK (0.000s): `python scripts/flowguard_project_topology.py build -> ok`
+- OK (0.000s): `python scripts/flowguard_project_topology.py check -> ok`
+- OK (0.000s): `python scripts/check_install.py -> ok`
+- OK (0.000s): `python scripts/check_public_release.py --json -> ok with dirty-worktree warning only`
+- OK (0.000s): `README/manifest direct dependency table check -> ok`
+- OK (0.000s): `startup screenshot asset check -> 2004x2128 RGB`
+
+### Findings
+- README startup-intake screenshot replaced with a high-resolution desktop-expanded capture that is opaque, no-scrollbar, and free of capture-edge artifacts
+- FlowPilot direct dependency table and manifest now list flowpilot, flowguard, model-first-function-flow, and autonomous-concept-ui-redesign only
+- frontend-design, design-iterator, and design-implementation-reviewer were removed from FlowPilot direct dependency docs because current FlowPilot delegates UI helper composition to autonomous-concept-ui-redesign
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Installed flowpilot skill copy was stale after dependency note edits; sync-repo-owned refreshed it before install verification
+
+### Skipped Steps
+- No runtime version bump, tag, or GitHub release was created for this correction-only pass
+
+### Risk Evidence Summary
+- FlowGuard package audit, LogicGuard model validation, topology check, install check, public release preflight, dependency table check, and screenshot asset check passed
+
+### Next Actions
+- Commit and push the README/dependency correction without creating a new release version unless the user explicitly asks for one

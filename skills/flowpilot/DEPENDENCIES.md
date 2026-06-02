@@ -15,12 +15,12 @@ python scripts\install_flowpilot.py --install-missing --install-flowguard
 python scripts\check_install.py
 ```
 
-Optional UI/design companions:
+Optional direct UI/design companion:
 
 - `autonomous-concept-ui-redesign`
-- `frontend-design`
-- `design-iterator`
-- `design-implementation-reviewer`
+
+That child skill owns any internal UI helper composition. FlowPilot does not
+list or install those internal helpers as direct dependencies.
 
 Install optional companions only when the user wants UI/design route support:
 
