@@ -27,7 +27,7 @@
           "split_child_model"
         ],
         "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_new has 636 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 637 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_new",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "priority_score": 29,
@@ -63,7 +63,7 @@
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_new has 636 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 637 lines, above the 450 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_new.py"
         ],
@@ -112,7 +112,7 @@
           "split_child_model"
         ],
         "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_new has 636 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 637 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_new",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "priority_score": 29,
@@ -4100,7 +4100,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 636,
+        "line_count": 637,
         "local_import_count": 0,
         "max_severity": "medium",
         "model_binding": null,
@@ -22197,15 +22197,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "complete",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:complete"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_full",
@@ -22335,15 +22337,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "complete",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:complete"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_full",
@@ -42652,6 +42656,7 @@
           "role": "owner",
           "side_effects": [
             "submit_host_result",
+            "save_run_ledger",
             "_run_until_wait_and_save"
           ],
           "state_reads": [],
@@ -52989,7 +52994,8 @@
             "_runtime_state",
             "host.submit_host_result",
             "run_shell.load_run_ledger",
-            "run_shell.load_run_shell"
+            "run_shell.load_run_shell",
+            "run_shell.save_run_ledger"
           ],
           "code_contract_id": "flowpilot_new.submit_result",
           "found": true,
@@ -53006,6 +53012,7 @@
           "returns_value": true,
           "side_effects": [
             "_run_until_wait_and_save",
+            "save_run_ledger",
             "submit_host_result"
           ],
           "state_reads": [
@@ -53025,6 +53032,7 @@
             "result_id",
             "root",
             "run_shell",
+            "save_run_ledger",
             "shell",
             "str",
             "submit_host_result"

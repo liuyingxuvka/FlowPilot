@@ -28,7 +28,6 @@
         "root_contract_reviewer_blocked"
       ],
       "display_status_available_before_startup_fact_review": true,
-      "unsupported historical_recipient_normalization_limited_to_unmarked_packets": true,
       "material_dispatch_block_event_registered": true,
       "material_dispatch_block_report_writer": true,
       "material_dispatch_card_has_pre_route_material_exception": true,
@@ -160,9 +159,9 @@
         "prior_path_context_review.superseded_nodes_considered",
         "recovery_evidence",
         "recovery_evidence.chat_history_progress_inference_used",
-        "recovery_evidence.role_binding_recovery_report_path",
         "recovery_evidence.packet_ledger_path",
         "recovery_evidence.resume_reentry_path",
+        "recovery_evidence.role_binding_recovery_report_path",
         "recovery_evidence.role_recovery_report_path",
         "recovery_evidence.sealed_packet_or_result_bodies_read",
         "run_id",
@@ -214,9 +213,9 @@
       "process_contract_bindings": [
         "control_blocker_repair|pm.control_blocker_repair_decision|project_manager|project_manager",
         "current_node_work|worker.current_node|project_manager|project_manager",
-        "material_scan|worker.material_scan|project_manager|project_manager",
         "flowguard_operator_model_miss_report|flowguard_operator.model_miss_report|project_manager|project_manager",
         "flowguard_operator_model_report|flowguard_operator.model_report|project_manager|project_manager",
+        "material_scan|worker.material_scan|project_manager|project_manager",
         "pm_role_work_request|pm.role_work_request|project_manager|project_manager",
         "research|worker.research|project_manager|project_manager",
         "resume_decision|pm.resume_decision|project_manager|project_manager",
@@ -224,8 +223,6 @@
       ],
       "reviewer_block_lane_flags": [
         "child_skill_manifest_reviewer_blocked",
-        "child_skill_process_flowguard_operator_blocked",
-        "child_skill_product_flowguard_operator_blocked",
         "evidence_quality_reviewer_blocked",
         "final_backward_replay_blocked",
         "material_scan_dispatch_recheck_blocked",
@@ -233,13 +230,10 @@
         "node_acceptance_plan_review_blocked",
         "node_review_blocked",
         "parent_backward_replay_blocked",
-        "product_architecture_modelability_blocked",
         "product_architecture_reviewer_blocked",
         "product_behavior_model_blocked",
-        "product_flowguard_operator_route_check_blocked",
         "research_review_blocked",
         "reviewer_route_check_blocked",
-        "root_contract_modelability_blocked",
         "root_contract_reviewer_blocked"
       ],
       "role_output_card_path_hash_pairs": [
@@ -350,12 +344,13 @@
         "external_fact_review.self_attested_ai_claims_accepted_as_proof"
       ],
       "strict_role_work_results_reject_recipient_drift": true,
+      "unsupported_historical_recipient_normalization_limited_to_unmarked_packets": true,
       "wait_event_producer_bindings": [
         "current_node_reviewer_blocks_result|human_like_reviewer",
         "current_node_reviewer_passes_result|human_like_reviewer",
         "pm_records_role_work_result_decision|project_manager",
         "pm_resume_recovery_decision_returned|project_manager",
-        "worker_current_node_result_returned|worker_a"
+        "worker_current_node_result_returned|worker"
       ]
     },
     "failures": [],

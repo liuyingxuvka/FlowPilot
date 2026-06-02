@@ -22480,3 +22480,251 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Next Action
 
 - Treat future old-format pressure as a negative test and hard rejection unless a named temporary migration is explicitly approved with owner, expiry, telemetry, and deletion tests.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-01T15:52:34+00:00
+- Ended: 2026-06-01T15:52:34+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-01T16:22:48+00:00
+- Ended: 2026-06-01T16:22:48+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.2
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=2 blocked=0 changed=2
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-01T16:32:26+00:00
+- Ended: 2026-06-01T16:32:26+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.3
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=0 blocked=0 changed=0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-01T18:03:20+00:00
+- Ended: 2026-06-01T18:03:20+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.4
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowpilot-readme-current-ui-refresh-20260602 - Refresh FlowPilot README and startup preview to match current v0.10.0 UI/runtime evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested README accuracy audit and explicit FlowGuard-built statement after FlowPilot UI, feature, and child-skill changes
+- Status: completed
+- Skill decision: existing_model_preflight+development_process_flow+logicguard_structured_artifact
+- Started: 2026-06-02T05:55:59+00:00
+- Ended: 2026-06-02T05:55:59+00:00
+- Duration seconds: 0.000
+- Commands OK: False
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+- docs/flowguard_project_topology.md
+
+### Commands
+- OK (0.000s): `python -c import flowguard; print(flowguard.SCHEMA_VERSION) -> 1.0`
+- OK (0.000s): `python -c import importlib.metadata as m; print(m.version('flowguard')) -> 0.40.4`
+- OK (0.000s): `python -m flowguard project-audit --root . -> ok`
+- OK (0.000s): `python -m logicguard validate/evaluate/diagnose/structure audit tmp/flowpilot_readme_logicguard_model.yaml -> root IN; no structural logic findings; section overload warnings only`
+- OK (0.000s): `README focused phrase/image/version/stale-term check -> ok; startup screenshot 860x680`
+- OK (0.000s): `git diff --check -- README.md assets/readme-hero/hero_design_note.md assets/readme-hero/hero_prompt.md assets/readme-screenshots/startup-intake.png -> ok`
+- OK (0.000s): `python scripts/check_install.py -> ok after topology freshness refresh`
+- OK (0.000s): `python scripts/flowguard_project_topology.py check -> ok`
+- FAIL (0.000s): `python scripts/check_public_release.py -> blocked by scripts/smoke_flowpilot.py --fast; model-test alignment source audit reports flowpilot_new.submit_result extra save_run_ledger side effect, outside README scope`
+
+### Findings
+- README now explicitly says FlowPilot is built/developed using FlowGuard in both English and Chinese sections
+- Stale README startup screenshot and wording for scheduled continuation/Cockpit/background-agent toggles were replaced with current startup intake surface: work request plus background collaboration, with manual continuation and chat as fixed startup defaults
+- Chinese role table duplicate FlowGuard operator entry was corrected to requested worker responsibility wording
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- No GitHub push, release, tag, PR, or publication action was performed
+- No topology rebuild was required for README/assets-only content changes; project checks refreshed topology evidence during verification
+
+### Risk Evidence Summary
+- Public release check remains blocked by an existing model-test/source-contract issue unrelated to README copy or screenshot assets
+
+### Next Actions
+- Resolve flowpilot_new.submit_result source contract side-effect alignment before using public release checks as green release evidence
+
+
+## flowpilot-startup-ui-single-column-20260602 - Reflow FlowPilot startup intake UI into a narrower single-column layout
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested the remaining startup option toggle above the work request input and a narrower default startup window
+- Status: completed
+- Skill decision: existing_model_preflight+ui_flow_structure+development_process_flow
+- Started: 2026-06-02T06:03:57+00:00
+- Ended: 2026-06-02T06:03:57+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_startup_intake_ui_model.py
+
+### Commands
+- OK (0.000s): `python -m flowguard project-audit --root . -> ok`
+- OK (0.000s): `powershell -NoProfile -ExecutionPolicy Bypass -File skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1 -SmokeTest -> UI_SMOKE_OK`
+- OK (0.000s): `powershell -NoProfile -ExecutionPolicy Bypass -File docs/ui/startup_intake_desktop_preview/flowpilot_startup_intake.ps1 -SmokeTest -> UI_SMOKE_OK`
+- OK (0.000s): `python simulations/run_flowpilot_startup_intake_ui_checks.py -> ok`
+- OK (0.000s): `python scripts/flowguard_project_topology.py build && python scripts/flowguard_project_topology.py check -> ok`
+- OK (0.000s): `python scripts/check_install.py -> ok`
+- OK (0.000s): `git diff --check for changed UI/topology files -> ok`
+
+### Findings
+- Startup intake main script now uses a 680px default width with the background collaboration toggle above the work request input
+- Desktop preview script now uses a 640px default width with the same single-column ordering
+- Startup result writing, fixed manual/chat defaults, sealed body handling, and role-assistance enum mapping were left unchanged
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- No GitHub push, release, PR, or full broad smoke was run for this layout-only UI change
+
+### Risk Evidence Summary
+- Focused UI smoke, FlowGuard startup intake model, topology check, and install check passed
+
+### Next Actions
+- If the user approves the visual layout, regenerate the README startup screenshot to avoid stale public imagery

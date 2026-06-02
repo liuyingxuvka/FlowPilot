@@ -457,26 +457,14 @@
     "ok": true
   },
   "live_run_projection": {
-    "blocking_reasons": [
-      "no_current_run_id"
-    ],
+    "blocking_reasons": [],
     "classification_ok": true,
-    "current_run_can_continue": false,
-    "decision": "model_coverage_insufficient",
-    "findings": [
-      {
-        "current_run_can_continue": false,
-        "decision": "model_coverage_insufficient",
-        "id": "flowpilot_model_mesh.no_current_run_id",
-        "message": "Current FlowPilot run is not permitted to continue: no_current_run_id",
-        "reason": "no_current_run_id",
-        "run_id": null,
-        "severity": "blocking"
-      }
-    ],
+    "current_run_can_continue": true,
+    "decision": "mesh_green_can_continue",
+    "findings": [],
     "metadata_only": true,
     "ok": true,
-    "permission": "blocked_or_insufficient",
+    "permission": "can_continue",
     "projected_failures": [],
     "projected_state": {
       "active_blocker_present": false,
@@ -490,8 +478,8 @@
       "coverage_parse_errors_ignored": false,
       "current_authorities_agree": true,
       "current_state_classified": true,
-      "decision": "model_coverage_insufficient",
-      "evidence_tier": "none",
+      "decision": "mesh_green_can_continue",
+      "evidence_tier": "live_current_green",
       "install_requires_safe_to_continue": false,
       "installed_skill_matches_repo": true,
       "known_hazard_live_projection_available": true,
@@ -502,10 +490,10 @@
       "live_required": true,
       "local_sync_required": false,
       "missing_conformance_adapter": false,
-      "model_registered": false,
-      "model_result_fresh": false,
-      "model_result_ok": false,
-      "model_result_run_matches_current": false,
+      "model_registered": true,
+      "model_result_fresh": true,
+      "model_result_ok": true,
+      "model_result_run_matches_current": true,
       "packet_evidence_accepted": false,
       "parent_child_lifecycle_conformant": true,
       "parent_child_lifecycle_replayed": true,
@@ -513,14 +501,19 @@
       "repair_event_node_compatible": true,
       "required_tier": "live_current_green",
       "role_origin_checked": true,
-      "safe_to_continue_claimed": false,
+      "safe_to_continue_claimed": true,
       "scenario": "live_run_projection",
       "sealed_body_opened_by_mesh": false,
       "status": "selected",
       "status_summary_reports_blocked": false
     },
-    "run_id": null,
-    "sealed_body_opened_by_mesh": false
+    "run_id": "run-20260601-143553",
+    "run_root": ".flowpilot\\runs\\run-20260601-143553",
+    "sealed_body_opened_by_mesh": false,
+    "terminal_disposition": {
+      "packet_authority_unchecked_disposed_by_terminal_state": false,
+      "terminal_run": false
+    }
   },
   "model": "flowpilot_model_mesh",
   "ok": true,

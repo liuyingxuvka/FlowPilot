@@ -2,6 +2,18 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.1 - 2026-06-02
+
+### Changed
+
+- Reflowed the Windows WPF startup intake UI into a narrower single-column
+  layout with the background-collaboration toggle above the work request field.
+- Refreshed the README and startup-intake screenshot to match the current UI
+  and to state explicitly that FlowPilot is developed with FlowGuard.
+- Published the latest no-compatibility FlowPilot runtime cleanup, including
+  legacy prompt-surface removal, relay-protocol cleanup, role packet access
+  hardening, and refreshed FlowGuard topology/evidence artifacts.
+
 ## 0.10.0 - 2026-05-31
 
 ### Breaking

@@ -376,6 +376,47 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
             self.assertIn("route_deliverable:node-001:product-json:failed", closure["blockers"])
             self.assertEqual(ledger["final_requirement_evidence_matrix"]["status"], "blocked")
 
+    def test_blocked_final_closure_routes_to_repair_packet_boundary(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ledger = runtime.new_ledger("Build target", "Require concrete product output.")
+            ledger["startup_intake"] = {"sealed": True}
+            ledger["recursive_route_execution_required"] = True
+            ledger["project_root"] = tmp
+            runtime.create_route(ledger, "Recursive route", ["implementation"])
+            ledger["results"]["planning-result"] = {
+                "result_id": "planning-result",
+                "body": _route_plan_body(
+                    [
+                        {
+                            "node_id": "node-001",
+                            "title": "Implementation",
+                            "acceptance_criteria": ["Implementation accepted."],
+                        }
+                    ]
+                ),
+            }
+            runtime.materialize_route_from_planning_result(ledger, "planning-result")
+            _mark_node_ready_for_final_closure(ledger, "node-001")
+            ledger["latest_validation_evidence_id"] = "runtime-validation"
+            blocked_packet = runtime.issue_task_packet(
+                ledger,
+                "pm",
+                "Repair stale closure blocker",
+                "SEALED_REPAIR_PACKET",
+                route_scope="repair",
+            )
+            ledger["packets"][blocked_packet]["status"] = "review_blocked"
+
+            self.assertEqual(runtime.router_next_action(ledger).action_type, "close_project")
+
+            boundary = runtime.run_until_wait(ledger, max_steps=3)
+
+            self.assertEqual(boundary["folded_applied_actions"][0]["action_type"], "close_project")
+            self.assertEqual(boundary["boundary_class"], "recovery")
+            self.assertEqual(boundary["next_action"]["action_type"], "repair_packet")
+            self.assertEqual(boundary["next_action"]["subject_id"], blocked_packet)
+            self.assertEqual(ledger["closure"]["decision"], "blocked")
+
     def test_existing_route_deliverable_allows_final_ledger(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             product_path = Path(tmp) / "data" / "product.json"

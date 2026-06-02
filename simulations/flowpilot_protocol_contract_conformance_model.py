@@ -66,8 +66,8 @@ REVIEWER_IDS_PATH = "external_fact_review.reviewer_checked_requirement_ids"
 TOP_LEVEL_REVIEWER_IDS_PATH = "reviewer_checked_requirement_ids"
 PM_CONTROL_BLOCKER_EVENT = "pm_records_control_blocker_repair_decision"
 PM_STARTUP_REPAIR_EVENT = "pm_requests_startup_repair"
-MATERIAL_DISPATCH_BLOCK_EVENT = "reviewer_blocks_material_scan_dispatch"
-MATERIAL_DISPATCH_BLOCK_FLAG = "material_scan_dispatch_blocked"
+MATERIAL_DISPATCH_BLOCK_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
+MATERIAL_DISPATCH_BLOCK_FLAG = "material_scan_dispatch_recheck_blocked"
 MODEL_MISS_REVIEW_BLOCK_FLAGS = frozenset(
     {
         "node_acceptance_plan_review_blocked",
@@ -1419,7 +1419,6 @@ def collect_source_state(project_root: Path) -> State:
     pm_repair_text = (runtime_root / "cards" / "phases" / "pm_review_repair.md").read_text(encoding="utf-8")
     pm_resume_text = (runtime_root / "cards" / "phases" / "pm_resume_decision.md").read_text(encoding="utf-8")
     pm_material_scan_text = (runtime_root / "cards" / "phases" / "pm_material_scan.md").read_text(encoding="utf-8")
-    reviewer_dispatch_text = (runtime_root / "cards" / "reviewer" / "dispatch_request.md").read_text(encoding="utf-8")
     role_output_guidance_texts = (
         startup_card_text,
         pm_core_text,
@@ -1534,7 +1533,7 @@ def collect_source_state(project_root: Path) -> State:
             router_source
         ),
         material_dispatch_card_has_pre_route_material_exception=_material_dispatch_card_has_pre_route_material_exception(
-            reviewer_dispatch_text
+            pm_material_scan_text
         ),
         material_scan_packets_mark_pre_route_not_current_node=_material_scan_packets_mark_pre_route_not_current_node(
             router_source

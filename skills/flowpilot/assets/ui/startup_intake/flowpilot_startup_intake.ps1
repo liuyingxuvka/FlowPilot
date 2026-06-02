@@ -268,10 +268,10 @@ $Xaml = @"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="FlowPilot"
-    Width="860"
+    Width="680"
     Height="680"
-    MinWidth="780"
-    MinHeight="650"
+    MinWidth="560"
+    MinHeight="620"
     WindowStartupLocation="CenterScreen"
     Background="#FFFFFF"
     FontFamily="Segoe UI Variable Text, Segoe UI"
@@ -523,7 +523,7 @@ $Xaml = @"
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="38,44,38,24">
+        <Grid Grid.Row="0" Margin="34,38,34,22">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -628,73 +628,59 @@ $Xaml = @"
             Grid.Row="1"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled"
-            Padding="38,0,30,0">
-          <Grid MinHeight="350">
-            <Grid.ColumnDefinitions>
-              <ColumnDefinition Width="*" MinWidth="330" />
-              <ColumnDefinition Width="*" MinWidth="330" />
-            </Grid.ColumnDefinitions>
-            <Grid
-                Grid.Column="0"
-                Margin="0,0,18,0">
-              <StackPanel>
-                <DockPanel Margin="0,0,0,10">
-                  <TextBlock
-                      x:Name="RequestLabel"
-                      Text="Work request"
-                      Foreground="{StaticResource InkBrush}"
-                      FontSize="14"
-                      FontWeight="SemiBold"
-                      DockPanel.Dock="Left" />
-                </DockPanel>
-
-                <Grid>
-                  <TextBox
-                      x:Name="WorkRequest"
-                      MinHeight="318"
-                      AcceptsReturn="True"
-                      TextWrapping="Wrap"
-                      VerticalScrollBarVisibility="Auto"
-                      BorderBrush="#E2C7E2"
-                      BorderThickness="1"
-                      Background="{StaticResource FieldBrush}"
-                      Foreground="{StaticResource InkBrush}"
-                      FontSize="14"
-                      Padding="14"
-                      SpellCheck.IsEnabled="True" />
-                  <TextBlock
-                      x:Name="PlaceholderText"
-                      Text="Write the instructions you want the AI to follow."
-                      Foreground="#9A869E"
-                      FontSize="14"
-                      Margin="18,15,18,0"
-                      TextWrapping="Wrap"
-                      IsHitTestVisible="False" />
-                </Grid>
-
+            Padding="34,0,26,0">
+          <StackPanel MinHeight="390">
+            <Grid MinHeight="82" Margin="0,0,0,24">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
+                <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,18,0" />
               </StackPanel>
+              <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
             </Grid>
 
-            <StackPanel
-                Grid.Column="1"
-                VerticalAlignment="Top"
-                Margin="6,30,0,0">
-                <Grid MinHeight="82" Margin="0,0,0,26">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
-                  </StackPanel>
-                  <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
-                </Grid>
+            <StackPanel>
+              <DockPanel Margin="0,0,0,10">
+                <TextBlock
+                    x:Name="RequestLabel"
+                    Text="Work request"
+                    Foreground="{StaticResource InkBrush}"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    DockPanel.Dock="Left" />
+              </DockPanel>
+
+              <Grid>
+                <TextBox
+                    x:Name="WorkRequest"
+                    MinHeight="318"
+                    AcceptsReturn="True"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Auto"
+                    BorderBrush="#E2C7E2"
+                    BorderThickness="1"
+                    Background="{StaticResource FieldBrush}"
+                    Foreground="{StaticResource InkBrush}"
+                    FontSize="14"
+                    Padding="14"
+                    SpellCheck.IsEnabled="True" />
+                <TextBlock
+                    x:Name="PlaceholderText"
+                    Text="Write the instructions you want the AI to follow."
+                    Foreground="#9A869E"
+                    FontSize="14"
+                    Margin="18,15,18,0"
+                    TextWrapping="Wrap"
+                    IsHitTestVisible="False" />
+              </Grid>
             </StackPanel>
-          </Grid>
+          </StackPanel>
         </ScrollViewer>
 
-        <Grid Grid.Row="2" Margin="38,34,38,26">
+        <Grid Grid.Row="2" Margin="34,30,34,24">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />

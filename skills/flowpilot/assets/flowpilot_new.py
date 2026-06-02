@@ -389,6 +389,7 @@ def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> di
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="submit_result_submitted")
     folded = _run_until_wait_and_save(shell, ledger, guard_trigger="submit_result")
     return {
         "ok": True,

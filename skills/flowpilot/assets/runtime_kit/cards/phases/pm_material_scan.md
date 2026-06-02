@@ -44,6 +44,11 @@ returned. PM must open the relayed result bodies through the runtime and record
 sufficiency gate. Only an absorbed PM disposition releases a formal material
 sufficiency package to the reviewer.
 
+Each material scan packet is a pre-route material intake packet, not a current
+route-node execution packet. The packet spec and body must identify
+`packet_type=material_scan` and `is_current_node=false`; if either value cannot
+be written exactly, block instead of issuing the packet.
+
 Each material scan packet is a blocking dependency for the material sufficiency
 gate unless Router supplies a different dependency class in the live request.
 The packet body must tell the target role to use the Router-issued current packet holder

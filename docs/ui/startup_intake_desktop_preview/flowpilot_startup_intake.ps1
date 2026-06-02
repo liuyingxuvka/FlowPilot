@@ -41,9 +41,9 @@ $Xaml = @"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     Title="FlowPilot Startup Intake"
-    Width="800"
+    Width="640"
     Height="640"
-    MinWidth="680"
+    MinWidth="540"
     MinHeight="560"
     WindowStartupLocation="CenterScreen"
     Background="#FFFFFF"
@@ -402,72 +402,54 @@ $Xaml = @"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled"
             Padding="36,0,28,0">
-          <StackPanel>
-            <Border
-                BorderBrush="{StaticResource AccentLineBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Background="#FFFFFF"
-                Padding="18"
-                Margin="0,0,0,18">
-              <StackPanel>
-                <DockPanel Margin="0,0,0,10">
-                  <TextBlock
-                      x:Name="RequestLabel"
-                      Text="Work request"
-                      Foreground="{StaticResource InkBrush}"
-                      FontSize="14"
-                      FontWeight="SemiBold"
-                      DockPanel.Dock="Left" />
-                </DockPanel>
-
-                <Grid>
-                  <TextBox
-                      x:Name="WorkRequest"
-                      MinHeight="230"
-                      AcceptsReturn="True"
-                      TextWrapping="Wrap"
-                      VerticalScrollBarVisibility="Auto"
-                      BorderBrush="#E2C7E2"
-                      BorderThickness="1"
-                      Background="{StaticResource FieldBrush}"
-                      Foreground="{StaticResource InkBrush}"
-                      FontSize="14"
-                      Padding="14"
-                      SpellCheck.IsEnabled="True" />
-                  <TextBlock
-                      x:Name="PlaceholderText"
-                      Text="Write the instructions you want the AI to follow."
-                      Foreground="#9A869E"
-                      FontSize="14"
-                      Margin="18,15,18,0"
-                      TextWrapping="Wrap"
-                      IsHitTestVisible="False" />
-                </Grid>
-
+          <StackPanel MinHeight="350">
+            <Grid MinHeight="78" Margin="0,0,0,22">
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
+                <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,18,0" />
               </StackPanel>
-            </Border>
+              <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
+            </Grid>
 
-            <Border
-                BorderBrush="{StaticResource LineBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                Background="#FFFFFF"
-                Margin="0,0,0,18">
-              <StackPanel>
-                <Grid MinHeight="78" Margin="18,15">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                  </Grid.ColumnDefinitions>
-                  <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                    <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                    <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,16,0" />
-                  </StackPanel>
-                  <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
-                </Grid>
-              </StackPanel>
-            </Border>
+            <StackPanel>
+              <DockPanel Margin="0,0,0,10">
+                <TextBlock
+                    x:Name="RequestLabel"
+                    Text="Work request"
+                    Foreground="{StaticResource InkBrush}"
+                    FontSize="14"
+                    FontWeight="SemiBold"
+                    DockPanel.Dock="Left" />
+              </DockPanel>
+
+              <Grid>
+                <TextBox
+                    x:Name="WorkRequest"
+                    MinHeight="250"
+                    AcceptsReturn="True"
+                    TextWrapping="Wrap"
+                    VerticalScrollBarVisibility="Auto"
+                    BorderBrush="#E2C7E2"
+                    BorderThickness="1"
+                    Background="{StaticResource FieldBrush}"
+                    Foreground="{StaticResource InkBrush}"
+                    FontSize="14"
+                    Padding="14"
+                    SpellCheck.IsEnabled="True" />
+                <TextBlock
+                    x:Name="PlaceholderText"
+                    Text="Write the instructions you want the AI to follow."
+                    Foreground="#9A869E"
+                    FontSize="14"
+                    Margin="18,15,18,0"
+                    TextWrapping="Wrap"
+                    IsHitTestVisible="False" />
+              </Grid>
+            </StackPanel>
           </StackPanel>
         </ScrollViewer>
 

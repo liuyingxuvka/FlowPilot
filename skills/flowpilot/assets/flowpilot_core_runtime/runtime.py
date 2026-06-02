@@ -4685,6 +4685,17 @@ def run_until_wait(ledger: dict[str, Any], *, max_steps: int = RUN_UNTIL_WAIT_MA
             }
         applied = _apply_router_internal_action(ledger, action)
         folded.append(applied)
+        next_action = _guard_next_action(ledger)
+        if _guard_action_key(next_action) == _guard_action_key(action):
+            return {
+                "ok": True,
+                "command": "run-until-wait",
+                "boundary_class": "router_internal_blocked",
+                "next_action": next_action.to_json(),
+                "folded_applied_count": len(folded),
+                "folded_applied_actions": folded,
+                "blocked_reason": "router internal action repeated after application",
+            }
     action = _guard_next_action(ledger)
     raise BlackBoxRuntimeError(
         "run_until_wait exceeded max_steps before a foreground boundary: "
@@ -5197,6 +5208,10 @@ def _guard_decision(
         if status:
             return "terminal_return", f"run lifecycle is {status}; Controller stop is allowed"
         return "control_plane_stuck", "terminal lifecycle action appeared without terminal lifecycle evidence"
+    if action.action_type == "close_project":
+        closure = ledger.get("closure") if isinstance(ledger.get("closure"), Mapping) else {}
+        if closure.get("decision") == "blocked":
+            return "control_plane_stuck", "final closure is blocked and requires explicit repair before another closure attempt"
     if action.action_type == "wait_for_ack":
         return "wait_for_ack", str(wait_recovery_map.get("reason") or "assigned lease has not acknowledged")
     if action.action_type == "wait_for_result":
@@ -5710,7 +5725,11 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         return RuntimeAction("terminal_complete", "final backward chain is complete")
     if recursive_route_required(ledger) and ledger.get("route_nodes"):
         frontier = ledger.get("execution_frontier") or {}
-        if not frontier.get("active_node_id") and frontier.get("status") == "ready_for_final_closure":
+        if (
+            not frontier.get("active_node_id")
+            and frontier.get("status") == "ready_for_final_closure"
+            and closure.get("decision") != "blocked"
+        ):
             return RuntimeAction("close_project", "all route nodes are resolved; final route-wide closure is required")
     if not active_packets:
         if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
@@ -5816,7 +5835,11 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                 return RuntimeAction("issue_pm_disposition_packet", "node awaits PM disposition", node_id, "pm")
             if node.get("status") not in {"accepted", "superseded", "waived"}:
                 return RuntimeAction("issue_node_task_packet", "frontier has an incomplete route node", node_id, node.get("responsibility", "worker"), node.get("modeled_target", ""))
-        if frontier.get("status") == "ready_for_final_closure" and not (ledger.get("closure") or {}).get("decision") == "complete":
+        if (
+            frontier.get("status") == "ready_for_final_closure"
+            and not (ledger.get("closure") or {}).get("decision") == "complete"
+            and (ledger.get("closure") or {}).get("decision") != "blocked"
+        ):
             return RuntimeAction("close_project", "all route nodes are resolved; final route-wide closure is required")
 
     closure = ledger.get("closure") or {}

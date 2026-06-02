@@ -271,7 +271,10 @@
       "unknown": 2
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
-    "heavy_parent_full_regression_obligations": [],
+    "heavy_parent_full_regression_obligations": [
+      "meta",
+      "capability"
+    ],
     "heavyweight_threshold": 10000,
     "large_child_models": [],
     "missing_child_results": [],
@@ -280,17 +283,17 @@
       {
         "edge_count": 18,
         "layered_full_regression": {
-          "current": true,
+          "current": false,
           "proof": {
             "created_at": "2026-06-01T14:23:04.609136+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
-            "reason": "valid proof",
+            "reason": "input fingerprint changed",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/meta_layered_full_results.json",
             "state_count": 12,
-            "valid": true
+            "valid": false
           }
         },
         "model_id": "meta",
@@ -300,13 +303,13 @@
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
-          "reason": "valid proof",
+          "reason": "input fingerprint changed",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/meta_layered_full_results.json",
           "state_count": 12,
-          "valid": true
+          "valid": false
         },
-        "release_confidence": "current_with_layered_full_parent",
+        "release_confidence": "requires_full_regression",
         "release_validation_command": "python simulations/run_meta_checks.py --full",
         "result_file": "simulations/meta_thin_parent_results.json",
         "result_type": "thin_parent",
@@ -317,7 +320,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-01T14:23:06.812512+00:00",
+            "created_at": "2026-06-02T05:51:22.837030+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -328,7 +331,7 @@
             "edge_count": 18,
             "model_id": "meta",
             "ok": true,
-            "release_confidence": "current_with_layered_full_parent",
+            "release_confidence": "requires_full_regression",
             "result_file": "simulations/meta_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -341,33 +344,33 @@
       {
         "edge_count": 14,
         "layered_full_regression": {
-          "current": true,
+          "current": false,
           "proof": {
-            "created_at": "2026-06-01T14:23:04.577138+00:00",
+            "created_at": "2026-06-01T15:46:40.432341+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
-            "reason": "valid proof",
+            "reason": "input fingerprint changed",
             "release_confidence": "current_with_layered_full_parent",
             "result_file": "simulations/capability_layered_full_results.json",
             "state_count": 10,
-            "valid": true
+            "valid": false
           }
         },
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-01T14:23:04.577138+00:00",
+          "created_at": "2026-06-01T15:46:40.432341+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
-          "reason": "valid proof",
+          "reason": "input fingerprint changed",
           "release_confidence": "current_with_layered_full_parent",
           "result_file": "simulations/capability_layered_full_results.json",
           "state_count": 10,
-          "valid": true
+          "valid": false
         },
-        "release_confidence": "current_with_layered_full_parent",
+        "release_confidence": "requires_full_regression",
         "release_validation_command": "python simulations/run_capability_checks.py --full",
         "result_file": "simulations/capability_thin_parent_results.json",
         "result_type": "thin_parent",
@@ -378,7 +381,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-01T14:23:06.735982+00:00",
+            "created_at": "2026-06-02T05:51:27.586048+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -389,7 +392,7 @@
             "edge_count": 14,
             "model_id": "capability",
             "ok": true,
-            "release_confidence": "current_with_layered_full_parent",
+            "release_confidence": "requires_full_regression",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
             "routine_confidence": "current",
@@ -1613,7 +1616,7 @@
         "tier": "small"
       }
     ],
-    "release_confidence": "current",
+    "release_confidence": "requires_background_or_valid_proof",
     "release_validation_commands": {
       "capability": "python simulations/run_capability_checks.py --full",
       "meta": "python simulations/run_meta_checks.py --full"

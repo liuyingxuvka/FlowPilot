@@ -212,21 +212,21 @@ def _source_report(project_root: Path) -> dict[str, object]:
         failures.append(f"contract registry missing ids: {missing_contracts}")
 
     missing_card_mentions: list[str] = []
-    missing_direct_router_submit_guidance: list[str] = []
+    missing_submit_result_guidance: list[str] = []
     missing_progress_guidance: list[str] = []
     for rel in ROLE_CARDS:
         path = project_root / rel
         text = path.read_text(encoding="utf-8") if path.exists() else ""
-        if "flowpilot_runtime.py" not in text:
+        if "flowpilot_new.py" not in text:
             missing_card_mentions.append(rel)
-        if "submit-output-to-router" not in text:
-            missing_direct_router_submit_guidance.append(rel)
+        if "submit-result" not in text:
+            missing_submit_result_guidance.append(rel)
         if "progress_status" not in text:
             missing_progress_guidance.append(rel)
     if missing_card_mentions:
-        failures.append(f"role cards missing flowpilot_runtime.py guidance: {missing_card_mentions}")
-    if missing_direct_router_submit_guidance:
-        failures.append(f"role cards missing submit-output-to-router guidance: {missing_direct_router_submit_guidance}")
+        failures.append(f"role cards missing flowpilot_new.py guidance: {missing_card_mentions}")
+    if missing_submit_result_guidance:
+        failures.append(f"role cards missing submit-result guidance: {missing_submit_result_guidance}")
     if missing_progress_guidance:
         failures.append(f"role cards missing role-output progress guidance: {missing_progress_guidance}")
 
@@ -234,8 +234,8 @@ def _source_report(project_root: Path) -> dict[str, object]:
     catalog_text = output_catalog.read_text(encoding="utf-8") if output_catalog.exists() else ""
     if "progress_status" not in catalog_text:
         failures.append("PM output contract catalog missing role-output progress_status guidance")
-    if "submit-output-to-router" not in catalog_text:
-        failures.append("PM output contract catalog missing submit-output-to-router guidance")
+    if "submit-result" not in catalog_text:
+        failures.append("PM output contract catalog missing submit-result guidance")
 
     controller_card = project_root / "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md"
     controller_text = controller_card.read_text(encoding="utf-8") if controller_card.exists() else ""
@@ -248,7 +248,7 @@ def _source_report(project_root: Path) -> dict[str, object]:
             [
                 "Runtime-ready evidence preempts foreground role waits",
                 "flowpilot_new.py patrol",
-                "controller_next_action_notice.json",
+                "current runtime next-action notice",
             ],
         ),
         "skill launcher": (
@@ -264,7 +264,7 @@ def _source_report(project_root: Path) -> dict[str, object]:
             [
                 "Runtime-ready evidence still preempts foreground role waits",
                 "flowpilot_new.py patrol",
-                "controller_next_action_notice.json",
+                "current runtime next-action notice",
             ],
         ),
     }

@@ -120,7 +120,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             ),
             external_inputs=("root", "lease_id", "packet_id", "body"),
             external_outputs=("return",),
-            side_effects=("submit_host_result", "_run_until_wait_and_save"),
+            side_effects=("submit_host_result", "save_run_ledger", "_run_until_wait_and_save"),
         ),
         _contract(
             "flowpilot_new.status",
