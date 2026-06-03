@@ -66,6 +66,7 @@ def create_run_shell(
         "results/bodies",
         "leases",
         "role_memory",
+        "role_continuity",
         "frontier",
         "preplanning",
         "route_nodes",
@@ -245,6 +246,8 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_json(shell.run_root / "leases" / f"{lease_id}.json", lease)
     for lease_id, memory in ledger.get("role_memory", {}).items():
         _write_json(shell.run_root / "role_memory" / f"{lease_id}.json", memory)
+    if isinstance(ledger.get("role_continuity"), dict):
+        _write_json(shell.run_root / "role_continuity" / "role_continuity.json", ledger["role_continuity"])
     for order_id, order in ledger.get("flowguard_work_orders", {}).items():
         _write_json(shell.run_root / "flowguard" / "work_orders" / f"{order_id}.json", order)
         envelope = {

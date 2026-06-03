@@ -118,7 +118,6 @@ def build_source_contract_alignment_plan() -> ModelTestAlignmentPlan:
         boundary_contracts=source_boundary_contracts(),
         boundary_observations=source_boundary_observations(),
         test_evidence=source_test_evidence(),
-        require_code_contracts=True,
     )
 
 

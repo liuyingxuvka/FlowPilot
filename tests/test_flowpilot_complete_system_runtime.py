@@ -110,6 +110,136 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertTrue(ledger["host_evidence"][live_lease_id]["live_confidence"])
         self.assertEqual(host.host_confidence_boundary(ledger)["confidence"], "live")
 
+    def test_same_responsibility_leases_reuse_current_run_agent_for_all_roles(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Do work"])
+
+        for role in ("pm", "reviewer", "flowguard_operator", "worker", "research_worker", "ui_qa", "planner"):
+            with self.subTest(role=role):
+                first = host.lease_responsibility(ledger, role, agent_id=f"{role}-agent-1", host_kind="fake")
+                runtime.close_lease(ledger, first, "test_role_available")
+                second = host.lease_responsibility(ledger, role, agent_id=f"{role}-agent-2", host_kind="fake")
+
+                self.assertEqual(ledger["leases"][second]["agent_id"], f"{role}-agent-1")
+                self.assertTrue(ledger["leases"][second]["role_continuity"]["reused"])
+                slot = ledger["role_continuity"]["roles"][role]
+                self.assertEqual(slot["agent_id"], f"{role}-agent-1")
+                self.assertIn(f"{role}-agent-2", slot["rejected_replacement_candidate_ids"])
+
+    def test_replacement_lease_requires_same_responsibility_memory_seed(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Review work"])
+        packet_id = packets.issue_packet(ledger, "reviewer", "Review work", "SEALED_REVIEW")
+        first = host.lease_responsibility(ledger, "reviewer", agent_id="reviewer-agent-1", host_kind="fake", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, first)
+        runtime.record_host_liveness(ledger, first, packet_id, "lost")
+
+        replacement_packet = packets.issue_packet(ledger, "reviewer", "Review replacement work", "SEALED_REVIEW_2")
+        replacement = host.lease_responsibility(
+            ledger,
+            "reviewer",
+            agent_id="reviewer-agent-2",
+            host_kind="fake",
+            packet_id=replacement_packet,
+        )
+        memory = runtime.role_memory_seed_for_lease(ledger, replacement, replacement_packet)
+
+        self.assertEqual(ledger["leases"][replacement]["agent_id"], "reviewer-agent-2")
+        self.assertEqual(ledger["leases"][replacement]["prior_agent_id"], "reviewer-agent-1")
+        self.assertTrue(ledger["leases"][replacement]["role_memory_seed_required"])
+        self.assertIsNotNone(memory)
+        assert memory is not None
+        self.assertEqual(memory["role"], "reviewer")
+        self.assertFalse(memory["sealed_packet_body_text_included"])
+        self.assertFalse(memory["sealed_result_body_text_included"])
+        self.assertNotIn("SEALED_REVIEW", json.dumps(memory, sort_keys=True))
+
+    def test_pm_repair_packets_include_recommendation_and_fresh_deliverable_contract(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = packets.issue_packet(ledger, "worker", "Do work", "SEALED_TASK")
+        worker = host.lease_responsibility(ledger, "worker", agent_id="worker-agent-1", host_kind="fake", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, worker)
+        runtime.ack_lease(ledger, worker, packet_id)
+        host.submit_host_result(
+            ledger,
+            worker,
+            packet_id,
+            json.dumps(
+                {
+                    "decision": "block",
+                    "blocker_class": "deliverable_gap",
+                    "recommended_resolution": "Create the missing concrete deliverable, not another repair summary.",
+                }
+            ),
+        )
+
+        blocker = next(iter(ledger["active_blockers"].values()))
+        pm_packet_id = blocker["pm_repair_packet_id"]
+        pm_body = json.loads(ledger["packets"][pm_packet_id]["body"])
+        self.assertEqual(pm_body["recommended_resolution"], "Create the missing concrete deliverable, not another repair summary.")
+        self.assertEqual(pm_body["repair_target_packet_id"], packet_id)
+        self.assertEqual(pm_body["repair_target"]["output_contract"]["packet_id"], packet_id)
+        self.assertTrue(pm_body["repair_decision_contract"]["repair_summary_alone_is_not_completion"])
+
+        pm_lease = host.lease_responsibility(ledger, "pm", agent_id="pm-agent-1", host_kind="fake", packet_id=pm_packet_id)
+        runtime.assign_packet(ledger, pm_packet_id, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet_id)
+        host.submit_host_result(ledger, pm_lease, pm_packet_id, json.dumps({"decision": "sender_reissue", "reason": "reissue"}))
+
+        repair_packet = next(
+            packet
+            for packet in ledger["packets"].values()
+            if packet.get("repair_blocker_id") == blocker["blocker_id"]
+        )
+        repair_body = json.loads(repair_packet["body"])
+        self.assertEqual(repair_body["original_packet_id"], packet_id)
+        self.assertEqual(repair_body["original_output_contract"]["packet_id"], packet_id)
+        self.assertEqual(repair_body["recommended_resolution"], "Create the missing concrete deliverable, not another repair summary.")
+        self.assertTrue(repair_body["repair_completion_contract"]["must_submit_current_packet_result"])
+        self.assertTrue(repair_body["repair_completion_contract"]["must_satisfy_original_output_contract"])
+        self.assertTrue(repair_body["repair_completion_contract"]["repair_summary_alone_is_not_completion"])
+
+    def test_repeated_blocker_family_is_visible_as_advisory_context(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = packets.issue_packet(ledger, "worker", "Do work", "SEALED_TASK")
+
+        for index in (1, 2):
+            lease = host.lease_responsibility(
+                ledger,
+                "worker",
+                agent_id=f"worker-agent-{index}",
+                host_kind="fake",
+                packet_id=packet_id,
+            )
+            runtime.assign_packet(ledger, packet_id, lease)
+            runtime.ack_lease(ledger, lease, packet_id)
+            host.submit_host_result(
+                ledger,
+                lease,
+                packet_id,
+                json.dumps(
+                    {
+                        "decision": "block",
+                        "blocker_class": "same_gap",
+                        "recommended_resolution": "Fix the same missing output.",
+                    }
+                ),
+            )
+
+        latest_blocker = list(ledger["active_blockers"].values())[-1]
+        pm_packet = ledger["packets"][latest_blocker["pm_repair_packet_id"]]
+        pm_body = json.loads(pm_packet["body"])
+
+        self.assertEqual(pm_body["repeat_context"]["repeat_count"], 2)
+        self.assertTrue(pm_body["repeat_context"]["advisory_only"])
+        self.assertIn(list(ledger["active_blockers"].values())[0]["blocker_id"], pm_body["repeat_context"]["previous_blocker_ids"])
+
     def test_complete_packet_flow_rejects_cockpit_direct_state_write_and_old_authority(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         ledger["startup_intake"] = {"sealed": True}

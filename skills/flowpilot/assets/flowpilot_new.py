@@ -289,6 +289,7 @@ def role_handoff_payload(root: Path, *, lease_id: str, packet_id: str) -> dict[s
 def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
+    role_memory = runtime.role_memory_seed_for_lease(ledger, lease_id, packet_id)
     body = packets.open_sealed_body_for_role(ledger, packet_id, lease_id)
     packet = ledger["packets"][packet_id]
     lease = ledger["leases"][lease_id]
@@ -312,7 +313,12 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
             "agent_id": lease.get("agent_id", ""),
             "responsibility": lease.get("responsibility", ""),
             "ack_received": bool(lease.get("ack_received")),
+            "role_memory_present": bool(role_memory),
+            "role_memory_seed_required": bool(lease.get("role_memory_seed_required")),
+            "role_memory_seed_id": str(lease.get("role_memory_seed_id") or ""),
         },
+        "role_memory": role_memory,
+        "role_memory_visibility": "assigned_role_only",
         "sealed_packet_body": body,
         "sealed_body_visibility": "assigned_role_only",
         "controller_may_read_packet_body": False,

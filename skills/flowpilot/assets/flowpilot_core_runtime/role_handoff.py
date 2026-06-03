@@ -90,6 +90,9 @@ def render_current_packet_handoff(
     host_kind = str(lease.get("host_kind") or "")
     agent_id = str(lease.get("agent_id") or "")
     objective = str(envelope.get("objective") or "")
+    role_memory_seed_id = str(lease.get("role_memory_seed_id") or "")
+    role_memory_present = bool(role_memory_seed_id)
+    role_memory_required = bool(lease.get("role_memory_seed_required"))
 
     text = "\n".join(
         [
@@ -104,6 +107,12 @@ def render_current_packet_handoff(
             f"Host kind: `{host_kind}`" if host_kind else "Host kind: `<unspecified>`",
             f"Agent id: `{agent_id}`" if agent_id else "Agent id: `<unspecified>`",
             f"Packet objective: `{objective}`" if objective else "Packet objective: `<unspecified>`",
+            (
+                "Role memory: present in open-packet output."
+                if role_memory_present
+                else "Role memory: no prior current-run memory seed for this lease."
+            ),
+            "Role memory required before open: yes." if role_memory_required else "Role memory required before open: no.",
             "",
             f"Act as the {label} role only for this packet.",
             "First ACK the lease with:",
@@ -133,6 +142,10 @@ def render_current_packet_handoff(
         "controller_may_read": True,
         "controller_may_read_packet_body": False,
         "sealed_body_text_included": False,
+        "role_memory_present": role_memory_present,
+        "role_memory_seed_required": role_memory_required,
+        "role_memory_seed_id": role_memory_seed_id,
+        "role_memory_body_included": False,
         "role_must_not_expose_sealed_body_in_chat": True,
         "commands": {
             "ack": ack_command,

@@ -21035,6 +21035,65 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-role-continuity-memory - FlowPilot current-run role continuity and repair packet hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowPilot to reuse existing same-responsibility agent threads where possible, inject current-run memory when a role must be replaced, and make PM/blocker repair packets concrete enough to avoid vague repair loops.
+- Status: completed
+- Skill decision: OpenSpec propose/apply with FlowGuard existing-model preflight and DevelopmentProcessFlow grounding
+- Started: 2026-06-03T09:20:00+00:00
+- Ended: 2026-06-03T09:47:11+00:00
+- Commands OK: True
+
+### Model Files
+- `simulations/meta_model.py`
+- `simulations/capability_model.py`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> 1.0
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> 0.40.7
+- OK: `python -m flowguard project-audit --root .`
+- OK: `openspec validate harden-flowpilot-role-continuity-memory --strict`
+- OK: `python -m pytest tests/test_flowpilot_complete_system_runtime.py -q`
+- OK: `python -m pytest tests/test_flowpilot_complete_system_runtime.py -q -k "same_responsibility or replacement_lease or pm_repair_packets or repeated_blocker"`
+- OK: `python -m compileall -q skills\flowpilot\assets\flowpilot_core_runtime skills\flowpilot\assets\flowpilot_new.py simulations\flowpilot_complete_system_evidence_model.py simulations\flowpilot_model_test_alignment_source_contracts.py`
+- OK: `python simulations/run_meta_checks.py` in background, log root `tmp/flowguard_background`, exit file `run_meta_checks.exit.txt`, exit 0, proof_reused false.
+- OK: `python simulations/run_capability_checks.py` in background, log root `tmp/flowguard_background`, exit file `run_capability_checks.exit.txt`, exit 0, proof_reused false.
+- OK: `python scripts/flowguard_project_topology.py build`
+- OK: `python scripts/flowguard_project_topology.py check`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/check_install.py --json`
+
+### Findings
+- The new current-run runtime now records a `role_continuity` ledger table for every registered FlowPilot responsibility.
+- Same-responsibility leasing prefers a reusable current-run agent id for PM, Reviewer, FlowGuard operator, worker-class roles, UI QA, planner, and future registered responsibilities.
+- Replacement leases attach a current-run metadata-only role memory seed before the replacement role can open its packet.
+- Public role handoff only exposes memory presence; assigned-role `open-packet` returns the bounded memory seed and still keeps sealed packet/result body text out of Controller-visible output.
+- PM repair-decision packets now include blocker recommendation, target packet, stale evidence ids, output contract, and repeat-loop context.
+- Repair reissue packets now name the original output contract and state that a repair summary alone is not completion evidence.
+- The complete-system alignment model used an obsolete `require_code_contracts` constructor argument; the current FlowGuard model class keeps orphan test/code-contract checks through `allow_orphan_tests` and `allow_orphan_code_contracts`, so the obsolete argument was removed.
+
+### Counterexamples
+- Focused regression covers repeated same-family blockers and verifies repeat context is advisory only, not a silent terminal stop or gate pass.
+
+### Friction Points
+- Running topology build and check in parallel produced a transient stale-source check failure because check read mixed pre/post-build mtimes; a serial topology check then passed.
+- Running install sync and install audit/check in parallel produced transient stale-install findings; serial post-sync install check and audit then passed.
+
+### Skipped Steps
+- Full layered parent release regressions were not force-rerun; meta/capability background logs report the layered full boundary remains release-scoped when fingerprints differ.
+- No GitHub push, tag, release, or deploy was performed.
+
+### Risk Evidence Summary
+- Current evidence supports the role-continuity and repair-packet runtime change, local installed skill freshness, topology freshness, and routine meta/capability regression pass.
+- Broad public release confidence still requires the repository's separate release-only layered/full gates.
+
+### Next Actions
+- Commit only the scoped task files locally and preserve unrelated peer-agent changes in the working tree.
+
+
 ## flowpilot-structural-convergence-guard-20260602 - FlowPilot structure debt convergence hardening
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -22864,6 +22923,262 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard package version recorded: 0.40.5
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+## flowpilot-run-20260601-packet-0275-prework-flowguard - Current-run pre-work FlowGuard evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: FlowPilot packet packet-0275 assigned flowguard_operator responsibility for mandatory pre-work FlowGuard gate before worker execution.
+- Status: completed_submitted_to_flowpilot_runtime
+- Skill decision: flowguard_existing_model_preflight+flowguard_test_mesh+flowguard_model_test_alignment
+- FlowGuard schema/package: 1.0 / 0.40.5
+- Run/packet/lease: run-20260601-143553 / packet-0275 / lease-0281
+- Evidence root: .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0275
+- Background log root: tmp/flowguard_background
+
+### Commands
+- OK: python -c "import flowguard; print(flowguard.SCHEMA_VERSION)" -> 1.0
+- OK: python -c "import importlib.metadata as m; print(m.version('flowguard'))" -> 0.40.5
+- OK: python -m flowguard project-audit --root .
+- OK: python simulations/run_meta_checks.py --full --force --json-out <packet evidence>
+- OK: python simulations/run_capability_checks.py --full --force --json-out <packet evidence>
+- OK: python simulations/run_flowpilot_complete_system_testmesh_checks.py --json-out <packet evidence>
+- OK: python simulations/run_flowpilot_complete_system_alignment_checks.py --json-out <packet evidence>
+- OK: python simulations/run_flowpilot_model_test_alignment_checks.py --json-out <packet evidence>
+- OK: python scripts/flowguard_project_topology.py check
+
+### Findings
+- Schema, package version, project audit, and manifest comparison passed with FlowGuard 0.40.5 / schema 1.0.
+- Meta and capability layered full parent checks were rerun into current-run packet evidence with exit code 0.
+- Complete-system TestMesh routine gate passed and kept release-only suites visible as deferred/not-run.
+- Complete-system planning model-test alignment passed; broader repository alignment passed while surfacing two existing medium structure-split maintenance findings.
+- Topology check passed without findings; no topology-owned source/model/test surfaces changed.
+
+### Skipped Steps
+- No worker implementation, release, install sync, GitHub push, tag, deploy, or broad public release claim was performed.
+- Release-only TestMesh suites requiring future runtime/live-host/install evidence were visible and not claimed as passed.
+- Topology build was not run because this packet only produced current-run evidence artifacts.
+
+### Risk Evidence Summary
+- Pre-work node design is safe for worker execution under routine/current-run evidence; release confidence is not claimed for deferred release-only suites.
+- Existing structure split maintenance findings for flowpilot_new.py and flowguard_project_topology.py remain future maintenance signals, not current node blockers.
+
+
+## flowpilot-run-20260601-packet-0276-rerun-current-flowguard-evidence - FlowPilot packet-0276 rerun current-run FlowGuard evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Worker packet for route node rerun-current-flowguard-evidence requires fresh current-run FlowGuard executable evidence
+- Status: in_progress
+- Skill decision: use_direct_flowguard_skill: development_process_flow with existing_model_preflight grounding
+- Started: 2026-06-02T16:00:53+00:00
+- Ended: 2026-06-02T16:00:53+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK (0.000s): `python -m flowguard project-audit --root .`
+
+### Findings
+- none recorded
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- none recorded
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Run scoped executable evidence suite and submit sealed result through FlowPilot runtime
+
+
+## flowpilot-run-20260601-packet-0276-rerun-current-flowguard-evidence - FlowPilot packet-0276 rerun current-run FlowGuard evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Worker packet for route node rerun-current-flowguard-evidence requires fresh current-run FlowGuard executable evidence
+- Status: completed
+- Skill decision: use_direct_flowguard_skill: development_process_flow with existing_model_preflight grounding
+- Started: 2026-06-02T16:36:13+00:00
+- Ended: 2026-06-02T16:36:13+00:00
+- Duration seconds: 2100.000
+- Commands OK: False
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK (0.000s): `python -c import-flowguard-schema`
+- OK (0.000s): `python -c importlib-metadata-flowguard-version`
+- OK (0.000s): `python -m flowguard project-audit --root .`
+- OK (0.000s): `python scripts/flowguard_project_topology.py check`
+- OK (0.000s): `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/flowpilot_model_test_alignment_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_complete_system_testmesh_checks.py --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/flowpilot_complete_system_testmesh_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_model_maturation_checks.py --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/flowpilot_model_maturation_results.json`
+- OK (0.000s): `python simulations/run_meta_checks.py --force --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_meta_checks_results.json --proof-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_meta_checks_proof.json`
+- OK (0.000s): `python simulations/run_capability_checks.py --force --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_capability_checks_results.json --proof-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_capability_checks_proof.json`
+- FAIL (0.000s): `python -m flowguard scenario-review (generic demo CLI, non-applicable in this install: missing examples.job_matching)`
+- FAIL (0.000s): `python -m flowguard conformance (generic demo CLI, non-applicable in this install: missing examples.problem_corpus)`
+- FAIL (0.000s): `python -m flowguard loop-review (generic demo CLI, non-applicable in this install: missing examples.looping_workflow)`
+
+### Findings
+- Current-run route node rerun-current-flowguard-evidence is active on route_version=1/source_generation=1/repair_generation=1; previous packet/evidence for this node is marked stale in the node file.
+- Real FlowGuard schema=1.0, package=0.40.5, project manifest=0.40.5, project-audit pass; no project-upgrade required.
+- All packet-scoped project evidence commands completed with exit 0; run_meta_checks and run_capability_checks were forced and valid_proof_reused=false.
+- Routine model-test alignment and TestMesh are green to continue; full coverage/release gates remain bounded by deferred structure splits and release-only suites.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Initial wrapper bug launched python without arguments and left invalid flowguard_schema artifact locked; corrected run used packet-scoped small-check names and required base names for heavyweight checks.
+
+### Skipped Steps
+- Topology build skipped because no model, runner, test registry, code ownership, prompt/card, or readiness surface was changed; topology check passed.
+- Full layered parent release regressions skipped; thin parent routine checks passed but release_confidence remains requires_full_regression because layered full fingerprints changed.
+
+### Risk Evidence Summary
+- Claim boundary: current packet routine FlowGuard evidence rerun only, not full release readiness, not install sync, not live-host readiness, and not topology rebuild.
+
+### Next Actions
+- Submit sealed packet-0276 result to FlowPilot runtime for PM/reviewer disposition.
+
+
+## flowpilot-run-20260601-packet-0276-rerun-current-flowguard-evidence-corrected - FlowPilot packet-0276 rerun current-run FlowGuard evidence
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Worker packet for route node rerun-current-flowguard-evidence requires fresh current-run FlowGuard executable evidence
+- Status: completed
+- Skill decision: use_direct_flowguard_skill: development_process_flow with existing_model_preflight grounding
+- Started: 2026-06-02T16:36:41+00:00
+- Ended: 2026-06-02T16:36:41+00:00
+- Duration seconds: 2100.000
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- OK (0.000s): `python -c import-flowguard-schema`
+- OK (0.000s): `python -c importlib-metadata-flowguard-version`
+- OK (0.000s): `python -m flowguard project-audit --root .`
+- OK (0.000s): `python scripts/flowguard_project_topology.py check`
+- OK (0.000s): `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/flowpilot_model_test_alignment_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_complete_system_testmesh_checks.py --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/flowpilot_complete_system_testmesh_results.json`
+- OK (0.000s): `python simulations/run_flowpilot_model_maturation_checks.py --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/flowpilot_model_maturation_results.json`
+- OK (0.000s): `python simulations/run_meta_checks.py --force --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_meta_checks_results.json --proof-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_meta_checks_proof.json`
+- OK (0.000s): `python simulations/run_capability_checks.py --force --json-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_capability_checks_results.json --proof-out .flowpilot/runs/run-20260601-143553/evidence/flowguard/packet-0276-current-run-evidence/run_capability_checks_proof.json`
+
+### Findings
+- Corrected entry: project-owned checks completed with exit 0; generic FlowGuard demo CLI commands are non-applicable in this install and recorded as skipped, not project failures.
+- Current-run route node rerun-current-flowguard-evidence is active on route_version=1/source_generation=1/repair_generation=1; previous packet/evidence for this node is marked stale in the node file.
+- Real FlowGuard schema=1.0, package=0.40.5, project manifest=0.40.5, project-audit pass; no project-upgrade required.
+- All packet-scoped project evidence commands completed with exit 0; run_meta_checks and run_capability_checks were forced and valid_proof_reused=false.
+- Routine model-test alignment and TestMesh are green to continue; full coverage/release gates remain bounded by deferred structure splits and release-only suites.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Initial wrapper bug launched python without arguments and left invalid flowguard_schema artifact locked; corrected run used packet-scoped small-check names and required base names for heavyweight checks.
+
+### Skipped Steps
+- Generic FlowGuard CLI scenario-review/conformance/loop-review/self-conformance/coverage are demo example surfaces in this install and fail on missing examples modules; project-specific runners are the applicable checks.
+- Topology build skipped because no model, runner, test registry, code ownership, prompt/card, or readiness surface was changed; topology check passed.
+- Full layered parent release regressions skipped; thin parent routine checks passed but release_confidence remains requires_full_regression because layered full fingerprints changed.
+
+### Risk Evidence Summary
+- Claim boundary: current packet routine FlowGuard evidence rerun only, not full release readiness, not install sync, not live-host readiness, and not topology rebuild.
+
+### Next Actions
+- Submit sealed packet-0276 result to FlowPilot runtime for PM/reviewer disposition.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-02T18:07:14+00:00
+- Ended: 2026-06-02T18:07:14+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.6
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-02T18:47:30+00:00
+- Ended: 2026-06-02T18:47:30+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.7
 - FlowGuard schema version recorded: 1.0
 - Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
 

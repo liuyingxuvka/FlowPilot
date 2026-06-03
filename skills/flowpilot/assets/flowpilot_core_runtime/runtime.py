@@ -92,6 +92,11 @@ EVENT_FAMILY_BY_TYPE = {
     "responsibility_lease_created": "lease",
     "role_memory_seed_recorded": "lease",
     "host_liveness_recorded": "lease",
+    "role_continuity_reused": "lease",
+    "role_continuity_replaced": "lease",
+    "role_continuity_initialized": "lease",
+    "role_memory_seed_attached": "lease",
+    "role_memory_seed_missing": "lease",
     "orphan_evidence_detected": "validation",
     "task_packet_issued": "packet",
     "packet_assigned": "packet",
@@ -176,6 +181,7 @@ _HOST_LIVENESS_STATUSES = (
         "acknowledged",
     }
 )
+_ROLE_NONREUSABLE_LIVENESS_STATUSES = _WAIT_LIVENESS_FAILURE_STATUSES | _WAIT_NO_OUTPUT_STATUSES
 TERMINAL_LIFECYCLE_STATUSES = {"stopped_by_user", "cancelled_by_user"}
 _STALE_RESULT_BLOCKERS = {
     "closed_or_inactive_lease",
@@ -381,6 +387,11 @@ def new_ledger(
         "host_driver_state": {},
         "host_evidence": {},
         "host_liveness_reports": {},
+        "role_continuity": {
+            "schema_version": "black_box_flowpilot.role_continuity.v1",
+            "roles": {},
+        },
+        "role_memory": {},
         "orphan_evidence": {},
         "terminal_lifecycle": None,
         "imported_evidence": {},
@@ -2531,6 +2542,13 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
     if existing:
         blocker["pm_repair_packet_id"] = str(existing["packet_id"])
         return str(existing["packet_id"])
+    repair_target_packet = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
+    repair_target_envelope = (
+        repair_target_packet.get("envelope", {})
+        if isinstance(repair_target_packet, Mapping) and isinstance(repair_target_packet.get("envelope"), Mapping)
+        else {}
+    )
+    repeat_context = _blocker_repeat_context(ledger, blocker)
     packet_id = issue_task_packet(
         ledger,
         "pm",
@@ -2540,11 +2558,40 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "schema_version": "black_box_flowpilot.pm_repair_decision_packet.v1",
                 "blocker_id": blocker_id,
                 "blocked_packet_id": blocker["packet_id"],
+                "subject_packet_id": blocker.get("subject_packet_id", ""),
                 "repair_target_packet_id": blocker["repair_target_packet_id"],
+                "target_result_id": blocker.get("target_result_id", ""),
                 "gate_kind": blocker["gate_kind"],
+                "blocker_class": blocker.get("blocker_class", ""),
+                "blocker_status": blocker.get("status", ""),
+                "recommended_resolution": blocker.get("recommended_resolution", ""),
+                "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
                 "required_recheck_role": blocker["required_recheck_role"],
+                "repair_target": {
+                    "packet_id": str(blocker.get("repair_target_packet_id") or ""),
+                    "objective": str(repair_target_envelope.get("objective") or ""),
+                    "packet_kind": str(repair_target_envelope.get("packet_kind", "task")),
+                    "responsibility": str(repair_target_envelope.get("responsibility") or ""),
+                    "required_output_type": str(repair_target_envelope.get("required_output_type") or ""),
+                    "output_contract": _copy_jsonable(repair_target_envelope.get("output_contract") or {}),
+                    "acceptance_criteria": list(repair_target_envelope.get("acceptance_criteria") or []),
+                    "route_node_id": str(repair_target_envelope.get("route_node_id") or blocker.get("route_node_id") or ""),
+                    "route_scope": str(repair_target_envelope.get("route_scope") or blocker.get("route_scope") or ""),
+                },
+                "repeat_context": repeat_context,
                 "allowed_decisions": sorted(_PM_REPAIR_DECISIONS),
-                "instruction": "Return a PM repair decision. PM chooses the repair route; PM does not impersonate the blocked reviewer, system validation check, or FlowGuard pass.",
+                "repair_decision_contract": {
+                    "pm_must_choose_allowed_decision": True,
+                    "pm_must_account_for_recommended_resolution": bool(blocker.get("recommended_resolution")),
+                    "pm_does_not_mark_blocked_gate_passed_by_text": True,
+                    "repair_summary_alone_is_not_completion": True,
+                    "repeat_context_is_advisory_not_terminal": True,
+                },
+                "instruction": (
+                    "Return a PM repair decision. PM chooses the repair route using the blocker recommendation and "
+                    "target contract. PM does not impersonate the blocked reviewer, system validation check, FlowGuard "
+                    "pass, or worker deliverable."
+                ),
             },
             indent=2,
             sort_keys=True,
@@ -2788,6 +2835,7 @@ def _issue_sender_repair_packet(
     target_packet = _require(ledger["packets"], target_packet_id, "repair target packet")
     target_envelope = target_packet["envelope"]
     repair_role = responsibility or str(target_envelope.get("responsibility") or "worker")
+    repeat_context = _blocker_repeat_context(ledger, blocker)
     packet_id = issue_task_packet(
         ledger,
         repair_role,
@@ -2799,9 +2847,31 @@ def _issue_sender_repair_packet(
                 "pm_repair_decision_id": decision_id,
                 "original_packet_id": target_packet_id,
                 "original_body_hash": target_envelope.get("body_hash", ""),
+                "original_objective": target_envelope.get("objective", ""),
+                "original_packet_kind": target_envelope.get("packet_kind", "task"),
+                "original_required_output_type": target_envelope.get("required_output_type", ""),
+                "original_output_contract": _copy_jsonable(target_envelope.get("output_contract") or {}),
+                "original_acceptance_criteria": list(target_envelope.get("acceptance_criteria") or []),
+                "target_result_id": blocker.get("target_result_id", ""),
+                "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
+                "blocker_class": blocker.get("blocker_class", ""),
                 "required_recheck_role": blocker.get("required_recheck_role", ""),
                 "recommended_resolution": blocker.get("recommended_resolution", ""),
-                "instruction": "Produce fresh repaired evidence. The prior blocked artifact is context only, not passing evidence.",
+                "repeat_context": repeat_context,
+                "repair_completion_contract": {
+                    "must_submit_current_packet_result": True,
+                    "current_repair_packet_replaces_context_only_prior_artifact": True,
+                    "repair_summary_alone_is_not_completion": True,
+                    "must_satisfy_original_output_contract": True,
+                    "may_return_new_blocker_if_repair_is_not_possible": True,
+                    "required_recheck_role": blocker.get("required_recheck_role", ""),
+                },
+                "instruction": (
+                    "Produce fresh repaired evidence for this current repair packet. The prior blocked artifact is "
+                    "context only, not passing evidence. A repair explanation or summary alone is not enough unless "
+                    "the original output contract explicitly requires only that; otherwise submit the corrected "
+                    "deliverable or a new structured blocker."
+                ),
             },
             indent=2,
             sort_keys=True,
@@ -3003,6 +3073,331 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
         ensure_node_prework_flowguard_packet(ledger, replacement_id)
 
 
+def _role_continuity_table(ledger: dict[str, Any]) -> dict[str, Any]:
+    continuity = ledger.setdefault(
+        "role_continuity",
+        {
+            "schema_version": "black_box_flowpilot.role_continuity.v1",
+            "roles": {},
+        },
+    )
+    if not isinstance(continuity, dict):
+        continuity = {"schema_version": "black_box_flowpilot.role_continuity.v1", "roles": {}}
+        ledger["role_continuity"] = continuity
+    roles = continuity.setdefault("roles", {})
+    if not isinstance(roles, dict):
+        roles = {}
+        continuity["roles"] = roles
+    return roles
+
+
+def _role_slot_reusable(ledger: Mapping[str, Any], role: str, slot: Mapping[str, Any] | None) -> bool:
+    if not isinstance(slot, Mapping):
+        return False
+    agent_id = str(slot.get("agent_id") or "").strip()
+    lease_id = str(slot.get("latest_lease_id") or "").strip()
+    if not agent_id:
+        return False
+    if str(slot.get("reuse_state") or "reusable") != "reusable":
+        return False
+    lease = ledger.get("leases", {}).get(lease_id)
+    if isinstance(lease, Mapping):
+        if lease.get("responsibility") != role:
+            return False
+        if lease.get("status") in {"expired", "superseded", "cancelled"}:
+            return False
+        liveness = str(lease.get("liveness_status") or lease.get("last_liveness_status") or "")
+        if liveness in _ROLE_NONREUSABLE_LIVENESS_STATUSES:
+            return False
+    liveness = str(slot.get("last_liveness_status") or "")
+    return liveness not in _ROLE_NONREUSABLE_LIVENESS_STATUSES
+
+
+def _public_packet_memory_row(ledger: Mapping[str, Any], packet_id: str, packet: Mapping[str, Any]) -> dict[str, Any]:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    result_rows: list[dict[str, Any]] = []
+    for result_id in list(packet.get("result_ids") or [])[-3:]:
+        result = ledger.get("results", {}).get(str(result_id))
+        if not isinstance(result, Mapping):
+            continue
+        result_rows.append(
+            {
+                "result_id": str(result.get("result_id") or result_id),
+                "status": str(result.get("status") or ""),
+                "accepted": bool(result.get("accepted") is True),
+                "semantic_decision": str(result.get("semantic_decision") or ""),
+                "packet_outcome_id": str(result.get("packet_outcome_id") or ""),
+                "review_id": str(result.get("review_id") or ""),
+                "validation_evidence_id": str(result.get("validation_evidence_id") or ""),
+            }
+        )
+    return {
+        "packet_id": str(packet_id),
+        "packet_kind": str(envelope.get("packet_kind", "task")),
+        "status": str(packet.get("status") or ""),
+        "responsibility": str(envelope.get("responsibility") or ""),
+        "objective": str(envelope.get("objective") or ""),
+        "route_version": envelope.get("route_version"),
+        "route_node_id": str(envelope.get("route_node_id") or ""),
+        "route_scope": str(envelope.get("route_scope") or ""),
+        "subject_id": str(envelope.get("subject_id") or ""),
+        "target_result_id": str(envelope.get("target_result_id") or ""),
+        "accepted_result_id": str(packet.get("accepted_result_id") or ""),
+        "active_blocker_id": str(packet.get("active_blocker_id") or packet.get("repair_blocker_id") or ""),
+        "result_summaries": result_rows,
+    }
+
+
+def _blocker_repeat_context(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
+    target = str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or blocker.get("packet_id") or "")
+    blocker_class = str(blocker.get("blocker_class") or "")
+    same_family: list[dict[str, str]] = []
+    for candidate in ledger.get("active_blockers", {}).values():
+        if not isinstance(candidate, Mapping):
+            continue
+        candidate_target = str(
+            candidate.get("repair_target_packet_id") or candidate.get("subject_packet_id") or candidate.get("packet_id") or ""
+        )
+        if candidate_target != target or str(candidate.get("blocker_class") or "") != blocker_class:
+            continue
+        same_family.append(
+            {
+                "blocker_id": str(candidate.get("blocker_id") or ""),
+                "status": str(candidate.get("status") or ""),
+                "pm_repair_decision_id": str(candidate.get("pm_repair_decision_id") or ""),
+                "pm_repair_packet_id": str(candidate.get("pm_repair_packet_id") or ""),
+            }
+        )
+    return {
+        "family_key": f"{target}:{blocker_class}",
+        "repeat_count": len(same_family),
+        "previous_blocker_ids": [row["blocker_id"] for row in same_family if row["blocker_id"] != blocker.get("blocker_id")],
+        "same_family_blockers": same_family,
+        "advisory_only": True,
+    }
+
+
+def _public_blocker_memory_row(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "blocker_id": str(blocker.get("blocker_id") or ""),
+        "status": str(blocker.get("status") or ""),
+        "packet_id": str(blocker.get("packet_id") or ""),
+        "subject_packet_id": str(blocker.get("subject_packet_id") or ""),
+        "repair_target_packet_id": str(blocker.get("repair_target_packet_id") or ""),
+        "target_result_id": str(blocker.get("target_result_id") or ""),
+        "required_recheck_role": str(blocker.get("required_recheck_role") or ""),
+        "gate_kind": str(blocker.get("gate_kind") or ""),
+        "blocker_class": str(blocker.get("blocker_class") or ""),
+        "recommended_resolution": str(blocker.get("recommended_resolution") or ""),
+        "stale_evidence_ids": [str(item) for item in blocker.get("stale_evidence_ids") or []],
+        "pm_repair_packet_id": str(blocker.get("pm_repair_packet_id") or ""),
+        "pm_repair_decision_id": str(blocker.get("pm_repair_decision_id") or ""),
+        "repeat_context": _blocker_repeat_context(ledger, blocker),
+    }
+
+
+def _build_role_memory_seed(
+    ledger: Mapping[str, Any],
+    role: str,
+    *,
+    prior_agent_id: str = "",
+    replacement_reason: str = "",
+) -> dict[str, Any]:
+    packet_rows: list[dict[str, Any]] = []
+    for packet_id, packet in reversed(list(ledger.get("packets", {}).items())):
+        if not isinstance(packet, Mapping):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        packet_role = str(envelope.get("responsibility") or "")
+        packet_kind = str(envelope.get("packet_kind", "task"))
+        visible_to_role = packet_role == role or (
+            role == "pm" and packet_kind in {"pm_repair_decision", "pm_disposition"}
+        )
+        if not visible_to_role:
+            continue
+        packet_rows.append(_public_packet_memory_row(ledger, str(packet_id), packet))
+        if len(packet_rows) >= 8:
+            break
+
+    blocker_rows: list[dict[str, Any]] = []
+    for blocker in reversed(list(ledger.get("active_blockers", {}).values())):
+        if not isinstance(blocker, Mapping):
+            continue
+        if role != "pm" and role not in {
+            str(blocker.get("required_recheck_role") or ""),
+            str(blocker.get("owner_role") or ""),
+        }:
+            continue
+        blocker_rows.append(_public_blocker_memory_row(ledger, blocker))
+        if len(blocker_rows) >= 8:
+            break
+
+    pm_decisions: list[dict[str, Any]] = []
+    if role == "pm":
+        for decision in reversed(list(ledger.get("pm_repair_decisions", {}).values())):
+            if not isinstance(decision, Mapping):
+                continue
+            pm_decisions.append(
+                {
+                    "decision_id": str(decision.get("decision_id") or ""),
+                    "blocker_id": str(decision.get("blocker_id") or ""),
+                    "packet_id": str(decision.get("packet_id") or ""),
+                    "result_id": str(decision.get("result_id") or ""),
+                    "decision": str(decision.get("decision") or ""),
+                    "reason": str(decision.get("reason") or ""),
+                    "created_at": str(decision.get("created_at") or ""),
+                }
+            )
+            if len(pm_decisions) >= 8:
+                break
+
+    return {
+        "schema_version": "black_box_flowpilot.role_memory_seed.v1",
+        "role": role,
+        "prior_agent_id": prior_agent_id,
+        "replacement_reason": replacement_reason,
+        "current_run_only": True,
+        "body_text_included": False,
+        "sealed_packet_body_text_included": False,
+        "sealed_result_body_text_included": False,
+        "packet_summaries": packet_rows,
+        "active_blockers": blocker_rows,
+        "pm_repair_decisions": pm_decisions,
+        "created_at": now_iso(),
+    }
+
+
+def _attach_role_memory_seed(
+    ledger: dict[str, Any],
+    lease: dict[str, Any],
+    *,
+    memory: Mapping[str, Any],
+    prior_agent_id: str = "",
+    required: bool = False,
+) -> str:
+    memory_seed_id = _next_id(ledger, "role_memory_seed")
+    row = _copy_jsonable(memory)
+    row["memory_seed_id"] = memory_seed_id
+    row["lease_id"] = str(lease.get("lease_id") or "")
+    row["required_before_open"] = bool(required)
+    row["prior_agent_id"] = prior_agent_id or str(row.get("prior_agent_id") or "")
+    ledger.setdefault("role_memory", {})[memory_seed_id] = row
+    lease["role_memory_seed_id"] = memory_seed_id
+    lease["role_memory_seed_required"] = bool(required)
+    lease["role_memory_present"] = True
+    if prior_agent_id:
+        lease["prior_agent_id"] = prior_agent_id
+        lease["prior_agent_authority"] = "audit_only"
+    _event(
+        ledger,
+        "role_memory_seed_attached",
+        lease_id=str(lease.get("lease_id") or ""),
+        role=str(lease.get("responsibility") or ""),
+        memory_seed_id=memory_seed_id,
+        required=bool(required),
+    )
+    return memory_seed_id
+
+
+def _update_role_slot_liveness(ledger: dict[str, Any], lease: Mapping[str, Any], status: str) -> None:
+    role = str(lease.get("responsibility") or "")
+    lease_id = str(lease.get("lease_id") or "")
+    if not role or not lease_id:
+        return
+    roles = _role_continuity_table(ledger)
+    slot = roles.get(role)
+    if not isinstance(slot, dict) or str(slot.get("latest_lease_id") or "") != lease_id:
+        return
+    slot["last_liveness_status"] = status
+    slot["last_liveness_checked_at"] = now_iso()
+    if status in _ROLE_NONREUSABLE_LIVENESS_STATUSES:
+        slot["reuse_state"] = "not_reusable"
+        slot["not_reusable_reason"] = f"liveness:{status}"
+    slot["updated_at"] = now_iso()
+
+
+def role_memory_seed_for_lease(
+    ledger: dict[str, Any],
+    lease_id: str,
+    packet_id: str = "",
+) -> dict[str, Any] | None:
+    lease = _require(ledger["leases"], lease_id, "lease")
+    if packet_id and str(lease.get("packet_id") or "") not in {"", packet_id}:
+        raise BlackBoxRuntimeError("role memory lease packet mismatch")
+    memory_seed_id = str(lease.get("role_memory_seed_id") or "")
+    if not memory_seed_id:
+        if lease.get("role_memory_seed_required"):
+            _event(ledger, "role_memory_seed_missing", lease_id=lease_id, packet_id=packet_id)
+            raise BlackBoxRuntimeError("replacement lease requires role memory before packet open")
+        return None
+    memory = ledger.setdefault("role_memory", {}).get(memory_seed_id)
+    if not isinstance(memory, Mapping):
+        if lease.get("role_memory_seed_required"):
+            _event(ledger, "role_memory_seed_missing", lease_id=lease_id, packet_id=packet_id)
+            raise BlackBoxRuntimeError("replacement lease role memory seed is missing")
+        return None
+    return _copy_jsonable(memory)
+
+
+def _mark_role_slot_after_lease(
+    ledger: dict[str, Any],
+    role: str,
+    lease: dict[str, Any],
+    *,
+    reused: bool,
+    requested_agent_id: str,
+    prior_agent_id: str = "",
+    replacement_reason: str = "",
+) -> None:
+    roles = _role_continuity_table(ledger)
+    previous = roles.get(role) if isinstance(roles.get(role), Mapping) else {}
+    slot = {
+        "schema_version": "black_box_flowpilot.role_slot.v1",
+        "role": role,
+        "agent_id": str(lease.get("agent_id") or ""),
+        "latest_lease_id": str(lease.get("lease_id") or ""),
+        "latest_packet_id": str(lease.get("packet_id") or ""),
+        "reuse_state": "reusable",
+        "last_liveness_status": str(lease.get("liveness_status") or lease.get("last_liveness_status") or ""),
+        "last_continuity_action": "reused" if reused else ("replaced" if prior_agent_id else "initialized"),
+        "prior_agent_id": prior_agent_id,
+        "replacement_reason": replacement_reason,
+        "updated_at": now_iso(),
+    }
+    rejected: list[str] = []
+    if reused and requested_agent_id and requested_agent_id != slot["agent_id"]:
+        rejected = [requested_agent_id]
+    if isinstance(previous, Mapping):
+        rejected.extend(str(item) for item in previous.get("rejected_replacement_candidate_ids") or [])
+    slot["rejected_replacement_candidate_ids"] = sorted(set(item for item in rejected if item))
+    roles[role] = slot
+    lease["role_continuity"] = {
+        "role": role,
+        "reused": reused,
+        "replaced": bool(prior_agent_id and not reused),
+        "requested_agent_id": requested_agent_id,
+        "effective_agent_id": slot["agent_id"],
+        "prior_agent_id": prior_agent_id,
+        "replacement_reason": replacement_reason,
+    }
+    if reused:
+        event = "role_continuity_reused"
+    elif prior_agent_id:
+        event = "role_continuity_replaced"
+    else:
+        event = "role_continuity_initialized"
+    _event(
+        ledger,
+        event,
+        role=role,
+        lease_id=slot["latest_lease_id"],
+        effective_agent_id=slot["agent_id"],
+        requested_agent_id=requested_agent_id,
+        prior_agent_id=prior_agent_id,
+        replacement_reason=replacement_reason,
+    )
+
+
 def lease_agent(
     ledger: dict[str, Any],
     responsibility: str,
@@ -3013,10 +3408,34 @@ def lease_agent(
     _assert_not_terminal_lifecycle(ledger)
     if responsibility not in RESPONSIBILITIES:
         raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
+    requested_agent_id = str(agent_id or "").strip()
+    roles = _role_continuity_table(ledger)
+    slot = roles.get(responsibility) if isinstance(roles.get(responsibility), Mapping) else None
+    prior_agent_id = str(slot.get("agent_id") or "") if isinstance(slot, Mapping) else ""
+    reusable = _role_slot_reusable(ledger, responsibility, slot)
+    effective_agent_id = requested_agent_id
+    replacement_reason = ""
+    reused = False
+    memory_seed: dict[str, Any] | None = None
+    memory_required = False
+    if reusable and prior_agent_id:
+        effective_agent_id = prior_agent_id
+        reused = True
+    elif prior_agent_id:
+        replacement_reason = "prior_role_slot_not_reusable"
+        memory_seed = _build_role_memory_seed(
+            ledger,
+            responsibility,
+            prior_agent_id=prior_agent_id,
+            replacement_reason=replacement_reason,
+        )
+        memory_required = True
     lease_id = _next_id(ledger, "lease")
+    if not effective_agent_id:
+        effective_agent_id = f"{responsibility}-{lease_id}"
     lease = {
         "lease_id": lease_id,
-        "agent_id": agent_id or f"{responsibility}-{lease_id}",
+        "agent_id": effective_agent_id,
         "responsibility": responsibility,
         "status": "active",
         "packet_id": packet_id,
@@ -3033,6 +3452,23 @@ def lease_agent(
         "close_reason": "",
     }
     ledger["leases"][lease_id] = lease
+    if memory_seed is not None:
+        _attach_role_memory_seed(
+            ledger,
+            lease,
+            memory=memory_seed,
+            prior_agent_id=prior_agent_id,
+            required=memory_required,
+        )
+    _mark_role_slot_after_lease(
+        ledger,
+        responsibility,
+        lease,
+        reused=reused,
+        requested_agent_id=requested_agent_id,
+        prior_agent_id="" if reused else prior_agent_id,
+        replacement_reason=replacement_reason,
+    )
     _event(ledger, "lease_created", lease_id=lease_id, responsibility=responsibility)
     return lease_id
 
@@ -3265,6 +3701,7 @@ def record_host_liveness(
     lease["liveness_checked_at"] = checked_at
     lease["liveness_source"] = source
     lease["liveness_detail"] = detail
+    _update_role_slot_liveness(ledger, lease, normalized)
     history = lease.setdefault("host_liveness_history", [])
     if isinstance(history, list):
         history.append(

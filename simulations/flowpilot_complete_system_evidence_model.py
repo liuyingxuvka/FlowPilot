@@ -481,7 +481,6 @@ def build_alignment_plan(*, implementation_evidence: bool = False) -> ModelTestA
         obligations=obligations,
         code_contracts=code_contracts,
         test_evidence=tuple(test_evidence),
-        require_code_contracts=True,
         allow_orphan_tests=False,
         allow_orphan_code_contracts=False,
     )
