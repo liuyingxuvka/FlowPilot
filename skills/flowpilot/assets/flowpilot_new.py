@@ -234,9 +234,99 @@ def _packet_by_kind(ledger: dict[str, Any], packet_kind: str) -> str:
     raise runtime.BlackBoxRuntimeError(f"no open {packet_kind} packet found")
 
 
-def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: str, host_kind: str) -> dict[str, Any]:
+def _quote_cli(value: str | Path) -> str:
+    text = str(value)
+    return "'" + text.replace("'", "''") + "'"
+
+
+def _role_assignment_commit_command(
+    root: Path,
+    *,
+    packet_id: str,
+    responsibility: str,
+    assignment: dict[str, Any],
+) -> str:
+    args = [
+        "lease-agent",
+        "--packet-id",
+        packet_id,
+        "--responsibility",
+        responsibility,
+        "--assignment-id",
+        str(assignment.get("assignment_id") or ""),
+        "--host-kind",
+        str(assignment.get("host_kind") or "live"),
+    ]
+    if str(assignment.get("disposition") or "") == "create_new_role":
+        args.extend(["--agent-id", "<role-surface-agent-id>"])
+    return (
+        f"python {_quote_cli(Path(__file__).resolve())} --root {_quote_cli(root.resolve())} --json "
+        + " ".join(args)
+    )
+
+
+def resolve_role_assignment(
+    root: Path,
+    *,
+    packet_id: str,
+    responsibility: str,
+    host_kind: str,
+) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
+    assignment = runtime.resolve_role_assignment(
+        ledger,
+        responsibility,
+        packet_id=packet_id,
+        host_kind=host_kind,
+    )
+    run_shell.save_run_ledger(shell, ledger, guard_trigger="resolve_role_assignment")
+    payload = {
+        "ok": str(assignment.get("status") or "") != "blocked",
+        "assignment_id": str(assignment.get("assignment_id") or ""),
+        "role_assignment": assignment,
+        "disposition": str(assignment.get("disposition") or ""),
+        "role_surface_required": bool(assignment.get("role_surface_required") is True),
+        "role_memory_seed_required": bool(assignment.get("role_memory_seed_required") is True),
+        "effective_agent_id": str(assignment.get("effective_agent_id") or ""),
+        "sealed_bodies_visible": False,
+        **_runtime_state(ledger),
+    }
+    if payload["ok"]:
+        payload["lease_commit_command"] = _role_assignment_commit_command(
+            root,
+            packet_id=packet_id,
+            responsibility=responsibility,
+            assignment=assignment,
+        )
+    else:
+        payload["error"] = str(assignment.get("blocker_reason") or "role assignment blocked")
+    return payload
+
+
+def lease_agent(
+    root: Path,
+    *,
+    packet_id: str,
+    responsibility: str,
+    assignment_id: str,
+    agent_id: str = "",
+    host_kind: str,
+) -> dict[str, Any]:
+    if not assignment_id:
+        raise runtime.BlackBoxRuntimeError(
+            "lease-agent requires role assignment authorization; run resolve-role-assignment first"
+        )
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    assignment = ledger.get("role_assignments", {}).get(assignment_id)
+    if not isinstance(assignment, dict):
+        raise runtime.BlackBoxRuntimeError("role assignment record is invalid")
+    disposition = str(assignment.get("disposition") or "")
+    if disposition == "reuse_existing_role" and agent_id:
+        raise runtime.BlackBoxRuntimeError("reuse role assignment does not accept --agent-id")
+    if disposition == "create_new_role" and not agent_id:
+        raise runtime.BlackBoxRuntimeError("create-new role assignment requires --agent-id after opening the role surface")
     lease_id = host.lease_responsibility(
         ledger,
         responsibility,
@@ -244,6 +334,7 @@ def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: st
         host_kind=host_kind,
         packet_id=packet_id,
         scope="current_run",
+        assignment_id=assignment_id,
     )
     runtime.assign_packet(ledger, packet_id, lease_id)
     run_shell.save_run_ledger(shell, ledger, guard_trigger="lease_agent")
@@ -258,6 +349,8 @@ def lease_agent(root: Path, *, packet_id: str, responsibility: str, agent_id: st
     return {
         "ok": True,
         "lease_id": lease_id,
+        "role_assignment_id": assignment_id,
+        "role_assignment": ledger.get("role_assignments", {}).get(assignment_id, {}),
         "role_handoff": handoff,
         "role_handoff_text": handoff["text"],
         **_runtime_state(ledger),
@@ -518,10 +611,22 @@ def main(argv: list[str] | None = None) -> int:
     resume_parser = sub.add_parser("resume", help="Record manual resume and rehydrate lifecycle guard status")
     resume_parser.add_argument("--reason", default="manual_resume")
 
-    lease = sub.add_parser("lease-agent", help="Record a dynamic responsibility lease and assign a packet")
+    resolve = sub.add_parser("resolve-role-assignment", help="Resolve reuse/create/block before opening a role surface")
+    resolve.add_argument("--packet-id", required=True)
+    resolve.add_argument("--responsibility", required=True)
+    resolve.add_argument(
+        "--host-kind",
+        default="live",
+        choices=sorted(host.HOST_KINDS),
+        metavar="{live,fake,dry_run}",
+        help=HOST_KIND_HELP,
+    )
+
+    lease = sub.add_parser("lease-agent", help="Commit an authorized role assignment and assign a packet")
     lease.add_argument("--packet-id", required=True)
     lease.add_argument("--responsibility", required=True)
-    lease.add_argument("--agent-id", required=True)
+    lease.add_argument("--assignment-id", required=True)
+    lease.add_argument("--agent-id", default="")
     lease.add_argument(
         "--host-kind",
         default="live",
@@ -589,11 +694,19 @@ def main(argv: list[str] | None = None) -> int:
             payload = final_preflight(root)
         elif args.command == "resume":
             payload = resume(root, reason=args.reason)
+        elif args.command == "resolve-role-assignment":
+            payload = resolve_role_assignment(
+                root,
+                packet_id=args.packet_id,
+                responsibility=args.responsibility,
+                host_kind=args.host_kind,
+            )
         elif args.command == "lease-agent":
             payload = lease_agent(
                 root,
                 packet_id=args.packet_id,
                 responsibility=args.responsibility,
+                assignment_id=args.assignment_id,
                 agent_id=args.agent_id,
                 host_kind=args.host_kind,
             )

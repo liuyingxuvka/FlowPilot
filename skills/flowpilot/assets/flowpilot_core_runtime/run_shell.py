@@ -67,6 +67,7 @@ def create_run_shell(
         "leases",
         "role_memory",
         "role_continuity",
+        "role_assignments",
         "frontier",
         "preplanning",
         "route_nodes",
@@ -244,6 +245,8 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_text(shell.run_root / "results" / "bodies" / f"{result_id}.md", str(result.get("body", "")))
     for lease_id, lease in ledger.get("leases", {}).items():
         _write_json(shell.run_root / "leases" / f"{lease_id}.json", lease)
+    for assignment_id, assignment in ledger.get("role_assignments", {}).items():
+        _write_json(shell.run_root / "role_assignments" / f"{assignment_id}.json", assignment)
     for lease_id, memory in ledger.get("role_memory", {}).items():
         _write_json(shell.run_root / "role_memory" / f"{lease_id}.json", memory)
     if isinstance(ledger.get("role_continuity"), dict):

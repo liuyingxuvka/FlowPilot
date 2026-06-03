@@ -182,7 +182,7 @@ def run_fake_e2e(
         action_type = str(action_json.get("action_type") or "")
         if action_type == "terminal_complete":
             break
-        if action_type != "lease_agent":
+        if action_type != "resolve_role_assignment":
             raise runtime.BlackBoxRuntimeError(f"fake e2e cannot satisfy next action: {action_json}")
         packet_id = str(action_json.get("subject_id") or "")
         packet = ledger["packets"][packet_id]

@@ -95,6 +95,10 @@ EVENT_FAMILY_BY_TYPE = {
     "role_continuity_reused": "lease",
     "role_continuity_replaced": "lease",
     "role_continuity_initialized": "lease",
+    "role_continuity_hydrated": "lease",
+    "role_assignment_resolved": "lease",
+    "role_assignment_committed": "lease",
+    "role_assignment_blocked": "lease",
     "role_memory_seed_attached": "lease",
     "role_memory_seed_missing": "lease",
     "orphan_evidence_detected": "validation",
@@ -207,7 +211,7 @@ ROUTER_INTERNAL_ACTION_TYPES = {
     "issue_pm_disposition_packet",
     "close_project",
 }
-ROLE_DISPATCH_ACTION_TYPES = {"lease_agent"}
+ROLE_DISPATCH_ACTION_TYPES = {"resolve_role_assignment"}
 ROLE_WAIT_ACTION_TYPES = {"wait_for_ack", "wait_for_result"}
 RECOVERY_ACTION_TYPES = {"replace_lease", "repair_accepted_packet", "repair_packet"}
 USER_REQUIRED_ACTION_TYPES = {"open_startup_intake", "wait_for_resume", "resume_reconcile", "repair_cutover_gate"}
@@ -391,6 +395,7 @@ def new_ledger(
             "schema_version": "black_box_flowpilot.role_continuity.v1",
             "roles": {},
         },
+        "role_assignments": {},
         "role_memory": {},
         "orphan_evidence": {},
         "terminal_lifecycle": None,
@@ -3113,6 +3118,168 @@ def _role_slot_reusable(ledger: Mapping[str, Any], role: str, slot: Mapping[str,
     return liveness not in _ROLE_NONREUSABLE_LIVENESS_STATUSES
 
 
+def _role_assignment_table(ledger: dict[str, Any]) -> dict[str, Any]:
+    assignments = ledger.setdefault("role_assignments", {})
+    if not isinstance(assignments, dict):
+        assignments = {}
+        ledger["role_assignments"] = assignments
+    return assignments
+
+
+def _lease_reusable_for_role_slot(lease: Mapping[str, Any]) -> bool:
+    agent_id = str(lease.get("agent_id") or "").strip()
+    if not agent_id:
+        return False
+    if str(lease.get("status") or "") in {"expired", "superseded", "cancelled"}:
+        return False
+    liveness = str(lease.get("liveness_status") or lease.get("last_liveness_status") or lease.get("last_progress_status") or "")
+    return liveness not in _ROLE_NONREUSABLE_LIVENESS_STATUSES
+
+
+def _same_responsibility_lease_history(ledger: Mapping[str, Any], role: str) -> list[Mapping[str, Any]]:
+    rows: list[Mapping[str, Any]] = []
+    for lease in ledger.get("leases", {}).values():
+        if not isinstance(lease, Mapping):
+            continue
+        if str(lease.get("responsibility") or "") == role:
+            rows.append(lease)
+    return rows
+
+
+def _hydrate_role_slot_from_current_run_history(
+    ledger: dict[str, Any],
+    role: str,
+) -> tuple[dict[str, Any] | None, str]:
+    history = _same_responsibility_lease_history(ledger, role)
+    if not history:
+        return None, "no_same_responsibility_history"
+    for lease in reversed(history):
+        if not _lease_reusable_for_role_slot(lease):
+            continue
+        roles = _role_continuity_table(ledger)
+        slot = {
+            "schema_version": "black_box_flowpilot.role_slot.v1",
+            "role": role,
+            "agent_id": str(lease.get("agent_id") or ""),
+            "latest_lease_id": str(lease.get("lease_id") or ""),
+            "latest_packet_id": str(lease.get("packet_id") or ""),
+            "reuse_state": "reusable",
+            "last_liveness_status": str(
+                lease.get("liveness_status") or lease.get("last_liveness_status") or lease.get("last_progress_status") or ""
+            ),
+            "last_continuity_action": "hydrated",
+            "prior_agent_id": "",
+            "replacement_reason": "",
+            "rejected_replacement_candidate_ids": [],
+            "hydrated_from_current_run_lease": str(lease.get("lease_id") or ""),
+            "updated_at": now_iso(),
+        }
+        roles[role] = slot
+        _event(
+            ledger,
+            "role_continuity_hydrated",
+            role=role,
+            agent_id=slot["agent_id"],
+            source_lease_id=slot["latest_lease_id"],
+            source_packet_id=slot["latest_packet_id"],
+        )
+        return slot, "hydrated_from_current_run_history"
+    return None, "same_responsibility_history_not_reusable"
+
+
+def resolve_role_assignment(
+    ledger: dict[str, Any],
+    responsibility: str,
+    *,
+    packet_id: str = "",
+    host_kind: str = "live",
+) -> dict[str, Any]:
+    """Resolve role reuse/create/block before any new role surface is opened."""
+
+    _assert_not_terminal_lifecycle(ledger)
+    if responsibility not in RESPONSIBILITIES:
+        raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
+    if packet_id:
+        packet = _require(ledger["packets"], packet_id, "packet")
+        if packet.get("accepted_result_id"):
+            raise BlackBoxRuntimeError("cannot assign accepted packet")
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if str(envelope.get("responsibility") or "") != responsibility:
+            raise BlackBoxRuntimeError("assignment responsibility does not match packet")
+    roles = _role_continuity_table(ledger)
+    slot = roles.get(responsibility) if isinstance(roles.get(responsibility), Mapping) else None
+    hydration_reason = ""
+    if slot is None:
+        slot, hydration_reason = _hydrate_role_slot_from_current_run_history(ledger, responsibility)
+    assignments = _role_assignment_table(ledger)
+    for existing in reversed(list(assignments.values())):
+        if not isinstance(existing, Mapping):
+            continue
+        if str(existing.get("status") or "") != "resolved":
+            continue
+        if str(existing.get("responsibility") or "") != responsibility:
+            continue
+        if str(existing.get("packet_id") or "") != packet_id:
+            continue
+        if str(existing.get("host_kind") or "") != host_kind:
+            continue
+        return _copy_jsonable(existing)
+    prior_agent_id = str(slot.get("agent_id") or "") if isinstance(slot, Mapping) else ""
+    reusable = _role_slot_reusable(ledger, responsibility, slot)
+    assignment_id = _next_id(ledger, "role_assignment")
+    disposition = "create_new_role"
+    status = "resolved"
+    effective_agent_id = ""
+    replacement_reason = ""
+    role_surface_required = True
+    blocker_reason = ""
+    memory_seed_required = False
+    if reusable and prior_agent_id:
+        disposition = "reuse_existing_role"
+        effective_agent_id = prior_agent_id
+        role_surface_required = False
+    elif slot is None and hydration_reason == "same_responsibility_history_not_reusable":
+        disposition = "blocked"
+        status = "blocked"
+        blocker_reason = "role_continuity_slot_missing_and_history_not_reusable"
+        role_surface_required = False
+    elif prior_agent_id:
+        disposition = "create_new_role"
+        replacement_reason = "prior_role_slot_not_reusable"
+        memory_seed_required = True
+    assignment = {
+        "schema_version": "black_box_flowpilot.role_assignment.v1",
+        "assignment_id": assignment_id,
+        "packet_id": packet_id,
+        "responsibility": responsibility,
+        "host_kind": host_kind,
+        "disposition": disposition,
+        "status": status,
+        "effective_agent_id": effective_agent_id,
+        "prior_agent_id": prior_agent_id,
+        "replacement_reason": replacement_reason,
+        "role_surface_required": role_surface_required,
+        "role_memory_seed_required": memory_seed_required,
+        "hydration_reason": hydration_reason,
+        "blocker_reason": blocker_reason,
+        "created_at": now_iso(),
+        "sealed_bodies_visible": False,
+    }
+    assignments[assignment_id] = assignment
+    event = "role_assignment_blocked" if disposition == "blocked" else "role_assignment_resolved"
+    _event(
+        ledger,
+        event,
+        assignment_id=assignment_id,
+        role=responsibility,
+        packet_id=packet_id,
+        disposition=disposition,
+        effective_agent_id=effective_agent_id,
+        blocker_reason=blocker_reason,
+    )
+    return _copy_jsonable(assignment)
+
+
 def _public_packet_memory_row(ledger: Mapping[str, Any], packet_id: str, packet: Mapping[str, Any]) -> dict[str, Any]:
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     result_rows: list[dict[str, Any]] = []
@@ -3404,25 +3571,47 @@ def lease_agent(
     *,
     agent_id: str | None = None,
     packet_id: str = "",
+    assignment_id: str = "",
 ) -> str:
     _assert_not_terminal_lifecycle(ledger)
     if responsibility not in RESPONSIBILITIES:
         raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
-    requested_agent_id = str(agent_id or "").strip()
-    roles = _role_continuity_table(ledger)
-    slot = roles.get(responsibility) if isinstance(roles.get(responsibility), Mapping) else None
-    prior_agent_id = str(slot.get("agent_id") or "") if isinstance(slot, Mapping) else ""
-    reusable = _role_slot_reusable(ledger, responsibility, slot)
-    effective_agent_id = requested_agent_id
+    assignments = _role_assignment_table(ledger)
+    assignment: dict[str, Any]
+    if assignment_id:
+        raw_assignment = _require(assignments, assignment_id, "role assignment")
+        if not isinstance(raw_assignment, dict):
+            raise BlackBoxRuntimeError("role assignment record is invalid")
+        assignment = raw_assignment
+        if assignment.get("status") != "resolved":
+            raise BlackBoxRuntimeError("role assignment is not available for lease commit")
+        if str(assignment.get("responsibility") or "") != responsibility:
+            raise BlackBoxRuntimeError("role assignment responsibility mismatch")
+        if packet_id and str(assignment.get("packet_id") or "") not in {"", packet_id}:
+            raise BlackBoxRuntimeError("role assignment packet mismatch")
+        if str(assignment.get("disposition") or "") == "blocked":
+            raise BlackBoxRuntimeError("blocked role assignment cannot be committed")
+    else:
+        assignment = resolve_role_assignment(ledger, responsibility, packet_id=packet_id, host_kind="live")
+        assignment_id = str(assignment.get("assignment_id") or "")
+    disposition = str(assignment.get("disposition") or "")
+    if disposition not in {"reuse_existing_role", "create_new_role"}:
+        raise BlackBoxRuntimeError(f"unsupported role assignment disposition: {disposition}")
+    requested_agent_id = ""
+    prior_agent_id = str(assignment.get("prior_agent_id") or "")
+    effective_agent_id = str(assignment.get("effective_agent_id") or "")
     replacement_reason = ""
-    reused = False
+    reused = disposition == "reuse_existing_role"
     memory_seed: dict[str, Any] | None = None
     memory_required = False
-    if reusable and prior_agent_id:
-        effective_agent_id = prior_agent_id
-        reused = True
-    elif prior_agent_id:
-        replacement_reason = "prior_role_slot_not_reusable"
+    if reused:
+        if agent_id and str(agent_id).strip() and str(agent_id).strip() != effective_agent_id:
+            raise BlackBoxRuntimeError("reuse assignment does not accept a fresh agent id")
+    else:
+        requested_agent_id = str(agent_id or "").strip()
+        effective_agent_id = requested_agent_id
+        replacement_reason = str(assignment.get("replacement_reason") or "")
+    if prior_agent_id and not reused:
         memory_seed = _build_role_memory_seed(
             ledger,
             responsibility,
@@ -3432,7 +3621,11 @@ def lease_agent(
         memory_required = True
     lease_id = _next_id(ledger, "lease")
     if not effective_agent_id:
-        effective_agent_id = f"{responsibility}-{lease_id}"
+        if disposition == "create_new_role":
+            effective_agent_id = f"{responsibility}-{assignment_id}"
+            requested_agent_id = effective_agent_id
+        else:
+            raise BlackBoxRuntimeError("reuse assignment is missing effective agent id")
     lease = {
         "lease_id": lease_id,
         "agent_id": effective_agent_id,
@@ -3450,6 +3643,7 @@ def lease_agent(
         "created_at": now_iso(),
         "closed_at": None,
         "close_reason": "",
+        "role_assignment_id": assignment_id,
     }
     ledger["leases"][lease_id] = lease
     if memory_seed is not None:
@@ -3468,6 +3662,21 @@ def lease_agent(
         requested_agent_id=requested_agent_id,
         prior_agent_id="" if reused else prior_agent_id,
         replacement_reason=replacement_reason,
+    )
+    if isinstance(assignment, dict):
+        assignment["status"] = "consumed"
+        assignment["consumed_lease_id"] = lease_id
+        assignment["consumed_at"] = now_iso()
+        assignment["effective_agent_id"] = effective_agent_id
+    _event(
+        ledger,
+        "role_assignment_committed",
+        assignment_id=assignment_id,
+        lease_id=lease_id,
+        role=responsibility,
+        packet_id=packet_id,
+        disposition=disposition,
+        effective_agent_id=effective_agent_id,
     )
     _event(ledger, "lease_created", lease_id=lease_id, responsibility=responsibility)
     return lease_id
@@ -5832,21 +6041,18 @@ def _foreground_recovery_command(
         args = {"packet_id": packet_id}
         cli_args = ["repair-accepted-packet", "--packet-id", packet_id]
     else:
-        command = "lease-agent"
+        command = "resolve-role-assignment"
         args = {
             "packet_id": packet_id,
             "responsibility": responsibility,
-            "agent_id": "<new-agent-id>",
             "host_kind": "live",
         }
         cli_args = [
-            "lease-agent",
+            "resolve-role-assignment",
             "--packet-id",
             packet_id,
             "--responsibility",
             responsibility,
-            "--agent-id",
-            "<new-agent-id>",
             "--host-kind",
             "live",
         ]
@@ -5859,7 +6065,7 @@ def _foreground_recovery_command(
         "responsibility": responsibility,
         "host_kind": str(args.get("host_kind", "")),
         "stale_lease_ids": stale_lease_ids,
-        "cleanup_action": "supersede_previous_active_leases_on_assignment",
+        "cleanup_action": "resolve_assignment_then_commit_authorized_lease",
         "reason": str(guard.get("reason", "")),
         "sealed_bodies_visible": False,
     }
@@ -6182,8 +6388,8 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             )
         if packet["status"] == "open":
             return RuntimeAction(
-                "lease_agent",
-                "packet has no assigned lease",
+                "resolve_role_assignment",
+                "packet role assignment must resolve before lease commit",
                 packet["packet_id"],
                 packet["envelope"]["responsibility"],
             )

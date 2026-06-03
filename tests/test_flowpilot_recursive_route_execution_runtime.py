@@ -174,7 +174,7 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(len(ledger["route_nodes"]), 3)
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-001")
         action = runtime.router_next_action(ledger).to_json()
-        self.assertEqual(action["action_type"], "lease_agent")
+        self.assertEqual(action["action_type"], "resolve_role_assignment")
         self.assertEqual(action["subject_id"], _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0])
 
     def test_numbered_text_plan_is_rejected_without_route_fallback(self) -> None:

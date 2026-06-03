@@ -23196,3 +23196,62 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+## enforce-flowpilot-role-assignment-resolution - FlowPilot resolve-first role assignment and same-responsibility role reuse enforcement
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowPilot to reuse existing same-responsibility role threads across all roles, remove old fallback surfaces, and synchronize installed/local versions.
+- Status: completed
+- Skill decision: OpenSpec propose/apply with FlowGuard existing-model preflight and DevelopmentProcessFlow grounding
+- Started: 2026-06-03T09:50:00+02:00
+- Ended: 2026-06-03T13:16:01+02:00
+- Commands OK: True
+
+### Model Files
+- simulations/meta_model.py
+- simulations/capability_model.py
+- simulations/flowpilot_fake_project_rehearsal_model.py
+- simulations/flowpilot_recursive_route_execution_model.py
+
+### Commands
+- python -c import-flowguard-schema: ok, schema 1.0
+- python -c importlib-metadata-flowguard-version: ok, package 0.40.7
+- python -m flowguard project-audit --root .: ok
+- openspec validate enforce-flowpilot-role-assignment-resolution --strict: ok
+- python -m py_compile focused runtime files: ok
+- python -m pytest focused role-assignment runtime suite: ok, 103 passed, 165 subtests passed
+- python -m pytest tests/test_flowpilot_card_runtime.py -q: ok, 10 passed
+- python simulations/run_flowpilot_core_runtime_checks.py: ok
+- python simulations/run_flowpilot_new_entrypoint_checks.py: ok
+- python simulations/run_flowpilot_lifecycle_guard_checks.py: ok
+- python simulations/run_meta_checks.py: background exit 0, proof_reuse=false
+- python simulations/run_capability_checks.py: background exit 0, proof_reuse=false
+- python simulations/run_flowpilot_fake_project_rehearsal_checks.py: background exit 0, ok=true, 13 scenarios passed
+- python scripts/flowguard_project_topology.py build/check: ok
+- python scripts/install_flowpilot.py --sync-repo-owned --json and --check --json: ok
+- python scripts/check_install.py --json and python scripts/audit_local_install_sync.py --json: ok
+
+### Findings
+- FlowPilot now resolves role assignment before opening or committing role work for every responsibility, not only PM or reviewer.
+- The runtime records role-assignment resolution, commit, and block events, and materializes role_assignments in the run shell.
+- Reusable current-run same-responsibility leases are preferred; missing continuity slots are hydrated only from current-run reusable lease history, otherwise blocked with a named current-contract reason.
+- Controller-facing recovery and relay commands now point to resolve-role-assignment and no longer instruct Controller to invent `<new-agent-id>`.
+- The public lease-agent command requires an authorized assignment id; fresh agent ids are allowed only after create_new_role authorization says a role surface is required.
+- Installed local FlowPilot skill was synchronized from the repository version and verified fresh.
+
+### Counterexamples
+- Raw public lease-agent with a fresh --agent-id and no assignment id is rejected by current-contract tests.
+- Missing same-responsibility continuity history blocks instead of creating an ungrounded fresh role surface.
+
+### Friction Points
+- The first fake-project background wrapper wrote PowerShell stderr decoration while the Python check still exited 0; result JSON and exit artifacts were inspected directly.
+
+### Skipped Steps
+- No GitHub push, tag, release, or deploy was performed.
+- Release-only layered/full gates were not force-rerun beyond the required meta/capability background regressions.
+
+### Risk Evidence Summary
+- Evidence supports current-runtime role-assignment resolution, no-compat public command hardening, fake-project black-box rehearsal, topology freshness, and local installed skill freshness. Broad release/publish confidence still needs the separate release-only layered/full gates.
+
+### Next Actions
+- Commit the scoped local changes without reverting peer-agent work.

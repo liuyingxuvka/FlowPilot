@@ -72,8 +72,9 @@ same batch. Router owns busy/idle enforcement, result joining, review routing,
 and stage advancement.
 
 When PM is the addressed packet recipient, successful current work authority comes from
-Router's current-run packet assignment, the matching `flowpilot_new.py
-lease-agent` record, the runtime-generated `flowpilot_new.py role-handoff`,
+Router's current-run packet assignment resolved by `flowpilot_new.py
+resolve-role-assignment`, the matching authorized `flowpilot_new.py
+lease-agent` commit, the runtime-generated `flowpilot_new.py role-handoff`,
 PM's `flowpilot_new.py ack`, PM's `flowpilot_new.py open-packet`, and the
 matching `flowpilot_new.py submit-result` return. Do not wait for inline body
 text, a corrected prompt, a Controller-written relay, or extra permission
@@ -403,7 +404,7 @@ For standalone PM decisions, control-blocker repair decisions, and PM-owned
 GateDecision bodies, use `flowpilot_new.py open-packet` to get the
 contract skeleton and `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` to write the
 decision body, runtime receipt, ledger record, and controller-visible envelope.
-Lower-level `role_output_runtime.py` commands only validate local mechanics. Live handoff must use `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so Router records the event. Use a concrete `--agent-id`. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The runtime may fill mechanical fixed
+Lower-level `role_output_runtime.py` commands only validate local mechanics. Live handoff must use `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so Router records the event. Use the current authorized lease id; do not invent or pass a fresh agent id. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The runtime may fill mechanical fixed
 fields, empty arrays, hashes, quality-pack checklist rows, and receipt metadata;
 PM still owns the decision,
 reasoning, evidence selection, and semantic sufficiency. If the runtime rejects

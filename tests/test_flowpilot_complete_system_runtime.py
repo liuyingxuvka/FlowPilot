@@ -98,6 +98,8 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             self.assertGreater(len(after_first_save), len(initial_events))
             self.assertEqual(after_first_save, after_second_save)
             self.assertTrue((shell.run_root / "role_memory" / f"{lease_id}.json").is_file())
+            role_assignment_id = ledger["leases"][lease_id]["role_assignment_id"]
+            self.assertTrue((shell.run_root / "role_assignments" / f"{role_assignment_id}.json").is_file())
 
     def test_dynamic_host_lease_is_scoped_until_real_live_evidence_exists(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
@@ -123,9 +125,83 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
 
                 self.assertEqual(ledger["leases"][second]["agent_id"], f"{role}-agent-1")
                 self.assertTrue(ledger["leases"][second]["role_continuity"]["reused"])
+                assignment_id = ledger["leases"][second]["role_assignment_id"]
+                self.assertEqual(ledger["role_assignments"][assignment_id]["disposition"], "reuse_existing_role")
+                self.assertEqual(ledger["role_assignments"][assignment_id]["status"], "consumed")
                 slot = ledger["role_continuity"]["roles"][role]
                 self.assertEqual(slot["agent_id"], f"{role}-agent-1")
-                self.assertIn(f"{role}-agent-2", slot["rejected_replacement_candidate_ids"])
+                self.assertEqual(slot["rejected_replacement_candidate_ids"], [])
+
+    def test_role_assignment_resolution_reuses_without_fresh_candidate(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = packets.issue_packet(ledger, "reviewer", "Review", "SEALED_REVIEW")
+        first = host.lease_responsibility(ledger, "reviewer", agent_id="reviewer-agent-1", host_kind="fake")
+        runtime.close_lease(ledger, first, "available")
+
+        assignment = runtime.resolve_role_assignment(ledger, "reviewer", packet_id=packet_id, host_kind="fake")
+        self.assertEqual(assignment["disposition"], "reuse_existing_role")
+        self.assertFalse(assignment["role_surface_required"])
+        self.assertEqual(assignment["effective_agent_id"], "reviewer-agent-1")
+
+        lease_id = host.lease_responsibility(
+            ledger,
+            "reviewer",
+            host_kind="fake",
+            packet_id=packet_id,
+            assignment_id=assignment["assignment_id"],
+        )
+
+        self.assertEqual(ledger["leases"][lease_id]["agent_id"], "reviewer-agent-1")
+        self.assertEqual(ledger["leases"][lease_id]["role_assignment_id"], assignment["assignment_id"])
+        self.assertEqual(ledger["role_assignments"][assignment["assignment_id"]]["status"], "consumed")
+        self.assertEqual(ledger["role_continuity"]["roles"]["reviewer"]["rejected_replacement_candidate_ids"], [])
+
+    def test_missing_role_slot_hydrates_from_current_run_same_role_history(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Review work"])
+        packet_id = packets.issue_packet(ledger, "reviewer", "Review", "SEALED_REVIEW")
+        first = host.lease_responsibility(ledger, "reviewer", agent_id="reviewer-agent-1", host_kind="fake", packet_id=packet_id)
+        runtime.close_lease(ledger, first, "available")
+        del ledger["role_continuity"]["roles"]["reviewer"]
+
+        next_packet = packets.issue_packet(ledger, "reviewer", "Review next", "SEALED_REVIEW_NEXT")
+        assignment = runtime.resolve_role_assignment(ledger, "reviewer", packet_id=next_packet, host_kind="fake")
+
+        self.assertEqual(assignment["disposition"], "reuse_existing_role")
+        self.assertEqual(assignment["hydration_reason"], "hydrated_from_current_run_history")
+        self.assertEqual(assignment["effective_agent_id"], "reviewer-agent-1")
+        self.assertEqual(
+            ledger["role_continuity"]["roles"]["reviewer"]["hydrated_from_current_run_lease"],
+            first,
+        )
+
+    def test_missing_role_slot_with_unusable_history_blocks_assignment(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["startup_intake"] = {"sealed": True}
+        runtime.create_route(ledger, "Route", ["Review work"])
+        packet_id = packets.issue_packet(ledger, "reviewer", "Review", "SEALED_REVIEW")
+        first = host.lease_responsibility(ledger, "reviewer", agent_id="reviewer-agent-1", host_kind="fake", packet_id=packet_id)
+        runtime.record_host_liveness(ledger, first, packet_id, "lost")
+        del ledger["role_continuity"]["roles"]["reviewer"]
+
+        next_packet = packets.issue_packet(ledger, "reviewer", "Review next", "SEALED_REVIEW_NEXT")
+        assignment = runtime.resolve_role_assignment(ledger, "reviewer", packet_id=next_packet, host_kind="fake")
+
+        self.assertEqual(assignment["disposition"], "blocked")
+        self.assertEqual(assignment["status"], "blocked")
+        self.assertEqual(assignment["blocker_reason"], "role_continuity_slot_missing_and_history_not_reusable")
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "history_not_reusable"):
+            host.lease_responsibility(
+                ledger,
+                "reviewer",
+                agent_id="reviewer-agent-2",
+                host_kind="fake",
+                packet_id=next_packet,
+                assignment_id=assignment["assignment_id"],
+            )
 
     def test_replacement_lease_requires_same_responsibility_memory_seed(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")

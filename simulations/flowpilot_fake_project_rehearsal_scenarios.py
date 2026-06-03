@@ -14,6 +14,7 @@ try:  # pragma: no cover
         complete_planning_chain_only,
         ensure,
         packet_row,
+        resolve_and_lease_packet,
         reset_scenario_root,
         run_cli,
         run_raw_cli,
@@ -28,6 +29,7 @@ except ImportError:  # pragma: no cover
         complete_planning_chain_only,
         ensure,
         packet_row,
+        resolve_and_lease_packet,
         reset_scenario_root,
         run_cli,
         run_raw_cli,
@@ -102,19 +104,20 @@ def scenario_wrong_role_recovery(work_root: Path) -> dict[str, Any]:
     rejected = run_cli(
         root,
         command_log,
-        "lease-agent",
+        "resolve-role-assignment",
         "--packet-id",
         pm_packet,
         "--responsibility",
         "reviewer",
-        "--agent-id",
-        "fake-reviewer-wrong-role",
         "--host-kind",
         "fake",
         expect_ok=False,
     )
-    ensure(rejected.get("ok") is False, f"wrong-role lease was not rejected: {rejected}")
-    ensure("lease responsibility does not match packet" in str(rejected.get("error", "")), f"wrong rejection error: {rejected}")
+    ensure(rejected.get("ok") is False, f"wrong-role assignment was not rejected: {rejected}")
+    ensure(
+        "assignment responsibility does not match packet" in str(rejected.get("error", "")),
+        f"wrong rejection error: {rejected}",
+    )
 
     chain = complete_full_packet_chain(root, command_log, start_payload)
     return {
@@ -185,18 +188,12 @@ def scenario_missing_ack_block(work_root: Path) -> dict[str, Any]:
     start_payload = start_rehearsal(root, command_log, "run-fake-missing-ack")
     pm_packet = str(start_payload["next_action"]["subject_id"])
 
-    lease_payload = run_cli(
+    lease_payload = resolve_and_lease_packet(
         root,
         command_log,
-        "lease-agent",
-        "--packet-id",
-        pm_packet,
-        "--responsibility",
-        "pm",
-        "--agent-id",
-        "fake-pm-no-ack",
-        "--host-kind",
-        "fake",
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-no-ack",
     )
     lease_id = str(lease_payload["lease_id"])
     result_payload = run_cli(
@@ -240,18 +237,12 @@ def scenario_ack_only_wait(work_root: Path) -> dict[str, Any]:
     start_payload = start_rehearsal(root, command_log, "run-fake-ack-only")
     pm_packet = str(start_payload["next_action"]["subject_id"])
 
-    lease_payload = run_cli(
+    lease_payload = resolve_and_lease_packet(
         root,
         command_log,
-        "lease-agent",
-        "--packet-id",
-        pm_packet,
-        "--responsibility",
-        "pm",
-        "--agent-id",
-        "fake-pm-ack-only",
-        "--host-kind",
-        "fake",
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-ack-only",
     )
     run_cli(root, command_log, "ack", "--lease-id", str(lease_payload["lease_id"]), "--packet-id", pm_packet)
     projection = status_projection(root, command_log)
@@ -287,18 +278,12 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
     start_payload = start_rehearsal(root, command_log, "run-fake-lifecycle-guard")
     pm_packet = str(start_payload["next_action"]["subject_id"])
 
-    lease_payload = run_cli(
+    lease_payload = resolve_and_lease_packet(
         root,
         command_log,
-        "lease-agent",
-        "--packet-id",
-        pm_packet,
-        "--responsibility",
-        "pm",
-        "--agent-id",
-        "fake-pm-guard",
-        "--host-kind",
-        "fake",
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-guard",
     )
     run_cli(root, command_log, "ack", "--lease-id", str(lease_payload["lease_id"]), "--packet-id", pm_packet)
     resumed = run_cli(root, command_log, "resume", "--reason", "fake_lifecycle_resume")
@@ -431,7 +416,7 @@ def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]
     for step_index in range(40):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action before reviewer step: {current_payload}")
-        ensure(action.get("action_type") == "lease_agent", f"unexpected action before reviewer step: {action}")
+        ensure(action.get("action_type") == "resolve_role_assignment", f"unexpected action before reviewer step: {action}")
         responsibility = str(action.get("responsibility", ""))
         packet_id = str(action.get("subject_id", ""))
         projection = status_projection(root, command_log)
@@ -439,18 +424,12 @@ def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]
         packet_kind = str(packet.get("packet_kind", ""))
         route_scope = str(packet.get("route_scope", ""))
 
-        lease_payload = run_cli(
+        lease_payload = resolve_and_lease_packet(
             root,
             command_log,
-            "lease-agent",
-            "--packet-id",
-            packet_id,
-            "--responsibility",
-            responsibility,
-            "--agent-id",
-            f"fake-slow-reviewer-{step_index}",
-            "--host-kind",
-            "fake",
+            packet_id=packet_id,
+            responsibility=responsibility,
+            agent_id=f"fake-slow-reviewer-{step_index}",
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
@@ -525,23 +504,17 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
     for step_index in range(20):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action before accepted packet: {current_payload}")
-        ensure(action.get("action_type") == "lease_agent", f"unexpected action before accepted packet: {action}")
+        ensure(action.get("action_type") == "resolve_role_assignment", f"unexpected action before accepted packet: {action}")
         packet_id = str(action.get("subject_id", ""))
         responsibility = str(action.get("responsibility", ""))
         projection = status_projection(root, command_log)
         current_packet = packet_row(projection, packet_id)
-        lease_payload = run_cli(
+        lease_payload = resolve_and_lease_packet(
             root,
             command_log,
-            "lease-agent",
-            "--packet-id",
-            packet_id,
-            "--responsibility",
-            responsibility,
-            "--agent-id",
-            f"fake-accepted-reassign-{step_index}",
-            "--host-kind",
-            "fake",
+            packet_id=packet_id,
+            responsibility=responsibility,
+            agent_id=f"fake-accepted-reassign-{step_index}",
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
@@ -570,13 +543,11 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
     reassignment = run_cli(
         root,
         command_log,
-        "lease-agent",
+        "resolve-role-assignment",
         "--packet-id",
         pm_packet,
         "--responsibility",
         "pm",
-        "--agent-id",
-        "fake-pm-replacement",
         "--host-kind",
         "fake",
         expect_ok=False,
@@ -605,18 +576,12 @@ def scenario_stop_terminal_fence(work_root: Path) -> dict[str, Any]:
     root = reset_scenario_root(work_root, "stop_terminal_fence")
     current_payload = start_rehearsal(root, command_log, "run-fake-stop-terminal")
     pm_packet = str(current_payload["next_action"]["subject_id"])
-    lease_payload = run_cli(
+    lease_payload = resolve_and_lease_packet(
         root,
         command_log,
-        "lease-agent",
-        "--packet-id",
-        pm_packet,
-        "--responsibility",
-        "pm",
-        "--agent-id",
-        "fake-pm-stop-terminal",
-        "--host-kind",
-        "fake",
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-stop-terminal",
     )
     stopped = run_cli(root, command_log, "stop", "--reason", "fake user stop")
     ensure(stopped.get("next_action", {}).get("action_type") == "terminal_lifecycle", f"stop did not terminalize: {stopped}")
@@ -653,18 +618,12 @@ def scenario_host_liveness_bridge_recovery(work_root: Path) -> dict[str, Any]:
     root = reset_scenario_root(work_root, "host_liveness_bridge_recovery")
     current_payload = start_rehearsal(root, command_log, "run-fake-host-liveness")
     pm_packet = str(current_payload["next_action"]["subject_id"])
-    lease_payload = run_cli(
+    lease_payload = resolve_and_lease_packet(
         root,
         command_log,
-        "lease-agent",
-        "--packet-id",
-        pm_packet,
-        "--responsibility",
-        "pm",
-        "--agent-id",
-        "fake-pm-host-liveness",
-        "--host-kind",
-        "fake",
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-host-liveness",
     )
     lease_id = str(lease_payload["lease_id"])
     run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", pm_packet)
@@ -706,18 +665,12 @@ def scenario_orphan_runner_summary_recovery(work_root: Path) -> dict[str, Any]:
     root = reset_scenario_root(work_root, "orphan_runner_summary_recovery")
     current_payload = start_rehearsal(root, command_log, "run-fake-orphan-summary")
     pm_packet = str(current_payload["next_action"]["subject_id"])
-    lease_payload = run_cli(
+    lease_payload = resolve_and_lease_packet(
         root,
         command_log,
-        "lease-agent",
-        "--packet-id",
-        pm_packet,
-        "--responsibility",
-        "pm",
-        "--agent-id",
-        "fake-pm-orphan-summary",
-        "--host-kind",
-        "fake",
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-orphan-summary",
     )
     run_cli(root, command_log, "ack", "--lease-id", str(lease_payload["lease_id"]), "--packet-id", pm_packet)
     current = json.loads((root / ".flowpilot" / "current.json").read_text(encoding="utf-8"))

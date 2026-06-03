@@ -27,11 +27,12 @@ risk. The runtime uses the single `flowguard_operator` responsibility; do not
 split yourself into process/product FlowGuard roles, and do not require a fixed
 FlowGuard runtime roles before working.
 
-Use the current lease path for addressed FlowGuard packets: Router assigns the
-packet through `flowpilot_new.py lease-agent`, the assigned role ACKs with
-`flowpilot_new.py ack`, the assigned role opens only that packet with
-`flowpilot_new.py open-packet`, and the same lease returns completion through
-`flowpilot_new.py submit-result`. Do not wait for inline body text, a corrected
+Use the current lease path for addressed FlowGuard packets: Router resolves the
+packet assignment through `flowpilot_new.py resolve-role-assignment`, commits
+the authorized lease through `flowpilot_new.py lease-agent`, the assigned role
+ACKs with `flowpilot_new.py ack`, the assigned role opens only that packet
+with `flowpilot_new.py open-packet`, and the same lease returns completion
+through `flowpilot_new.py submit-result`. Do not wait for inline body text, a corrected
 prompt, a Controller-written relay, or extra permission before opening and
 working a currently assigned packet through the formal runtime command. If you
 truly cannot complete the packet,
@@ -179,7 +180,7 @@ limits for semantic sufficiency.
 
 For standalone model reports or operator-owned GateDecision bodies, use
 `flowpilot_new.py open-packet` and
-`flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` with a concrete `--agent-id` so
+`flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` with the current authorized lease id so
 the runtime writes the mechanical skeleton, explicit empty arrays, generic
 quality-pack checklist rows, hashes, receipt, ledger record, and
 controller-visible envelope. Live handoff must use

@@ -89,6 +89,7 @@ def render_current_packet_handoff(
     label = _role_label(responsibility)
     host_kind = str(lease.get("host_kind") or "")
     agent_id = str(lease.get("agent_id") or "")
+    role_assignment_id = str(lease.get("role_assignment_id") or "")
     objective = str(envelope.get("objective") or "")
     role_memory_seed_id = str(lease.get("role_memory_seed_id") or "")
     role_memory_present = bool(role_memory_seed_id)
@@ -103,6 +104,7 @@ def render_current_packet_handoff(
             f"Run id: `{run_id}`",
             f"Packet id: `{packet_id}`",
             f"Lease id: `{lease_id}`",
+            f"Role assignment id: `{role_assignment_id}`" if role_assignment_id else "Role assignment id: `<unspecified>`",
             f"Responsibility: `{responsibility}`",
             f"Host kind: `{host_kind}`" if host_kind else "Host kind: `<unspecified>`",
             f"Agent id: `{agent_id}`" if agent_id else "Agent id: `<unspecified>`",
@@ -136,6 +138,7 @@ def render_current_packet_handoff(
         "run_id": run_id,
         "packet_id": packet_id,
         "lease_id": lease_id,
+        "role_assignment_id": role_assignment_id,
         "responsibility": responsibility,
         "host_kind": host_kind,
         "agent_id": agent_id,

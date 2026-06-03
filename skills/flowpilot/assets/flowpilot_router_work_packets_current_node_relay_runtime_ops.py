@@ -39,21 +39,15 @@ def _flowpilot_runtime_relay_operation(
     holder_agent_id = ''
     if isinstance(active_holder_item, dict):
         holder_agent_id = str(active_holder_item.get('target_agent_id') or '').strip()
-    args: list[str] = []
-    if holder_agent_id:
-        args = (
-            [
-                'lease-agent',
-                '--packet-id',
-                packet_id,
-                '--responsibility',
-                target_role,
-                '--agent-id',
-                holder_agent_id,
-                '--host-kind',
-                'live',
-            ]
-        )
+    args: list[str] = [
+        'resolve-role-assignment',
+        '--packet-id',
+        packet_id,
+        '--responsibility',
+        target_role,
+        '--host-kind',
+        'live',
+    ]
     packet_dir = envelope_path.parent
     expected_writes = [
         envelope_rel,
@@ -67,8 +61,8 @@ def _flowpilot_runtime_relay_operation(
     expected_writes = [item for item in expected_writes if item]
     return {
         'schema_version': 'flowpilot.runtime_delivery_operation.v1',
-        'operation_type': 'current_assignment_lease',
-        'runtime_entrypoint': 'flowpilot_new.py lease-agent',
+        'operation_type': 'current_assignment_resolution',
+        'runtime_entrypoint': 'flowpilot_new.py resolve-role-assignment',
         'runtime_args': args,
         'packet_id': packet_id,
         'packet_family': packet_family,
@@ -79,9 +73,11 @@ def _flowpilot_runtime_relay_operation(
         'postcondition': postcondition,
         'expected_delivery_kind': 'current_assignment',
         'expected_writes': sorted(dict.fromkeys(expected_writes)),
-        'active_holder_lease_required': bool(holder_agent_id),
+        'active_holder_lease_required': False,
         'active_holder_lease_path': str(active_holder_item.get('active_holder_lease_path') or '') if isinstance(active_holder_item, dict) else '',
-        'target_agent_id': holder_agent_id,
+        'target_agent_id': '',
+        'prior_target_agent_id_observed': holder_agent_id,
+        'lease_commit_requires_role_assignment_id': True,
         'sealed_body_reads_allowed': False,
         'path_only_handoff_is_not_completion': True,
     }

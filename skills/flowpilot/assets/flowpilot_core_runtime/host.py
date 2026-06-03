@@ -27,25 +27,53 @@ def lease_responsibility(
     agent_id: str | None = None,
     packet_id: str = "",
     scope: str = "",
+    assignment_id: str = "",
 ) -> str:
     normalized = RESPONSIBILITY_ALIASES.get(responsibility, responsibility)
     if host_kind not in HOST_KINDS:
         raise runtime.BlackBoxRuntimeError(f"unknown host kind: {host_kind}")
-    lease_id = runtime.lease_agent(ledger, normalized, agent_id=agent_id, packet_id=packet_id)
+    if not assignment_id:
+        assignment = runtime.resolve_role_assignment(
+            ledger,
+            normalized,
+            packet_id=packet_id,
+            host_kind=host_kind,
+        )
+        assignment_id = str(assignment.get("assignment_id") or "")
+    else:
+        assignment = ledger.setdefault("role_assignments", {}).get(assignment_id)
+        if not isinstance(assignment, dict):
+            raise runtime.BlackBoxRuntimeError("role assignment record is invalid")
+    if str(assignment.get("disposition") or "") == "blocked":
+        reason = str(assignment.get("blocker_reason") or "role assignment blocked")
+        raise runtime.BlackBoxRuntimeError(reason)
+    effective_agent_id = agent_id
+    if str(assignment.get("disposition") or "") == "reuse_existing_role":
+        effective_agent_id = None
+    lease_id = runtime.lease_agent(
+        ledger,
+        normalized,
+        agent_id=effective_agent_id,
+        packet_id=packet_id,
+        assignment_id=assignment_id,
+    )
     lease = ledger["leases"][lease_id]
     lease["host_kind"] = host_kind
     lease["scope"] = scope
+    lease["role_assignment_id"] = assignment_id
     ledger.setdefault("host_driver_state", {})[lease_id] = {
         "lease_id": lease_id,
         "host_kind": host_kind,
         "responsibility": normalized,
         "scope": scope,
+        "role_assignment_id": assignment_id,
         "state": "leased",
         "current_run_only": True,
     }
     ledger.setdefault("host_evidence", {})[lease_id] = {
         "lease_id": lease_id,
         "host_kind": host_kind,
+        "role_assignment_id": assignment_id,
         "confidence": "live" if host_kind == "live" else "scoped",
         "live_confidence": host_kind == "live",
         "current_run_only": True,

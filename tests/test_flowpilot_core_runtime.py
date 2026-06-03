@@ -123,7 +123,13 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
     def test_reassignment_supersedes_older_active_packet_lease(self) -> None:
         ledger, packet_id, first_lease = runtime_runner._base_ledger()
-        second_lease = runtime.lease_agent(ledger, "worker", agent_id="worker-2", packet_id=packet_id)
+        assignment = runtime.resolve_role_assignment(ledger, "worker", packet_id=packet_id, host_kind="fake")
+        second_lease = runtime.lease_agent(
+            ledger,
+            "worker",
+            packet_id=packet_id,
+            assignment_id=assignment["assignment_id"],
+        )
 
         runtime.assign_packet(ledger, packet_id, second_lease)
 
@@ -136,7 +142,15 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
     def test_final_preflight_blocks_stale_active_accepted_packet_lease(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime_runner._complete_happy_path(ledger, packet_id, worker)
-        stale_lease = runtime.lease_agent(ledger, "worker", agent_id="stale-worker", packet_id=packet_id)
+        stale_lease = runtime._next_id(ledger, "lease")
+        ledger["leases"][stale_lease] = {
+            **ledger["leases"][worker],
+            "lease_id": stale_lease,
+            "agent_id": "stale-worker",
+            "status": "active",
+            "packet_id": packet_id,
+            "ack_received": True,
+        }
 
         health = runtime.accepted_packet_lease_health(ledger)
         preflight = runtime.final_return_preflight(ledger)
@@ -171,10 +185,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         command = duty["recovery"]["recommended_command"]
 
         self.assertEqual(duty["action"], "recover_or_reissue")
-        self.assertEqual(command["command"], "lease-agent")
+        self.assertEqual(command["command"], "resolve-role-assignment")
         self.assertEqual(command["packet_id"], packet_id)
         self.assertEqual(command["responsibility"], "worker")
         self.assertEqual(command["host_kind"], "live")
+        self.assertNotIn("--agent-id", command["cli"])
+        self.assertNotIn("<new-agent-id>", command["cli"])
         self.assertIn(worker, command["stale_lease_ids"])
         self.assertFalse(command["sealed_bodies_visible"])
 
@@ -495,7 +511,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             packets.open_sealed_body_for_role(ledger, packet_id, wrong_lease)
 
         wrong_role = copy.deepcopy(ledger)
-        wrong_role_lease = runtime.lease_agent(wrong_role, "pm", agent_id="pm-1", packet_id=packet_id)
+        wrong_role_lease = runtime.lease_agent(wrong_role, "pm", agent_id="pm-1")
         wrong_role["packets"][packet_id]["assigned_lease_id"] = wrong_role_lease
         wrong_role["leases"][wrong_role_lease]["ack_received"] = True
         with self.assertRaises(Exception):
@@ -550,7 +566,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
         self.assertEqual(len(active), 1)
         action = runtime.router_next_action(ledger)
-        self.assertEqual(action.action_type, "lease_agent")
+        self.assertEqual(action.action_type, "resolve_role_assignment")
         self.assertEqual(action.responsibility, "pm")
 
     def test_structured_verdict_blocked_routes_to_semantic_repair(self) -> None:
@@ -602,7 +618,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         boundary = runtime.run_until_wait(ledger)
 
         self.assertEqual(boundary["boundary_class"], "role_dispatch")
-        self.assertEqual(boundary["next_action"]["action_type"], "lease_agent")
+        self.assertEqual(boundary["next_action"]["action_type"], "resolve_role_assignment")
         self.assertEqual(boundary["folded_applied_count"], 1)
         self.assertEqual(boundary["folded_applied_actions"][0]["action_type"], "issue_task_packet")
 

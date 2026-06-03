@@ -148,6 +148,7 @@ def replacement_worker_success() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.record_progress(ledger, worker, packet_id, "still working")
+    runtime.record_host_liveness(ledger, worker, packet_id, "lost")
     runtime.close_lease(ledger, worker, "no final result")
     late_result = runtime.submit_result(
         ledger,
@@ -352,7 +353,13 @@ def console_does_not_leak_sealed_bodies() -> dict[str, Any]:
 
 def reassignment_supersedes_active_packet_lease() -> dict[str, Any]:
     ledger, packet_id, first_lease = _base_ledger()
-    replacement = runtime.lease_agent(ledger, "worker", agent_id="worker-2", packet_id=packet_id)
+    assignment = runtime.resolve_role_assignment(ledger, "worker", packet_id=packet_id, host_kind="fake")
+    replacement = runtime.lease_agent(
+        ledger,
+        "worker",
+        packet_id=packet_id,
+        assignment_id=assignment["assignment_id"],
+    )
     runtime.assign_packet(ledger, packet_id, replacement)
     safe = (
         ledger["packets"][packet_id]["assigned_lease_id"] == replacement
@@ -375,7 +382,15 @@ def reassignment_supersedes_active_packet_lease() -> dict[str, Any]:
 def final_preflight_blocks_accepted_packet_stale_lease() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     _complete_happy_path(ledger, packet_id, worker)
-    stale_lease = runtime.lease_agent(ledger, "worker", agent_id="stale-worker", packet_id=packet_id)
+    stale_lease = runtime._next_id(ledger, "lease")
+    ledger["leases"][stale_lease] = {
+        **ledger["leases"][worker],
+        "lease_id": stale_lease,
+        "agent_id": "stale-worker",
+        "status": "active",
+        "packet_id": packet_id,
+        "ack_received": True,
+    }
     preflight = runtime.final_return_preflight(ledger)
     blocked = (
         preflight["allowed"] is False
@@ -420,10 +435,11 @@ def recovery_duty_names_command_payload() -> dict[str, Any]:
     command = duty.get("recovery", {}).get("recommended_command", {})
     ok = (
         duty.get("action") == "recover_or_reissue"
-        and command.get("command") == "lease-agent"
+        and command.get("command") == "resolve-role-assignment"
         and command.get("packet_id") == packet_id
         and command.get("responsibility") == "worker"
         and command.get("host_kind") == "live"
+        and "--agent-id" not in str(command.get("cli", ""))
         and worker in command.get("stale_lease_ids", [])
         and command.get("sealed_bodies_visible") is False
     )

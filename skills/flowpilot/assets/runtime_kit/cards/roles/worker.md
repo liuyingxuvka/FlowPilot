@@ -25,11 +25,12 @@ mismatched, or contains inline body fields, return
 `unauthorized_direct_message` and wait for a corrected runtime-delivered
 envelope.
 
-Use the current lease path for addressed work packets: Router assigns the
-packet through `flowpilot_new.py lease-agent`, the assigned role ACKs with
-`flowpilot_new.py ack`, the assigned role opens only that packet with
-`flowpilot_new.py open-packet`, and the same lease returns completion through
-`flowpilot_new.py submit-result`. Do not wait for inline body text, a corrected
+Use the current lease path for addressed work packets: Router resolves the
+packet assignment through `flowpilot_new.py resolve-role-assignment`, commits
+the authorized lease through `flowpilot_new.py lease-agent`, the assigned role
+ACKs with `flowpilot_new.py ack`, the assigned role opens only that packet
+with `flowpilot_new.py open-packet`, and the same lease returns completion
+through `flowpilot_new.py submit-result`. Do not wait for inline body text, a corrected
 prompt, a Controller-written relay, or extra permission before opening and
 working a currently assigned packet through the formal runtime command.
 Verify the packet is addressed to your requested responsibility and that any

@@ -52,7 +52,8 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json sta
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resume --reason manual_resume
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --agent-id <agent_id> --host-kind live
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resolve-role-assignment --packet-id <packet_id> --responsibility <role> --host-kind live
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --assignment-id <role_assignment_id> --host-kind live
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json role-handoff --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json open-packet --lease-id <lease_id> --packet-id <packet_id>
@@ -61,7 +62,7 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json sub
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json repair-accepted-packet --packet-id <packet_id>
 ```
 
-Copy exact fixed values from the returned `next_action`: `--host-kind` is `live`, `fake`, or `dry_run`; `--responsibility` is the exact packet role or node role returned by the runtime. If no listed value fits, stop and report the value-menu mismatch.
+Copy exact fixed values from the returned `next_action`: `--host-kind` is `live`, `fake`, or `dry_run`; `--responsibility` is the exact packet role or node role returned by the runtime. Role work starts by running `resolve-role-assignment`, then following its returned `lease_commit_command`. If that response says `role_surface_required=true`, open the named role surface first and pass its id with the authorized `--assignment-id`; if it says reuse, do not pass a fresh `--agent-id`. If no listed value fits, stop and report the value-menu mismatch.
 
 Formal startup creates the run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, first high-standard pre-planning packet, lifecycle guard, and foreground duty before returning a public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI.
 

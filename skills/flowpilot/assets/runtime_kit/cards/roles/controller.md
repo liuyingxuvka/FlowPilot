@@ -67,8 +67,9 @@ Allowed actions:
 
 - run the current `flowpilot_new.py` command named by the lifecycle guard or
   foreground duty. Fresh runs use `flowpilot_new.py start`, `status`, `patrol`,
-  `resume`, `lease-agent`, `role-handoff`, `ack`, `progress`, `host-liveness`,
-  `submit-result`, `repair-accepted-packet`, `stop`, `cancel`, and
+  `resume`, `resolve-role-assignment`, `lease-agent`, `role-handoff`, `ack`,
+  `progress`, `host-liveness`, `submit-result`, `repair-accepted-packet`,
+  `stop`, `cancel`, and
   `final-preflight` as the public control surface;
 - load only Controller-visible current-run metadata: lifecycle guard,
   foreground duty, public packet/result envelopes, leases, status projection,
@@ -127,7 +128,8 @@ Allowed actions:
   authority. Diagnostic/source utilities, standby projections, stale runtime
   files, and Controller action ledgers are not authority for a fresh run;
 - rely on runtime-owned manifest and packet-ledger checks; current work-packet
-  authority is the current `flowpilot_new.py lease-agent`,
+  authority starts with the current `flowpilot_new.py resolve-role-assignment`
+  result, then the authorized `flowpilot_new.py lease-agent` commit,
   runtime-generated `flowpilot_new.py role-handoff`, addressed-role
   `flowpilot_new.py ack`, addressed-role `flowpilot_new.py open-packet`, and
   `flowpilot_new.py submit-result` path. Controller may relay only the

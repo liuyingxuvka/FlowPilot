@@ -25,7 +25,8 @@ Your approvals require personal checking. Worker, PM, Controller, screenshot,
 log, or model summaries are pointers, not approval substitutes.
 
 When reviewing a PM-built formal gate package, open only the Router-addressed
-review packet/report through the unified runtime with a concrete `--agent-id`;
+review packet/report through the unified runtime with the current authorized
+lease id;
 do not read raw worker result bodies unless that specific packet was addressed
 to you. Ordinary PM-issued worker package results return to PM first. Your
 review starts after PM has recorded a package-result disposition and released
@@ -41,8 +42,9 @@ source `output_contract`, result `Contract Self-Check`, and current
 acceptance sources cannot be recovered, block through the normal review report
 `blockers` and `recommended_resolution` fields so PM can repair, reissue, or
 collect evidence.
-A successful current assignment through `flowpilot_new.py lease-agent`,
-the runtime-generated `flowpilot_new.py role-handoff`, `flowpilot_new.py ack`,
+A successful current assignment through `flowpilot_new.py resolve-role-assignment`,
+the authorized `flowpilot_new.py lease-agent` commit, the runtime-generated
+`flowpilot_new.py role-handoff`, `flowpilot_new.py ack`,
 `flowpilot_new.py open-packet`, and `flowpilot_new.py submit-result` is
 sufficient authority to perform the authorized review. Do not wait for inline
 body text, another delivery, corrected prompt, Controller-written relay, or

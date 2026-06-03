@@ -22,6 +22,33 @@ lifecycle_runner = importlib.import_module("simulations.run_flowpilot_lifecycle_
 
 
 class FlowPilotLifecycleGuardTests(unittest.TestCase):
+    def _lease_packet(
+        self,
+        root: Path,
+        *,
+        packet_id: str,
+        responsibility: str,
+        agent_id: str,
+        host_kind: str = "fake",
+    ) -> str:
+        assignment = flowpilot_new.resolve_role_assignment(
+            root,
+            packet_id=packet_id,
+            responsibility=responsibility,
+            host_kind=host_kind,
+        )
+        self.assertTrue(assignment["ok"], assignment)
+        kwargs: dict[str, object] = {
+            "packet_id": packet_id,
+            "responsibility": responsibility,
+            "assignment_id": assignment["assignment_id"],
+            "host_kind": host_kind,
+        }
+        if assignment["role_surface_required"]:
+            kwargs["agent_id"] = agent_id
+        lease = flowpilot_new.lease_agent(root, **kwargs)
+        return str(lease["lease_id"])
+
     def test_nonterminal_status_blocks_controller_stop_and_persists_guard(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -33,7 +60,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             )
 
             self.assertFalse(started["lifecycle_guard"]["controller_stop_allowed"])
-            self.assertEqual(started["lifecycle_guard"]["next_action"]["action_type"], "lease_agent")
+            self.assertEqual(started["lifecycle_guard"]["next_action"]["action_type"], "resolve_role_assignment")
             status = flowpilot_new.status(root)
             guard = status["status"]["lifecycle_guard"]
             self.assertFalse(guard["controller_stop_allowed"])
@@ -81,13 +108,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
 
             resumed = flowpilot_new.resume(root, reason="manual_resume_test")
@@ -117,7 +143,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
 
             self.assertFalse(preflight["ok"])
             self.assertFalse(preflight["final_return_preflight"]["allowed"])
-            self.assertIn("next_action:lease_agent", preflight["final_return_preflight"]["blockers"])
+            self.assertIn("next_action:resolve_role_assignment", preflight["final_return_preflight"]["blockers"])
             self.assertEqual(preflight["foreground_duty"]["action"], "process_next_action")
 
     def test_progress_keeps_slow_live_result_wait_in_patrol(self) -> None:
@@ -130,13 +156,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-progress",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
 
             shell = run_shell.load_run_shell(root, run_id="run-progress-grace")
@@ -164,13 +189,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-liveness",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
             shell = run_shell.load_run_shell(root, run_id="run-liveness-check-due")
             ledger = run_shell.load_run_ledger(shell)
@@ -197,13 +221,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-failure",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
             shell = run_shell.load_run_shell(root, run_id="run-liveness-failure")
             ledger = run_shell.load_run_ledger(shell)
@@ -226,13 +249,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-liveness-bridge",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
             flowpilot_new.progress(root, lease_id=lease_id, packet_id=packet_id, status="still_working")
 
@@ -259,13 +281,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-completed-without-result",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
 
             bridge = flowpilot_new.host_liveness(
@@ -291,13 +312,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-stop",
-                host_kind="fake",
-            )["lease_id"]
+            )
 
             stopped = flowpilot_new.stop_run(root, reason="unit test stop")
 
@@ -329,11 +349,10 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(cancelled["next_action"]["action_type"], "terminal_lifecycle")
             self.assertTrue(cancelled["final_return_preflight"]["allowed"])
             with self.assertRaisesRegex(Exception, "run is terminal"):
-                flowpilot_new.lease_agent(
+                flowpilot_new.resolve_role_assignment(
                     root,
                     packet_id=packet_id,
                     responsibility="pm",
-                    agent_id="fake-pm-after-cancel",
                     host_kind="fake",
                 )
 
@@ -347,13 +366,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-orphan",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
             shell = run_shell.load_run_shell(root, run_id="run-orphan-runner-summary")
             summary_path = shell.run_root / "evidence" / "flowguard" / packet_id / "runner_summary.json"
@@ -390,13 +408,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-accepted",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
             flowpilot_new.submit_result(root, lease_id=lease_id, packet_id=packet_id, body="SEALED_RESULT_BODY: PM")
             shell = run_shell.load_run_shell(root, run_id="run-accepted-hard-gate")
@@ -407,11 +424,10 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             run_shell.save_run_ledger(shell, ledger, guard_trigger="test_accept")
 
             with self.assertRaisesRegex(Exception, "cannot assign accepted packet"):
-                flowpilot_new.lease_agent(
+                flowpilot_new.resolve_role_assignment(
                     root,
                     packet_id=packet_id,
                     responsibility="pm",
-                    agent_id="fake-replacement",
                     host_kind="fake",
                 )
             with self.assertRaisesRegex(Exception, "cannot ACK an accepted packet"):
@@ -430,13 +446,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            original_lease = flowpilot_new.lease_agent(
+            original_lease = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm-original",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=original_lease, packet_id=packet_id)
             result_id = flowpilot_new.submit_result(
                 root,
@@ -446,11 +461,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             )["result_id"]
             shell = run_shell.load_run_shell(root, run_id="run-accepted-race-repair")
             ledger = run_shell.load_run_ledger(shell)
+            assignment = runtime.resolve_role_assignment(ledger, "pm", packet_id=packet_id, host_kind="fake")
             replacement_lease = runtime.lease_agent(
                 ledger,
                 "pm",
-                agent_id="fake-pm-replacement",
                 packet_id=packet_id,
+                assignment_id=assignment["assignment_id"],
             )
             ledger["packets"][packet_id]["status"] = "acknowledged"
             ledger["packets"][packet_id]["accepted_result_id"] = result_id
@@ -466,7 +482,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
 
             self.assertEqual(repaired["repair"]["closed_replacement_lease_ids"], [replacement_lease])
             self.assertNotEqual(repaired["next_action"]["subject_id"], packet_id)
-            self.assertEqual(repaired["next_action"]["action_type"], "lease_agent")
+            self.assertEqual(repaired["next_action"]["action_type"], "resolve_role_assignment")
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(ledger["packets"][packet_id]["status"], "accepted")
             self.assertEqual(ledger["packets"][packet_id]["accepted_result_id"], result_id)
@@ -506,13 +522,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = started["next_action"]["subject_id"]
-            lease_id = flowpilot_new.lease_agent(
+            lease_id = self._lease_packet(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 agent_id="fake-pm",
-                host_kind="fake",
-            )["lease_id"]
+            )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
 
             shell = run_shell.load_run_shell(root, run_id="run-guard-inactive-result")

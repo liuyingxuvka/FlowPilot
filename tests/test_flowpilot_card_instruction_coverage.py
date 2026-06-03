@@ -98,6 +98,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             obsolete_relay = "flowpilot_" + "runtime.py relay-envelope"
             self.assertNotIn(obsolete_relay, text)
             self.assertNotIn("controller_relay", text)
+            self.assertIn("flowpilot_new.py resolve-role-assignment", text)
             self.assertIn("flowpilot_new.py lease-agent", text)
             self.assertIn("flowpilot_new.py role-handoff", text)
             self.assertIn("flowpilot_new.py ack", text)
@@ -429,6 +430,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("current assignment", packet_runtime_text)
         for text in (packet_template, pm_card):
             self.assertIn("successful", text)
+            self.assertIn("flowpilot_new.py resolve-role-assignment", text)
             self.assertIn("flowpilot_new.py lease-agent", text)
             self.assertIn("flowpilot_new.py role-handoff", text)
             self.assertIn("flowpilot_new.py ack", text)
@@ -455,6 +457,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for path in ordinary_role_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
+                self.assertIn("flowpilot_new.py resolve-role-assignment", text)
                 self.assertIn("flowpilot_new.py lease-agent", text)
                 self.assertIn("flowpilot_new.py ack", text)
                 self.assertIn("flowpilot_new.py open-packet", text)
