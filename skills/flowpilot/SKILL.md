@@ -115,6 +115,13 @@ When the router returns a `payload_contract`, satisfy it exactly or return to th
 
 After FlowPilot starts, the main assistant is Controller only. For a fresh `flowpilot_new.py` run, Controller may check public packet envelopes, lease state, lifecycle guard, foreground duty, final-return preflight, and status projection. Controller follows `foreground_duty` until terminal return. Controller may not use diagnostic/source utilities as formal-run authority.
 
+If public runtime output includes `progress_fraction.display`, Controller may
+relay that exact current expanded node fraction to the user when a status update
+is useful. Do not calculate progress, convert it to a percent, read sealed
+packet/result bodies for progress, or treat the fraction as completion, stop,
+gate, route-advance, or final-return authority. If absent, do not invent
+progress.
+
 Controller must not implement product work, write project evidence for a worker node, approve gates, mark route nodes complete, mutate the route from its own judgement, run `flowpilot_new.py open-packet`, read sealed packet/result bodies, or receive/submit formal role outputs. Role outputs go directly to Router through the runtime command named by the packet.
 
 When the router returns a control blocker, Controller may deliver only the public blocker id plus sealed repair packet path/hash to the target role. When the user asks to stop or cancel the active run, record the requested terminal event and follow the lifecycle action; do not continue route work after that.

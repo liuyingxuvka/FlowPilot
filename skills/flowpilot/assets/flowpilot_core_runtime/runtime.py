@@ -2130,6 +2130,16 @@ _ACTIVE_SEMANTIC_BLOCKER_STATUSES = {"active", "repairing", "awaiting_recheck"}
 _CURRENT_PACKET_BLOCKING_STATUSES = {"result_blocked", "review_blocked", "system_validation_blocked", "flowguard_blocked"}
 _NONCURRENT_PACKET_STATUSES = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
 _NONCURRENT_ROUTE_NODE_STATUSES = {"accepted", "waived", "superseded"}
+_PROGRESS_ROUTE_NODE_ENDED_STATUSES = {"accepted", "waived", "superseded", "blocked", "stopped"}
+_PROGRESS_PACKET_ENDED_STATUSES = {
+    "accepted",
+    "result_blocked",
+    "review_blocked",
+    "system_validation_blocked",
+    "flowguard_blocked",
+    "quarantined_after_route_mutation",
+    "superseded_after_repair",
+}
 _PM_REPAIR_DECISIONS = {
     "same_node_repair",
     "sender_reissue",
@@ -2347,6 +2357,99 @@ def _packet_requires_current_acceptance(ledger: Mapping[str, Any], packet: Mappi
     if active_route is not None and envelope.get("route_version") != active_route:
         return False
     return True
+
+
+def _coerce_nonnegative_int(value: Any) -> int:
+    try:
+        coerced = int(value)
+    except (TypeError, ValueError):
+        return 0
+    return max(coerced, 0)
+
+
+def _progress_active_subject(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    try:
+        action = router_next_action(ledger).to_json()
+    except BlackBoxRuntimeError:
+        return {}
+    subject_id = str(action.get("subject_id") or "")
+    packet = ledger.get("packets", {}).get(subject_id) if subject_id else None
+    node_id = ""
+    if isinstance(packet, Mapping):
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        node_id = str(envelope.get("route_node_id") or "")
+    return {
+        "action_type": str(action.get("action_type") or ""),
+        "subject_id": subject_id,
+        "route_node_id": node_id,
+    }
+
+
+def _progress_packets(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    active_route = ledger.get("active_route_version")
+    packets: list[Mapping[str, Any]] = []
+    for packet in ledger.get("packets", {}).values():
+        if not isinstance(packet, Mapping):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        packet_kind = str(envelope.get("packet_kind") or "task")
+        if packet_kind not in PACKET_KINDS:
+            continue
+        if active_route is not None and envelope.get("route_version") != active_route:
+            continue
+        packets.append(packet)
+    return packets
+
+
+def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
+    """Return Controller-safe current expanded node progress."""
+
+    route_nodes = [
+        node
+        for node in ledger.get("route_nodes", {}).values()
+        if isinstance(node, Mapping)
+    ]
+    if route_nodes:
+        expanded_nodes = 0
+        ended_nodes = 0
+        repair_generations = 0
+        for node in route_nodes:
+            repairs = _coerce_nonnegative_int(node.get("repair_generation", 0))
+            repair_generations += repairs
+            expanded_nodes += 1 + repairs
+            ended_nodes += repairs
+            if str(node.get("status") or "") in _PROGRESS_ROUTE_NODE_ENDED_STATUSES:
+                ended_nodes += 1
+        source = "route_nodes"
+        included_packet_fallback = False
+    else:
+        packets = _progress_packets(ledger)
+        expanded_nodes = len(packets)
+        ended_nodes = sum(
+            1
+            for packet in packets
+            if str(packet.get("status") or "") in _PROGRESS_PACKET_ENDED_STATUSES
+        )
+        repair_generations = 0
+        source = "packets"
+        included_packet_fallback = True
+
+    ended_nodes = min(ended_nodes, expanded_nodes)
+    return {
+        "schema_version": "black_box_flowpilot.progress_fraction.v1",
+        "display": f"{ended_nodes}/{expanded_nodes}",
+        "ended_nodes": ended_nodes,
+        "expanded_nodes": expanded_nodes,
+        "source": source,
+        "equal_weight_nodes": True,
+        "includes_repair_generations": True,
+        "repair_generations": repair_generations,
+        "packet_fallback_used": included_packet_fallback,
+        "controller_relay_only": True,
+        "percent_provided": False,
+        "active_subject": _progress_active_subject(ledger),
+        "sealed_bodies_visible": False,
+    }
 
 
 def _blocker_current_effective(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> bool:
@@ -6494,6 +6597,7 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
 def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Return public status without sealed task or result bodies."""
 
+    progress_fraction = current_progress_fraction(ledger)
     packet_rows = []
     for packet in ledger.get("packets", {}).values():
         envelope = packet["envelope"]
@@ -6523,6 +6627,7 @@ def render_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "route_stage": _route_stage(ledger),
         "active_route_version": ledger.get("active_route_version"),
         "source_generation": ledger.get("source_generation"),
+        "progress_fraction": progress_fraction,
         "next_action": router_next_action(ledger).to_json(),
         "lifecycle_guard": _copy_jsonable(ledger.get("lifecycle_guard") or preview_lifecycle_guard(ledger, trigger="render")),
         "foreground_duty": _copy_jsonable(
@@ -6725,6 +6830,7 @@ def render_compact_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
         },
         "foreground_duty": compact_foreground,
         "final_return_preflight": full.get("foreground_duty", {}).get("final_return_preflight", {}),
+        "progress_fraction": full.get("progress_fraction", current_progress_fraction(ledger)),
         "counts": {
             "packets": len(packets),
             "active_packets": len(active_packets),
@@ -6732,6 +6838,8 @@ def render_compact_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
             "active_leases": len(active_leases),
             "flowguard_orders": len(full.get("flowguard", [])),
             "active_blockers": len(full.get("active_blockers", [])),
+            "progress_ended_nodes": int((full.get("progress_fraction") or {}).get("ended_nodes", 0) or 0),
+            "progress_expanded_nodes": int((full.get("progress_fraction") or {}).get("expanded_nodes", 0) or 0),
         },
         "packets": packets,
         "leases": leases,

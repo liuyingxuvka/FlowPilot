@@ -121,6 +121,70 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertNotIn("SEALED_TASK_BODY", rendered)
         self.assertNotIn("SEALED_RESULT_BODY", rendered)
 
+    def test_current_progress_fraction_is_zero_before_work_expands(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+
+        progress = runtime.current_progress_fraction(ledger)
+
+        self.assertEqual(progress["display"], "0/0")
+        self.assertEqual(progress["ended_nodes"], 0)
+        self.assertEqual(progress["expanded_nodes"], 0)
+        self.assertFalse(progress["percent_provided"])
+        self.assertTrue(progress["controller_relay_only"])
+        self.assertFalse(progress["sealed_bodies_visible"])
+
+    def test_current_progress_fraction_packet_fallback_ignores_control_plane_mechanics(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "SEALED_TASK_BODY")
+
+        self.assertEqual(runtime.current_progress_fraction(ledger)["display"], "0/1")
+
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-1", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        runtime.record_progress(ledger, lease_id, packet_id, "still_working")
+        progress = runtime.current_progress_fraction(ledger)
+
+        self.assertEqual(progress["display"], "0/1")
+        self.assertEqual(progress["source"], "packets")
+        self.assertTrue(progress["packet_fallback_used"])
+
+    def test_current_progress_fraction_counts_route_nodes_and_repairs_equally(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["route_nodes"] = {
+            "node-1": {"node_id": "node-1", "status": "running", "repair_generation": 0},
+            "node-2": {"node_id": "node-2", "status": "accepted", "repair_generation": 0},
+            "node-3": {"node_id": "node-3", "status": "repair_required", "repair_generation": 1},
+            "node-4": {"node_id": "node-4", "status": "superseded", "repair_generation": 0},
+        }
+
+        progress = runtime.current_progress_fraction(ledger)
+
+        self.assertEqual(progress["display"], "3/5")
+        self.assertEqual(progress["ended_nodes"], 3)
+        self.assertEqual(progress["expanded_nodes"], 5)
+        self.assertEqual(progress["repair_generations"], 1)
+        self.assertEqual(progress["source"], "route_nodes")
+        self.assertFalse(progress["packet_fallback_used"])
+
+    def test_public_console_exposes_progress_fraction_without_completion_authority(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["route_nodes"] = {
+            "node-1": {"node_id": "node-1", "status": "accepted", "repair_generation": 0},
+            "node-2": {"node_id": "node-2", "status": "running", "repair_generation": 0},
+        }
+
+        full = runtime.render_console(ledger)
+        compact = runtime.render_compact_console(ledger)
+
+        self.assertEqual(full["progress_fraction"]["display"], "1/2")
+        self.assertEqual(compact["progress_fraction"]["display"], "1/2")
+        self.assertFalse(compact["progress_fraction"]["percent_provided"])
+        self.assertEqual(compact["counts"]["progress_ended_nodes"], 1)
+        self.assertEqual(compact["counts"]["progress_expanded_nodes"], 2)
+        self.assertEqual(compact["status_projection_authority"], "display_only")
+
     def test_reassignment_supersedes_older_active_packet_lease(self) -> None:
         ledger, packet_id, first_lease = runtime_runner._base_ledger()
         assignment = runtime.resolve_role_assignment(ledger, "worker", packet_id=packet_id, host_kind="fake")

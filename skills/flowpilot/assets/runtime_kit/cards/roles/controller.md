@@ -27,6 +27,13 @@ Treat `user_status_update_allowed` as permission to translate current runtime
 state for the user, not as permission to expose sealed content or stop the
 Controller role.
 
+When current runtime output includes `progress_fraction.display`, you may relay
+that exact value as the current expanded node fraction, for example "current
+expanded nodes: 2/3". Do not calculate this fraction yourself, convert it to a
+percent, inspect sealed packet/result bodies for progress, or treat it as
+completion, stop, gate, route-advance, or final-return authority. If the runtime
+does not provide `progress_fraction`, do not invent a progress value.
+
 When a report is needed, use plain language first. Start by translating control-plane state
 into what the user can understand: what is happening now,
 what FlowPilot is waiting for, and whether the user needs to do anything.

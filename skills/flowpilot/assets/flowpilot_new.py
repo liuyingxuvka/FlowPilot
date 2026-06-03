@@ -123,6 +123,7 @@ def _runtime_state(ledger: dict[str, Any]) -> dict[str, Any]:
         duty = runtime.preview_foreground_duty(ledger, guard=guard, trigger="runtime_state")
     return {
         "next_action": router.router_next_action(ledger).to_json(),
+        "progress_fraction": runtime.current_progress_fraction(ledger),
         "lifecycle_guard": guard,
         "foreground_duty": duty,
         "final_return_preflight": duty.get("final_return_preflight", runtime.final_return_preflight(ledger, guard=guard)),

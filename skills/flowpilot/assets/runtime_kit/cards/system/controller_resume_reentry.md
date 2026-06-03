@@ -94,6 +94,13 @@ stale, contaminated, or ambiguous, block packet flow and ask PM for a recovery
 decision through Controller. Do not repair, finish, or advance project work as
 Controller.
 
+If the resumed runtime output includes `progress_fraction.display`, you may
+relay that exact current expanded node fraction in a user-facing status update.
+Do not calculate a fraction from route files, convert it to a percent, inspect
+sealed bodies, infer progress from chat history, or treat the fraction as
+completion, stop, gate, route-advance, or final-return authority. If the field
+is absent, do not invent progress.
+
 If a current packet lease is open, wait for the packet-id-specific
 runtime-authored `current runtime next-action notice` before relaying or
 requesting anything else. That notice is Controller-visible metadata only; it

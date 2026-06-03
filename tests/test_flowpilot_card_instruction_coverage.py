@@ -105,6 +105,23 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("flowpilot_new.py open-packet", text)
             self.assertIn("flowpilot_new.py submit-result", text)
 
+    def test_controller_progress_fraction_guidance_is_runtime_owned(self) -> None:
+        guidance_texts = [
+            _card_path_by_id("controller.core").read_text(encoding="utf-8").lower(),
+            _card_path_by_id("controller.resume_reentry").read_text(encoding="utf-8").lower(),
+            (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower(),
+            (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8").lower(),
+        ]
+        for text in guidance_texts:
+            with self.subTest():
+                self.assertIn("progress_fraction.display", text)
+                self.assertIn("current expanded node fraction", text)
+                self.assertIn("do not calculate", text)
+                self.assertIn("percent", text)
+                self.assertIn("sealed", text)
+                self.assertIn("do not invent", text)
+                self.assertIn("authority", text)
+
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
             "pm.material_scan",

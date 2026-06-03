@@ -98,6 +98,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(result["mode"], "rehearsal")
             self.assertEqual(result["next_action"]["action_type"], "resolve_role_assignment")
             self.assertEqual(result["next_action"]["responsibility"], "pm")
+            self.assertEqual(result["progress_fraction"]["display"], "0/1")
+            self.assertEqual(result["status"]["progress_fraction"]["display"], "0/1")
             shell = run_shell.load_run_shell(root, run_id="run-new-entry")
             ledger = run_shell.load_run_ledger(shell)
             self.assertTrue(ledger["startup_intake"]["current_run_authority"])
