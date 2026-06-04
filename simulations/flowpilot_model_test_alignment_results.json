@@ -98,7 +98,7 @@
         "surface_owner": "script:flowguard_project_topology"
       }
     ],
-    "covered_surface_count": 922,
+    "covered_surface_count": 923,
     "deferred_structure_split_count": 2,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
@@ -347,9 +347,9 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 924,
+    "surface_count": 925,
     "surface_counts": {
-      "model_check_runner": 134,
+      "model_check_runner": 135,
       "model_check_runner_helper": 19,
       "owner_module": 274,
       "public_facade": 112,
@@ -445,6 +445,28 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_defect_governance_checks",
         "surface_owner": "model-check:run_defect_governance_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 173,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_canonical_repair_scope_rotation_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_canonical_repair_scope_rotation_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_canonical_repair_scope_rotation_checks",
+        "surface_owner": "model-check:run_flowpilot_canonical_repair_scope_rotation_checks"
       },
       {
         "covered": true,
@@ -2348,7 +2370,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 258,
+        "line_count": 257,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_route_display_checks",
@@ -22197,17 +22219,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
-              "meta_status": "complete",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": null,
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -22337,17 +22357,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": 0,
-              "meta_status": "complete",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": null,
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "meta_full",
