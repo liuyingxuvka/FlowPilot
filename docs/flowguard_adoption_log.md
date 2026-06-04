@@ -21034,6 +21034,78 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+## harden-flowpilot-new-only-control-plane - FlowPilot new-only control-plane cleanup
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested all planned FlowPilot control-plane friction fixes completed in one pass with OpenSpec and FlowGuard, no compatibility/fallback paths, installed version sync, and local git recording.
+- Status: completed
+- Skill decision: OpenSpec apply plus FlowGuard existing-model preflight, DevelopmentProcessFlow validation, model-test alignment, fake-project rehearsal, install sync, and release tier evidence
+- Started: 2026-06-04T16:05:00Z
+- Ended: 2026-06-04T18:31:18Z
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model_state.py
+- simulations/flowpilot_control_plane_friction_model_transitions.py
+- simulations/flowpilot_control_plane_friction_model_invariants.py
+- simulations/flowpilot_control_plane_friction_model_hazards.py
+- simulations/flowpilot_complete_system_ui_model.py
+- simulations/flowpilot_route_display_model.py
+
+### Commands
+- python -c "import flowguard; print(flowguard.SCHEMA_VERSION)": ok, schema 1.0
+- python -m flowguard project-audit --root .: ok
+- openspec status/instructions harden-flowpilot-new-only-control-plane: ok
+- python -m pytest core, recursive route, high-standard, entrypoint, complete-system, lifecycle suites: ok, 125 passed, 43 subtests passed
+- python -m unittest tests.test_flowpilot_router_runtime_startup_daemon: ok, 65 tests passed via background child
+- python simulations/run_flowpilot_control_plane_friction_checks.py --json-out tmp/flowguard_background/flowpilot_control_plane_friction_new_only_results.json: ok, 57 sequences, 4383 traces, 0 violations
+- python simulations/run_flowpilot_core_runtime_checks.py --json-out tmp/flowguard_background/flowpilot_core_runtime_new_only_results.json: ok
+- python simulations/run_flowpilot_complete_system_runtime_checks.py --json-out tmp/flowguard_background/flowpilot_complete_system_runtime_new_only_results.json: ok
+- python simulations/run_flowpilot_complete_system_ui_checks.py --json-out tmp/flowguard_background/flowpilot_complete_system_ui_new_only_results.json: ok
+- python simulations/run_flowpilot_complete_system_historical_replay_checks.py --json-out tmp/flowguard_background/flowpilot_complete_system_historical_replay_new_only_results.json: ok
+- python simulations/run_flowpilot_route_display_checks.py --json-out tmp/flowguard_background/flowpilot_route_display_new_only_results.json: ok
+- python simulations/run_flowpilot_model_test_alignment_checks.py --json-out tmp/flowguard_background/flowpilot_model_test_alignment_new_only_results.json: ok; alignment_ok true; medium deferred structure split findings only
+- python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out tmp/flowguard_background/flowpilot_fake_project_rehearsal_new_only_results.json: ok; 13 black-box rehearsal scenarios passed
+- python scripts/install_flowpilot.py --sync-repo-owned --json: copied installed FlowPilot to repository digest e53e8dfff04057c115c67d03d80aaf6470ab5edb62cfa6a8a5fcbe56b566ffc0; self-check initially failed only because topology was stale before rebuild
+- python scripts/flowguard_project_topology.py build and python scripts/flowguard_project_topology.py check: ok; 924 code surfaces, 134 models, 350 test commands, 2339 known-bad signals; findings empty
+- python scripts/audit_local_install_sync.py --json: ok
+- python scripts/install_flowpilot.py --check --json: ok
+- python scripts/check_install.py: ok
+- python scripts/smoke_flowpilot.py --fast: ok
+- python scripts/run_test_tier.py --tier release --background --background-dir tmp/flowguard_background --background-max-parallel 3 --json: ok; release supervisor, release_tooling, meta_full, capability_full, and public_release_check all exit 0
+
+### Findings
+- FlowPilot formal runtime is now new-only at the result contract: packet results require strict top-level JSON decision values and PM repair decisions require strict top-level reason.
+- Same-family blockers now retire older active/awaiting-recheck blockers when a newer repair path becomes current; final preflight ignores retired history but still blocks live stale targets.
+- Formal entrypoint no longer exposes run-fake-e2e or headless-startup-text; fake rehearsal uses an internal helper outside the formal public CLI path.
+- Startup display routing treats requested Cockpit as required Cockpit or display_blocked, not chat substitution.
+- Public status now distinguishes consumed historical blocking outcomes from current blockers, fixing the route-mutation terminal friction found during rehearsal.
+- Installed local FlowPilot skill was synchronized to repository source and all install/smoke/release checks passed after topology refresh.
+
+### Counterexamples
+- Prose result bodies, missing top-level decision, old alias fields, and nested PM repair-decision wrappers are mechanically blocked/reissued rather than translated.
+- A PM mutate-route disposition can be accepted and applied through the current gate, but the consumed historical blocking outcome no longer appears as a current public-status blocker after the repaired route completes.
+- Accepted packet plus superseded-after-repair status is historical only and no longer treated as a current regression by the control surface.
+- Cockpit-unavailable startup now records a display-surface blocker instead of substituting a chat fallback path.
+
+### Friction Points
+- Several fake rehearsal bodies still lacked top-level decision and were correctly blocked by the new runtime until the rehearsal fixture was updated.
+- Startup daemon tests were still asserting old heartbeat text and old role-slot count; tests were aligned to the current requested-responsibility set.
+- The first full fake-project rerun exposed a display-only blocker leak: an applied PM route-mutation outcome still appeared as local_artifact in compact status. Runtime filtering now removes applied/committed gate outcomes from current blockers.
+- Install sync copied the skill successfully, but self-check failed until flowguard_project_topology was rebuilt after result artifacts changed.
+
+### Skipped Steps
+- No legacy compatibility parser, old CLI fallback, old field alias support, or old-router fallback was retained.
+- No public release, GitHub push, tag, or deploy was performed.
+
+### Risk Evidence Summary
+- Evidence supports strict new-only result parsing, PM repair decision hardening, same-family blocker retirement, route-mutation terminal status cleanup, startup display blocker behavior, installed skill freshness, topology freshness, smoke, and release tier success.
+
+### Next Actions
+- Keep the topology rebuild/check after validations that refresh tracked result files, before install/check_install.
+- Treat compact public status as display-only but keep its blocker list current-only so terminal routes do not appear stuck after a gate consumes historical blocker evidence.
+- Deferred StructureMesh work remains for oversized flowpilot_new.py and scripts/flowguard_project_topology.py; not a blocker for this control-plane repair.
+
 
 ## harden-flowpilot-current-target-repair - FlowPilot current-target repair hardening for stale package, PM decision, fallback, and fake/bad packet control-plane friction
 

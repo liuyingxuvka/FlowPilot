@@ -1943,7 +1943,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "reviewer_checked_requirement_ids": [
                     "live_agent_spawn_freshness",
                     "heartbeat_host_automation_current_run_binding",
-                    "cockpit_or_display_fallback_reality",
+                    "cockpit_display_surface_reality",
                 ],
                 "direct_evidence_paths_checked": [
                     self.rel(root, run_root / "startup_answers.json"),

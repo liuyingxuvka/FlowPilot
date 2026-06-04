@@ -140,7 +140,7 @@ def _startup_external_fact_requirements(router: ModuleType, run_root: Path, run_
     if router._scheduled_continuation_requested(answers) and (not router._continuation_has_host_bound_automation_receipt(continuation_binding, str(run_state.get('run_id') or ''))):
         requirements.append({'id': 'heartbeat_host_automation_current_run_binding', 'reason': 'Router validates the heartbeat binding fields, but host_automation_verified=true alone is an AI/host payload claim unless backed by a host receipt.', 'self_attested_payload_fields': ['host_automation_verified', 'host_automation_id'], 'reviewer_direct_check_required': True})
     if answers.get('display_surface') == 'cockpit':
-        requirements.append({'id': 'cockpit_or_display_fallback_reality', 'reason': 'Router can record selected display mode and chat fallback, but live Cockpit availability or fallback necessity requires direct review when requested.', 'self_attested_payload_fields': ['display_surface'], 'reviewer_direct_check_required': True})
+        requirements.append({'id': 'cockpit_display_surface_reality', 'reason': 'Router can record the selected display mode, but live Cockpit availability requires direct review when requested.', 'self_attested_payload_fields': ['display_surface'], 'reviewer_direct_check_required': True})
     return requirements
 
 def _startup_fact_review_ownership(router: ModuleType, computed_checks: dict[str, bool], external_requirements: list[dict[str, Any]]) -> dict[str, Any]:

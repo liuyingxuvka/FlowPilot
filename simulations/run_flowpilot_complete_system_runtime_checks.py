@@ -78,7 +78,7 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         ledger,
         lease_id,
         packet_id,
-        "SEALED_RESULT_BODY: complete-system result",
+        json.dumps({"decision": "pass", "summary": "complete-system result"}),
         evidence_ids=["runtime-unit"],
     )
     flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
@@ -86,14 +86,14 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         ledger,
         flowguard_packet,
         agent_id="flowguard-complete-system",
-        body="SEALED_RESULT_BODY: complete-system FlowGuard evidence",
+        body=json.dumps({"decision": "pass", "summary": "complete-system FlowGuard evidence"}),
     )
     review_packet = _open_packet_by_kind(ledger, "review")
     _complete_open_packet(
         ledger,
         review_packet,
         agent_id="reviewer-complete-system",
-        body="SEALED_RESULT_BODY: complete-system reviewer accepted evidence",
+        body=json.dumps({"decision": "pass", "summary": "complete-system reviewer accepted evidence"}),
     )
     return result_id
 
@@ -103,7 +103,7 @@ def dead_worker_replaced() -> dict[str, Any]:
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.record_progress(ledger, worker, packet_id, "working")
     runtime.expire_lease(ledger, worker)
-    late = host.submit_host_result(ledger, worker, packet_id, "SEALED_RESULT_BODY: late")
+    late = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass", "summary": "late"}))
     replacement = host.lease_responsibility(ledger, "worker", host_kind="fake", scope="replacement")
     runtime.assign_packet(ledger, packet_id, replacement)
     _complete_packet(ledger, packet_id, replacement)
@@ -172,7 +172,7 @@ def cutover_requires_live_host() -> dict[str, Any]:
 def wrong_flowguard_target_blocks_complete_system() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = host.submit_host_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
+    result_id = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
     order_id = flowguard_orders.create_work_order(ledger, "target_product_behavior", "wrong_target", packet_id)
     flowguard_orders.complete_work_order(ledger, order_id)
     reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")
@@ -208,7 +208,7 @@ def body_hash_mismatch_blocks_result() -> dict[str, Any]:
         ledger,
         worker,
         packet_id,
-        "SEALED_RESULT_BODY",
+        json.dumps({"decision": "pass"}),
         packet_body_hash="wrong-body-hash",
     )
     return _scenario_result(
@@ -222,8 +222,8 @@ def body_hash_mismatch_blocks_result() -> dict[str, Any]:
 def duplicate_output_blocks_second_result() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    first = host.submit_host_result(ledger, worker, packet_id, "SEALED_RESULT_BODY:first")
-    second = host.submit_host_result(ledger, worker, packet_id, "SEALED_RESULT_BODY:second")
+    first = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass", "seq": 1}))
+    second = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass", "seq": 2}))
     return _scenario_result(
         "duplicate_output_blocks_second_result",
         ledger["results"][first]["status"] == "mechanically_valid"
@@ -236,7 +236,7 @@ def duplicate_output_blocks_second_result() -> dict[str, Any]:
 def missing_target_and_report_only_flowguard_block_review() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = host.submit_host_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
+    result_id = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
     missing_target_blocked = False
     try:
         flowguard_orders.create_work_order(ledger, "", "done_claim", packet_id)
@@ -259,7 +259,7 @@ def missing_target_and_report_only_flowguard_block_review() -> dict[str, Any]:
 def stale_proof_artifact_blocks_review() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = host.submit_host_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
+    result_id = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
     order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
     flowguard_orders.complete_work_order(ledger, order_id, proof_artifact="simulations/stale.json")
     ledger["flowguard_work_orders"][order_id]["proof_stale"] = True
@@ -296,16 +296,16 @@ def completion_claim_resources_risks_and_old_ui_block_closure() -> dict[str, Any
     )
 
 
-def cockpit_disconnect_records_chat_fallback() -> dict[str, Any]:
+def cockpit_disconnect_records_display_surface_blocker() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
-    fallback = cockpit.record_display_surface_fallback(ledger, "cockpit_unavailable")
+    blocked = cockpit.record_display_surface_blocker(ledger, "cockpit_unavailable")
     projection = cockpit.render_status(ledger)
     return _scenario_result(
-        "cockpit_disconnect_records_chat_fallback",
-        fallback["fallback"]["route_sign_required"]
-        and projection["display_surface"]["active"] == "chat_route_sign",
+        "cockpit_disconnect_records_display_surface_blocker",
+        blocked["blocker"]["repair_required"]
+        and projection["display_surface"]["active"] == "blocked",
         ledger,
-        {"fallback": fallback["fallback"]},
+        {"blocker": blocked["blocker"]},
     )
 
 
@@ -321,7 +321,7 @@ SCENARIOS: dict[str, ScenarioFn] = {
     "missing_target_and_report_only_flowguard_block_review": missing_target_and_report_only_flowguard_block_review,
     "stale_proof_artifact_blocks_review": stale_proof_artifact_blocks_review,
     "completion_claim_resources_risks_and_old_ui_block_closure": completion_claim_resources_risks_and_old_ui_block_closure,
-    "cockpit_disconnect_records_chat_fallback": cockpit_disconnect_records_chat_fallback,
+    "cockpit_disconnect_records_display_surface_blocker": cockpit_disconnect_records_display_surface_blocker,
 }
 
 

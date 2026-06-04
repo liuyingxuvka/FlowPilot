@@ -23,7 +23,7 @@ REQUIRED_REPLAY_IDS = (
     "wrong_flowguard_target_not_gate_evidence",
     "stale_result_artifact_not_gate_evidence",
     "duplicate_result_not_authority",
-    "cockpit_disconnect_uses_chat_route_sign",
+    "cockpit_disconnect_blocks_display_surface",
     "progress_only_background_not_release",
 )
 
@@ -69,10 +69,10 @@ def run_checks() -> dict[str, Any]:
             "evidence": "duplicate_output_blocks_second_result",
         },
         {
-            "replay_id": "cockpit_disconnect_uses_chat_route_sign",
-            "source_class": "display_surface_fallback",
-            "status": "passed" if scenarios["cockpit_disconnect_records_chat_fallback"]["ok"] else "failed",
-            "evidence": "cockpit_disconnect_records_chat_fallback",
+            "replay_id": "cockpit_disconnect_blocks_display_surface",
+            "source_class": "display_surface_blocker",
+            "status": "passed" if scenarios["cockpit_disconnect_records_display_surface_blocker"]["ok"] else "failed",
+            "evidence": "cockpit_disconnect_records_display_surface_blocker",
         },
         {
             "replay_id": "progress_only_background_not_release",

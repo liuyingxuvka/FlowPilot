@@ -13,6 +13,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
 ENTRYPOINT = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_new.py"
+ASSETS = REPO_ROOT / "skills" / "flowpilot" / "assets"
 FAKE_STARTUP_TEXT = "Build a fake calculator CLI with docs, tests, FlowGuard evidence, review, validation, and closure."
 MIN_ACCEPTED_ROUTE_NODES = 3
 ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
@@ -41,7 +42,7 @@ def redact_args(args: tuple[str, ...]) -> list[str]:
             redact_next = False
             continue
         redacted.append(arg)
-        if arg in {"--body", "--startup-text", "--headless-startup-text"}:
+        if arg in {"--body", "--startup-text"}:
             redact_next = True
     return redacted
 
@@ -118,6 +119,34 @@ def run_raw_cli(root: Path, command_log: list[dict[str, Any]], *args: str) -> su
     return completed
 
 
+def run_internal_rehearsal_start(
+    root: Path,
+    command_log: list[dict[str, Any]],
+    *,
+    run_id: str,
+    startup_text: str,
+) -> dict[str, Any]:
+    if str(ASSETS) not in sys.path:
+        sys.path.insert(0, str(ASSETS))
+    from flowpilot_new import start_run
+
+    payload = start_run(
+        root,
+        run_id=run_id,
+        headless_startup_text=startup_text,
+        require_formal_ui=False,
+    )
+    command_log.append(
+        {
+            "args": ["internal-rehearsal-start", "--run-id", run_id, "--startup-text", "<sealed>"],
+            "returncode": 0,
+            "payload": payload_summary(payload),
+            "stderr_excerpt": "",
+        }
+    )
+    return payload
+
+
 def resolve_and_lease_packet(
     root: Path,
     command_log: list[dict[str, Any]],
@@ -190,6 +219,7 @@ def assert_public_projection_is_sealed(projection: dict[str, Any]) -> None:
 def _route_plan_body() -> str:
     return json.dumps(
         {
+            "decision": "pass",
             "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
             "nodes": [
                 {
@@ -232,6 +262,7 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
     node_id = str(packet.get("route_node_id") or "")
     return json.dumps(
         {
+            "decision": "pass",
             "route_node_id": node_id,
             "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
             "repair_policy": "same_node_repair_default",
@@ -308,7 +339,7 @@ def complete_full_packet_chain(
             decision = first_pm_disposition_decision if pm_disposition_count == 1 else "accept"
             body = json.dumps({"decision": decision, "reason": f"fake PM disposition {decision}"})
         else:
-            body = f"SEALED_RESULT_BODY: fake {packet_kind} result for {packet_id}"
+            body = json.dumps({"decision": "pass", "summary": f"fake {packet_kind} result for {packet_id}"})
 
         current_payload = run_cli(
             root,
@@ -395,6 +426,7 @@ def complete_planning_chain_only(
         if packet_kind == "task" and route_scope == "high_standard_contract":
             body = json.dumps(
                 {
+                    "decision": "pass",
                     "requirements": [
                         {
                             "requirement_id": "hsr-001",
@@ -407,6 +439,7 @@ def complete_planning_chain_only(
         elif packet_kind == "task" and route_scope == "discovery":
             body = json.dumps(
                 {
+                    "decision": "pass",
                     "material_sources": ["startup"],
                     "local_skill_inventory": ["flowguard-development-process-flow"],
                 }
@@ -414,6 +447,7 @@ def complete_planning_chain_only(
         elif packet_kind == "task" and route_scope == "skill_standard":
             body = json.dumps(
                 {
+                    "decision": "pass",
                     "obligations": [
                         {
                             "obligation_id": "skill-std-001",
@@ -428,7 +462,7 @@ def complete_planning_chain_only(
         elif packet_kind == "task" and route_scope == "node_acceptance_plan":
             body = _node_acceptance_plan_body(packet)
         else:
-            body = f"SEALED_RESULT_BODY: fake planning {packet_kind}"
+            body = json.dumps({"decision": "pass", "summary": f"fake planning {packet_kind}"})
         current_payload = run_cli(
             root,
             command_log,
@@ -471,15 +505,7 @@ def complete_planning_chain_only(
 
 
 def start_rehearsal(root: Path, command_log: list[dict[str, Any]], run_id: str) -> dict[str, Any]:
-    payload = run_cli(
-        root,
-        command_log,
-        "start",
-        "--run-id",
-        run_id,
-        "--headless-startup-text",
-        FAKE_STARTUP_TEXT,
-    )
+    payload = run_internal_rehearsal_start(root, command_log, run_id=run_id, startup_text=FAKE_STARTUP_TEXT)
     ensure(payload.get("mode") == "rehearsal", "headless startup should be recorded as rehearsal mode")
     ensure(
         payload.get("next_action", {}).get("action_type") == "resolve_role_assignment",

@@ -27,7 +27,7 @@
           "split_child_model"
         ],
         "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_new has 791 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 777 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_new",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "priority_score": 29,
@@ -63,7 +63,7 @@
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_new has 791 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 777 lines, above the 450 line diagnostic threshold",
         "paths": [
           "skills/flowpilot/assets/flowpilot_new.py"
         ],
@@ -112,7 +112,7 @@
           "split_child_model"
         ],
         "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_new has 791 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_new has 777 lines, above the 450 line diagnostic threshold",
         "name": "flowpilot_new",
         "path": "skills/flowpilot/assets/flowpilot_new.py",
         "priority_score": 29,
@@ -654,7 +654,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 464,
+        "line_count": 474,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_plane_friction_checks",
@@ -2348,7 +2348,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 257,
+        "line_count": 258,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_route_display_checks",
@@ -3008,7 +3008,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 177,
+        "line_count": 184,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_validation_pm_gate_checks",
@@ -3387,7 +3387,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 212,
+        "line_count": 217,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -4100,8 +4100,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 791,
-        "local_import_count": 0,
+        "line_count": 777,
+        "local_import_count": 1,
         "max_severity": "medium",
         "model_binding": null,
         "name": "flowpilot_new",
@@ -7972,7 +7972,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 154,
+        "line_count": 159,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8270,7 +8270,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 299,
+        "line_count": 309,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -22197,15 +22197,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "complete",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:complete"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_full",
@@ -22335,15 +22337,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
+              "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "passed",
+              "meta_status": "complete",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "passed"
+              "reasons": [
+                "unexpected_meta_status:complete"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_full",
@@ -57377,10 +57381,8 @@
             "ack_parser.add_argument",
             "argparse.ArgumentParser",
             "args.root.resolve",
-            "bool",
             "cancel_parser.add_argument",
             "cancel_run",
-            "fake.add_argument",
             "final_preflight",
             "handoff_parser.add_argument",
             "host_liveness",
@@ -57407,7 +57409,6 @@
             "resume",
             "resume_parser.add_argument",
             "role_handoff_payload",
-            "run_fake_e2e",
             "run_until_wait",
             "run_wait.add_argument",
             "runtime.BlackBoxRuntimeError",
@@ -57458,19 +57459,16 @@
             "assignment_id",
             "blocker_id",
             "body",
-            "bool",
             "cancel_parser",
             "cancel_run",
             "command",
             "detail",
             "dumps",
             "exc",
-            "fake",
             "final_preflight",
             "full",
             "get",
             "handoff_parser",
-            "headless_startup_text",
             "host",
             "host_kind",
             "host_liveness",
@@ -57505,7 +57503,6 @@
             "resume_parser",
             "role_handoff_payload",
             "root",
-            "run_fake_e2e",
             "run_id",
             "run_until_wait",
             "run_wait",
@@ -57515,7 +57512,6 @@
             "source",
             "start",
             "start_run",
-            "startup_text",
             "status",
             "status_parser",
             "stderr",
@@ -57532,7 +57528,6 @@
             "ack_parser",
             "args",
             "cancel_parser",
-            "fake",
             "handoff_parser",
             "lease",
             "liveness_parser",
@@ -71720,6 +71715,7 @@
             "flowpilot_new.status",
             "flowpilot_new.submit_result",
             "iter",
+            "json.dumps",
             "json.loads",
             "next",
             "run_shell.load_run_ledger",
@@ -71757,6 +71753,7 @@
             "flowpilot_new.submit_result",
             "get",
             "iter",
+            "json.dumps",
             "json.loads",
             "len",
             "next",
@@ -71793,6 +71790,7 @@
             "flowpilot_new.submit_result",
             "get",
             "iter",
+            "json.dumps",
             "json.loads",
             "len",
             "next",
@@ -71834,6 +71832,7 @@
             "flowpilot_new.submit_result",
             "get",
             "iter",
+            "json.dumps",
             "len",
             "next",
             "run_shell.load_run_ledger",
@@ -71856,7 +71855,7 @@
           "test_name": "test_reviewer_packet_lease_projection_is_clean_before_and_after_review"
         },
         {
-          "assert_count": 24,
+          "assert_count": 26,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"
@@ -71886,7 +71885,7 @@
           "test_name": "test_formal_public_surface_omits_unsupported_side_command_paths"
         },
         {
-          "assert_count": 24,
+          "assert_count": 26,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"
@@ -72053,6 +72052,7 @@
             "flowpilot_new.ack",
             "flowpilot_new.start_run",
             "flowpilot_new.submit_result",
+            "json.dumps",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "run_shell.save_run_ledger",
@@ -72077,6 +72077,7 @@
           "calls": [
             "host.lease_responsibility",
             "host.submit_host_result",
+            "json.dumps",
             "runtime.ack_lease",
             "runtime.assign_packet",
             "runtime.create_route",

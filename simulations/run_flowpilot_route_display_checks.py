@@ -32,7 +32,7 @@ HAZARD_EXPECTED_FAILURES = {
     "draft_route_projected_to_user_visible_surface": "draft or repair candidate was projected to the user-visible route surface",
     "draft_writes_visible_display_plan": "route draft wrote or replaced the user-visible display plan",
     "draft_backed_route_state_snapshot_visible": "user-visible route_state_snapshot was backed by flow.draft.json",
-    "draft_backed_chat_route_sign": "user-visible route sign generator allowed flow.draft.json fallback",
+    "draft_backed_user_dialog_route_sign": "user-visible route sign generator allowed flow.draft.json source substitution",
     "draft_only_run_leaves_waiting_state": "draft or repair candidate was projected to the user-visible route surface",
     "draft_overwrites_previous_committed_visible_route": "draft or repair candidate was projected to the user-visible route surface",
     "repair_candidate_projected_before_commit": "draft or repair candidate was projected to the user-visible route surface",
@@ -43,9 +43,9 @@ HAZARD_EXPECTED_FAILURES = {
     "startup_waiting_status_card_visible": "startup waiting status card was shown to the user before PM route activation",
     "canonical_route_keeps_placeholder_identity": "canonical route display kept startup placeholder semantics",
     "canonical_route_missing_identity": "canonical route display lacked explicit canonical identity",
-    "chat_fallback_bullet_list_after_route_draft": "chat fallback displayed bullet list instead of Mermaid route sign",
-    "degraded_mermaid_without_reason": "chat fallback degraded without recording a Mermaid source reason",
-    "cockpit_chat_source_drift": "Cockpit route map and chat fallback used different route sources",
+    "user_dialog_bullet_list_after_route_draft": "user dialog route sign displayed bullet list instead of Mermaid route sign",
+    "degraded_mermaid_without_reason": "user dialog route sign degraded without recording a Mermaid source reason",
+    "cockpit_dialog_source_drift": "Cockpit route map and user dialog route sign used different route sources",
     "route_checklists_simplified_away": "route display dropped real major nodes or node checklists",
     "route_statuses_collapsed": "completed, active, selected, blocked, or pending node states were conflated",
     "generated_files_without_visible_receipt": "generated route diagram files existed without a user-visible display receipt",
@@ -65,16 +65,16 @@ def _state_id(state: model.State) -> str:
         f"display_role={state.display_role},placeholder={state.is_placeholder},replacement={state.replacement_rule},"
         f"nodes={state.route_nodes_real},checklist={state.route_checklists_preserved},"
         f"statuses={state.route_statuses_distinct}|canonical={state.canonical_route_nodes_required},"
-        f"{state.canonical_frontier_fields_required},draft={state.draft_route_fallback_supported},"
-        f"snapshot={state.snapshot_fallback_supported}|gen={state.route_generation},"
+        f"{state.canonical_frontier_fields_required},draft={state.draft_route_source_substitution_supported},"
+        f"snapshot={state.snapshot_source_substitution_supported}|gen={state.route_generation},"
         f"diagram={state.diagram_generation},visible={state.visible_generation}|"
         f"draft_wrote_plan={state.draft_wrote_visible_display_plan},snapshot_draft={state.route_state_snapshot_backed_by_draft}|"
         f"mermaid={state.mermaid_source_available},unknown={state.mermaid_route_unknown},"
         f"{state.mermaid_node_unknown},route_nodes={state.mermaid_uses_route_nodes},"
-        f"source={state.mermaid_uses_canonical_source}|chat={state.chat_display_kind},"
+        f"source={state.mermaid_uses_canonical_source}|chat={state.user_dialog_display_kind},"
         f"ledger={state.user_dialog_display_ledger_recorded}|cockpit={state.cockpit_available},"
         f"{state.cockpit_display_kind},{state.cockpit_receipt_recorded},"
-        f"same={state.same_graph_source_for_chat_and_cockpit}|files_only={state.generated_files_only}|"
+        f"same={state.same_graph_source_for_dialog_and_cockpit}|files_only={state.generated_files_only}|"
         f"boundary={state.sealed_body_boundary_preserved},source_leak={state.internal_source_fields_visible},"
         f"evidence={state.evidence_table_visible},invented={state.controller_invented_nodes}"
     )
@@ -190,11 +190,11 @@ def _architecture_candidate() -> dict[str, object]:
         "scenarios": list(model.SCENARIOS),
         "principles": [
             "display_plan.json remains a native visible-plan projection, not the only user-facing route map",
-            "Mermaid/chat route sign and Cockpit route map share canonical route/frontier/snapshot semantics",
+            "Mermaid/user dialog route sign and Cockpit route map share canonical route/frontier/snapshot semantics",
             "Startup Mermaid may be displayed as a placeholder only when it has explicit placeholder identity and replacement metadata",
             "Startup waiting-for-PM-route state remains internal instead of producing a separate user-visible status card",
             "draft routes are internal-only until PM activates a reviewed flow.json route",
-            "route_state_snapshot.route.nodes is the stable fallback when a committed route file is unavailable",
+            "route_state_snapshot.route.nodes is the stable source when a committed route file is unavailable",
             "display receipt is required; generated files alone do not satisfy user visibility",
         ],
         "minimal_runtime_change_set": [

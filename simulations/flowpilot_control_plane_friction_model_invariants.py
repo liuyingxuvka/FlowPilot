@@ -651,6 +651,22 @@ def current_repair_targets_stay_on_current_packets(state: State, trace) -> Invar
         )
     return InvariantResult.pass_()
 
+def new_only_result_contract_blocks_old_shapes(state: State, trace) -> InvariantResult:
+    del trace
+    if state.old_packet_outcome_shape_seen and not state.old_packet_outcome_shape_mechanically_blocked:
+        return InvariantResult.fail(
+            "old packet outcome shape was accepted instead of mechanically blocked"
+        )
+    return InvariantResult.pass_()
+
+def same_family_repair_paths_retire_old_blockers(state: State, trace) -> InvariantResult:
+    del trace
+    if state.newer_same_family_repair_path_seen and not state.older_same_family_blocker_retired:
+        return InvariantResult.fail(
+            "newer same-family repair path left an older active blocker live"
+        )
+    return InvariantResult.pass_()
+
 def blocked_pm_repair_decisions_are_reissued(state: State, trace) -> InvariantResult:
     del trace
     if state.blocked_pm_repair_decision_packet_seen and state.blocked_pm_repair_decision_packet_reused:
@@ -1393,6 +1409,16 @@ INVARIANTS = (
         name="current_repair_targets_stay_on_current_packets",
         description="Repair target selection retires replaced result_submitted packets and gates active blockers that point at noncurrent packets.",
         predicate=current_repair_targets_stay_on_current_packets,
+    ),
+    Invariant(
+        name="new_only_result_contract_blocks_old_shapes",
+        description="Old prose, alias, or missing-decision packet outcomes are mechanically blocked instead of being accepted as current pass/fail evidence.",
+        predicate=new_only_result_contract_blocks_old_shapes,
+    ),
+    Invariant(
+        name="same_family_repair_paths_retire_old_blockers",
+        description="A newer same-family repair authority retires older active blockers from the current control path.",
+        predicate=same_family_repair_paths_retire_old_blockers,
     ),
     Invariant(
         name="blocked_pm_repair_decisions_are_reissued",

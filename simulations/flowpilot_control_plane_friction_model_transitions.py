@@ -336,6 +336,21 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.new_only_result_contract_checked:
+        yield Transition(
+            "new_only_result_contract_blocks_old_shapes_and_retires_old_blockers",
+            _inc(
+                state,
+                holder="router",
+                new_only_result_contract_checked=True,
+                old_packet_outcome_shape_seen=True,
+                old_packet_outcome_shape_mechanically_blocked=True,
+                newer_same_family_repair_path_seen=True,
+                older_same_family_blocker_retired=True,
+            ),
+        )
+        return
+
     if not state.pm_research_package_written:
         yield Transition(
             "pm_writes_research_package_with_scope_fields",

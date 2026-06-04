@@ -40,7 +40,7 @@ def _open_packets(ledger: dict, *, kind: str | None = None, scope: str | None = 
     return rows
 
 
-def _complete_open_packet(ledger: dict, packet_id: str, body: str = "SEALED_RESULT_BODY") -> str:
+def _complete_open_packet(ledger: dict, packet_id: str, body: str = '{"decision": "pass"}') -> str:
     packet = ledger["packets"][packet_id]
     responsibility = packet["envelope"]["responsibility"]
     lease_id = host.lease_responsibility(
@@ -56,10 +56,10 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str = "SEALED_RESU
     return host.submit_host_result(ledger, lease_id, packet_id, body)
 
 
-def _complete_task_chain(ledger: dict, packet_id: str, body: str = "SEALED_RESULT_BODY") -> None:
+def _complete_task_chain(ledger: dict, packet_id: str, body: str = '{"decision": "pass"}') -> None:
     _complete_open_packet(ledger, packet_id, body)
     for kind in ("flowguard_check", "review"):
-        _complete_open_packet(ledger, _open_packets(ledger, kind=kind)[0], f"SEALED_RESULT_BODY: {kind}")
+        _complete_open_packet(ledger, _open_packets(ledger, kind=kind)[0], json.dumps({"decision": "pass"}))
 
 
 def _complete_preplanning(ledger: dict) -> None:
@@ -68,6 +68,7 @@ def _complete_preplanning(ledger: dict) -> None:
         _open_packets(ledger, scope="high_standard_contract")[0],
         json.dumps(
             {
+                "decision": "pass",
                 "requirements": [
                     {
                         "requirement_id": "hsr-001",
@@ -81,13 +82,20 @@ def _complete_preplanning(ledger: dict) -> None:
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="discovery")[0],
-        json.dumps({"material_sources": ["startup"], "local_skill_inventory": ["flowguard-development-process-flow"]}),
+        json.dumps(
+            {
+                "decision": "pass",
+                "material_sources": ["startup"],
+                "local_skill_inventory": ["flowguard-development-process-flow"],
+            }
+        ),
     )
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="skill_standard")[0],
         json.dumps(
             {
+                "decision": "pass",
                 "obligations": [
                     {
                         "obligation_id": "skill-std-001",
@@ -104,6 +112,7 @@ def _route_plan_body(nodes: list[dict] | None = None) -> str:
     return json.dumps(
         {
             "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "decision": "pass",
             "nodes": nodes
             or [
                 {
@@ -148,6 +157,7 @@ def _node_context_body(ledger: dict) -> str:
     node = ledger["route_nodes"][node_id]
     return json.dumps(
         {
+            "decision": "pass",
             "repair_policy": "same_node_repair_default",
             "node_context_package": {
                 "node_id": node_id,
@@ -189,7 +199,7 @@ def _complete_active_node_packet_loop(ledger: dict) -> str:
     node_id = ledger["execution_frontier"]["active_node_id"]
     if _open_packets(ledger, scope="node_prework_flowguard"):
         _complete_prework_flowguard(ledger)
-    _complete_task_chain(ledger, _open_packets(ledger, scope="node")[0], f"SEALED_RESULT_BODY: {node_id}")
+    _complete_task_chain(ledger, _open_packets(ledger, scope="node")[0], json.dumps({"decision": "pass", "node_id": node_id}))
     return node_id
 
 
@@ -197,9 +207,9 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
     def test_reviewer_pass_auto_closes_without_closure_flowguard_operator_packet(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "requirements": []}))
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
-        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"decision": "pass"}))
 
         self.assertFalse(_open_packets(ledger, kind="validation"))
         self.assertFalse(_open_packets(ledger, kind="closure"))
@@ -219,10 +229,10 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
     def test_system_validation_failure_routes_to_pm_repair(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        _complete_open_packet(ledger, packet_id, json.dumps({"requirements": []}))
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "requirements": []}))
         runtime._ensure_review_packet_for_task_result(ledger, packet_id)
 
-        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"decision": "pass"}))
 
         self.assertFalse(_open_packets(ledger, kind="closure"))
         self.assertFalse(ledger["system_closures"])
@@ -305,7 +315,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_planning(ledger)
 
         packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
-        result_id = _complete_open_packet(ledger, packet_id, json.dumps({"repair_policy": "same_node_repair_default"}))
+        result_id = _complete_open_packet(
+            ledger,
+            packet_id,
+            json.dumps({"decision": "pass", "repair_policy": "same_node_repair_default"}),
+        )
 
         node_id = ledger["execution_frontier"]["active_node_id"]
         self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
@@ -334,7 +348,8 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             json.dumps(
                 {
                     "schema_version": "black_box_flowpilot.packet_outcome.v1",
-                    "passed": False,
+                    "decision": "block",
+                    "blocking": True,
                     "blocker_class": "local_artifact",
                     "recommended_resolution": "Reviewer rejected the real node acceptance plan.",
                 }
@@ -372,7 +387,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(worker_body["node_context_package_id"], context_id)
         self.assertIn("minimum baseline", worker_body["instruction"])
 
-        _complete_open_packet(ledger, worker_packet, f"SEALED_RESULT_BODY: completed {node_id}")
+        _complete_open_packet(ledger, worker_packet, json.dumps({"decision": "pass", "node_id": node_id}))
         post_flowguard = _open_packets(ledger, kind="flowguard_check")[0]
         post_body = json.loads(ledger["packets"][post_flowguard]["body"])
         self.assertEqual(ledger["packets"][post_flowguard]["envelope"]["node_context_package_id"], context_id)
@@ -458,6 +473,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             packet_id,
             json.dumps(
                 {
+                    "decision": "pass",
                     "requirements": [
                         {
                             "requirement_id": "hsr-001",
@@ -477,7 +493,8 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             json.dumps(
                 {
                     "schema_version": "black_box_flowpilot.packet_outcome.v1",
-                    "passed": False,
+                    "decision": "block",
+                    "blocking": True,
                     "blocker_class": "local_artifact",
                     "recommended_resolution": "PM must reissue a sharper high-standard contract.",
                 }
@@ -501,7 +518,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         _complete_open_packet(ledger, repair_packets[0], json.dumps({"decision": "pass"}))
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
-        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"decision": "pass"}))
 
         self.assertEqual(ledger["active_blockers"][active[0]["blocker_id"]]["status"], "cleared")
         self.assertFalse(_open_packets(ledger, kind="validation"))
@@ -539,7 +556,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             packet_id,
-            json.dumps({"status": "blocked", "blocker_class": "local_artifact", "recommended_resolution": "sender fix"}),
+            json.dumps({"decision": "block", "blocking": True, "blocker_class": "local_artifact", "recommended_resolution": "sender fix"}),
         )
         blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
 
@@ -549,7 +566,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             json.dumps({"decision": "sender_reissue", "reason": "plain repair"}),
         )
 
-        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_recheck")
+        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "repair_packet_open")
         self.assertFalse(ledger["pm_decision_gates"])
         repair_packets = [
             packet_id
@@ -569,7 +586,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             node_packet,
-            json.dumps({"status": "blocked", "blocker_class": "local_artifact", "recommended_resolution": "route change"}),
+            json.dumps({"decision": "block", "blocking": True, "blocker_class": "local_artifact", "recommended_resolution": "route change"}),
         )
         blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
         old_route_version = ledger["active_route_version"]
@@ -587,7 +604,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertTrue(_open_packets(ledger, kind="flowguard_check"))
 
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
-        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"decision": "pass"}))
         self.assertEqual(gate["status"], "applied")
         self.assertEqual(ledger["active_route_version"], old_route_version + 1)
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
@@ -605,7 +622,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             node_packet,
-            json.dumps({"status": "blocked", "blocker_class": "local_artifact", "recommended_resolution": "route change"}),
+            json.dumps({"decision": "block", "blocking": True, "blocker_class": "local_artifact", "recommended_resolution": "route change"}),
         )
         blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
         old_route_version = ledger["active_route_version"]
@@ -625,7 +642,8 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             json.dumps(
                 {
                     "schema_version": "black_box_flowpilot.packet_outcome.v1",
-                    "passed": False,
+                    "decision": "block",
+                    "blocking": True,
                     "blocker_class": "local_artifact",
                     "recommended_resolution": "Reviewer rejected the real route mutation decision.",
                 }
@@ -637,7 +655,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(ledger["results"][source_result_id]["staged_effect"]["status"], "pending")
         self.assertEqual(ledger["active_route_version"], old_route_version)
         self.assertNotEqual(ledger["route_nodes"][node_id]["status"], "superseded")
-        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_pm_decision_gate")
+        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "retired_after_new_current_blocker")
         active_review_blocks = [
             row
             for row in ledger["active_blockers"].values()
@@ -667,7 +685,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertTrue(_open_packets(ledger, kind="flowguard_check"))
 
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
-        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"passed": True}))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], json.dumps({"decision": "pass"}))
 
         self.assertEqual(gate["status"], "applied")
         self.assertEqual(ledger["active_route_version"], old_route_version + 1)
@@ -684,7 +702,8 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             json.dumps(
                 {
                     "schema_version": "black_box_flowpilot.packet_outcome.v1",
-                    "status": "blocked",
+                    "decision": "block",
+                    "blocking": True,
                     "blocker_class": "needs_user",
                     "recommended_resolution": "PM must clarify the high-standard contract before evidence work.",
                 }

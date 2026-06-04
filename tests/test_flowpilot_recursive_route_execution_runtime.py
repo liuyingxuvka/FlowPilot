@@ -46,7 +46,7 @@ def _open_packets(ledger: dict, kind: str | None = None, scope: str | None = Non
     return rows
 
 
-def _complete_open_packet(ledger: dict, packet_id: str, body: str = "SEALED_RESULT_BODY") -> str:
+def _complete_open_packet(ledger: dict, packet_id: str, body: str = '{"decision": "pass"}') -> str:
     packet = ledger["packets"][packet_id]
     responsibility = packet["envelope"]["responsibility"]
     lease_id = host.lease_responsibility(
@@ -66,6 +66,7 @@ def _route_plan_body(nodes: list[dict] | None = None) -> str:
     return json.dumps(
         {
             "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "decision": "pass",
             "nodes": nodes
             or [
                 {
@@ -98,7 +99,7 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
     _complete_open_packet(ledger, pm_packet, _route_plan_body())
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
-        _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: {kind}")
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "summary": kind}))
 
 
 def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
@@ -111,16 +112,20 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
             json.dumps({"decision": "pass", "selected_routes": ["flowguard-development-process-flow"]}),
         )
     task_packet = _open_packets(ledger, "task", scope="node")[0]
-    _complete_open_packet(ledger, task_packet, f"SEALED_RESULT_BODY: completed {node_id}")
+    _complete_open_packet(ledger, task_packet, json.dumps({"decision": "pass", "node_id": node_id}))
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
-        _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: {kind} for {node_id}")
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "summary": f"{kind} for {node_id}"}))
     pm_packet = _open_packets(ledger, "pm_disposition")[0]
     _complete_open_packet(ledger, pm_packet, json.dumps({"decision": disposition, "reason": f"{disposition} {node_id}"}))
     if disposition == "mutate_route":
         for kind in ("flowguard_check", "review"):
             packet_id = _open_packets(ledger, kind)[0]
-            _complete_open_packet(ledger, packet_id, f"SEALED_RESULT_BODY: PM disposition gate {kind} for {node_id}")
+            _complete_open_packet(
+                ledger,
+                packet_id,
+                json.dumps({"decision": "pass", "summary": f"PM disposition gate {kind} for {node_id}"}),
+            )
     return node_id
 
 
@@ -270,6 +275,20 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-001-repair-v2")
         self.assertEqual(ledger["active_route_version"], 2)
         self.assertTrue(ledger["route_mutations"][-1]["requires_replay_or_rebinding"])
+
+    def test_public_status_does_not_keep_consumed_route_mutation_as_current_blocker(self) -> None:
+        ledger, pm_packet = _recursive_ledger()
+        _complete_foundation_planning_chain(ledger, pm_packet)
+        _complete_active_node(ledger, "mutate_route")
+        while ledger["execution_frontier"].get("active_node_id"):
+            _complete_active_node(ledger, "accept")
+
+        projection = runtime.render_compact_console(ledger)
+
+        self.assertEqual(ledger["closure"]["decision"], "complete")
+        self.assertEqual(projection["next_action"]["action_type"], "terminal_complete")
+        self.assertNotIn("local_artifact", projection["blockers"])
+        self.assertEqual(projection["blockers"], [])
 
     def test_public_status_projects_route_frontier_and_final_ledger_without_bodies(self) -> None:
         ledger, pm_packet = _recursive_ledger()

@@ -7,7 +7,7 @@ from typing import Any
 from . import runtime
 
 
-ALLOWED_EVENTS = {"pause", "resume", "stop", "refresh", "open_logs", "chat_fallback"}
+ALLOWED_EVENTS = {"pause", "resume", "stop", "refresh", "open_logs", "display_blocked"}
 STATE_MUTATING_KEYS = {
     "routes",
     "packets",
@@ -30,17 +30,17 @@ def render_status(ledger: dict[str, Any], *, compact: bool = False) -> dict[str,
     return projection
 
 
-def record_display_surface_fallback(ledger: dict[str, Any], reason: str) -> dict[str, Any]:
-    fallback = {
+def record_display_surface_blocker(ledger: dict[str, Any], reason: str) -> dict[str, Any]:
+    blocker = {
         "preferred": "cockpit",
-        "active": "chat_route_sign",
-        "fallback_reason": reason,
-        "route_sign_required": True,
+        "active": "blocked",
+        "block_reason": reason,
+        "repair_required": True,
         "created_at": runtime.now_iso(),
     }
-    ledger["display_surface"] = fallback
-    event = submit_cockpit_event(ledger, "chat_fallback", {"reason": reason})
-    return {"fallback": fallback, "event": event}
+    ledger["display_surface"] = blocker
+    event = submit_cockpit_event(ledger, "display_blocked", {"reason": reason})
+    return {"blocker": blocker, "event": event}
 
 
 def submit_cockpit_event(ledger: dict[str, Any], event_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:

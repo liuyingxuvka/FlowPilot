@@ -85,6 +85,11 @@ def _safe_base(**changes: object) -> State:
             pm_repair_allowed_success_only=False,
             pm_repair_non_success_outcome_routable=True,
             current_repair_target_gate_checked=True,
+            new_only_result_contract_checked=True,
+            old_packet_outcome_shape_seen=True,
+            old_packet_outcome_shape_mechanically_blocked=True,
+            newer_same_family_repair_path_seen=True,
+            older_same_family_blocker_retired=True,
             result_submitted_repair_target_seen=True,
             result_submitted_repair_target_replaced=True,
             result_submitted_repair_target_superseded=True,
@@ -554,6 +559,14 @@ def hazard_states() -> dict[str, State]:
             result_submitted_repair_target_seen=True,
             result_submitted_repair_target_replaced=True,
             result_submitted_repair_target_superseded=False,
+        ),
+        "old_packet_outcome_shape_accepted": _safe_base(
+            old_packet_outcome_shape_seen=True,
+            old_packet_outcome_shape_mechanically_blocked=False,
+        ),
+        "newer_same_family_repair_left_old_blocker_live": _safe_base(
+            newer_same_family_repair_path_seen=True,
+            older_same_family_blocker_retired=False,
         ),
         "active_blocker_noncurrent_target_not_blocked": _safe_base(
             active_blocker_points_noncurrent_packet=True,

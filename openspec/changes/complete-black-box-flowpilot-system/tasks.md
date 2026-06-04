@@ -42,9 +42,9 @@
 
 - [x] 6.1 Reuse or adapt the existing startup intake panel so it writes sealed current-run intake evidence.
 - [x] 6.2 Add a public status projection model that renders route stage, packets, leases, FlowGuard orders, blockers, validation rows, lifecycle state, and closure status without sealed bodies.
-- [x] 6.3 Add a minimal Cockpit/status command surface for pause, resume, stop, open logs, refresh, and chat fallback events.
+- [x] 6.3 Add a minimal Cockpit/status command surface for pause, resume, stop, open logs, refresh, and display-surface blocker events.
 - [x] 6.4 Add UI-flow tests proving Cockpit is projection-only and cannot directly mutate canonical state.
-- [x] 6.5 Add chat route-sign fallback rules when Cockpit is unavailable.
+- [x] 6.5 Add display-surface blocker rules when Cockpit is unavailable.
 
 ## 7. Review, Repair, Route Mutation, And Closure
 

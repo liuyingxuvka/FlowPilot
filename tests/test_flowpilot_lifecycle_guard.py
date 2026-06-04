@@ -415,7 +415,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 agent_id="fake-pm-accepted",
             )
             flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
-            flowpilot_new.submit_result(root, lease_id=lease_id, packet_id=packet_id, body="SEALED_RESULT_BODY: PM")
+            flowpilot_new.submit_result(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                body=json.dumps({"decision": "pass", "summary": "PM"}),
+            )
             shell = run_shell.load_run_shell(root, run_id="run-accepted-hard-gate")
             ledger = run_shell.load_run_ledger(shell)
             packet = ledger["packets"][packet_id]
@@ -457,7 +462,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 lease_id=original_lease,
                 packet_id=packet_id,
-                body="SEALED_RESULT_BODY: PM",
+                body=json.dumps({"decision": "pass", "summary": "PM"}),
             )["result_id"]
             shell = run_shell.load_run_shell(root, run_id="run-accepted-race-repair")
             ledger = run_shell.load_run_ledger(shell)
@@ -540,7 +545,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 lease_id=lease_id,
                 packet_id=packet_id,
-                body="SEALED_RESULT_BODY: late inactive lease result",
+                body=json.dumps({"decision": "pass", "summary": "late inactive lease result"}),
             )
             self.assertEqual(result["next_action"]["action_type"], "repair_packet")
             self.assertEqual(result["lifecycle_guard"]["decision"], "quarantine_stale_result")
@@ -563,7 +568,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         runtime.ack_lease(ledger, lease_id, packet_id)
         runtime.create_route(ledger, "route two", ["two"])
 
-        result_id = host.submit_host_result(ledger, lease_id, packet_id, "SEALED_RESULT_BODY: late")
+        result_id = host.submit_host_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps({"decision": "pass", "summary": "late"}),
+        )
         result = ledger["results"][result_id]
 
         self.assertEqual(ledger["packets"][packet_id]["status"], "quarantined_after_route_mutation")

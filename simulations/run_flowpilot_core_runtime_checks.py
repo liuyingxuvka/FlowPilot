@@ -78,7 +78,7 @@ def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) ->
         ledger,
         worker,
         packet_id,
-        "SEALED_RESULT_BODY: implementation result",
+        json.dumps({"decision": "pass", "summary": "implementation result"}),
         evidence_ids=["unit-runtime"],
     )
     flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
@@ -86,20 +86,20 @@ def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) ->
         ledger,
         flowguard_packet,
         agent_id="flowguard-a",
-        body="SEALED_RESULT_BODY: FlowGuard runtime evidence",
+        body=json.dumps({"decision": "pass", "summary": "FlowGuard runtime evidence"}),
     )
     review_packet = _open_packet_by_kind(ledger, "review")
     _complete_open_packet(
         ledger,
         review_packet,
         agent_id="reviewer-a",
-        body="SEALED_RESULT_BODY: reviewer accepted the runtime result",
+        body=json.dumps({"decision": "pass", "summary": "reviewer accepted the runtime result"}),
     )
     return result_id
 
 
 def _route_plan_body(nodes: list[dict[str, Any]]) -> str:
-    return json.dumps({"schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION, "nodes": nodes})
+    return json.dumps({"schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION, "decision": "pass", "nodes": nodes})
 
 
 def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> str:
@@ -154,7 +154,7 @@ def replacement_worker_success() -> dict[str, Any]:
         ledger,
         worker,
         packet_id,
-        "SEALED_RESULT_BODY: late stale result",
+        json.dumps({"decision": "pass", "summary": "late stale result"}),
         evidence_ids=["late"],
     )
     replacement = runtime.lease_agent(ledger, "worker", agent_id="worker-2")
@@ -175,7 +175,7 @@ def replacement_worker_success() -> dict[str, Any]:
 def wrong_flowguard_target_blocks() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = runtime.submit_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
+    result_id = runtime.submit_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
     order_id = runtime.create_flowguard_work_order(
         ledger,
         "target_product_behavior",
@@ -270,7 +270,7 @@ def route_deliverable_blocks_terminal_closure() -> dict[str, Any]:
 def self_review_blocks() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = runtime.submit_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
+    result_id = runtime.submit_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
     order_id = runtime.create_flowguard_work_order(ledger, "development_process", "done_claim", packet_id)
     runtime.complete_flowguard_work_order(ledger, order_id)
     reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="worker-1")
@@ -288,7 +288,7 @@ def stale_route_output_blocks() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.create_route(ledger, "Mutated route", ["new implementation path"])
-    result_id = runtime.submit_result(ledger, worker, packet_id, "SEALED_RESULT_BODY")
+    result_id = runtime.submit_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
     return _scenario_result(
         "stale_route_output_blocks",
         ledger,
@@ -306,7 +306,7 @@ def stale_evidence_blocks() -> dict[str, Any]:
         ledger,
         worker,
         packet_id,
-        "SEALED_RESULT_BODY",
+        json.dumps({"decision": "pass"}),
         evidence_generation=1,
     )
     return _scenario_result(

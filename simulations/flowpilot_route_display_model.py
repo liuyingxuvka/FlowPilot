@@ -17,8 +17,7 @@ Risk intent brief:
   startup placeholders with missing identity/replacement metadata, repair
   candidates shown before recheck, previous committed routes overwritten by
   drafts, Cockpit/chat source drift, checklist loss, status conflation, and
-  accidental internal evidence/source-field display.
-- Hard invariant: user-visible route maps are committed-route only. A draft may
+  accidental internal evidence/source-field display.\n- Hard invariant: user-visible route maps are committed-route only. A draft may
   be reviewed internally, but it must not advance the visible route generation,
   replace the visible display plan, or become the Cockpit/chat route source.
 - Blindspot: this is a display-control model. It does not render or visually
@@ -41,8 +40,8 @@ SCENARIOS = (
     "major node entry/current node starts",
     "current node completes and moves to next",
     "route mutation or review-failure repair candidate remains internal",
-    "Cockpit unavailable, chat fallback required",
-    "Cockpit available, same graph source used by UI and chat fallback",
+    "Cockpit unavailable, user dialog route sign required",
+    "Cockpit available, same graph source used by UI and user dialog route sign",
 )
 
 
@@ -81,8 +80,8 @@ class State:
     controller_invented_nodes: bool = False
     canonical_route_nodes_required: bool = False
     canonical_frontier_fields_required: bool = False
-    draft_route_fallback_supported: bool = False
-    snapshot_fallback_supported: bool = False
+    draft_route_source_substitution_supported: bool = False
+    snapshot_source_substitution_supported: bool = False
     route_nodes_real: bool = False
     route_checklists_preserved: bool = False
     route_statuses_distinct: bool = True
@@ -104,11 +103,11 @@ class State:
     mermaid_uses_canonical_source: bool = False
     mermaid_degraded_reason_recorded: bool = False
 
-    chat_fallback_required: bool = True
+    user_dialog_route_sign_required: bool = True
     cockpit_available: bool = False
-    chat_display_kind: str = "none"  # none | bullet | mermaid | degraded
+    user_dialog_display_kind: str = "none"  # none | bullet | mermaid | degraded
     cockpit_display_kind: str = "none"  # none | route_map | degraded
-    same_graph_source_for_chat_and_cockpit: bool = True
+    same_graph_source_for_dialog_and_cockpit: bool = True
     user_dialog_display_ledger_recorded: bool = False
     cockpit_receipt_recorded: bool = False
     generated_files_only: bool = False
@@ -142,8 +141,8 @@ def _draft_written(state: State, *, repair: bool = False) -> State:
         route_source_is_canonical=True,
         canonical_route_nodes_required=True,
         canonical_frontier_fields_required=True,
-        draft_route_fallback_supported=False,
-        snapshot_fallback_supported=True,
+        draft_route_source_substitution_supported=False,
+        snapshot_source_substitution_supported=True,
         route_nodes_real=True,
         route_checklists_preserved=True,
         route_statuses_distinct=True,
@@ -155,7 +154,7 @@ def _draft_written(state: State, *, repair: bool = False) -> State:
         display_role=state.display_role,
         is_placeholder=state.is_placeholder,
         replacement_rule=state.replacement_rule,
-        chat_display_kind=state.chat_display_kind,
+        user_dialog_display_kind=state.user_dialog_display_kind,
         cockpit_display_kind=state.cockpit_display_kind,
         user_dialog_display_ledger_recorded=state.user_dialog_display_ledger_recorded,
         cockpit_receipt_recorded=state.cockpit_receipt_recorded,
@@ -189,8 +188,8 @@ def _committed_route_dirty(
         route_source_is_canonical=True,
         canonical_route_nodes_required=True,
         canonical_frontier_fields_required=True,
-        draft_route_fallback_supported=False,
-        snapshot_fallback_supported=True,
+        draft_route_source_substitution_supported=False,
+        snapshot_source_substitution_supported=True,
         route_nodes_real=True,
         route_checklists_preserved=True,
         route_statuses_distinct=True,
@@ -203,7 +202,7 @@ def _committed_route_dirty(
         mermaid_node_unknown=False,
         mermaid_uses_route_nodes=False,
         mermaid_uses_canonical_source=False,
-        chat_display_kind="none",
+        user_dialog_display_kind="none",
         cockpit_display_kind="none",
         user_dialog_display_ledger_recorded=False,
         cockpit_receipt_recorded=False,
@@ -274,7 +273,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 display_role="startup_placeholder",
                 is_placeholder=True,
                 replacement_rule="replace_when_canonical_route_available",
-                chat_display_kind="mermaid",
+                user_dialog_display_kind="mermaid",
                 mermaid_degraded_reason_recorded=True,
                 user_dialog_display_ledger_recorded=True,
                 visible_generation=0,
@@ -325,8 +324,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             "committed_route_synced_to_user_visible_surface",
             _inc(
                 state,
-                chat_fallback_required=True,
-                chat_display_kind="mermaid",
+                user_dialog_route_sign_required=True,
+                user_dialog_display_kind="mermaid",
                 visible_source_kind=state.route_source_kind,
                 display_role="canonical_route",
                 is_placeholder=False,
@@ -343,13 +342,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 cockpit_available=True,
                 cockpit_display_kind="route_map",
                 cockpit_receipt_recorded=True,
-                chat_display_kind="mermaid",
+                user_dialog_display_kind="mermaid",
                 visible_source_kind=state.route_source_kind,
                 display_role="canonical_route",
                 is_placeholder=False,
                 replacement_rule="none",
                 user_dialog_display_ledger_recorded=True,
-                same_graph_source_for_chat_and_cockpit=True,
+                same_graph_source_for_dialog_and_cockpit=True,
                 generated_files_only=False,
                 visible_generation=state.committed_generation,
             ),
@@ -410,7 +409,7 @@ def visible_route_map_is_committed_only(state: State, trace) -> InvariantResult:
     del trace
     if state.visible_source_kind in {"flow_draft", "repair_candidate"}:
         return InvariantResult.fail("draft or repair candidate was projected to the user-visible route surface")
-    if state.chat_display_kind == "mermaid" or state.cockpit_display_kind == "route_map":
+    if state.user_dialog_display_kind == "mermaid" or state.cockpit_display_kind == "route_map":
         if not state.committed_route_exists and state.is_placeholder and state.display_role == "startup_placeholder":
             return InvariantResult.pass_()
         if state.visible_source_kind not in {"flow_json", "snapshot_from_flow_json"}:
@@ -425,7 +424,7 @@ def startup_placeholder_has_explicit_identity_and_replacement_rule(state: State,
     startup_mermaid = (
         state.startup_displayed
         and not state.committed_route_exists
-        and state.chat_display_kind == "mermaid"
+        and state.user_dialog_display_kind == "mermaid"
     )
     if startup_mermaid:
         if state.display_role != "startup_placeholder" or not state.is_placeholder:
@@ -453,7 +452,7 @@ def canonical_route_replaces_placeholder_identity(state: State, trace) -> Invari
     canonical_visible = (
         state.committed_route_exists
         and state.visible_generation == state.committed_generation
-        and (state.chat_display_kind == "mermaid" or state.cockpit_display_kind == "route_map")
+        and (state.user_dialog_display_kind == "mermaid" or state.cockpit_display_kind == "route_map")
     )
     if canonical_visible:
         if state.is_placeholder or state.replacement_rule != "none":
@@ -469,8 +468,8 @@ def draft_review_cannot_update_visible_route_plan(state: State, trace) -> Invari
         return InvariantResult.fail("route draft wrote or replaced the user-visible display plan")
     if state.route_state_snapshot_backed_by_draft:
         return InvariantResult.fail("user-visible route_state_snapshot was backed by flow.draft.json")
-    if state.draft_route_fallback_supported:
-        return InvariantResult.fail("user-visible route sign generator allowed flow.draft.json fallback")
+    if state.draft_route_source_substitution_supported:
+        return InvariantResult.fail("user-visible route sign generator allowed flow.draft.json source substitution")
     if state.draft_route_exists and not state.committed_route_exists and state.visible_source_kind != "waiting":
         return InvariantResult.fail("draft-only run did not keep the user-visible surface in waiting state")
     if state.repair_candidate_exists and state.visible_source_kind == "repair_candidate":
@@ -499,23 +498,23 @@ def route_source_replaces_startup_unknown_mermaid(state: State, trace) -> Invari
     return InvariantResult.pass_()
 
 
-def chat_fallback_is_mermaid_or_explicitly_degraded(state: State, trace) -> InvariantResult:
+def user_dialog_route_sign_is_mermaid_or_explicitly_degraded(state: State, trace) -> InvariantResult:
     del trace
-    if state.committed_route_exists and state.chat_fallback_required and state.visible_generation == state.committed_generation:
-        if state.chat_display_kind == "bullet":
-            return InvariantResult.fail("chat fallback displayed bullet list instead of Mermaid route sign")
-        if state.chat_display_kind == "degraded" and not state.mermaid_degraded_reason_recorded:
-            return InvariantResult.fail("chat fallback degraded without recording a Mermaid source reason")
-        if state.chat_display_kind not in {"mermaid", "degraded"}:
-            return InvariantResult.fail("chat fallback did not display a route sign")
+    if state.committed_route_exists and state.user_dialog_route_sign_required and state.visible_generation == state.committed_generation:
+        if state.user_dialog_display_kind == "bullet":
+            return InvariantResult.fail("user dialog route sign displayed bullet list instead of Mermaid route sign")
+        if state.user_dialog_display_kind == "degraded" and not state.mermaid_degraded_reason_recorded:
+            return InvariantResult.fail("user dialog route sign degraded without recording a Mermaid source reason")
+        if state.user_dialog_display_kind not in {"mermaid", "degraded"}:
+            return InvariantResult.fail("user dialog route sign did not display a route sign")
     return InvariantResult.pass_()
 
 
-def cockpit_and_chat_share_canonical_graph_source(state: State, trace) -> InvariantResult:
+def cockpit_and_dialog_share_canonical_graph_source(state: State, trace) -> InvariantResult:
     del trace
     if state.cockpit_available and state.visible_generation == state.committed_generation:
-        if not state.same_graph_source_for_chat_and_cockpit:
-            return InvariantResult.fail("Cockpit route map and chat fallback used different route sources")
+        if not state.same_graph_source_for_dialog_and_cockpit:
+            return InvariantResult.fail("Cockpit route map and user dialog route sign used different route sources")
     return InvariantResult.pass_()
 
 
@@ -593,14 +592,14 @@ INVARIANTS = (
         predicate=route_source_replaces_startup_unknown_mermaid,
     ),
     Invariant(
-        name="chat_fallback_is_mermaid_or_explicitly_degraded",
-        description="Chat fallback shows Mermaid route signs or a recorded degraded reason.",
-        predicate=chat_fallback_is_mermaid_or_explicitly_degraded,
+        name="user_dialog_route_sign_is_mermaid_or_explicitly_degraded",
+        description="user dialog route sign shows Mermaid route signs or a recorded degraded reason.",
+        predicate=user_dialog_route_sign_is_mermaid_or_explicitly_degraded,
     ),
     Invariant(
-        name="cockpit_and_chat_share_canonical_graph_source",
-        description="Cockpit and chat fallback use the same route source semantics.",
-        predicate=cockpit_and_chat_share_canonical_graph_source,
+        name="cockpit_and_dialog_share_canonical_graph_source",
+        description="Cockpit and user dialog route sign use the same route source semantics.",
+        predicate=cockpit_and_dialog_share_canonical_graph_source,
     ),
     Invariant(
         name="route_nodes_and_checklists_are_preserved",
@@ -650,8 +649,8 @@ def _safe_visible_route_base(**changes: object) -> State:
             replacement_rule="none",
             canonical_route_nodes_required=True,
             canonical_frontier_fields_required=True,
-            draft_route_fallback_supported=False,
-            snapshot_fallback_supported=True,
+            draft_route_source_substitution_supported=False,
+            snapshot_source_substitution_supported=True,
             route_nodes_real=True,
             route_checklists_preserved=True,
             route_statuses_distinct=True,
@@ -665,8 +664,8 @@ def _safe_visible_route_base(**changes: object) -> State:
             mermaid_node_unknown=False,
             mermaid_uses_route_nodes=True,
             mermaid_uses_canonical_source=True,
-            chat_fallback_required=True,
-            chat_display_kind="mermaid",
+            user_dialog_route_sign_required=True,
+            user_dialog_display_kind="mermaid",
             user_dialog_display_ledger_recorded=True,
             generated_files_only=False,
             display_plan_preserved_native_projection=True,
@@ -690,8 +689,8 @@ def hazard_states() -> dict[str, State]:
         "draft_backed_route_state_snapshot_visible": _safe_visible_route_base(
             route_state_snapshot_backed_by_draft=True,
         ),
-        "draft_backed_chat_route_sign": _safe_visible_route_base(
-            draft_route_fallback_supported=True,
+        "draft_backed_user_dialog_route_sign": _safe_visible_route_base(
+            draft_route_source_substitution_supported=True,
         ),
         "draft_only_run_leaves_waiting_state": _safe_visible_route_base(
             route_phase="draft",
@@ -720,7 +719,7 @@ def hazard_states() -> dict[str, State]:
             startup_displayed=True,
             internal_waiting_state_recorded=True,
             visible_source_kind="waiting",
-            chat_display_kind="mermaid",
+            user_dialog_display_kind="mermaid",
             user_dialog_display_ledger_recorded=True,
             mermaid_route_unknown=True,
             mermaid_node_unknown=True,
@@ -730,7 +729,7 @@ def hazard_states() -> dict[str, State]:
             startup_displayed=True,
             internal_waiting_state_recorded=True,
             visible_source_kind="waiting",
-            chat_display_kind="mermaid",
+            user_dialog_display_kind="mermaid",
             display_role="startup_placeholder",
             is_placeholder=True,
             replacement_rule="none",
@@ -747,7 +746,7 @@ def hazard_states() -> dict[str, State]:
             display_role="startup_placeholder",
             is_placeholder=True,
             replacement_rule="replace_when_canonical_route_available",
-            chat_display_kind="mermaid",
+            user_dialog_display_kind="mermaid",
             user_dialog_display_ledger_recorded=True,
         ),
         "canonical_route_keeps_placeholder_identity": _safe_visible_route_base(
@@ -758,19 +757,19 @@ def hazard_states() -> dict[str, State]:
         "canonical_route_missing_identity": _safe_visible_route_base(
             display_role="none",
         ),
-        "chat_fallback_bullet_list_after_route_draft": _safe_visible_route_base(
-            chat_display_kind="bullet",
+        "user_dialog_bullet_list_after_route_draft": _safe_visible_route_base(
+            user_dialog_display_kind="bullet",
             display_plan_only_source=True,
         ),
         "degraded_mermaid_without_reason": _safe_visible_route_base(
-            chat_display_kind="degraded",
+            user_dialog_display_kind="degraded",
             mermaid_degraded_reason_recorded=False,
         ),
-        "cockpit_chat_source_drift": _safe_visible_route_base(
+        "cockpit_dialog_source_drift": _safe_visible_route_base(
             cockpit_available=True,
             cockpit_display_kind="route_map",
             cockpit_receipt_recorded=True,
-            same_graph_source_for_chat_and_cockpit=False,
+            same_graph_source_for_dialog_and_cockpit=False,
         ),
         "route_checklists_simplified_away": _safe_visible_route_base(
             route_checklists_preserved=False,
@@ -803,14 +802,14 @@ def current_implementation_failure_trace() -> dict[str, object]:
         visible_source_kind="flow_draft",
         draft_wrote_visible_display_plan=True,
         route_state_snapshot_backed_by_draft=True,
-        draft_route_fallback_supported=True,
+        draft_route_source_substitution_supported=True,
     )
     return {
         "labels": [
             "startup_no_committed_route_displays_route_sign_with_internal_waiting_state",
             "pm_writes_internal_route_draft_without_visible_projection",
             "current_router_writes_display_plan_from_flow_draft",
-            "current_route_sign_generator_accepts_flow_draft_fallback",
+            "current_route_sign_generator_accepts_flow_draft_source_substitution",
             "user_dialog_or_cockpit_can_receive_a_draft_backed_route_map",
         ],
         "failures": invariant_failures(state),

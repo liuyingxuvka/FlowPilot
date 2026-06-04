@@ -25,7 +25,7 @@ def build_interaction_model() -> UIInteractionModel:
         UIControl(control_id, label=control_id, function_key=function_key, rationale=rationale)
         for control_id, function_key, rationale in (
             ("open", "open", "Open native startup intake."),
-            ("fallback", "fallback", "Use chat route-sign fallback when Cockpit is unavailable."),
+            ("display_blocked", "display_blocked", "Record Cockpit display unavailability as a repair blocker."),
             ("submit", "submit", "Submit sealed startup intake into the current run."),
             ("cancel", "cancel", "Cancel startup without route execution."),
             ("refresh", "refresh", "Refresh public status projection."),
@@ -38,8 +38,8 @@ def build_interaction_model() -> UIInteractionModel:
     states = (
         UIStateNode(
             "launch",
-            visible_controls=("open", "fallback"),
-            enabled_controls=("open", "fallback"),
+            visible_controls=("open", "display_blocked"),
+            enabled_controls=("open", "display_blocked"),
             visible_displays=("status",),
             rationale="Initial operation surface before intake authority exists.",
         ),
@@ -66,12 +66,10 @@ def build_interaction_model() -> UIInteractionModel:
             rationale="A current run is paused but still has router-owned lifecycle state.",
         ),
         UIStateNode(
-            "fallback",
+            "display_blocked",
             terminal=True,
-            visible_controls=("refresh",),
-            enabled_controls=("refresh",),
-            visible_displays=("status",),
-            rationale="Chat route-sign fallback renders the same projection without Cockpit.",
+            visible_displays=("status", "blockers"),
+            rationale="Cockpit unavailability is a current display-surface blocker, not a second operation path.",
         ),
         UIStateNode(
             "stopped",
@@ -88,7 +86,7 @@ def build_interaction_model() -> UIInteractionModel:
     )
     transitions = (
         UITransition("open_event", "open", "launch", "intake", function_block="startup_intake", output="open intake", rationale="User starts native intake."),
-        UITransition("fallback_event", "fallback", "launch", "fallback", function_block="chat_fallback", output="chat fallback", rationale="Cockpit unavailable or user chooses chat route signs."),
+        UITransition("display_blocked_event", "display_blocked", "launch", "display_blocked", function_block="display_surface_blocker", output="display blocked", rationale="Cockpit unavailability blocks the display surface instead of opening a second route."),
         UITransition("submit_event", "submit", "intake", "running", function_block="sealed_intake", output="sealed record", rationale="Intake writes current-run envelope/body evidence."),
         UITransition("cancel_event", "cancel", "intake", "stopped", function_block="cancel", output="stop", rationale="Cancellation prevents route work."),
         UITransition("refresh_running", "refresh", "running", "running", function_block="projection", output="status", rationale="Refresh derives public projection from ledger."),
@@ -99,7 +97,6 @@ def build_interaction_model() -> UIInteractionModel:
         UITransition("resume_event", "resume", "paused", "running", function_block="typed_event", output="resume", rationale="Resume is a typed event consumed by router."),
         UITransition("stop_paused", "stop", "paused", "stopped", function_block="typed_event", output="stop", rationale="Stop while paused is still router-owned."),
         UITransition("logs_paused", "logs", "paused", "paused", function_block="open_logs", output="logs", rationale="Paused log open does not mutate state."),
-        UITransition("refresh_fallback", "refresh", "fallback", "fallback", function_block="projection", output="status", rationale="Chat fallback refresh derives the same projection."),
     )
     return UIInteractionModel(
         MODEL_ID,
@@ -111,7 +108,7 @@ def build_interaction_model() -> UIInteractionModel:
         source_product_model_id="complete-black-box-flowpilot-system",
         source_product_model_path="openspec/changes/complete-black-box-flowpilot-system/specs/complete-black-box-flowpilot-system/spec.md",
         validation_boundaries=("sealed_body_not_rendered", "projection_only_ui", "typed_events_only"),
-        rationale="Models startup intake, Cockpit status, chat fallback, and lifecycle controls as UI event x UI state transitions.",
+        rationale="Models startup intake, Cockpit status, display-surface blocking, and lifecycle controls as UI event x UI state transitions.",
     )
 
 
@@ -122,7 +119,7 @@ def build_journey_coverage() -> UIJourneyCoverage:
         "launch",
         entry_points=(
             UIJourneyEntryPoint("entry_open", "open", "open_event", source_state_ids=("launch",), rationale="Primary Cockpit startup path."),
-            UIJourneyEntryPoint("entry_fallback", "fallback", "fallback_event", source_state_ids=("launch",), rationale="Chat route-sign fallback path."),
+            UIJourneyEntryPoint("entry_display_blocked", "display_blocked", "display_blocked_event", source_state_ids=("launch",), rationale="Cockpit unavailable blocker path."),
         ),
         feature_journeys=(
             UIFeatureJourney(
@@ -149,15 +146,14 @@ def build_journey_coverage() -> UIJourneyCoverage:
                 rationale="Covers the main Cockpit journey and all operational controls reachable from status.",
             ),
             UIFeatureJourney(
-                "fallback",
-                "Chat route-sign fallback status",
-                entry_point_ids=("entry_fallback",),
-                required_state_ids=("launch", "fallback"),
-                required_event_ids=("fallback_event", "refresh_fallback"),
-                success_terminal_state_ids=("fallback",),
-                recovery_event_ids=("refresh_fallback",),
-                validation_boundaries=("chat_fallback_status",),
-                rationale="Covers the no-Cockpit display surface without changing runtime authority.",
+                "display_blocked",
+                "Cockpit display blocker",
+                entry_point_ids=("entry_display_blocked",),
+                required_state_ids=("launch", "display_blocked"),
+                required_event_ids=("display_blocked_event",),
+                success_terminal_state_ids=("display_blocked",),
+                validation_boundaries=("display_surface_blocked"),
+                rationale="Covers Cockpit unavailability as a hard blocker without changing runtime authority.",
             ),
         ),
         terminal_action_allowances=(
@@ -167,7 +163,6 @@ def build_journey_coverage() -> UIJourneyCoverage:
             UITerminalActionAllowance("running", "logs_running", "export", "Open logs/proof artifacts."),
             UITerminalActionAllowance("running", "stop_running", "exit", "Stop the run from running status."),
             UITerminalActionAllowance("paused", "stop_paused", "exit", "Stop the run from paused status."),
-            UITerminalActionAllowance("fallback", "refresh_fallback", "recovery", "Refresh chat fallback projection."),
         ),
         interaction_model_reviewed=True,
         validation_boundaries=("all_reachable_events", "terminal_or_recovery_paths"),
@@ -188,8 +183,8 @@ def build_structure_derivation() -> UIStructureDerivation:
                 placement="left",
                 parent_region_id="root",
                 owns_states=("launch", "intake"),
-                owns_controls=("open", "fallback", "submit", "cancel"),
-                owns_events=("open_event", "fallback_event", "submit_event", "cancel_event"),
+                owns_controls=("open", "display_blocked", "submit", "cancel"),
+                owns_events=("open_event", "display_blocked_event", "submit_event", "cancel_event"),
                 owns_displays=("intake_summary",),
                 stable_across_states=True,
                 validation_boundaries=("startup_region",),
@@ -200,7 +195,7 @@ def build_structure_derivation() -> UIStructureDerivation:
                 level="global",
                 placement="main",
                 parent_region_id="root",
-                owns_states=("running", "paused", "fallback", "stopped"),
+                owns_states=("running", "paused", "display_blocked", "stopped"),
                 owns_controls=("refresh", "pause", "resume", "stop", "logs"),
                 owns_events=(
                     "refresh_running",
@@ -211,7 +206,6 @@ def build_structure_derivation() -> UIStructureDerivation:
                     "logs_running",
                     "logs_paused",
                     "refresh_paused",
-                    "refresh_fallback",
                 ),
                 owns_displays=("status", "blockers"),
                 stable_across_states=True,
@@ -225,12 +219,12 @@ def build_structure_derivation() -> UIStructureDerivation:
             ("intake", "startup"),
             ("running", "status"),
             ("paused", "status"),
-            ("fallback", "status"),
+            ("display_blocked", "status"),
             ("stopped", "status"),
         ),
         control_region_map=(
             ("open", "startup"),
-            ("fallback", "startup"),
+            ("display_blocked", "startup"),
             ("submit", "startup"),
             ("cancel", "startup"),
             ("refresh", "status"),
@@ -241,7 +235,7 @@ def build_structure_derivation() -> UIStructureDerivation:
         ),
         event_region_map=(
             ("open_event", "startup"),
-            ("fallback_event", "startup"),
+            ("display_blocked_event", "startup"),
             ("submit_event", "startup"),
             ("cancel_event", "startup"),
             ("refresh_running", "status"),
@@ -252,13 +246,12 @@ def build_structure_derivation() -> UIStructureDerivation:
             ("logs_running", "status"),
             ("logs_paused", "status"),
             ("refresh_paused", "status"),
-            ("refresh_fallback", "status"),
         ),
         display_region_map=(("status", "status"), ("blockers", "status"), ("intake_summary", "startup")),
         hierarchy_edges=(("root", "startup"), ("root", "status")),
         persistent_control_ids=("refresh", "stop", "logs"),
-        contextual_control_ids=("open", "fallback", "submit", "cancel"),
+        contextual_control_ids=("open", "display_blocked", "submit", "cancel"),
         stable_region_ids=("root", "startup", "status"),
         validation_boundaries=("projection_only", "no_sealed_body"),
-        rationale="Derives Cockpit and chat fallback structure from modeled UI state and controls.",
+        rationale="Derives Cockpit and display-blocker structure from modeled UI state and controls.",
     )

@@ -55,9 +55,9 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(heartbeat_action["router_scheduler_progress_class"], "parallel_obligation")
         self.assertEqual(heartbeat_action["automation_update_request"]["kind"], "heartbeat")
         self.assertNotIn("otherwise keep the run alive", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("Every heartbeat wake must record heartbeat_or_manual_resume_requested", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("Router consumes local prompt-manifest checks internally", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("stop only at a real role, user, host, payload, packet, or await_role_decision boundary", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("Every heartbeat wake must record the resume request", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("Rehydrate only the currently required requested responsibilities", heartbeat_action["automation_update_request"]["prompt"])
+        self.assertIn("stop only at a real role, user, host, payload, packet, blocker, or terminal-return boundary", heartbeat_action["automation_update_request"]["prompt"])
         self.assertEqual(heartbeat_action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
         self.assertEqual(heartbeat_action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
         self.assert_controller_receipt_action_projection(heartbeat_action)
@@ -883,7 +883,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue((run_root / "runtime_kit" / "manifest.json").exists())
         self.assertTrue((run_root / "packet_ledger.json").exists())
         self.assertTrue((run_root / "execution_frontier.json").exists())
-        self.assertEqual(len(list((run_root / "role_binding_memory").glob("*.json"))), 6)
+        self.assertEqual(len(list((run_root / "role_binding_memory").glob("*.json"))), len(router.RUNTIME_ROLE_KEYS))
         self.assertTrue((run_root / "user_request.json").exists())
         user_request_record = read_json(run_root / "user_request.json")
         self.assertNotIn(USER_REQUEST["text"], json.dumps(user_request_record))
@@ -897,7 +897,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(set(role_core_delivery["role_card_hashes"]), set(router.ROLE_CARD_KEYS))
 
         role_binding = read_json(run_root / "role_binding_ledger.json")
-        self.assertEqual(len(role_binding["role_slots"]), 6)
+        self.assertEqual(len(role_binding["role_slots"]), len(router.RUNTIME_ROLE_KEYS))
         self.assertNotIn("controller", {slot["role_key"] for slot in role_binding["role_slots"]})
         self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"live_agent_started"})
         self.assertTrue(all(slot["agent_id"] for slot in role_binding["role_slots"]))
@@ -1636,7 +1636,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(state["startup_repair_request"]["startup_repair_cycle"], 1)
 
         self.deliver_expected_card(root, "reviewer.startup_fact_check")
-        submit_blocking_report("reviewer_startup_fact_block_2", "cockpit_or_display_fallback_reality")
+        submit_blocking_report("reviewer_startup_fact_block_2", "cockpit_display_surface_reality")
         self.deliver_expected_card(root, "pm.startup_activation")
 
         with self.assertRaisesRegex(router.RouterError, "repeats the previous PM decision"):
@@ -1656,7 +1656,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         ledger = read_json(run_root / "startup" / "startup_repair_requests.json")
         self.assertEqual(ledger["latest_cycle"], 2)
         self.assertEqual(len(ledger["entries"]), 2)
-    def test_cockpit_requested_startup_display_records_chat_fallback_mermaid(self) -> None:
+    def test_cockpit_requested_startup_display_records_display_blocker(self) -> None:
         root = self.make_project()
         cockpit_answers = {**STARTUP_ANSWERS, "display_surface": "cockpit"}
         run_root = self.boot_to_controller(root, cockpit_answers)
@@ -1665,12 +1665,13 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         display_surface = read_json(run_root / "display" / "display_surface.json")
         self.assertEqual(display_surface["requested_display_surface"], "cockpit")
-        self.assertEqual(display_surface["selected_surface"], "chat_route_sign_fallback")
-        self.assertEqual(display_surface["cockpit_status"], "not_started_in_router_runtime")
+        self.assertEqual(display_surface["selected_surface"], "display_blocked")
+        self.assertEqual(display_surface["cockpit_status"], "blocked_unverified")
         self.assertTrue(display_surface["cockpit_probe_required_for_requested_cockpit"])
-        self.assertTrue(display_surface["reviewer_fallback_check_required_for_requested_cockpit"])
-        self.assertTrue(display_surface["fallback_is_display_only_not_product_ui_completion"])
+        self.assertTrue(display_surface["display_surface_blocked"])
+        self.assertEqual(display_surface["display_block_reason"], "cockpit_unavailable_or_unverified")
         self.assertIn("user-flow-diagram.md", display_surface["standard_route_sign_markdown_path"])
+        self.assertFalse(display_surface["chat_displayed_by_controller"])
         display_packet = read_json(run_root / "diagrams" / "user-flow-diagram-display.json")
         self.assertFalse(display_packet["canonical_route_available"])
         self.assertEqual(display_packet["display_role"], "startup_placeholder")

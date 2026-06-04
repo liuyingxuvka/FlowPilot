@@ -202,6 +202,11 @@ class State:
     pm_repair_allowed_success_only: bool = False
     pm_repair_non_success_outcome_routable: bool = True
     current_repair_target_gate_checked: bool = False
+    new_only_result_contract_checked: bool = False
+    old_packet_outcome_shape_seen: bool = False
+    old_packet_outcome_shape_mechanically_blocked: bool = True
+    newer_same_family_repair_path_seen: bool = False
+    older_same_family_blocker_retired: bool = True
     result_submitted_repair_target_seen: bool = False
     result_submitted_repair_target_replaced: bool = False
     result_submitted_repair_target_superseded: bool = True

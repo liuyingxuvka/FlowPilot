@@ -9,6 +9,7 @@ from typing import Any, Callable
 try:  # pragma: no cover
     from .flowpilot_fake_project_rehearsal_cli import (
         ENTRYPOINT,
+        RehearsalFailure,
         assert_public_projection_is_sealed,
         complete_full_packet_chain,
         complete_planning_chain_only,
@@ -24,6 +25,7 @@ try:  # pragma: no cover
 except ImportError:  # pragma: no cover
     from flowpilot_fake_project_rehearsal_cli import (
         ENTRYPOINT,
+        RehearsalFailure,
         assert_public_projection_is_sealed,
         complete_full_packet_chain,
         complete_planning_chain_only,
@@ -346,6 +348,7 @@ def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = 
     if packet_kind == "task" and route_scope == "high_standard_contract":
         return json.dumps(
             {
+                "decision": "pass",
                 "requirements": [
                     {
                         "requirement_id": "hsr-001",
@@ -358,6 +361,7 @@ def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = 
     if packet_kind == "task" and route_scope == "discovery":
         return json.dumps(
             {
+                "decision": "pass",
                 "material_sources": ["startup"],
                 "local_skill_inventory": ["flowguard-development-process-flow"],
             }
@@ -365,6 +369,7 @@ def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = 
     if packet_kind == "task" and route_scope == "skill_standard":
         return json.dumps(
             {
+                "decision": "pass",
                 "obligations": [
                     {
                         "obligation_id": "skill-std-001",
@@ -379,6 +384,7 @@ def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = 
     if packet_kind == "task" and route_scope == "node_acceptance_plan":
         return json.dumps(
             {
+                "decision": "pass",
                 "route_node_id": route_node_id,
                 "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
                 "repair_policy": "same_node_repair_default",
@@ -405,7 +411,7 @@ def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = 
                 },
             }
         )
-    return f"SEALED_RESULT_BODY: fake planning {packet_kind}"
+    return json.dumps({"decision": "pass", "summary": f"fake planning {packet_kind}"})
 
 
 def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]:
@@ -708,8 +714,10 @@ def scenario_unsupported_side_command(work_root: Path) -> dict[str, Any]:
     root = reset_scenario_root(work_root, "unsupported_side_command")
     help_result = run_raw_cli(root, command_log, "--help")
     ensure(help_result.returncode == 0, f"help failed: {help_result.stderr}")
-    for expected in ("start", "run-fake-e2e", "run-until-wait", "status", "patrol", "submit-result"):
+    for expected in ("start", "run-until-wait", "status", "patrol", "submit-result"):
         ensure(expected in help_result.stdout, f"formal command missing from help: {expected}")
+    for retired in ("run-fake-e2e", "headless-startup-text"):
+        ensure(retired not in help_result.stdout, f"retired command appears in help: {retired}")
     for unsupported in ("complete-flowguard", "record-validation", "close"):
         ensure(unsupported not in help_result.stdout, f"unsupported command appears in help: {unsupported}")
 

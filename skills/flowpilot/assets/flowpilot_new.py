@@ -1,8 +1,7 @@
 """Formal entrypoint for the new black-box FlowPilot runtime.
 
 This entrypoint starts a new FlowPilot run from the native startup intake UI,
-then hands all authority to ``flowpilot_core_runtime``. The old router remains
-available for diagnostics, but a fresh formal run should enter here.
+then hands all authority to ``flowpilot_core_runtime``.
 """
 
 from __future__ import annotations
@@ -32,14 +31,9 @@ HOST_KIND_HELP = (
     "Do not invent values outside this menu."
 )
 
-try:  # pragma: no cover - direct script fallback.
-    if str(ASSETS_ROOT) not in sys.path:
-        sys.path.insert(0, str(ASSETS_ROOT))
-    from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime
-except ImportError:  # pragma: no cover
-    if str(ASSETS_ROOT) not in sys.path:
-        sys.path.insert(0, str(ASSETS_ROOT))
-    from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime  # type: ignore
+if str(ASSETS_ROOT) not in sys.path:
+    sys.path.insert(0, str(ASSETS_ROOT))
+from flowpilot_core_runtime import cockpit, fake_e2e, host, packets, role_handoff, router, run_shell, runtime
 
 
 def _print(payload: object) -> None:
@@ -615,11 +609,6 @@ def main(argv: list[str] | None = None) -> int:
 
     start = sub.add_parser("start", help="Start a fresh new FlowPilot run through the native startup UI")
     start.add_argument("--run-id", default=None)
-    start.add_argument("--headless-startup-text", default="", help="Test/rehearsal only; formal starts require the native UI")
-
-    fake = sub.add_parser("run-fake-e2e", help="Run a deterministic fake-host end-to-end rehearsal")
-    fake.add_argument("--run-id", default=None)
-    fake.add_argument("--startup-text", required=True)
 
     run_wait = sub.add_parser("run-until-wait", help="Fold safe black-box mechanics until the next foreground boundary")
     run_wait.add_argument("--max-steps", type=int, default=runtime.RUN_UNTIL_WAIT_MAX_STEPS)
@@ -707,11 +696,8 @@ def main(argv: list[str] | None = None) -> int:
             payload = start_run(
                 root,
                 run_id=args.run_id,
-                headless_startup_text=args.headless_startup_text,
-                require_formal_ui=not bool(args.headless_startup_text),
+                require_formal_ui=True,
             )
-        elif args.command == "run-fake-e2e":
-            payload = run_fake_e2e(root, run_id=args.run_id, startup_text=args.startup_text)
         elif args.command == "run-until-wait":
             payload = run_until_wait(root, max_steps=args.max_steps)
         elif args.command == "status":

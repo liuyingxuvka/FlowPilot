@@ -16,6 +16,7 @@ def _route_plan_body() -> str:
     return json.dumps(
         {
             "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+            "decision": "pass",
             "nodes": [
                 {
                     "node_id": "node-001",
@@ -60,6 +61,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
     if kind == "task" and scope == "high_standard_contract":
         return json.dumps(
             {
+                "decision": "pass",
                 "requirements": [
                     {
                         "requirement_id": "hsr-001",
@@ -79,6 +81,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
     if kind == "task" and scope == "discovery":
         return json.dumps(
             {
+                "decision": "pass",
                 "material_sources": ["sealed_startup_intake", "current_repository"],
                 "material_sufficiency": "sufficient_for_route_planning",
                 "local_skill_inventory": ["flowguard-development-process-flow"],
@@ -88,6 +91,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
     if kind == "task" and scope == "skill_standard":
         return json.dumps(
             {
+                "decision": "pass",
                 "obligations": [
                     {
                         "obligation_id": "skill-std-001",
@@ -107,6 +111,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
         node_id = envelope.get("route_node_id", "")
         return json.dumps(
             {
+                "decision": "pass",
                 "route_node_id": node_id,
                 "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
                 "repair_policy": "same_node_repair_default",
@@ -138,7 +143,13 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
         )
     if kind == "pm_disposition":
         return json.dumps({"decision": "accept", "reason": "fake PM accepts current node"})
-    return f"SEALED_RESULT_BODY: fake {kind} result for packet {packet['packet_id']}"
+    return json.dumps(
+        {
+            "decision": "pass",
+            "summary": f"fake {kind} result for packet {packet['packet_id']}",
+        },
+        sort_keys=True,
+    )
 
 
 def run_fake_e2e(

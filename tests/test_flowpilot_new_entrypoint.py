@@ -202,7 +202,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body="SEALED_RESULT_BODY: PM result is not enough for closure.",
+                body=json.dumps({"decision": "pass", "summary": "PM result is not enough for closure."}),
             )
             self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
             self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
@@ -320,7 +320,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body="SEALED_RESULT_BODY: PM result",
+                body=json.dumps({"decision": "pass", "summary": "PM result"}),
             )
 
             self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
@@ -352,7 +352,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=flowguard_lease,
                 packet_id=flowguard_packet,
-                body="SEALED_RESULT_BODY: FlowGuard result",
+                body=json.dumps({"decision": "pass", "summary": "FlowGuard result"}),
             )
 
             ledger = run_shell.load_run_ledger(shell)
@@ -381,7 +381,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=pm_packet,
                 responsibility="pm",
                 agent_id="pm-agent",
-                body="SEALED_RESULT_BODY: PM result",
+                body=json.dumps({"decision": "pass", "summary": "PM result"}),
             )
             ledger = run_shell.load_run_ledger(shell)
             flowguard_packet = self._open_packet_by_kind(ledger, "flowguard_check")
@@ -390,7 +390,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=flowguard_packet,
                 responsibility="flowguard_operator",
                 agent_id="flowguard-agent",
-                body="SEALED_RESULT_BODY: FlowGuard result",
+                body=json.dumps({"decision": "pass", "summary": "FlowGuard result"}),
             )
             ledger = run_shell.load_run_ledger(shell)
             review_packet = self._open_packet_by_kind(ledger, "review")
@@ -431,7 +431,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=reviewer_lease,
                 packet_id=review_packet,
-                body="SEALED_RESULT_BODY: Reviewer accepted the FlowGuard-backed result.",
+                body=json.dumps({"decision": "pass", "summary": "Reviewer accepted the FlowGuard-backed result."}),
             )
             after_review = flowpilot_new.status(root)["status"]
             self.assertFalse(
@@ -511,6 +511,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertIn("run-until-wait", completed.stdout)
         self.assertIn("resolve-role-assignment", completed.stdout)
         self.assertIn("repair-accepted-packet", completed.stdout)
+        self.assertNotIn("run-fake-e2e", completed.stdout)
+        self.assertNotIn("headless-startup-text", completed.stdout)
         for command in ("complete-flowguard", "record-validation"):
             self.assertNotIn(command, completed.stdout)
 

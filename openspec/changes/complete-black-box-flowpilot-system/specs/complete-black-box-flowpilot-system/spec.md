@@ -121,9 +121,9 @@ surface that renders current state and submits only typed user events.
 #### Scenario: Cockpit unavailable
 
 - **WHEN** the user requested Cockpit but it cannot open
-- **THEN** the runtime MUST record a display-surface fallback and require chat
-  route-sign/status projection rather than treating Cockpit failure as proof of
-  route completion or route blockage.
+- **THEN** the runtime MUST record a display-surface blocker and require repair
+  of the current Cockpit path rather than treating Cockpit failure as proof of
+  route completion or opening a second operation path.
 
 #### Scenario: Cockpit attempts direct state write
 

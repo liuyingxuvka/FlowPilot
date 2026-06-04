@@ -96,7 +96,7 @@ def _display_surface_receipt_payload_contract() -> dict[str, Any]:
             "display_confirmation.provenance": [DISPLAY_CONFIRMATION_PROVENANCE],
             "display_confirmation.rendered_to": [DISPLAY_CONFIRMATION_TARGET],
             "display_surface_receipt.schema_version": [DISPLAY_SURFACE_RECEIPT_SCHEMA],
-            "display_surface_receipt.actual_surface": ["chat_route_sign", "chat_route_sign_fallback", "cockpit"],
+            "display_surface_receipt.actual_surface": ["chat_route_sign", "cockpit", "display_blocked"],
             "display_surface_receipt.host_display_surface_verified": [True],
         },
         conditional_required_fields={
@@ -110,9 +110,9 @@ def _display_surface_receipt_payload_contract() -> dict[str, Any]:
         },
         description=(
             "Confirm the router-provided route sign was displayed in the user dialog. If a native Cockpit or "
-            "fallback display was attempted, include display_surface_receipt with the actual surface and host result."
+            "if Cockpit was requested but unavailable, include display_surface_receipt.actual_surface=display_blocked."
         ),
-        reviewer_check="Reviewer checks requested cockpit versus actual cockpit/fallback reality when Cockpit was requested.",
+        reviewer_check="Reviewer checks requested Cockpit versus actual Cockpit availability when Cockpit was requested.",
     )
 def _role_slots_payload_contract() -> dict[str, Any]:
     return _payload_contract(

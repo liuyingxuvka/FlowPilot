@@ -53,7 +53,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-30T17:07:24.505053+00:00",
+        "created_at": "2026-06-04T17:09:12.777535+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -123,7 +123,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-30T17:07:24.506047+00:00",
+        "created_at": "2026-06-04T17:09:12.779535+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -135,7 +135,7 @@
             "packets"
           ],
           "cockpit_event_type": "pause",
-          "created_at": "2026-05-30T17:07:24.506047+00:00"
+          "created_at": "2026-06-04T17:09:12.779535+00:00"
         }
       },
       "name": "cockpit_direct_write_rejected",
@@ -198,14 +198,14 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-05-30T17:07:24.507983+00:00",
+        "created_at": "2026-06-04T17:09:12.781534+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "import": {
-          "created_at": "2026-05-30T17:07:24.507983+00:00",
+          "created_at": "2026-06-04T17:09:12.781534+00:00",
           "current_authority": false,
           "disposition": "imported_read_only",
           "import_id": "import-0001",
@@ -275,7 +275,7 @@
         "blockers": [
           "cutover_gate_blocked"
         ],
-        "created_at": "2026-05-30T17:07:24.509061+00:00",
+        "created_at": "2026-06-04T17:09:12.783540+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -332,7 +332,7 @@
           "blockers": [
             "cutover_gate_blocked"
           ],
-          "created_at": "2026-05-30T17:07:24.509061+00:00",
+          "created_at": "2026-06-04T17:09:12.783540+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -341,17 +341,17 @@
           "blockers": [
             "live_host_not_current"
           ],
-          "created_at": "2026-05-30T17:07:24.509061+00:00",
+          "created_at": "2026-06-04T17:09:12.783540+00:00",
           "decision": "blocked",
           "old_runtime_authority": false
         }
       },
       "name": "cutover_requires_live_host",
       "next_action": {
-        "action_type": "close_project",
+        "action_type": "issue_task_packet",
         "modeled_target": "",
-        "reason": "all active packets are accepted",
-        "responsibility": "",
+        "reason": "active route has no task packets",
+        "responsibility": "worker",
         "subject_id": ""
       },
       "ok": true
@@ -366,7 +366,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-30T17:07:24.510031+00:00",
+          "created_at": "2026-06-04T17:09:12.785534+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -374,7 +374,7 @@
           "pm_routing_decision": "",
           "result_id": "result-0001",
           "review_id": "review-0001",
-          "reviewer_agent_id": "reviewer-lease-0002",
+          "reviewer_agent_id": "reviewer-role_assignment-0002",
           "reviewer_lease_id": "lease-0002",
           "scope_restatement": "",
           "waivers": []
@@ -382,9 +382,9 @@
       },
       "name": "wrong_flowguard_target_blocks_complete_system",
       "next_action": {
-        "action_type": "lease_agent",
+        "action_type": "resolve_role_assignment",
         "modeled_target": "",
-        "reason": "packet has no assigned lease",
+        "reason": "packet role assignment must resolve before lease commit",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -399,7 +399,7 @@
           "affected_packets": [
             "packet-0001"
           ],
-          "created_at": "2026-05-30T17:07:24.510031+00:00",
+          "created_at": "2026-06-04T17:09:12.785534+00:00",
           "mutation_id": "mutation-0001",
           "new_route_version": 2,
           "old_route_version": 1,
@@ -415,6 +415,7 @@
             "allowed_tools": [],
             "body_hash": "91a4b45c122c77bef7837213696fe091a884b4c01cf2579341bfdb6b076d6e96",
             "body_visibility": "sealed",
+            "node_context_package_id": "",
             "objective": "Execute packet",
             "output_contract": {
               "accepted_authority": "runtime_acceptance_gate",
@@ -465,10 +466,10 @@
       "details": {
         "result": {
           "accepted": false,
-          "body": "SEALED_RESULT_BODY",
+          "body": "{\"decision\": \"pass\"}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "3e0183dea9d85b0f8b9bad16afb55b409e31d4c1685c5bf7a6e1a2f56884cddb",
+            "body_hash": "cc722b8660243e4257aef5609d40643c65d6d218afb5eb241d87562a996b2312",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -496,7 +497,7 @@
           ],
           "non_authoritative": true,
           "packet_id": "packet-0001",
-          "producer_agent_id": "worker-lease-0001",
+          "producer_agent_id": "worker-role_assignment-0001",
           "producer_lease_id": "lease-0001",
           "quarantine_reason": "body_hash_mismatch",
           "quarantined": false,
@@ -523,10 +524,10 @@
       "details": {
         "first": {
           "accepted": false,
-          "body": "SEALED_RESULT_BODY:first",
+          "body": "{\"decision\": \"pass\", \"seq\": 1}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "c2d6afc02c57b51109e8ebea064f8e2228f381d6316c17e5fe4d221f8138b0d0",
+            "body_hash": "1a72c965ef18c370a16cc6d58188f1315709414237d8fff5a43e6e2d76478af3",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -553,7 +554,7 @@
           "non_authoritative": false,
           "packet_id": "packet-0001",
           "packet_outcome_id": "outcome-0001",
-          "producer_agent_id": "worker-lease-0001",
+          "producer_agent_id": "worker-role_assignment-0001",
           "producer_lease_id": "lease-0001",
           "quarantine_reason": "",
           "quarantined": false,
@@ -565,10 +566,10 @@
         },
         "second": {
           "accepted": false,
-          "body": "SEALED_RESULT_BODY:second",
+          "body": "{\"decision\": \"pass\", \"seq\": 2}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "42f6e486df6cb09720b28a0cbe6e5daee29642005050c23c246c34df3573df9f",
+            "body_hash": "193290c54bffdc931481b9e1c9cf740f9c70d838299d55800ef5ec84a86c8c44",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -597,7 +598,7 @@
           ],
           "non_authoritative": true,
           "packet_id": "packet-0001",
-          "producer_agent_id": "worker-lease-0001",
+          "producer_agent_id": "worker-role_assignment-0001",
           "producer_lease_id": "lease-0001",
           "quarantine_reason": "closed_or_inactive_lease,duplicate_output_from_same_lease",
           "quarantined": true,
@@ -609,9 +610,9 @@
       },
       "name": "duplicate_output_blocks_second_result",
       "next_action": {
-        "action_type": "lease_agent",
+        "action_type": "resolve_role_assignment",
         "modeled_target": "",
-        "reason": "packet has no assigned lease",
+        "reason": "packet role assignment must resolve before lease commit",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -627,7 +628,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-30T17:07:24.511984+00:00",
+          "created_at": "2026-06-04T17:09:12.789534+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -635,7 +636,7 @@
           "pm_routing_decision": "",
           "result_id": "result-0001",
           "review_id": "review-0001",
-          "reviewer_agent_id": "reviewer-lease-0002",
+          "reviewer_agent_id": "reviewer-role_assignment-0002",
           "reviewer_lease_id": "lease-0002",
           "scope_restatement": "",
           "waivers": []
@@ -643,9 +644,9 @@
       },
       "name": "missing_target_and_report_only_flowguard_block_review",
       "next_action": {
-        "action_type": "lease_agent",
+        "action_type": "resolve_role_assignment",
         "modeled_target": "",
-        "reason": "packet has no assigned lease",
+        "reason": "packet role assignment must resolve before lease commit",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -657,13 +658,13 @@
       },
       "details": {
         "order": {
-          "completed_at": "2026-05-30T17:07:24.512994+00:00",
+          "completed_at": "2026-06-04T17:09:12.790534+00:00",
           "confidence_boundary": "scoped",
-          "created_at": "2026-05-30T17:07:24.512994+00:00",
+          "created_at": "2026-06-04T17:09:12.790534+00:00",
           "decision": "pass",
           "evidence_id": "flowguard-report",
-          "modeled_target": "development_process",
           "flowguard_operator_lease_id": "",
+          "modeled_target": "development_process",
           "order_id": "flowguard-0001",
           "pm_decision": "",
           "progress_only": false,
@@ -681,7 +682,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-05-30T17:07:24.512994+00:00",
+          "created_at": "2026-06-04T17:09:12.790534+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -689,7 +690,7 @@
           "pm_routing_decision": "",
           "result_id": "result-0001",
           "review_id": "review-0001",
-          "reviewer_agent_id": "reviewer-lease-0002",
+          "reviewer_agent_id": "reviewer-role_assignment-0002",
           "reviewer_lease_id": "lease-0002",
           "scope_restatement": "",
           "waivers": []
@@ -697,9 +698,9 @@
       },
       "name": "stale_proof_artifact_blocks_review",
       "next_action": {
-        "action_type": "lease_agent",
+        "action_type": "resolve_role_assignment",
         "modeled_target": "",
-        "reason": "packet has no assigned lease",
+        "reason": "packet role assignment must resolve before lease commit",
         "responsibility": "flowguard_operator",
         "subject_id": "packet-0002"
       },
@@ -715,7 +716,7 @@
           "unresolved_residual_risks",
           "unresolved_resources"
         ],
-        "created_at": "2026-05-30T17:07:24.513989+00:00",
+        "created_at": "2026-06-04T17:09:12.793536+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -730,7 +731,7 @@
             "unresolved_residual_risks",
             "unresolved_resources"
           ],
-          "created_at": "2026-05-30T17:07:24.513989+00:00",
+          "created_at": "2026-06-04T17:09:12.793536+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -738,10 +739,10 @@
       },
       "name": "completion_claim_resources_risks_and_old_ui_block_closure",
       "next_action": {
-        "action_type": "close_project",
+        "action_type": "issue_task_packet",
         "modeled_target": "",
-        "reason": "all active packets are accepted",
-        "responsibility": "",
+        "reason": "active route has no task packets",
+        "responsibility": "worker",
         "subject_id": ""
       },
       "ok": true
@@ -753,7 +754,7 @@
       "details": {
         "fallback": {
           "active": "chat_route_sign",
-          "created_at": "2026-05-30T17:07:24.513989+00:00",
+          "created_at": "2026-06-04T17:09:12.793536+00:00",
           "fallback_reason": "cockpit_unavailable",
           "preferred": "cockpit",
           "route_sign_required": true

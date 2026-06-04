@@ -324,7 +324,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         lease_id = host.lease_responsibility(ledger, "worker", host_kind="fake")
         runtime.assign_packet(ledger, packet_id, lease_id)
         runtime.ack_lease(ledger, lease_id, packet_id)
-        result_id = host.submit_host_result(ledger, lease_id, packet_id, "SEALED_RESULT")
+        result_id = host.submit_host_result(ledger, lease_id, packet_id, json.dumps({"decision": "pass"}))
         order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
         flowguard_orders.complete_work_order(ledger, order_id, proof_artifact="simulations/result.json")
         reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")
@@ -381,11 +381,11 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             ledger,
             new_lease,
             new_packet,
-            "BAD_HASH_RESULT",
+            json.dumps({"decision": "pass", "summary": "bad hash result"}),
             packet_body_hash="not-the-packet-hash",
         )
-        good_result = host.submit_host_result(ledger, new_lease, new_packet, "GOOD_RESULT")
-        duplicate_result = host.submit_host_result(ledger, new_lease, new_packet, "DUPLICATE_RESULT")
+        good_result = host.submit_host_result(ledger, new_lease, new_packet, json.dumps({"decision": "pass", "summary": "good"}))
+        duplicate_result = host.submit_host_result(ledger, new_lease, new_packet, json.dumps({"decision": "pass", "summary": "duplicate"}))
         order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", new_packet)
         flowguard_orders.complete_work_order(ledger, order_id, proof_artifact="simulations/result.json")
         reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")
@@ -422,8 +422,8 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         runtime.supersede_lease(ledger, first, replacement)
         runtime.assign_packet(ledger, packet_id, replacement)
         runtime.ack_lease(ledger, replacement, packet_id)
-        late = host.submit_host_result(ledger, first, packet_id, "LATE_RESULT")
-        result_id = host.submit_host_result(ledger, replacement, packet_id, "RESULT")
+        late = host.submit_host_result(ledger, first, packet_id, json.dumps({"decision": "pass", "summary": "late"}))
+        result_id = host.submit_host_result(ledger, replacement, packet_id, json.dumps({"decision": "pass", "summary": "result"}))
         with self.assertRaises(runtime.BlackBoxRuntimeError):
             flowguard_orders.create_work_order(ledger, "", "done_claim", packet_id)
         order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
@@ -435,14 +435,14 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["reviews"][review_id]["decision"], "block")
         self.assertIn("missing_matching_flowguard_report", ledger["reviews"][review_id]["blockers"])
 
-    def test_cockpit_disconnect_records_chat_route_sign_fallback(self) -> None:
+    def test_cockpit_disconnect_records_display_surface_blocker(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
-        fallback = cockpit.record_display_surface_fallback(ledger, "cockpit_unavailable")
+        blocked = cockpit.record_display_surface_blocker(ledger, "cockpit_unavailable")
         projection = cockpit.render_status(ledger)
 
-        self.assertTrue(fallback["fallback"]["route_sign_required"])
-        self.assertEqual(projection["display_surface"]["active"], "chat_route_sign")
-        self.assertEqual(ledger["user_events"][-1]["cockpit_event_type"], "chat_fallback")
+        self.assertTrue(blocked["blocker"]["repair_required"])
+        self.assertEqual(projection["display_surface"]["active"], "blocked")
+        self.assertEqual(ledger["user_events"][-1]["cockpit_event_type"], "display_blocked")
 
     def test_current_run_save_materializes_sealed_envelopes_orders_reviews_and_status(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -454,7 +454,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             lease_id = host.lease_responsibility(ledger, "worker", host_kind="fake")
             runtime.assign_packet(ledger, packet_id, lease_id)
             runtime.ack_lease(ledger, lease_id, packet_id)
-            result_id = host.submit_host_result(ledger, lease_id, packet_id, "SEALED_RESULT")
+            result_id = host.submit_host_result(ledger, lease_id, packet_id, json.dumps({"decision": "pass"}))
             order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
             flowguard_orders.complete_work_order(ledger, order_id, proof_artifact="simulations/result.json")
             reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")

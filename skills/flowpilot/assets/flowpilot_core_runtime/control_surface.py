@@ -308,7 +308,11 @@ def audit_packet_contracts(
             )
         if packet_obj.get("status") == "accepted" and not packet_obj.get("accepted_result_id"):
             findings.append(_packet_finding("accepted_packet_missing_result", str(packet_id), "accepted packet has no accepted_result_id"))
-        if packet_obj.get("accepted_result_id") and packet_obj.get("status") not in {"accepted", "quarantined_after_route_mutation"}:
+        if packet_obj.get("accepted_result_id") and packet_obj.get("status") not in {
+            "accepted",
+            "quarantined_after_route_mutation",
+            "superseded_after_repair",
+        }:
             findings.append(_packet_finding("accepted_result_status_regressed", str(packet_id), "packet has accepted_result_id but nonterminal status"))
         for result_id in packet_obj.get("result_ids") or []:
             result = results.get(result_id) if isinstance(results, Mapping) else None

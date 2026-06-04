@@ -68,7 +68,7 @@ TEST_NAMES = (
     "test_pm_can_approve_startup_findings_with_file_backed_decision",
     "test_pm_startup_repair_request_resets_fact_review_cycle",
     "test_pm_startup_repair_request_can_repeat_for_new_blocking_report",
-    "test_cockpit_requested_startup_display_records_chat_fallback_mermaid",
+    "test_cockpit_requested_startup_display_records_display_blocker",
     "test_startup_fact_report_accepts_file_backed_envelope_only_payload",
     "test_startup_fact_report_rejects_canonical_submission_alias",
 )
