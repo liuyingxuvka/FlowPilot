@@ -37,6 +37,53 @@ When fixing a failure, delete or reject the unsupported path rather than
 teaching the runtime to accept both old and new forms. Add a negative test for
 each removed compatibility surface.
 
+## Minimal Current-Contract Repair Framework
+
+When repairing FlowPilot runtime, route, prompt, card, gate, or recovery
+failures, prefer the smallest current-contract change that fixes the observed
+state-machine problem. Do not add a new ledger, table, packet kind, prompt
+channel, role, or state family when the existing packet/result/gate surfaces
+can express the repair.
+
+Use this default ownership split:
+
+- Runtime/router owns mechanical validity: schema, packet kind, route scope,
+  current run, current packet/result/node ids, path/hash presence, supported
+  command names, and rejection of legacy aliases, wrappers, fallback prose, or
+  missing-field defaults.
+- FlowGuard owns substantive process and state review: whether the real current
+  artifact, evidence, route effect, repair effect, or recovery effect can
+  execute without stale evidence, loops, future-state assumptions, or broken
+  refinement.
+- Reviewer owns substantive quality review: whether the real current artifact
+  satisfies the task, evidence is credible, contradictions are handled, and the
+  output is good enough for the next gate or user-facing claim.
+
+For gated side effects, prefer one lightweight staged-effect concept over
+per-scenario candidate ledgers. A staged effect records only the current result
+or gate identity, effect kind, target node/route/blocker when needed, status,
+and the command or runtime path that will commit it after review. It must not
+copy sealed bodies or recreate a parallel candidate system. Use staged effects
+only for effects that are currently blocked by a real timing mismatch, such as
+"review must inspect the real submitted artifact before runtime binds it as an
+accepted node plan" or "route mutation must be reviewed before active route
+version changes."
+
+Before adding new fields or state, require a clear answer to all of these:
+
+- Which observed blocker, loop, stale-evidence hazard, or unsupported path does
+  this prevent?
+- Can the same repair be represented with existing packet, result, gate,
+  blocker, or route-node records?
+- Is this mechanical validation better owned by runtime/router instead of
+  FlowGuard or Reviewer?
+- Does the added state have one owner, one commit point, a negative test, and a
+  cleanup/terminal disposition?
+
+If any answer is unclear, first reduce the repair plan instead of expanding the
+runtime shape. Avoid recreating old-router complexity through many specialized
+candidate records, compatibility surfaces, or role-specific state machines.
+
 ## FlowGuard Project Topology
 
 This mature FlowGuard project maintains an automatically generated project

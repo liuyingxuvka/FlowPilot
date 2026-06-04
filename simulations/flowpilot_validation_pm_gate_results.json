@@ -19,6 +19,8 @@
       "pm_decision_reviewer_missing",
       "pm_mutation_without_flowguard",
       "pm_waiver_applied_before_gate",
+      "semantic_review_demands_future_committed_state",
+      "staged_effect_missing_before_gate",
       "system_validation_failure_auto_closed",
       "system_validation_failure_not_routed_to_pm",
       "system_validation_treated_as_terminal",
@@ -29,7 +31,7 @@
         "closure before system validation"
       ],
       "closure_flowguard_operator_required_on_ordinary_path": [
-        "ordinary path still required Closure Officer AI"
+        "ordinary path still required Closure FlowGuard operator AI"
       ],
       "high_risk_pm_applied_before_gate": [
         "high-risk PM decision applied before gate"
@@ -52,6 +54,13 @@
       "pm_waiver_applied_before_gate": [
         "PM waiver applied before gate"
       ],
+      "semantic_review_demands_future_committed_state": [
+        "semantic review demanded future committed state before gate closure"
+      ],
+      "staged_effect_missing_before_gate": [
+        "high-risk PM decision staged without staged_effect",
+        "PM decision gate opened without staged_effect"
+      ],
       "system_validation_failure_auto_closed": [
         "failed system validation auto-closed the subject"
       ],
@@ -71,17 +80,25 @@
   "model_test_alignment": {
     "evidence": [
       "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-      "tests/test_flowpilot_high_standard_control_flow.py"
+      "tests/test_flowpilot_high_standard_control_flow.py",
+      "tests/test_flowpilot_core_runtime.py",
+      "tests/test_flowpilot_card_instruction_coverage.py"
     ],
     "missing": [],
     "obligations": {
       "high_risk_pm_disposition_staged": true,
       "high_risk_pm_repair_staged": true,
       "low_risk_pm_repair_direct": true,
+      "node_acceptance_staged_effect_kind": true,
       "old_validation_closure_packets_rejected": true,
       "old_validator_closure_roles_removed": true,
       "pm_decision_gate_ledger": true,
+      "review_future_state_boundary_card_test": true,
       "reviewer_pass_no_closure_flowguard_operator_packet": true,
+      "route_mutation_staged_effect_kind": true,
+      "runtime_staged_effect_helper": true,
+      "staged_node_acceptance_test": true,
+      "staged_route_mutation_test": true,
       "system_closure_helper": true,
       "system_closure_ledger": true,
       "system_validation_failure_routes_pm": true,
@@ -123,6 +140,7 @@
       "pm_gate_flowguard_passed": true,
       "pm_gate_reviewer_passed": true,
       "pm_gate_system_closure_recorded": true,
+      "staged_effect_recorded": true,
       "staged_pm_decision_applied": true,
       "status": "complete",
       "system_closure_applied": true,
@@ -165,7 +183,9 @@
       {
         "evidence": [
           "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-          "tests/test_flowpilot_high_standard_control_flow.py"
+          "tests/test_flowpilot_high_standard_control_flow.py",
+          "tests/test_flowpilot_core_runtime.py",
+          "tests/test_flowpilot_card_instruction_coverage.py"
         ],
         "freshness": "current",
         "id": "validation_pm_gate_model_test_alignment",

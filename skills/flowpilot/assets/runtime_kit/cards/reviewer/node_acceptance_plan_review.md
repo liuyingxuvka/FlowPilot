@@ -41,6 +41,16 @@ required work; include why the current node cannot contain the repair.
 
 Review the PM node acceptance plan before any worker packet is registered.
 
+Runtime owns mechanical validation for field names, top-level package shape,
+packet kind, route scope, hashes, current-run identity, and the small
+`staged_effect` record. Reviewer must review the real node acceptance plan,
+the sufficiency of the `node_context_package`, user/quality/proof obligations,
+evidence starting points, route-node fit, and whether the staged
+`commit_node_acceptance_plan` effect is semantically safe to commit after the
+gate. Do not pass or block by rechecking runtime-owned field lists alone; when
+the body is mechanically malformed, runtime should reject and reissue it before
+Reviewer review.
+
 Check:
 
 - the plan matches the active route id, route version, and active node id;

@@ -27,6 +27,7 @@ class State:
     low_risk_pm_decision_applied: bool = False
     high_risk_pm_decision_recorded: bool = False
     high_risk_pm_decision_staged: bool = False
+    staged_effect_recorded: bool = False
     pm_gate_flowguard_passed: bool = False
     pm_gate_reviewer_passed: bool = False
     pm_gate_system_validation_recorded: bool = False
@@ -46,6 +47,8 @@ class State:
     pm_mutation_without_flowguard: bool = False
     pm_decision_reviewer_missing: bool = False
     low_risk_repair_forced_through_gate: bool = False
+    staged_effect_missing_before_gate: bool = False
+    semantic_review_demands_future_committed_state: bool = False
 
 
 @dataclass(frozen=True)
@@ -173,7 +176,12 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
     if not state.high_risk_pm_decision_recorded:
         return (Transition("record_high_risk_pm_decision", replace(state, high_risk_pm_decision_recorded=True)),)
     if not state.high_risk_pm_decision_staged:
-        return (Transition("stage_high_risk_pm_decision", replace(state, high_risk_pm_decision_staged=True)),)
+        return (
+            Transition(
+                "stage_high_risk_pm_decision",
+                replace(state, high_risk_pm_decision_staged=True, staged_effect_recorded=True),
+            ),
+        )
     if not state.pm_gate_flowguard_passed:
         return (Transition("pass_pm_decision_flowguard_gate", replace(state, pm_gate_flowguard_passed=True)),)
     if not state.pm_gate_reviewer_passed:
@@ -227,6 +235,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("low-risk PM decision applied before record")
     if state.high_risk_pm_decision_staged and not state.high_risk_pm_decision_recorded:
         failures.append("high-risk PM decision staged before record")
+    if state.high_risk_pm_decision_staged and not state.staged_effect_recorded:
+        failures.append("high-risk PM decision staged without staged_effect")
     if state.pm_gate_flowguard_passed and not state.high_risk_pm_decision_staged:
         failures.append("PM gate FlowGuard passed before high-risk decision staging")
     if state.pm_gate_reviewer_passed and not state.pm_gate_flowguard_passed:
@@ -263,6 +273,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM decision gate lacked reviewer pass")
     if state.low_risk_repair_forced_through_gate:
         failures.append("low-risk PM repair was forced through high-risk gate")
+    if state.staged_effect_missing_before_gate:
+        failures.append("PM decision gate opened without staged_effect")
+    if state.semantic_review_demands_future_committed_state:
+        failures.append("semantic review demanded future committed state before gate closure")
     return failures
 
 
@@ -282,6 +296,7 @@ def is_success(state: State) -> bool:
         and state.failed_system_validation_routed_to_pm
         and state.low_risk_pm_decision_applied
         and state.high_risk_pm_decision_staged
+        and state.staged_effect_recorded
         and state.pm_gate_system_closure_recorded
         and state.staged_pm_decision_applied
         and state.old_packet_roles_rejected
@@ -318,6 +333,8 @@ def hazard_states() -> dict[str, State]:
         "pm_mutation_without_flowguard": replace(base, pm_mutation_without_flowguard=True),
         "pm_decision_reviewer_missing": replace(base, pm_decision_reviewer_missing=True),
         "low_risk_repair_forced_through_gate": replace(base, low_risk_repair_forced_through_gate=True),
+        "staged_effect_missing_before_gate": replace(base, staged_effect_recorded=False, staged_effect_missing_before_gate=True),
+        "semantic_review_demands_future_committed_state": replace(base, semantic_review_demands_future_committed_state=True),
     }
 
 
@@ -330,6 +347,7 @@ def state_summary(state: State) -> dict[str, object]:
         "failed_system_validation_routed_to_pm": state.failed_system_validation_routed_to_pm,
         "low_risk_pm_decision_applied": state.low_risk_pm_decision_applied,
         "high_risk_pm_decision_staged": state.high_risk_pm_decision_staged,
+        "staged_effect_recorded": state.staged_effect_recorded,
         "pm_gate_flowguard_passed": state.pm_gate_flowguard_passed,
         "pm_gate_reviewer_passed": state.pm_gate_reviewer_passed,
         "pm_gate_system_closure_recorded": state.pm_gate_system_closure_recorded,

@@ -69,8 +69,10 @@ def _hazard_report() -> dict[str, Any]:
 
 def _model_test_alignment_report() -> dict[str, Any]:
     high_standard_test = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
+    core_runtime_test = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
     runtime = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
     test_text = high_standard_test.read_text(encoding="utf-8")
+    core_test_text = core_runtime_test.read_text(encoding="utf-8")
     runtime_text = runtime.read_text(encoding="utf-8")
     obligations = {
         "system_validation_helper": "_record_system_validation_for_packet" in runtime_text,
@@ -84,6 +86,14 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "high_risk_pm_repair_staged": "test_pm_mutate_route_repair_is_gated_before_application" in test_text,
         "low_risk_pm_repair_direct": "test_pm_sender_reissue_repair_remains_direct" in test_text,
         "high_risk_pm_disposition_staged": "test_pm_mutate_route_disposition_is_gated_before_application" in test_text,
+        "runtime_staged_effect_helper": "_attach_staged_effect" in runtime_text,
+        "route_mutation_staged_effect_kind": "commit_route_mutation" in runtime_text,
+        "node_acceptance_staged_effect_kind": "commit_node_acceptance_plan" in runtime_text,
+        "staged_node_acceptance_test": "test_node_acceptance_plan_result_stages_effect_before_closure" in core_test_text,
+        "staged_route_mutation_test": "test_mutate_route_pm_decision_stages_route_effect_until_gate_applies" in core_test_text,
+        "review_future_state_boundary_card_test": "test_current_contract_staged_effect_guidance_is_role_scoped" in (
+            REPO_ROOT / "tests" / "test_flowpilot_card_instruction_coverage.py"
+        ).read_text(encoding="utf-8"),
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {
@@ -93,6 +103,8 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "evidence": [
             "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             "tests/test_flowpilot_high_standard_control_flow.py",
+            "tests/test_flowpilot_core_runtime.py",
+            "tests/test_flowpilot_card_instruction_coverage.py",
         ],
     }
 

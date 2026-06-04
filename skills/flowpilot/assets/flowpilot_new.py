@@ -545,6 +545,25 @@ def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
     }
 
 
+def resolve_stopped_blocker(root: Path, *, blocker_id: str, resolution: str, reason: str = "") -> dict[str, Any]:
+    shell = run_shell.load_run_shell(root)
+    ledger = run_shell.load_run_ledger(shell)
+    recovery = runtime.resolve_stopped_blocker(
+        ledger,
+        blocker_id,
+        resolution=resolution,
+        reason=reason,
+    )
+    folded = _run_until_wait_and_save(shell, ledger, guard_trigger="resolve_stopped_blocker")
+    return {
+        "ok": True,
+        "recovery": recovery,
+        "run_until_wait": folded,
+        **_runtime_state(ledger),
+        "status": _status_projection(ledger),
+    }
+
+
 def final_preflight(root: Path) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
@@ -611,6 +630,14 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("final-preflight", help="Fail unless current foreground duty allows terminal return")
     resume_parser = sub.add_parser("resume", help="Record manual resume and rehydrate lifecycle guard status")
     resume_parser.add_argument("--reason", default="manual_resume")
+    stopped_parser = sub.add_parser("resolve-stopped-blocker", help="Resolve a PM-stopped semantic blocker explicitly")
+    stopped_parser.add_argument("--blocker-id", required=True)
+    stopped_parser.add_argument(
+        "--resolution",
+        required=True,
+        choices=["reissue_pm_repair_decision", "stop_run", "cancel_run"],
+    )
+    stopped_parser.add_argument("--reason", default="")
 
     resolve = sub.add_parser("resolve-role-assignment", help="Resolve reuse/create/block before opening a role surface")
     resolve.add_argument("--packet-id", required=True)
@@ -695,6 +722,13 @@ def main(argv: list[str] | None = None) -> int:
             payload = final_preflight(root)
         elif args.command == "resume":
             payload = resume(root, reason=args.reason)
+        elif args.command == "resolve-stopped-blocker":
+            payload = resolve_stopped_blocker(
+                root,
+                blocker_id=args.blocker_id,
+                resolution=args.resolution,
+                reason=args.reason,
+            )
         elif args.command == "resolve-role-assignment":
             payload = resolve_role_assignment(
                 root,

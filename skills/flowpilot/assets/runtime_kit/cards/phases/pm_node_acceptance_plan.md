@@ -25,6 +25,13 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 Before issuing a current-node work packet, write the active node acceptance
 plan.
 
+Submit the node acceptance plan as a current packet result with a top-level
+`node_context_package`. Runtime owns mechanical validation of required fields,
+node identity, packet kind, route scope, hashes, and current-run identity. A
+mechanically valid result is staged as `commit_node_acceptance_plan`; it is not
+an accepted node plan and must not claim accepted `node_acceptance_plan_id` or
+`node_context_package_id` until FlowGuard, Reviewer, and system closure pass.
+
 Use only the active route, active frontier, root acceptance contract, product
 function architecture, approved child-skill gate manifest, and latest
 route-memory prior path context. The plan must state:

@@ -305,10 +305,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_planning(ledger)
 
         packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
-        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "top-level node_context_package"):
-            _complete_task_chain(ledger, packet_id, json.dumps({"repair_policy": "same_node_repair_default"}))
+        result_id = _complete_open_packet(ledger, packet_id, json.dumps({"repair_policy": "same_node_repair_default"}))
 
         node_id = ledger["execution_frontier"]["active_node_id"]
+        self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
+        self.assertIn("top-level node_context_package", ledger["results"][result_id]["quarantine_reason"])
+        self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
+        self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
         self.assertFalse(runtime._node_context_package_current(ledger, node_id))
         self.assertFalse(_open_packets(ledger, scope="node_prework_flowguard"))
         self.assertFalse(_open_packets(ledger, scope="node"))

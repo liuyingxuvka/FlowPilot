@@ -75,6 +75,9 @@ class State:
     control_blocker_active: bool = False
     control_blocker_lane: str = "none"  # none | pm_repair_decision_required | fatal_protocol_violation
     pm_repair_decision_recorded: bool = False
+    pm_repair_reissue_recorded: bool = False
+    reissued_packet_kind_preserved: bool = True
+    fallback_flowguard_evidence_accepted: bool = False
     followup_event_already_recorded: bool = False
     followup_reaudit_passed: bool = False
 
@@ -345,6 +348,15 @@ def pm_decision_does_not_clear_blocker_without_followup(state: State, trace) -> 
     del trace
     if state.pm_repair_decision_recorded and not state.followup_reaudit_passed and not state.control_blocker_active:
         return InvariantResult.fail("PM repair decision cleared blocker without corrected follow-up re-audit")
+    if state.pm_repair_reissue_recorded and not state.reissued_packet_kind_preserved:
+        return InvariantResult.fail("PM repair reissue lost the current packet kind")
+    return InvariantResult.pass_()
+
+
+def flowguard_fallback_evidence_is_never_accepted(state: State, trace) -> InvariantResult:
+    del trace
+    if state.fallback_flowguard_evidence_accepted:
+        return InvariantResult.fail("FlowGuard fallback evidence was accepted as current evidence")
     return InvariantResult.pass_()
 
 
@@ -392,8 +404,13 @@ INVARIANTS = (
     ),
     Invariant(
         "pm_decision_does_not_clear_blocker_without_followup",
-        "PM repair decision records intent but cannot clear a blocker without corrected follow-up re-audit.",
+        "PM repair decision records intent but cannot clear a blocker without corrected follow-up re-audit, and reissue preserves packet kind.",
         pm_decision_does_not_clear_blocker_without_followup,
+    ),
+    Invariant(
+        "flowguard_fallback_evidence_is_never_accepted",
+        "FlowGuard API/model failure must be a toolchain blocker, not accepted fallback evidence.",
+        flowguard_fallback_evidence_is_never_accepted,
     ),
     Invariant(
         "fatal_protocol_violation_requires_pm_decision_before_followup",
@@ -549,6 +566,15 @@ def hazard_states() -> dict[str, State]:
             control_blocker_active=False,
             pm_repair_decision_recorded=True,
             followup_reaudit_passed=False,
+        ),
+        "pm_repair_reissue_lost_packet_kind": State(
+            status="running",
+            pm_repair_reissue_recorded=True,
+            reissued_packet_kind_preserved=False,
+        ),
+        "fallback_flowguard_evidence_accepted": State(
+            status="running",
+            fallback_flowguard_evidence_accepted=True,
         ),
         "fatal_followup_without_pm_decision": State(
             status="running",

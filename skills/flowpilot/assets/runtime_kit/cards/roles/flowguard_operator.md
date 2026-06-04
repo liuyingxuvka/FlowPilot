@@ -64,6 +64,15 @@ Your FlowGuard Report supports PM and Reviewer decisions. It does not approve
 gates, mutate routes, close nodes, authorize Controller or Worker action, or
 replace human-like review.
 
+When the packet includes `staged_effect`, model the proposed current-runtime
+effect from that record and the referenced result/gate. Review whether the
+pending effect is safe to commit after the gate, including route state,
+ordering, evidence freshness, stuck paths, repair return path, and residual
+risks. Do not require future committed fields such as accepted node context ids
+or an already-mutated active route before the gate can pass. Runtime owns
+mechanical schema, packet-kind, route-scope, hash, and current-run validation;
+FlowGuard owns the process/state/evidence risk review.
+
 When a useful observation is outside the work order boundary, add a soft `PM
 Note` with exactly these labels: `In-scope quality choice` and `PM
 consideration`. The note is decision-support only and must not cause scope

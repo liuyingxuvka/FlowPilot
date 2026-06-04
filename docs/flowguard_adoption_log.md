@@ -21035,6 +21035,76 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## stage-flowpilot-gated-effects - FlowPilot staged gated effects and current-contract mechanical runtime validation
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested a clean current-contract repair of control-plane friction, with runtime/router owning mechanical field checks and FlowGuard/Reviewer judging real evidence instead of field lists.
+- Status: completed
+- Skill decision: OpenSpec change plus FlowGuard existing-model preflight and DevelopmentProcessFlow grounding
+- Started: 2026-06-04T08:15:00+00:00
+- Ended: 2026-06-04T08:59:10+00:00
+- Commands OK: true
+
+### Model Files
+- simulations/flowpilot_validation_pm_gate_model.py
+- simulations/flowpilot_packet_lifecycle_model.py
+- simulations/flowpilot_decision_liveness_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- python -c import-flowguard-schema: ok, schema 1.0
+- python -c importlib-metadata-flowguard-version: ok, package 0.40.8
+- python -m flowguard project-audit --root .: ok
+- openspec validate stage-flowpilot-gated-effects --strict --json: ok
+- python -m py_compile focused runtime files: ok
+- python -m pytest focused staged-effect suites: ok, 116 passed, 162 subtests passed
+- python simulations/run_flowpilot_validation_pm_gate_checks.py: ok
+- python simulations/run_flowpilot_packet_lifecycle_checks.py: ok
+- python simulations/run_flowpilot_decision_liveness_checks.py --json-out simulations/flowpilot_decision_liveness_results.json: ok
+- python simulations/run_flowpilot_core_runtime_checks.py: ok
+- python simulations/run_flowpilot_route_hard_gate_checks.py: ok
+- python simulations/run_flowpilot_prework_flowguard_gate_checks.py: ok
+- python simulations/run_flowpilot_flowguard_work_order_checks.py: ok
+- python tmp/flowguard_background/_run_background_command.py run_meta_checks [python simulations/run_meta_checks.py]: ok, stable log exit 0, meta status passed, stderr empty, proof_reused=null
+- python tmp/flowguard_background/_run_background_command.py run_capability_checks [python simulations/run_capability_checks.py]: ok, stable log exit 0, meta status passed, stderr empty, proof_reused=null
+- python scripts/flowguard_project_topology.py build: ok
+- python scripts/flowguard_project_topology.py check: ok
+- python scripts/install_flowpilot.py --sync-repo-owned --json: ok, installed/source digest cfc06ac6a292eac56120e7c7775be859b5b62277179d70905a6d7edda71e2145
+- python scripts/audit_local_install_sync.py --json: ok
+- python scripts/check_install.py: ok
+
+### Findings
+- Runtime/router now owns current-contract mechanical validation for route-plan, node-acceptance-plan, and FlowGuard-evidence result families.
+- FlowGuard and Reviewer cards now review real process, state, artifact, evidence, and quality concerns rather than checking runtime-owned field mechanics.
+- A single lightweight `staged_effect` record carries pending route mutation and node acceptance side effects until the relevant gate closure commits them exactly once.
+- PM repair reissue preserves the current packet kind and route scope instead of falling back to generic task packets.
+- Stopped semantic blockers require an explicit current-runtime recovery command; ordinary resume remains a lifecycle action only.
+- AGENTS now records the minimal current-contract repair framework so future fixes avoid compatibility shims, parallel ledgers, prose fallbacks, and reviewer field-check drift.
+- Installed local FlowPilot skill was synchronized from repository source and verified fresh.
+
+### Counterexamples
+- Old planning `route_nodes` alias submissions are mechanically blocked and reissued instead of accepted or translated.
+- FlowGuard fallback/manual API evidence text is mechanically blocked and reissued instead of being reviewed as current evidence.
+- Plain lifecycle resume does not clear PM-stopped semantic blockers; only explicit stopped-blocker recovery or terminal stop/cancel resolves them.
+- High-risk PM route mutation and node acceptance plan effects stay staged until FlowGuard, Reviewer, system validation, and system closure commit the current result.
+
+### Friction Points
+- The first background Start-Process launch did not replace the old stable meta files, so the long checks were rerun through the stable wrapper before evidence was accepted.
+- Running Meta/Capability after topology build refreshed thin result files and made install self-check report stale topology; rebuilding topology after long checks fixed the serial validation order.
+
+### Skipped Steps
+- No public release, GitHub push, tag, or deploy was performed.
+- No compatibility migration for old field names was added; unsupported paths were blocked by current-runtime validation instead.
+
+### Risk Evidence Summary
+- Evidence supports current-contract staged side effects, mechanical runtime rejection of unsupported current-result shapes, substantive Reviewer/FlowGuard role boundaries, stopped-blocker recovery, topology freshness, and local installed skill freshness. No GitHub push, tag, release, or deploy was performed.
+
+### Next Actions
+- Use the same minimal current-contract repair framework for future FlowPilot control-plane fixes.
+- Do not treat stale background artifacts or stale topology-source warnings as pass evidence; rerun or rebuild in serial order.
+
+
 ## harden-flowpilot-role-continuity-memory - FlowPilot current-run role continuity and repair packet hardening
 
 - Project: FlowGuardProjectAutopilot_20260430

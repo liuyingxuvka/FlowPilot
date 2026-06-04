@@ -49,6 +49,7 @@ HAZARD_EXPECTED_FAILURES = {
     "request_flowguard_operator_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
     "needs_evidence_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
     "stop_for_user_decision_dead_ends_on_same_pm_event": "accepted nonterminal PM decision looped back to same PM event instead of opening next channel",
+    "plain_resume_clears_stopped_blocker": "plain resume cleared stopped semantic blocker without explicit stopped-blocker recovery",
     "pm_context_without_work_request_channel": "PM decision context opened without always-available role-work-request channel",
     "pm_work_request_without_recipient": "PM work request registered without a valid recipient role",
     "pm_work_request_without_output_contract": "PM work request registered without an output contract",

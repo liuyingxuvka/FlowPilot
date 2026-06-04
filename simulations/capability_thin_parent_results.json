@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-03T11:04:39.862473+00:00",
+  "created_at": "2026-06-04T08:55:07.365382+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -244,7 +244,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_packet_lifecycle_results.json",
-            "result_fingerprint": "0361cac5c64adecc3cc3d7f43bd1848d7bdbcfc031b6afd155c97dd96e025636",
+            "result_fingerprint": "a36fe8251dbc021bb0c7f8899633d69fa2548e0024c126c5770ee2fb06541c64",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 60

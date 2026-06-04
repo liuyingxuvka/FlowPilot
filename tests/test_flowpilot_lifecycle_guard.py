@@ -489,12 +489,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(ledger["packets"][packet_id]["assigned_lease_id"], original_lease)
             self.assertEqual(ledger["leases"][replacement_lease]["status"], "closed")
 
-    def test_patrol_classifies_repeated_nonterminal_action_as_stuck(self) -> None:
+    def test_patrol_does_not_classify_repeated_role_dispatch_as_stuck(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             flowpilot_new.start_run(
                 root,
-                run_id="run-guard-stuck",
+                run_id="run-guard-role-dispatch",
                 headless_startup_text="Exercise repeated action patrol.",
                 require_formal_ui=False,
             )
@@ -502,14 +502,15 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             first = flowpilot_new.patrol(root)
             second = flowpilot_new.patrol(root)
             third = flowpilot_new.patrol(root)
-            shell = run_shell.load_run_shell(root, run_id="run-guard-stuck")
+            shell = run_shell.load_run_shell(root, run_id="run-guard-role-dispatch")
             ledger = run_shell.load_run_ledger(shell)
             refreshed = runtime.refresh_lifecycle_guard(ledger, trigger="patrol")
 
             self.assertFalse(first["lifecycle_guard"]["controller_stop_allowed"])
             self.assertFalse(second["lifecycle_guard"]["controller_stop_allowed"])
-            self.assertEqual(third["lifecycle_guard"]["decision"], "control_plane_stuck")
-            self.assertEqual(refreshed["decision"], "control_plane_stuck")
+            self.assertEqual(third["lifecycle_guard"]["decision"], "process_next_action")
+            self.assertEqual(refreshed["decision"], "process_next_action")
+            self.assertEqual(third["lifecycle_guard"]["next_action_class"], "role_dispatch")
             self.assertGreaterEqual(third["lifecycle_guard"]["repeated_count"], 3)
 
     def test_inactive_lease_result_is_quarantined_by_guard(self) -> None:

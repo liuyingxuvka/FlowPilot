@@ -26,6 +26,8 @@ HAZARD_EXPECTED_FAILURES = {
     "agent_id_role_string": "reviewer pass occurred without complete packet/result receipts and agent role authority",
     "worker_write_without_grant": "worker project write occurred before a current-node write grant",
     "pm_decision_clears_blocker_without_followup": "PM repair decision cleared blocker without corrected follow-up re-audit",
+    "pm_repair_reissue_lost_packet_kind": "PM repair reissue lost the current packet kind",
+    "fallback_flowguard_evidence_accepted": "FlowGuard fallback evidence was accepted as current evidence",
     "fatal_followup_without_pm_decision": "fatal protocol violation follow-up was accepted before PM repair decision",
     "pm_absorbs_without_packet_group_audit": "PM absorbed research before reviewer packet-group runtime audit passed",
 }

@@ -54,7 +54,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-03T10:55:54.077166+00:00",
+        "created_at": "2026-06-04T08:53:27.581358+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -86,7 +86,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-06-03T10:55:54.078167+00:00",
+        "created_at": "2026-06-04T08:53:27.581922+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -139,7 +139,7 @@
           "final_route_wide_gate_ledger_unresolved",
           "route_deliverable:node-001:product-json:failed"
         ],
-        "created_at": "2026-06-03T10:55:54.088167+00:00",
+        "created_at": "2026-06-04T08:53:27.591545+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -309,7 +309,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-03T10:55:54.093165+00:00",
+        "created_at": "2026-06-04T08:53:27.595635+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -335,7 +335,7 @@
           },
           {
             "accepted_result_id": "result-0002",
-            "body_hash": "1f1a4bceab9075a7147e8341f0e6174b5c2f7b3589a8c6b6b40d4ced46d758d0",
+            "body_hash": "865e4d9ec73a73185ccd707e0095bce8efc9ed0096e1c2470eac1169be2611b9",
             "node_context_package_id": "",
             "objective": "Run FlowGuard evidence for packet-0001",
             "packet_id": "packet-0002",
@@ -450,7 +450,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-03T10:55:54.096166+00:00",
+        "created_at": "2026-06-04T08:53:27.598635+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -508,7 +508,7 @@
             "lifecycle_guard_disallows_stop",
             "next_action:repair_accepted_packet"
           ],
-          "checked_at": "2026-06-03T10:55:54.096166+00:00",
+          "checked_at": "2026-06-04T08:53:27.598635+00:00",
           "closure_decision": "complete",
           "controller_stop_allowed": false,
           "guard_decision": "repair_assignment_race",
@@ -581,7 +581,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-03T10:55:54.098165+00:00",
+        "created_at": "2026-06-04T08:53:27.602208+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -593,7 +593,9 @@
           "active_packets": 0,
           "flowguard_orders": 1,
           "leases": 3,
-          "packets": 3
+          "packets": 3,
+          "progress_ended_nodes": 3,
+          "progress_expanded_nodes": 3
         },
         "leaked": false,
         "projection": "compact_controller_status"
@@ -618,7 +620,7 @@
         "duty": {
           "action": "recover_or_reissue",
           "controller_stop_allowed": false,
-          "created_at": "2026-06-03T10:55:54.099163+00:00",
+          "created_at": "2026-06-04T08:53:27.603733+00:00",
           "final_return_preflight": {
             "accepted_packet_lease_health": {
               "finding_count": 0,
@@ -634,7 +636,7 @@
               "lifecycle_guard_disallows_stop",
               "next_action:wait_for_result"
             ],
-            "checked_at": "2026-06-03T10:55:54.099163+00:00",
+            "checked_at": "2026-06-04T08:53:27.603733+00:00",
             "closure_decision": "not_attempted",
             "controller_stop_allowed": false,
             "guard_decision": "reissue_or_replace_lease",
@@ -678,7 +680,7 @@
             "subject_id": "packet-0001",
             "wait_recovery": {
               "decision_override": "reissue_or_replace_lease",
-              "last_liveness_checked_at": "2026-06-03T10:55:54.099163+00:00",
+              "last_liveness_checked_at": "2026-06-04T08:53:27.602208+00:00",
               "last_liveness_elapsed_seconds": 0,
               "last_liveness_status": "not_found",
               "last_progress_elapsed_seconds": null,

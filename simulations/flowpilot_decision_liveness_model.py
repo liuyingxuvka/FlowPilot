@@ -122,6 +122,9 @@ class State:
     repair_packet_opened: bool = False
     dependent_pm_final_decision_recorded: bool = False
     controlled_user_stop_recorded: bool = False
+    stopped_blocker_active: bool = False
+    plain_resume_cleared_stopped_blocker: bool = False
+    stopped_blocker_recovery_command_recorded: bool = False
     terminal_closure_recorded: bool = False
     prior_advisory_round_absorbed: bool = False
     supporting_role_result_absorbed: bool = False
@@ -523,6 +526,10 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM information-gathering decision did not use the generic role-work-request channel")
     if state.decision == DECISION_STOP_FOR_USER and state.request_registered:
         failures.append("stop_for_user incorrectly opened role work instead of controlled pause")
+    if state.plain_resume_cleared_stopped_blocker and not state.stopped_blocker_recovery_command_recorded:
+        failures.append("plain resume cleared stopped semantic blocker without explicit stopped-blocker recovery")
+    if state.terminal_closure_recorded and state.stopped_blocker_active and not state.stopped_blocker_recovery_command_recorded:
+        failures.append("terminal closure recorded while stopped semantic blocker still lacked explicit recovery")
 
     if state.request_packet_created and not state.request_registered:
         failures.append("PM work request packet created before request registration")
@@ -667,6 +674,13 @@ def hazard_states() -> dict[str, State]:
             decision_recorded=True,
             same_event_wait_materialized=True,
             pm_decision_required_blocker_written=True,
+        ),
+        "plain_resume_clears_stopped_blocker": _open_pm_context(
+            decision=DECISION_STOP_FOR_USER,
+            decision_recorded=True,
+            stopped_blocker_active=False,
+            plain_resume_cleared_stopped_blocker=True,
+            stopped_blocker_recovery_command_recorded=False,
         ),
         "pm_context_without_work_request_channel": _open_pm_context(
             pm_work_request_channel_available=False,

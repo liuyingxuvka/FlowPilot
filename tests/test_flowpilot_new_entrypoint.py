@@ -211,6 +211,63 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertNotIn("recommended_runner_commands", flowguard_body)
             self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
 
+    def test_resolve_stopped_blocker_reissues_current_pm_repair_packet(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-stopped-blocker",
+                headless_startup_text="Exercise stopped blocker recovery.",
+                require_formal_ui=False,
+            )
+            pm_packet = started["next_action"]["subject_id"]
+            pm_lease = self._lease_packet(
+                root,
+                packet_id=pm_packet,
+                responsibility="pm",
+                agent_id="pm-agent",
+            )
+            flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
+            flowpilot_new.submit_result(
+                root,
+                lease_id=pm_lease,
+                packet_id=pm_packet,
+                body=json.dumps({"decision": "block", "blocking": True, "recommended_resolution": "needs user decision"}),
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-stopped-blocker")
+            ledger = run_shell.load_run_ledger(shell)
+            blocker_id = next(iter(ledger["active_blockers"]))
+            repair_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+            repair_lease = self._lease_packet(
+                root,
+                packet_id=repair_packet,
+                responsibility="pm",
+                agent_id="pm-repair",
+            )
+            flowpilot_new.ack(root, lease_id=repair_lease, packet_id=repair_packet)
+            flowpilot_new.submit_result(
+                root,
+                lease_id=repair_lease,
+                packet_id=repair_packet,
+                body=json.dumps({"decision": "stop_for_user", "reason": "Need explicit user decision."}),
+            )
+
+            resumed = flowpilot_new.resume(root, reason="plain_resume")
+            recovered = flowpilot_new.resolve_stopped_blocker(
+                root,
+                blocker_id=blocker_id,
+                resolution="reissue_pm_repair_decision",
+                reason="User selected continued repair.",
+            )
+            ledger = run_shell.load_run_ledger(shell)
+            fresh_packet = ledger["packets"][recovered["recovery"]["fresh_packet_id"]]
+
+            self.assertEqual(resumed["next_action"]["action_type"], "wait_for_resume")
+            self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "active")
+            self.assertNotEqual(fresh_packet["packet_id"], repair_packet)
+            self.assertEqual(fresh_packet["envelope"]["packet_kind"], "pm_repair_decision")
+            self.assertEqual(recovered["next_action"]["action_type"], "resolve_role_assignment")
+
     def test_flowguard_operator_is_leased_through_its_own_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)

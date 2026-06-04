@@ -559,6 +559,34 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("skipped", text)
                 self.assertIn("undispositioned", text)
 
+    def test_current_contract_staged_effect_guidance_is_role_scoped(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        pm_core = normalized(_card_path_by_id("pm.core"))
+        self.assertIn("current-contract runtime", pm_core)
+        self.assertIn("runtime owns the mechanical staged-effect record", pm_core)
+        self.assertIn("do not create separate candidate ledgers", pm_core)
+
+        pm_node_plan = normalized(_card_path_by_id("pm.node_acceptance_plan"))
+        self.assertIn("top-level `node_context_package`", pm_node_plan)
+        self.assertIn("commit_node_acceptance_plan", pm_node_plan)
+        self.assertIn("must not claim accepted", pm_node_plan)
+
+        reviewer_node_plan = normalized(_card_path_by_id("reviewer.node_acceptance_plan_review"))
+        self.assertIn("runtime owns mechanical validation", reviewer_node_plan)
+        self.assertIn("review the real node acceptance plan", reviewer_node_plan)
+        self.assertIn("semantically safe to commit", reviewer_node_plan)
+
+        flowguard_core = normalized(_card_path_by_id("flowguard_operator.core"))
+        self.assertIn("when the packet includes `staged_effect`", flowguard_core)
+        self.assertIn("do not require future committed fields", flowguard_core)
+        self.assertIn("process/state/evidence risk review", flowguard_core)
+
+        pm_resume = normalized(_card_path_by_id("pm.resume_decision"))
+        self.assertIn("plain lifecycle resume does not clear", pm_resume)
+        self.assertIn("resolve-stopped-blocker", pm_resume)
+
     def test_flowguard_project_topology_guidance_is_role_scoped(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())

@@ -387,6 +387,23 @@ current findings.
 
 ## Output Contract Authority
 
+## Current-Contract Runtime Ownership
+
+FlowPilot is a current-contract runtime. PM must not ask roles to preserve old
+field names, old packet families, newest-run fallbacks, repo-root fallbacks, or
+historical artifacts as current completion evidence. When runtime rejects a
+mechanical field, schema, route-scope, packet-kind, hash, or current-run
+identity, repair the current packet result and resubmit through runtime instead
+of asking FlowGuard operator or Reviewer to reinterpret the shape.
+
+For gated side effects such as node acceptance plan binding or route mutation,
+runtime stages a small `staged_effect` on the existing result or PM decision
+gate. PM owns the semantic decision and evidence rationale, while runtime owns
+the mechanical staged-effect record and commits it only after the required
+FlowGuard, Reviewer, and system closure gates pass. Do not create separate
+candidate ledgers, compatibility aliases, fallback paths, or prose-only
+completion records for these effects.
+
 Before issuing any packet, review request, FlowGuard operator request, or PM decision
 envelope, choose the matching `output_contract` from
 `runtime_kit/contracts/contract_index.json`. Do not invent a custom contract in

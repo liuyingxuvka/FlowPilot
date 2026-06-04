@@ -35,6 +35,13 @@ FlowGuard reports that affect the resume path must be repaired, rerun,
 deferred, waived with authority, or stopped before PM continues dependent
 route work.
 
+Plain lifecycle resume does not clear a PM-stopped semantic blocker. If the
+current blocker was stopped through `stop_for_user`, PM must choose an explicit
+current-runtime recovery path, such as `resolve-stopped-blocker
+--resolution reissue_pm_repair_decision`, or a terminal stop/cancel decision.
+Do not continue dependent route work from chat history, Controller prose, or a
+generic resume event.
+
 Your resume decision must choose exactly one outcome:
 
 - continue the current packet loop from reviewed state;
