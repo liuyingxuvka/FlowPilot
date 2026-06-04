@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.2</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.3</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.2` |
+| Source version | `v0.10.3` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for work request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.2` hardens the current-control path after `v0.10.1`: staged node acceptance plans and route mutations stay pending until current FlowGuard and Reviewer gates inspect the real submitted artifact, controller status can relay runtime progress fractions, role assignment and continuity memory reject stale or unresolved bindings, and `lease_agent` now lightly prefers durable, addressable role surfaces without practical parallel-count or model-capability limits when available.
+`v0.10.3` makes repair routing canonical: PM repair decisions now use only `repair_current_scope`, `repair_parent_scope`, `redesign_route`, `waive_with_authority`, or `stop_for_user`; removed repair decisions are rejected instead of translated; and every nonterminal repair must open a fresh current executable packet before the blocker can advance.
 
 ## What FlowPilot Is
 
@@ -97,7 +97,7 @@ startup intake
   -> route and frontier
   -> FlowGuard process/product gates when required
   -> packeted worker execution
-  -> review, repair, route mutation, or stale-evidence reset
+  -> review, repair, route redesign, or stale-evidence reset
   -> terminal backward replay
   -> final completion ledger
 ```
@@ -110,7 +110,7 @@ FlowPilot is developed using the real [FlowGuard](https://github.com/liuyingxuvk
 
 | Layer | What it models | Typical checks |
 | --- | --- | --- |
-| FlowGuard operator process model | startup gates, material intake, route creation, packet handoff, role authority, heartbeat/manual resume, route mutation, final ledger, and closure | no skipped startup, no controller body access, no stale route advance, no completion before approval |
+| FlowGuard operator process model | startup gates, material intake, route creation, packet handoff, role authority, heartbeat/manual resume, route redesign, final ledger, and closure | no skipped startup, no controller body access, no stale route advance, no completion before approval |
 | FlowGuard operator product/function model | the product or workflow being built: inputs, state, outputs, side effects, failure cases, and acceptance behavior | no "technically done" result that misses the user's actual workflow, state contract, or risk scenarios |
 
 FlowGuard counterexamples are design feedback. If a route can skip review, reuse stale evidence, or complete without the right gate, the route or protocol should change before the work is treated as safe.
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.2`
+**Source version:** `v0.10.3`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -280,7 +280,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.2` |
+| Source version | `v0.10.3` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -289,7 +289,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 work request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.2` 在 `v0.10.1` 之后继续加固当前控制路径：staged node acceptance plan 和 route mutation 必须等当前 FlowGuard 与 Reviewer gate 审查真实提交 artifact 后才会生效，Controller status 可以转述 runtime progress fraction，role assignment 与 continuity memory 会拒绝 stale 或 unresolved binding，并且 `lease_agent` 现在会轻量优先选择 durable、addressable、没有实际 parallel-count 或 model-capability 限制的 role surface。
+`v0.10.3` 把修复路由收成标准五选一：PM 修复决策现在只能使用 `repair_current_scope`、`repair_parent_scope`、`redesign_route`、`waive_with_authority` 或 `stop_for_user`；旧修复决策不再翻译或兼容；所有非终止修复都必须先打开一个新的当前可执行工作包，blocker 才能继续推进。
 
 ## 它是什么
 
@@ -338,7 +338,7 @@ startup intake
   -> route and frontier
   -> required FlowGuard process/product gates
   -> packeted worker execution
-  -> review, repair, route mutation, or stale-evidence reset
+  -> review, repair, route redesign, or stale-evidence reset
   -> terminal backward replay
   -> final completion ledger
 ```
@@ -351,7 +351,7 @@ FlowPilot 是使用真实 [FlowGuard](https://github.com/liuyingxuvka/FlowGuard)
 
 | 层 | 建模对象 | 常见检查 |
 | --- | --- | --- |
-| FlowGuard operator process model | startup gate、material intake、route creation、packet handoff、role authority、heartbeat/manual resume、route mutation、final ledger、closure | 不跳过 startup、不让 Controller 读 body、不用 stale route 推进、不在 approval 前 completion |
+| FlowGuard operator process model | startup gate、material intake、route creation、packet handoff、role authority、heartbeat/manual resume、route redesign、final ledger、closure | 不跳过 startup、不让 Controller 读 body、不用 stale route 推进、不在 approval 前 completion |
 | FlowGuard operator product/function model | 正在构建的产品或工作流：input、state、output、side effect、failure case、acceptance behavior | 防止“技术上完成”但漏掉用户真实 workflow、state contract 或风险场景 |
 
 FlowGuard counterexample 是设计反馈。如果模型显示某条 route 可以跳过 review、复用 stale evidence 或没有正确 gate 就 complete，FlowPilot 应该先改 route 或 protocol。
