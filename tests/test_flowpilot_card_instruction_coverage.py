@@ -122,6 +122,13 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
                 self.assertIn("do not invent", text)
                 self.assertIn("authority", text)
 
+    def test_role_surface_preference_is_present_on_lease_surface(self) -> None:
+        text = (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8").lower()
+        self.assertIn("prefer durable, addressable role surfaces", text)
+        self.assertIn("parallel-count", text)
+        self.assertIn("model-capability limits", text)
+        self.assertIn("when such surfaces are available", text)
+
     def test_pm_worker_packet_cards_carry_lightweight_dispatch_guidance(self) -> None:
         worker_packet_cards = _card_paths_by_id(
             "pm.material_scan",

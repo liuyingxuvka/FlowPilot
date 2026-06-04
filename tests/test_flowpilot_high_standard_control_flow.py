@@ -316,6 +316,43 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertFalse(_open_packets(ledger, scope="node_prework_flowguard"))
         self.assertFalse(_open_packets(ledger, scope="node"))
 
+    def test_node_acceptance_plan_reviewer_block_keeps_staged_effect_pending(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        packet_id = _open_packets(ledger, scope="node_acceptance_plan")[0]
+
+        result_id = _complete_open_packet(ledger, packet_id, _node_context_body(ledger))
+        self.assertEqual(ledger["results"][result_id]["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
+        self.assertEqual(ledger["results"][result_id]["staged_effect"]["status"], "pending")
+        _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
+
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="review")[0],
+            json.dumps(
+                {
+                    "schema_version": "black_box_flowpilot.packet_outcome.v1",
+                    "passed": False,
+                    "blocker_class": "local_artifact",
+                    "recommended_resolution": "Reviewer rejected the real node acceptance plan.",
+                }
+            ),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["staged_effect"]["status"], "pending")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "review_blocked")
+        self.assertFalse(ledger["node_acceptance_plans"])
+        self.assertFalse(ledger["node_context_packages"])
+        self.assertFalse(runtime._node_context_package_current(ledger, node_id))
+        self.assertFalse(_open_packets(ledger, scope="node_prework_flowguard"))
+        self.assertFalse(_open_packets(ledger, scope="node"))
+        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
+        self.assertEqual(len(active), 1)
+        self.assertEqual(active[0]["required_recheck_role"], "reviewer")
+        self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
+
     def test_node_context_package_follows_flowguard_worker_and_reviewer_packets(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
@@ -556,6 +593,58 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
         self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_recheck")
         self.assertFalse(_open_packets(ledger, kind="closure"))
+
+    def test_pm_mutate_route_repair_reviewer_block_keeps_staged_effect_pending(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        _complete_prework_flowguard(ledger)
+        node_packet = _open_packets(ledger, scope="node")[0]
+        _complete_open_packet(
+            ledger,
+            node_packet,
+            json.dumps({"status": "blocked", "blocker_class": "local_artifact", "recommended_resolution": "route change"}),
+        )
+        blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
+        old_route_version = ledger["active_route_version"]
+
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="pm_repair_decision")[0],
+            json.dumps({"decision": "mutate_route", "reason": "current node plan is wrong"}),
+        )
+        gate = next(iter(ledger["pm_decision_gates"].values()))
+        source_result_id = gate["source_result_id"]
+
+        _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], json.dumps({"decision": "pass"}))
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="review")[0],
+            json.dumps(
+                {
+                    "schema_version": "black_box_flowpilot.packet_outcome.v1",
+                    "passed": False,
+                    "blocker_class": "local_artifact",
+                    "recommended_resolution": "Reviewer rejected the real route mutation decision.",
+                }
+            ),
+        )
+
+        self.assertEqual(gate["status"], "awaiting_review")
+        self.assertEqual(gate["staged_effect"]["status"], "pending")
+        self.assertEqual(ledger["results"][source_result_id]["staged_effect"]["status"], "pending")
+        self.assertEqual(ledger["active_route_version"], old_route_version)
+        self.assertNotEqual(ledger["route_nodes"][node_id]["status"], "superseded")
+        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_pm_decision_gate")
+        active_review_blocks = [
+            row
+            for row in ledger["active_blockers"].values()
+            if row["status"] == "active" and row["gate_kind"] == "review"
+        ]
+        self.assertEqual(len(active_review_blocks), 1)
+        self.assertEqual(active_review_blocks[0]["required_recheck_role"], "reviewer")
 
     def test_pm_mutate_route_disposition_is_gated_before_application(self) -> None:
         ledger = _ledger()
