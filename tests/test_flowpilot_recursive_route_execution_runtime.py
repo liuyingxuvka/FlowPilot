@@ -118,7 +118,7 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
         _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "summary": f"{kind} for {node_id}"}))
     pm_packet = _open_packets(ledger, "pm_disposition")[0]
     _complete_open_packet(ledger, pm_packet, json.dumps({"decision": disposition, "reason": f"{disposition} {node_id}"}))
-    if disposition == "mutate_route":
+    if disposition == "redesign_route":
         for kind in ("flowguard_check", "review"):
             packet_id = _open_packets(ledger, kind)[0]
             _complete_open_packet(
@@ -268,7 +268,7 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         ledger, pm_packet = _recursive_ledger()
         _complete_foundation_planning_chain(ledger, pm_packet)
 
-        mutated = _complete_active_node(ledger, "mutate_route")
+        mutated = _complete_active_node(ledger, "redesign_route")
 
         self.assertEqual(mutated, "node-001")
         self.assertEqual(ledger["route_nodes"]["node-001"]["status"], "superseded")
@@ -279,7 +279,7 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
     def test_public_status_does_not_keep_consumed_route_mutation_as_current_blocker(self) -> None:
         ledger, pm_packet = _recursive_ledger()
         _complete_foundation_planning_chain(ledger, pm_packet)
-        _complete_active_node(ledger, "mutate_route")
+        _complete_active_node(ledger, "redesign_route")
         while ledger["execution_frontier"].get("active_node_id"):
             _complete_active_node(ledger, "accept")
 

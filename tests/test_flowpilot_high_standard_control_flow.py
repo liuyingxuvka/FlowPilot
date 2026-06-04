@@ -144,6 +144,10 @@ def _route_plan_body(nodes: list[dict] | None = None) -> str:
     )
 
 
+def _route_plan_obj(nodes: list[dict]) -> dict:
+    return json.loads(_route_plan_body(nodes))
+
+
 def _complete_planning(ledger: dict) -> None:
     _complete_task_chain(
         ledger,
@@ -158,7 +162,7 @@ def _node_context_body(ledger: dict) -> str:
     return json.dumps(
         {
             "decision": "pass",
-            "repair_policy": "same_node_repair_default",
+            "repair_policy": "repair_scope_replacement_default",
             "node_context_package": {
                 "node_id": node_id,
                 "purpose": f"Execute and verify {node['title']}",
@@ -318,7 +322,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         result_id = _complete_open_packet(
             ledger,
             packet_id,
-            json.dumps({"decision": "pass", "repair_policy": "same_node_repair_default"}),
+            json.dumps({"decision": "pass", "repair_policy": "repair_scope_replacement_default"}),
         )
 
         node_id = ledger["execution_frontier"]["active_node_id"]
@@ -429,12 +433,14 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             _open_packets(ledger, kind="pm_repair_decision")[0],
-            json.dumps({"decision": "same_node_repair", "reason": "repair node design from FlowGuard report"}),
+            json.dumps({"decision": "repair_current_scope", "reason": "replace current node from FlowGuard report"}),
         )
 
-        self.assertEqual(ledger["route_nodes"][node_id]["repair_generation"], 1)
-        self.assertFalse(runtime._node_prework_flowguard_accepted(ledger, node_id))
-        self.assertFalse(runtime._node_context_package_current(ledger, node_id))
+        replacement_id = ledger["execution_frontier"]["active_node_id"]
+        self.assertNotEqual(replacement_id, node_id)
+        self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
+        self.assertFalse(runtime._node_prework_flowguard_accepted(ledger, replacement_id))
+        self.assertFalse(runtime._node_context_package_current(ledger, replacement_id))
         self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
         self.assertFalse(_open_packets(ledger, scope="node"))
 
@@ -444,26 +450,105 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_prework_flowguard(ledger)
 
         self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "cleared")
-        self.assertEqual(ledger["packets"][first_prework]["status"], "superseded_after_repair")
-        self.assertTrue(runtime._node_prework_flowguard_accepted(ledger, node_id))
+        self.assertEqual(ledger["packets"][first_prework]["status"], "quarantined_after_route_mutation")
+        self.assertTrue(runtime._node_prework_flowguard_accepted(ledger, replacement_id))
         self.assertTrue(_open_packets(ledger, scope="node"))
 
-    def test_pm_repair_reuses_same_node_and_repair_generation(self) -> None:
+    def test_pm_disposition_repair_current_scope_creates_replacement_node(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
         _complete_planning(ledger)
         _complete_node_acceptance_plan(ledger)
         node_id = _complete_active_node_packet_loop(ledger)
-        _complete_open_packet(ledger, _open_packets(ledger, kind="pm_disposition")[0], json.dumps({"decision": "repair", "reason": "needs deeper evidence"}))
+        _complete_open_packet(ledger, _open_packets(ledger, kind="pm_disposition")[0], json.dumps({"decision": "repair_current_scope", "reason": "needs deeper evidence"}))
 
-        self.assertEqual(ledger["active_route_version"], 1)
-        self.assertEqual(ledger["execution_frontier"]["active_node_id"], node_id)
-        self.assertEqual(ledger["route_nodes"][node_id]["repair_generation"], 1)
+        self.assertEqual(ledger["active_route_version"], 2)
+        replacement_id = ledger["execution_frontier"]["active_node_id"]
+        self.assertNotEqual(replacement_id, node_id)
+        self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
         self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
         self.assertFalse(_open_packets(ledger, scope="node"))
         _complete_node_acceptance_plan(ledger)
         _complete_prework_flowguard(ledger)
-        self.assertEqual(ledger["packets"][_open_packets(ledger, scope="node")[0]]["envelope"]["route_node_id"], node_id)
+        self.assertEqual(ledger["packets"][_open_packets(ledger, scope="node")[0]]["envelope"]["route_node_id"], replacement_id)
+
+    def test_pm_repair_parent_scope_replaces_parent_and_descendants(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_task_chain(
+            ledger,
+            _open_packets(ledger, scope="planning")[0],
+            _route_plan_body(
+                [
+                    {
+                        "node_id": "node-parent",
+                        "title": "Parent module",
+                        "node_kind": "parent",
+                        "responsibility": "worker",
+                        "modeled_target": "development_process",
+                        "acceptance_criteria": ["Parent module composes."],
+                        "child_node_ids": ["node-child"],
+                    },
+                    {
+                        "node_id": "node-child",
+                        "title": "Child module",
+                        "parent_node_id": "node-parent",
+                        "responsibility": "worker",
+                        "modeled_target": "development_process",
+                        "acceptance_criteria": ["Child module works."],
+                    },
+                ]
+            ),
+        )
+        blocker_id = "blocker-parent-scope"
+        decision_id = "pm_repair_decision-parent-scope"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "active",
+            "outcome_id": "outcome-parent-scope",
+            "packet_id": "",
+            "packet_kind": "task",
+            "subject_packet_id": "",
+            "repair_target_packet_id": "",
+            "target_result_id": "",
+            "result_id": "",
+            "owner_role": "worker",
+            "required_recheck_role": "reviewer",
+            "gate_kind": "task",
+            "blocker_class": "composition",
+            "recommended_resolution": "bubble to parent",
+            "route_version": ledger["active_route_version"],
+            "route_node_id": "node-child",
+            "route_scope": "node",
+            "repair_generation": 0,
+            "stale_evidence_ids": [],
+            "created_at": runtime.now_iso(),
+            "pm_repair_packet_id": "",
+            "pm_repair_decision_id": decision_id,
+            "cleared_by_outcome_id": "",
+        }
+        ledger["pm_repair_decisions"][decision_id] = {
+            "decision_id": decision_id,
+            "blocker_id": blocker_id,
+            "packet_id": "packet-decision",
+            "result_id": "result-decision",
+            "decision": "repair_parent_scope",
+            "reason": "Parent composition is invalid.",
+            "created_at": runtime.now_iso(),
+        }
+
+        runtime._apply_pm_repair_decision(ledger, blocker_id, decision_id)
+
+        replacement_id = ledger["execution_frontier"]["active_node_id"]
+        fresh_packet_id = ledger["repair_transactions"][decision_id]["fresh_packet_id"]
+        self.assertEqual(ledger["route_nodes"]["node-parent"]["status"], "superseded")
+        self.assertEqual(ledger["route_nodes"]["node-child"]["status"], "superseded")
+        self.assertEqual(ledger["route_nodes"]["node-parent"]["superseded_by"], replacement_id)
+        self.assertEqual(ledger["route_nodes"]["node-child"]["superseded_by"], replacement_id)
+        self.assertEqual(ledger["route_nodes"][replacement_id]["child_node_ids"], [])
+        self.assertEqual(ledger["packets"][fresh_packet_id]["status"], "open")
+        self.assertEqual(ledger["packets"][fresh_packet_id]["repair_blocker_id"], blocker_id)
+        self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "repair_packet_open")
 
     def test_reviewer_block_routes_to_pm_repair_and_requires_recheck(self) -> None:
         ledger = _ledger()
@@ -508,7 +593,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(active[0]["required_recheck_role"], "reviewer")
         pm_repair_packet = _open_packets(ledger, kind="pm_repair_decision")[0]
 
-        _complete_open_packet(ledger, pm_repair_packet, json.dumps({"decision": "sender_reissue", "reason": "local fix"}))
+        _complete_open_packet(ledger, pm_repair_packet, json.dumps({"decision": "repair_current_scope", "reason": "local fix"}))
         repair_packets = [
             packet_id
             for packet_id, packet in ledger["packets"].items()
@@ -550,7 +635,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                         packet_kind=packet_kind,
                     )
 
-    def test_pm_sender_reissue_repair_remains_direct(self) -> None:
+    def test_pm_repair_current_scope_for_packet_scope_remains_direct(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
         _complete_open_packet(
@@ -563,7 +648,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             _open_packets(ledger, kind="pm_repair_decision")[0],
-            json.dumps({"decision": "sender_reissue", "reason": "plain repair"}),
+            json.dumps({"decision": "repair_current_scope", "reason": "plain repair"}),
         )
 
         self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "repair_packet_open")
@@ -575,7 +660,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ]
         self.assertEqual(len(repair_packets), 1)
 
-    def test_pm_mutate_route_repair_is_gated_before_application(self) -> None:
+    def test_pm_redesign_route_repair_is_gated_before_application(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
         _complete_planning(ledger)
@@ -594,7 +679,23 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             _open_packets(ledger, kind="pm_repair_decision")[0],
-            json.dumps({"decision": "mutate_route", "reason": "current node plan is wrong"}),
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "reason": "current route plan is wrong",
+                    "route_plan": _route_plan_obj(
+                        [
+                            {
+                                "node_id": "node-redesign-001",
+                                "title": "Redesigned repair node",
+                                "responsibility": "worker",
+                                "modeled_target": "development_process",
+                                "acceptance_criteria": ["Redesigned route opens fresh repair work."],
+                            }
+                        ]
+                    ),
+                }
+            ),
         )
 
         self.assertEqual(ledger["active_route_version"], old_route_version)
@@ -608,10 +709,10 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(gate["status"], "applied")
         self.assertEqual(ledger["active_route_version"], old_route_version + 1)
         self.assertEqual(ledger["route_nodes"][node_id]["status"], "superseded")
-        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "awaiting_recheck")
+        self.assertEqual(ledger["active_blockers"][blocker["blocker_id"]]["status"], "repair_packet_open")
         self.assertFalse(_open_packets(ledger, kind="closure"))
 
-    def test_pm_mutate_route_repair_reviewer_block_keeps_staged_effect_pending(self) -> None:
+    def test_pm_redesign_route_repair_reviewer_block_keeps_staged_effect_pending(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
         _complete_planning(ledger)
@@ -630,7 +731,23 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             _open_packets(ledger, kind="pm_repair_decision")[0],
-            json.dumps({"decision": "mutate_route", "reason": "current node plan is wrong"}),
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "reason": "current route plan is wrong",
+                    "route_plan": _route_plan_obj(
+                        [
+                            {
+                                "node_id": "node-redesign-001",
+                                "title": "Redesigned repair node",
+                                "responsibility": "worker",
+                                "modeled_target": "development_process",
+                                "acceptance_criteria": ["Redesigned route opens fresh repair work."],
+                            }
+                        ]
+                    ),
+                }
+            ),
         )
         gate = next(iter(ledger["pm_decision_gates"].values()))
         source_result_id = gate["source_result_id"]
@@ -645,7 +762,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
                     "decision": "block",
                     "blocking": True,
                     "blocker_class": "local_artifact",
-                    "recommended_resolution": "Reviewer rejected the real route mutation decision.",
+                    "recommended_resolution": "Reviewer rejected the real route redesign decision.",
                 }
             ),
         )
@@ -664,7 +781,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(len(active_review_blocks), 1)
         self.assertEqual(active_review_blocks[0]["required_recheck_role"], "reviewer")
 
-    def test_pm_mutate_route_disposition_is_gated_before_application(self) -> None:
+    def test_pm_redesign_route_disposition_is_gated_before_application(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)
         _complete_planning(ledger)
@@ -675,7 +792,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             _open_packets(ledger, kind="pm_disposition")[0],
-            json.dumps({"decision": "mutate_route", "reason": "node needs a different route"}),
+            json.dumps({"decision": "redesign_route", "reason": "node needs a different route"}),
         )
 
         self.assertEqual(ledger["active_route_version"], old_route_version)

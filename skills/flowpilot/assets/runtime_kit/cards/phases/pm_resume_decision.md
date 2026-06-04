@@ -85,8 +85,8 @@ Return it through router event `pm_resume_recovery_decision_returned`.
 Write the decision body to a run-scoped file and submit it directly to Router with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>`. Use contract `flowpilot.output_contract.pm_resume_decision.v1` and router event `pm_resume_recovery_decision_returned`. The runtime-generated role-output envelope carries `body_ref`, `runtime_receipt_ref`, `controller_visibility: "role_output_envelope_only"`, and no inline decision body. Path/hash-only chat envelopes are not the live handoff path. Preferred path: run `flowpilot_new.py open-packet --output-type pm_resume_decision --role project_manager --agent-id <agent-id>` to get the skeleton, then run `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` with the completed decision body. Lower-level `role_output_runtime.py` commands only validate local mechanics; live handoff must use the unified runtime so Router records the event. The runtime fills mechanical fixed fields, explicit empty arrays, quality-pack checklist rows when declared, hash, receipt, and ledger entry. PM still writes the decision, impact, evidence rationale, and semantic recovery judgement.
 
 Use these exact field names. The `decision` value must be one of:
-`continue_current_packet_loop`, `request_sender_reissue`,
-`restore_or_replace_roles_from_memory`, `create_repair_or_route_mutation_node`,
+`continue_current_packet_loop`, `repair_current_scope`,
+`restore_or_replace_roles_from_memory`, `create_repair_or_route_redesign_node`,
 `stop_for_user_or_environment`, or
 `close_after_final_ledger_and_terminal_replay`.
 

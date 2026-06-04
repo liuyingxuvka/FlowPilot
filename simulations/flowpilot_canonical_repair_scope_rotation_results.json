@@ -1,0 +1,187 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=11 initial_states=1 traces=210",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "parent_repair_guessed_parent",
+      "parent_repair_kept_descendants_current",
+      "removed_decision_reached_runtime",
+      "repair_packet_open_without_current_open_packet",
+      "repair_packet_open_without_fresh_packet",
+      "repair_packet_open_without_transaction",
+      "route_redesign_without_flowguard_scan",
+      "route_redesign_without_plan",
+      "same_node_repair_in_place_survived",
+      "terminal_stop_created_packet",
+      "waiver_without_authority"
+    ],
+    "hazards": {
+      "parent_repair_guessed_parent": [
+        "parent repair guessed a parent scope",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "parent_repair_kept_descendants_current": [
+        "parent repair kept descendants current",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "removed_decision_reached_runtime": [
+        "removed PM repair decision reached runtime application",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "repair_packet_open_without_current_open_packet": [
+        "repair_packet_open without current open fresh packet",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "repair_packet_open_without_fresh_packet": [
+        "repair_packet_open without fresh_packet_id",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "repair_packet_open_without_transaction": [
+        "repair_packet_open without repair transaction",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "route_redesign_without_flowguard_scan": [
+        "route redesign activated without strict route plan and scans",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "route_redesign_without_plan": [
+        "route redesign activated without strict route plan and scans",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "same_node_repair_in_place_survived": [
+        "same-node repair-in-place path survived"
+      ],
+      "terminal_stop_created_packet": [
+        "stop_for_user created a repair packet",
+        "completion claimed before repair-scope obligations were satisfied"
+      ],
+      "waiver_without_authority": [
+        "waiver terminal state lacks authority reference",
+        "completion claimed before repair-scope obligations were satisfied"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_canonical_repair_scope_rotation",
+  "model_test_alignment": {
+    "evidence": [
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+      "tests/test_flowpilot_core_runtime.py",
+      "tests/test_flowpilot_high_standard_control_flow.py",
+      "tests/test_flowpilot_recursive_route_execution_runtime.py"
+    ],
+    "missing": [],
+    "obligations": {
+      "current_scope_replacement_test": true,
+      "five_choice_menu": true,
+      "fresh_packet_gate": true,
+      "june3_regression_test": true,
+      "parent_scope_replacement_test": true,
+      "pm_disposition_current_name": true,
+      "removed_decision_negative_test": true,
+      "route_redesign_test": true
+    },
+    "ok": true
+  },
+  "ok": true,
+  "result_type": "flowpilot_canonical_repair_scope_rotation_checks",
+  "target_plan": {
+    "failures": [],
+    "labels": [
+      "record_current_blocker",
+      "declare_five_choice_pm_menu",
+      "reject_removed_pm_decisions",
+      "pm_selects_repair_current_scope",
+      "runtime_replaces_current_scope",
+      "runtime_records_fresh_packet_transaction",
+      "runtime_opens_blocker_repair_packet",
+      "complete_nonterminal_repair_rotation",
+      "pm_selects_repair_parent_scope",
+      "runtime_replaces_parent_scope",
+      "pm_selects_redesign_route",
+      "runtime_stage_route_plan_scan",
+      "runtime_activates_redesigned_route",
+      "pm_selects_authorized_waiver",
+      "pm_selects_stop_for_user"
+    ],
+    "ok": true,
+    "state": {
+      "authority_ref_present": false,
+      "blocker_detected": true,
+      "blocker_id": "blocker-001",
+      "blocker_repair_packet_open": true,
+      "blocker_terminal": false,
+      "descendants_superseded": false,
+      "flowguard_scan_passed": false,
+      "fresh_packet_current_open": true,
+      "fresh_packet_id": "packet-001-repair",
+      "menu_declared": true,
+      "old_decision_accepted": false,
+      "old_decisions_rejected": true,
+      "old_scope_superseded": true,
+      "parent_found": false,
+      "pm_decision": "repair_current_scope",
+      "replacement_scope_created": true,
+      "reviewer_scan_passed": false,
+      "route_plan_packet_present": false,
+      "route_version_switched": false,
+      "same_node_repair_in_place": false,
+      "source_id": "node-001",
+      "status": "complete",
+      "transaction_recorded": true
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_canonical_repair_scope_rotation_model.py"
+        ],
+        "freshness": "current",
+        "id": "canonical_repair_scope_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/canonical-repair-scope-rotation/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "canonical_repair_scope_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_canonical_repair_scope_rotation_model.py"
+        ],
+        "freshness": "current",
+        "id": "canonical_repair_scope_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "tests/test_flowpilot_core_runtime.py",
+          "tests/test_flowpilot_high_standard_control_flow.py",
+          "tests/test_flowpilot_recursive_route_execution_runtime.py"
+        ],
+        "freshness": "current",
+        "id": "canonical_repair_scope_model_test_alignment",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

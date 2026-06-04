@@ -1,4 +1,4 @@
-"""Run FlowGuard checks for FlowPilot validation automation and PM gates."""
+"""Run FlowGuard checks for FlowPilot canonical repair-scope rotation."""
 
 from __future__ import annotations
 
@@ -10,14 +10,14 @@ from typing import Any
 from flowguard import Explorer
 
 try:  # pragma: no cover
-    from . import flowpilot_validation_pm_gate_model as model
+    from . import flowpilot_canonical_repair_scope_rotation_model as model
 except ImportError:  # pragma: no cover
-    import flowpilot_validation_pm_gate_model as model
+    import flowpilot_canonical_repair_scope_rotation_model as model
 
 
 ROOT = Path(__file__).resolve().parent
 REPO_ROOT = ROOT.parent
-RESULTS_PATH = ROOT / "flowpilot_validation_pm_gate_results.json"
+RESULTS_PATH = ROOT / "flowpilot_canonical_repair_scope_rotation_results.json"
 
 
 def _flowguard_report() -> dict[str, Any]:
@@ -47,7 +47,6 @@ def _target_plan_report() -> dict[str, Any]:
     failures = model.invariant_failures(state)
     return {
         "ok": not failures and model.is_success(state),
-        "evidence_role": "validation_pm_gate_model_not_live_host_proof",
         "failures": failures,
         "state": model.state_summary(state),
         "labels": list(model.REQUIRED_SAFE_LABELS),
@@ -68,39 +67,29 @@ def _hazard_report() -> dict[str, Any]:
 
 
 def _model_test_alignment_report() -> dict[str, Any]:
-    high_standard_test = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
-    core_runtime_test = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
-    runtime = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
-    test_text = high_standard_test.read_text(encoding="utf-8")
-    core_test_text = core_runtime_test.read_text(encoding="utf-8")
-    runtime_text = runtime.read_text(encoding="utf-8")
+    runtime_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
+    core_test_path = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
+    high_standard_test_path = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
+    recursive_test_path = REPO_ROOT / "tests" / "test_flowpilot_recursive_route_execution_runtime.py"
+    runtime_text = runtime_path.read_text(encoding="utf-8")
+    core_test_text = core_test_path.read_text(encoding="utf-8")
+    high_standard_test_text = high_standard_test_path.read_text(encoding="utf-8")
+    recursive_test_text = recursive_test_path.read_text(encoding="utf-8")
     obligations = {
-        "system_validation_helper": "_record_system_validation_for_packet" in runtime_text,
-        "system_closure_helper": "_auto_close_packet_after_system_validation" in runtime_text,
-        "system_closure_ledger": "system_closures" in runtime_text,
-        "reviewer_pass_no_closure_flowguard_operator_packet": "test_reviewer_pass_auto_closes_without_closure_flowguard_operator_packet" in test_text,
-        "system_validation_failure_routes_pm": "test_system_validation_failure_routes_to_pm_repair" in test_text,
-        "old_validator_closure_roles_removed": "test_validator_and_closure_flowguard_operator_are_not_runtime_roles" in test_text,
-        "old_validation_closure_packets_rejected": "test_validation_and_closure_packet_kinds_are_rejected" in test_text,
-        "pm_decision_gate_ledger": "pm_decision_gates" in runtime_text,
-        "high_risk_pm_repair_staged": "test_pm_redesign_route_repair_is_gated_before_application" in test_text,
-        "low_risk_pm_repair_direct": "test_pm_repair_current_scope_for_packet_scope_remains_direct" in test_text,
-        "high_risk_pm_disposition_staged": "test_pm_redesign_route_disposition_is_gated_before_application" in test_text,
-        "runtime_staged_effect_helper": "_attach_staged_effect" in runtime_text,
-        "route_redesign_staged_effect_kind": "commit_route_redesign" in runtime_text,
-        "node_acceptance_staged_effect_kind": "commit_node_acceptance_plan" in runtime_text,
-        "staged_node_acceptance_test": "test_node_acceptance_plan_result_stages_effect_before_closure" in core_test_text,
-        "staged_route_redesign_test": "test_redesign_route_pm_decision_stages_route_effect_until_gate_applies" in core_test_text,
-        "current_target_bad_packet_tests": (
-            "test_result_submitted_repair_target_is_superseded_after_reissue" in core_test_text
-            and "test_nested_pm_repair_decision_wrapper_is_rejected_and_reissued" in core_test_text
+        "five_choice_menu": (
+            '"repair_current_scope"' in runtime_text
+            and '"repair_parent_scope"' in runtime_text
+            and '"redesign_route"' in runtime_text
+            and '"waive_with_authority"' in runtime_text
+            and '"stop_for_user"' in runtime_text
         ),
-        "staged_effect_same_family_convergence_test": (
-            "test_staged_effect_same_family_reuses_pending_effect" in core_test_text
-        ),
-        "review_future_state_boundary_card_test": "test_current_contract_staged_effect_guidance_is_role_scoped" in (
-            REPO_ROOT / "tests" / "test_flowpilot_card_instruction_coverage.py"
-        ).read_text(encoding="utf-8"),
+        "removed_decision_negative_test": "test_removed_pm_repair_decisions_are_rejected" in core_test_text,
+        "fresh_packet_gate": "fresh repair packet does not exist" in runtime_text,
+        "current_scope_replacement_test": "test_pm_disposition_repair_current_scope_creates_replacement_node" in high_standard_test_text,
+        "parent_scope_replacement_test": "test_pm_repair_parent_scope_replaces_parent_and_descendants" in high_standard_test_text,
+        "route_redesign_test": "test_pm_redesign_route_repair_is_gated_before_application" in high_standard_test_text,
+        "june3_regression_test": "test_june3_same_node_empty_fresh_packet_regression_is_rejected" in core_test_text,
+        "pm_disposition_current_name": "repair_current_scope" in high_standard_test_text,
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {
@@ -109,9 +98,9 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "missing": missing,
         "evidence": [
             "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-            "tests/test_flowpilot_high_standard_control_flow.py",
             "tests/test_flowpilot_core_runtime.py",
-            "tests/test_flowpilot_card_instruction_coverage.py",
+            "tests/test_flowpilot_high_standard_control_flow.py",
+            "tests/test_flowpilot_recursive_route_execution_runtime.py",
         ],
     }
 
@@ -123,28 +112,28 @@ def run_checks() -> dict[str, Any]:
     alignment = _model_test_alignment_report()
     rows = [
         {
-            "id": "validation_pm_gate_flowguard_model",
+            "id": "canonical_repair_scope_flowguard_model",
             "status": "passed" if flowguard["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["simulations/flowpilot_validation_pm_gate_model.py"],
+            "evidence": ["simulations/flowpilot_canonical_repair_scope_rotation_model.py"],
         },
         {
-            "id": "validation_pm_gate_target_plan",
+            "id": "canonical_repair_scope_target_plan",
             "status": "passed" if target_plan["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["openspec/changes/auto-close-after-system-validation/tasks.md"],
+            "evidence": ["openspec/changes/canonical-repair-scope-rotation/tasks.md"],
         },
         {
-            "id": "validation_pm_gate_hazard_replay",
+            "id": "canonical_repair_scope_hazard_replay",
             "status": "passed" if hazards["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
-            "evidence": ["simulations/flowpilot_validation_pm_gate_model.py"],
+            "evidence": ["simulations/flowpilot_canonical_repair_scope_rotation_model.py"],
         },
         {
-            "id": "validation_pm_gate_model_test_alignment",
+            "id": "canonical_repair_scope_model_test_alignment",
             "status": "passed" if alignment["ok"] else "failed",
             "freshness": "current",
             "scope": "routine",
@@ -152,7 +141,7 @@ def run_checks() -> dict[str, Any]:
         },
     ]
     return {
-        "result_type": "flowpilot_validation_pm_gate_checks",
+        "result_type": "flowpilot_canonical_repair_scope_rotation_checks",
         "model_id": model.MODEL_ID,
         "ok": flowguard["ok"] and target_plan["ok"] and hazards["ok"] and alignment["ok"],
         "flowguard": flowguard,

@@ -34,7 +34,11 @@ def review_result(
     review["scope_restatement"] = scope_restatement
     review["failure_hypotheses"] = list(failure_hypotheses or [])
     if decision == "block" and pm_routing_decision:
-        review["route_invalidating_issue"] = pm_routing_decision in {"mutate_route", "split_route", "repair_route", "block_route"}
+        review["route_invalidating_issue"] = pm_routing_decision in {
+            "redesign_route",
+            "repair_parent_scope",
+            "block_route",
+        }
     return review_id
 
 

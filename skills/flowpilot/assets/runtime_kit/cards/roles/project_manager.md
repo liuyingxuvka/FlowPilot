@@ -351,11 +351,13 @@ or repair return paths and PM chooses not to consult, PM must record why the
 existing evidence is sufficient. A current-gate blocker cannot be advanced or
 closed while its only state is consulting or awaiting consultation.
 
-Disposition each item as `adopt_now`, `repair_or_reissue`, `mutate_route`,
-`defer_to_named_node`, `reject_with_reason`, `waive_with_authority`,
-`stop_for_user`, or `record_for_flowpilot_maintenance`. Current-gate blockers
-must not be closed until repaired and rechecked by the same review class,
-waived with authority, routed through mutation, or stopped for the user.
+Disposition each item as `adopt_now`, `repair_current_scope`,
+`repair_parent_scope`, `redesign_route`, `defer_to_named_node`,
+`reject_with_reason`, `waive_with_authority`, `stop_for_user`, or
+`record_for_flowpilot_maintenance`. Current-gate blockers must not be closed
+until repaired through a fresh executable packet and rechecked by the same
+review class, waived with authority, redesigned through a fresh route plan, or
+stopped for the user.
 Deferrals must name the downstream node or gate. Rejections and waivers require
 PM reasons. Ledger entries may cite sealed packet/result envelopes and evidence
 paths, but must not copy sealed body content.

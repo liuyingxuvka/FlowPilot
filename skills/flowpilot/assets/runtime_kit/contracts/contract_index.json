@@ -1128,9 +1128,9 @@
       ],
       "allowed_decision_values": [
         "continue_current_packet_loop",
-        "request_sender_reissue",
+        "repair_current_scope",
         "restore_or_replace_roles_from_memory",
-        "create_repair_or_route_mutation_node",
+        "create_repair_or_route_redesign_node",
         "stop_for_user_or_environment",
         "close_after_final_ledger_and_terminal_replay"
       ],
@@ -1348,7 +1348,7 @@
         "waive",
         "skip",
         "repair_local",
-        "mutate_route"
+        "redesign_route"
       ],
       "allowed_evidence_ref_kind_values": [
         "file",

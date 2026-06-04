@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=22 initial_states=1 traces=253",
+    "summary": "sequences=23 initial_states=1 traces=276",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -17,8 +17,11 @@
       "old_closure_packet_accepted",
       "old_validator_packet_accepted",
       "pm_decision_reviewer_missing",
-      "pm_mutation_without_flowguard",
+      "pm_gate_before_staged_effect_convergence",
+      "pm_redesign_without_flowguard",
       "pm_waiver_applied_before_gate",
+      "same_family_staged_effect_not_converged",
+      "same_family_staged_effect_parallel_candidate",
       "semantic_review_demands_future_committed_state",
       "staged_effect_missing_before_gate",
       "system_validation_failure_auto_closed",
@@ -48,11 +51,22 @@
       "pm_decision_reviewer_missing": [
         "PM decision gate lacked reviewer pass"
       ],
-      "pm_mutation_without_flowguard": [
-        "PM route mutation applied without FlowGuard"
+      "pm_gate_before_staged_effect_convergence": [
+        "same-family staged effect did not converge before PM gate",
+        "PM gate opened before same-family staged effect convergence"
+      ],
+      "pm_redesign_without_flowguard": [
+        "PM route redesign applied without FlowGuard"
       ],
       "pm_waiver_applied_before_gate": [
         "PM waiver applied before gate"
+      ],
+      "same_family_staged_effect_not_converged": [
+        "same-family staged effect did not converge before PM gate",
+        "PM gate opened before same-family staged effect convergence"
+      ],
+      "same_family_staged_effect_parallel_candidate": [
+        "same-family staged effect created parallel candidate state"
       ],
       "semantic_review_demands_future_committed_state": [
         "semantic review demanded future committed state before gate closure"
@@ -86,6 +100,7 @@
     ],
     "missing": [],
     "obligations": {
+      "current_target_bad_packet_tests": true,
       "high_risk_pm_disposition_staged": true,
       "high_risk_pm_repair_staged": true,
       "low_risk_pm_repair_direct": true,
@@ -95,10 +110,11 @@
       "pm_decision_gate_ledger": true,
       "review_future_state_boundary_card_test": true,
       "reviewer_pass_no_closure_flowguard_operator_packet": true,
-      "route_mutation_staged_effect_kind": true,
+      "route_redesign_staged_effect_kind": true,
       "runtime_staged_effect_helper": true,
+      "staged_effect_same_family_convergence_test": true,
       "staged_node_acceptance_test": true,
-      "staged_route_mutation_test": true,
+      "staged_route_redesign_test": true,
       "system_closure_helper": true,
       "system_closure_ledger": true,
       "system_validation_failure_routes_pm": true,
@@ -124,6 +140,7 @@
       "apply_low_risk_pm_decision_directly",
       "record_high_risk_pm_decision",
       "stage_high_risk_pm_decision",
+      "converge_same_family_staged_effect",
       "pass_pm_decision_flowguard_gate",
       "pass_pm_decision_reviewer_gate",
       "record_pm_decision_system_validation",
@@ -140,6 +157,7 @@
       "pm_gate_flowguard_passed": true,
       "pm_gate_reviewer_passed": true,
       "pm_gate_system_closure_recorded": true,
+      "same_family_staged_effect_converged": true,
       "staged_effect_recorded": true,
       "staged_pm_decision_applied": true,
       "status": "complete",

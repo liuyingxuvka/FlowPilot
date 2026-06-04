@@ -114,7 +114,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
                 "decision": "pass",
                 "route_node_id": node_id,
                 "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
-                "repair_policy": "same_node_repair_default",
+                "repair_policy": "repair_scope_replacement_default",
                 "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
                 "node_context_package": {
                     "node_id": node_id,

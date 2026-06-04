@@ -139,8 +139,9 @@ At every subnode and every major-node closure, reviewer also audits the full
 mail chain for that node: current assignment, recipient pre-open checks,
 holder continuity, no private mail, and replacement coverage for
 contaminated, rejected, missing, or unopened mail. If any required letter was
-not opened when needed, reviewer sends the chain audit to PM. PM chooses
-`restart_node`, `create_repair_node`, or `request_sender_reissue`.
+not opened when needed, reviewer sends the chain audit to PM. PM chooses a
+fresh executable repair path: `repair_current_scope`, `repair_parent_scope`,
+`redesign_route`, `waive_with_authority`, or `stop_for_user`.
 
 Reviewer decisions for role-origin mismatch:
 
@@ -255,7 +256,7 @@ REVIEW_DECISION:
 
 ```text
 PM_DECISION:
-  decision: issue_next_packet | repair_current | mutate_route | block_user | complete
+  decision: issue_next_packet | repair_current_scope | repair_parent_scope | redesign_route | block_user | complete
   next_packet:
   stop_for_user: true | false
   controller_reminder:

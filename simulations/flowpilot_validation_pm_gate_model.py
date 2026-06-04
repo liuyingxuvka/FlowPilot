@@ -47,7 +47,7 @@ class State:
     system_validation_failure_auto_closed: bool = False
     high_risk_pm_applied_before_gate: bool = False
     pm_waiver_applied_before_gate: bool = False
-    pm_mutation_without_flowguard: bool = False
+    pm_redesign_without_flowguard: bool = False
     pm_decision_reviewer_missing: bool = False
     low_risk_repair_forced_through_gate: bool = False
     staged_effect_missing_before_gate: bool = False
@@ -293,8 +293,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("high-risk PM decision applied before gate")
     if state.pm_waiver_applied_before_gate:
         failures.append("PM waiver applied before gate")
-    if state.pm_mutation_without_flowguard:
-        failures.append("PM route mutation applied without FlowGuard")
+    if state.pm_redesign_without_flowguard:
+        failures.append("PM route redesign applied without FlowGuard")
     if state.pm_decision_reviewer_missing:
         failures.append("PM decision gate lacked reviewer pass")
     if state.low_risk_repair_forced_through_gate:
@@ -357,7 +357,7 @@ def hazard_states() -> dict[str, State]:
         "system_validation_failure_auto_closed": replace(base, system_validation_failure_auto_closed=True),
         "high_risk_pm_applied_before_gate": replace(base, high_risk_pm_applied_before_gate=True),
         "pm_waiver_applied_before_gate": replace(base, pm_waiver_applied_before_gate=True),
-        "pm_mutation_without_flowguard": replace(base, pm_mutation_without_flowguard=True),
+        "pm_redesign_without_flowguard": replace(base, pm_redesign_without_flowguard=True),
         "pm_decision_reviewer_missing": replace(base, pm_decision_reviewer_missing=True),
         "low_risk_repair_forced_through_gate": replace(base, low_risk_repair_forced_through_gate=True),
         "staged_effect_missing_before_gate": replace(base, staged_effect_recorded=False, staged_effect_missing_before_gate=True),

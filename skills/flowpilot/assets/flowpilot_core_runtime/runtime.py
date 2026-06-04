@@ -60,7 +60,7 @@ NODE_CONTEXT_PACKAGE_REQUIRED_LIST_FIELDS = {
 STAGED_EFFECT_SCHEMA_VERSION = "black_box_flowpilot.staged_effect.v1"
 STAGED_EFFECT_KINDS = {
     "commit_node_acceptance_plan",
-    "commit_route_mutation",
+    "commit_route_redesign",
 }
 
 EVENT_FAMILY_BY_TYPE = {
@@ -77,7 +77,7 @@ EVENT_FAMILY_BY_TYPE = {
     "node_acceptance_plan_accepted": "route",
     "node_context_package_accepted": "route",
     "node_prework_flowguard_accepted": "flowguard",
-    "same_node_repair_prepared": "route",
+    "repair_scope_replaced": "route",
     "parent_backward_replay_accepted": "route",
     "final_requirement_evidence_matrix_built": "closure",
     "pm_disposition_recorded": "route",
@@ -1494,7 +1494,7 @@ def record_pm_disposition(
 ) -> str:
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
     disposition_id = _next_id(ledger, "pm_disposition")
-    normalized = decision if decision in {"accept", "repair", "mutate_route", "block", "stop"} else "accept"
+    normalized = decision if decision in {"accept", "repair_current_scope", "redesign_route", "block", "stop"} else "accept"
     ledger.setdefault("pm_dispositions", {})[disposition_id] = {
         "disposition_id": disposition_id,
         "node_id": node_id,
@@ -1515,56 +1515,15 @@ def record_pm_disposition(
         node["status"] = "accepted"
         _advance_frontier_after_node_acceptance(ledger, node_id)
         _event(ledger, "route_node_accepted", node_id=node_id, disposition_id=disposition_id)
-    elif normalized == "mutate_route":
-        _mutate_route_for_node(ledger, node_id, disposition_id=disposition_id, reason=reason or "pm_disposition_mutate_route")
-    elif normalized == "repair":
-        _prepare_same_node_repair(ledger, node_id, disposition_id=disposition_id, reason=reason or "pm_disposition_repair")
+    elif normalized == "redesign_route":
+        _replace_route_node_for_repair(ledger, node_id, disposition_id=disposition_id, reason=reason or "pm_disposition_redesign_route")
+    elif normalized == "repair_current_scope":
+        _replace_route_node_for_repair(ledger, node_id, disposition_id=disposition_id, reason=reason or "pm_disposition_repair_current_scope")
     else:
         node["status"] = "blocked" if normalized == "block" else "stopped"
         _frontier_update(ledger, node_id, node["status"], reason or f"pm_disposition_{normalized}")
     _event(ledger, "pm_disposition_recorded", node_id=node_id, disposition_id=disposition_id, decision=normalized)
     return disposition_id
-
-
-def _prepare_same_node_repair(ledger: dict[str, Any], node_id: str, *, disposition_id: str, reason: str) -> None:
-    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
-    previous_evidence = [
-        str(item)
-        for item in (
-            list(node.get("packet_ids") or [])
-            + list(node.get("flowguard_order_ids") or [])
-            + list(node.get("review_ids") or [])
-            + list(node.get("validation_evidence_ids") or [])
-            + ([node.get("node_context_package_id")] if node.get("node_context_package_id") else [])
-            + ([node.get("accepted_result_id")] if node.get("accepted_result_id") else [])
-        )
-        if item
-    ]
-    node["repair_generation"] = int(node.get("repair_generation", 0)) + 1
-    node["status"] = "repair_required"
-    node["accepted_result_id"] = ""
-    node["accepted_repair_generation"] = None
-    node["prework_flowguard_packet_id"] = ""
-    node["prework_flowguard_order_id"] = ""
-    node["prework_flowguard_result_id"] = ""
-    node["prework_flowguard_repair_generation"] = None
-    node["node_acceptance_plan_id"] = ""
-    node["node_context_package_id"] = ""
-    node["node_context_package_repair_generation"] = None
-    node["closure_id"] = ""
-    node.setdefault("stale_evidence", []).extend([disposition_id, *previous_evidence])
-    _frontier_update(ledger, node_id, "repair_required", reason)
-    _event(
-        ledger,
-        "same_node_repair_prepared",
-        node_id=node_id,
-        repair_generation=node["repair_generation"],
-        stale_evidence=previous_evidence,
-    )
-    if high_standard_flow_required(ledger):
-        ensure_node_acceptance_plan_packet(ledger, node_id)
-    else:
-        ensure_node_prework_flowguard_packet(ledger, node_id)
 
 
 def _evaluate_route_deliverable_checks(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> list[dict[str, Any]]:
@@ -2146,7 +2105,7 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
                 "schema_version": "black_box_flowpilot.pm_disposition_packet.v1",
                 "route_node_id": node_id,
                 "subject_packet_id": subject_packet_id,
-                "instruction": "Return a PM disposition. Default valid decision is accept; other valid decisions are repair, mutate_route, block, or stop.",
+                "instruction": "Return a PM disposition. Default valid decision is accept; other valid decisions are repair_current_scope, redesign_route, block, or stop.",
             },
             indent=2,
             sort_keys=True,
@@ -2168,7 +2127,7 @@ def _decision_from_pm_body(body: str) -> tuple[str, str]:
     if not isinstance(payload, dict):
         raise BlackBoxRuntimeError("PM disposition requires a structured JSON object")
     decision = _normalize_outcome_token(payload.get("decision"))
-    if decision not in {"accept", "repair", "mutate_route", "block", "stop"}:
+    if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
         raise BlackBoxRuntimeError("PM disposition requires an explicit allowed decision")
     reason = str(payload.get("reason") or payload.get("summary") or "")
     return decision, reason
@@ -2207,16 +2166,21 @@ _PROGRESS_PACKET_ENDED_STATUSES = {
     "superseded_after_repair",
 }
 _PM_REPAIR_DECISIONS = {
+    "repair_current_scope",
+    "repair_parent_scope",
+    "redesign_route",
+    "waive_with_authority",
+    "stop_for_user",
+}
+_REMOVED_PM_REPAIR_DECISIONS = {
     "same_node_repair",
     "sender_reissue",
     "collect_more_evidence",
     "mutate_route",
     "quarantine_evidence",
-    "waive_with_authority",
-    "stop_for_user",
 }
-_HIGH_RISK_PM_REPAIR_DECISIONS = {"mutate_route", "waive_with_authority"}
-_HIGH_RISK_PM_DISPOSITION_DECISIONS = {"mutate_route"}
+_HIGH_RISK_PM_REPAIR_DECISIONS = {"redesign_route"}
+_HIGH_RISK_PM_DISPOSITION_DECISIONS = {"redesign_route"}
 def _strict_json_object_from_body(body: str) -> dict[str, Any] | None:
     try:
         payload = json.loads(body)
@@ -2687,6 +2651,16 @@ def _mark_blocker_repair_packet_open(
     decision_id: str,
     fresh_packet_id: str,
 ) -> None:
+    if not fresh_packet_id:
+        raise BlackBoxRuntimeError("repair_packet_open requires a fresh repair packet id")
+    packet = ledger.get("packets", {}).get(fresh_packet_id)
+    if not isinstance(packet, Mapping):
+        raise BlackBoxRuntimeError(f"fresh repair packet does not exist: {fresh_packet_id}")
+    if packet.get("status") != "open":
+        raise BlackBoxRuntimeError(f"fresh repair packet is not open: {fresh_packet_id}")
+    target_violation = _packet_current_target_violation(ledger, fresh_packet_id)
+    if target_violation:
+        raise BlackBoxRuntimeError(f"fresh repair packet is not current: {target_violation}")
     blocker["status"] = "repair_packet_open"
     blocker["repair_packet_id"] = fresh_packet_id
     blocker["repair_packet_opened_by_decision_id"] = decision_id
@@ -2868,6 +2842,9 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                     "required_json_shape": {"decision": "<allowed_decision>", "reason": "<brief reason>"},
                     "top_level_decision_only": True,
                     "nested_repair_decision_wrappers_forbidden": True,
+                    "nonterminal_repairs_require_runtime_fresh_packet": True,
+                    "redesign_route_requires_route_plan": True,
+                    "waive_with_authority_requires_authority_ref": True,
                     "pm_must_account_for_recommended_resolution": bool(blocker.get("recommended_resolution")),
                     "pm_does_not_mark_blocked_gate_passed_by_text": True,
                     "repair_summary_alone_is_not_completion": True,
@@ -2875,7 +2852,9 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 },
                 "instruction": (
                     "Return exactly one structured JSON object with a top-level allowed decision, for example "
-                    "{\"decision\":\"same_node_repair\",\"reason\":\"current artifact needs same-node repair\"}. "
+                    "{\"decision\":\"repair_current_scope\",\"reason\":\"current node needs replacement repair\"}. "
+                    "Use repair_parent_scope only when the explicit parent scope should be replaced. Use redesign_route "
+                    "only with a strict route_plan object. Use waive_with_authority only with authority_ref. "
                     "Do not wrap the decision inside repair_decision, pm_repair_decision, prose, or any legacy shape. "
                     "PM chooses the repair route using the blocker recommendation and target contract. PM does not "
                     "impersonate the blocked reviewer, system validation check, FlowGuard pass, or worker deliverable."
@@ -2895,7 +2874,7 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
     return packet_id
 
 
-def _parse_pm_repair_decision_body(body: str) -> tuple[str, str]:
+def _parse_pm_repair_decision_body(body: str) -> tuple[str, str, str, dict[str, Any] | None]:
     try:
         payload = json.loads(body)
     except json.JSONDecodeError as exc:
@@ -2904,11 +2883,24 @@ def _parse_pm_repair_decision_body(body: str) -> tuple[str, str]:
         raise BlackBoxRuntimeError("PM repair decision requires a structured JSON object")
     decision = _normalize_outcome_token(payload.get("decision"))
     reason = str(payload.get("reason") or "")
+    if decision in _REMOVED_PM_REPAIR_DECISIONS:
+        raise BlackBoxRuntimeError("PM repair decision uses a removed decision; request a current five-choice decision")
     if decision not in _PM_REPAIR_DECISIONS:
         raise BlackBoxRuntimeError("PM repair decision requires an explicit allowed decision")
     if not reason:
         raise BlackBoxRuntimeError("PM repair decision requires a top-level reason")
-    return decision, reason
+    authority_ref = str(payload.get("authority_ref") or payload.get("authority") or "")
+    if decision == "waive_with_authority" and not authority_ref:
+        raise BlackBoxRuntimeError("PM repair decision waive_with_authority requires authority_ref")
+    route_plan: dict[str, Any] | None = None
+    if decision == "redesign_route":
+        raw_route_plan = payload.get("route_plan")
+        if not isinstance(raw_route_plan, dict):
+            raise BlackBoxRuntimeError("PM repair decision redesign_route requires a strict route_plan object")
+        route_plan = _parse_strict_route_plan(json.dumps(raw_route_plan, sort_keys=True))
+        _normalize_strict_route_plan_nodes(route_plan)
+        route_plan = _copy_jsonable(route_plan)
+    return decision, reason, authority_ref, route_plan
 
 
 def _record_pm_repair_decision_from_packet_result(
@@ -2918,11 +2910,13 @@ def _record_pm_repair_decision_from_packet_result(
     *,
     decision: str | None = None,
     reason: str | None = None,
+    authority_ref: str = "",
+    route_plan: dict[str, Any] | None = None,
 ) -> str:
     blocker_id = str(packet["envelope"].get("subject_id") or "")
     blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
     if decision is None:
-        decision, reason = _parse_pm_repair_decision_body(str(result.get("body", "")))
+        decision, reason, authority_ref, route_plan = _parse_pm_repair_decision_body(str(result.get("body", "")))
     decision = str(decision)
     reason = str(reason or "")
     decision_id = _next_id(ledger, "pm_repair_decision")
@@ -2933,6 +2927,8 @@ def _record_pm_repair_decision_from_packet_result(
         "result_id": result["result_id"],
         "decision": decision,
         "reason": reason,
+        "authority_ref": authority_ref,
+        "route_plan": route_plan,
         "created_at": now_iso(),
     }
     ledger.setdefault("pm_repair_decisions", {})[decision_id] = row
@@ -2994,10 +2990,10 @@ def _stage_pm_decision_gate(
         "system_closure_id": "",
         "created_at": now_iso(),
     }
-    if decision == "mutate_route":
+    if decision == "redesign_route":
         _attach_staged_effect(
             row,
-            effect_kind="commit_route_mutation",
+            effect_kind="commit_route_redesign",
             source_packet_id=row["source_packet_id"],
             source_result_id=row["source_result_id"],
             target_node_id=node_id,
@@ -3008,7 +3004,7 @@ def _stage_pm_decision_gate(
         if isinstance(result, dict):
             _attach_staged_effect(
                 result,
-                effect_kind="commit_route_mutation",
+                effect_kind="commit_route_redesign",
                 source_packet_id=row["source_packet_id"],
                 source_result_id=row["source_result_id"],
                 target_node_id=node_id,
@@ -3148,35 +3144,55 @@ def _latest_open_packet_for_repair(ledger: Mapping[str, Any], *, route_node_id: 
     return ""
 
 
-def _issue_sender_repair_packet(
+def _record_repair_transaction(
     ledger: dict[str, Any],
     blocker: Mapping[str, Any],
     decision_id: str,
     *,
-    responsibility: str = "",
-    packet_kind: str = "task",
+    source_id: str,
+    fresh_packet_id: str,
+) -> None:
+    decision_label = str(ledger.get("pm_repair_decisions", {}).get(decision_id, {}).get("decision") or "")
+    ledger.setdefault("repair_transactions", {})[decision_id] = {
+        "transaction_id": decision_id,
+        "source_id": source_id,
+        "blocker_id": blocker["blocker_id"],
+        "decision": decision_label,
+        "fresh_packet_id": fresh_packet_id,
+        "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
+        "created_at": now_iso(),
+    }
+
+
+def _issue_current_scope_repair_packet(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+    decision_id: str,
 ) -> str:
     target_packet_id = str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or "")
     target_packet = _require(ledger["packets"], target_packet_id, "repair target packet")
     target_envelope = target_packet["envelope"]
-    repair_role = responsibility or str(target_envelope.get("responsibility") or "worker")
+    repair_role = str(target_envelope.get("responsibility") or "")
+    if not repair_role:
+        raise BlackBoxRuntimeError("repair_current_scope requires current packet responsibility")
+    packet_kind = str(target_envelope.get("packet_kind") or "task")
     repeat_context = _blocker_repeat_context(ledger, blocker)
     packet_id = issue_task_packet(
         ledger,
         repair_role,
-        f"Repair and reissue work for blocker {blocker['blocker_id']}",
+        f"Repair current packet scope for blocker {blocker['blocker_id']}",
         json.dumps(
             {
-                "schema_version": "black_box_flowpilot.repair_reissue_packet.v1",
+                "schema_version": "black_box_flowpilot.current_scope_repair_packet.v1",
                 "blocker_id": blocker["blocker_id"],
                 "pm_repair_decision_id": decision_id,
-                "original_packet_id": target_packet_id,
-                "original_body_hash": target_envelope.get("body_hash", ""),
-                "original_objective": target_envelope.get("objective", ""),
-                "original_packet_kind": target_envelope.get("packet_kind", "task"),
-                "original_required_output_type": target_envelope.get("required_output_type", ""),
-                "original_output_contract": _copy_jsonable(target_envelope.get("output_contract") or {}),
-                "original_acceptance_criteria": list(target_envelope.get("acceptance_criteria") or []),
+                "source_packet_id": target_packet_id,
+                "source_body_hash": target_envelope.get("body_hash", ""),
+                "source_objective": target_envelope.get("objective", ""),
+                "source_packet_kind": packet_kind,
+                "source_required_output_type": target_envelope.get("required_output_type", ""),
+                "source_output_contract": _copy_jsonable(target_envelope.get("output_contract") or {}),
+                "source_acceptance_criteria": list(target_envelope.get("acceptance_criteria") or []),
                 "target_result_id": blocker.get("target_result_id", ""),
                 "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
                 "blocker_class": blocker.get("blocker_class", ""),
@@ -3185,17 +3201,16 @@ def _issue_sender_repair_packet(
                 "repeat_context": repeat_context,
                 "repair_completion_contract": {
                     "must_submit_current_packet_result": True,
-                    "current_repair_packet_replaces_context_only_prior_artifact": True,
+                    "source_artifact_is_context_not_passing_evidence": True,
                     "repair_summary_alone_is_not_completion": True,
-                    "must_satisfy_original_output_contract": True,
+                    "must_satisfy_source_output_contract": True,
                     "may_return_new_blocker_if_repair_is_not_possible": True,
                     "required_recheck_role": blocker.get("required_recheck_role", ""),
                 },
                 "instruction": (
-                    "Produce fresh repaired evidence for this current repair packet. The prior blocked artifact is "
-                    "context only, not passing evidence. A repair explanation or summary alone is not enough unless "
-                    "the original output contract explicitly requires only that; otherwise submit the corrected "
-                    "deliverable or a new structured blocker."
+                    "Produce fresh repaired evidence for this current replacement packet. "
+                    "The source artifact is context only, not passing evidence. Submit the corrected deliverable "
+                    "or a new structured blocker."
                 ),
             },
             indent=2,
@@ -3208,23 +3223,208 @@ def _issue_sender_repair_packet(
         route_node_id=str(target_envelope.get("route_node_id") or ""),
         route_scope=str(target_envelope.get("route_scope") or ""),
         acceptance_criteria=list(target_envelope.get("acceptance_criteria") or []),
+        node_context_package_id=str(target_envelope.get("node_context_package_id") or ""),
     )
     ledger["packets"][packet_id]["repair_blocker_id"] = str(blocker["blocker_id"])
-    decision_label = str(
-        ledger.get("pm_repair_decisions", {}).get(decision_id, {}).get("decision")
-        or "sender_reissue"
+    _record_repair_transaction(
+        ledger,
+        blocker,
+        decision_id,
+        source_id=target_packet_id,
+        fresh_packet_id=packet_id,
     )
-    ledger.setdefault("repair_transactions", {})[decision_id] = {
-        "transaction_id": decision_id,
-        "blocker_id": blocker["blocker_id"],
-        "decision": decision_label,
-        "fresh_packet_id": packet_id,
-        "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
-        "created_at": now_iso(),
-    }
     _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
-    _event(ledger, "repair_reissue_packet_issued", blocker_id=blocker["blocker_id"], packet_id=packet_id)
+    _event(ledger, "repair_scope_replaced", blocker_id=blocker["blocker_id"], source_id=target_packet_id, fresh_packet_id=packet_id)
     return packet_id
+
+
+def _replace_scope_and_open_repair_packet(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+    decision_id: str,
+    *,
+    source_node_id: str,
+    reason: str,
+    supersede_descendants: bool = False,
+) -> tuple[str, str]:
+    before_packets = set(ledger.get("packets", {}))
+    replacement_id = _replace_route_node_for_repair(
+        ledger,
+        source_node_id,
+        disposition_id=decision_id,
+        reason=reason,
+        supersede_descendants=supersede_descendants,
+    )
+    fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=replacement_id, before_ids=before_packets)
+    if not fresh_packet_id:
+        raise BlackBoxRuntimeError("repair scope replacement did not create a fresh executable packet")
+    ledger["packets"][fresh_packet_id]["repair_blocker_id"] = str(blocker["blocker_id"])
+    _record_repair_transaction(
+        ledger,
+        blocker,
+        decision_id,
+        source_id=source_node_id,
+        fresh_packet_id=fresh_packet_id,
+    )
+    _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
+    _event(
+        ledger,
+        "repair_scope_replaced",
+        blocker_id=str(blocker["blocker_id"]),
+        source_id=source_node_id,
+        replacement_node_id=replacement_id,
+        fresh_packet_id=fresh_packet_id,
+    )
+    return replacement_id, fresh_packet_id
+
+
+def _redesign_route_from_pm_decision(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+    decision_id: str,
+    *,
+    reason: str,
+) -> tuple[list[str], str]:
+    row = ledger.get("pm_repair_decisions", {}).get(decision_id, {})
+    route_plan = row.get("route_plan") if isinstance(row, Mapping) else None
+    if not isinstance(route_plan, Mapping):
+        raise BlackBoxRuntimeError("redesign_route requires a strict route_plan")
+    route_plan = _parse_strict_route_plan(json.dumps(route_plan, sort_keys=True))
+    node_specs = _normalize_strict_route_plan_nodes(route_plan)
+    old_version = int(ledger.get("active_route_version") or 0)
+    new_version = old_version + 1
+    old_node_ids = [
+        str(node_id)
+        for node_id, node in ledger.get("route_nodes", {}).items()
+        if isinstance(node, Mapping) and int(node.get("route_version") or 0) == old_version
+    ]
+    for packet in ledger.get("packets", {}).values():
+        if not isinstance(packet, dict):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if envelope.get("route_version") != old_version:
+            continue
+        if packet.get("status") == "accepted":
+            continue
+        packet["status"] = "quarantined_after_route_mutation"
+        packet["old_route_disposition"] = "quarantined"
+    for node_id in old_node_ids:
+        node = ledger.get("route_nodes", {}).get(node_id)
+        if isinstance(node, dict):
+            node["status"] = "superseded"
+            node["superseded_by"] = f"route-v{new_version}"
+            node.setdefault("stale_evidence", []).append(decision_id)
+    if str(old_version) in ledger.get("routes", {}):
+        ledger["routes"][str(old_version)]["status"] = "superseded"
+        ledger["routes"][str(old_version)]["superseded_by_route_version"] = new_version
+
+    materialized_ids: list[str] = []
+    route_nodes = ledger.setdefault("route_nodes", {})
+    for spec in node_specs:
+        node_id = str(spec["node_id"])
+        if node_id in route_nodes:
+            raise BlackBoxRuntimeError(f"redesign_route node_id already exists: {node_id}")
+        criteria = spec.get("acceptance_criteria")
+        route_nodes[node_id] = {
+            "node_id": node_id,
+            "route_version": new_version,
+            "title": str(spec["title"]),
+            "node_kind": str(spec.get("node_kind") or "leaf"),
+            "parent_node_id": str(spec.get("parent_node_id") or ""),
+            "child_node_ids": list(spec.get("child_node_ids") or []),
+            "responsibility": _normalize_node_responsibility(str(spec.get("responsibility") or "")),
+            "modeled_target": _normalize_modeled_target(str(spec.get("modeled_target") or ""), str(spec["title"])),
+            "acceptance_criteria": [str(item) for item in criteria],
+            "required_outputs": list(spec.get("required_outputs") or []),
+            "deliverable_checks": list(spec.get("deliverable_checks") or []),
+            "validation_checks": list(spec.get("validation_checks") or []),
+            "status": "pending",
+            "repair_generation": 0,
+            "packet_ids": [],
+            "accepted_result_id": "",
+            "accepted_repair_generation": None,
+            "flowguard_order_ids": [],
+            "prework_flowguard_order_ids": [],
+            "prework_flowguard_packet_id": "",
+            "prework_flowguard_order_id": "",
+            "prework_flowguard_result_id": "",
+            "prework_flowguard_repair_generation": None,
+            "review_ids": [],
+            "validation_evidence_ids": [],
+            "closure_id": "",
+            "pm_disposition_id": "",
+            "node_acceptance_plan_id": "",
+            "node_context_package_id": "",
+            "node_context_package_repair_generation": None,
+            "parent_backward_replay_id": "",
+            "parent_backward_waiver": "",
+            "high_standard_requirement_ids": [str(item) for item in spec.get("high_standard_requirement_ids") or []],
+            "skill_standard_obligation_ids": [str(item) for item in spec.get("skill_standard_obligation_ids") or []],
+            "superseded_by": "",
+            "stale_evidence": [],
+            "created_from_result_id": str(row.get("result_id") or ""),
+            "route_plan_schema_version": route_plan.get("schema_version", ""),
+            "created_at": now_iso(),
+        }
+        materialized_ids.append(node_id)
+
+    ledger.setdefault("routes", {})[str(new_version)] = {
+        "route_version": new_version,
+        "route_id": f"route-v{new_version}",
+        "title": "Redesigned repair route",
+        "status": "active",
+        "nodes": [str(spec["title"]) for spec in node_specs],
+        "node_order": materialized_ids,
+        "created_at": now_iso(),
+        "redesigned_from_route_version": old_version,
+        "redesign_decision_id": decision_id,
+        "redesign_reason": reason,
+    }
+    ledger["active_route_version"] = new_version
+    first_node_id = materialized_ids[0] if materialized_ids else ""
+    ledger["execution_frontier"] = {
+        "active_route_version": new_version,
+        "active_node_id": first_node_id,
+        "completed_nodes": [],
+        "status": "node_execution" if first_node_id else "blocked",
+        "pending_route_mutation": {
+            "mutation_id": _next_id(ledger, "mutation"),
+            "old_route_version": old_version,
+            "new_route_version": new_version,
+            "reason": reason,
+            "disposition_id": decision_id,
+            "superseded_node_ids": old_node_ids,
+            "replacement_node_id": first_node_id,
+            "affected_packets": [],
+            "requires_replay_or_rebinding": True,
+            "created_at": now_iso(),
+        },
+        "blocked_reason": "" if first_node_id else "route_redesign_empty",
+        "updated_at": now_iso(),
+    }
+    ledger.setdefault("route_mutations", []).append(ledger["execution_frontier"]["pending_route_mutation"])
+    _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
+    _event(ledger, "execution_frontier_updated", status=ledger["execution_frontier"]["status"], active_node_id=first_node_id)
+    if first_node_id:
+        before_packets = set(ledger.get("packets", {}))
+        if high_standard_flow_required(ledger):
+            ensure_node_acceptance_plan_packet(ledger, first_node_id)
+        else:
+            ensure_node_prework_flowguard_packet(ledger, first_node_id)
+        fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=first_node_id, before_ids=before_packets)
+        if not fresh_packet_id:
+            raise BlackBoxRuntimeError("redesign_route did not create a fresh executable packet")
+        ledger["packets"][fresh_packet_id]["repair_blocker_id"] = str(blocker["blocker_id"])
+        _record_repair_transaction(
+            ledger,
+            blocker,
+            decision_id,
+            source_id=f"route-v{old_version}",
+            fresh_packet_id=fresh_packet_id,
+        )
+        _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
+        return materialized_ids, fresh_packet_id
+    return materialized_ids, ""
 
 
 def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_id: str) -> None:
@@ -3232,22 +3432,19 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
     decision = str(ledger["pm_repair_decisions"][decision_id]["decision"])
     reason = str(ledger["pm_repair_decisions"][decision_id].get("reason") or f"pm_repair_{decision}")
     route_node_id = str(blocker.get("route_node_id") or "")
-    before_packets = set(ledger.get("packets", {}))
-    if decision == "same_node_repair" and route_node_id and route_node_id in ledger.get("route_nodes", {}):
-        _prepare_same_node_repair(ledger, route_node_id, disposition_id=decision_id, reason=reason)
-        fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=route_node_id, before_ids=before_packets)
-        if fresh_packet_id:
-            ledger["packets"][fresh_packet_id]["repair_blocker_id"] = blocker_id
-        ledger.setdefault("repair_transactions", {})[decision_id] = {
-            "transaction_id": decision_id,
-            "blocker_id": blocker_id,
-            "decision": decision,
-            "fresh_packet_id": fresh_packet_id,
-            "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
-            "created_at": now_iso(),
-        }
-        if fresh_packet_id:
-            _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
+    if decision in _REMOVED_PM_REPAIR_DECISIONS:
+        raise BlackBoxRuntimeError("removed PM repair decision cannot be applied")
+    if decision == "repair_current_scope":
+        if route_node_id and route_node_id in ledger.get("route_nodes", {}):
+            _replacement_id, fresh_packet_id = _replace_scope_and_open_repair_packet(
+                ledger,
+                blocker,
+                decision_id,
+                source_node_id=route_node_id,
+                reason=reason,
+            )
+        else:
+            fresh_packet_id = _issue_current_scope_repair_packet(ledger, blocker, decision_id)
         _mark_blocker_repair_packet_open(
             ledger,
             blocker,
@@ -3255,15 +3452,20 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
             fresh_packet_id=fresh_packet_id,
         )
         return
-    if decision in {"same_node_repair", "sender_reissue", "collect_more_evidence"}:
-        packet_kind = "task"
-        if decision in {"sender_reissue", "collect_more_evidence"}:
-            target_packet_id = str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or "")
-            target_packet = ledger.get("packets", {}).get(target_packet_id, {})
-            target_envelope = target_packet.get("envelope", {}) if isinstance(target_packet, Mapping) else {}
-            packet_kind = str(target_envelope.get("packet_kind") or "task")
-        _issue_sender_repair_packet(ledger, blocker, decision_id, packet_kind=packet_kind)
-        fresh_packet_id = str(ledger["repair_transactions"][decision_id]["fresh_packet_id"])
+    if decision == "repair_parent_scope":
+        if not route_node_id or route_node_id not in ledger.get("route_nodes", {}):
+            raise BlackBoxRuntimeError("repair_parent_scope requires a current route node")
+        parent_node_id = _nearest_parent_route_node_id(ledger, route_node_id)
+        if not parent_node_id or parent_node_id not in ledger.get("route_nodes", {}):
+            raise BlackBoxRuntimeError("repair_parent_scope requires an explicit parent route node")
+        _replacement_id, fresh_packet_id = _replace_scope_and_open_repair_packet(
+            ledger,
+            blocker,
+            decision_id,
+            source_node_id=parent_node_id,
+            reason=reason,
+            supersede_descendants=True,
+        )
         _mark_blocker_repair_packet_open(
             ledger,
             blocker,
@@ -3271,17 +3473,27 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
             fresh_packet_id=fresh_packet_id,
         )
         return
-    if decision == "mutate_route" and route_node_id and route_node_id in ledger.get("route_nodes", {}):
-        _mutate_route_for_node(ledger, route_node_id, disposition_id=decision_id, reason=reason)
-        blocker["status"] = "awaiting_recheck"
-        return
-    if decision == "quarantine_evidence":
-        blocker["status"] = "quarantined"
-        blocker["quarantined_at"] = now_iso()
+    if decision == "redesign_route":
+        _node_ids, fresh_packet_id = _redesign_route_from_pm_decision(
+            ledger,
+            blocker,
+            decision_id,
+            reason=reason,
+        )
+        _mark_blocker_repair_packet_open(
+            ledger,
+            blocker,
+            decision_id=decision_id,
+            fresh_packet_id=fresh_packet_id,
+        )
         return
     if decision == "waive_with_authority":
+        authority_ref = str(ledger["pm_repair_decisions"][decision_id].get("authority_ref") or "")
+        if not authority_ref:
+            raise BlackBoxRuntimeError("waive_with_authority requires authority_ref")
         blocker["status"] = "waived"
         blocker["waived_at"] = now_iso()
+        blocker["authority_ref"] = authority_ref
         blocker["cleared_by_outcome_id"] = str(blocker.get("outcome_id") or "")
         return
     if decision == "stop_for_user":
@@ -3330,13 +3542,52 @@ def _frontier_update(ledger: dict[str, Any], node_id: str, status: str, blocked_
     _event(ledger, "execution_frontier_updated", status=status, active_node_id=node_id)
 
 
-def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_id: str, reason: str) -> None:
+def _descendant_route_node_ids(ledger: Mapping[str, Any], node_id: str) -> list[str]:
+    route_nodes = ledger.get("route_nodes", {})
+    descendants: list[str] = []
+    queue = [str(item) for item in (route_nodes.get(node_id, {}) or {}).get("child_node_ids", [])]
+    while queue:
+        candidate = queue.pop(0)
+        if candidate in descendants:
+            continue
+        descendants.append(candidate)
+        node = route_nodes.get(candidate, {})
+        if isinstance(node, Mapping):
+            queue.extend(str(item) for item in node.get("child_node_ids", []) if item)
+    return descendants
+
+
+def _nearest_parent_route_node_id(ledger: Mapping[str, Any], node_id: str) -> str:
+    node = ledger.get("route_nodes", {}).get(node_id, {})
+    if isinstance(node, Mapping):
+        direct_parent = str(node.get("parent_node_id") or "")
+        if direct_parent:
+            return direct_parent
+    for candidate_id, candidate in ledger.get("route_nodes", {}).items():
+        if not isinstance(candidate, Mapping):
+            continue
+        if node_id in [str(item) for item in candidate.get("child_node_ids", [])]:
+            return str(candidate_id)
+    return ""
+
+
+def _replace_route_node_for_repair(
+    ledger: dict[str, Any],
+    node_id: str,
+    *,
+    disposition_id: str,
+    reason: str,
+    supersede_descendants: bool = False,
+) -> str:
     old_version = int(ledger.get("active_route_version") or 0)
     new_version = old_version + 1
     replacement_id = f"{node_id}-repair-v{new_version}"
+    superseded_node_ids = [node_id]
+    if supersede_descendants:
+        superseded_node_ids.extend(_descendant_route_node_ids(ledger, node_id))
     affected_packets: list[str] = []
     for packet in ledger.get("packets", {}).values():
-        if packet.get("envelope", {}).get("route_node_id") != node_id:
+        if packet.get("envelope", {}).get("route_node_id") not in superseded_node_ids:
             continue
         if packet.get("accepted_result_id"):
             packet["status"] = "accepted"
@@ -3346,16 +3597,20 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
             packet["old_route_disposition"] = "quarantined"
             affected_packets.append(packet["packet_id"])
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
-    node["status"] = "superseded"
-    node["superseded_by"] = replacement_id
-    node["stale_evidence"].append(disposition_id)
+    for superseded_id in superseded_node_ids:
+        superseded_node = _require(ledger.setdefault("route_nodes", {}), superseded_id, "route node")
+        superseded_node["status"] = "superseded"
+        superseded_node["superseded_by"] = replacement_id
+        superseded_node.setdefault("stale_evidence", []).append(disposition_id)
     replacement = dict(node)
+    child_node_ids = [] if supersede_descendants else list(node.get("child_node_ids") or [])
     replacement.update(
         {
             "node_id": replacement_id,
             "route_version": new_version,
             "title": f"Repair {node['title']}",
             "status": "pending",
+            "child_node_ids": child_node_ids,
             "packet_ids": [],
             "accepted_result_id": "",
             "flowguard_order_ids": [],
@@ -3379,8 +3634,15 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
         }
     )
     ledger["route_nodes"][replacement_id] = replacement
+    if str(old_version) in ledger.get("routes", {}):
+        ledger["routes"][str(old_version)]["status"] = "superseded"
+        ledger["routes"][str(old_version)]["superseded_by_route_version"] = new_version
     route = dict(ledger.get("routes", {}).get(str(old_version), {}))
-    node_order = [replacement_id if item == node_id else item for item in route.get("node_order", [])]
+    node_order = [
+        replacement_id if item == node_id else item
+        for item in route.get("node_order", [])
+        if item == node_id or item not in superseded_node_ids
+    ]
     route.update(
         {
             "route_version": new_version,
@@ -3398,7 +3660,7 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
         "new_route_version": new_version,
         "reason": reason,
         "disposition_id": disposition_id,
-        "superseded_node_ids": [node_id],
+        "superseded_node_ids": superseded_node_ids,
         "replacement_node_id": replacement_id,
         "affected_packets": affected_packets,
         "requires_replay_or_rebinding": True,
@@ -3408,7 +3670,11 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
     ledger["execution_frontier"] = {
         "active_route_version": new_version,
         "active_node_id": replacement_id,
-        "completed_nodes": [item for item in (ledger.get("execution_frontier") or {}).get("completed_nodes", []) if item != node_id],
+        "completed_nodes": [
+            item
+            for item in (ledger.get("execution_frontier") or {}).get("completed_nodes", [])
+            if item not in superseded_node_ids
+        ],
         "status": "node_execution",
         "pending_route_mutation": mutation,
         "blocked_reason": "",
@@ -3420,6 +3686,7 @@ def _mutate_route_for_node(ledger: dict[str, Any], node_id: str, *, disposition_
         ensure_node_acceptance_plan_packet(ledger, replacement_id)
     else:
         ensure_node_prework_flowguard_packet(ledger, replacement_id)
+    return replacement_id
 
 
 def _role_continuity_table(ledger: dict[str, Any]) -> dict[str, Any]:
@@ -4560,7 +4827,7 @@ def _apply_valid_packet_result(
         return
     if packet_kind == "pm_repair_decision":
         try:
-            repair_decision, repair_reason = _parse_pm_repair_decision_body(str(result.get("body", "")))
+            repair_decision, repair_reason, authority_ref, route_plan = _parse_pm_repair_decision_body(str(result.get("body", "")))
         except BlackBoxRuntimeError as exc:
             result["status"] = "pm_repair_decision_blocked"
             result["accepted"] = False
@@ -4596,6 +4863,8 @@ def _apply_valid_packet_result(
             result,
             decision=repair_decision,
             reason=repair_reason,
+            authority_ref=authority_ref,
+            route_plan=route_plan,
         )
         return
 
@@ -5007,7 +5276,7 @@ def _record_node_acceptance_plan_closure(
         "source_result_id": result_id,
         "repair_generation": int(node.get("repair_generation", 0)),
         "node_context_package_id": context_package["context_package_id"],
-        "repair_policy": "same_node_repair_default",
+        "repair_policy": "repair_scope_replacement_default",
         "high_standard_requirement_ids": requirement_ids,
         "skill_standard_obligation_ids": obligation_ids,
         "created_at": now_iso(),

@@ -113,12 +113,13 @@
     "other": {
       "alignment_family_count": 4,
       "code_surface_count": 227,
-      "known_bad_count": 1187,
-      "model_count": 73,
+      "known_bad_count": 1204,
+      "model_count": 74,
       "runner_keys": [
         "capability",
         "command_refinement",
         "defect_governance",
+        "flowpilot_canonical_repair_scope_rotation",
         "flowpilot_complete_system_alignment",
         "flowpilot_complete_system_development",
         "flowpilot_complete_system_historical_replay",
@@ -154,8 +155,7 @@
         "flowpilot_new_entrypoint",
         "flowpilot_optimization_proposal",
         "flowpilot_parallel_run_isolation",
-        "flowpilot_parent_child_lifecycle",
-        "flowpilot_planning_quality"
+        "flowpilot_parent_child_lifecycle"
       ],
       "surface_kinds": {
         "model_check_runner": 73,
@@ -12509,14 +12509,14 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780598353.7356608,
+  "generated_at_epoch": 1780607262.009534,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 10,
     "code_surfaces": 924,
     "evidence_summaries": 5,
-    "known_bad_signals": 2339,
-    "models": 134,
+    "known_bad_signals": 2356,
+    "models": 135,
     "test_commands": 350
   },
   "model_test_alignment": [
@@ -12866,6 +12866,41 @@
       "result_path": "simulations/defect_governance_results.json",
       "runner_key": "defect_governance",
       "runner_path": "simulations/run_defect_governance_checks.py"
+    },
+    {
+      "area": "other",
+      "coverage_tier": "unclassified_model_tier",
+      "evidence": {
+        "confidence": "",
+        "decision": "",
+        "edge_count": null,
+        "finding_count": null,
+        "full_coverage_ok": null,
+        "known_bad": [
+          "expected",
+          "hazards",
+          "ok",
+          "parent_repair_guessed_parent",
+          "parent_repair_kept_descendants_current",
+          "removed_decision_reached_runtime",
+          "repair_packet_open_without_current_open_packet",
+          "repair_packet_open_without_fresh_packet",
+          "repair_packet_open_without_transaction",
+          "route_redesign_without_flowguard_scan",
+          "route_redesign_without_plan",
+          "same_node_repair_in_place_survived",
+          "terminal_stop_created_packet",
+          "waiver_without_authority"
+        ],
+        "ok": true,
+        "present": true,
+        "release_convergence_ok": null,
+        "state_count": null
+      },
+      "model_path": "simulations/flowpilot_canonical_repair_scope_rotation_model.py",
+      "result_path": "simulations/flowpilot_canonical_repair_scope_rotation_results.json",
+      "runner_key": "flowpilot_canonical_repair_scope_rotation",
+      "runner_path": "simulations/run_flowpilot_canonical_repair_scope_rotation_checks.py"
     },
     {
       "area": "packet",
@@ -17374,8 +17409,11 @@
           "old_closure_packet_accepted",
           "old_validator_packet_accepted",
           "pm_decision_reviewer_missing",
-          "pm_mutation_without_flowguard",
+          "pm_gate_before_staged_effect_convergence",
+          "pm_redesign_without_flowguard",
           "pm_waiver_applied_before_gate",
+          "same_family_staged_effect_not_converged",
+          "same_family_staged_effect_parallel_candidate",
           "semantic_review_demands_future_committed_state",
           "staged_effect_missing_before_gate",
           "system_validation_failure_auto_closed",
@@ -17860,9 +17898,9 @@
   "sources": [
     {
       "exists": true,
-      "mtime_ns": 1780560648098052500,
+      "mtime_ns": 1780604705555752200,
       "path": "AGENTS.md",
-      "size": 10307
+      "size": 10362
     },
     {
       "exists": true,
@@ -18070,7 +18108,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780597827747015200,
+      "mtime_ns": 1780606946388417200,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20663
     },
@@ -18097,6 +18135,18 @@
       "mtime_ns": 1780217154282765800,
       "path": "simulations/defect_governance_results.json",
       "size": 23602
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1780605113309469900,
+      "path": "simulations/flowpilot_canonical_repair_scope_rotation_model.py",
+      "size": 16098
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1780606817362860700,
+      "path": "simulations/flowpilot_canonical_repair_scope_rotation_results.json",
+      "size": 6722
     },
     {
       "exists": true,
@@ -18328,13 +18378,13 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780319438977368600,
+      "mtime_ns": 1780606907951958000,
       "path": "simulations/flowpilot_core_runtime_development_results.json",
       "size": 4032
     },
     {
       "exists": true,
-      "mtime_ns": 1780592952729018100,
+      "mtime_ns": 1780607114611791800,
       "path": "simulations/flowpilot_core_runtime_results.json",
       "size": 25609
     },
@@ -19552,15 +19602,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780587692452665800,
+      "mtime_ns": 1780606888703982500,
       "path": "simulations/flowpilot_validation_pm_gate_model.py",
       "size": 18531
     },
     {
       "exists": true,
-      "mtime_ns": 1780563115265809800,
+      "mtime_ns": 1780606895881012400,
       "path": "simulations/flowpilot_validation_pm_gate_results.json",
-      "size": 6943
+      "size": 7847
     },
     {
       "exists": true,
@@ -19600,7 +19650,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780597827860110900,
+      "mtime_ns": 1780606946420416300,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26200
     },
@@ -19681,6 +19731,12 @@
       "mtime_ns": 1780217156292433000,
       "path": "simulations/run_defect_governance_checks.py",
       "size": 3655
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1780606430785011500,
+      "path": "simulations/run_flowpilot_canonical_repair_scope_rotation_checks.py",
+      "size": 6978
     },
     {
       "exists": true,
@@ -20380,9 +20436,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780587826311883600,
+      "mtime_ns": 1780606873174312600,
       "path": "simulations/run_flowpilot_validation_pm_gate_checks.py",
-      "size": 8129
+      "size": 8151
     },
     {
       "exists": true,
@@ -23008,9 +23064,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780562483380135100,
+      "mtime_ns": 1780606693917727800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
-      "size": 11194
+      "size": 11187
     },
     {
       "exists": true,
@@ -23152,9 +23208,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780562431003771500,
+      "mtime_ns": 1780606685459492600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
-      "size": 32495
+      "size": 32571
     },
     {
       "exists": true,
@@ -23422,9 +23478,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780318964462179900,
+      "mtime_ns": 1780606256125514000,
       "path": "tests/test_flowpilot_output_contracts.py",
-      "size": 22167
+      "size": 22169
     },
     {
       "exists": true,

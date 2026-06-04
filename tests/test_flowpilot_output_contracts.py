@@ -151,7 +151,7 @@ class FlowPilotOutputContractTests(unittest.TestCase):
         ):
             self.assertIn(field, gate_contract["required_body_fields"])
         self.assertIn("repair_local", gate_contract["allowed_decision_values"])
-        self.assertIn("mutate_route", gate_contract["allowed_decision_values"])
+        self.assertIn("redesign_route", gate_contract["allowed_decision_values"])
         self.assertIn("semantic_sufficiency_fields_not_router_owned", gate_contract["router_mechanical_validation"])
         resume_contract = next(
             item

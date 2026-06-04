@@ -2,6 +2,28 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.3 - 2026-06-04
+
+### Breaking
+
+- Replaced the PM repair decision surface with the canonical five-choice menu:
+  `repair_current_scope`, `repair_parent_scope`, `redesign_route`,
+  `waive_with_authority`, and `stop_for_user`.
+- Removed acceptance of old repair decisions such as `same_node_repair`,
+  `sender_reissue`, `collect_more_evidence`, `mutate_route`, and
+  `quarantine_evidence`; current FlowPilot now rejects them instead of
+  translating or falling back.
+
+### Changed
+
+- Made every nonterminal repair prove that runtime opened a fresh current
+  executable packet before the blocker can move to `repair_packet_open`.
+- Added current-scope, parent-scope, route-redesign, authorized-waiver, and
+  June 3 empty-fresh-packet regression coverage with a dedicated FlowGuard
+  repair-scope rotation model.
+- Updated PM-facing cards, resume contracts, and control-plane references to
+  expose the current repair vocabulary only.
+
 ## 0.10.2 - 2026-06-04
 
 ### Changed
