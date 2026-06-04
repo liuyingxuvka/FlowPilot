@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.1</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.2</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.1` |
+| Source version | `v0.10.2` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for work request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.1` refreshes the public README and startup-intake screenshot for the current single-column startup UI, and publishes the latest no-compatibility FlowPilot runtime cleanup. The current prompts, templates, runtime cards, models, and tests use the single `flowguard_operator` responsibility, generic requested worker responsibilities, mandatory node pre-work FlowGuard gates, PM-authored node context packages, and current-effective packet outcome authority.
+`v0.10.2` hardens the current-control path after `v0.10.1`: staged node acceptance plans and route mutations stay pending until current FlowGuard and Reviewer gates inspect the real submitted artifact, controller status can relay runtime progress fractions, role assignment and continuity memory reject stale or unresolved bindings, and `lease_agent` now lightly prefers durable, addressable role surfaces without practical parallel-count or model-capability limits when available.
 
 ## What FlowPilot Is
 
@@ -271,7 +271,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.1`
+**Source version:** `v0.10.2`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -291,7 +291,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.1` |
+| Source version | `v0.10.2` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -300,7 +300,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 work request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.1` 更新 public README 和 startup-intake 截图，使其匹配当前单列 startup UI，并发布最新 no-compatibility FlowPilot runtime cleanup。当前 prompts、templates、runtime cards、models 和 tests 统一使用单一 `flowguard_operator` responsibility、按需 worker responsibility、强制 node pre-work FlowGuard gate、PM-authored node context package，以及 current-effective packet outcome authority。
+`v0.10.2` 在 `v0.10.1` 之后继续加固当前控制路径：staged node acceptance plan 和 route mutation 必须等当前 FlowGuard 与 Reviewer gate 审查真实提交 artifact 后才会生效，Controller status 可以转述 runtime progress fraction，role assignment 与 continuity memory 会拒绝 stale 或 unresolved binding，并且 `lease_agent` 现在会轻量优先选择 durable、addressable、没有实际 parallel-count 或 model-capability 限制的 role surface。
 
 ## 它是什么
 

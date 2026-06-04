@@ -208,9 +208,9 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
         ),
         _evidence(
             "source.new_entrypoint.lifecycle_guard_patrol",
-            test_name="test_patrol_classifies_repeated_nonterminal_action_as_stuck",
+            test_name="test_patrol_does_not_classify_repeated_role_dispatch_as_stuck",
             path="tests/test_flowpilot_lifecycle_guard.py",
-            command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_patrol_classifies_repeated_nonterminal_action_as_stuck",
+            command="python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_patrol_does_not_classify_repeated_role_dispatch_as_stuck",
             test_kind=EDGE,
             covers=("new_entrypoint.lifecycle_guard_resume_patrol",),
             code_contracts=(

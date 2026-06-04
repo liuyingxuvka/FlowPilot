@@ -15,6 +15,12 @@ def _known_bad_cases() -> list[dict[str, Any]]:
     )
     path = "tests/test_flowpilot_model_test_alignment.py"
     command = "python -m unittest tests.test_flowpilot_model_test_alignment"
+    code_contract = CodeContract(
+        "known_bad.required_contract",
+        path=path,
+        symbol="FlowPilotModelTestAlignmentTests",
+        implements_obligations=("known_bad.required_obligation",),
+    )
     return [
         {
             "name": "missing_evidence",
@@ -22,6 +28,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
             "plan": ModelTestAlignmentPlan(
                 model_id="known_bad_missing_evidence",
                 obligations=(obligation,),
+                code_contracts=(code_contract,),
                 test_evidence=(),
             ),
         },
@@ -31,6 +38,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
             "plan": ModelTestAlignmentPlan(
                 model_id="known_bad_stale_evidence",
                 obligations=(obligation,),
+                code_contracts=(code_contract,),
                 test_evidence=(
                     _evidence(
                         "known_bad.stale",
@@ -39,6 +47,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         command=command,
                         test_kind=HAPPY,
                         covers=("known_bad.required_obligation",),
+                        code_contracts=("known_bad.required_contract",),
                         evidence_current=False,
                         stale_reasons=("model obligation changed after evidence was recorded",),
                     ),
@@ -51,6 +60,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
             "plan": ModelTestAlignmentPlan(
                 model_id="known_bad_progress_only",
                 obligations=(obligation,),
+                code_contracts=(code_contract,),
                 test_evidence=(
                     _evidence(
                         "known_bad.progress_only",
@@ -59,6 +69,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         command=command,
                         test_kind=HAPPY,
                         covers=("known_bad.required_obligation",),
+                        code_contracts=("known_bad.required_contract",),
                         result_status=RUNNING,
                     ),
                 ),
@@ -70,6 +81,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
             "plan": ModelTestAlignmentPlan(
                 model_id="known_bad_overclaim",
                 obligations=(obligation,),
+                code_contracts=(code_contract,),
                 test_evidence=(
                     _evidence(
                         "known_bad.overclaim",
@@ -78,6 +90,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         command=command,
                         test_kind=HAPPY,
                         covers=("known_bad.required_obligation",),
+                        code_contracts=("known_bad.required_contract",),
                         overclaims_model_confidence=True,
                     ),
                 ),
@@ -89,6 +102,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
             "plan": ModelTestAlignmentPlan(
                 model_id="known_bad_orphan",
                 obligations=(obligation,),
+                code_contracts=(code_contract,),
                 test_evidence=(
                     _evidence(
                         "known_bad.orphan",
@@ -107,6 +121,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
             "plan": ModelTestAlignmentPlan(
                 model_id="known_bad_duplicate",
                 obligations=(obligation,),
+                code_contracts=(code_contract,),
                 test_evidence=(
                     _evidence(
                         "known_bad.duplicate.first",
@@ -115,6 +130,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         command=command,
                         test_kind=HAPPY,
                         covers=("known_bad.required_obligation",),
+                        code_contracts=("known_bad.required_contract",),
                     ),
                     _evidence(
                         "known_bad.duplicate.second",
@@ -123,6 +139,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         command=command,
                         test_kind=HAPPY,
                         covers=("known_bad.required_obligation",),
+                        code_contracts=("known_bad.required_contract",),
                     ),
                 ),
             ),
@@ -141,6 +158,14 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         required_runtime_node_ids=("known_bad.runtime_path.node",),
                     ),
                 ),
+                code_contracts=(
+                    CodeContract(
+                        "known_bad.runtime_path_contract",
+                        path=path,
+                        symbol="FlowPilotModelTestAlignmentTests",
+                        implements_obligations=("known_bad.runtime_path_required",),
+                    ),
+                ),
                 test_evidence=(
                     _evidence(
                         "known_bad.runtime_path.has_test",
@@ -149,6 +174,7 @@ def _known_bad_cases() -> list[dict[str, Any]]:
                         command=command,
                         test_kind=HAPPY,
                         covers=("known_bad.runtime_path_required",),
+                        code_contracts=("known_bad.runtime_path_contract",),
                     ),
                 ),
                 require_runtime_path_evidence=True,

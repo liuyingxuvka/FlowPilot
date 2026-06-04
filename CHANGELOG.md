@@ -2,6 +2,21 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.2 - 2026-06-04
+
+### Changed
+
+- Hardened current-contract gates so staged node acceptance plans and route
+  mutations stay pending until current FlowGuard and Reviewer gates inspect the
+  real submitted artifact.
+- Added controller progress-fraction reporting plus stricter role assignment
+  resolution and role-continuity memory checks for current-run role bindings.
+- Refined `lease_agent` guidance to prefer durable, addressable role surfaces
+  without practical parallel-count or model-capability limits when such
+  surfaces are available.
+- Added focused staged-effect and prompt-coverage tests, refreshed capability
+  evidence, and rebuilt the FlowGuard project topology.
+
 ## 0.10.1 - 2026-06-02
 
 ### Changed

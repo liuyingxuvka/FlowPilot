@@ -11,11 +11,13 @@ from dataclasses import replace
 from typing import Any
 
 from flowguard import (
+    CodeContract,
     ModelObligation,
     ModelTestAlignmentPlan,
     RuntimeNodeContract,
     RuntimePathRecorder,
     RuntimePathRun,
+    TestEvidence,
 )
 
 
@@ -60,6 +62,33 @@ def _code_contract_id(prefix: str, obligation_id: str) -> str:
     return f"{prefix}.{_slug(obligation_id)}" if prefix else f"runtime_path.{_slug(obligation_id)}"
 
 
+def _runtime_path_code_contract(
+    obligation: ModelObligation,
+    *,
+    code_contract_id: str,
+) -> CodeContract:
+    return CodeContract(
+        code_contract_id=code_contract_id,
+        path="skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+        symbol="attach_runtime_path_evidence_to_plan",
+        surface_type="diagnostic_runtime_path_binding",
+        implements_obligations=(obligation.obligation_id,),
+    )
+
+
+def _with_code_contract_bindings(
+    evidence: TestEvidence,
+    *,
+    contracts_by_obligation: dict[str, str],
+) -> TestEvidence:
+    contract_ids = list(evidence.covered_code_contracts)
+    for obligation_id in evidence.covered_obligations:
+        contract_id = contracts_by_obligation.get(obligation_id)
+        if contract_id:
+            contract_ids.append(contract_id)
+    return replace(evidence, covered_code_contracts=tuple(dict.fromkeys(contract_ids)))
+
+
 def attach_runtime_path_evidence_to_plan(
     plan: ModelTestAlignmentPlan,
     *,
@@ -83,6 +112,9 @@ def attach_runtime_path_evidence_to_plan(
         },
     )
     contracts: list[RuntimeNodeContract] = []
+    code_contracts: list[CodeContract] = []
+    contracts_by_obligation: dict[str, str] = {}
+    existing_code_contract_ids = {contract.code_contract_id for contract in plan.code_contracts}
 
     for index, obligation in enumerate(obligations):
         node_id = runtime_node_id(plan.model_id, obligation.obligation_id)
@@ -95,6 +127,14 @@ def attach_runtime_path_evidence_to_plan(
         input_case = f"{plan.model_id}.external_contract_input"
         state_case = f"{plan.model_id}.current_model_state"
         next_state = f"{plan.model_id}.{RUNTIME_PATH_NEXT_STATE}"
+        contracts_by_obligation[obligation.obligation_id] = contract_id
+        if contract_id not in existing_code_contract_ids:
+            code_contracts.append(
+                _runtime_path_code_contract(
+                    obligation,
+                    code_contract_id=contract_id,
+                )
+            )
         metadata = {
             "family": family,
             "source_test_evidence_id": evidence_id,
@@ -159,23 +199,20 @@ def attach_runtime_path_evidence_to_plan(
             "progress_lines": recorder.format_progress_lines().splitlines(),
         },
     )
-    return ModelTestAlignmentPlan(
-        model_id=plan.model_id,
+    return replace(
+        plan,
         obligations=obligations,
-        code_contracts=plan.code_contracts,
-        test_evidence=plan.test_evidence,
-        obligation_families=plan.obligation_families,
-        family_evidence=plan.family_evidence,
-        boundary_contracts=plan.boundary_contracts,
-        boundary_observations=plan.boundary_observations,
+        code_contracts=(*plan.code_contracts, *code_contracts),
+        test_evidence=tuple(
+            _with_code_contract_bindings(
+                evidence,
+                contracts_by_obligation=contracts_by_obligation,
+            )
+            for evidence in plan.test_evidence
+        ),
         runtime_node_contracts=(*plan.runtime_node_contracts, *contracts),
-        runtime_node_observations=plan.runtime_node_observations,
         runtime_path_runs=(*plan.runtime_path_runs, run),
-        require_code_contracts=plan.require_code_contracts,
-        require_proof_artifacts=plan.require_proof_artifacts,
         require_runtime_path_evidence=True,
-        allow_orphan_tests=plan.allow_orphan_tests,
-        allow_orphan_code_contracts=plan.allow_orphan_code_contracts,
     )
 
 

@@ -176,12 +176,22 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             shell = run_shell.load_run_shell(root, run_id="run-no-shortcut")
             ledger = run_shell.load_run_ledger(shell)
             pm_packet = next(iter(ledger["packets"]))
-            pm_lease = self._lease_packet(
+            assignment = flowpilot_new.resolve_role_assignment(
                 root,
                 packet_id=pm_packet,
                 responsibility="pm",
-                agent_id="pm-agent",
+                host_kind="fake",
             )
+            self.assertTrue(assignment["ok"], assignment)
+            lease_kwargs: dict[str, object] = {
+                "packet_id": pm_packet,
+                "responsibility": "pm",
+                "assignment_id": assignment["assignment_id"],
+                "host_kind": "fake",
+            }
+            if assignment["role_surface_required"]:
+                lease_kwargs["agent_id"] = "pm-agent"
+            pm_lease = str(flowpilot_new.lease_agent(root, **lease_kwargs)["lease_id"])
             flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
 
             ack_only_status = flowpilot_new.status(root)
@@ -221,12 +231,22 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             pm_packet = started["next_action"]["subject_id"]
-            pm_lease = self._lease_packet(
+            pm_assignment = flowpilot_new.resolve_role_assignment(
                 root,
                 packet_id=pm_packet,
                 responsibility="pm",
-                agent_id="pm-agent",
+                host_kind="fake",
             )
+            self.assertTrue(pm_assignment["ok"], pm_assignment)
+            pm_lease_kwargs: dict[str, object] = {
+                "packet_id": pm_packet,
+                "responsibility": "pm",
+                "assignment_id": pm_assignment["assignment_id"],
+                "host_kind": "fake",
+            }
+            if pm_assignment["role_surface_required"]:
+                pm_lease_kwargs["agent_id"] = "pm-agent"
+            pm_lease = str(flowpilot_new.lease_agent(root, **pm_lease_kwargs)["lease_id"])
             flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
             flowpilot_new.submit_result(
                 root,
@@ -311,12 +331,22 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn(f"/evidence/flowguard/{flowguard_packet}", flowguard_body["evidence_output_policy"]["run_local_evidence_root"])
             self.assertNotIn("recommended_runner_commands", flowguard_body)
             self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
-            flowguard_lease = self._lease_packet(
+            flowguard_assignment = flowpilot_new.resolve_role_assignment(
                 root,
                 packet_id=flowguard_packet,
                 responsibility="flowguard_operator",
-                agent_id="flowguard-agent",
+                host_kind="fake",
             )
+            self.assertTrue(flowguard_assignment["ok"], flowguard_assignment)
+            flowguard_lease_kwargs: dict[str, object] = {
+                "packet_id": flowguard_packet,
+                "responsibility": "flowguard_operator",
+                "assignment_id": flowguard_assignment["assignment_id"],
+                "host_kind": "fake",
+            }
+            if flowguard_assignment["role_surface_required"]:
+                flowguard_lease_kwargs["agent_id"] = "flowguard-agent"
+            flowguard_lease = str(flowpilot_new.lease_agent(root, **flowguard_lease_kwargs)["lease_id"])
             flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
             flowpilot_new.submit_result(
                 root,
@@ -364,12 +394,22 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             )
             ledger = run_shell.load_run_ledger(shell)
             review_packet = self._open_packet_by_kind(ledger, "review")
-            reviewer_lease = self._lease_packet(
+            reviewer_assignment = flowpilot_new.resolve_role_assignment(
                 root,
                 packet_id=review_packet,
                 responsibility="reviewer",
-                agent_id="reviewer-agent",
+                host_kind="fake",
             )
+            self.assertTrue(reviewer_assignment["ok"], reviewer_assignment)
+            reviewer_lease_kwargs: dict[str, object] = {
+                "packet_id": review_packet,
+                "responsibility": "reviewer",
+                "assignment_id": reviewer_assignment["assignment_id"],
+                "host_kind": "fake",
+            }
+            if reviewer_assignment["role_surface_required"]:
+                reviewer_lease_kwargs["agent_id"] = "reviewer-agent"
+            reviewer_lease = str(flowpilot_new.lease_agent(root, **reviewer_lease_kwargs)["lease_id"])
 
             before_ack = flowpilot_new.status(root)["status"]
             reviewer_rows = [row for row in before_ack["leases"] if row["lease_id"] == reviewer_lease]

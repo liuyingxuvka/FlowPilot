@@ -12509,7 +12509,7 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780569230.4576566,
+  "generated_at_epoch": 1780571336.611323,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 10,
@@ -18082,7 +18082,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404085927770400,
+      "mtime_ns": 1780571296244683800,
       "path": "simulations/card_instruction_coverage_results.json",
       "size": 45563
     },
@@ -18118,7 +18118,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404088052910300,
+      "mtime_ns": 1780571298202197600,
       "path": "simulations/flowpilot_command_refinement_results.json",
       "size": 2711
     },
@@ -18208,7 +18208,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404093239253600,
+      "mtime_ns": 1780571304027139800,
       "path": "simulations/flowpilot_control_plane_friction_results.json",
       "size": 3220460
     },
@@ -18256,7 +18256,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404098194474600,
+      "mtime_ns": 1780571309409415100,
       "path": "simulations/flowpilot_control_transaction_registry_results.json",
       "size": 33456
     },
@@ -18346,7 +18346,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404094201479800,
+      "mtime_ns": 1780571304963081000,
       "path": "simulations/flowpilot_cross_plane_friction_results.json",
       "size": 62441
     },
@@ -18364,7 +18364,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404095979956600,
+      "mtime_ns": 1780571306792704500,
       "path": "simulations/flowpilot_daemon_controller_actions_results.json",
       "size": 3972
     },
@@ -18442,19 +18442,19 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404095092546900,
+      "mtime_ns": 1780571305878356500,
       "path": "simulations/flowpilot_daemon_startup_lock_results.json",
       "size": 3826
     },
     {
       "exists": true,
-      "mtime_ns": 1780404097355395400,
+      "mtime_ns": 1780571308503830500,
       "path": "simulations/flowpilot_daemon_terminal_projection_results.json",
       "size": 3961
     },
     {
       "exists": true,
-      "mtime_ns": 1780404096653029800,
+      "mtime_ns": 1780571307627166100,
       "path": "simulations/flowpilot_daemon_wait_liveness_results.json",
       "size": 3851
     },
@@ -18712,7 +18712,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404112657535200,
+      "mtime_ns": 1780571318996113200,
       "path": "simulations/flowpilot_model_hierarchy_results.json",
       "size": 53650
     },
@@ -18736,15 +18736,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404099057256100,
+      "mtime_ns": 1780571310420502800,
       "path": "simulations/flowpilot_model_mesh_results.json",
       "size": 19054
     },
     {
       "exists": true,
-      "mtime_ns": 1780404686192932600,
+      "mtime_ns": 1780571329285288000,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 2996753
+      "size": 3177540
     },
     {
       "exists": true,
@@ -18976,7 +18976,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404121346699500,
+      "mtime_ns": 1780571330594472700,
       "path": "simulations/flowpilot_project_topology_orientation_results.json",
       "size": 18792
     },
@@ -19114,7 +19114,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404088964681700,
+      "mtime_ns": 1780571299024529600,
       "path": "simulations/flowpilot_reviewer_active_challenge_results.json",
       "size": 9490
     },
@@ -19264,7 +19264,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404681113436100,
+      "mtime_ns": 1780571321448090300,
       "path": "simulations/flowpilot_router_facade_split_results.json",
       "size": 3635
     },
@@ -19360,7 +19360,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404681730914700,
+      "mtime_ns": 1780571322388866600,
       "path": "simulations/flowpilot_similarity_convergence_results.json",
       "size": 127240
     },
@@ -19450,7 +19450,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404680359523200,
+      "mtime_ns": 1780571320146700600,
       "path": "simulations/flowpilot_structure_maintenance_results.json",
       "size": 6722
     },
@@ -19612,7 +19612,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404089886662900,
+      "mtime_ns": 1780571299828498100,
       "path": "simulations/prompt_isolation_results.json",
       "size": 768492
     },
@@ -19642,7 +19642,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404086701646300,
+      "mtime_ns": 1780571297057277700,
       "path": "simulations/release_tooling_results.json",
       "size": 28699
     },
@@ -20470,7 +20470,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780404087165500000,
+      "mtime_ns": 1780571297449433600,
       "path": "simulations/startup_pm_review_results.json",
       "size": 211192
     },
@@ -22450,9 +22450,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780221021488911600,
+      "mtime_ns": 1780570350814080200,
       "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
-      "size": 8291
+      "size": 9410
     },
     {
       "exists": true,
@@ -23248,7 +23248,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780569208852002200,
+      "mtime_ns": 1780570987787617200,
       "path": "skills/flowpilot/assets/runtime_kit/prompts/manifest.json",
       "size": 3745
     },
