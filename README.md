@@ -131,22 +131,23 @@ Do not use FlowPilot for ordinary Q&A, tiny edits, simple one-file changes, casu
 
 Recommended human-facing path:
 
-1. Open a fresh AI CLI/window that supports local tools and, ideally, addressable background role surfaces.
-2. Ask it to install FlowPilot and required dependencies:
+1. Open a fresh AI agent or CLI window that supports local tools.
+2. If the host has a Goal/target option, turn it on and set the goal to keep using FlowPilot until FlowPilot reaches a terminal state, asks for user input, or explicitly says to stop.
+3. Ask the agent to install FlowPilot:
 
 ```text
 Install FlowPilot from https://github.com/liuyingxuvka/FlowPilot.
-Install and verify the required dependencies too:
-flowguard, model-first-function-flow, and flowpilot itself.
+Also install and verify its required FlowGuard dependency.
 ```
 
-3. Start actual project work with only:
+4. Start actual project work with only:
 
 ```text
 Use FlowPilot.
 ```
 
-4. When the startup intake UI opens, enter the real project request there and choose whether background collaboration is allowed. Manual continuation and chat route signs are recorded as fixed startup defaults.
+5. When the startup intake dialog opens, type the real project request there and click OK. Choose whether background collaboration is allowed if that option is shown.
+6. Keep the agent running until FlowPilot says the route is complete, asks for user input, or explicitly says to stop.
 
 From a local checkout:
 
@@ -161,40 +162,28 @@ Check without changing installed skills:
 python scripts\install_flowpilot.py --check
 ```
 
-Install optional companion skills only when the route needs them:
-
-```powershell
-python scripts\install_flowpilot.py --install-missing --install-flowguard --include-optional
-```
-
 Refresh repository-owned installed skill copies from this checkout:
 
 ```powershell
 python scripts\install_flowpilot.py --sync-repo-owned
 ```
 
-## Required And Companion Skill Sources
+## Required External Dependency
 
-FlowPilot is not complete when only the `flowpilot` folder is copied. A formal
-FlowPilot run needs the real FlowGuard package, the FlowGuard-owned
-`model-first-function-flow` skill, and this `flowpilot` skill. UI/design routes
-may also call the current direct UI child skill when the route selects it.
+FlowPilot itself is this repository, so it is not listed as its own dependency.
+For a user-facing install, the required external dependency to know about is
+FlowGuard.
 
-| Dependency | When used | Public source |
+| Required external dependency | Why it is needed | Public source |
 | --- | --- | --- |
-| `flowpilot` | Required skill and runtime | `https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot` |
-| `flowguard` | Required Python package and modeling engine | `https://github.com/liuyingxuvka/FlowGuard` |
-| `model-first-function-flow` | Required FlowGuard-owned model-first skill | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
-| `autonomous-concept-ui-redesign` | Optional direct UI/design child skill | `https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign` |
-
-The autonomous UI child skill owns any internal UI helper composition.
-FlowPilot records only direct FlowPilot dependencies in this table.
+| `flowguard` | Real Python package and FlowGuard modeling engine used by FlowPilot gates and validation | `https://github.com/liuyingxuvka/FlowGuard` |
 
 `flowpilot.dependencies.json` is the installer-readable source of truth, and
-[Dependency sources](docs/dependency_sources.md) gives the longer policy. The
-FlowPilot release process is scoped to this repository; companion skill
-repositories are documented and checked, but not published by FlowPilot release
-tooling.
+[Dependency sources](docs/dependency_sources.md) gives the longer installer
+policy. That manifest may name installer-managed skill copies or host-specific
+capabilities, but those are not separate user-facing install choices. Optional
+companion skills are selected by a FlowPilot route only when that route actually
+needs them.
 
 ## Verification
 
@@ -383,22 +372,23 @@ FlowGuard counterexample 是设计反馈。如果模型显示某条 route 可以
 
 推荐的人类使用路径：
 
-1. 打开一个支持本地工具的全新 AI CLI/window，最好支持可寻址的后台角色协作 surface。
-2. 让它安装 FlowPilot 和必需依赖：
+1. 打开一个支持本地工具的全新 AI agent 或 CLI/window。
+2. 如果宿主界面有 Goal/目标 选项，就打开它，把目标设成：持续使用 FlowPilot，直到 FlowPilot 明确完成、要求用户输入，或者明确说可以停止。
+3. 让 AI 安装 FlowPilot：
 
 ```text
 Install FlowPilot from https://github.com/liuyingxuvka/FlowPilot.
-Install and verify the required dependencies too:
-flowguard, model-first-function-flow, and flowpilot itself.
+Also install and verify its required FlowGuard dependency.
 ```
 
-3. 真正开始项目时，只发送：
+4. 真正开始项目时，只发送：
 
 ```text
 Use FlowPilot.
 ```
 
-4. Startup intake UI 打开后，把真实项目请求填到 UI 里，并选择是否允许 background collaboration。Manual continuation 和 chat route signs 会作为固定 startup defaults 被记录。
+5. Startup intake 对话框打开后，把真实项目请求填进去，然后点击 OK。如果界面显示是否允许 background collaboration，再按项目需要选择。
+6. 之后让 AI 持续运行，直到 FlowPilot 说路线已经完成、要求用户输入，或者明确说可以停止。
 
 本地 checkout 安装：
 
@@ -413,39 +403,26 @@ python scripts\check_install.py
 python scripts\install_flowpilot.py --check
 ```
 
-只有路线需要时才安装 optional companion skills：
-
-```powershell
-python scripts\install_flowpilot.py --install-missing --install-flowguard --include-optional
-```
-
 从当前 checkout 刷新 repo-owned installed skill copy：
 
 ```powershell
 python scripts\install_flowpilot.py --sync-repo-owned
 ```
 
-## 必需依赖和 companion skill 来源
+## 必需外部依赖
 
-只复制 `flowpilot` 文件夹并不构成完整 FlowPilot。正式 FlowPilot run 需要真实
-FlowGuard package、FlowGuard 仓库里的 `model-first-function-flow` skill，以及
-这个 `flowpilot` skill。UI/design 路线被选中时，FlowPilot 还可能调用 companion
-skill。
+FlowPilot 本身就是这个仓库，所以不在表里把 `flowpilot` 再列成自己的依赖。
+对用户来说，需要知道的必需外部依赖是 FlowGuard。
 
-| Dependency | 使用场景 | Public source |
+| 必需外部依赖 | 为什么需要 | Public source |
 | --- | --- | --- |
-| `flowpilot` | 必需 skill 和 runtime | `https://github.com/liuyingxuvka/FlowPilot/tree/main/skills/flowpilot` |
-| `flowguard` | 必需 Python package 和建模引擎 | `https://github.com/liuyingxuvka/FlowGuard` |
-| `model-first-function-flow` | 必需 FlowGuard-owned model-first skill | `https://github.com/liuyingxuvka/FlowGuard/tree/main/.agents/skills/model-first-function-flow` |
-| `autonomous-concept-ui-redesign` | 可选直接 UI/design child skill | `https://github.com/liuyingxuvka/autonomous-concept-ui-redesign-skill/tree/main/autonomous-concept-ui-redesign` |
-
-这个 autonomous UI child skill 负责它自己的内部 UI helper 组合。FlowPilot
-在这个表里只记录 FlowPilot 直接依赖。
+| `flowguard` | 真实 Python package 和 FlowGuard 建模引擎，用于 FlowPilot gate 和验证 | `https://github.com/liuyingxuvka/FlowGuard` |
 
 `flowpilot.dependencies.json` 是 installer-readable source of truth；
-[Dependency sources](docs/dependency_sources.md) 里有更完整的策略说明。FlowPilot
-release process 只作用于这个仓库；companion skill repositories 会被记录和检查，
-但不会由 FlowPilot release tooling 代为发布。
+[Dependency sources](docs/dependency_sources.md) 里有更完整的安装器策略说明。这个
+manifest 可能记录安装器管理的 skill copy 或 host-specific capability，但这些不是
+用户每次手动选择的额外安装项。Optional companion skills 只有在 FlowPilot route
+实际选中时才会使用。
 
 ## 验证
 
