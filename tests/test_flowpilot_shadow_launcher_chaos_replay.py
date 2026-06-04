@@ -176,11 +176,11 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         peer_evidence = test_tier_background.classify_background_artifact(proof_dir, "peer_shadow_proof")
 
         self.assertEqual(stopped["run_id"], "run-a")
-        self.assertEqual(current["current_run_id"], "run-b")
+        self.assertEqual(current["run_id"], "run-b")
         self.assertEqual(read_json(run_a / "runtime" / "router_daemon.lock")["status"], "released")
         self.assertEqual(read_json(run_b / "runtime" / "router_daemon.lock")["status"], "active")
         self.assertTrue(peer_evidence["ok"])
-        self.assertNotEqual(peer_proof["run_id"], current["current_run_id"])
+        self.assertNotEqual(peer_proof["run_id"], current["run_id"])
         self.assertFalse(read_json(router.run_state_path(run_a))["daemon_mode_enabled"])
         self.assertTrue(read_json(router.run_state_path(run_b))["daemon_mode_enabled"])
 
@@ -191,8 +191,8 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
             root / ".flowpilot" / "current.json",
             {
                 "schema_version": "flowpilot.current.v1",
-                "current_run_id": run_root.name,
-                "current_run_root": router.project_relative(root, run_root),
+                "run_id": run_root.name,
+                "run_root": router.project_relative(root, run_root),
                 "status": "running",
                 "updated_at": router.utc_now(),
             },
@@ -313,7 +313,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
             current = read_json(root / ".flowpilot" / "current.json")
             cycle_results.append(
                 {
-                    "run_id": current["current_run_id"],
+                    "run_id": current["run_id"],
                     "lock_status": final_lock["status"],
                     "stop_ok": str(stopped["ok"]),
                 }

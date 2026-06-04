@@ -9,6 +9,11 @@ from typing import Any
 import flowpilot_router_runtime_state_persistence as _parent
 
 
+for _name, _value in vars(_parent).items():
+    if not (_name.startswith("__") and _name.endswith("__")):
+        globals().setdefault(_name, _value)
+
+
 def _bind_router(router: ModuleType) -> None:
     _parent._bind_router(router)
     current = globals()

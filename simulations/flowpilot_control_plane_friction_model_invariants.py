@@ -635,6 +635,50 @@ def pm_repair_recheck_outcomes_remain_routable(state: State, trace) -> Invariant
         )
     return InvariantResult.pass_()
 
+def current_repair_targets_stay_on_current_packets(state: State, trace) -> InvariantResult:
+    del trace
+    if (
+        state.result_submitted_repair_target_seen
+        and state.result_submitted_repair_target_replaced
+        and not state.result_submitted_repair_target_superseded
+    ):
+        return InvariantResult.fail(
+            "result_submitted repair target was replaced without being superseded"
+        )
+    if state.active_blocker_points_noncurrent_packet and not state.current_target_gate_blocks_stale_target:
+        return InvariantResult.fail(
+            "active blocker pointed at a noncurrent packet without current-target gate"
+        )
+    return InvariantResult.pass_()
+
+def blocked_pm_repair_decisions_are_reissued(state: State, trace) -> InvariantResult:
+    del trace
+    if state.blocked_pm_repair_decision_packet_seen and state.blocked_pm_repair_decision_packet_reused:
+        return InvariantResult.fail(
+            "blocked PM repair decision packet was reused instead of superseded and reissued"
+        )
+    if state.blocked_pm_repair_decision_packet_seen and not state.fresh_pm_repair_decision_packet_issued:
+        return InvariantResult.fail(
+            "blocked PM repair decision packet did not get a fresh current packet"
+        )
+    return InvariantResult.pass_()
+
+def control_plane_fallback_responsibility_is_forbidden(state: State, trace) -> InvariantResult:
+    del trace
+    if state.fallback_responsibility_used:
+        return InvariantResult.fail(
+            "control-plane fallback responsibility was used instead of hard blocking"
+        )
+    return InvariantResult.pass_()
+
+def staged_effect_same_family_expansion_converges(state: State, trace) -> InvariantResult:
+    del trace
+    if state.staged_effect_same_family_repeated and not state.same_family_expansion_stopped:
+        return InvariantResult.fail(
+            "same-family staged effect expansion was not stopped"
+        )
+    return InvariantResult.pass_()
+
 def repair_success_clears_stale_repair_lane(state: State, trace) -> InvariantResult:
     del trace
     if state.active_repair_transaction_stale or state.repair_recheck_pending_action_stale:
@@ -1344,6 +1388,26 @@ INVARIANTS = (
         name="pm_repair_recheck_outcomes_remain_routable",
         description="Reviewer rechecks after PM repair can route blocker or protocol outcomes, not only success.",
         predicate=pm_repair_recheck_outcomes_remain_routable,
+    ),
+    Invariant(
+        name="current_repair_targets_stay_on_current_packets",
+        description="Repair target selection retires replaced result_submitted packets and gates active blockers that point at noncurrent packets.",
+        predicate=current_repair_targets_stay_on_current_packets,
+    ),
+    Invariant(
+        name="blocked_pm_repair_decisions_are_reissued",
+        description="Blocked PM repair decision packets are superseded and replaced by fresh current PM decision packets.",
+        predicate=blocked_pm_repair_decisions_are_reissued,
+    ),
+    Invariant(
+        name="control_plane_fallback_responsibility_is_forbidden",
+        description="Recovery commands hard-block missing current responsibility instead of deriving fallback responsibility.",
+        predicate=control_plane_fallback_responsibility_is_forbidden,
+    ),
+    Invariant(
+        name="staged_effect_same_family_expansion_converges",
+        description="Repeated same-family staged effects must stop expansion at one current staged effect instead of growing parallel candidate state.",
+        predicate=staged_effect_same_family_expansion_converges,
     ),
     Invariant(
         name="repair_success_clears_stale_repair_lane",

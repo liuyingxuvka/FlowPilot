@@ -117,7 +117,7 @@ class FlowPilotHardGateRedTeamReplayTests(FlowPilotRouterRuntimeTestBase):
         stopped = router.stop_router_daemon(root, reason="hard_gate_peer_stop", run_root=run_a)
 
         self.assertEqual(stopped["run_id"], "run-a")
-        self.assertEqual(read_json(root / ".flowpilot" / "current.json")["current_run_id"], "run-b")
+        self.assertEqual(read_json(root / ".flowpilot" / "current.json")["run_id"], "run-b")
         self.assertEqual(read_json(run_a / "runtime" / "router_daemon.lock")["status"], "released")
         self.assertEqual(read_json(run_b / "runtime" / "router_daemon.lock")["status"], "active")
         self.assertFalse(read_json(router.run_state_path(run_a))["daemon_mode_enabled"])

@@ -18,9 +18,9 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(exit_code, 0)
         result = json.loads(stdout.getvalue())
         current = read_json(root / ".flowpilot" / "current.json")
-        self.assertNotEqual(current["current_run_id"], "run-old-running")
+        self.assertNotEqual(current["run_id"], "run-old-running")
         self.assertIn("create_run_shell", [item["action_type"] for item in result["folded_applied_actions"]])
-        self.assertTrue((root / current["current_run_root"] / "run.json").exists())
+        self.assertTrue((root / current["run_root"] / "run.json").exists())
         self.assertEqual(read_json(router.run_state_path(old_run_root)), old_state_before)
         self.assertFalse((old_run_root / "runtime" / "controller_action_ledger.json").exists())
     def test_new_invocation_preserves_multiple_parallel_running_runs(self) -> None:
@@ -46,14 +46,14 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
         result = router.run_until_wait(root, new_invocation=True)
 
         current = read_json(root / ".flowpilot" / "current.json")
-        self.assertNotIn(current["current_run_id"], {"run-a", "run-b"})
+        self.assertNotIn(current["run_id"], {"run-a", "run-b"})
         self.assertIn("create_run_shell", [item["action_type"] for item in result["folded_applied_actions"]])
-        self.assertTrue((root / current["current_run_root"] / "run.json").exists())
+        self.assertTrue((root / current["run_root"] / "run.json").exists())
         self.assertEqual(read_json(router.run_state_path(run_a)), state_a_before)
         self.assertEqual(read_json(router.run_state_path(run_b)), state_b_before)
         index = read_json(root / ".flowpilot" / "index.json")
         run_ids = {item["run_id"] for item in index["runs"]}
-        self.assertTrue({"run-a", "run-b", current["current_run_id"]}.issubset(run_ids))
+        self.assertTrue({"run-a", "run-b", current["run_id"]}.issubset(run_ids))
         self.assertEqual(next(item for item in index["runs"] if item["run_id"] == "run-a")["status"], "running")
         self.assertEqual(next(item for item in index["runs"] if item["run_id"] == "run-b")["status"], "running")
 

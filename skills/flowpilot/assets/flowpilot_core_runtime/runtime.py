@@ -2205,6 +2205,7 @@ _BARE_OUTCOME_DECLARATION_RE = re.compile(
 )
 _ACTIVE_SEMANTIC_BLOCKER_STATUSES = {"active", "repairing", "awaiting_recheck"}
 _CURRENT_PACKET_BLOCKING_STATUSES = {"result_blocked", "review_blocked", "system_validation_blocked", "flowguard_blocked"}
+_REPAIR_REPLACED_PACKET_STATUSES = _CURRENT_PACKET_BLOCKING_STATUSES | {"result_submitted"}
 _NONCURRENT_PACKET_STATUSES = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
 _NONCURRENT_ROUTE_NODE_STATUSES = {"accepted", "waived", "superseded"}
 _PROGRESS_ROUTE_NODE_ENDED_STATUSES = {"accepted", "waived", "superseded", "blocked", "stopped"}
@@ -2423,6 +2424,10 @@ def _packet_route_node_id(packet: Mapping[str, Any]) -> str:
 def _packet_is_noncurrent_for_routing(ledger: Mapping[str, Any], packet: Mapping[str, Any]) -> bool:
     if packet.get("status") in _NONCURRENT_PACKET_STATUSES:
         return True
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    active_route = ledger.get("active_route_version")
+    if active_route is not None and envelope.get("route_version") != active_route:
+        return True
     return _route_node_is_noncurrent(ledger, _packet_route_node_id(packet))
 
 
@@ -2549,6 +2554,47 @@ def _blocker_current_effective(ledger: Mapping[str, Any], blocker: Mapping[str, 
     return True
 
 
+def _packet_current_target_violation(
+    ledger: Mapping[str, Any],
+    packet_id: str,
+    *,
+    require_responsibility: bool = True,
+) -> str:
+    if not packet_id:
+        return "missing_packet_id"
+    packet = ledger.get("packets", {}).get(packet_id)
+    if not isinstance(packet, Mapping):
+        return "missing_packet"
+    status = str(packet.get("status") or "")
+    if status in _NONCURRENT_PACKET_STATUSES:
+        return f"noncurrent_packet_status:{status}"
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    active_route = ledger.get("active_route_version")
+    if active_route is not None and envelope.get("route_version") != active_route:
+        return f"stale_route_version:{envelope.get('route_version')}"
+    route_node_id = str(envelope.get("route_node_id") or "")
+    if _route_node_is_noncurrent(ledger, route_node_id):
+        return f"noncurrent_route_node:{route_node_id}"
+    if require_responsibility and not str(envelope.get("responsibility") or ""):
+        return "missing_packet_responsibility"
+    if status == "result_submitted" and packet.get("accepted_result_id"):
+        return "result_submitted_with_accepted_result"
+    return ""
+
+
+def _packet_is_current_repair_target(ledger: Mapping[str, Any], packet_id: str) -> bool:
+    return not _packet_current_target_violation(ledger, packet_id)
+
+
+def _current_pm_repair_decision_packet_reusable(packet: Mapping[str, Any]) -> bool:
+    status = str(packet.get("status") or "")
+    if status in _NONCURRENT_PACKET_STATUSES or status in _CURRENT_PACKET_BLOCKING_STATUSES:
+        return False
+    if status in {"pm_repair_decision_blocked", "result_blocked"}:
+        return False
+    return status in {"open", "assigned", "acknowledged", "result_submitted"}
+
+
 def _active_semantic_blockers(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return [
         blocker
@@ -2603,7 +2649,9 @@ def _mark_blocked_packet_noncurrent_after_repair(
         packet = ledger.get("packets", {}).get(packet_id)
         if not isinstance(packet, dict):
             continue
-        if packet.get("status") not in _CURRENT_PACKET_BLOCKING_STATUSES:
+        if packet.get("status") not in _REPAIR_REPLACED_PACKET_STATUSES:
+            continue
+        if packet.get("status") == "result_submitted" and packet.get("accepted_result_id"):
             continue
         packet["status"] = "superseded_after_repair"
         packet["superseded_by_outcome_id"] = outcome_id
@@ -2618,6 +2666,30 @@ def _mark_blocked_packet_noncurrent_after_repair(
         )
 
 
+def _mark_repair_target_noncurrent_after_current_reissue(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+    outcome_id: str,
+) -> None:
+    """Retire old repair-chain packet targets once a fresh current packet exists."""
+
+    _mark_blocked_packet_noncurrent_after_repair(ledger, blocker, outcome_id)
+
+
+def _resolve_current_repair_target_packet_id(
+    ledger: Mapping[str, Any],
+    packet: Mapping[str, Any],
+    outcome: Mapping[str, Any],
+) -> str:
+    candidate = str(outcome.get("subject_packet_id") or "")
+    if candidate and _packet_is_current_repair_target(ledger, candidate):
+        return candidate
+    packet_id = str(packet.get("packet_id") or "")
+    if packet_id and _packet_is_current_repair_target(ledger, packet_id):
+        return packet_id
+    return candidate or packet_id
+
+
 def _record_semantic_blocker(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
@@ -2628,7 +2700,7 @@ def _record_semantic_blocker(
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     packet_kind = str(envelope.get("packet_kind", "task"))
     blocker_id = _next_id(ledger, "blocker")
-    repair_target_packet_id = str(outcome.get("subject_packet_id") or packet.get("packet_id") or "")
+    repair_target_packet_id = _resolve_current_repair_target_packet_id(ledger, packet, outcome)
     subject_packet = ledger.get("packets", {}).get(repair_target_packet_id, {})
     subject_envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet, Mapping) else {}
     route_node_id = str(outcome.get("route_node_id") or subject_envelope.get("route_node_id") or "")
@@ -2723,10 +2795,31 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
         raise BlackBoxRuntimeError(
             f"cannot issue PM repair decision packet for blocker {blocker_id} in status {blocker.get('status')}"
         )
-    existing = _find_packet(ledger, packet_kind="pm_repair_decision", subject_id=blocker_id)
+    existing = _find_packet(
+        ledger,
+        packet_kind="pm_repair_decision",
+        subject_id=blocker_id,
+        reusable_statuses={"open", "assigned", "acknowledged", "result_submitted"},
+    )
+    if existing:
+        if not _current_pm_repair_decision_packet_reusable(existing):
+            existing = None
     if existing:
         blocker["pm_repair_packet_id"] = str(existing["packet_id"])
         return str(existing["packet_id"])
+    stale_existing = _find_packet(ledger, packet_kind="pm_repair_decision", subject_id=blocker_id)
+    if isinstance(stale_existing, dict) and stale_existing.get("status") in _CURRENT_PACKET_BLOCKING_STATUSES:
+        stale_existing["status"] = "superseded_after_repair"
+        stale_existing["superseded_by_outcome_id"] = str(blocker.get("outcome_id") or "")
+        stale_existing["superseded_reason"] = "blocked_pm_repair_decision_reissued"
+        stale_existing["superseded_at"] = now_iso()
+        stale_existing["active_blocker_id"] = ""
+        _event(
+            ledger,
+            "blocked_pm_repair_decision_packet_superseded",
+            packet_id=str(stale_existing.get("packet_id") or ""),
+            blocker_id=blocker_id,
+        )
     repair_target_packet = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
     repair_target_envelope = (
         repair_target_packet.get("envelope", {})
@@ -2767,15 +2860,20 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "allowed_decisions": sorted(_PM_REPAIR_DECISIONS),
                 "repair_decision_contract": {
                     "pm_must_choose_allowed_decision": True,
+                    "required_json_shape": {"decision": "<allowed_decision>", "reason": "<brief reason>"},
+                    "top_level_decision_only": True,
+                    "nested_repair_decision_wrappers_forbidden": True,
                     "pm_must_account_for_recommended_resolution": bool(blocker.get("recommended_resolution")),
                     "pm_does_not_mark_blocked_gate_passed_by_text": True,
                     "repair_summary_alone_is_not_completion": True,
                     "repeat_context_is_advisory_not_terminal": True,
                 },
                 "instruction": (
-                    "Return a PM repair decision. PM chooses the repair route using the blocker recommendation and "
-                    "target contract. PM does not impersonate the blocked reviewer, system validation check, FlowGuard "
-                    "pass, or worker deliverable."
+                    "Return exactly one structured JSON object with a top-level allowed decision, for example "
+                    "{\"decision\":\"same_node_repair\",\"reason\":\"current artifact needs same-node repair\"}. "
+                    "Do not wrap the decision inside repair_decision, pm_repair_decision, prose, or any legacy shape. "
+                    "PM chooses the repair route using the blocker recommendation and target contract. PM does not "
+                    "impersonate the blocked reviewer, system validation check, FlowGuard pass, or worker deliverable."
                 ),
             },
             indent=2,
@@ -3117,6 +3215,7 @@ def _issue_sender_repair_packet(
         "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
         "created_at": now_iso(),
     }
+    _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
     _event(ledger, "repair_reissue_packet_issued", blocker_id=blocker["blocker_id"], packet_id=packet_id)
     return packet_id
 
@@ -3140,6 +3239,8 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
             "stale_evidence_ids": list(blocker.get("stale_evidence_ids") or []),
             "created_at": now_iso(),
         }
+        if fresh_packet_id:
+            _mark_repair_target_noncurrent_after_current_reissue(ledger, blocker, decision_id)
         blocker["status"] = "awaiting_recheck"
         return
     if decision in {"same_node_repair", "sender_reissue", "collect_more_evidence"}:
@@ -4939,6 +5040,7 @@ def _find_packet(
     packet_kind: str,
     subject_id: str,
     target_result_id: str = "",
+    reusable_statuses: set[str] | None = None,
 ) -> dict[str, Any] | None:
     for packet in ledger.get("packets", {}).values():
         envelope = packet.get("envelope", {})
@@ -4949,6 +5051,8 @@ def _find_packet(
         if target_result_id and envelope.get("target_result_id", "") != target_result_id:
             continue
         if packet.get("status") in {"quarantined_after_route_mutation", "superseded_after_repair"}:
+            continue
+        if reusable_statuses is not None and packet.get("status") not in reusable_statuses:
             continue
         return packet
     return None
@@ -6421,6 +6525,7 @@ def final_return_preflight(
         if not isinstance(finding, Mapping):
             continue
         blockers.append(f"accepted_packet_lease_health:{finding.get('packet_id', 'unknown')}")
+    blockers.extend(_current_target_preflight_blockers(ledger, next_action))
     if guard_map.get("controller_stop_allowed") is not True:
         blockers.append("lifecycle_guard_disallows_stop")
     if guard_map.get("decision") != "terminal_return":
@@ -6446,6 +6551,58 @@ def final_return_preflight(
         "accepted_packet_lease_health": accepted_health,
         "sealed_bodies_visible": False,
     }
+
+
+def _current_target_preflight_blockers(
+    ledger: Mapping[str, Any],
+    next_action: Mapping[str, Any],
+) -> list[str]:
+    blockers: list[str] = []
+    subject_id = str(next_action.get("subject_id") or "")
+    if subject_id and subject_id in ledger.get("packets", {}):
+        violation = _packet_current_target_violation(ledger, subject_id)
+        if violation:
+            blockers.append(f"next_action_current_target:{subject_id}:{violation}")
+        packet = ledger.get("packets", {}).get(subject_id)
+        envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) and isinstance(packet.get("envelope"), Mapping) else {}
+        if (
+            isinstance(packet, Mapping)
+            and envelope.get("packet_kind", "task") == "pm_repair_decision"
+            and packet.get("status") in _CURRENT_PACKET_BLOCKING_STATUSES
+        ):
+            blockers.append(f"next_action_blocked_pm_repair_decision:{subject_id}")
+    for blocker in ledger.get("active_blockers", {}).values():
+        if not isinstance(blocker, Mapping):
+            continue
+        if blocker.get("status") not in (_ACTIVE_SEMANTIC_BLOCKER_STATUSES | {"awaiting_pm_decision_gate"}):
+            continue
+        blocker_id = str(blocker.get("blocker_id") or "")
+        for field in ("packet_id", "subject_packet_id", "repair_target_packet_id"):
+            packet_id = str(blocker.get(field) or "")
+            if not packet_id:
+                continue
+            packet = ledger.get("packets", {}).get(packet_id)
+            if not isinstance(packet, Mapping):
+                continue
+            violation = _packet_current_target_violation(ledger, packet_id, require_responsibility=False)
+            if violation:
+                blockers.append(f"active_blocker_current_target:{blocker_id}:{field}:{packet_id}:{violation}")
+            if packet.get("status") == "result_submitted" and not packet.get("accepted_result_id"):
+                blockers.append(f"active_blocker_result_submitted_target:{blocker_id}:{field}:{packet_id}")
+    for gate in ledger.get("pm_decision_gates", {}).values():
+        if not isinstance(gate, Mapping):
+            continue
+        if gate.get("status") not in {"awaiting_flowguard", "awaiting_review", "awaiting_system_closure", "pending"}:
+            continue
+        gate_id = str(gate.get("gate_id") or "")
+        for field in ("source_packet_id",):
+            packet_id = str(gate.get(field) or "")
+            if not packet_id:
+                continue
+            violation = _packet_current_target_violation(ledger, packet_id, require_responsibility=False)
+            if violation:
+                blockers.append(f"pm_gate_current_target:{gate_id}:{field}:{packet_id}:{violation}")
+    return blockers
 
 
 def _foreground_duty_action(guard: Mapping[str, Any]) -> str:
@@ -6486,14 +6643,14 @@ def _foreground_wait_patrol(
     }
 
 
-def _packet_recovery_responsibility(ledger: Mapping[str, Any], packet_id: str, fallback: str = "") -> str:
+def _packet_recovery_responsibility(ledger: Mapping[str, Any], packet_id: str) -> str:
     packet = ledger.get("packets", {}).get(packet_id)
     if isinstance(packet, Mapping):
         envelope = packet.get("envelope") if isinstance(packet.get("envelope"), Mapping) else {}
         responsibility = str(envelope.get("responsibility") or "")
         if responsibility:
             return responsibility
-    return fallback
+    return ""
 
 
 def _foreground_recovery_command(
@@ -6507,7 +6664,7 @@ def _foreground_recovery_command(
     packet_id = str(wait_subject.get("packet_id") or next_action.get("subject_id") or "")
     responsibility = str(next_action.get("responsibility") or "")
     if packet_id:
-        responsibility = _packet_recovery_responsibility(ledger, packet_id, responsibility)
+        responsibility = _packet_recovery_responsibility(ledger, packet_id)
     stale_lease_ids: list[str] = []
     repair = wait_recovery.get("repair") if isinstance(wait_recovery.get("repair"), Mapping) else {}
     if isinstance(repair, Mapping):
@@ -6520,6 +6677,20 @@ def _foreground_recovery_command(
         command = "repair-accepted-packet"
         args = {"packet_id": packet_id}
         cli_args = ["repair-accepted-packet", "--packet-id", packet_id]
+    elif packet_id and not responsibility:
+        return {
+            "schema_version": "black_box_flowpilot.recovery_command.v1",
+            "command": "control-plane-blocker",
+            "args": {"packet_id": packet_id, "reason": "missing current packet responsibility"},
+            "cli": "",
+            "packet_id": packet_id,
+            "responsibility": "",
+            "host_kind": "",
+            "stale_lease_ids": stale_lease_ids,
+            "cleanup_action": "hard_block_until_current_packet_responsibility_exists",
+            "reason": "missing current packet responsibility",
+            "sealed_bodies_visible": False,
+        }
     else:
         command = "resolve-role-assignment"
         args = {
@@ -6882,6 +7053,19 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                 return RuntimeAction("wait_for_ack", "assigned lease has not acknowledged", packet["packet_id"])
             if packet["status"] == "acknowledged":
                 return RuntimeAction("wait_for_result", "ACK is liveness only", packet["packet_id"])
+
+    for packet in active_packets:
+        if (
+            packet["status"] in _CURRENT_PACKET_BLOCKING_STATUSES
+            and packet["envelope"].get("packet_kind", "task") == "pm_repair_decision"
+        ):
+            blocker_id = str(packet["envelope"].get("subject_id") or packet.get("repair_blocker_id") or "")
+            return RuntimeAction(
+                "issue_pm_repair_decision_packet",
+                "blocked PM repair decision packet is noncurrent and must be reissued",
+                blocker_id,
+                "pm",
+            )
 
     for packet in active_packets:
         if packet["status"] in {"result_blocked", "review_blocked", "system_validation_blocked", "flowguard_blocked"}:

@@ -9,7 +9,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 MODEL_ID = "flowpilot_validation_automation_pm_gates"
-MAX_SEQUENCE_LENGTH = 22
+MAX_SEQUENCE_LENGTH = 23
 
 
 @dataclass(frozen=True)
@@ -28,6 +28,9 @@ class State:
     high_risk_pm_decision_recorded: bool = False
     high_risk_pm_decision_staged: bool = False
     staged_effect_recorded: bool = False
+    same_family_staged_effect_repeated: bool = False
+    same_family_staged_effect_converged: bool = False
+    same_family_staged_effect_parallel_candidate_created: bool = False
     pm_gate_flowguard_passed: bool = False
     pm_gate_reviewer_passed: bool = False
     pm_gate_system_validation_recorded: bool = False
@@ -79,6 +82,7 @@ REQUIRED_SAFE_LABELS = (
     "apply_low_risk_pm_decision_directly",
     "record_high_risk_pm_decision",
     "stage_high_risk_pm_decision",
+    "converge_same_family_staged_effect",
     "pass_pm_decision_flowguard_gate",
     "pass_pm_decision_reviewer_gate",
     "record_pm_decision_system_validation",
@@ -182,6 +186,18 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, high_risk_pm_decision_staged=True, staged_effect_recorded=True),
             ),
         )
+    if not state.same_family_staged_effect_converged:
+        return (
+            Transition(
+                "converge_same_family_staged_effect",
+                replace(
+                    state,
+                    same_family_staged_effect_repeated=True,
+                    same_family_staged_effect_converged=True,
+                    same_family_staged_effect_parallel_candidate_created=False,
+                ),
+            ),
+        )
     if not state.pm_gate_flowguard_passed:
         return (Transition("pass_pm_decision_flowguard_gate", replace(state, pm_gate_flowguard_passed=True)),)
     if not state.pm_gate_reviewer_passed:
@@ -237,6 +253,16 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("high-risk PM decision staged before record")
     if state.high_risk_pm_decision_staged and not state.staged_effect_recorded:
         failures.append("high-risk PM decision staged without staged_effect")
+    if state.same_family_staged_effect_repeated and not state.same_family_staged_effect_converged:
+        failures.append("same-family staged effect did not converge before PM gate")
+    if state.same_family_staged_effect_parallel_candidate_created:
+        failures.append("same-family staged effect created parallel candidate state")
+    if (
+        state.pm_gate_flowguard_passed
+        and state.high_risk_pm_decision_staged
+        and not state.same_family_staged_effect_converged
+    ):
+        failures.append("PM gate opened before same-family staged effect convergence")
     if state.pm_gate_flowguard_passed and not state.high_risk_pm_decision_staged:
         failures.append("PM gate FlowGuard passed before high-risk decision staging")
     if state.pm_gate_reviewer_passed and not state.pm_gate_flowguard_passed:
@@ -297,6 +323,7 @@ def is_success(state: State) -> bool:
         and state.low_risk_pm_decision_applied
         and state.high_risk_pm_decision_staged
         and state.staged_effect_recorded
+        and state.same_family_staged_effect_converged
         and state.pm_gate_system_closure_recorded
         and state.staged_pm_decision_applied
         and state.old_packet_roles_rejected
@@ -334,6 +361,21 @@ def hazard_states() -> dict[str, State]:
         "pm_decision_reviewer_missing": replace(base, pm_decision_reviewer_missing=True),
         "low_risk_repair_forced_through_gate": replace(base, low_risk_repair_forced_through_gate=True),
         "staged_effect_missing_before_gate": replace(base, staged_effect_recorded=False, staged_effect_missing_before_gate=True),
+        "same_family_staged_effect_not_converged": replace(
+            base,
+            same_family_staged_effect_repeated=True,
+            same_family_staged_effect_converged=False,
+        ),
+        "same_family_staged_effect_parallel_candidate": replace(
+            base,
+            same_family_staged_effect_parallel_candidate_created=True,
+        ),
+        "pm_gate_before_staged_effect_convergence": replace(
+            base,
+            pm_gate_flowguard_passed=True,
+            high_risk_pm_decision_staged=True,
+            same_family_staged_effect_converged=False,
+        ),
         "semantic_review_demands_future_committed_state": replace(base, semantic_review_demands_future_committed_state=True),
     }
 
@@ -348,6 +390,7 @@ def state_summary(state: State) -> dict[str, object]:
         "low_risk_pm_decision_applied": state.low_risk_pm_decision_applied,
         "high_risk_pm_decision_staged": state.high_risk_pm_decision_staged,
         "staged_effect_recorded": state.staged_effect_recorded,
+        "same_family_staged_effect_converged": state.same_family_staged_effect_converged,
         "pm_gate_flowguard_passed": state.pm_gate_flowguard_passed,
         "pm_gate_reviewer_passed": state.pm_gate_reviewer_passed,
         "pm_gate_system_closure_recorded": state.pm_gate_system_closure_recorded,

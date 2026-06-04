@@ -314,6 +314,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
+    if not state.current_repair_target_gate_checked:
+        yield Transition(
+            "current_repair_target_gate_retires_old_packets",
+            _inc(
+                state,
+                holder="router",
+                current_repair_target_gate_checked=True,
+                result_submitted_repair_target_seen=True,
+                result_submitted_repair_target_replaced=True,
+                result_submitted_repair_target_superseded=True,
+                active_blocker_points_noncurrent_packet=True,
+                current_target_gate_blocks_stale_target=True,
+                blocked_pm_repair_decision_packet_seen=True,
+                blocked_pm_repair_decision_packet_reused=False,
+                fresh_pm_repair_decision_packet_issued=True,
+                fallback_responsibility_used=False,
+                staged_effect_same_family_repeated=True,
+                same_family_expansion_stopped=True,
+            ),
+        )
+        return
+
     if not state.pm_research_package_written:
         yield Transition(
             "pm_writes_research_package_with_scope_fields",

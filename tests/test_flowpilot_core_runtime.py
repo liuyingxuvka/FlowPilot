@@ -376,6 +376,35 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(flowguard_packets), 1)
         self.assertEqual(json.loads(flowguard_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
+    def test_staged_effect_same_family_reuses_pending_effect(self) -> None:
+        record: dict[str, object] = {}
+
+        first = runtime._attach_staged_effect(
+            record,
+            effect_kind="commit_route_mutation",
+            source_packet_id="packet-1",
+            source_result_id="result-1",
+            target_node_id="node-1",
+            blocker_id="blocker-1",
+            gate_id="gate-1",
+            route_scope="node",
+        )
+        second = runtime._attach_staged_effect(
+            record,
+            effect_kind="commit_route_mutation",
+            source_packet_id="packet-2",
+            source_result_id="result-2",
+            target_node_id="node-2",
+            blocker_id="blocker-2",
+            gate_id="gate-2",
+            route_scope="node",
+        )
+
+        self.assertIs(second, first)
+        self.assertEqual(record["staged_effect"], first)
+        self.assertEqual(first["source_packet_id"], "packet-1")
+        self.assertEqual(first["gate_id"], "gate-1")
+
     def test_mutate_route_pm_decision_stages_route_effect_until_gate_applies(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         runtime.create_route(ledger, "Route", ["Node one"])
@@ -519,6 +548,122 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             and packet["status"] == "open"
         ]
         self.assertEqual(len(reissues), 1)
+
+    def test_result_submitted_repair_target_is_superseded_after_reissue(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        result_id = runtime.submit_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_submitted")
+
+        blocker_id = "blocker-result-submitted"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "active",
+            "outcome_id": "outcome-result-submitted",
+            "packet_id": packet_id,
+            "packet_kind": "task",
+            "subject_packet_id": packet_id,
+            "repair_target_packet_id": packet_id,
+            "target_result_id": result_id,
+            "result_id": result_id,
+            "owner_role": "worker",
+            "required_recheck_role": "worker",
+            "gate_kind": "task",
+            "blocker_class": "local_artifact",
+            "recommended_resolution": "reissue current work",
+            "route_version": ledger["active_route_version"],
+            "route_node_id": "",
+            "route_scope": "",
+            "repair_generation": 0,
+            "stale_evidence_ids": [result_id],
+            "created_at": runtime.now_iso(),
+            "pm_repair_packet_id": "",
+            "pm_repair_decision_id": "",
+            "cleared_by_outcome_id": "",
+        }
+        decision_id = "pm_repair_decision-result-submitted"
+        ledger["pm_repair_decisions"][decision_id] = {
+            "decision_id": decision_id,
+            "blocker_id": blocker_id,
+            "packet_id": "packet-decision",
+            "result_id": "result-decision",
+            "decision": "sender_reissue",
+            "reason": "Replace a submitted but unaccepted packet.",
+            "created_at": runtime.now_iso(),
+        }
+
+        runtime._apply_pm_repair_decision(ledger, blocker_id, decision_id)
+
+        self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
+        fresh_packet_id = ledger["repair_transactions"][decision_id]["fresh_packet_id"]
+        self.assertEqual(ledger["packets"][fresh_packet_id]["status"], "open")
+        self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "awaiting_recheck")
+
+    def test_final_preflight_blocks_active_blocker_pointing_at_result_submitted_target(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        result_id = runtime.submit_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
+        blocker_id = "blocker-stale-submitted"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "active",
+            "outcome_id": "outcome-stale-submitted",
+            "packet_id": packet_id,
+            "packet_kind": "task",
+            "subject_packet_id": packet_id,
+            "repair_target_packet_id": packet_id,
+            "target_result_id": result_id,
+            "result_id": result_id,
+            "owner_role": "worker",
+            "required_recheck_role": "worker",
+            "gate_kind": "task",
+            "blocker_class": "local_artifact",
+            "recommended_resolution": "repair",
+            "route_version": ledger["active_route_version"],
+            "route_node_id": "",
+            "route_scope": "",
+            "repair_generation": 0,
+            "stale_evidence_ids": [result_id],
+            "created_at": runtime.now_iso(),
+            "pm_repair_packet_id": "",
+            "pm_repair_decision_id": "",
+            "cleared_by_outcome_id": "",
+        }
+
+        preflight = runtime.final_return_preflight(ledger)
+
+        self.assertFalse(preflight["allowed"])
+        self.assertTrue(
+            any(
+                blocker.startswith(f"active_blocker_result_submitted_target:{blocker_id}:")
+                for blocker in preflight["blockers"]
+            ),
+            preflight["blockers"],
+        )
+
+    def test_foreground_recovery_missing_packet_responsibility_hard_blocks(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "SEALED_TASK_BODY")
+        ledger["packets"][packet_id]["envelope"]["responsibility"] = ""
+        guard = {
+            "decision": "replace_lease",
+            "next_action": {
+                "action_type": "replace_lease",
+                "subject_id": packet_id,
+                "responsibility": "worker",
+            },
+            "wait_subject": {"packet_id": packet_id},
+            "wait_recovery": {"lease_id": "lease-stale"},
+        }
+
+        command = runtime._foreground_recovery_command(ledger, guard)
+
+        self.assertEqual(command["command"], "control-plane-blocker")
+        self.assertEqual(command["packet_id"], packet_id)
+        self.assertEqual(command["responsibility"], "")
+        self.assertEqual(command["cli"], "")
+        self.assertEqual(command["cleanup_action"], "hard_block_until_current_packet_responsibility_exists")
 
     def test_evidence_summary_finalizer_excludes_self_artifacts(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -741,6 +886,14 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(packet["accepted_result_id"], "")
         self.assertTrue(result["envelope"]["ack_result_accepted_separate"])
         self.assertEqual(result["envelope"]["output_contract"]["packet_id"], packet_id)
+        flowguard_packets = [
+            packet
+            for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "flowguard_check"
+            and packet["envelope"]["subject_id"] == packet_id
+        ]
+        self.assertEqual(len(flowguard_packets), 1)
+        self.assertEqual(runtime.router_next_action(ledger).subject_id, flowguard_packets[0]["packet_id"])
         self.assertEqual(control_surface.audit_packet_contracts(ledger), [])
 
     def test_generated_role_handoff_and_packet_open_are_role_symmetric(self) -> None:
@@ -971,14 +1124,18 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
+        self.assertEqual(ledger["packets"][pm_packet]["status"], "result_blocked")
         self.assertFalse(ledger["pm_repair_decisions"])
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "issue_pm_repair_decision_packet")
 
-        ledger["packets"][pm_packet]["status"] = "open"
-        ledger["packets"][pm_packet]["assigned_lease_id"] = ""
-        good_pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-good", packet_id=pm_packet)
-        runtime.assign_packet(ledger, pm_packet, good_pm_lease)
-        runtime.ack_lease(ledger, good_pm_lease, pm_packet)
-        runtime.submit_result(ledger, good_pm_lease, pm_packet, json.dumps({"decision": "stop_for_user"}))
+        fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
+        self.assertNotEqual(fresh_pm_packet, pm_packet)
+        self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
+
+        good_pm_lease = runtime.lease_agent(ledger, "pm", packet_id=fresh_pm_packet)
+        runtime.assign_packet(ledger, fresh_pm_packet, good_pm_lease)
+        runtime.ack_lease(ledger, good_pm_lease, fresh_pm_packet)
+        runtime.submit_result(ledger, good_pm_lease, fresh_pm_packet, json.dumps({"decision": "stop_for_user"}))
 
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "stopped")
         self.assertEqual(runtime.router_next_action(ledger).action_type, "wait_for_resume")
@@ -994,8 +1151,40 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "active")
-        self.assertNotEqual(recovery["fresh_packet_id"], pm_packet)
+        self.assertNotEqual(recovery["fresh_packet_id"], fresh_pm_packet)
         self.assertEqual(ledger["packets"][recovery["fresh_packet_id"]]["envelope"]["packet_kind"], "pm_repair_decision")
+
+    def test_nested_pm_repair_decision_wrapper_is_rejected_and_reissued(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            json.dumps({"decision": "block", "blocking": True, "recommended_resolution": "needs PM"}),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-wrapper", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+
+        bad_result = runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            json.dumps({"repair_decision": {"decision": "same_node_repair", "reason": "legacy wrapper"}}),
+        )
+
+        self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
+        self.assertFalse(ledger["pm_repair_decisions"])
+        fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
+
+        self.assertNotEqual(fresh_pm_packet, pm_packet)
+        self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
+        body = json.loads(ledger["packets"][fresh_pm_packet]["body"])
+        self.assertTrue(body["repair_decision_contract"]["top_level_decision_only"])
+        self.assertTrue(body["repair_decision_contract"]["nested_repair_decision_wrappers_forbidden"])
 
 
 if __name__ == "__main__":

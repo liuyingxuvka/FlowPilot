@@ -91,6 +91,13 @@ def _model_test_alignment_report() -> dict[str, Any]:
         "node_acceptance_staged_effect_kind": "commit_node_acceptance_plan" in runtime_text,
         "staged_node_acceptance_test": "test_node_acceptance_plan_result_stages_effect_before_closure" in core_test_text,
         "staged_route_mutation_test": "test_mutate_route_pm_decision_stages_route_effect_until_gate_applies" in core_test_text,
+        "current_target_bad_packet_tests": (
+            "test_result_submitted_repair_target_is_superseded_after_reissue" in core_test_text
+            and "test_nested_pm_repair_decision_wrapper_is_rejected_and_reissued" in core_test_text
+        ),
+        "staged_effect_same_family_convergence_test": (
+            "test_staged_effect_same_family_reuses_pending_effect" in core_test_text
+        ),
         "review_future_state_boundary_card_test": "test_current_contract_staged_effect_guidance_is_role_scoped" in (
             REPO_ROOT / "tests" / "test_flowpilot_card_instruction_coverage.py"
         ).read_text(encoding="utf-8"),

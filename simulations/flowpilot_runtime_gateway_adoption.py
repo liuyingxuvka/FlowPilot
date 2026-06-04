@@ -42,7 +42,9 @@ PROOF_ARTIFACT_ID = "tests.test_flowpilot_runtime_gateway_adoption"
 APPROVED_GATEWAY_MODULES: dict[str, str] = {
     "card_runtime_io.py": GATEWAY_CARD_RUNTIME,
     "flowpilot_controller_break_glass.py": GATEWAY_BREAK_GLASS,
+    "flowpilot_controller_break_glass_core.py": GATEWAY_BREAK_GLASS,
     "flowpilot_router_daemon_runtime.py": GATEWAY_ROUTER_JSON,
+    "flowpilot_router_daemon_runtime_lock.py": GATEWAY_ROUTER_JSON,
     "flowpilot_router_event_dispatcher.py": GATEWAY_ROUTER_JSON,
     "flowpilot_router_io_json.py": GATEWAY_ROUTER_JSON,
     "flowpilot_router_io_locks.py": GATEWAY_ROUTER_JSON,
@@ -332,6 +334,7 @@ def _gateway_observations(surfaces: dict[str, dict[str, Any]]) -> list[RuntimeWr
                     action_id="flowpilot-runtime-gateway-adoption",
                     step_contract_ids=("harden-flowpilot-control-plane-recovery.runtime_gateway_adoption",),
                     code_boundary_ids=module_boundaries,
+                    runtime_node_ids=(surface_id,),
                     proof_artifact_ids=(PROOF_ARTIFACT_ID, INVENTORY_EVIDENCE_ID),
                     current=True,
                     result_status="passed",
@@ -353,7 +356,7 @@ def _direct_violation_observations(findings: Iterable[StaticWriteFinding]) -> li
                 write_kind=RUNTIME_WRITE_DIRECT,
                 result_status="failed",
                 current=True,
-                unsupported_historical_bypass_reason=finding.message,
+                legacy_bypass_reason=finding.message,
                 metadata=finding.to_dict(),
             )
         )
@@ -427,7 +430,7 @@ def known_bad_cases() -> list[dict[str, Any]]:
             "report": report.to_dict(),
             "expected_codes": [
                 "writer_observation_not_passing",
-                "declared_unsupported_historical_gateway_bypass",
+                "declared_legacy_gateway_bypass",
                 "direct_state_write_bypasses_gateway",
             ],
         }

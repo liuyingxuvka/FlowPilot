@@ -21035,6 +21035,74 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-current-target-repair - FlowPilot current-target repair hardening for stale package, PM decision, fallback, and fake/bad packet control-plane friction
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a clean non-compat repair of all observed FlowPilot control-plane friction surfaces, including FlowGuard model updates, tests, fake package regressions, installed skill sync, and local git recording.
+- Status: completed
+- Skill decision: OpenSpec change plus FlowGuard existing-model preflight, model-miss review, DevelopmentProcessFlow, model-test alignment, and TestMesh-style verification
+- Started: 2026-06-04T13:30:00Z
+- Ended: 2026-06-04T16:03:20Z
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_control_plane_friction_model.py
+- simulations/flowpilot_control_plane_friction_model_state.py
+- simulations/flowpilot_control_plane_friction_model_transitions.py
+- simulations/flowpilot_control_plane_friction_model_invariants.py
+- simulations/flowpilot_control_plane_friction_model_hazards.py
+- simulations/flowpilot_validation_pm_gate_model.py
+- simulations/meta_model.py
+- simulations/capability_model.py
+
+### Commands
+- python -c import-flowguard-schema: ok, schema 1.0
+- python -c importlib-metadata-flowguard-version: ok, package 0.40.8
+- python -m flowguard project-audit --root .: ok
+- openspec validate harden-flowpilot-current-target-repair --strict: ok
+- python -m pytest tests/test_flowpilot_core_runtime.py -q: ok, 44 passed, 28 subtests passed
+- python -m pytest tests/test_flowpilot_high_standard_control_flow.py -q: ok, 20 passed, 4 subtests passed
+- python -m pytest lifecycle and historical replay suites: ok, 32 passed, 19 subtests passed
+- python -m pytest control-plane canary replay suites: ok, 10 passed, 14 subtests passed
+- python -m pytest model-test alignment and runner contracts: ok, 19 passed, 646 subtests passed
+- python -m pytest control-plane contracts/gates, cards, bootstrap, runtime owner, persistence, and gateway suites: ok
+- python simulations/run_flowpilot_validation_pm_gate_checks.py --no-write-results: ok, 23 sequences, 276 traces, 0 violations
+- python simulations/run_flowpilot_control_plane_friction_checks.py --skip-live-audit: ok, 57 sequences, 4535 traces, 0 violations
+- python simulations/run_meta_checks.py and python simulations/run_capability_checks.py: ok, stable artifacts exit 0
+- python scripts/flowguard_project_topology.py build/check: ok
+- python scripts/install_flowpilot.py --install-missing --sync-repo-owned --json, --check --json: ok
+- python scripts/audit_local_install_sync.py --json and python scripts/check_install.py: ok
+
+### Findings
+- The root friction was stale evidence remaining routable after a newer repair/result existed; the runtime now resolves to the current repair target and retires replaced old packets.
+- PM repair decisions now have one current shape: top-level decision plus reason; nested wrappers are unsupported and reissued rather than normalized.
+- Active blockers, next actions, and final preflight now reject noncurrent packet targets, stale active route versions, and missing current responsibility.
+- Runtime/router owns mechanical validity while FlowGuard and Reviewer are kept on substantive review of the real current artifact or process effect.
+- FlowGuard models and model-test alignment now cover result_submitted replacement, blocked PM decision reuse, no fallback responsibility, fake/bad packet cases, and staged-effect convergence.
+- Installed local FlowPilot was refreshed from repository source and verified fresh after the final topology rebuild.
+
+### Counterexamples
+- Replaced result_submitted packets are superseded after current repair reissue, while ordinary pending result_submitted packets still proceed to FlowGuard/review.
+- Nested PM repair-decision wrappers are rejected; blocked PM decision packets are superseded and freshly reissued.
+- Missing current responsibility hard-blocks control-plane recovery instead of using fallback fields.
+- Same-family staged effects converge without creating a parallel candidate ledger.
+
+### Friction Points
+- Initial background wrappers for meta/capability did not produce exit artifacts, so the checks were rerun under the required stable artifact names.
+- Meta/capability refreshed thin parent result files after topology was built; rebuilding topology before install self-check fixed the stale-source finding.
+
+### Skipped Steps
+- No public release, GitHub push, tag, or deploy was performed.
+- No legacy compatibility parser, old-field migration, fallback responsibility, or nested-wrapper normalization was added.
+
+### Risk Evidence Summary
+- Evidence supports the current-target repair, PM-decision reissue, no-fallback recovery, fake/bad packet rejection, model-test alignment, topology freshness, and local installed skill freshness.
+
+### Next Actions
+- For future FlowPilot control-plane repairs, keep the current-contract split: runtime validates ids and shape, FlowGuard reviews process/state risk, Reviewer reviews quality and evidence.
+- Keep topology rebuild after any validation command that refreshes result artifacts, then run install sync/check serially.
+
+
 ## stage-flowpilot-gated-effects - FlowPilot staged gated effects and current-contract mechanical runtime validation
 
 - Project: FlowGuardProjectAutopilot_20260430
