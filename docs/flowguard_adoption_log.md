@@ -21034,6 +21034,60 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+
+## harden-flowpilot-replayable-control-repair-20260605 - Replayable package and hard user-stop repair
+
+- Project: FlowPilot
+- Trigger reason: user requested the planned OpenSpec plus FlowGuard repair completed end-to-end, without compatibility fallback layers, with installed/local/git synchronization.
+- Status: implemented, validated, installed, synced, local git committed
+- Skill decision: OpenSpec proposal plus FlowGuard existing-model preflight, DevelopmentProcessFlow validation, and Controller break-glass model coverage.
+- FlowGuard schema: 1.0
+- OpenSpec change: `harden-flowpilot-replayable-control-repair`
+
+### Model Files
+- `simulations/flowpilot_controller_break_glass_model.py`
+- `simulations/run_flowpilot_controller_break_glass_checks.py`
+- `simulations/flowpilot_controller_break_glass_results.json`
+- `simulations/flowpilot_decision_liveness_results.json`
+- `simulations/flowpilot_new_control_plane_duty_results.json`
+- `docs/flowguard_project_topology.json`
+
+### Commands
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - schema 1.0.
+- OK: `python -m flowguard project-audit --root .` - package 0.40.9, schema 1.0.
+- OK: `openspec validate harden-flowpilot-replayable-control-repair --strict --json`.
+- OK: `python -m py_compile` for touched runtime, model, and test files.
+- OK: `python -m unittest tests.test_flowpilot_core_runtime tests.test_flowpilot_new_entrypoint tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_controller_break_glass` - 90 tests passed.
+- OK: `python simulations/run_flowpilot_controller_break_glass_checks.py --json-out simulations/flowpilot_controller_break_glass_results.json`.
+- OK: `python simulations/run_flowpilot_core_runtime_checks.py --json-out simulations/flowpilot_core_runtime_results.json`.
+- OK: `python simulations/run_flowpilot_new_entrypoint_checks.py --json-out simulations/flowpilot_new_entrypoint_results.json`.
+- OK: `python simulations/run_flowpilot_decision_liveness_checks.py --json-out simulations/flowpilot_decision_liveness_results.json`.
+- OK: `python simulations/run_flowpilot_new_control_plane_duty_checks.py --json-out simulations/flowpilot_new_control_plane_duty_results.json`.
+- OK: `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check`.
+- OK: `python -m unittest tests.test_flowguard_project_topology tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_maintenance_tools` - 35 tests passed.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json`.
+
+### Findings
+- New packets now carry one replayability acceptance rule for scripts, checkers, and evidence generators.
+- Reviewer guidance now defaults to inspecting existing run outputs and reruns only targeted suspicious, critical, stale-looking, or adversarial evidence.
+- PM guidance now routes replayability/package-handoff control-plane blockers to existing Controller break-glass when normal PM repair cannot form a legal next action.
+- `stop_for_user` recovery now requires explicit user intent before a PM repair decision can be reissued; ordinary patrol/resume leaves the blocker stopped.
+- Installed FlowPilot skill digest matches repository source after sync, and install self-check passes after topology refresh.
+
+### Counterexamples
+- `non_replayable_packet_script_bound_to_specific_packet_id`
+- `plain_resume_reissued_pm_repair_decision_after_stop_for_user`
+- `control_plane_replayability_blocker_sent_directly_to_user_stop`
+- `reviewer_reruns_every_script_by_default`
+
+### Skipped Steps
+- No compatibility parser, old packet fallback, old-router fallback, or broad schema migration was added.
+- No GitHub push, tag, release, deploy, or public publication was performed.
+
+### Next Actions
+- Archive the OpenSpec change after maintainer review if this behavior is accepted.
+- Keep topology rebuild/check after validation commands that refresh tracked result files before install self-check.
+
 ## harden-flowpilot-new-only-control-plane - FlowPilot new-only control-plane cleanup
 
 - Project: FlowGuardProjectAutopilot_20260430

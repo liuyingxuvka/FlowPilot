@@ -539,7 +539,14 @@ def resume(root: Path, *, reason: str = "manual_resume") -> dict[str, Any]:
     }
 
 
-def resolve_stopped_blocker(root: Path, *, blocker_id: str, resolution: str, reason: str = "") -> dict[str, Any]:
+def resolve_stopped_blocker(
+    root: Path,
+    *,
+    blocker_id: str,
+    resolution: str,
+    reason: str = "",
+    user_requested: bool = False,
+) -> dict[str, Any]:
     shell = run_shell.load_run_shell(root)
     ledger = run_shell.load_run_ledger(shell)
     recovery = runtime.resolve_stopped_blocker(
@@ -547,6 +554,7 @@ def resolve_stopped_blocker(root: Path, *, blocker_id: str, resolution: str, rea
         blocker_id,
         resolution=resolution,
         reason=reason,
+        user_requested=user_requested,
     )
     folded = _run_until_wait_and_save(shell, ledger, guard_trigger="resolve_stopped_blocker")
     return {
@@ -627,6 +635,11 @@ def main(argv: list[str] | None = None) -> int:
         choices=["reissue_pm_repair_decision", "stop_run", "cancel_run"],
     )
     stopped_parser.add_argument("--reason", default="")
+    stopped_parser.add_argument(
+        "--user-requested",
+        action="store_true",
+        help="Required when reissuing a PM repair decision after stop_for_user.",
+    )
 
     resolve = sub.add_parser("resolve-role-assignment", help="Resolve reuse/create/block before opening a role surface")
     resolve.add_argument("--packet-id", required=True)
@@ -714,6 +727,7 @@ def main(argv: list[str] | None = None) -> int:
                 blocker_id=args.blocker_id,
                 resolution=args.resolution,
                 reason=args.reason,
+                user_requested=args.user_requested,
             )
         elif args.command == "resolve-role-assignment":
             payload = resolve_role_assignment(

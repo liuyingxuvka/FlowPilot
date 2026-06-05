@@ -60,6 +60,10 @@ failures:
   with no valid release condition.
 - A `control_blocker` exists but the PM repair, packet, or role-output channel
   needed to handle it is itself unavailable or contradictory.
+- A package-produced script, checker, or evidence generator is not replayable
+  because execution is bound to a specific FlowPilot packet id, current active
+  packet, or one-time phase, and normal PM repair cannot form a legal next
+  action.
 - A prompt/card requires a return event that Router's current
   `allowed_external_events` does not allow.
 - `runtime_kit/manifest.json`, `runtime_kit/contracts/contract_index.json`,

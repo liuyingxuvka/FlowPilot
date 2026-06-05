@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=9 initial_states=1 traces=225",
+    "summary": "sequences=9 initial_states=1 traces=270",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -153,9 +153,10 @@
     "accepted_scenarios": [
       "control_flow_stuck_no_legal_next_action",
       "event_authority_contradiction",
+      "non_replayable_package_artifact_blocks_packet_replay",
       "pm_packet_repair_lane_broken"
     ],
-    "edge_count": 21,
+    "edge_count": 26,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -163,6 +164,6 @@
       "normal_pm_repair_available",
       "ordinary_project_bug"
     ],
-    "state_count": 22
+    "state_count": 27
   }
 }

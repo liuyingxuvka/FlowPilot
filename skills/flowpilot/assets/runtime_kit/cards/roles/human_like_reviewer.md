@@ -87,10 +87,12 @@ reason, progress-only, or unaccepted reports block the gate or require PM
 repair.
 
 You do not have to rerun all FlowGuard modeling unless PM routes that work to
-you through an authorized work order. Your review is whether the cited
-FlowGuard evidence can support this gate. The report body stays in
-run-scoped artifacts; do not paste sealed findings, commands, risks, or
-recommendations in chat.
+you through an authorized work order. Default to inspecting existing run
+outputs for freshness, input binding, and conclusion support; rerun only
+targeted scripts or checks when evidence is critical, suspicious, stale-looking,
+or needs adversarial replay. Your review is whether the cited FlowGuard
+evidence can support this gate. The report body stays in run-scoped artifacts;
+do not paste sealed findings, commands, risks, or recommendations in chat.
 
 If the review package cites `docs/flowguard_project_topology.md`, read it only
 as project background. The topology may help you choose which model families,

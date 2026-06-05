@@ -18,6 +18,7 @@ VALID_SCENARIOS = (
     "control_flow_stuck_no_legal_next_action",
     "event_authority_contradiction",
     "pm_packet_repair_lane_broken",
+    "non_replayable_package_artifact_blocks_packet_replay",
 )
 NEGATIVE_SCENARIOS = (
     "ordinary_project_bug",
@@ -46,6 +47,7 @@ class State:
     ordinary_project_defect: bool = False
     normal_repair_available: bool = False
     normal_lanes_checked: bool = False
+    package_artifact_not_replayable: bool = False
     playbook_read: bool = False
     incident_recorded: bool = False
     recovery_transaction_recorded: bool = False
@@ -116,6 +118,7 @@ def _scenario_state(name: str) -> State:
             ordinary_project_defect=False,
             normal_repair_available=False,
             normal_lanes_checked=True,
+            package_artifact_not_replayable=name == "non_replayable_package_artifact_blocks_packet_replay",
             patch_used=name in PATCH_SCENARIOS,
         )
     return State(

@@ -150,6 +150,22 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(progress["source"], "packets")
         self.assertTrue(progress["packet_projection_used"])
 
+    def test_task_packet_acceptance_criteria_include_replayable_artifact_rule(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        runtime.create_route(ledger, "Route", ["Do work"])
+
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Do work",
+            "SEALED_TASK_BODY",
+            acceptance_criteria=["specific criterion"],
+        )
+
+        criteria = ledger["packets"][packet_id]["envelope"]["acceptance_criteria"]
+        self.assertEqual(criteria[0], "specific criterion")
+        self.assertIn(runtime.REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION, criteria)
+
     def test_current_progress_fraction_counts_route_nodes_and_repairs_equally(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         ledger["route_nodes"] = {
@@ -1330,16 +1346,27 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.reconcile_resume_request(ledger, resume_source="plain_resume")
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "stopped")
 
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "explicit user request"):
+            runtime.resolve_stopped_blocker(
+                ledger,
+                blocker_id,
+                resolution="reissue_pm_repair_decision",
+                reason="plain resume must not continue current repair",
+            )
+        self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "stopped")
+
         recovery = runtime.resolve_stopped_blocker(
             ledger,
             blocker_id,
             resolution="reissue_pm_repair_decision",
             reason="user chose to continue current repair",
+            user_requested=True,
         )
 
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "active")
         self.assertNotEqual(recovery["fresh_packet_id"], fresh_pm_packet)
         self.assertEqual(ledger["packets"][recovery["fresh_packet_id"]]["envelope"]["packet_kind"], "pm_repair_decision")
+        self.assertTrue(recovery["user_requested"])
 
     def test_nested_pm_repair_decision_wrapper_is_rejected_and_reissued(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()

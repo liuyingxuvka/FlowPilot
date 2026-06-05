@@ -48,6 +48,10 @@ budget is exhausted or the artifact also shows contamination. Treat
 `fatal_protocol_violation` as a stop condition until PM or the user records an
 explicit recovery decision. Always follow the artifact's `policy_row_id`,
 `pm_recovery_options`, `return_policy`, and `hard_stop_conditions`.
+If the blocker is caused by non-replayable package scripts, package handoff
+defects, event-authority contradictions, or evidence-entry defects, and the
+normal PM repair lane cannot form a legal next action, prefer existing
+Controller break-glass repair before user stop / `stop_for_user`.
 
 Before choosing repair or mutation, read the latest route-memory prior path
 context and the reviewer block source path. Do not create a repair node from
@@ -100,6 +104,8 @@ Allowed PM decisions:
 - request sender reissue;
 - issue a repair packet to the correct role;
 - mutate route and invalidate stale evidence;
+- use Controller break-glass for FlowPilot control-plane blocker repair when the
+  normal repair lane cannot form a legal next action;
 - stop for user when a human decision is required;
 - quarantine contaminated evidence.
 

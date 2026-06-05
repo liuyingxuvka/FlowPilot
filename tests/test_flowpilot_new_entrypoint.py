@@ -17,6 +17,7 @@ if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
 flowpilot_new = importlib.import_module("flowpilot_new")
+runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
 entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entrypoint_checks")
 
@@ -221,7 +222,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertNotIn("recommended_runner_commands", flowguard_body)
             self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
 
-    def test_resolve_stopped_blocker_reissues_current_pm_repair_packet(self) -> None:
+    def test_resolve_stopped_blocker_requires_explicit_user_request_before_reissue(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             started = flowpilot_new.start_run(
@@ -273,11 +274,19 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             )
 
             resumed = flowpilot_new.resume(root, reason="plain_resume")
+            with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "explicit user request"):
+                flowpilot_new.resolve_stopped_blocker(
+                    root,
+                    blocker_id=blocker_id,
+                    resolution="reissue_pm_repair_decision",
+                    reason="Plain resume must not continue current repair.",
+                )
             recovered = flowpilot_new.resolve_stopped_blocker(
                 root,
                 blocker_id=blocker_id,
                 resolution="reissue_pm_repair_decision",
                 reason="User selected continued repair.",
+                user_requested=True,
             )
             ledger = run_shell.load_run_ledger(shell)
             fresh_packet = ledger["packets"][recovered["recovery"]["fresh_packet_id"]]
@@ -286,6 +295,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "active")
             self.assertNotEqual(fresh_packet["packet_id"], repair_packet)
             self.assertEqual(fresh_packet["envelope"]["packet_kind"], "pm_repair_decision")
+            self.assertTrue(recovered["recovery"]["user_requested"])
             self.assertEqual(recovered["next_action"]["action_type"], "resolve_role_assignment")
 
     def test_flowguard_operator_is_leased_through_its_own_packet(self) -> None:

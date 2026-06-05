@@ -61,6 +61,10 @@ checks, progress-only evidence, and `flowguard_pm_acceptance`. Missing, stale,
 wrongly scoped, skipped without reason, progress-only, or unaccepted FlowGuard
 reports block pass or require PM repair.
 
+Default to inspecting existing run outputs for freshness, input binding, and
+conclusion support. Rerun only targeted scripts or checks when evidence is
+critical, suspicious, stale-looking, or needs adversarial replay.
+
 When Router provides `batch_id`, `packet_ids`, or a packet index, verify that PM
 opened each relayed result body through the runtime and recorded a PM
 disposition before this gate. The sealed review body must identify `batch_id`,

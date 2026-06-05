@@ -409,6 +409,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         reviewer_text = " ".join(_card_path_by_id("reviewer.core").read_text(encoding="utf-8").lower().split())
         self.assertIn("you do not have to rerun all flowguard modeling", reviewer_text)
         self.assertIn("unless pm routes that work", reviewer_text)
+        self.assertIn("default to inspecting existing run outputs", reviewer_text)
+        self.assertIn("rerun only targeted scripts or checks", reviewer_text)
         self.assertIn("whether the cited flowguard evidence can support this gate", reviewer_text)
 
     def test_reviewer_formal_package_reuses_existing_acceptance_sources(self) -> None:
@@ -428,6 +430,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("node_acceptance_plan", text)
             self.assertIn("blockers", text)
             self.assertIn("recommended_resolution", text)
+        self.assertIn("default to inspecting existing run outputs", worker_review)
+        self.assertIn("rerun only targeted scripts or checks", worker_review)
 
     def test_packet_open_success_requires_work_or_existing_exit(self) -> None:
         def normalized(path: Path) -> str:
@@ -593,6 +597,26 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         pm_resume = normalized(_card_path_by_id("pm.resume_decision"))
         self.assertIn("plain lifecycle resume does not clear", pm_resume)
         self.assertIn("resolve-stopped-blocker", pm_resume)
+        self.assertIn("--user-requested", pm_resume)
+        self.assertIn("ordinary patrol, resume, or chat-history context must not do it automatically", pm_resume)
+
+    def test_control_plane_replayability_blocker_routes_to_existing_break_glass_before_user_stop(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        pm_blocked = normalized(_card_path_by_id("pm.event.reviewer_blocked"))
+        pm_repair = normalized(_card_path_by_id("pm.review_repair"))
+        break_glass = normalized(_card_path_by_id("controller.break_glass_repair"))
+
+        for text in (pm_blocked, pm_repair):
+            self.assertIn("non-replayable package scripts", text)
+            self.assertIn("controller break-glass", text)
+            self.assertIn("normal repair lane cannot form a legal next action", text)
+            self.assertIn("before user stop", text)
+
+        self.assertIn("package-produced script, checker, or evidence generator is not replayable", break_glass)
+        self.assertIn("specific flowpilot packet id", break_glass)
+        self.assertIn("normal pm repair cannot form a legal next action", break_glass)
 
     def test_flowguard_project_topology_guidance_is_role_scoped(self) -> None:
         def normalized(path: Path) -> str:

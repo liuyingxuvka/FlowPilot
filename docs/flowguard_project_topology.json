@@ -12522,7 +12522,7 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780607768.3273697,
+  "generated_at_epoch": 1780644543.85933,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 10,
@@ -13413,7 +13413,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 21,
+        "edge_count": 26,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -13444,7 +13444,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 22
+        "state_count": 27
       },
       "model_path": "simulations/flowpilot_controller_break_glass_model.py",
       "result_path": "simulations/flowpilot_controller_break_glass_results.json",
@@ -18325,15 +18325,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779954142967105200,
+      "mtime_ns": 1780644079801291700,
       "path": "simulations/flowpilot_controller_break_glass_model.py",
-      "size": 13177
+      "size": 13395
     },
     {
       "exists": true,
-      "mtime_ns": 1780228016798933900,
+      "mtime_ns": 1780644453038375700,
       "path": "simulations/flowpilot_controller_break_glass_results.json",
-      "size": 5423
+      "size": 5486
     },
     {
       "exists": true,
@@ -18397,7 +18397,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780607114611791800,
+      "mtime_ns": 1780644434768656400,
       "path": "simulations/flowpilot_core_runtime_results.json",
       "size": 25609
     },
@@ -18529,7 +18529,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780563117515884100,
+      "mtime_ns": 1780644455067354600,
       "path": "simulations/flowpilot_decision_liveness_results.json",
       "size": 61536
     },
@@ -18829,7 +18829,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780319439055367900,
+      "mtime_ns": 1780644453045383300,
       "path": "simulations/flowpilot_new_control_plane_duty_results.json",
       "size": 2394
     },
@@ -18841,7 +18841,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780484155041363700,
+      "mtime_ns": 1780644435350840300,
       "path": "simulations/flowpilot_new_entrypoint_results.json",
       "size": 6273
     },
@@ -19039,7 +19039,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780607765053566000,
+      "mtime_ns": 1780644541596830400,
       "path": "simulations/flowpilot_project_topology_orientation_results.json",
       "size": 18792
     },
@@ -19837,9 +19837,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1779954150945920600,
+      "mtime_ns": 1780644090216528400,
       "path": "simulations/run_flowpilot_controller_break_glass_checks.py",
-      "size": 8467
+      "size": 8539
     },
     {
       "exists": true,
@@ -20653,9 +20653,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780591806086081400,
+      "mtime_ns": 1780643973588319600,
       "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "size": 31348
+      "size": 31674
     },
     {
       "exists": true,
@@ -22885,9 +22885,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780328708250768300,
+      "mtime_ns": 1780644255724241600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/events/pm_reviewer_blocked.md",
-      "size": 3988
+      "size": 4509
     },
     {
       "exists": true,
@@ -23077,15 +23077,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780606693917727800,
+      "mtime_ns": 1780644028867858600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
-      "size": 11187
+      "size": 11369
     },
     {
       "exists": true,
-      "mtime_ns": 1780328708312766900,
+      "mtime_ns": 1780644246074210000,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
-      "size": 16318
+      "size": 16728
     },
     {
       "exists": true,
@@ -23197,9 +23197,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780403397363614100,
+      "mtime_ns": 1780643997313687800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
-      "size": 14683
+      "size": 14901
     },
     {
       "exists": true,
@@ -23215,9 +23215,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780483893374537800,
+      "mtime_ns": 1780643984521688200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
-      "size": 21202
+      "size": 21420
     },
     {
       "exists": true,
@@ -23239,9 +23239,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780328708355861000,
+      "mtime_ns": 1780644038282143700,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
-      "size": 14463
+      "size": 14705
     },
     {
       "exists": true,

@@ -52,7 +52,8 @@ def _state_id(state: model.State) -> str:
     return (
         f"scenario={state.scenario}|status={state.status}|control={state.flowpilot_control_failure}|"
         f"ordinary={state.ordinary_project_defect}|normal_available={state.normal_repair_available}|"
-        f"lanes={state.normal_lanes_checked}|playbook={state.playbook_read}|"
+        f"lanes={state.normal_lanes_checked}|replayable_artifact={state.package_artifact_not_replayable}|"
+        f"playbook={state.playbook_read}|"
         f"incident={state.incident_recorded}|patch_used={state.patch_used}|"
         f"patch={state.patch_recorded}|returned={state.returned_to_normal_flow}|"
         f"disclosed={state.final_disclosed}"

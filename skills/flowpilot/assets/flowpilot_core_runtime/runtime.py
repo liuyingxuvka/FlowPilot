@@ -41,6 +41,10 @@ PACKET_KINDS = {
     "pm_repair_decision",
     "pm_disposition",
 }
+REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION = (
+    "Scripts, checkers, and evidence generators must be replayable; do not make execution depend on a "
+    "specific FlowPilot packet id, current active packet, or one-time phase."
+)
 
 PREPLANNING_GATE_SCOPES = {
     "high_standard_contract",
@@ -4387,6 +4391,13 @@ def _supersede_older_active_packet_leases(
     return superseded + closed
 
 
+def _default_packet_acceptance_criteria(acceptance_criteria: list[str] | None) -> list[str]:
+    criteria = list(acceptance_criteria or [])
+    if REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION not in criteria:
+        criteria.append(REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION)
+    return criteria
+
+
 def issue_task_packet(
     ledger: dict[str, Any],
     responsibility: str,
@@ -4429,7 +4440,7 @@ def issue_task_packet(
         "route_node_id": route_node_id,
         "route_scope": route_scope,
         "node_context_package_id": node_context_package_id,
-        "acceptance_criteria": list(acceptance_criteria or []),
+        "acceptance_criteria": _default_packet_acceptance_criteria(acceptance_criteria),
         "body_hash": body_hash,
         "body_visibility": "sealed",
         "source_generation": ledger["source_generation"],
@@ -6042,12 +6053,15 @@ def resolve_stopped_blocker(
     *,
     resolution: str,
     reason: str = "",
+    user_requested: bool = False,
 ) -> dict[str, Any]:
     _assert_not_terminal_lifecycle(ledger)
     blocker = _require(ledger.setdefault("active_blockers", {}), blocker_id, "semantic blocker")
     if blocker.get("status") != "stopped":
         raise BlackBoxRuntimeError("stopped-blocker recovery requires a stopped semantic blocker")
     if resolution == "reissue_pm_repair_decision":
+        if not user_requested:
+            raise BlackBoxRuntimeError("reissue_pm_repair_decision requires explicit user request")
         old_packet_id = str(blocker.get("pm_repair_packet_id") or "")
         old_packet = ledger.get("packets", {}).get(old_packet_id)
         if isinstance(old_packet, dict):
@@ -6057,6 +6071,7 @@ def resolve_stopped_blocker(
         blocker["status"] = "active"
         blocker["recovered_from_stop_at"] = now_iso()
         blocker["stopped_recovery_reason"] = reason
+        blocker["stopped_recovery_user_requested"] = True
         blocker["pm_repair_packet_id"] = ""
         blocker["pm_repair_decision_id"] = ""
         fresh_packet_id = _ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
@@ -6066,12 +6081,14 @@ def resolve_stopped_blocker(
             blocker_id=blocker_id,
             resolution=resolution,
             fresh_packet_id=fresh_packet_id,
+            user_requested=True,
         )
         return {
             "blocker_id": blocker_id,
             "resolution": resolution,
             "fresh_packet_id": fresh_packet_id,
             "status": blocker["status"],
+            "user_requested": True,
         }
     if resolution in {"stop_run", "cancel_run"}:
         terminal_status = "stopped_by_user" if resolution == "stop_run" else "cancelled_by_user"

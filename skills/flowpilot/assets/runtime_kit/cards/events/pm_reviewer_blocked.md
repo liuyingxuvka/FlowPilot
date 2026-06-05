@@ -24,9 +24,18 @@ PM must choose one:
 
 - repair packet;
 - sender reissue;
+- Controller break-glass for FlowPilot control-plane blocker repair when the
+  normal repair lane cannot form a legal next action;
 - route mutation;
 - quarantine evidence;
 - user stop.
+
+For control-plane blockers such as non-replayable package scripts, package
+handoff defects, event-authority contradictions, or evidence-entry defects,
+prefer Controller break-glass repair before user stop when the normal PM repair
+lane cannot form a legal next action. User stop is the fallback when a human
+decision is genuinely required or break-glass is unavailable, unsafe, or outside
+authority.
 
 For reviewer-blocked repair or sender reissue, prefer returning the work to the
 same worker who produced the blocked result so the repair keeps local context,

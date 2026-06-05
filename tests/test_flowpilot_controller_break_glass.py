@@ -10,10 +10,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "skills" / "flowpilot" / "assets"))
+sys.path.insert(0, str(ROOT / "simulations"))
 sys.path.insert(0, str(ROOT / "tests"))
 
 import flowpilot_controller_break_glass as break_glass  # noqa: E402
 import flowpilot_router as router  # noqa: E402
+import run_flowpilot_controller_break_glass_checks as break_glass_checks  # noqa: E402
 from router_runtime.common import FlowPilotRouterRuntimeTestBase, read_json  # noqa: E402
 
 
@@ -50,6 +52,12 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
         self.assertIn("ordinary project bugs", prompt["text"])
         self.assertIn("worker defects", prompt["text"])
         self.assertFalse(prompt["sealed_body_reads_allowed"])
+
+    def test_break_glass_model_accepts_non_replayable_package_artifact_control_blocker(self) -> None:
+        report = break_glass_checks.run_checks()
+        self.assertTrue(report["ok"], report)
+        accepted = report["safe_graph"]["accepted_scenarios"]
+        self.assertIn("non_replayable_package_artifact_blocks_packet_replay", accepted)
 
     def test_break_glass_helper_records_incident_and_patch(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-break-glass-"))
