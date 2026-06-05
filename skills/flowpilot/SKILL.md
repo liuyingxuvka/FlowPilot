@@ -59,10 +59,16 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json open-packet --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json progress --lease-id <lease_id> --packet-id <packet_id> --status still_working
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json submit-result --lease-id <lease_id> --packet-id <packet_id> --body <sealed_result_summary>
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resolve-stopped-blocker --blocker-id <blocker_id> --resolution reattach_required_recheck --user-requested --reason <repair_summary>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json repair-accepted-packet --packet-id <packet_id>
 ```
 
 Copy exact fixed values from the returned `next_action`: `--host-kind` is `live`, `fake`, or `dry_run`; `--responsibility` is the exact packet role or node role returned by the runtime. Role work starts by running `resolve-role-assignment`, then following its returned `lease_commit_command`. If that response says `role_surface_required=true`, open the named role surface first and pass its id with the authorized `--assignment-id`; if it says reuse, do not pass a fresh `--agent-id`. If no listed value fits, stop and report the value-menu mismatch.
+
+Use `reattach_required_recheck` only after the user explicitly requests recovery
+from a PM-stopped blocker because Controller or the user has repaired the
+underlying control-plane/evidence cause. The command reopens the required
+FlowGuard/Reviewer recheck path; it does not clear the blocker directly.
 
 Formal startup creates the run shell, current pointer, run index, sealed startup-intake record, frozen contract, first route, first high-standard pre-planning packet, lifecycle guard, and foreground duty before returning a public next action. `.flowpilot/current.json` is UI focus/default-target metadata; `.flowpilot/runs/<run-id>/ledger.json` is authority. There is no requirement for a non-startup monitoring UI.
 

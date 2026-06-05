@@ -1,0 +1,133 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=12 initial_states=1 traces=156",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "cleared_before_reviewer_pass",
+      "direct_clear_after_break_glass",
+      "pm_reissue_loop_after_stop",
+      "reattached_without_user_request",
+      "stale_recheck_packet_reused",
+      "target_unrestored_at_recheck"
+    ],
+    "hazards": {
+      "cleared_before_reviewer_pass": [
+        "blocker cleared before fresh Reviewer pass"
+      ],
+      "direct_clear_after_break_glass": [
+        "stopped blocker recovery attempted direct blocker clearance",
+        "blocker cleared before fresh Reviewer pass"
+      ],
+      "pm_reissue_loop_after_stop": [
+        "stopped blocker recovery looped through PM instead of required recheck"
+      ],
+      "reattached_without_user_request": [
+        "stopped blocker reattached without explicit user request",
+        "blocker entered awaiting_recheck without explicit user request"
+      ],
+      "stale_recheck_packet_reused": [
+        "stopped blocker recovery reused old recheck packet"
+      ],
+      "target_unrestored_at_recheck": [
+        "blocker reattached before PM-stopped target was restored",
+        "recheck issued while target packet remained pm_stopped"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_stopped_blocker_recheck",
+  "ok": true,
+  "result_type": "flowpilot_stopped_blocker_recheck_checks",
+  "target_plan": {
+    "evidence_role": "stopped_blocker_recheck_model_not_live_host_proof",
+    "failures": [],
+    "labels": [
+      "select_flowguard_operator_stopped_blocker",
+      "select_reviewer_stopped_blocker",
+      "keep_stopped_until_user_request",
+      "record_user_requested_recovery",
+      "restore_pm_stopped_target_status",
+      "reattach_blocker_to_awaiting_recheck",
+      "issue_fresh_flowguard_recheck_packet",
+      "record_fresh_flowguard_pass",
+      "issue_fresh_reviewer_after_flowguard",
+      "issue_fresh_reviewer_recheck_packet",
+      "record_fresh_reviewer_pass",
+      "clear_blocker_via_existing_owner_pass"
+    ],
+    "ok": true,
+    "roles": {
+      "flowguard_operator": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "blocker_status": "cleared",
+          "flowguard_passed": true,
+          "fresh_flowguard_packet_issued": true,
+          "fresh_reviewer_packet_issued": true,
+          "recheck_role": "flowguard_operator",
+          "reviewer_passed": true,
+          "status": "complete",
+          "target_packet_status": "result_submitted",
+          "user_requested_recovery": true
+        }
+      },
+      "reviewer": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "blocker_status": "cleared",
+          "flowguard_passed": false,
+          "fresh_flowguard_packet_issued": false,
+          "fresh_reviewer_packet_issued": true,
+          "recheck_role": "reviewer",
+          "reviewer_passed": true,
+          "status": "complete",
+          "target_packet_status": "result_submitted",
+          "user_requested_recovery": true
+        }
+      }
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_stopped_blocker_recheck_model.py"
+        ],
+        "freshness": "current",
+        "id": "stopped_blocker_recheck_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/reattach-stopped-blocker-recheck/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "stopped_blocker_recheck_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_stopped_blocker_recheck_model.py"
+        ],
+        "freshness": "current",
+        "id": "stopped_blocker_recheck_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

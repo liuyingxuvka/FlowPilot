@@ -21035,6 +21035,50 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-stopped-blocker-recheck-reattachment - stopped blocker recovery
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested the planned FlowPilot stopped-blocker recovery fix completed end to end with OpenSpec and FlowGuard, installed-skill sync, and local git sync.
+- Status: implemented_validated_installed_synced_local_git_pending
+- Skill decision: predictive KB preflight, OpenSpec apply, FlowGuard existing-model preflight, DevelopmentProcessFlow, focused stopped-blocker model, runtime tests, install sync.
+- Started: 2026-06-05T08:30:00+02:00
+- Ended: 2026-06-05T10:57:01+02:00
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_stopped_blocker_recheck_model.py`
+- `simulations/run_flowpilot_stopped_blocker_recheck_checks.py`
+- `simulations/flowpilot_stopped_blocker_recheck_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- OK: `openspec validate reattach-stopped-blocker-recheck --strict`
+- OK: `python simulations/run_flowpilot_stopped_blocker_recheck_checks.py`
+- OK: `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py -q`
+- OK: `python scripts/flowguard_project_topology.py build`
+- OK: `python scripts/flowguard_project_topology.py check`
+- OK: `python simulations/run_meta_checks.py --full ...`
+- OK: `python simulations/run_capability_checks.py --full ...`
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/check_install.py --json`
+
+### Findings
+- Added `reattach_required_recheck` as the formal stopped-blocker return path.
+- Reattachment requires explicit user request, restores the PM-stopped target packet, issues fresh FlowGuard/Reviewer recheck packets, and does not directly clear the blocker.
+- Break-glass and PM resume guidance now return repaired stopped blockers through the formal recheck command instead of another PM loop.
+
+### Counterexamples
+- Reattachment without `--user-requested` is rejected.
+- Old accepted FlowGuard/Reviewer packets are not reused.
+- Direct blocker clearance from break-glass evidence remains forbidden.
+
+### Next Actions
+- Commit the scoped local changes without staging unrelated peer-agent work.
+
+
 ## harden-flowpilot-replayable-control-repair-20260605 - Replayable package and hard user-stop repair
 
 - Project: FlowPilot

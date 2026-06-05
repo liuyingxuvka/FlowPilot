@@ -113,8 +113,8 @@
     "other": {
       "alignment_family_count": 4,
       "code_surface_count": 228,
-      "known_bad_count": 1204,
-      "model_count": 74,
+      "known_bad_count": 1213,
+      "model_count": 75,
       "runner_keys": [
         "capability",
         "command_refinement",
@@ -12522,14 +12522,14 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780644543.85933,
+  "generated_at_epoch": 1780649635.5564408,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 10,
     "code_surfaces": 925,
     "evidence_summaries": 5,
-    "known_bad_signals": 2356,
-    "models": 135,
+    "known_bad_signals": 2365,
+    "models": 136,
     "test_commands": 350
   },
   "model_test_alignment": [
@@ -17020,6 +17020,36 @@
     },
     {
       "area": "other",
+      "coverage_tier": "unclassified_model_tier",
+      "evidence": {
+        "confidence": "",
+        "decision": "",
+        "edge_count": null,
+        "finding_count": null,
+        "full_coverage_ok": null,
+        "known_bad": [
+          "expected",
+          "hazards",
+          "ok",
+          "cleared_before_reviewer_pass",
+          "direct_clear_after_break_glass",
+          "pm_reissue_loop_after_stop",
+          "reattached_without_user_request",
+          "stale_recheck_packet_reused",
+          "target_unrestored_at_recheck"
+        ],
+        "ok": true,
+        "present": true,
+        "release_convergence_ok": null,
+        "state_count": null
+      },
+      "model_path": "simulations/flowpilot_stopped_blocker_recheck_model.py",
+      "result_path": "simulations/flowpilot_stopped_blocker_recheck_results.json",
+      "runner_key": "flowpilot_stopped_blocker_recheck",
+      "runner_path": "simulations/run_flowpilot_stopped_blocker_recheck_checks.py"
+    },
+    {
+      "area": "other",
       "coverage_tier": "supporting_model_owned",
       "evidence": {
         "confidence": "",
@@ -19495,6 +19525,18 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1780648939320608000,
+      "path": "simulations/flowpilot_stopped_blocker_recheck_model.py",
+      "size": 12661
+    },
+    {
+      "exists": true,
+      "mtime_ns": 1780649585703997700,
+      "path": "simulations/flowpilot_stopped_blocker_recheck_results.json",
+      "size": 4259
+    },
+    {
+      "exists": true,
       "mtime_ns": 1780174678873541600,
       "path": "simulations/flowpilot_structural_refactor_model.py",
       "size": 12033
@@ -20389,6 +20431,12 @@
     },
     {
       "exists": true,
+      "mtime_ns": 1780648973194312400,
+      "path": "simulations/run_flowpilot_stopped_blocker_recheck_checks.py",
+      "size": 4644
+    },
+    {
+      "exists": true,
       "mtime_ns": 1780174678994077500,
       "path": "simulations/run_flowpilot_structural_refactor_checks.py",
       "size": 7511
@@ -20557,9 +20605,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780567968646886900,
+      "mtime_ns": 1780649305468489600,
       "path": "skills/flowpilot/SKILL.md",
-      "size": 13576
+      "size": 14086
     },
     {
       "exists": true,
@@ -20653,9 +20701,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780643973588319600,
+      "mtime_ns": 1780649249773357000,
       "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "size": 31674
+      "size": 31697
     },
     {
       "exists": true,
@@ -23077,9 +23125,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780644028867858600,
+      "mtime_ns": 1780649339349508600,
       "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
-      "size": 11369
+      "size": 11563
     },
     {
       "exists": true,
@@ -23203,9 +23251,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780515375189868200,
+      "mtime_ns": 1780649315470117000,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
-      "size": 21044
+      "size": 21071
     },
     {
       "exists": true,
@@ -23239,9 +23287,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780644038282143700,
+      "mtime_ns": 1780649326209867700,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
-      "size": 14705
+      "size": 15051
     },
     {
       "exists": true,

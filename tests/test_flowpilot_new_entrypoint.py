@@ -23,6 +23,23 @@ entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entry
 
 
 class FlowPilotNewEntrypointTests(unittest.TestCase):
+    def test_resolve_stopped_blocker_cli_exposes_reattach_required_recheck(self) -> None:
+        completed = subprocess.run(
+            [
+                sys.executable,
+                str(ASSETS / "flowpilot_new.py"),
+                "resolve-stopped-blocker",
+                "--help",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertIn("reattach_required_recheck", completed.stdout)
+
     def _complete_open_packet(
         self,
         root: Path,

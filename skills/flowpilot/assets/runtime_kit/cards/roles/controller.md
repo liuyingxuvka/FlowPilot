@@ -76,7 +76,7 @@ Allowed actions:
   foreground duty. Fresh runs use `flowpilot_new.py start`, `status`, `patrol`,
   `resume`, `resolve-role-assignment`, `lease-agent`, `role-handoff`, `ack`,
   `progress`, `host-liveness`, `submit-result`, `repair-accepted-packet`,
-  `stop`, `cancel`, and
+  `resolve-stopped-blocker`, `stop`, `cancel`, and
   `final-preflight` as the public control surface;
 - load only Controller-visible current-run metadata: lifecycle guard,
   foreground duty, public packet/result envelopes, leases, status projection,

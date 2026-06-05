@@ -632,13 +632,13 @@ def main(argv: list[str] | None = None) -> int:
     stopped_parser.add_argument(
         "--resolution",
         required=True,
-        choices=["reissue_pm_repair_decision", "stop_run", "cancel_run"],
+        choices=["reissue_pm_repair_decision", "reattach_required_recheck", "stop_run", "cancel_run"],
     )
     stopped_parser.add_argument("--reason", default="")
     stopped_parser.add_argument(
         "--user-requested",
         action="store_true",
-        help="Required when reissuing a PM repair decision after stop_for_user.",
+        help="Required when reissuing or reattaching after stop_for_user.",
     )
 
     resolve = sub.add_parser("resolve-role-assignment", help="Resolve reuse/create/block before opening a role surface")

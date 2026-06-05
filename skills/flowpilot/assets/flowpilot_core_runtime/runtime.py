@@ -3505,6 +3505,8 @@ def _apply_pm_repair_decision(ledger: dict[str, Any], blocker_id: str, decision_
         blocker["stopped_at"] = now_iso()
         target_packet = ledger.get("packets", {}).get(str(blocker.get("repair_target_packet_id") or ""))
         if isinstance(target_packet, dict):
+            if target_packet.get("status") != "pm_stopped" and not target_packet.get("pm_stop_previous_status"):
+                target_packet["pm_stop_previous_status"] = str(target_packet.get("status") or "")
             target_packet["status"] = "pm_stopped"
 
 
@@ -4934,7 +4936,14 @@ def _apply_valid_packet_result(
             recheck_role="flowguard_operator",
             outcome_id=outcome_id,
         )
-        _ensure_review_packet_for_task_result(ledger, packet["envelope"]["subject_id"])
+        repair_blocker_id = str(packet.get("repair_blocker_id") or "")
+        _ensure_review_packet_for_task_result(
+            ledger,
+            packet["envelope"]["subject_id"],
+            force_new=bool(repair_blocker_id),
+            repair_blocker_id=repair_blocker_id,
+            recheck_reason="recheck_after_reattached_stopped_blocker" if repair_blocker_id else "",
+        )
         return
     if packet_kind == "review":
         review_id = _record_review_from_packet_result(ledger, packet, result, outcome=outcome, outcome_id=outcome_id)
@@ -5395,51 +5404,63 @@ def _ensure_flowguard_packet_for_task_result(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
     result: Mapping[str, Any],
+    *,
+    force_new: bool = False,
+    repair_blocker_id: str = "",
+    recheck_reason: str = "",
 ) -> str:
     subject_id = str(packet["packet_id"])
-    existing = _find_packet(ledger, packet_kind="flowguard_check", subject_id=subject_id, target_result_id=str(result["result_id"]))
+    existing = None
+    if not force_new:
+        existing = _find_packet(
+            ledger,
+            packet_kind="flowguard_check",
+            subject_id=subject_id,
+            target_result_id=str(result["result_id"]),
+        )
     if existing:
         return str(existing["packet_id"])
     flowguard_packet_id = _next_id(ledger, "packet")
     evidence_root = _flowguard_packet_evidence_root(ledger, flowguard_packet_id)
     node_id = str(packet["envelope"].get("route_node_id") or "")
     node_context = _optional_node_context_reference(ledger, node_id) if node_id else {}
-    return issue_task_packet(
+    body_payload = {
+        "schema_version": "black_box_flowpilot.flowguard_packet.v1",
+        "subject_packet_id": subject_id,
+        "target_result_id": result["result_id"],
+        "modeled_target": packet["envelope"]["required_flowguard_target"],
+        **node_context,
+        **_staged_effect_public_reference(result),
+        "instruction": (
+            "Produce current-run FlowGuard evidence for the subject packet result. Start from node_context_package "
+            "or staged_effect when present, then independently select or create suitable FlowGuard evidence for "
+            "the result, skipped checks, and residual risks."
+        ),
+        "evidence_output_policy": {
+            "run_local_evidence_root": evidence_root,
+            "required_for_formal_run": True,
+            "tracked_baseline_paths_forbidden_unless_explicit_baseline_update": [
+                "simulations/meta_thin_parent_results.json",
+                "simulations/meta_layered_full_results.json",
+                "simulations/capability_thin_parent_results.json",
+                "simulations/capability_layered_full_results.json",
+            ],
+            "operator_rule": (
+                "Write formal-run FlowGuard evidence under run_local_evidence_root. "
+                "Do not write formal-run evidence to tracked simulations/*_results.json baselines "
+                "unless the packet explicitly requests a baseline refresh."
+            ),
+        },
+    }
+    if repair_blocker_id:
+        body_payload["recheck_for_blocker_id"] = repair_blocker_id
+    if recheck_reason:
+        body_payload["recheck_reason"] = recheck_reason
+    packet_id = issue_task_packet(
         ledger,
         "flowguard_operator",
         f"Run FlowGuard evidence for {subject_id}",
-        json.dumps(
-            {
-                "schema_version": "black_box_flowpilot.flowguard_packet.v1",
-                "subject_packet_id": subject_id,
-                "target_result_id": result["result_id"],
-                "modeled_target": packet["envelope"]["required_flowguard_target"],
-                **node_context,
-                **_staged_effect_public_reference(result),
-                "instruction": (
-                    "Produce current-run FlowGuard evidence for the subject packet result. Start from node_context_package "
-                    "or staged_effect when present, then independently select or create suitable FlowGuard evidence for "
-                    "the result, skipped checks, and residual risks."
-                ),
-                "evidence_output_policy": {
-                    "run_local_evidence_root": evidence_root,
-                    "required_for_formal_run": True,
-                    "tracked_baseline_paths_forbidden_unless_explicit_baseline_update": [
-                        "simulations/meta_thin_parent_results.json",
-                        "simulations/meta_layered_full_results.json",
-                        "simulations/capability_thin_parent_results.json",
-                        "simulations/capability_layered_full_results.json",
-                    ],
-                    "operator_rule": (
-                        "Write formal-run FlowGuard evidence under run_local_evidence_root. "
-                        "Do not write formal-run evidence to tracked simulations/*_results.json baselines "
-                        "unless the packet explicitly requests a baseline refresh."
-                    ),
-                },
-            },
-            indent=2,
-            sort_keys=True,
-        ),
+        json.dumps(body_payload, indent=2, sort_keys=True),
         required_flowguard_target="",
         packet_kind="flowguard_check",
         subject_id=subject_id,
@@ -5450,6 +5471,9 @@ def _ensure_flowguard_packet_for_task_result(
         acceptance_criteria=list(packet["envelope"].get("acceptance_criteria") or []),
         node_context_package_id=str(node_context.get("node_context_package_id") or ""),
     )
+    if repair_blocker_id:
+        ledger["packets"][packet_id]["repair_blocker_id"] = repair_blocker_id
+    return packet_id
 
 
 def _flowguard_packet_evidence_root(ledger: Mapping[str, Any], packet_id: str) -> str:
@@ -5521,34 +5545,50 @@ def _record_flowguard_from_packet_result(
     return order_id
 
 
-def _ensure_review_packet_for_task_result(ledger: dict[str, Any], subject_id: str) -> str:
+def _ensure_review_packet_for_task_result(
+    ledger: dict[str, Any],
+    subject_id: str,
+    *,
+    force_new: bool = False,
+    repair_blocker_id: str = "",
+    recheck_reason: str = "",
+) -> str:
     subject_packet = _require(ledger["packets"], subject_id, "packet")
-    target_result_id = str((subject_packet.get("result_ids") or [""])[-1])
-    existing = _find_packet(ledger, packet_kind="review", subject_id=subject_id, target_result_id=target_result_id)
+    result_ids = [str(item) for item in (subject_packet.get("result_ids") or []) if item]
+    target_result_id = str(
+        (result_ids[-1] if result_ids else "")
+        or subject_packet.get("accepted_result_id")
+        or subject_packet["envelope"].get("target_result_id")
+        or ""
+    )
+    existing = None
+    if not force_new:
+        existing = _find_packet(ledger, packet_kind="review", subject_id=subject_id, target_result_id=target_result_id)
     if existing:
         return str(existing["packet_id"])
     node_id = str(subject_packet["envelope"].get("route_node_id") or "")
     node_context = _optional_node_context_reference(ledger, node_id) if node_id else {}
-    return issue_task_packet(
+    body_payload = {
+        "schema_version": "black_box_flowpilot.review_packet.v1",
+        "subject_packet_id": subject_id,
+        "target_result_id": target_result_id,
+        **node_context,
+        "instruction": (
+            "Review the subject result and matching FlowGuard evidence independently. Start from "
+            "node_context_package as the minimum checklist, then actively inspect relevant files, UI/screenshots, "
+            "logs, commands, model artifacts, and evidence paths inside the authorized scope. Do not treat the "
+            "package as the review boundary."
+        ),
+    }
+    if repair_blocker_id:
+        body_payload["recheck_for_blocker_id"] = repair_blocker_id
+    if recheck_reason:
+        body_payload["recheck_reason"] = recheck_reason
+    packet_id = issue_task_packet(
         ledger,
         "reviewer",
         f"Review result and FlowGuard evidence for {subject_id}",
-        json.dumps(
-            {
-                "schema_version": "black_box_flowpilot.review_packet.v1",
-                "subject_packet_id": subject_id,
-                "target_result_id": target_result_id,
-                **node_context,
-                "instruction": (
-                    "Review the subject result and matching FlowGuard evidence independently. Start from "
-                    "node_context_package as the minimum checklist, then actively inspect relevant files, UI/screenshots, "
-                    "logs, commands, model artifacts, and evidence paths inside the authorized scope. Do not treat the "
-                    "package as the review boundary."
-                ),
-            },
-            indent=2,
-            sort_keys=True,
-        ),
+        json.dumps(body_payload, indent=2, sort_keys=True),
         required_flowguard_target="",
         packet_kind="review",
         subject_id=subject_id,
@@ -5558,6 +5598,9 @@ def _ensure_review_packet_for_task_result(ledger: dict[str, Any], subject_id: st
         acceptance_criteria=list(subject_packet["envelope"].get("acceptance_criteria") or []),
         node_context_package_id=str(node_context.get("node_context_package_id") or ""),
     )
+    if repair_blocker_id:
+        ledger["packets"][packet_id]["repair_blocker_id"] = repair_blocker_id
+    return packet_id
 
 
 def _record_review_from_packet_result(
@@ -6047,6 +6090,125 @@ def record_resume_request(ledger: dict[str, Any], reason: str = "manual_resume")
     _event(ledger, "resume_requested", reason=reason)
 
 
+def _supersede_stopped_blocker_pm_packet(ledger: dict[str, Any], blocker: Mapping[str, Any]) -> None:
+    old_packet_id = str(blocker.get("pm_repair_packet_id") or "")
+    old_packet = ledger.get("packets", {}).get(old_packet_id)
+    if isinstance(old_packet, dict):
+        old_packet["status"] = "superseded_after_repair"
+        old_packet["superseded_reason"] = "stopped_blocker_recovery"
+        old_packet["superseded_at"] = now_iso()
+
+
+def _restore_pm_stopped_repair_target(ledger: dict[str, Any], blocker: Mapping[str, Any]) -> str:
+    target_packet_id = str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or "")
+    if not target_packet_id:
+        raise BlackBoxRuntimeError("reattach_required_recheck requires a stopped blocker repair target")
+    target_packet = ledger.get("packets", {}).get(target_packet_id)
+    if not isinstance(target_packet, dict):
+        raise BlackBoxRuntimeError(f"reattach_required_recheck target packet does not exist: {target_packet_id}")
+    if target_packet.get("status") != "pm_stopped":
+        return str(target_packet.get("status") or "")
+    previous_status = str(target_packet.get("pm_stop_previous_status") or "")
+    if not previous_status:
+        has_result = bool(
+            target_packet.get("result_ids")
+            or target_packet.get("accepted_result_id")
+            or blocker.get("target_result_id")
+        )
+        if not has_result:
+            raise BlackBoxRuntimeError("PM-stopped target is missing previous status and result evidence")
+        previous_status = "result_submitted"
+    target_packet["status"] = previous_status
+    target_packet["pm_stop_restored_at"] = now_iso()
+    _event(
+        ledger,
+        "pm_stopped_target_restored",
+        blocker_id=str(blocker.get("blocker_id") or ""),
+        packet_id=target_packet_id,
+        restored_status=previous_status,
+    )
+    return previous_status
+
+
+def _stopped_blocker_recheck_subject_packet_id(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> str:
+    for field in ("repair_target_packet_id", "subject_packet_id"):
+        packet_id = str(blocker.get(field) or "")
+        packet = ledger.get("packets", {}).get(packet_id)
+        if isinstance(packet, Mapping):
+            return packet_id
+    packet_id = str(blocker.get("packet_id") or "")
+    packet = ledger.get("packets", {}).get(packet_id)
+    envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) else {}
+    subject_id = str(envelope.get("subject_id") or "")
+    if subject_id and isinstance(ledger.get("packets", {}).get(subject_id), Mapping):
+        return subject_id
+    if isinstance(packet, Mapping):
+        return packet_id
+    raise BlackBoxRuntimeError("reattach_required_recheck could not identify a subject packet")
+
+
+def _stopped_blocker_target_result(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+    subject_packet: Mapping[str, Any],
+) -> Mapping[str, Any]:
+    envelope = subject_packet.get("envelope", {}) if isinstance(subject_packet.get("envelope"), Mapping) else {}
+    result_ids = [str(item) for item in (subject_packet.get("result_ids") or []) if item]
+    candidates = [
+        str(blocker.get("target_result_id") or ""),
+        str(subject_packet.get("accepted_result_id") or ""),
+        result_ids[-1] if result_ids else "",
+        str(envelope.get("target_result_id") or ""),
+    ]
+    for result_id in candidates:
+        if result_id and isinstance(ledger.get("results", {}).get(result_id), Mapping):
+            return ledger["results"][result_id]
+    raise BlackBoxRuntimeError("reattach_required_recheck requires an existing target result")
+
+
+def _stopped_blocker_recheck_kind(blocker: Mapping[str, Any]) -> str:
+    blocker_class = str(blocker.get("blocker_class") or "")
+    gate_kind = str(blocker.get("gate_kind") or "")
+    recheck_role = str(blocker.get("required_recheck_role") or "")
+    if blocker_class == "flowguard_failure" or gate_kind == "flowguard_check" or recheck_role == "flowguard_operator":
+        return "flowguard_check"
+    if gate_kind == "review" or recheck_role == "reviewer":
+        return "review"
+    raise BlackBoxRuntimeError("reattach_required_recheck supports FlowGuard or Reviewer semantic blockers only")
+
+
+def _issue_required_recheck_packet_for_stopped_blocker(
+    ledger: dict[str, Any],
+    blocker: Mapping[str, Any],
+    *,
+    reason: str,
+) -> tuple[str, str]:
+    subject_packet_id = _stopped_blocker_recheck_subject_packet_id(ledger, blocker)
+    subject_packet = _require(ledger["packets"], subject_packet_id, "subject packet")
+    recheck_kind = _stopped_blocker_recheck_kind(blocker)
+    repair_blocker_id = str(blocker.get("blocker_id") or "")
+    recheck_reason = reason or "reattach_required_recheck"
+    if recheck_kind == "flowguard_check":
+        result = _stopped_blocker_target_result(ledger, blocker, subject_packet)
+        fresh_packet_id = _ensure_flowguard_packet_for_task_result(
+            ledger,
+            subject_packet,
+            result,
+            force_new=True,
+            repair_blocker_id=repair_blocker_id,
+            recheck_reason=recheck_reason,
+        )
+        return fresh_packet_id, recheck_kind
+    fresh_packet_id = _ensure_review_packet_for_task_result(
+        ledger,
+        subject_packet_id,
+        force_new=True,
+        repair_blocker_id=repair_blocker_id,
+        recheck_reason=recheck_reason,
+    )
+    return fresh_packet_id, recheck_kind
+
+
 def resolve_stopped_blocker(
     ledger: dict[str, Any],
     blocker_id: str,
@@ -6062,12 +6224,7 @@ def resolve_stopped_blocker(
     if resolution == "reissue_pm_repair_decision":
         if not user_requested:
             raise BlackBoxRuntimeError("reissue_pm_repair_decision requires explicit user request")
-        old_packet_id = str(blocker.get("pm_repair_packet_id") or "")
-        old_packet = ledger.get("packets", {}).get(old_packet_id)
-        if isinstance(old_packet, dict):
-            old_packet["status"] = "superseded_after_repair"
-            old_packet["superseded_reason"] = "stopped_blocker_recovery"
-            old_packet["superseded_at"] = now_iso()
+        _supersede_stopped_blocker_pm_packet(ledger, blocker)
         blocker["status"] = "active"
         blocker["recovered_from_stop_at"] = now_iso()
         blocker["stopped_recovery_reason"] = reason
@@ -6087,6 +6244,42 @@ def resolve_stopped_blocker(
             "blocker_id": blocker_id,
             "resolution": resolution,
             "fresh_packet_id": fresh_packet_id,
+            "status": blocker["status"],
+            "user_requested": True,
+        }
+    if resolution == "reattach_required_recheck":
+        if not user_requested:
+            raise BlackBoxRuntimeError("reattach_required_recheck requires explicit user request")
+        _supersede_stopped_blocker_pm_packet(ledger, blocker)
+        restored_status = _restore_pm_stopped_repair_target(ledger, blocker)
+        blocker["status"] = "awaiting_recheck"
+        blocker["recovered_from_stop_at"] = now_iso()
+        blocker["stopped_recovery_reason"] = reason
+        blocker["stopped_recovery_user_requested"] = True
+        blocker["pm_repair_packet_id"] = ""
+        blocker["pm_repair_decision_id"] = ""
+        blocker["reattached_required_recheck_at"] = now_iso()
+        fresh_packet_id, recheck_kind = _issue_required_recheck_packet_for_stopped_blocker(
+            ledger,
+            blocker,
+            reason=reason or "reattach_required_recheck",
+        )
+        _event(
+            ledger,
+            "stopped_blocker_resolved",
+            blocker_id=blocker_id,
+            resolution=resolution,
+            fresh_packet_id=fresh_packet_id,
+            recheck_kind=recheck_kind,
+            restored_target_status=restored_status,
+            user_requested=True,
+        )
+        return {
+            "blocker_id": blocker_id,
+            "resolution": resolution,
+            "fresh_packet_id": fresh_packet_id,
+            "recheck_kind": recheck_kind,
+            "restored_target_status": restored_status,
             "status": blocker["status"],
             "user_requested": True,
         }

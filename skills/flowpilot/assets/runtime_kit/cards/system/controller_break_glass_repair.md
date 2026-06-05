@@ -271,6 +271,12 @@ action. Return to `flowpilot_new.py` lifecycle guard and foreground-duty
 processing.
 Do not mark any route gate complete from break-glass evidence alone.
 
+When break-glass or user repair fixes the cause of a PM-stopped semantic
+blocker, return through `flowpilot_new.py resolve-stopped-blocker --resolution
+reattach_required_recheck --user-requested`. This restores the required
+FlowGuard/Reviewer recheck path and must not be replaced by direct blocker
+clearance or another PM repair-decision loop.
+
 An incident may leave open status only through one of these closure paths:
 
 - a closed Recovery Supervisor transaction linked to the incident;

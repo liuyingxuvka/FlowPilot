@@ -36,12 +36,14 @@ deferred, waived with authority, or stopped before PM continues dependent
 route work.
 
 Plain lifecycle resume does not clear a PM-stopped semantic blocker. If the
-current blocker was stopped through `stop_for_user`, PM must choose an explicit
-current-runtime recovery path, such as `resolve-stopped-blocker
---resolution reissue_pm_repair_decision --user-requested`, or a terminal
-stop/cancel decision. Reissuing the PM repair decision after `stop_for_user`
-requires explicit user intent; ordinary patrol, resume, or chat-history context
-must not do it automatically.
+current blocker was stopped through `stop_for_user`, ordinary PM resume must
+not continue dependent route work or loop another PM repair decision from chat
+context. After the user explicitly requests recovery because Controller or the
+user repaired the stopped cause, Controller may use `resolve-stopped-blocker
+--resolution reattach_required_recheck --user-requested` to return to the
+required FlowGuard/Reviewer recheck path. Reissuing the PM repair decision
+after `stop_for_user` also requires explicit user intent; ordinary patrol,
+resume, or chat-history context must not do it automatically.
 Do not continue dependent route work from chat history, Controller prose, or a
 generic resume event.
 
