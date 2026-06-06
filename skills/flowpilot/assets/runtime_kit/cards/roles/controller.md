@@ -190,19 +190,20 @@ Allowed actions:
   lifecycle guard before waiting on role chat, `wait_agent`, or role-binding
   output completion. Use `flowpilot_new.py patrol` or the guard's refresh
   command to consume ready duties first. Use unsupported diagnostic commands only when an
-  explicit diagnostic or repair instruction names that old-run fallback.
+  explicit diagnostic or repair instruction names that old-run recovery target.
 - if any runtime-required role binding is missing, cancelled, unknown, timed
   out, no longer addressable, or otherwise cannot be found, immediately record
   `controller_reports_role_liveness_fault` with the affected role key and then
-  follow the router's unified role-recovery actions. This recovery preempts
-  normal waits, packets, gates, route advancement, and control blockers because
-  the blocked work may depend on the lost role.
+  follow the runtime-provided role assignment or replacement recovery for the
+  current packet responsibility. This recovery preempts normal waits, packets,
+  gates, route advancement, and control blockers because the blocked work may
+  depend on the lost role.
 - if Router is waiting for a role output and a fresh liveness check proves the
   role is still reachable, or has ended, but the expected Router output is still
   absent and the role is not continuing the work, record
   `controller_reports_role_no_output` with the Router-visible wait metadata.
   Do not report a role liveness fault for this case; Router will reissue the
-  same work before considering role recovery or PM escalation.
+  same work before considering assignment replacement or PM escalation.
 
 Forbidden actions:
 
@@ -235,10 +236,10 @@ Forbidden actions:
 - do not treat a Controller receipt or Controller checklist tick as Router
   workflow completion. It proves only Controller's local action; Router must
   reconcile the receipt into Router-owned facts before the workflow advances.
-- do not wait for unrelated work to finish before role recovery. A role
-  liveness fault is a recovery-first control-plane event unless the user
-  explicitly stops/cancels the run or the router is already performing terminal
-  cleanup.
+- do not wait for unrelated work to finish before current-packet role
+  assignment or replacement recovery. A role liveness fault is a recovery-first
+  control-plane event unless the user explicitly stops/cancels the run or the
+  router is already performing terminal cleanup.
 
 ## Router Control Blockers
 
@@ -300,5 +301,5 @@ protocol weakness during the run, such as reissuing a mechanically valid but
 ambiguous envelope, recovering from relay/ledger order ambiguity, correcting a
 display-plan projection mismatch, or working around missing router guidance.
 Do not record ordinary project defects as skill observations unless the issue
-is caused by FlowPilot's cards, router state, templates, ledgers, heartbeat, or
-automation behavior.
+is caused by FlowPilot's cards, router state, templates, ledgers, lifecycle
+guard, role-binding, or automation behavior.

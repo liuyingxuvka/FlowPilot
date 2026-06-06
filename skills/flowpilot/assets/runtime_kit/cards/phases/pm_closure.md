@@ -4,7 +4,7 @@ recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
+post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
@@ -74,15 +74,17 @@ Closure order:
 
 1. reconcile state, frontier, route, current pointer, and run index;
 2. reconcile pause, stopped, resumed, and terminal lifecycle records;
-3. stop heartbeat or record manual-resume no-automation evidence;
+3. confirm there is no pending manual-resume lifecycle duty or foreground
+   patrol obligation;
 4. archive role binding and role memory without treating archived roles as live;
 5. write nonblocking FlowPilot skill-improvement observations;
 6. record PM completion decision;
 7. emit final report.
 
 Completion cannot list unresolved risks as accepted completion payload.
-If closure evidence disagrees with the current pointer, frontier, heartbeat, or
-run index, block closure and repair lifecycle state first.
+If closure evidence disagrees with the current pointer, frontier, lifecycle
+guard, status projection, or run index, block closure and repair lifecycle
+state first.
 
 Apply Minimum Sufficient Complexity before final approval. The completion
 decision must not depend on unused route branches, unconsumed generated
@@ -131,7 +133,7 @@ paths from the router delivery envelope.
     "terminal_backward_replay_passed": true,
     "task_completion_projection_ready_for_pm_terminal_closure": true,
     "execution_frontier_current": true,
-    "role_binding_ledger_current": true,
+    "role_assignment_and_lease_state_current": true,
     "continuation_binding_current": true,
     "current_ledgers_clean": true,
     "pm_suggestion_ledger_clean": true,

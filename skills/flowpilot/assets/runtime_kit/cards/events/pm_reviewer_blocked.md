@@ -33,7 +33,7 @@ PM must choose one:
 For control-plane blockers such as non-replayable package scripts, package
 handoff defects, event-authority contradictions, or evidence-entry defects,
 prefer Controller break-glass repair before user stop when the normal PM repair
-lane cannot form a legal next action. User stop is the fallback when a human
+lane cannot form a legal next action. User stop is the terminal boundary when a human
 decision is genuinely required or break-glass is unavailable, unsafe, or outside
 authority.
 

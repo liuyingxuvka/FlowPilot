@@ -4,11 +4,11 @@ recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
+post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
-# PM Role Binding Recovery Freshness
+# PM Role Assignment Freshness
 
 ## Role Capability Reminder
 
@@ -21,30 +21,34 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Put reviewer, worker, or bounded consultation advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Before resume or startup activation, decide whether the router-dispatched role
-slots for the current formal task are fresh.
+Before resume or startup activation, decide whether the runtime-requested role
+assignments and leases for the current formal task are fresh.
 
 Accept only:
 
-- live role bindings opened for this run after the runtime requested their responsibilities;
+- live role bindings opened for this run after the runtime requested their
+  current packet responsibilities;
 - live continuity confirmed by a host liveness preflight for the current run;
-- same-task role memory packets rehydrated into replacement role bindings;
-- explicit user-approved fallback for dispatched role work.
+- same-task role memory packets reused only for the currently requested
+  replacement role binding;
+- explicit user-approved stop or replacement for dispatched role work.
 
-For any live role binding, whether it is first opened, restored, rehydrated, or
-replaced during heartbeat/manual resume, require an explicit
+For any live role binding, whether it is first opened, reused, or replaced
+during manual resume or current assignment recovery, require an explicit
 strongest-available host model request and highest-available reasoning-effort
 request. Foreground/Controller model inheritance is not sufficient role setup.
 
-The same freshness rule applies to mid-run role recovery. If Controller reports
-a role liveness fault, require the router-written `role_recovery_report.json`
-before allowing normal work to continue. The report must show current-run memory/context injection,
-packet ownership reconciliation, and stale/superseded agent output quarantine
-for any restored, replaced, or recycled role.
+The same freshness rule applies to mid-run role assignment or replacement
+recovery. If Controller reports a role liveness fault, require current runtime
+evidence showing the affected packet id, requested responsibility, assignment
+id, lease id when committed, current-run memory/context seed when replacement
+is needed, packet ownership reconciliation, and stale/superseded agent output
+quarantine for any replaced role. Do not accept a stale role report or a fixed
+role-set restoration as current authority.
 
 Prior-run `agent_id` values are audit history only. If any runtime-required
 role binding is missing, stale, cross-run, or unverifiable, block route work
-until PM records a replacement or fallback decision.
+until PM records a replacement, stop, or current-runtime recovery decision.
 
 `wait_agent` timeout is not freshness proof. Treat it as `timeout_unknown`;
 Controller must not continue waiting on that old role unless a later bounded

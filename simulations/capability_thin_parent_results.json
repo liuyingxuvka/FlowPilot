@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-04T21:13:18.244692+00:00",
+  "created_at": "2026-06-06T04:55:47.133747+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -64,30 +64,30 @@
             "state_count": 298
           },
           {
-            "edge_count": 3148,
+            "edge_count": 183,
             "failures": [],
             "missing": false,
             "model_id": "startup_pm_review",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/startup_pm_review_results.json",
-            "result_fingerprint": "2c708018ed54c6dbbd612d04379aa89740d0b4e6fabdcc83db93fb0485a8c795",
+            "result_fingerprint": "db2e53e6661be0f9f760766677bf0a1044d26f7f23c9e69146061e4214aa4201",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 3149
+            "state_count": 180
           },
           {
-            "edge_count": 26,
+            "edge_count": 17,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_startup_intake_ui",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
-            "result_fingerprint": "d1a7ab1dd5c15d6bec46cec305d388cd5df64f5042216122291e8ffbac2744b1",
+            "result_fingerprint": "b2a31d7bb5d3e2d4e90dc68766ff5f1f23b302378193916cfb0d8c41b83f53c7",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 27
+            "state_count": 18
           },
           {
             "edge_count": 38,
@@ -97,7 +97,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_deterministic_startup_bootstrap_results.json",
-            "result_fingerprint": "09290c342eadd580aa1522320710065769cdf96f98feb2b1b111b65d0f3ec6b4",
+            "result_fingerprint": "76ca61291e87b5e9ac50eaf1782f67bc7a8633160cb530271cadcb41e618c134",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 39
@@ -328,7 +328,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_route_display_results.json",
-            "result_fingerprint": "3e9eac0f391d3db56b416b180d43ca1ebb8957c9fc1cdab90443a5df997257bd",
+            "result_fingerprint": "7e29e0006706658b693eeecf2de7bd6dcf9118988331e6ac77fcc5b3a566665d",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 35
@@ -341,23 +341,23 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_controller_patrol_results.json",
-            "result_fingerprint": "c751f06190297591ff5a61a807c3b93f7356b5d03da8cd80fa1e6d95427460ca",
+            "result_fingerprint": "f1048742d91451a7e6abca62a3aec7338b5f4b8533a398b49307fb07bab6e4a6",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 18
           },
           {
-            "edge_count": 26,
+            "edge_count": 17,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_startup_intake_ui",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
-            "result_fingerprint": "d1a7ab1dd5c15d6bec46cec305d388cd5df64f5042216122291e8ffbac2744b1",
+            "result_fingerprint": "b2a31d7bb5d3e2d4e90dc68766ff5f1f23b302378193916cfb0d8c41b83f53c7",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 27
+            "state_count": 18
           }
         ],
         "evidence_ids": [
@@ -413,7 +413,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/defect_governance_results.json",
-            "result_fingerprint": "fabaad9c10d17d7534d6313eb58bc26e99c656334a4f1b62445adb1ff759e623",
+            "result_fingerprint": "e454389af4b4213ded7f4f36472cf41638cf8d2cdf294096c89c113cd8df33cd",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 49

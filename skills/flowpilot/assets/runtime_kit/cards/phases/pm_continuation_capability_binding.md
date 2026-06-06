@@ -4,7 +4,7 @@ recipient_identity: FlowPilot project manager role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
+post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
@@ -25,10 +25,13 @@ Bind continuation to the user's startup answer and current-run evidence.
 
 Check:
 
-- heartbeat is allowed only when startup answers selected scheduled continuation;
-- manual resume is valid when heartbeat is unavailable or not authorized;
-- continuation evidence names current-run state, frontier, packet ledger, and role-binding memory;
-- any heartbeat claim cites the latest current-run heartbeat record, not old state;
-- unsupported continuation capability becomes a PM blocker or manual-resume plan.
+- manual lifecycle resume is valid only when it is recorded through the current
+  `flowpilot_new.py resume` path;
+- continuation evidence names current-run ledger, lifecycle guard, packet/lease
+  state, status projection, and role-binding memory needed for currently
+  requested responsibilities;
+- unsupported continuation capability becomes a PM blocker or explicit
+  manual-resume plan.
 
-Do not let Controller continue route work from a heartbeat status note alone.
+Do not let Controller continue route work from a stale status note, old Router
+state, chat history, or prior role activity alone.
