@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot heartbeat/manual-resume re-entry model."""
+"""Run checks for the FlowPilot manual-resume re-entry model."""
 
 from __future__ import annotations
 
@@ -15,10 +15,9 @@ RESULTS_PATH = Path(__file__).with_name("flowpilot_resume_results.json")
 
 
 REQUIRED_LABELS = (
-    "stable_heartbeat_launcher_entered",
     "stable_manual_resume_launcher_entered",
     "resume_wake_recorded_to_router",
-    "one_minute_heartbeat_resume_trigger_confirmed",
+    "manual_resume_trigger_confirmed",
     "active_control_blocker_deferred_until_resume_ready",
     "current_pointer_loaded",
     "current_run_root_loaded",
@@ -49,7 +48,7 @@ REQUIRED_LABELS = (
     "router_checks_prompt_manifest",
     "status_summary_synced_after_pending_prompt_manifest_action",
     "run_until_wait_folds_prompt_manifest_check_before_pm_card",
-    "heartbeat_prompt_manifest_checkpoint_boundary_stated",
+    "resume_prompt_manifest_checkpoint_boundary_stated",
     "pm_decision_card_delivered_with_controller_reminder",
     "pm_resume_decision_returned",
     "active_control_blocker_handled_after_pm_resume_decision",
@@ -74,9 +73,9 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|entry={state.entry_mode}|holder={state.holder}|"
         f"work={state.work_branch}|ambiguous={state.ambiguous_state}|"
-        f"heartbeat={state.heartbeat_trigger_evidence_loaded},"
-        f"{state.heartbeat_interval_minutes},"
-        f"{state.heartbeat_trigger_bound_to_current_run}|"
+        f"manual_resume={state.manual_resume_trigger_evidence_loaded},"
+        f"{state.manual_resume_trigger_sequence},"
+        f"{state.manual_resume_trigger_bound_to_current_run}|"
         f"active_blocker={state.active_control_blocker_scan_done},"
         f"{state.active_control_blocker_present},"
         f"{state.active_control_blocker_deferred_until_resume_ready},"
@@ -115,7 +114,7 @@ def _state_id(state: model.State) -> str:
         f"{state.capability_lifecycle_flags_current},"
         f"{state.flowguard_operator_lifecycle_flags_current}|"
         f"pm={state.pm_decision_prompt_delivered},{state.pm_decision_returned}|"
-        f"pm_manifest_boundary={state.heartbeat_prompt_continuation_boundary_stated},"
+        f"pm_manifest_boundary={state.resume_prompt_continuation_boundary_stated},"
         f"status_synced={state.pm_resume_pending_action_status_synced},"
         f"summary_next={state.pm_resume_status_next_step_matches_manifest_check},"
         f"folded={state.pm_resume_manifest_check_folded},"
@@ -277,3 +276,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

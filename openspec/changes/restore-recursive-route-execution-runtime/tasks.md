@@ -7,7 +7,7 @@
 ## 2. Runtime Route And Frontier State
 
 - [x] 2.1 Extend the current-run ledger with structured route nodes, execution frontier, node results, PM dispositions, route-wide ledger, and node closure state.
-- [x] 2.2 Materialize PM planning results into executable route nodes and conservative fallback nodes when PM output is prose.
+- [x] 2.2 Materialize PM planning results into executable route nodes only from the strict structured route-plan contract.
 - [x] 2.3 Materialize route/frontier/node artifacts under the active run root and include public projection rows without sealed bodies.
 
 ## 3. Recursive Node Packet Loop

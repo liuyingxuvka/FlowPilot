@@ -276,8 +276,8 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("Foreground standby used diagnostic Router next/run-until-wait instead of daemon status and action ledger")
         if not state.foreground_standby_polling_daemon_status or not state.foreground_standby_polling_action_ledger:
             failures.append("Foreground standby did not poll daemon status and Controller action ledger")
-    if state.heartbeat_started_second_daemon:
-        failures.append("heartbeat started a second Router daemon while one was live")
+    if state.patrol_started_second_daemon:
+        failures.append("patrol started a second Router daemon while one was live")
     if state.lifecycle == "terminal":
         if state.terminal_controller_cleanup_best_effort_failed and not state.terminal_fence_written:
             failures.append("terminal cleanup failure blocked immediate daemon fence")
@@ -289,16 +289,16 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("terminal projection still exposes a nonterminal next step")
         if state.startup_row_scheduled_after_terminal_fence:
             failures.append("terminal lifecycle scheduled startup work")
-        if state.heartbeat_binding_scheduled_after_terminal_fence:
-            failures.append("terminal lifecycle scheduled heartbeat binding work")
+        if state.patrol_binding_scheduled_after_terminal_fence:
+            failures.append("terminal lifecycle scheduled manual resume binding work")
         if (
             state.daemon_alive
             or state.controller_attached
             or state.roles_live
-            or state.heartbeat_active
+            or state.manual_resume_binding_active
             or state.route_work_allowed
         ):
-            failures.append("terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active")
+            failures.append("terminal lifecycle left daemon, Controller, roles, patrol, or route work active")
     return failures
 
 
@@ -382,12 +382,13 @@ INVARIANTS = (
     _invariant("foreground_controller_standby_keeps_turn_open", "Foreground Controller ended instead of staying in standby for a live daemon-owned role wait"),
     _invariant("foreground_standby_does_not_use_router_metronome", "Foreground standby used diagnostic Router next/run-until-wait instead of daemon status and action ledger"),
     _invariant("foreground_standby_polls_daemon_and_ledger", "Foreground standby did not poll daemon status and Controller action ledger"),
-    _invariant("heartbeat_does_not_start_second_daemon", "heartbeat started a second Router daemon while one was live"),
+    _invariant("patrol_does_not_start_second_daemon", "patrol started a second Router daemon while one was live"),
     _invariant("terminal_lifecycle_writes_immediate_fence", "terminal lifecycle missing immediate daemon fence"),
     _invariant("terminal_cleanup_failure_does_not_block_fence", "terminal cleanup failure blocked immediate daemon fence"),
     _invariant("terminal_lifecycle_refreshes_projections", "terminal lifecycle did not refresh runtime projections"),
     _invariant("terminal_projection_clears_nonterminal_next_step", "terminal projection still exposes a nonterminal next step"),
     _invariant("terminal_scheduler_blocks_startup_rows", "terminal lifecycle scheduled startup work"),
-    _invariant("terminal_scheduler_blocks_heartbeat_binding", "terminal lifecycle scheduled heartbeat binding work"),
-    _invariant("terminal_cleanup_stops_runtime", "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active"),
+    _invariant("terminal_scheduler_blocks_manual_resume_binding", "terminal lifecycle scheduled manual resume binding work"),
+    _invariant("terminal_cleanup_stops_runtime", "terminal lifecycle left daemon, Controller, roles, patrol, or route work active"),
 )
+

@@ -294,35 +294,35 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
     if not state.continuation_probe_done:
         yield _step(
             state,
-            label="host_continuation_capability_supported",
-            action="probe host automation capability, record host-kind continuation evidence, and confirm real heartbeat setup is supported",
+            label="manual_resume_binding_capability_recorded",
+            action="probe host automation capability, record host-kind continuation evidence, and confirm real manual resume binding setup is supported",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
-            host_continuation_supported=True,
+            manual_resume_binding_supported=True,
         )
         yield _step(
             state,
-            label="host_continuation_capability_unsupported_manual_resume",
-            action="probe host automation capability, record host-kind evidence, find no real wakeup support, and record manual-resume mode without creating heartbeat automation",
+            label="manual_resume_binding_unavailable_manual_resume_boundary",
+            action="probe host automation capability, record host-kind evidence, find no real wakeup support, and record manual-resume mode without creating manual resume binding",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
-            host_continuation_supported=False,
-            manual_resume_mode_recorded=True,
+            manual_resume_binding_supported=False,
+            manual_resume_boundary_recorded=True,
         )
         return
 
-    if state.host_continuation_supported and not state.heartbeat_schedule_created:
+    if state.manual_resume_binding_supported and not state.manual_resume_binding_configured:
         yield _step(
             state,
-            label="heartbeat_schedule_created",
-            action="create one-minute route heartbeat as a stable launcher that reads state and execution frontier",
-            heartbeat_schedule_created=True,
-            route_heartbeat_interval_minutes=1,
-            stable_heartbeat_launcher_recorded=True,
-            heartbeat_bound_to_current_run=True,
-            heartbeat_same_name_only_checked=False,
+            label="manual_resume_binding_configured",
+            action="create one-second manual resume binding as a stable launcher that reads state and execution frontier",
+            manual_resume_binding_configured=True,
+            manual_resume_binding_interval_seconds=1,
+            stable_manual_resume_launcher_recorded=True,
+            manual_resume_binding_bound_to_current_run=True,
+            manual_resume_binding_name_only_checked=False,
         )
         return
 
@@ -435,7 +435,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="codex_plan_synced",
-            action="sync visible Codex plan from capability execution frontier without changing heartbeat automation prompt",
+            action="sync visible Codex plan from capability execution frontier without changing manual resume binding prompt",
             codex_plan_synced=True,
             plan_version=state.frontier_version,
         )
@@ -464,7 +464,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="capability_user_flow_diagram_emitted",
-            action="emit visible capability user flow diagram with next gates, checks, and fallback branches",
+            action="emit visible capability user flow diagram with next gates, checks, and repair-or-block branches",
             capability_user_flow_diagram_emitted=True,
         )
         return
@@ -479,13 +479,13 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and not state.runtime_role_assistance_decision_recorded
+        and not state.background_collaboration_start_decision_recorded
     ):
         yield _step(
             state,
-            label="runtime_role_binding_start_authorized",
-            action="ask for and record user authorization to request runtime FlowPilot role assistance from the host",
-            runtime_role_assistance_decision_recorded=True,
+            label="background_collaboration_start_authorized",
+            action="record startup UI authorization for mandatory background or parallel FlowPilot agents",
+            background_collaboration_start_decision_recorded=True,
         )
         return
 
@@ -499,14 +499,13 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.plan_version == state.frontier_version
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
-        and state.runtime_role_assistance_decision_recorded
+        and state.background_collaboration_start_decision_recorded
         and not state.runtime_role_bindings_opened
-        and not state.single_agent_role_continuity_authorized
     ):
         yield _step(
             state,
-            label="fresh_six_runtime_role_bindings_opened",
-            action="open runtime-requested FlowPilot role bindings as fresh current-task bindings and record nonreuse evidence",
+            label="current_background_agents_opened",
+            action="open mandatory current background or parallel FlowPilot agents and record nonreuse evidence",
             runtime_role_bindings_opened=True,
             runtime_role_bindings_current_task_ready=True,
             role_bindings_opened_after_startup_answers=True,
@@ -532,7 +531,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
     ):
         yield _step(
             state,
-            label="startup_preflight_reviewer_fact_report_blocked",
+            label="runtime_startup_entry_blocked",
             action="human-like reviewer independently checks startup facts including run isolation, prior-work boundary, and current-task role-binding freshness, then reports blockers to PM without opening the start gate",
             startup_preflight_review_report_written=True,
             startup_preflight_review_blocking_findings=True,
@@ -542,7 +541,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             startup_reviewer_checked_live_agent_freshness=True,
             startup_reviewer_checked_no_historical_agent_reuse=True,
             startup_reviewer_checked_capability_resolution=True,
-            startup_reviewer_checked_current_run_heartbeat_binding=not state.manual_resume_mode_recorded,
+            startup_pm_checked_manual_resume_binding=not state.manual_resume_boundary_recorded,
         )
         return
 
@@ -582,8 +581,8 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             startup_reviewer_checked_live_agent_freshness=False,
             startup_reviewer_checked_no_historical_agent_reuse=False,
             startup_reviewer_checked_capability_resolution=False,
-            startup_reviewer_checked_current_run_heartbeat_binding=False,
-            startup_pm_independent_gate_audit_done=False,
+            startup_pm_checked_manual_resume_binding=False,
+            pm_first_round_startup_entry_audit_done=False,
             startup_pm_capability_resolution_recorded=False,
         )
         return
@@ -604,7 +603,7 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
     ):
         yield _step(
             state,
-            label="startup_preflight_reviewer_fact_report_clean",
+            label="runtime_startup_entry_clean",
             action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh role binding evidence, and writes a clean fact report for PM",
             startup_preflight_review_report_written=True,
             startup_preflight_review_blocking_findings=False,
@@ -614,21 +613,21 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             startup_reviewer_checked_live_agent_freshness=True,
             startup_reviewer_checked_no_historical_agent_reuse=True,
             startup_reviewer_checked_capability_resolution=True,
-            startup_reviewer_checked_current_run_heartbeat_binding=not state.manual_resume_mode_recorded,
+            startup_pm_checked_manual_resume_binding=not state.manual_resume_boundary_recorded,
         )
         return
 
     if (
         state.startup_preflight_review_report_written
         and not state.startup_preflight_review_blocking_findings
-        and not state.startup_pm_independent_gate_audit_done
+        and not state.pm_first_round_startup_entry_audit_done
         and not state.pm_start_gate_opened
     ):
         yield _step(
             state,
-            label="startup_pm_independent_gate_audit_done",
+            label="pm_first_round_startup_entry_audit_done",
             action="PM independently audits capability startup run isolation, prior-work boundary, role-binding freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
-            startup_pm_independent_gate_audit_done=True,
+            pm_first_round_startup_entry_audit_done=True,
             startup_pm_capability_resolution_recorded=True,
         )
         return
@@ -636,12 +635,12 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
     if (
         state.startup_preflight_review_report_written
         and not state.startup_preflight_review_blocking_findings
-        and state.startup_pm_independent_gate_audit_done
+        and state.pm_first_round_startup_entry_audit_done
         and not state.pm_start_gate_opened
     ):
         yield _step(
             state,
-            label="pm_start_gate_opened_from_fact_report",
+            label="pm_first_round_started_after_runtime_entry",
             action="project manager opens startup and allows work beyond startup from the current clean factual reviewer report",
             pm_start_gate_opened=True,
             work_beyond_startup_allowed=True,
@@ -699,3 +698,4 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
             **repair_changes,
         )
         return
+

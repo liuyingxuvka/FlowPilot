@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -90,7 +92,7 @@ def _sync_startup_bootstrap_flags_to_run_state(router: ModuleType, bootstrap_sta
     _bind_router(router)
     bootstrap_flags = bootstrap_state.get('flags') if isinstance(bootstrap_state.get('flags'), dict) else {}
     run_flags = run_state.setdefault('flags', {})
-    for flag in ('startup_intake_result_recorded', 'startup_intake_body_boundary_enforced', 'startup_answers_recorded', 'banner_emitted', 'flowguard_capability_snapshot_written', 'roles_started', 'role_core_prompts_injected', 'continuation_binding_recorded'):
+    for flag in ('startup_intake_result_recorded', 'startup_intake_body_boundary_enforced', 'startup_answers_recorded', 'banner_emitted', 'flowguard_capability_snapshot_written'):
         if bootstrap_flags.get(flag):
             run_flags[flag] = True
 
@@ -102,20 +104,11 @@ def _fold_stable_startup_role_flags_from_bootstrap(router: ModuleType, project_r
     _raise_if_runtime_write_active(bootstrap_path)
     bootstrap = read_daemon_critical_json_if_exists(bootstrap_path)
     bootstrap_flags = bootstrap.get('flags') if isinstance(bootstrap.get('flags'), dict) else {}
-    roles_started = bool(bootstrap_flags.get('roles_started'))
-    core_prompts_injected = bool(bootstrap_flags.get('role_core_prompts_injected'))
-    if roles_started != core_prompts_injected:
-        return {'changed': False, 'exists': True, 'waiting_for_settlement': True, 'roles_started': roles_started, 'role_core_prompts_injected': core_prompts_injected}
-    if not roles_started:
-        return {'changed': False, 'exists': True}
-    flags = run_state.setdefault('flags', {})
-    missing = [flag for flag in ('roles_started', 'role_core_prompts_injected') if not flags.get(flag)]
-    if not missing:
-        return {'changed': False, 'exists': True, 'already_folded': True}
-    flags['roles_started'] = True
-    flags['role_core_prompts_injected'] = True
-    append_history(run_state, 'router_folded_startup_role_flags_from_bootstrap', {'source': 'daemon_settlement_barrier', 'bootstrap_state_path': project_relative(project_root, bootstrap_path), 'folded_flags': ['roles_started', 'role_core_prompts_injected']})
-    return {'changed': True, 'exists': True, 'folded_flags': ['roles_started', 'role_core_prompts_injected']}
+    old_flags_present = any(bootstrap_flags.get(flag) for flag in ('roles_started', 'role_core_prompts_injected'))
+    if old_flags_present:
+        append_history(run_state, 'router_ignored_old_startup_role_flags_from_bootstrap', {'source': 'unsupported_old_startup_role_prewarm', 'bootstrap_state_path': project_relative(project_root, bootstrap_path)})
+        return {'changed': False, 'exists': True, 'ignored_old_startup_role_flags': True}
+    return {'changed': False, 'exists': True}
 
 __all__ = (
     '_ensure_pending',

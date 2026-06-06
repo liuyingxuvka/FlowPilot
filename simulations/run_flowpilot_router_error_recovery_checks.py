@@ -45,7 +45,7 @@ def _state_id(state: model.State) -> str:
         f"{state.runtime_returned_control_blocker},{state.runtime_requested_router_next_action}|"
         f"next={state.next_action_source},{state.next_action_type},{state.next_action_target_role}|"
         f"controller={state.controller_applied_next_action},{state.pm_or_target_role_wait_exposed}|"
-        f"bad={state.chain_broken},{state.heartbeat_required_for_recovery},"
+        f"bad={state.chain_broken},{state.current_resume_recovery_required},"
         f"{state.non_control_error_swallowed},{state.controller_self_repaired},"
         f"{state.controller_read_sealed_body},{state.original_event_accepted},"
         f"{state.original_event_retried_by_controller},{state.runtime_hardcoded_pm_target}"

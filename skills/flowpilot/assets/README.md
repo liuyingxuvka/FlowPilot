@@ -41,7 +41,7 @@ Reusable assets for FlowPilot live here or in the repository-level
   `route_history_index.json` and `pm_prior_path_context.json`;
 - `.flowpilot/` template files;
 - route templates;
-- heartbeat templates;
+- continuation and manual-resume templates;
 - capability evidence templates;
 - research package, worker report, and reviewer report templates;
 - experiment templates;

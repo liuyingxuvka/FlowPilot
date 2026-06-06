@@ -198,7 +198,7 @@ long-form public explanation lives in `docs/protocol.md`.
 33. Freeze the checked candidate as the active route JSON and write derived
     Markdown summary.
 34. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route, active
-    node, next node, current mainline, fallback, checks before advance, and the
+    node, next node, current mainline, repair/block exit, checks before advance, and the
     current-node completion guard. Include actor authority for the current
     gate: draft owner, execution owner, required approver, forbidden
     approvers, approval status, approval evidence path, independent validation
@@ -219,7 +219,7 @@ long-form public explanation lives in `docs/protocol.md`.
     request, unless Cockpit UI is open and showing the same graph. Major node
     means an effective node in the current route/mainline, not an internal
     subnode, micro-step, or heartbeat tick. Include active route, active node, next jumps,
-    checks, fallback or repair branches, continuation state, and acceptance
+    checks, repair or block branches, continuation state, and acceptance
     delta as nearby text. If the route returns for repair, the Mermaid must
     show that return edge and the reviewer must check the visible chat block
     before the node can advance. Generated files or display packets alone do
@@ -250,8 +250,8 @@ long-form public explanation lives in `docs/protocol.md`.
     allowed role assistance, verify each runtime-required binding was opened for
     this FlowPilot task after that user decision and after current route allocation, and
     verify none of its `agent_id` values comes from prior route ledgers or
-    older role-memory packets. If the user chose fallback continuity, verify
-    the explicit fallback authorization and do not claim live role bindings. The reviewer writes a report only; the reviewer
+    older role-memory packets. If the user chose single-agent continuity, verify
+    the explicit user authorization and do not claim live role bindings. The reviewer writes a report only; the reviewer
     does not approve startup and does not open the gate. The project manager
     reads the report. If it contains blockers, PM sends remediation items back
     to authorized workers through a PM packet and requires a new factual reviewer report. If it
@@ -315,7 +315,7 @@ Use FlowPilot. Ask the startup questions first.
 
 FlowPilot invocation only opens the startup prompt for the work request and
 background-collaboration permission. It is not authorization for role bindings,
-fallback execution, scheduled jobs, manual resume, or a default display
+unsupported downgrade execution, scheduled jobs, manual resume, or a default display
 surface. The assistant must stop immediately after asking, and the banner is
 emitted only after the later user answer is complete.
 
@@ -744,12 +744,12 @@ Repeat until complete or blocked:
    them. A new formal FlowPilot task must create fresh
    live role bindings instead of resuming prior-route IDs. If host role bindings are
    missing, cancelled, unknown, or timeout-unknown, ask for the missing
-   startup/fallback decision when needed before replacing roles from memory.
+   startup/continuity decision when needed before replacing roles from memory.
    Record resumed, replaced, seeded, blocked, liveness status, and
    unavailable roles in a role rehydration report covering project manager and
    the runtime-required role bindings. Do not lazily rehydrate a required role
    only when it is first needed. Role continuity through persisted memory is
-   allowed only after explicit fallback approval.
+   allowed only after explicit current-role-continuity approval.
 3. Ask the rehydrated project manager for a completion-oriented runway from
    the current position to project completion. The runway names the current
    gate, downstream steps, hard-stop conditions, checkpoint cadence, and any PM
@@ -757,7 +757,7 @@ Repeat until complete or blocked:
 4. Confirm the route is checked, summaries are synced, the execution frontier
    matches the active route version, and the visible Codex plan is synced from
    the latest PM runway. The sync record must name the method: native plan tool
-   called when available, or explicit chat/`.flowpilot` fallback when no native
+   called when available, or explicit manual chat/`.flowpilot` projection when no native
    tool exists. The projection must include downstream runway items, not only
    the current gate.
 5. If `unfinished_current_node` is true, or
@@ -829,7 +829,7 @@ asks whether Cockpit UI or chat should be the primary progress surface. If the
 user chose Cockpit, open it immediately after startup route/frontier state is
 ready; if the user chose chat, or Cockpit is unavailable or not proven visible,
 show the simplified English FlowPilot Route Sign Mermaid, next jumps, checks,
-fallback or repair exits, continuation state, and acceptance delta.
+repair or block exits, continuation state, and acceptance delta.
 Formal startup, route mutation, and completion self-interrogation evidence is
 only draft evidence until the project manager ratifies the scope, layer
 coverage, count, and decision set. The project manager's ratification path is
@@ -886,7 +886,7 @@ UI-only or backend-only interview does not satisfy a full gate.
 
 For formal multi-hour routes, continuation evidence must include the real
 host-level continuation or wakeup record when the host supports it. If no such
-tool exists, record `manual-resume` fallback/limitation instead of treating
+tool exists, record the `manual-resume` limitation instead of treating
 JSON heartbeat files as a passed real-continuation gate. Unsupported hosts must
 not create heartbeat automation.
 
@@ -923,7 +923,7 @@ invariant and missing-label results, counterexample inspection, PM risk-tier
 extraction, model-derived review agenda, toolchain/model improvement
 suggestions, confidence boundary, blindspots, and any valid unchanged-reuse
 basis. If the host cannot let live FlowGuard operators run tools, FlowPilot records
-explicit single-agent fallback and does not claim parallel FlowGuard operator execution.
+an explicit current single-agent limitation and does not claim parallel FlowGuard operator execution.
 Controller outputs are pointers only.
 
 PM-initiated FlowGuard modeling is a decision-support move, not a vague

@@ -200,7 +200,11 @@ def _source_bundle(*paths: str) -> str:
 def _actual_prompt_source_report() -> dict[str, object]:
     skill = _source_text("skills/flowpilot/SKILL.md")
     controller = _source_text("skills/flowpilot/assets/runtime_kit/cards/roles/controller.md")
-    startup_fact_card = _source_text("skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md")
+    startup_work_cards = _source_bundle(
+        "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_intake.md",
+        "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+        "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
+    )
     packet_body_template = _source_text("templates/flowpilot/packets/packet_body.template.md")
     packet_runtime = _source_text("skills/flowpilot/assets/packet_runtime.py")
     lifecycle_resume_prompt = _source_text(
@@ -316,7 +320,7 @@ def _actual_prompt_source_report() -> dict[str, object]:
             and "not external recovery authority" in router
         ),
         "work_card_ack_continues_and_waits_for_router_output": _contains_all(
-            startup_fact_card,
+            startup_work_cards,
             (
                 "After work-card ACK, do not stop or wait for another prompt",
                 "immediately continue the assigned work",

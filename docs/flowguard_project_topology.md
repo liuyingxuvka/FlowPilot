@@ -5,12 +5,12 @@ It is orientation only; it is not validation evidence.
 
 ## Summary
 
-- Model runners: 140
+- Model runners: 142
 - Model-test alignment families: 10
 - Code surfaces: 934
 - Test commands: 350
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2419
+- Known-bad/risk labels surfaced: 2399
 
 ## Area Map
 
@@ -22,12 +22,12 @@ It is orientation only; it is not validation evidence.
 | `material` | 1 | 0 | 22 | 25 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 73 |
 | `model-test-alignment` | 3 | 0 | 12 | 12 | 61 |
-| `other` | 79 | 4 | 237 | 40 | 1270 |
+| `other` | 81 | 4 | 237 | 40 | 1280 |
 | `packet` | 9 | 2 | 169 | 124 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 77 |
 | `review` | 3 | 0 | 3 | 0 | 67 |
 | `route` | 16 | 2 | 282 | 55 | 304 |
-| `startup` | 6 | 1 | 74 | 43 | 159 |
+| `startup` | 6 | 1 | 74 | 43 | 129 |
 | `structure` | 3 | 0 | 7 | 4 | 37 |
 
 ## Evidence Boundaries

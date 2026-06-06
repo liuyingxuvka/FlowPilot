@@ -1,34 +1,55 @@
 # startup-continuation-bootstrap Specification
 
 ## Purpose
-TBD - created by archiving change move-heartbeat-before-controller-core. Update Purpose after archive.
+Define the current startup continuation bootstrap after the historical
+scheduled-continuation and fixed-role startup path has been removed.
+
 ## Requirements
-### Requirement: Startup heartbeat precedes Controller core
-When the startup intake selects scheduled continuation, FlowPilot SHALL create
-and record the run-bound heartbeat host automation before `load_controller_core`
-is applied.
+### Requirement: Startup background acknowledgement gates Controller bootstrap
+FlowPilot startup SHALL continue only when startup answers use the current
+startup field set and record `background_collaboration_authorized=true`.
+The native startup UI SHALL record the background-collaboration switch state as
+the user's startup answer. A switched-on state is explicit user authorization
+for current-run background or parallel agents. A switched-off state is an
+explicit startup block, not permission to continue through a foreground-only
+route.
 
-#### Scenario: Scheduled continuation startup
-- **WHEN** startup answers request scheduled continuation and role slots have been started
-- **THEN** the next host boundary is `create_heartbeat_automation` with bootloader/startup ownership before `load_controller_core`
+#### Scenario: Current startup acknowledgement is present
+- **WHEN** startup answers contain `background_collaboration_authorized=true`
+- **AND** the startup answer payload contains only current startup fields
+- **THEN** Router may materialize deterministic startup artifacts and expose
+  `load_controller_core`
+- **AND** Router MUST NOT expose historical continuation automation or fixed role-slot
+  startup actions.
 
-#### Scenario: Controller core cannot precede requested heartbeat
-- **WHEN** scheduled continuation is requested and no valid heartbeat host receipt has been recorded
-- **THEN** the router MUST NOT expose or apply `load_controller_core`
+#### Scenario: Background acknowledgement is disabled or missing
+- **WHEN** startup answers omit `background_collaboration_authorized` or record
+  it as false
+- **THEN** Router records a startup blocker for required background
+  collaboration
+- **AND** Router MUST NOT expose Controller, PM, route, role, or implementation
+  work.
+- **AND** Router MUST NOT attempt a foreground-only FlowPilot fallback route.
 
-### Requirement: Manual resume skips heartbeat bootstrap
-When the startup intake selects manual continuation, FlowPilot SHALL skip the
-startup heartbeat host action and may continue to Controller core handoff.
+### Requirement: Startup rejects unsupported continuation fields
+FlowPilot SHALL not translate historical startup continuation fields into a
+current startup result.
 
-#### Scenario: Manual continuation startup
-- **WHEN** startup answers select manual resume rather than scheduled continuation
-- **THEN** the router emits `load_controller_core` without requiring `create_heartbeat_automation`
+#### Scenario: Old continuation field is submitted
+- **WHEN** startup answers include an unsupported continuation or fixed-role
+  field
+- **THEN** Router rejects the startup result as unsupported current input
+- **AND** no current startup field is inferred from that field.
 
-### Requirement: Controller core consumes established continuation
-After `load_controller_core`, Controller SHALL treat startup continuation as an
-already-established authority or manual-resume mode, not as first-time startup
-heartbeat setup.
+### Requirement: Controller core consumes current startup state
+After `load_controller_core`, Controller SHALL consume the current startup
+state and reviewer fact-review evidence, not historical continuation or
+fixed-role bootstrap
+state.
 
 #### Scenario: Controller startup fact review
-- **WHEN** Controller enters the startup fact-review sequence
-- **THEN** the run has either a valid heartbeat binding or a recorded manual-resume continuation mode
+- **WHEN** Controller enters startup fact review
+- **THEN** the startup facts include current background-collaboration
+  acknowledgement and current-field mechanical audit evidence
+- **AND** no historical continuation binding or fixed role-slot bootstrap evidence is
+  required.

@@ -469,7 +469,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         yield Transition(
-            "heartbeat_opens_rehydrate_pending_action",
+            "manual_resume_opens_rehydrate_pending_action",
             _step(
                 state,
                 pending_action_kind="rehydrate_role_bindings",
@@ -508,7 +508,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.role_output_ledger_submitted and state.pending_action_kind == "await_role_decision":
         yield Transition(
-            "heartbeat_opens_rehydrate_pending_action_after_role_output",
+            "manual_resume_opens_rehydrate_pending_action_after_role_output",
             _step(
                 state,
                 pending_action_kind="rehydrate_role_bindings",

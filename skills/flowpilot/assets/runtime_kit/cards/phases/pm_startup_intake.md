@@ -21,13 +21,12 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Current task: review startup authorization context, not the full user work
-request body. Before startup activation, PM may use
+Current task: absorb the startup context and prepare for the first PM work
+item. Startup has no Reviewer fact gate and no PM activation gate. PM may use
 `startup_intake/startup_intake_record.json`, startup answers, route/run
 identity, display evidence, role/continuation evidence, and user-intake
-envelope path/hash metadata. The full `user_intake` body remains Router-held
-until PM approves startup activation, then Router exposes it as the first
-post-startup PM mail item.
+envelope path/hash metadata. After Runtime writes the mechanical startup audit
+and display status, Router exposes `user_intake` as the first PM mail item.
 
 Do not use `flowpilot_new.py open-packet` for the full `user_intake` packet
 from this phase. That command is only for a later runtime-generated role
@@ -35,25 +34,23 @@ handoff after a current lease and ACK assign an actual packet to PM. Do not ask
 Controller to recover the user's work request from chat history; Controller
 may deliver only paths, hashes, status, and envelopes.
 
-If startup metadata cannot legally support the later startup-activation
-decision, submit an existing PM exit after the startup fact report:
-`pm_startup_repair_request` when a legal repair target exists,
-`pm_startup_protocol_dead_end` when no legal path exists, or
-`pm_control_blocker_repair_decision` when Router delivered a control blocker.
-Do not submit an ordinary blocker back to PM.
+If startup metadata is mechanically invalid, do not invent a startup repair
+gate. Wait for the Runtime control blocker and resolve it through the current
+control-blocker repair path, or stop for the user when the current protocol
+cannot continue. Do not submit an ordinary blocker back to PM.
 
 Allowed PM decisions:
 
 - reset Controller role;
-- prepare to decide startup activation after reviewer facts;
+- prepare to absorb the first PM `user_intake` mail after Runtime startup mechanics pass;
 - request prior-work import boundaries;
 - request startup cleanup or capability evidence;
 - block for user if startup answers are incomplete or contradictory.
 
 Forbidden:
 
-- do not open the full `user_intake` body before startup activation and
-  current assignment;
+- do not open the full `user_intake` body before Runtime delivers the current
+  PM mail item;
 - do not request material or capability scan packets yet;
 - do not write the final route yet;
 - do not issue implementation packets;

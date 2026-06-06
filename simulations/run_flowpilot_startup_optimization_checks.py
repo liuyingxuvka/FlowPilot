@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot startup optimization model."""
+"""Run checks for the current FlowPilot startup path model."""
 
 from __future__ import annotations
 
@@ -16,32 +16,25 @@ RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_startup_optimization
 
 
 HAZARD_EXPECTED_FAILURES = {
-    "roles_ready_without_core_receipts": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
-    "later_core_injection_required": "optimized startup still required a delayed role-core injection gate",
-    "fewer_than_required_runtime_roles": "roles became ready without current-run role-binding slots, core prompt hashes, and role I/O receipts",
-    "heartbeat_before_run_or_roles": "heartbeat was created before current run and role ledger existed",
-    "heartbeat_after_reviewer_dispatch": "reviewer startup fact card was dispatched before early heartbeat binding",
-    "heartbeat_wrong_cadence": "heartbeat lacked current-run one-minute verified host proof",
-    "heartbeat_missing_host_proof": "heartbeat lacked current-run one-minute verified host proof",
-    "controller_loaded_before_roles": "Controller loaded before run shell and role-binding startup receipts existed",
-    "controller_reads_sealed_body": "Controller read sealed role body during startup optimization",
-    "self_attested_proof": "self-attested startup claim was used as proof",
-    "reviewer_without_mechanical_proof": "reviewer startup fact card lacked current mechanical proof or display evidence",
-    "reviewer_without_display_receipt": "reviewer startup fact card lacked current mechanical proof or display evidence",
-    "reviewer_reproves_router_facts": "reviewer was required to re-prove router-owned mechanical facts",
-    "startup_actions_bypass_controller_ledger": "startup actions bypassed the common Controller action ledger",
-    "startup_ack_bypass_pending_return_ledger": "startup card ACK bypassed the common pending-return ledger",
-    "separate_startup_wait_table": "startup ACK join used a separate startup-only wait table",
-    "pending_ack_blocks_independent_dispatch": "pending startup ACK blocked independent startup dispatch instead of common-ledger deferral",
-    "reviewer_before_pre_review_ack_join": "reviewer startup fact card was dispatched before common startup prep ACK join",
-    "pm_prep_no_join_policy": "PM prep lacked independence and join policy before reviewer startup review",
-    "pm_prep_blocks_reviewer": "PM prep blocked reviewer startup fact progress",
-    "startup_review_acceptance_without_reviewer": "startup review report was accepted before reviewer report, PM prep completion, and ACK clearance",
-    "startup_ack_join_without_common_ledger": "startup ACK join was marked clean without common ledger sync and clear pending returns",
-    "startup_ack_join_with_pending_ack": "startup ACK join was marked clean without common ledger sync and clear pending returns",
-    "pm_activation_before_review_acceptance": "PM startup activation occurred before reviewer startup report acceptance",
-    "work_before_pm_activation": "work beyond startup was allowed before PM startup activation",
-    "route_work_before_startup_open": "route or material work started before startup activation opened",
+    "background_not_authorized": "background collaboration was not authorized",
+    "startup_background_agents_preleased": "startup pre-leased background agents",
+    "fixed_role_count_gate_required": "startup required a fixed role-count gate",
+    "heartbeat_or_manual_resume_binding_required": "startup required heartbeat or manual resume binding liveness",
+    "controller_loaded_before_run": "Controller loaded before current run shell existed",
+    "controller_reads_sealed_body": "Controller read sealed startup or role body",
+    "self_attested_proof": "self-attested startup claim was used as runtime proof",
+    "mechanical_audit_without_current_intake": "startup mechanical audit was written without current sealed intake",
+    "display_status_without_runtime_ready": "startup display status was written without current audit",
+    "user_intake_before_runtime_ready": "user_intake mail was exposed before startup runtime mechanics were ready",
+    "reviewer_mechanical_fact_gate_used": "Reviewer startup mechanical fact gate was used",
+    "reviewer_reproves_router_facts": "Reviewer was required to re-prove router-owned mechanical facts",
+    "pm_startup_activation_gate_used": "PM startup activation gate was used",
+    "pm_intake_ack_bypasses_common_ledger": "PM startup intake ACK bypassed user_intake mail or common card ledger",
+    "pm_route_planning_before_pm_intake": "PM route planning started before PM startup intake ACK",
+    "role_work_before_pm_route_planning": "role work was allocated before PM route planning",
+    "route_work_without_current_role_agent": "route work started without a current role-agent binding",
+    "role_agent_failure_continues": "FlowPilot continued after required current role-agent opening failed",
+    "foreground_only_fallback_used": "FlowPilot used foreground-only fallback work after role-agent failure",
 }
 
 
@@ -49,30 +42,17 @@ def _state_id(state: model.State) -> str:
     return (
         f"status={state.status}|answers={state.startup_answers_recorded}|"
         f"run={state.run_shell_created},{state.current_pointer_written},{state.run_index_updated}|"
-        f"roles={state.runtime_roles_started},{state.role_core_prompts_delivered_at_spawn},"
-        f"{state.role_core_prompt_hashes_recorded},{state.role_io_protocol_receipts_current},"
-        f"later_core={state.later_core_injection_required},few={state.fewer_than_required_runtime_roles_used}|"
-        f"heartbeat={state.scheduled_continuation_requested},{state.heartbeat_created},"
-        f"{state.heartbeat_bound_to_current_run},{state.heartbeat_interval_minutes},"
-        f"{state.heartbeat_host_proof_verified}|"
-        f"controller={state.controller_loaded},{state.controller_boundary_confirmed},"
-        f"body={state.controller_read_sealed_body},selfproof={state.self_attested_claim_used_as_proof}|"
-        f"audit={state.mechanical_audit_written},{state.router_owned_mechanical_proof_current},"
-        f"display={state.display_receipt_written},{state.display_receipt_visible_to_reviewer}|"
-        f"reviewer={state.reviewer_fact_card_dispatched},"
-        f"after_pre_review_join={state.reviewer_fact_card_dispatched_after_pre_review_join},"
-        f"reprove={state.reviewer_required_to_reprove_router_facts},"
-        f"report={state.reviewer_report_returned},{state.reviewer_external_facts_checked}|"
-        f"ledgers={state.controller_action_ledger_used},{state.card_pending_return_ledger_used},"
-        f"sync={state.router_synced_common_ledgers},ack_pending={state.startup_card_ack_pending},"
-        f"async={state.independent_startup_dispatch_continues_with_pending_ack},"
-        f"ack_join={state.startup_ack_join_checked_common_ledger},{state.startup_ack_join_clean},"
-        f"separate={state.startup_only_wait_table_created}|"
-        f"pm={state.pm_prep_started},{state.pm_prep_independent_before_reviewer_dispatch},"
-        f"{state.pm_prep_join_policy_recorded},{state.pm_prep_completed},"
-        f"blocks={state.pm_prep_blocked_reviewer}|"
-        f"review_accepted={state.startup_review_report_accepted}|activation={state.pm_activation_approved},"
-        f"open={state.work_beyond_startup_allowed}|work={state.route_or_material_work_started}"
+        f"controller={state.controller_loaded},{state.controller_boundary_confirmed}|"
+        f"intake={state.startup_intake_record_current},{state.startup_intake_body_sealed}|"
+        f"audit={state.mechanical_audit_written},{state.router_owned_mechanical_proof_current}|"
+        f"display={state.display_status_written},{state.display_receipt_current}|"
+        f"pm={state.user_intake_mail_exposed},{state.pm_startup_intake_ack_recorded},"
+        f"{state.pm_startup_intake_ack_via_common_ledger},{state.pm_route_planning_started}|"
+        f"role={state.first_role_work_allocated},{state.current_role_agent_open_attempted},"
+        f"{state.current_role_agent_bound},{state.current_role_agent_failed}|"
+        f"legacy={state.startup_background_agents_preleased},{state.fixed_role_count_gate_required},"
+        f"{state.heartbeat_or_manual_resume_binding_required},{state.reviewer_mechanical_fact_gate_used},"
+        f"{state.pm_startup_activation_gate_used}|work={state.route_work_started}"
     )
 
 
@@ -210,7 +190,7 @@ def run_checks() -> dict[str, object]:
             "failures": optimized_failures,
             "state": model.optimized_plan_state().__dict__,
         },
-        "model_boundary": "startup control-plane optimization model; runtime tests remain required",
+        "model_boundary": "current startup path model; runtime tests remain required",
     }
 
 

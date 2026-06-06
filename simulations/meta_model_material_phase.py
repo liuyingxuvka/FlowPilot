@@ -526,23 +526,22 @@ def apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
     if not state.continuation_probe_done:
         yield _step(
             state,
-            label="host_continuation_capability_supported",
-            action="probe host automation capability, record host-kind continuation evidence, and confirm real heartbeat setup is supported",
+            label="manual_resume_binding_capability_supported",
+            action="probe manual resume binding capability and record current host-kind continuation evidence",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
-            host_continuation_supported=True,
-            active_node="create_heartbeat_schedule",
+            manual_resume_binding_supported=True,
+            active_node="configure_manual_resume_binding",
         )
         yield _step(
             state,
-            label="host_continuation_capability_unsupported_manual_resume",
-            action="probe host automation capability, record host-kind evidence, find no real wakeup support, and record manual-resume mode without creating heartbeat automation",
+            label="manual_resume_boundary_recorded",
+            action="probe manual resume binding capability, record host-kind evidence, and record manual-resume boundary when patrol is unavailable",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
-            host_continuation_supported=False,
-            manual_resume_mode_recorded=True,
+            manual_resume_boundary_recorded=True,
             active_node="design_flowguard_route",
         )
         return

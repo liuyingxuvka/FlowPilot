@@ -41,10 +41,10 @@ def _ready(**changes: object) -> State:
         pm_core_delivered=True,
         pm_phase_map_delivered=True,
         pm_startup_intake_card_delivered=True,
-        reviewer_startup_fact_check_card_delivered=True,
-        startup_fact_reported=True,
-        pm_startup_activation_card_delivered=True,
-        startup_activation_approved=True,
+        startup_runtime_entry_completed=True,
+        startup_runtime_mechanical_audit_written=True,
+        startup_display_status_written=True,
+        startup_user_intake_released_to_pm=True,
         user_intake_delivered_to_pm=True,
         user_intake_controller_relayed=True,
         controller_role_confirmed=True,
@@ -226,11 +226,11 @@ def hazard_states() -> dict[str, State]:
             roles_started=True,
         ),
         "user_intake_before_pm_cards": _ready(pm_phase_map_delivered=False),
-        "startup_activation_without_reviewer_facts": _ready(
-            startup_fact_reported=False,
-            startup_activation_approved=True,
+        "legacy_startup_activation_without_runtime_entry": _ready(
+            startup_runtime_mechanical_audit_written=False,
+            startup_user_intake_released_to_pm=True,
         ),
-        "user_intake_before_startup_activation": _ready(startup_activation_approved=False),
+        "user_intake_before_runtime_entry": _ready(startup_user_intake_released_to_pm=False),
         "user_intake_without_controller_relay": _ready(
             user_intake_delivered_to_pm=True,
             user_intake_controller_relayed=False,
@@ -576,3 +576,5 @@ def hazard_states() -> dict[str, State]:
 
 
 __all__ = ["hazard_states"]
+
+

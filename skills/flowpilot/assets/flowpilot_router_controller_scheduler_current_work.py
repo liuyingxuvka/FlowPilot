@@ -27,9 +27,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -67,7 +72,7 @@ def _current_work_payload(router: ModuleType, *, owner_key: str, task_label: str
     task = task_label.strip() or 'Monitor current FlowPilot progress'
     return {'owner_kind': owner_kind, 'owner_key': owner_key or None, 'owner_label': owner_label, 'task_label': task, 'source': source, 'source_path': source_path, 'action_type': action_type, 'action_id': action_id, 'packet_id': packet_id, 'wait_class': wait_class, 'waiting_for_role_hint': waiting_for_role, 'display': {'en': f'Current owner: {owner_label}. Current task: {task}.', 'zh': f'当前处理方：{owner_label}。当前任务：{task}。'}, 'controller_use': {'primary_monitor_field': True, 'ownership_projection_only': True, 'does_not_satisfy_wait_or_approval': True, 'role_liveness_checks_apply': owner_kind == 'role', 'internal_owner': owner_kind in {'router', 'controller'}}, 'diagnostics': diagnostics or {}}
 
-def _current_work_from_action(router: ModuleType, action: dict[str, Any], *, source: str, source_path: str | None=None, fallback_owner: str='controller') -> dict[str, Any] | None:
+def _current_work_from_action(router: ModuleType, action: dict[str, Any], *, source: str, source_path: str | None=None, default_owner: str='controller') -> dict[str, Any] | None:
     _bind_router(router)
     if not isinstance(action, dict) or not action:
         return None
@@ -85,7 +90,7 @@ def _current_work_from_action(router: ModuleType, action: dict[str, Any], *, sou
     elif target in {'router', 'controller'}:
         owner_key = target
     else:
-        owner_key = fallback_owner
+        owner_key = default_owner
     wait_class = router._pending_wait_class(action)
     return router._current_work_payload(owner_key=owner_key, task_label=label, source=source, source_path=source_path, action_type=action_type or None, action_id=str(action.get('action_id') or action.get('controller_action_id') or '') or None, wait_class=wait_class, waiting_for_role=target or None, diagnostics={'passive_wait_status': _action_is_passive_wait_status(action), 'ordinary_controller_work_row': not _action_is_passive_wait_status(action)})
 
@@ -206,7 +211,7 @@ def _current_work_from_passive_waits(router: ModuleType, project_root: Path, run
                 continue
             if not flowpilot_closure_kernel.closure_blocks_progress('controller_passive_wait', item):
                 continue
-            payload = router._current_work_from_action(item, source='controller_action_ledger.passive_waits', source_path=controller_ledger.get('path') if isinstance(controller_ledger.get('path'), str) else None, fallback_owner='controller')
+            payload = router._current_work_from_action(item, source='controller_action_ledger.passive_waits', source_path=controller_ledger.get('path') if isinstance(controller_ledger.get('path'), str) else None, default_owner='controller')
             if payload:
                 return payload
     scheduler_path = _router_scheduler_ledger_path(run_root)
@@ -266,7 +271,7 @@ def _derive_current_work(router: ModuleType, project_root: Path, run_root: Path,
     if passive_payload:
         return passive_payload
     if isinstance(current_wait, dict) and current_wait:
-        payload = router._current_work_from_action(current_wait, source='current_wait', source_path=project_relative(project_root, _router_daemon_status_path(run_root)), fallback_owner='router')
+        payload = router._current_work_from_action(current_wait, source='current_wait', source_path=project_relative(project_root, _router_daemon_status_path(run_root)), default_owner='router')
         if payload and payload.get('owner_kind') != 'none':
             return payload
     if run_state.get('daemon_mode_enabled'):

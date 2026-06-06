@@ -16,7 +16,6 @@ from flowpilot_router_startup_resume_binding_reports import (
 from flowpilot_router_startup_resume_binding_actions import (
     _next_resume_action,
     _next_role_recovery_action,
-    _next_startup_heartbeat_binding_action,
 )
 
 __all__ = (
@@ -29,7 +28,6 @@ __all__ = (
     '_write_initial_continuation_binding',
     '_next_resume_action',
     '_next_role_recovery_action',
-    '_next_startup_heartbeat_binding_action',
 )
 
 _LOCAL_NAMES = set(globals())

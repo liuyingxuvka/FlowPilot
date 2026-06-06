@@ -92,14 +92,6 @@
       "source": "system"
     },
     {
-      "audience": "human_like_reviewer",
-      "id": "reviewer.startup_fact_check",
-      "issued_by": "router",
-      "kind": "reviewer_gate",
-      "path": "cards/reviewer/startup_fact_check.md",
-      "source": "system"
-    },
-    {
       "audience": "project_manager",
       "id": "pm.material_scan",
       "issued_by": "router",
@@ -166,15 +158,6 @@
       "kind": "phase",
       "path": "cards/phases/pm_material_understanding.md",
       "phase": "material_understanding",
-      "source": "system"
-    },
-    {
-      "audience": "project_manager",
-      "id": "pm.startup_activation",
-      "issued_by": "router",
-      "kind": "startup_gate",
-      "path": "cards/phases/pm_startup_activation.md",
-      "phase": "startup_activation",
       "source": "system"
     },
     {

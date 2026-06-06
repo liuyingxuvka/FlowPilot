@@ -69,8 +69,8 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
                 json.dumps(
                     {
                         "schema_version": "flowpilot.current.v1",
-                        "current_run_id": "run-test",
-                        "current_run_root": ".flowpilot/runs/run-test",
+                        "run_id": "run-test",
+                        "run_root": ".flowpilot/runs/run-test",
                         "status": "running",
                     }
                 ),
@@ -226,8 +226,8 @@ class FlowPilotControllerBreakGlassPromptTests(unittest.TestCase):
                 json.dumps(
                     {
                         "schema_version": "flowpilot.current.v1",
-                        "current_run_id": "run-test",
-                        "current_run_root": ".flowpilot/runs/run-test",
+                        "run_id": "run-test",
+                        "run_root": ".flowpilot/runs/run-test",
                         "status": "running",
                     }
                 ),
@@ -356,7 +356,7 @@ class FlowPilotControllerBreakGlassRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_startup_fact_role_wait(root)
+        self.force_current_role_result_wait(root)
 
         standby = router.foreground_controller_standby(root, max_seconds=0, poll_seconds=0.01, bounded_diagnostic=True)
         self.assertIn("break_glass_reminder", standby)
@@ -377,3 +377,4 @@ class FlowPilotControllerBreakGlassRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
 if __name__ == "__main__":
     unittest.main()
+

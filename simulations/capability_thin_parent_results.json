@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-06T04:55:47.133747+00:00",
+  "created_at": "2026-06-06T18:21:41.415697+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -51,17 +51,17 @@
       {
         "evidence": [
           {
-            "edge_count": 313,
+            "edge_count": 70,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_startup_control",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_startup_control_results.json",
-            "result_fingerprint": "f2476f19c9a572503c5115c232316e27ccc87ef60c186f67ab05636214e7a6cd",
+            "result_fingerprint": "6e41c0a63e30d7ea47ac6683ee39c5fbaeb1262d36cdd93f8595db2267aea588",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 298
+            "state_count": 70
           },
           {
             "edge_count": 183,
@@ -71,7 +71,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/startup_pm_review_results.json",
-            "result_fingerprint": "db2e53e6661be0f9f760766677bf0a1044d26f7f23c9e69146061e4214aa4201",
+            "result_fingerprint": "6d1a1ad1132b25e13512b197a9f4b0f9d3aae6f3be95e29e08d6bb5394871088",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 180
@@ -283,7 +283,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_role_output_runtime_results.json",
-            "result_fingerprint": "33c0a5b582f5cccb8530e7f7b936ee5ab0ff03306865cdefb171535f1b9d44dd",
+            "result_fingerprint": "b1fde6d142f77ae5d427f49b0576ff67d33f9d32cc58da35c1e25c23d7d7405b",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null
@@ -497,7 +497,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/proof_carrying_checks_results.json",
-            "result_fingerprint": "15fd2a1a502bae9df2540a4e687f90a03038b2228baa2851bb071371d80d786a",
+            "result_fingerprint": "1e5bf8e411942ef3dda653e9599348ab018b3b87f4b1c806302c0627feb045b8",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": 11

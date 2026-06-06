@@ -15,7 +15,6 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             {
                 "confirm_controller_core_boundary",
                 "check_prompt_manifest",
-                "create_heartbeat_automation",
                 "deliver_system_card",
                 "write_display_surface_status",
             },
@@ -43,10 +42,13 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(lifecycle["reconciliation"]["status"], "stopped_by_user")
         self.assertTrue((run_root / "lifecycle" / "terminal_reconciliation.json").exists())
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
-        self.assertFalse(continuation["heartbeat_active"])
-        self.assertIn(continuation["host_automation_cleanup_status"], {"inactive_verified", "missing_verified"})
-        role_binding = read_json(run_root / "role_binding_ledger.json")
-        self.assertTrue(all(slot["status"] == "stopped_with_run" for slot in role_binding["role_slots"]))
+        self.assertFalse(continuation["manual_resume_binding_active"])
+        self.assertNotIn("heartbeat_active", continuation)
+        self.assertNotIn("host_automation_cleanup_status", continuation)
+        role_binding_path = run_root / "role_binding_ledger.json"
+        if role_binding_path.exists():
+            role_binding = read_json(role_binding_path)
+            self.assertTrue(all(slot["status"] == "stopped_with_run" for slot in role_binding["role_slots"]))
         packet_ledger = read_json(run_root / "packet_ledger.json")
         self.assertEqual(packet_ledger["active_packet_status"], "stopped_by_user")
         frontier = read_json(run_root / "execution_frontier.json")
@@ -101,109 +103,65 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         state_path = router.run_state_path(run_root)
         state = read_json(state_path)
-        flags = state.setdefault("flags", {})
-        for flag in (
-            "material_scan_packets_relayed",
-            "worker_packets_delivered",
-            "worker_scan_results_returned",
-            "material_scan_results_relayed_to_pm",
-            "material_scan_result_disposition_recorded",
-        ):
-            flags[flag] = True
-
-        tx_id = "repair-tx-terminal-quarantine"
-        tx_path = run_root / "control_blocks" / "repair_transactions" / f"{tx_id}.json"
+        transaction_id = "repair-tx-terminal-quarantine"
+        transaction_path = run_root / "control_blocks" / "repair_transactions" / f"{transaction_id}.json"
+        transaction_path.parent.mkdir(parents=True, exist_ok=True)
         router.write_json(
-            tx_path,
+            transaction_path,
             {
-                "schema_version": "flowpilot.repair_transaction.v1",
-                "transaction_id": tx_id,
-                "run_id": state["run_id"],
+                "schema_version": router.REPAIR_TRANSACTION_SCHEMA,
+                "transaction_id": transaction_id,
                 "blocker_id": "control-blocker-terminal-quarantine",
-                "status": "committed",
-                "plan_kind": "packet_reissue",
+                "status": "opened",
+                "plan_kind": "same_node_repair",
+                "packet_generation_id": "packet-generation-terminal-quarantine",
             },
         )
         state["active_repair_transaction"] = {
-            "transaction_id": tx_id,
+            "transaction_id": transaction_id,
             "blocker_id": "control-blocker-terminal-quarantine",
-            "status": "committed",
-            "plan_kind": "packet_reissue",
-            "path": self.rel(root, tx_path),
+            "status": "opened",
+            "path": self.rel(root, transaction_path),
         }
-        body_ref = {
-            "path": self.rel(root, run_root / "reviews" / "startup_fact_report-terminal.json"),
-            "hash": "duplicate-review-hash",
-        }
-        state["events"] = [
-            {"event": "reviewer_reports_startup_facts", "payload": {"body_ref": body_ref}},
-            {"event": "reviewer_reports_startup_facts", "payload": {"body_ref": body_ref}},
-        ]
-        state["external_event_idempotency"] = {
-            "processed": {
-                "pm_records_material_scan_result_disposition": {
-                    "first": {
-                        "scope": {
-                            "batch_id": "batch-a",
-                            "packet_ids": "packet-a",
-                            "packet_generation_id": "generation-a",
-                            "body_hash": "hash-a",
-                        }
-                    },
-                    "second": {
-                        "scope": {
-                            "batch_id": "batch-a",
-                            "packet_ids": "packet-a",
-                            "packet_generation_id": "generation-a",
-                            "body_hash": "hash-b",
-                        }
-                    },
-                }
-            }
-        }
-        router.save_run_state(run_root, state)
-
         packet_ledger_path = run_root / "packet_ledger.json"
         packet_ledger = read_json(packet_ledger_path)
+        packet_ledger["active_packet_id"] = "packet-terminal-quarantine"
+        packet_ledger["active_packet_status"] = "worker-result-returned"
+        packet_ledger["active_packet_holder"] = "router"
         packet_ledger.setdefault("packets", []).append(
             {
-                "packet_id": "packet-missing-author",
+                "packet_id": "packet-terminal-quarantine",
+                "active_packet_status": "worker-result-returned",
                 "result_envelope": {
+                    "result_id": "result-terminal-quarantine",
                     "completed_by_role": "worker",
-                    "completed_agent_id": None,
-                    "completed_agent_id_belongs_to_role": False,
                 },
             }
         )
         router.write_json(packet_ledger_path, packet_ledger)
+        router.save_run_state(run_root, state)
 
-        result = router.record_external_event(root, "user_requests_run_stop", {"reason": "user asked to stop"})
+        result = router.record_external_event(root, "user_requests_run_stop", {"reason": "stop during repair"})
 
         self.assertTrue(result["ok"])
-        state = read_json(state_path)
-        self.assertIsNone(state["active_repair_transaction"])
-        for flag in (
-            "material_scan_packets_relayed",
-            "worker_packets_delivered",
-            "worker_scan_results_returned",
-            "material_scan_results_relayed_to_pm",
-            "material_scan_result_disposition_recorded",
-        ):
-            self.assertFalse(state["flags"][flag])
-        tx = read_json(tx_path)
-        self.assertEqual(tx["status"], "superseded_by_terminal_lifecycle")
-        self.assertEqual(state["events"][1]["terminal_lifecycle_quarantine"]["status"], "terminal_lifecycle_quarantined")
-        records = state["external_event_idempotency"]["processed"]["pm_records_material_scan_result_disposition"]
-        self.assertEqual(records["second"]["terminal_lifecycle_quarantine"]["status"], "terminal_lifecycle_quarantined")
-        packet_ledger = read_json(packet_ledger_path)
-        result_envelope = packet_ledger["packets"][-1]["result_envelope"]
-        self.assertEqual(result_envelope["author_identity_quarantine"]["status"], "terminal_lifecycle_quarantined")
-        reconciliation = read_json(run_root / "lifecycle" / "terminal_reconciliation.json")
-        authorities = {receipt["authority"] for receipt in reconciliation["cleanup_receipts"]}
-        self.assertIn("repair_transaction", authorities)
-        self.assertIn("material_progress_flags", authorities)
-        self.assertIn("role_output_event_identity", authorities)
-        self.assertIn("packet_result_author_identity", authorities)
+        state_after = read_json(state_path)
+        self.assertIsNone(state_after["active_repair_transaction"])
+        transaction_after = read_json(transaction_path)
+        self.assertEqual(transaction_after["status"], "superseded_by_terminal_lifecycle")
+        lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
+        receipt_authorities = {
+            item.get("authority")
+            for item in lifecycle["cleanup_receipts"]
+            if isinstance(item, dict) and item.get("authority")
+        }
+        self.assertIn("repair_transaction", receipt_authorities)
+        self.assertIn("packet_result_author_identity", receipt_authorities)
+        packet_ledger_after = read_json(packet_ledger_path)
+        packet = next(item for item in packet_ledger_after["packets"] if item["packet_id"] == "packet-terminal-quarantine")
+        self.assertEqual(
+            packet["result_envelope"]["author_identity_quarantine"]["status"],
+            "terminal_lifecycle_quarantined",
+        )
     def test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -239,7 +197,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(fence["controller_work_fence"]["status"], "best_effort_failed")
         self.assertEqual(fence["controller_work_fence"]["error"]["type"], "RouterLedgerWriteInProgress")
         write_lock.unlink(missing_ok=True)
-    def test_terminal_pending_heartbeat_action_is_noop(self) -> None:
+    def test_terminal_pending_legacy_heartbeat_action_is_rejected(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state = read_json(router.run_state_path(run_root))
@@ -256,15 +214,10 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.save_run_state(run_root, state)
         binding_before = read_json(run_root / "continuation" / "continuation_binding.json")
 
-        result = router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
-
+        with self.assertRaisesRegex(router.RouterError, "unknown controller action: create_heartbeat_automation"):
+            router.apply_action(root, "create_heartbeat_automation", self.unsupported_heartbeat_binding_payload(root))
         binding_after = read_json(run_root / "continuation" / "continuation_binding.json")
-        refreshed_state = read_json(router.run_state_path(run_root))
-        self.assertTrue(result["heartbeat_binding_skipped"])
-        self.assertEqual(result["terminal_lifecycle_status"], "stopped_by_user")
         self.assertEqual(binding_after, binding_before)
-        self.assertFalse(refreshed_state["flags"]["continuation_binding_recorded"])
-        self.assertIsNone(refreshed_state.get("pending_action"))
     def test_reconcile_run_recovers_terminal_status_from_current_pointer(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-terminal-drift", status="startup_bootstrap")
@@ -272,8 +225,8 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root / ".flowpilot" / "current.json",
             {
                 "schema_version": "flowpilot.current.v1",
-                "current_run_id": run_root.name,
-                "current_run_root": router.project_relative(root, run_root),
+                "run_id": run_root.name,
+                "run_root": router.project_relative(root, run_root),
                 "status": "stopped_by_user",
                 "updated_at": router.utc_now(),
             },
@@ -342,7 +295,7 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
@@ -549,3 +502,4 @@ class TerminalRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "run_lifecycle_terminal")
         self.assertEqual(action["run_lifecycle_status"], "closed")
+

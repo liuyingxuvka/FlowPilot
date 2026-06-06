@@ -181,7 +181,7 @@ def _state_id(state: model.State) -> str:
         f"no_legal={state.no_legal_next_control_blocker_materialized},"
         f"dup_pm={state.duplicate_pm_repair_decision_seen},"
         f"{state.duplicate_repair_created_new_blocker}|stop={state.stop_requested},"
-        f"{state.current_status_stopped},hb={state.continuation_heartbeat_active},"
+        f"{state.current_status_stopped},patrol={state.manual_resume_binding_active},"
         f"runtime_roles={state.runtime_role_live_agents_active},packet_loop={state.packet_loop_active},"
         f"frontier={state.frontier_terminal}|snapshot={state.snapshot_published_as_active},"
         f"{state.snapshot_fresh_against_frontier_and_ledger}|active={state.multiple_running_index_entries_visible},"
@@ -215,3 +215,5 @@ def _state_id(state: model.State) -> str:
         f"{state.pm_package_authority_split_crashed_daemon},"
         f"{state.pm_package_authority_split_accepted_as_success}"
     )
+
+

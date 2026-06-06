@@ -8,9 +8,9 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_reentry_loads_state_before_resume_cards(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
@@ -34,6 +34,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "rehydrate_role_bindings")
+        self.assertTrue(action["background_collaboration_authorized"])
         self.assertFalse(action["requires_host_role_binding"])
         self.assertTrue(action["requires_host_role_rehydration"])
         self.assertTrue(action["new_binding_required_only_for_replacements"])
@@ -88,12 +89,28 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["liveness_preflight_policy"]["liveness_probe_batch_id"], action["liveness_probe_batch_id"])
         self.assertFalse(action["liveness_preflight_policy"]["timeout_unknown_is_active"])
         self.assertEqual(action["liveness_preflight_policy"]["roles_to_check"], list(router.RUNTIME_ROLE_KEYS))
-        self.assertEqual(len(action["role_rehydration_request"]), 6)
+        self.assertEqual(
+            {item["role_key"] for item in action["role_rehydration_request"]},
+            set(router.RUNTIME_ROLE_KEYS),
+        )
+        self.assertEqual(len(action["role_rehydration_request"]), len(router.RUNTIME_ROLE_KEYS))
         pm_request = next(item for item in action["role_rehydration_request"] if item["role_key"] == "project_manager")
         self.assertTrue(pm_request["pm_resume_context_required"])
         self.assertIn("pm_prior_path_context", pm_request["pm_resume_context_paths"])
         with self.assertRaisesRegex(router.RouterError, "runtime_role_assistance_capability_status"):
             router.apply_action(root, "rehydrate_role_bindings")
+        payload = self.resume_role_agent_payload(root, action)
+        payload["role_bindings"] = payload.pop("rehydrated_role_bindings")
+        with self.assertRaisesRegex(router.RouterError, "old role_bindings aliases"):
+            router.apply_action(root, "rehydrate_role_bindings", payload)
+        payload = self.resume_role_agent_payload(root, action)
+        state = read_json(router.run_state_path(run_root))
+        state["startup_answers"]["background_collaboration_authorized"] = False
+        router.save_run_state(run_root, state)
+        with self.assertRaisesRegex(router.RouterError, "background_collaboration_authorized=true"):
+            router.apply_action(root, "rehydrate_role_bindings", payload)
+        state["startup_answers"]["background_collaboration_authorized"] = True
+        router.save_run_state(run_root, state)
         payload = self.resume_role_agent_payload(root, action)
         payload["rehydrated_role_bindings"] = payload["rehydrated_role_bindings"][:-1]
         with self.assertRaisesRegex(router.RouterError, "missing rehydrated live role binding records"):
@@ -171,25 +188,31 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             for item in role_io["injection_receipts"]
             if item["resume_tick_id"] == resume_tick_id
         ]
-        self.assertEqual(len(resume_receipts), 6)
-        self.assertIn("heartbeat_rehydration", {item["lifecycle_phase"] for item in resume_receipts})
+        self.assertEqual({item["role_key"] for item in resume_receipts}, set(router.RUNTIME_ROLE_KEYS))
+        self.assertEqual(len(resume_receipts), len(router.RUNTIME_ROLE_KEYS))
+        receipt_phase_by_role = {item["role_key"]: item["lifecycle_phase"] for item in resume_receipts}
+        self.assertEqual(receipt_phase_by_role[replaced_role], "missing_agent_replacement")
+        self.assertEqual(
+            {phase for role, phase in receipt_phase_by_role.items() if role != replaced_role},
+            {"manual_resume_rehydration"},
+        )
 
-        role_report = read_json(run_root / "continuation" / "role_recovery_report.json")
-        self.assertFalse(role_report["pm_decision_required_before_normal_work"])
-        self.assertTrue(role_report["mechanical_obligation_replay_before_pm"])
-        self.assertTrue(role_report["mechanical_obligation_replay_completed"])
-        replay = read_json(root / role_report["role_recovery_obligation_replay_path"])
-        self.assertEqual(replay["candidate_count"], 0)
-        self.assertEqual(replay["replacement_count"], 0)
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["role_recovery_obligations_scanned"])
-        self.assertTrue(state["flags"]["role_recovery_obligation_replay_completed"])
+        self.assertFalse((run_root / "continuation" / "role_recovery_report.json").exists())
+        self.assertTrue(state["flags"]["role_binding_recovery_report_written"])
+        self.assertTrue(state["flags"]["resume_role_bindings_rehydrated"])
+        self.assertTrue(state["flags"]["resume_roles_restored"])
+        self.assertFalse(state["flags"]["role_recovery_report_written"])
+        self.assertFalse(state["flags"]["role_recovery_obligation_replay_completed"])
         self.assertFalse(state["flags"]["role_recovery_pm_escalation_required"])
-        self.assertTrue(state["flags"]["pm_resume_recovery_decision_returned"])
+        self.assertFalse(state["flags"]["pm_resume_recovery_decision_returned"])
 
-        self.deliver_expected_card(root, "controller.resume_reentry")
+        controller_card = self.deliver_expected_card(root, "controller.resume_reentry")
+        self.assertEqual(controller_card["to_role"], "controller")
+        self.assertEqual(controller_card["target_agent_id"], router.CONTROLLER_RUNTIME_HELPER_AGENT_ID)
         action = router.next_action(root)
-        self.assertNotEqual(action.get("card_id"), "pm.role_binding_recovery_freshness")
+        self.assertEqual(action.get("action_type"), "deliver_system_card")
+        self.assertEqual(action.get("card_id"), "pm.role_binding_recovery_freshness")
         self.assertNotEqual(action.get("card_id"), "pm.resume_decision")
         self.assertNotEqual(action.get("label"), "controller_waits_for_pm_resume_decision")
         self.assertFalse((run_root / "continuation" / "pm_resume_decision.json").exists())
@@ -197,9 +220,9 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_load_resume_state_controller_receipt_replays_router_state_handler(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
 
@@ -230,11 +253,11 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_reentry_attaches_to_live_router_daemon_and_ledger(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         router._refresh_router_daemon_lock(root, run_root)  # type: ignore[attr-defined]
 
         try:
-            router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+            router.record_external_event(root, "manual_resume_requested")
             action = router.next_action(root)
             self.assertEqual(action["action_type"], "load_resume_state")
             recovery = action["router_daemon_resume_recovery"]
@@ -255,23 +278,23 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             self.assertTrue(resume_evidence["controller_action_ledger_rescanned"])
         finally:
             router.stop_router_daemon(root, reason="test_cleanup")
-    def test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat(self) -> None:
+    def test_resume_reentry_attaches_to_live_owner_after_delayed_daemon_patrol(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         lock_path = run_root / "runtime" / "router_daemon.lock"
         lock = read_json(lock_path)
         lock["last_tick_at"] = "2000-01-01T00:00:00Z"
         router.write_json(lock_path, lock)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
         recovery = action["router_daemon_resume_recovery"]
         self.assertFalse(recovery["router_daemon_lock_live"])
         self.assertTrue(recovery["router_daemon_owner_process_live"])
         self.assertTrue(recovery["router_daemon_active_owner_live"])
-        self.assertEqual(recovery["heartbeat"]["status"], "check_liveness")
+        self.assertEqual(recovery["daemon_patrol"]["status"], "check_liveness")
         self.assertEqual(recovery["decision"], "attach_controller_to_live_daemon")
         self.assertFalse(recovery["work_chain_liveness_claimed"])
         self.assertTrue(recovery["old_route_state_liveness_rejected"])
@@ -286,21 +309,21 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         lock_path = run_root / "runtime" / "router_daemon.lock"
         lock = read_json(lock_path)
         lock["last_tick_at"] = "2000-01-01T00:00:00Z"
         lock["owner"] = {"pid": 999999999, "process_name": "missing-test-daemon"}
         router.write_json(lock_path, lock)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
         recovery = action["router_daemon_resume_recovery"]
         self.assertFalse(recovery["router_daemon_lock_live"])
         self.assertFalse(recovery["router_daemon_owner_process_live"])
         self.assertFalse(recovery["router_daemon_active_owner_live"])
-        self.assertEqual(recovery["heartbeat"]["status"], "check_liveness")
+        self.assertEqual(recovery["daemon_patrol"]["status"], "check_liveness")
         self.assertEqual(recovery["decision"], "restart_router_daemon_from_current_state")
         self.assertFalse(recovery["work_chain_liveness_claimed"])
         self.assertTrue(recovery["wait_agent_timeout_liveness_rejected"])
@@ -313,7 +336,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_reentry_preempts_active_control_blocker_until_replay_or_pm_decision(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -325,7 +348,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
             payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
         )
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "load_resume_state")
@@ -345,7 +368,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_mid_run_role_liveness_fault_uses_unified_recovery_before_normal_work(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -380,10 +403,23 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "recover_role_bindings")
         self.assertEqual(action["target_role_keys"], ["worker"])
+        self.assertTrue(action["background_collaboration_authorized"])
         self.assertIn("restore_old_agent", action["recovery_ladder"])
         self.assertIn("full_role_binding_recovery", action["recovery_ladder"])
         self.assertFalse(action["normal_waits_allowed_before_recovery"])
-        router.apply_action(root, "recover_role_bindings", self.role_recovery_agent_payload(root, action, role="worker"))
+        payload = self.role_recovery_agent_payload(root, action, role="worker")
+        legacy_payload = self.role_recovery_agent_payload(root, action, role="worker")
+        legacy_payload["role_bindings"] = legacy_payload.pop("recovered_role_bindings")
+        with self.assertRaisesRegex(router.RouterError, "old role_bindings aliases"):
+            router.apply_action(root, "recover_role_bindings", legacy_payload)
+        state = read_json(router.run_state_path(run_root))
+        state["startup_answers"]["background_collaboration_authorized"] = False
+        router.save_run_state(run_root, state)
+        with self.assertRaisesRegex(router.RouterError, "background_collaboration_authorized=true"):
+            router.apply_action(root, "recover_role_bindings", payload)
+        state["startup_answers"]["background_collaboration_authorized"] = True
+        router.save_run_state(run_root, state)
+        router.apply_action(root, "recover_role_bindings", payload)
 
         report = read_json(run_root / "continuation" / "role_recovery_report.json")
         self.assertEqual(report["schema_version"], "flowpilot.role_recovery_report.v1")
@@ -405,7 +441,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_blocked_role_recovery_receipt_reclaims_existing_report(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         report = self.recover_worker_after_liveness_fault(root)
         self.assertTrue(report["required_role_bindings_ready"])
@@ -471,7 +507,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         first_report = self.recover_worker_after_liveness_fault(root)
         self.assertTrue(first_report["required_role_bindings_ready"])
@@ -507,7 +543,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_active_agent_lookup_rejects_unknown_recovered_liveness(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         role_binding = read_json(run_root / "role_binding_ledger.json")
         pm_slot = next(slot for slot in role_binding["role_slots"] if slot["role_key"] == "project_manager")
@@ -525,7 +561,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_load_resume_state_does_not_downgrade_existing_role_recovery_report(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         report = self.recover_worker_after_liveness_fault(root)
         self.assertFalse(report["pm_decision_required_before_normal_work"])
@@ -592,8 +628,8 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_done_rehydrate_receipt_reclaims_existing_current_run_report_before_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        self.complete_startup_runtime_entry(root)
+        router.record_external_event(root, "manual_resume_requested")
         self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
         original_action = self.next_after_display_sync(root)
@@ -643,7 +679,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        wait_action = self.force_startup_fact_role_wait(root)
+        wait_action = self.force_current_role_result_wait(root)
 
         result = router.record_external_event(
             root,
@@ -679,7 +715,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        wait_action = self.force_startup_fact_role_wait(root)
+        wait_action = self.force_current_role_result_wait(root)
 
         result = router.record_external_event(
             root,
@@ -704,7 +740,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        wait_action = self.force_startup_fact_role_wait(root)
+        wait_action = self.force_current_role_result_wait(root)
 
         first = router.record_external_event(
             root,
@@ -746,20 +782,20 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_rehydration_settles_existing_output_without_pm(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         original = self.write_worker_recovery_wait_action(root, label="resume_waits_for_worker_existing_output")
         state = read_json(router.run_state_path(run_root))
         state.setdefault("events", []).append(
             {
                 "event": "worker_scan_results_returned",
-                "summary": "Worker output already reached Router before heartbeat resume replay.",
+                "summary": "Worker output already reached Router before manual resume replay.",
                 "payload": {"result_envelope_path": self.rel(root, run_root / "test_role_outputs" / "resume-existing.json")},
                 "recorded_at": router.utc_now(),
             }
         )
         router.save_run_state(run_root, state)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
         action = self.next_after_display_sync(root)
@@ -780,10 +816,10 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resume_rehydration_reissues_missing_obligations_before_pm(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         original = self.write_worker_recovery_wait_action(root, label="resume_waits_for_worker_missing_output")
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
         action = self.next_after_display_sync(root)
@@ -808,7 +844,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_role_recovery_settles_existing_output_without_replay_or_pm(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         original = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_existing_output")
         state = read_json(router.run_state_path(run_root))
         state.setdefault("events", []).append(
@@ -833,7 +869,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_role_recovery_settles_existing_ack_without_replay_or_pm(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         ack_path = run_root / "runtime" / "card_returns" / "worker-existing.ack.json"
         envelope_path = run_root / "runtime" / "card_envelopes" / "worker-existing.envelope.json"
         ack_path.parent.mkdir(parents=True, exist_ok=True)
@@ -897,7 +933,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_role_recovery_reissues_missing_obligations_in_original_order(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         first = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_output_first")
         second = self.write_worker_recovery_wait_action(root, label="controller_waits_for_worker_output_second")
 
@@ -924,7 +960,7 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root = self.boot_to_controller(root)
         (run_root / "role_binding_memory" / "worker.json").unlink()
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         self.assertEqual(self.next_after_display_sync(root)["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
         action = self.next_after_display_sync(root)
@@ -977,19 +1013,32 @@ class ResumeRuntimeTests(FlowPilotRouterRuntimeTestBase):
         decision = read_json(run_root / "continuation" / "pm_resume_decision.json")
         self.assertTrue(decision["resume_ambiguous"])
         self.assertEqual(decision["decision"], "restore_or_replace_roles_from_memory")
-    def test_heartbeat_alive_status_still_enters_router_resume_path(self) -> None:
+    def test_manual_resume_alive_status_enters_router_resume_path(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
 
         result = router.record_external_event(
             root,
-            "heartbeat_or_manual_resume_requested",
-            {"source": "heartbeat", "work_chain_status": "alive"},
+            "manual_resume_requested",
+            {"source": "manual_resume", "work_chain_status": "alive"},
         )
 
         self.assertTrue(result["resume_requested"])
-        self.assertTrue(result["heartbeat_tick"]["router_reentry_required"])
-        self.assertFalse(result["heartbeat_tick"]["self_keepalive_allowed"])
-        self.assertEqual(result["heartbeat_tick"]["work_chain_status_trust"], "diagnostic_only")
+        self.assertTrue(result["manual_resume_tick"]["router_reentry_required"])
+        self.assertFalse(result["manual_resume_tick"]["self_keepalive_allowed"])
+        self.assertEqual(result["manual_resume_tick"]["work_chain_status_trust"], "diagnostic_only")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "load_resume_state")
+
+    def test_legacy_heartbeat_resume_event_is_rejected(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        with self.assertRaisesRegex(router.RouterError, "unknown external event: heartbeat_or_manual_resume_requested"):
+            router.record_external_event(
+                root,
+                "heartbeat_or_manual_resume_requested",
+                {"source": "heartbeat", "work_chain_status": "alive"},
+            )
+
+

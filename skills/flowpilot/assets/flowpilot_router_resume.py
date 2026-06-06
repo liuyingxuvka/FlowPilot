@@ -1,4 +1,4 @@
-"""Resume and heartbeat helpers for FlowPilot router."""
+"""Manual resume helpers for FlowPilot router."""
 
 from __future__ import annotations
 
@@ -9,53 +9,34 @@ from typing import Any
 
 from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 
+_MANUAL_RESUME_BINDING_PAYLOAD_FIELDS = {"recorded_by"}
 
-def write_host_heartbeat_binding(
+
+def write_manual_resume_binding(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
     run_state: dict[str, Any],
     payload: dict[str, Any],
 ) -> None:
+    del project_root
     binding_path = router._continuation_binding_path(run_root)
     binding = router.read_json_if_exists(binding_path)
-    answers = router._startup_answers_from_run(run_root)
-    scheduled_requested = router._scheduled_continuation_requested(answers)
-    interval = int(payload.get("route_heartbeat_interval_minutes") or binding.get("route_heartbeat_interval_minutes") or 0)
-    if scheduled_requested and interval != 1:
-        raise router.RouterError("scheduled FlowPilot heartbeat must be one minute")
-    if scheduled_requested and not payload.get("host_automation_id"):
-        raise router.RouterError("scheduled FlowPilot heartbeat requires host_automation_id")
-    if scheduled_requested and payload.get("host_automation_verified") is not True:
-        raise router.RouterError("scheduled FlowPilot heartbeat requires host_automation_verified=true")
-    host_automation_proof = payload.get("host_automation_proof")
-    if scheduled_requested and not isinstance(host_automation_proof, dict):
-        raise router.RouterError("scheduled FlowPilot heartbeat requires host_automation_proof")
-    if host_automation_proof is not None:
-        if not isinstance(host_automation_proof, dict):
-            raise router.RouterError("host_automation_proof must be an object")
-        if host_automation_proof.get("source_kind") != "host_receipt":
-            raise router.RouterError("host_automation_proof requires source_kind=host_receipt")
-        if host_automation_proof.get("run_id") != run_state["run_id"]:
-            raise router.RouterError("host_automation_proof run_id must match current run")
-        if host_automation_proof.get("host_automation_id") != payload.get("host_automation_id"):
-            raise router.RouterError("host_automation_proof host_automation_id mismatch")
-        if int(host_automation_proof.get("route_heartbeat_interval_minutes") or 0) != 1:
-            raise router.RouterError("host_automation_proof requires one-minute heartbeat interval")
-        if host_automation_proof.get("heartbeat_bound_to_current_run") is not True:
-            raise router.RouterError("host_automation_proof must bind heartbeat to current run")
+    unsupported = sorted(set(payload) - _MANUAL_RESUME_BINDING_PAYLOAD_FIELDS)
+    if unsupported:
+        raise router.RouterError(
+            "manual resume binding payload contains unsupported fields: "
+            + ", ".join(unsupported)
+        )
     binding.update(
         {
             "schema_version": "flowpilot.continuation_binding.v1",
             "run_id": run_state["run_id"],
-            "mode": "scheduled_heartbeat" if scheduled_requested else "manual_resume",
-            "scheduled_continuation_requested": scheduled_requested,
-            "route_heartbeat_interval_minutes": 1 if scheduled_requested else 0,
-            "heartbeat_active": bool(scheduled_requested),
-            "host_automation_id": payload.get("host_automation_id") if scheduled_requested else None,
-            "host_automation_verified": bool(scheduled_requested),
+            "mode": "manual_resume",
+            "manual_resume_required": True,
+            "manual_resume_binding_active": True,
+            "host_automation_supported": False,
             "stable_launcher": router._stable_resume_launcher_contract(),
-            **({"host_automation_proof": host_automation_proof} if scheduled_requested and isinstance(host_automation_proof, dict) else {}),
             "recorded_by": str(payload.get("recorded_by") or "host"),
             "updated_at": router.utc_now(),
         }
@@ -63,7 +44,7 @@ def write_host_heartbeat_binding(
     router.write_json(binding_path, binding)
 
 
-def append_heartbeat_tick(
+def append_manual_resume_tick(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
@@ -71,11 +52,13 @@ def append_heartbeat_tick(
     payload: dict[str, Any],
 ) -> dict[str, Any]:
     del project_root
-    source = str(payload.get("source") or "heartbeat_or_manual_resume")
+    source = str(payload.get("source") or "manual_resume")
+    if source != "manual_resume":
+        raise router.RouterError("manual_resume_requested requires payload.source=manual_resume")
     tick = {
-        "schema_version": "flowpilot.heartbeat_tick.v1",
+        "schema_version": "flowpilot.manual_resume_tick.v1",
         "run_id": run_state["run_id"],
-        "tick_id": f"heartbeat-{len(run_state.get('heartbeat_ticks', [])) + 1:04d}",
+        "tick_id": f"manual-resume-{len(run_state.get('resume_ticks', [])) + 1:04d}",
         "work_chain_status": str(payload.get("work_chain_status") or "broken_or_unknown"),
         "work_chain_status_trust": "diagnostic_only",
         "recorded_at": router.utc_now(),
@@ -83,23 +66,21 @@ def append_heartbeat_tick(
         "resume_requested": True,
         "router_reentry_required": True,
         "self_keepalive_allowed": False,
-        "heartbeat_automation_status": str(payload.get("heartbeat_automation_status") or "unknown"),
-        "heartbeat_automation_status_checked": payload.get("heartbeat_automation_status_checked") is True,
+        "host_automation_supported": False,
     }
-    ticks_path = run_root / "continuation" / "heartbeat_ticks.jsonl"
-    assert_runtime_gateway_write(ticks_path, GATEWAY_ROUTER_JSON, operation="append_heartbeat_tick")
+    ticks_path = run_root / "continuation" / "manual_resume_ticks.jsonl"
+    assert_runtime_gateway_write(ticks_path, GATEWAY_ROUTER_JSON, operation="append_manual_resume_tick")
     ticks_path.parent.mkdir(parents=True, exist_ok=True)
     with ticks_path.open("a", encoding="utf-8") as stream:
         stream.write(json.dumps(tick, sort_keys=True) + "\n")
-    run_state.setdefault("heartbeat_ticks", []).append(
+    run_state.setdefault("resume_ticks", []).append(
         {
             "tick_id": tick["tick_id"],
             "work_chain_status": tick["work_chain_status"],
             "resume_requested": tick["resume_requested"],
             "router_reentry_required": tick["router_reentry_required"],
             "self_keepalive_allowed": tick["self_keepalive_allowed"],
-            "heartbeat_automation_status": tick["heartbeat_automation_status"],
-            "heartbeat_automation_status_checked": tick["heartbeat_automation_status_checked"],
+            "host_automation_supported": False,
         }
     )
     return tick

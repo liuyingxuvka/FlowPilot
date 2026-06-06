@@ -12,10 +12,10 @@
       "Keep unsupported/general events non-completing for gate waits.",
       "Treat a gate group as complete only when a terminal gate outcome satisfies the active gate flag.",
       "Map gate-targeted PM role-work results to a concrete gate pass/block event before continuation.",
-      "Use product behavior model submission as the only Product Officer gate completion path.",
+      "Use product behavior model submission as the only FlowGuard operator product-scope gate completion path.",
       "Write only the canonical product behavior model artifact for new runs.",
       "Require PM product behavior model acceptance before reviewer challenge or route planning can use the model.",
-      "Use process route model submission as the only Process Officer route gate completion path.",
+      "Use process route model submission as the only FlowGuard operator route-scope route gate completion path.",
       "Write only the canonical process route model artifact for new runs.",
       "Require PM process route model acceptance before Reviewer route challenge can use the model."
     ],
@@ -29,11 +29,11 @@
       "process_canonical_artifact_written": "process_route_model_missing_canonical_artifact",
       "process_pm_acceptance_not_skipped": "process_route_model_submission_skips_pm_acceptance",
       "repair_success_cannot_skip_gate": "pm_repair_resolves_blocker_without_gate_event",
-      "unsupported_event_cannot_close_gate": "unsupported_event_accepted_without_required_gate_flag",
-      "role_work_result_must_map_to_gate": "pm_role_work_result_not_mapped_to_current_gate"
+      "role_work_result_must_map_to_gate": "pm_role_work_result_not_mapped_to_current_gate",
+      "unsupported_event_cannot_close_gate": "unsupported_event_accepted_without_required_gate_flag"
     }
   },
-  "current_run_can_continue": true,
+  "current_run_can_continue": false,
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -90,7 +90,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
           "return_event_name": "none",
           "return_event_registered": false,
@@ -103,7 +102,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "identity_card_carries_hidden_work": {
@@ -149,7 +149,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
           "return_event_name": "none",
           "return_event_registered": false,
@@ -162,7 +161,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": true,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "mechanical_green_used_as_router_acceptance": {
@@ -209,9 +209,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
-          "return_event_name": "product_flowguard_operator_blocks_product_architecture_modelability",
+          "return_event_name": "flowguard_operator_product_scope_blocks_product_architecture_modelability",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "role_guess",
@@ -222,7 +221,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "pm_repair_resolves_blocker_without_gate_event": {
@@ -268,7 +268,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": false,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
           "return_event_name": "pm_registers_role_work_request",
           "return_event_registered": true,
@@ -281,7 +280,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "pm_role_work_result_not_mapped_to_current_gate": {
@@ -326,7 +326,6 @@
           "pm_role_work_result_maps_to_current_gate": false,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
           "return_event_name": "pm_records_role_work_result_decision",
           "return_event_registered": true,
@@ -339,7 +338,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "pm_role_work_wrong_recipient": {
@@ -383,7 +383,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "human_like_reviewer",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
           "return_event_name": "pm_records_role_work_result_decision",
           "return_event_registered": true,
@@ -396,7 +395,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "process_route_model_gate_uses_route_check_as_canonical_completion": {
@@ -420,7 +420,7 @@
           "current_gate_completion_contract_declared": true,
           "current_gate_flag_satisfied": true,
           "current_gate_name": "route_process_check",
-          "current_gate_required_flag": "process_flowguard_operator_route_check_passed",
+          "current_gate_required_flag": "flowguard_operator_route_scope_route_check_passed",
           "current_run_allowed_to_continue": true,
           "direct_router_wait_present": false,
           "downstream_product_flow_allowed": false,
@@ -439,9 +439,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
-          "return_event_name": "process_flowguard_operator_passes_route_check",
+          "return_event_name": "flowguard_operator_route_scope_passes_route_check",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "current_router_wait",
@@ -452,7 +451,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "process_route_model_missing_canonical_artifact": {
@@ -495,9 +495,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
-          "return_event_name": "process_flowguard_operator_submits_process_route_model",
+          "return_event_name": "flowguard_operator_submits_process_route_model",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "current_router_wait",
@@ -508,7 +507,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "process_route_model_submission_skips_pm_acceptance": {
@@ -551,9 +551,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
-          "return_event_name": "process_flowguard_operator_submits_process_route_model",
+          "return_event_name": "flowguard_operator_submits_process_route_model",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "current_router_wait",
@@ -564,7 +563,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "product_behavior_model_gate_uses_modelability_as_canonical_completion": {
@@ -607,9 +607,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
-          "return_event_name": "product_flowguard_operator_passes_product_architecture_modelability",
+          "return_event_name": "flowguard_operator_product_scope_passes_product_architecture_modelability",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "current_router_wait",
@@ -620,7 +619,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "product_behavior_model_missing_canonical_artifact": {
@@ -663,9 +663,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
-          "return_event_name": "product_flowguard_operator_submits_product_behavior_model",
+          "return_event_name": "flowguard_operator_submits_product_behavior_model",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "current_router_wait",
@@ -676,7 +675,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "product_behavior_model_submission_skips_pm_acceptance": {
@@ -719,9 +719,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
-          "return_event_name": "product_flowguard_operator_submits_product_behavior_model",
+          "return_event_name": "flowguard_operator_submits_product_behavior_model",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "current_router_wait",
@@ -732,7 +731,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "registered_event_not_currently_allowed": {
@@ -778,9 +778,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
-          "return_event_name": "product_flowguard_operator_blocks_product_architecture_modelability",
+          "return_event_name": "flowguard_operator_product_scope_blocks_product_architecture_modelability",
           "return_event_registered": true,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "role_guess",
@@ -791,124 +790,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
-        }
-      },
-      "unsupported_direct_event_competes_with_pm_packet": {
-        "detected": true,
-        "expected_failure": "unsupported direct FlowGuard operator event competes with PM role-work result contract",
-        "failures": [
-          "router-supplied return event was not supplied by current Router wait, PM packet, or registered work authority",
-          "system card alone cannot authorize formal router-supplied output",
-          "role guessed a formal return event",
-          "formal return event is not currently allowed by Router wait state",
-          "unsupported direct FlowGuard operator event competes with PM role-work result contract"
-        ],
-        "state": {
-          "assignment_surface": "system_card",
-          "authority_contract_matches": true,
-          "authority_recipient_matches": true,
-          "authority_role_matches": true,
-          "authority_route_frontier_fresh": true,
-          "canonical_process_route_model_artifact_written": true,
-          "canonical_product_behavior_model_artifact_written": true,
-          "concrete_return_event_present": true,
-          "contract_event_mode": "router_supplied",
-          "control_blocker_resolved": false,
-          "current_gate_active": false,
-          "current_gate_completion_contract_declared": true,
-          "current_gate_flag_satisfied": true,
-          "current_gate_name": "none",
-          "current_gate_required_flag": "none",
-          "current_run_allowed_to_continue": false,
-          "direct_router_wait_present": false,
-          "downstream_product_flow_allowed": false,
-          "downstream_route_challenge_flow_allowed": false,
-          "formal_output_requested": true,
-          "identity_ack_only": false,
-          "mechanical_role_output_valid": true,
-          "output_contract_id": "flowguard_operator_model_report",
-          "output_type": "flowguard_operator_model_report",
-          "pm_acceptance_completed": true,
-          "pm_acceptance_required_after_submission": false,
-          "pm_process_acceptance_completed": true,
-          "pm_process_acceptance_required_after_submission": false,
-          "pm_role_work_packet_present": true,
-          "pm_role_work_result_contract_present": true,
-          "pm_role_work_result_maps_to_current_gate": true,
-          "repair_followup_event_satisfies_current_gate": true,
-          "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": true,
-          "return_event_currently_allowed": false,
-          "return_event_name": "product_flowguard_operator_blocks_product_architecture_modelability",
-          "return_event_registered": true,
-          "return_event_satisfies_current_gate": true,
-          "return_event_source": "role_guess",
-          "router_accepted_event": false,
-          "router_registered_work_authority_present": false,
-          "scenario": "unsupported_direct_event_competes_with_pm_packet",
-          "semantic_report_meaningful": true,
-          "static_card_guidance_present": true,
-          "status": "running",
-          "task_like_card": false,
-          "terminal_reason": "none"
-        }
-      },
-      "unsupported_event_accepted_without_required_gate_flag": {
-        "detected": true,
-        "expected_failure": "Router accepted an event that did not satisfy the current gate",
-        "failures": [
-          "product behavior model gate used modelability as canonical completion",
-          "Router accepted an event that did not satisfy the current gate"
-        ],
-        "state": {
-          "assignment_surface": "direct_router_wait",
-          "authority_contract_matches": true,
-          "authority_recipient_matches": true,
-          "authority_role_matches": true,
-          "authority_route_frontier_fresh": true,
-          "canonical_process_route_model_artifact_written": true,
-          "canonical_product_behavior_model_artifact_written": true,
-          "concrete_return_event_present": true,
-          "contract_event_mode": "router_supplied",
-          "control_blocker_resolved": false,
-          "current_gate_active": true,
-          "current_gate_completion_contract_declared": true,
-          "current_gate_flag_satisfied": false,
-          "current_gate_name": "product_architecture_modelability",
-          "current_gate_required_flag": "product_architecture_modelability_passed",
-          "current_run_allowed_to_continue": false,
-          "direct_router_wait_present": true,
-          "downstream_product_flow_allowed": false,
-          "downstream_route_challenge_flow_allowed": false,
-          "formal_output_requested": true,
-          "identity_ack_only": false,
-          "mechanical_role_output_valid": true,
-          "output_contract_id": "flowguard_operator_model_report",
-          "output_type": "flowguard_operator_model_report",
-          "pm_acceptance_completed": true,
-          "pm_acceptance_required_after_submission": false,
-          "pm_process_acceptance_completed": true,
-          "pm_process_acceptance_required_after_submission": false,
-          "pm_role_work_packet_present": false,
-          "pm_role_work_result_contract_present": false,
-          "pm_role_work_result_maps_to_current_gate": true,
-          "repair_followup_event_satisfies_current_gate": true,
-          "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": true,
-          "return_event_currently_allowed": true,
-          "return_event_name": "product_flowguard_operator_model_report",
-          "return_event_registered": true,
-          "return_event_satisfies_current_gate": false,
-          "return_event_source": "current_router_wait",
-          "router_accepted_event": true,
-          "router_registered_work_authority_present": true,
-          "scenario": "unsupported_event_accepted_without_required_gate_flag",
-          "semantic_report_meaningful": true,
-          "static_card_guidance_present": true,
-          "status": "running",
-          "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "role_guesses_unknown_event": {
@@ -955,9 +838,8 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
-          "return_event_name": "product_flowguard_operator_model_report",
+          "return_event_name": "flowguard_operator_product_scope_model_report",
           "return_event_registered": false,
           "return_event_satisfies_current_gate": true,
           "return_event_source": "role_guess",
@@ -968,7 +850,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "stale_work_authority_used": {
@@ -1011,7 +894,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
           "return_event_name": "active_holder_result_mechanics_passed",
           "return_event_registered": true,
@@ -1024,7 +906,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": true,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "static_card_guidance_used_as_dynamic_lease": {
@@ -1071,7 +954,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
           "return_event_name": "use_router_supplied_event_name",
           "return_event_registered": false,
@@ -1084,7 +966,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "system_card_only_router_supplied_report": {
@@ -1129,7 +1012,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
           "return_event_name": "none",
           "return_event_registered": false,
@@ -1142,7 +1024,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": false,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "task_card_without_work_authority": {
@@ -1187,7 +1070,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": false,
           "return_event_name": "none",
           "return_event_registered": false,
@@ -1200,7 +1082,125 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": true,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
+        }
+      },
+      "unsupported_direct_event_competes_with_pm_packet": {
+        "detected": true,
+        "expected_failure": "unsupported direct FlowGuard operator event competes with PM role-work result contract",
+        "failures": [
+          "router-supplied return event was not supplied by current Router wait, PM packet, or registered work authority",
+          "system card alone cannot authorize formal router-supplied output",
+          "role guessed a formal return event",
+          "formal return event is not currently allowed by Router wait state",
+          "unsupported direct FlowGuard operator event competes with PM role-work result contract"
+        ],
+        "state": {
+          "assignment_surface": "system_card",
+          "authority_contract_matches": true,
+          "authority_recipient_matches": true,
+          "authority_role_matches": true,
+          "authority_route_frontier_fresh": true,
+          "canonical_process_route_model_artifact_written": true,
+          "canonical_product_behavior_model_artifact_written": true,
+          "concrete_return_event_present": true,
+          "contract_event_mode": "router_supplied",
+          "control_blocker_resolved": false,
+          "current_gate_active": false,
+          "current_gate_completion_contract_declared": true,
+          "current_gate_flag_satisfied": true,
+          "current_gate_name": "none",
+          "current_gate_required_flag": "none",
+          "current_run_allowed_to_continue": false,
+          "direct_router_wait_present": false,
+          "downstream_product_flow_allowed": false,
+          "downstream_route_challenge_flow_allowed": false,
+          "formal_output_requested": true,
+          "identity_ack_only": false,
+          "mechanical_role_output_valid": true,
+          "output_contract_id": "flowguard_operator_model_report",
+          "output_type": "flowguard_operator_model_report",
+          "pm_acceptance_completed": true,
+          "pm_acceptance_required_after_submission": false,
+          "pm_process_acceptance_completed": true,
+          "pm_process_acceptance_required_after_submission": false,
+          "pm_role_work_packet_present": true,
+          "pm_role_work_result_contract_present": true,
+          "pm_role_work_result_maps_to_current_gate": true,
+          "repair_followup_event_satisfies_current_gate": true,
+          "required_result_next_recipient": "project_manager",
+          "return_event_currently_allowed": false,
+          "return_event_name": "flowguard_operator_product_scope_blocks_product_architecture_modelability",
+          "return_event_registered": true,
+          "return_event_satisfies_current_gate": true,
+          "return_event_source": "role_guess",
+          "router_accepted_event": false,
+          "router_registered_work_authority_present": false,
+          "scenario": "unsupported_direct_event_competes_with_pm_packet",
+          "semantic_report_meaningful": true,
+          "static_card_guidance_present": true,
+          "status": "running",
+          "task_like_card": false,
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": true
+        }
+      },
+      "unsupported_event_accepted_without_required_gate_flag": {
+        "detected": true,
+        "expected_failure": "Router accepted an event that did not satisfy the current gate",
+        "failures": [
+          "product behavior model gate used modelability as canonical completion",
+          "Router accepted an event that did not satisfy the current gate"
+        ],
+        "state": {
+          "assignment_surface": "direct_router_wait",
+          "authority_contract_matches": true,
+          "authority_recipient_matches": true,
+          "authority_role_matches": true,
+          "authority_route_frontier_fresh": true,
+          "canonical_process_route_model_artifact_written": true,
+          "canonical_product_behavior_model_artifact_written": true,
+          "concrete_return_event_present": true,
+          "contract_event_mode": "router_supplied",
+          "control_blocker_resolved": false,
+          "current_gate_active": true,
+          "current_gate_completion_contract_declared": true,
+          "current_gate_flag_satisfied": false,
+          "current_gate_name": "product_architecture_modelability",
+          "current_gate_required_flag": "product_architecture_modelability_passed",
+          "current_run_allowed_to_continue": false,
+          "direct_router_wait_present": true,
+          "downstream_product_flow_allowed": false,
+          "downstream_route_challenge_flow_allowed": false,
+          "formal_output_requested": true,
+          "identity_ack_only": false,
+          "mechanical_role_output_valid": true,
+          "output_contract_id": "flowguard_operator_model_report",
+          "output_type": "flowguard_operator_model_report",
+          "pm_acceptance_completed": true,
+          "pm_acceptance_required_after_submission": false,
+          "pm_process_acceptance_completed": true,
+          "pm_process_acceptance_required_after_submission": false,
+          "pm_role_work_packet_present": false,
+          "pm_role_work_result_contract_present": false,
+          "pm_role_work_result_maps_to_current_gate": true,
+          "repair_followup_event_satisfies_current_gate": true,
+          "required_result_next_recipient": "project_manager",
+          "return_event_currently_allowed": true,
+          "return_event_name": "flowguard_operator_product_scope_model_report",
+          "return_event_registered": true,
+          "return_event_satisfies_current_gate": false,
+          "return_event_source": "current_router_wait",
+          "router_accepted_event": true,
+          "router_registered_work_authority_present": true,
+          "scenario": "unsupported_event_accepted_without_required_gate_flag",
+          "semantic_report_meaningful": true,
+          "static_card_guidance_present": true,
+          "status": "running",
+          "task_like_card": false,
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": true
         }
       },
       "wrong_contract_uses_work_authority": {
@@ -1243,7 +1243,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
           "return_event_name": "current_node_reviewer_passes_result",
           "return_event_registered": true,
@@ -1256,7 +1255,8 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": true,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       },
       "wrong_role_uses_work_authority": {
@@ -1299,7 +1299,6 @@
           "pm_role_work_result_maps_to_current_gate": true,
           "repair_followup_event_satisfies_current_gate": true,
           "required_result_next_recipient": "project_manager",
-          "unsupported_direct_event_present": false,
           "return_event_currently_allowed": true,
           "return_event_name": "current_node_reviewer_passes_result",
           "return_event_registered": true,
@@ -1312,97 +1311,35 @@
           "static_card_guidance_present": true,
           "status": "running",
           "task_like_card": true,
-          "terminal_reason": "none"
+          "terminal_reason": "none",
+          "unsupported_direct_event_present": false
         }
       }
     },
     "ok": true
   },
   "live_run_projection": {
-    "classification": "no_active_dynamic_return_path_findings",
-    "current_finding_count": 0,
+    "classification": "current_run_missing",
     "current_findings": [],
-    "current_run_can_continue": true,
-    "current_run_id": "run-20260528-142320",
-    "current_run_root": ".flowpilot/runs/run-20260528-142320",
-    "historical_gate_alignment_finding_count": 0,
+    "current_run_can_continue": false,
+    "current_run_id": null,
+    "current_run_root": null,
     "historical_gate_alignment_findings": [],
-    "mitigated_path_count": 0,
+    "metadata_only": true,
     "mitigated_paths": [],
     "ok": true,
-    "risk_surface_count": 6,
-    "risk_surfaces": [
-      {
-        "contract_id": "flowpilot.output_contract.controller_boundary_confirmation.v1",
-        "kind": "router_supplied_contract_needs_dynamic_lease",
-        "output_type": "controller_boundary_confirmation",
-        "packet_type": null,
-        "recipient_roles": [
-          "controller"
-        ],
-        "task_family": "controller.boundary_confirmation"
-      },
-      {
-        "contract_id": "flowpilot.output_contract.flowguard_model_miss_report.v1",
-        "kind": "router_supplied_contract_needs_dynamic_lease",
-        "output_type": "flowguard_model_miss_report",
-        "packet_type": null,
-        "recipient_roles": [
-          "process_flowguard_operator",
-          "product_flowguard_operator"
-        ],
-        "task_family": "flowguard_operator.model_miss_report"
-      },
-      {
-        "contract_id": "flowpilot.output_contract.material_sufficiency_report.v1",
-        "kind": "router_supplied_contract_needs_dynamic_lease",
-        "output_type": "material_sufficiency_report",
-        "packet_type": null,
-        "recipient_roles": [
-          "human_like_reviewer"
-        ],
-        "task_family": "reviewer.material_sufficiency"
-      },
-      {
-        "contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1",
-        "kind": "router_supplied_contract_needs_dynamic_lease",
-        "output_type": "flowguard_operator_model_report",
-        "packet_type": null,
-        "recipient_roles": [
-          "process_flowguard_operator",
-          "product_flowguard_operator"
-        ],
-        "task_family": "flowguard_operator.model_report"
-      },
-      {
-        "contract_id": "flowpilot.output_contract.pm_package_result_disposition.v1",
-        "kind": "router_supplied_contract_needs_dynamic_lease",
-        "output_type": "pm_package_result_disposition",
-        "packet_type": null,
-        "recipient_roles": [
-          "project_manager"
-        ],
-        "task_family": "pm.package_result_disposition"
-      },
-      {
-        "contract_id": "flowpilot.output_contract.reviewer_review_report.v1",
-        "kind": "router_supplied_contract_needs_dynamic_lease",
-        "output_type": "reviewer_review_report",
-        "packet_type": null,
-        "recipient_roles": [
-          "human_like_reviewer"
-        ],
-        "task_family": "reviewer.review"
-      }
-    ],
+    "risk_surfaces": [],
     "router_supplied_contracts": [
       "flowpilot.output_contract.controller_boundary_confirmation.v1",
       "flowpilot.output_contract.flowguard_model_miss_report.v1",
-      "flowpilot.output_contract.material_sufficiency_report.v1",
       "flowpilot.output_contract.flowguard_operator_model_report.v1",
+      "flowpilot.output_contract.material_sufficiency_report.v1",
       "flowpilot.output_contract.pm_package_result_disposition.v1",
       "flowpilot.output_contract.reviewer_review_report.v1"
-    ]
+    ],
+    "safe_to_claim_live_run_confidence": false,
+    "skip_reason": "no .flowpilot/current.json with current run_id/run_root found",
+    "skipped": true
   },
   "ok": true,
   "progress": {
@@ -1443,13 +1380,13 @@
       "product_behavior_model_missing_canonical_artifact",
       "product_behavior_model_submission_skips_pm_acceptance",
       "registered_event_not_currently_allowed",
-      "unsupported_direct_event_competes_with_pm_packet",
-      "unsupported_event_accepted_without_required_gate_flag",
       "role_guesses_unknown_event",
       "stale_work_authority_used",
       "static_card_guidance_used_as_dynamic_lease",
       "system_card_only_router_supplied_report",
       "task_card_without_work_authority",
+      "unsupported_direct_event_competes_with_pm_packet",
+      "unsupported_event_accepted_without_required_gate_flag",
       "wrong_contract_uses_work_authority",
       "wrong_role_uses_work_authority"
     ],

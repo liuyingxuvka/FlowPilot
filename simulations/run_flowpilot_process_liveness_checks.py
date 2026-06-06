@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for `run_flowpilot_process_liveness_checks.py`."""
+"""Thin current-contract entrypoint for the FlowPilot process-liveness checks."""
 
 from __future__ import annotations
 

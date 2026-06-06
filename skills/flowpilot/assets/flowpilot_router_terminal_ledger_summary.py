@@ -29,9 +29,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -166,7 +171,7 @@ def _write_terminal_summary(router: ModuleType, project_root: Path, run_root: Pa
     write_json(index_path, index)
     current_path = project_root / '.flowpilot' / 'current.json'
     current = read_json_if_exists(current_path) or {}
-    if (current.get('run_id') or current.get('current_run_id')) == run_id:
+    if current.get('run_id') == run_id:
         current['status'] = mode
         current['final_summary_path'] = markdown_rel
         current['final_summary_json_path'] = json_rel

@@ -10,8 +10,8 @@ TEST_NAMES = (
     "test_run_until_wait_applies_only_safe_startup_action",
     "test_run_until_wait_folds_only_internal_bootloader_actions_after_banner",
     "test_run_until_wait_folds_user_intake_then_stops_before_role_boundary",
-    "test_scheduled_startup_heartbeat_is_queued_after_controller_core",
-    "test_manual_startup_skips_heartbeat_after_controller_core",
+    "test_manual_startup_writes_current_resume_binding_after_controller_core",
+    "test_manual_startup_records_current_resume_binding_for_resume_reentry",
     "test_formal_startup_starts_router_daemon_before_controller_core",
     "test_startup_daemon_defers_banner_and_queues_next_boot_row",
     "test_deterministic_bootstrap_seed_failure_does_not_create_pm_blocker",
@@ -21,7 +21,7 @@ TEST_NAMES = (
     "test_load_controller_core_receipt_reconciles_startup_postcondition",
     "test_startup_reconciliation_resolves_stale_blocker_and_supersedes_pm_row",
     "test_startup_missing_router_postcondition_retries_before_pm_blocker",
-    "test_startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait",
+    "test_startup_daemon_queues_controller_core_without_legacy_role_or_automation_wait",
     "test_startup_async_receipts_update_bootstrap_flags_and_scheduler_rows",
     "test_formal_startup_daemon_failure_blocks_controller_core",
     "test_formal_startup_attaches_same_run_live_daemon_without_duplicate_spawn",
@@ -51,9 +51,8 @@ TEST_NAMES = (
     "test_router_daemon_nested_state_write_lock_wait_does_not_exit",
     "test_terminal_startup_daemon_schedule_does_not_append_boot_rows",
     "test_router_daemon_status_not_active_after_error_lock_or_missing_pid",
-    "test_startup_reviewer_event_uses_current_scope_reconciliation",
-    "test_startup_fact_role_output_ledger_is_reconciled_by_router_tick",
-    "test_startup_fact_canonical_artifact_drift_syncs_flag_once",
+    "test_startup_rejects_legacy_reviewer_event_before_pm_work",
+    "test_startup_rejects_legacy_startup_fact_role_output_ledger",
     "test_startup_waits_for_answers_before_banner_or_controller",
     "test_startup_intake_rejects_body_hash_mismatch",
     "test_startup_intake_rejects_body_text_in_controller_payload",
@@ -61,16 +60,12 @@ TEST_NAMES = (
     "test_startup_sequence_creates_prompt_isolated_run",
     "test_startup_banner_action_and_result_are_user_visible",
     "test_user_intake_from_startup_ui_is_router_owned_and_sealed_from_controller",
-    "test_daemon_folds_stable_startup_role_flags_from_bootstrap",
-    "test_partial_startup_role_flags_wait_for_settlement",
-    "test_startup_activation_requires_reviewer_facts_before_work",
-    "test_reviewer_startup_findings_go_to_pm_without_control_blocker",
-    "test_pm_can_approve_startup_findings_with_file_backed_decision",
-    "test_pm_startup_repair_request_resets_fact_review_cycle",
-    "test_pm_startup_repair_request_can_repeat_for_new_blocking_report",
-    "test_cockpit_requested_startup_display_records_display_blocker",
-    "test_startup_fact_report_accepts_file_backed_envelope_only_payload",
-    "test_startup_fact_report_rejects_canonical_submission_alias",
+    "test_daemon_ignores_old_startup_role_flags_from_bootstrap",
+    "test_partial_old_startup_role_flags_are_ignored_without_settlement_wait",
+    "test_startup_current_path_releases_user_intake_without_startup_role_gate",
+    "test_startup_old_role_gate_events_are_unsupported",
+    "test_cockpit_startup_answer_is_rejected_as_legacy_option",
+    "test_old_startup_role_output_contracts_are_absent",
 )
 
 
@@ -80,3 +75,4 @@ def load_tests(loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: 
 
 if __name__ == "__main__":
     unittest.main()
+

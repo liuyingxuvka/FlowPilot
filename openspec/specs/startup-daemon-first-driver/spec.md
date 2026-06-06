@@ -8,15 +8,17 @@ TBD - created by archiving change startup-daemon-first-driver. Update Purpose af
 Formal FlowPilot startup SHALL create only the minimal run shell, current
 pointer, and run index before starting or attaching the run-scoped Router
 daemon. The daemon SHALL become the startup driver before startup intake UI,
-role startup, heartbeat binding, or Controller core load.
+current background collaboration checks, foreground patrol setup, or Controller
+core load.
 
 #### Scenario: New formal startup starts daemon first
 
 - **WHEN** a new formal startup begins
 - **THEN** Router loads, creates the run shell, writes the current pointer,
   updates the run index, and starts or attaches the Router daemon
-- **AND** startup intake UI, role startup, heartbeat binding, and Controller
-  core load do not happen before daemon readiness is proven.
+- **AND** startup intake UI, current background collaboration checks,
+  foreground patrol setup, and Controller core load do not happen before daemon
+  readiness is proven.
 
 #### Scenario: Daemon cannot become the startup driver
 
@@ -32,8 +34,8 @@ action ledger and Router scheduler ledger used after Controller core loads.
 
 #### Scenario: Daemon schedules a startup row
 
-- **WHEN** the daemon schedules startup intake UI, role startup, heartbeat
-  binding, or Controller core handoff
+- **WHEN** the daemon schedules startup intake UI, current background
+  collaboration checks, foreground patrol setup, or Controller core handoff
 - **THEN** Router writes a Controller action row for Controller/work execution
 - **AND** Router writes a Router scheduler row for ordering, scope,
   idempotency, dependencies, and barrier classification
@@ -73,8 +75,9 @@ Daemon-owned startup scheduling SHALL stop immediately when current-run
 lifecycle is terminal.
 
 #### Scenario: Startup scheduler receives stopped run
-- **WHEN** startup daemon scheduling is asked to create startup intake, role
-  startup, heartbeat binding, or Controller core handoff for a stopped run
+- **WHEN** startup daemon scheduling is asked to create startup intake, current
+  background collaboration checks, foreground patrol setup, or Controller core
+  handoff for a stopped run
 - **THEN** it MUST return terminal/no-op status
 - **AND** it MUST NOT append a new startup scheduler row or Controller action.
 

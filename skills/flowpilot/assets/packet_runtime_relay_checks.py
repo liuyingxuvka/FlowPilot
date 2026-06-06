@@ -286,6 +286,8 @@ def validate_result_ready_for_recipient_relay(
         blockers.append("result_completed_by_wrong_role")
     if _completed_agent_id_is_role_key(completed_by_agent_id):
         blockers.append("completed_agent_id_is_role_key_not_agent_id")
+    if agent_role_map is not None and str(completed_by_agent_id) not in agent_role_map:
+        blockers.append("completed_agent_id_not_in_current_role_binding_ledger")
     if (
         agent_role_map is not None
         and str(completed_by_agent_id) in agent_role_map
@@ -307,10 +309,12 @@ def validate_result_ready_for_recipient_relay(
         "completed_by_agent_id": completed_by_agent_id,
         "completed_agent_id_belongs_to_role": bool(
             agent_role_map is None
-            or str(completed_by_agent_id) not in agent_role_map
             or agent_role_map.get(str(completed_by_agent_id)) == completed_by_role
         )
         and not _completed_agent_id_is_role_key(completed_by_agent_id),
+        "completed_agent_id_known_to_role_binding_ledger": bool(
+            agent_role_map is None or str(completed_by_agent_id) in agent_role_map
+        ),
         "blockers": blockers,
         "passed": not blockers,
     }

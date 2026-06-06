@@ -44,6 +44,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -175,7 +177,7 @@ def _consume_router_internal_mechanical_action(
         elif action_type == "write_startup_mechanical_audit":
             context = _startup_mechanical_audit_context(project_root, run_root, run_state)
             if not run_state.get("flags", {}).get("startup_mechanical_audit_written") or context is None:
-                computed_checks = _startup_fact_checks(project_root, run_root, run_state)
+                computed_checks = _startup_mechanical_checks(project_root, run_root, run_state)
                 _write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
                 context = _startup_mechanical_audit_context(project_root, run_root, run_state)
                 if context is None:
@@ -186,7 +188,7 @@ def _consume_router_internal_mechanical_action(
                     "sha256": context["audit_hash"],
                     "proof_path": project_relative(project_root, context["proof_path"]),
                     "proof_sha256": context["proof_hash"],
-                    "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
+                    "written_before_first_pm_work": not run_state["flags"].get("user_intake_delivered_to_pm"),
                 }
                 side_effect_applied = True
             result_extra["postcondition"] = "startup_mechanical_audit_written"

@@ -36,6 +36,29 @@ def _runtime_json_target_valid(path: Path) -> bool:
     return isinstance(parsed, dict)
 
 
+def _runtime_json_target_signature(path: Path) -> dict[str, int | bool | None]:
+    try:
+        stat = path.stat()
+    except OSError:
+        return {"exists": False, "mtime_ns": None, "size": None}
+    return {
+        "exists": True,
+        "mtime_ns": int(stat.st_mtime_ns),
+        "size": int(stat.st_size),
+    }
+
+
+def _runtime_json_target_signature_changed(path: Path, lock_payload: dict[str, Any]) -> bool:
+    initial = lock_payload.get("target_initial_signature")
+    if not isinstance(initial, dict):
+        return False
+    return _runtime_json_target_signature(path) != {
+        "exists": bool(initial.get("exists")),
+        "mtime_ns": initial.get("mtime_ns"),
+        "size": initial.get("size"),
+    }
+
+
 def _runtime_json_tmp_artifact_present(path: Path) -> bool:
     try:
         return any(path.parent.glob(".tmp-*.json"))
@@ -84,7 +107,12 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
     stale_by_age = age is not None and age > RUNTIME_JSON_WRITE_LOCK_STALE_SECONDS
     target_valid_json = _runtime_json_target_valid(path)
     tmp_artifact_present = _runtime_json_tmp_artifact_present(path)
-    if owner_is_self and owner_process_live and stale_by_age:
+    target_signature_changed = _runtime_json_target_signature_changed(path, payload)
+    if owner_is_self and owner_process_live and target_signature_changed and target_valid_json and not tmp_artifact_present:
+        classification = "self_owned_completed_write_takeover"
+        active = False
+        takeover_allowed = True
+    elif owner_is_self and owner_process_live and stale_by_age:
         if target_valid_json and not tmp_artifact_present:
             classification = "self_owned_stale_takeover"
             active = False
@@ -136,6 +164,8 @@ def _json_write_lock_liveness(path: Path) -> dict[str, Any]:
         "owner_process_live": owner_process_live,
         "owner_is_self": owner_is_self,
         "target_valid_json": target_valid_json,
+        "target_initial_signature_present": isinstance(payload.get("target_initial_signature"), dict),
+        "target_signature_changed": target_signature_changed,
         "tmp_artifact_present": tmp_artifact_present,
     }
 
@@ -158,6 +188,7 @@ def _record_json_write_lock_takeover(path: Path, liveness: dict[str, Any], *, re
         "stale": bool(liveness.get("stale")),
         "age_seconds": liveness.get("age_seconds"),
         "target_valid_json": bool(liveness.get("target_valid_json")),
+        "target_signature_changed": bool(liveness.get("target_signature_changed")),
         "tmp_artifact_present": bool(liveness.get("tmp_artifact_present")),
         "recorded_at": utc_now(),
     }
@@ -348,6 +379,7 @@ def _acquire_json_write_lock(path: Path) -> Path:
                         "schema_version": "flowpilot.runtime_json_write_lock.v1",
                         "path": str(path),
                         "pid": os.getpid(),
+                        "target_initial_signature": _runtime_json_target_signature(path),
                         "created_at": utc_now(),
                     },
                     sort_keys=True,

@@ -134,6 +134,24 @@ from packet_runtime_progress import write_controller_status_packet
 
 from packet_runtime_creation_core import create_packet
 
+
+_CURRENT_STARTUP_OPTION_KEYS = {"background_collaboration_authorized"}
+_CURRENT_STARTUP_METADATA = {"provenance": "explicit_user_reply"}
+
+
+def _current_startup_options(startup_options: dict[str, Any] | None) -> dict[str, Any]:
+    options = dict(startup_options or {})
+    supported_keys = _CURRENT_STARTUP_OPTION_KEYS | set(_CURRENT_STARTUP_METADATA)
+    unsupported_keys = sorted(set(options) - supported_keys)
+    if unsupported_keys:
+        raise PacketRuntimeError(f"unsupported startup option field(s): {', '.join(unsupported_keys)}")
+    for key, expected in _CURRENT_STARTUP_METADATA.items():
+        if key in options and options.get(key) != expected:
+            raise PacketRuntimeError(f"startup option metadata {key} must be {expected}")
+    if options.get("background_collaboration_authorized") is not True:
+        raise PacketRuntimeError("user intake requires background_collaboration_authorized=true")
+    return {key: options[key] for key in _CURRENT_STARTUP_OPTION_KEYS}
+
 def router_release_startup_user_intake(
     project_root: Path,
     *,
@@ -240,10 +258,11 @@ def create_user_intake_packet(
     """Preserve the user's initial prompt as the first PM-bound physical packet."""
 
     resolved_body_visibility = body_visibility or USER_INTAKE_BODY_VISIBILITY
+    current_startup_options = _current_startup_options(startup_options)
     metadata = {
         "source": source,
-        "controller_bootstrap_scope": startup_options or {},
-        "controller_may_bootstrap_roles_heartbeat_and_ui": True,
+        "controller_bootstrap_scope": current_startup_options,
+        "controller_may_bootstrap_required_background_collaboration": True,
         "controller_may_read_user_intake_body": resolved_body_visibility == USER_INTAKE_BODY_VISIBILITY,
         "controller_must_not_make_pm_route_or_gate_decision": True,
         "pm_must_request_startup_reviewer_gate_before_opening_start_gate": True,

@@ -129,9 +129,9 @@ def controller_table_prompt(runtime_kit_root: Path | None = None) -> dict[str, A
     }
 
 
-def startup_heartbeat_prompt(project_root: Path, run_id: str) -> str:
+def startup_lifecycle_resume_prompt(project_root: Path, run_id: str) -> str:
     return render_prompt_text(
-        "startup.heartbeat_resume",
+        "startup.lifecycle_resume",
         {
             "project_root": project_root,
             "run_id": run_id,

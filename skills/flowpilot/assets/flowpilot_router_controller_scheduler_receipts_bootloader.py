@@ -11,7 +11,12 @@ from types import ModuleType
 from typing import Any
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
     for name, value in vars(router).items():
@@ -101,52 +106,6 @@ def _apply_startup_bootloader_receipt_effects(
         bootstrap["startup_banner_dialog_display_confirmation"] = confirmation
         run_state.setdefault("flags", {})["banner_emitted"] = True
         result["display_text_sha256"] = confirmation.get("display_text_sha256")
-    elif action_type == "start_role_slots":
-        role_slots = router._normalize_role_agent_records(bootstrap, receipt_payload)
-        write_json(
-            run_root / "role_binding_ledger.json",
-            {
-                "schema_version": "flowpilot.role_binding_ledger.v1",
-                "run_id": run_state["run_id"],
-                "runtime_role_assistance_mode": (bootstrap.get("startup_answers") or {}).get("runtime_role_assistances"),
-                "role_slots": role_slots,
-                "created_at": utc_now(),
-            },
-        )
-        role_binding_memory_root = run_root / "role_binding_memory"
-        role_binding_memory_root.mkdir(parents=True, exist_ok=True)
-        for role in RUNTIME_ROLE_KEYS:
-            write_json(role_binding_memory_root / f"{role}.json", router._create_empty_role_memory(str(run_state["run_id"]), role))
-        _append_role_io_protocol_injections(
-            project_root,
-            run_root,
-            str(run_state["run_id"]),
-            role_slots,
-            default_lifecycle_phase="fresh_spawn",
-            resume_tick_id="manual-resume",
-            source_action="start_role_slots",
-        )
-        write_json(
-            run_root / "role_core_prompt_delivery.json",
-            router._role_core_prompt_delivery_payload(project_root, run_root, str(run_state["run_id"]), source_action="start_role_slots"),
-        )
-        bootstrap.setdefault("flags", {})["role_core_prompts_injected"] = True
-        run_state.setdefault("flags", {})["roles_started"] = True
-        run_state.setdefault("flags", {})["role_core_prompts_injected"] = True
-        result["coalesced_postconditions"] = ["roles_started", "role_core_prompts_injected"]
-    elif action_type == "create_heartbeat_automation":
-        _write_host_heartbeat_binding(project_root, run_root, run_state, receipt_payload)
-        run_state.setdefault("flags", {})["continuation_binding_recorded"] = True
-        run_state.setdefault("events", []).append(
-            {
-                "event": "host_records_heartbeat_binding",
-                "summary": EXTERNAL_EVENTS["host_records_heartbeat_binding"]["summary"],
-                "payload": receipt_payload,
-                "recorded_at": utc_now(),
-                "source_action": action_type,
-                "startup_phase": "bootloader_controller_receipt",
-            }
-        )
     elif action_type == "load_controller_core":
         if not _formal_router_daemon_ready(project_root, run_root):
             return {

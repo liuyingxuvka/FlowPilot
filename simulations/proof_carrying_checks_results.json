@@ -44,7 +44,7 @@
         ],
         "state": {
           "ai_claim_used_as_proof": true,
-          "fact_kind": "live_heartbeat",
+          "fact_kind": "live_daemon_liveness",
           "proof_bound_to_current_run": false,
           "proof_source": "self_attested_ai",
           "reviewer_checked": false,
@@ -69,7 +69,7 @@
         ],
         "state": {
           "ai_claim_used_as_proof": true,
-          "fact_kind": "live_heartbeat",
+          "fact_kind": "live_daemon_liveness",
           "proof_bound_to_current_run": false,
           "proof_source": "self_attested_ai",
           "reviewer_checked": true,
@@ -94,7 +94,7 @@
         ],
         "state": {
           "ai_claim_used_as_proof": true,
-          "fact_kind": "live_heartbeat",
+          "fact_kind": "live_daemon_liveness",
           "proof_bound_to_current_run": true,
           "proof_source": "self_attested_ai",
           "reviewer_checked": false,

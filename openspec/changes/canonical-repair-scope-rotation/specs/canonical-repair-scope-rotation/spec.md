@@ -1,6 +1,6 @@
 # canonical-repair-scope-rotation Specification
 
-## Requirements
+## ADDED Requirements
 
 ### Requirement: Runtime exposes one current PM repair menu
 
@@ -26,9 +26,9 @@ FlowPilot MUST accept exactly these PM repair decisions:
 
 ### Requirement: Nonterminal repair requires a fresh executable packet
 
-For `repair_current_scope`, `repair_parent_scope`, and `redesign_route`,
-Runtime MUST create or identify a fresh current executable packet before the
-blocker can enter `repair_packet_open`.
+Runtime MUST require `repair_current_scope`, `repair_parent_scope`, and
+`redesign_route` to create or identify a fresh current executable packet before
+the blocker can enter `repair_packet_open`.
 
 #### Scenario: Fresh packet is missing
 

@@ -67,7 +67,9 @@ Router SHALL treat Controller receipts as local completion evidence and SHALL ap
 Startup Reviewer fact review SHALL use the same current-scope pre-review reconciliation rule used by later route scopes.
 
 #### Scenario: Reviewer startup fact card waits for startup scope cleanup
-- **WHEN** startup-local Controller rows, startup prep card deliveries, startup prep ACKs, heartbeat/boundary/display/mechanical evidence, or local blockers remain unresolved
+- **WHEN** startup-local Controller rows, startup prep card deliveries, startup
+  prep ACKs, background collaboration, foreground patrol, display/mechanical
+  evidence, or local blockers remain unresolved
 - **THEN** Router returns `await_current_scope_reconciliation` with `scope_kind` set to `startup` instead of delivering `reviewer.startup_fact_check`.
 
 #### Scenario: Reviewer startup fact event waits for startup scope cleanup
@@ -123,6 +125,6 @@ daemon mode is active.
 
 #### Scenario: No live daemon owns the run
 - **WHEN** no live daemon lock exists and foreground recovery is explicitly
-  operating as the Router-owned fallback lane
+  operating as the Router-owned recovery lane
 - **THEN** the foreground path may perform the scheduler fold
-- **AND** it records that fallback ownership in the reconciliation result.
+- **AND** it records that recovery ownership in the reconciliation result.

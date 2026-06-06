@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot startup PM/reviewer model."""
+"""Run checks for the FlowPilot startup Runtime/PM entry model."""
 
 from __future__ import annotations
 
@@ -13,15 +13,10 @@ ROOT = Path(__file__).resolve().parent
 RESULTS_PATH = ROOT / "startup_pm_review_results.json"
 REQUIRED_LABELS = (
     "startup_intake_ui_completed",
-    "startup_dialog_stopped_for_user_answers",
-    "runtime_role_assistances_allowed",
-    "runtime_role_assistances_declined_single_agent",
-    "scheduled_continuation_allowed",
-    "scheduled_continuation_declined_manual",
-    "cockpit_ui_requested",
-    "chat_route_sign_requested",
-    "explicit_startup_answers_recorded",
-    "startup_banner_emitted_after_answers",
+    "background_collaboration_authorized_by_startup_ui",
+    "startup_blocked_without_background_authorization",
+    "explicit_background_authorization_recorded",
+    "startup_banner_emitted_after_background_authorization",
     "run_directory_created",
     "current_pointer_written",
     "run_index_updated",
@@ -33,31 +28,24 @@ REQUIRED_LABELS = (
     "route_file_written",
     "canonical_state_written",
     "execution_frontier_written",
-    "cockpit_ui_opened_for_startup",
-    "cockpit_capability_unavailable_detected",
     "startup_route_sign_displayed_in_chat",
-    "chat_route_sign_displayed_after_pm_cockpit_fallback",
-    "role_binding_ledger_current",
-    "role_memory_packets_current",
-    "fresh_runtime_role_bindings_opened",
-    "runtime_role_assistance_capability_unavailable_detected",
-    "single_agent_role_continuity_authorized",
-    "automated_heartbeat_factually_verified",
-    "scheduled_continuation_capability_unavailable_detected",
-    "manual_resume_ready",
+    "background_agent_ledger_current",
+    "background_collaboration_requested",
+    "current_background_agents_opened",
+    "background_agent_capability_unavailable_detected",
     "clean_start_required_by_user",
     "clean_start_not_required",
     "old_route_cleanup_verified",
-    "startup_mechanical_audit_written_before_reviewer_fact_review",
-    "startup_mechanical_audit_delivered_to_reviewer",
-    "reviewer_independently_checked_startup_facts",
-    "startup_preflight_reviewer_fact_report_blocked",
+    "startup_mechanical_audit_written_before_pm_first_round",
+    "startup_mechanical_audit_delivered_to_pm",
+    "runtime_completed_startup_mechanical_scope",
+    "runtime_startup_entry_blocked",
     "pm_returns_startup_blockers_to_worker",
     "pm_declares_protocol_dead_end_for_unroutable_startup_block",
     "startup_worker_remediation_completed",
-    "startup_preflight_reviewer_fact_report_clean",
+    "runtime_startup_entry_clean",
     "pm_independently_audited_startup_gate",
-    "pm_start_gate_opened_from_fact_report",
+    "pm_first_round_started_after_runtime_entry",
     "route_execution_started",
     "child_skill_started",
     "imagegen_started",
@@ -126,3 +114,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -44,6 +44,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -110,6 +112,11 @@ def _ensure_startup_run_state(project_root: Path, bootstrap_state: dict[str, Any
         run_state.setdefault("controller_action_ledger_path", None)
     else:
         run_state = new_run_state(run_id, run_root_rel, controller_core_loaded=False)
+    bootstrap_answers = bootstrap_state.get("startup_answers") if isinstance(bootstrap_state.get("startup_answers"), dict) else None
+    if bootstrap_answers is not None:
+        run_state["startup_answers"] = dict(bootstrap_answers)
+        run_state["startup_answers_path"] = project_relative(project_root, run_root / "startup_answers.json")
+        run_state.setdefault("flags", {})["startup_answers_recorded"] = True
     if not (run_root / "execution_frontier.json").exists():
         write_json(run_root / "execution_frontier.json", _create_empty_execution_frontier(run_id))
     if not _continuation_binding_path(run_root).exists():

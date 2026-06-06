@@ -364,20 +364,12 @@
             "target": "_role_output_snapshot_name"
           },
           {
-            "public": "_startup_fact_canonical_report_is_valid",
-            "target": "_startup_fact_canonical_report_is_valid"
-          },
-          {
             "public": "_sync_current_and_index_status",
             "target": "_sync_current_and_index_status"
           },
           {
             "public": "_try_reconcile_direct_role_output_event_ledger",
             "target": "_try_reconcile_direct_role_output_event_ledger"
-          },
-          {
-            "public": "_try_reconcile_startup_fact_role_output_ledger",
-            "target": "_try_reconcile_startup_fact_role_output_ledger"
           },
           {
             "public": "write_role_output_envelope",
@@ -2573,6 +2565,10 @@
             "target": "_complete_startup_daemon_bootloader_row"
           },
           {
+            "public": "_current_background_collaboration_payload_contract",
+            "target": "_current_background_collaboration_payload_contract"
+          },
+          {
             "public": "_daemon_scheduled_bootloader_action",
             "target": "_daemon_scheduled_bootloader_action"
           },
@@ -2583,10 +2579,6 @@
           {
             "public": "_finish_bootloader_action",
             "target": "_finish_bootloader_action"
-          },
-          {
-            "public": "_apply_background_role_agent_bindings",
-            "target": "_apply_background_role_agent_bindings"
           },
           {
             "public": "_fold_stable_startup_role_flags_from_bootstrap",
@@ -2818,28 +2810,16 @@
             "target": "_record_controller_boundary_confirmation_from_core_load"
           },
           {
-            "public": "_role_slots_have_host_role_binding_receipts",
-            "target": "_role_slots_have_host_role_binding_receipts"
-          },
-          {
             "public": "_run_manifest_path",
             "target": "_run_manifest_path"
           },
           {
-            "public": "_startup_external_fact_requirements",
-            "target": "_startup_external_fact_requirements"
-          },
-          {
-            "public": "_startup_fact_checks",
-            "target": "_startup_fact_checks"
-          },
-          {
-            "public": "_startup_fact_review_ownership",
-            "target": "_startup_fact_review_ownership"
-          },
-          {
             "public": "_startup_intake_record_context",
             "target": "_startup_intake_record_context"
+          },
+          {
+            "public": "_startup_mechanical_checks",
+            "target": "_startup_mechanical_checks"
           },
           {
             "public": "_startup_mechanical_audit_action_extra",
@@ -2850,32 +2830,20 @@
             "target": "_startup_mechanical_audit_context"
           },
           {
-            "public": "_validate_startup_external_fact_review",
-            "target": "_validate_startup_external_fact_review"
+            "public": "_startup_mechanical_ownership",
+            "target": "_startup_mechanical_ownership"
+          },
+          {
+            "public": "_startup_mechanical_required_evidence",
+            "target": "_startup_mechanical_required_evidence"
           },
           {
             "public": "_write_controller_boundary_confirmation",
             "target": "_write_controller_boundary_confirmation"
           },
           {
-            "public": "_write_startup_activation",
-            "target": "_write_startup_activation"
-          },
-          {
-            "public": "_write_startup_fact_report",
-            "target": "_write_startup_fact_report"
-          },
-          {
             "public": "_write_startup_mechanical_audit",
             "target": "_write_startup_mechanical_audit"
-          },
-          {
-            "public": "_write_startup_protocol_dead_end",
-            "target": "_write_startup_protocol_dead_end"
-          },
-          {
-            "public": "_write_startup_repair_request",
-            "target": "_write_startup_repair_request"
           }
         ],
         "inject_router": true,

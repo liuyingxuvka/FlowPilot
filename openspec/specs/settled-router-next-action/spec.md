@@ -20,13 +20,13 @@ Controller-visible next action.
 ### Requirement: Same-origin blocker resolution is durable and auditable
 Router SHALL resolve a control blocker only when the reconciled evidence matches
 the blocker's originating Controller action id, scheduler row id, or startup
-bootloader postcondition fallback.
+bootloader postcondition recovery target.
 
 #### Scenario: Exact identity resolves same-origin blocker
 - **WHEN** a blocker records a Controller action id or scheduler row id and that same row reconciles
 - **THEN** Router records `resolution_status` on the blocker artifact and moves it from active blockers to resolved blockers
 
-#### Scenario: Startup fallback requires satisfied postcondition
+#### Scenario: Startup recovery requires satisfied postcondition
 - **WHEN** an older startup blocker lacks exact row identity but its originating action type matches a startup bootloader action
 - **THEN** Router resolves it only if the corresponding startup postcondition is already satisfied
 

@@ -53,9 +53,9 @@ def _resolve_current_run_root() -> tuple[Path | None, str]:
     if not current_path.exists():
         return None, "no .flowpilot/current.json found"
     current = _read_json(current_path)
-    run_root_text = current.get("current_run_root")
+    run_root_text = current.get("run_root")
     if not isinstance(run_root_text, str) or not run_root_text:
-        return None, ".flowpilot/current.json has no current_run_root"
+        return None, ".flowpilot/current.json has no run_root"
     run_root = PROJECT_ROOT / run_root_text
     if not run_root.exists():
         return None, f"current run root does not exist: {run_root_text}"

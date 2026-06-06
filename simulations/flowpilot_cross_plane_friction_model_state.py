@@ -21,13 +21,11 @@ TERMINAL_STATUSES = frozenset(
 )
 ACTIVE_STATUSES = frozenset({"running", "active", "in_progress", "current"})
 DONE_ITEM_STATUSES = frozenset({"complete", "completed", "done", "passed", "closed"})
-STANDARD_SIX_ROLES = frozenset(
+CURRENT_ROLE_ARCHETYPES = frozenset(
     {
         "project_manager",
         "human_like_reviewer",
         "flowguard_operator",
-        "flowguard_operator",
-        "worker",
         "worker",
     }
 )
@@ -68,7 +66,7 @@ class State:
     run_lifecycle_record_written: bool = True
     router_frontier_lifecycle_terminal_consistent: bool = True
     terminal_control_blocker_cleared: bool = True
-    heartbeat_inactive_after_terminal: bool = True
+    manual_resume_binding_inactive_after_terminal: bool = True
 
     completed_nodes_observed: bool = False
     route_snapshot_visible: bool = False
@@ -123,7 +121,7 @@ __all__ = [
     "ACTIVE_STATUSES",
     "BODY_PATH_NAMES",
     "DONE_ITEM_STATUSES",
-    "STANDARD_SIX_ROLES",
+    "CURRENT_ROLE_ARCHETYPES",
     "TERMINAL_STATUSES",
     "Action",
     "State",
@@ -132,3 +130,4 @@ __all__ = [
     "initial_state",
     "_inc",
 ]
+

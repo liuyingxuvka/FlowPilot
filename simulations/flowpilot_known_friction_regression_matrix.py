@@ -120,6 +120,7 @@ REQUIRED_ROW_FIELDS = (
     "model_obligation",
     "model_check",
     "runtime_surface",
+    "code_contract_id",
     "runtime_test",
     "replay_fixture",
     "child_evidence_ids",
@@ -577,7 +578,7 @@ KNOWN_FRICTION_ROWS: tuple[dict[str, Any], ...] = (
         "model_obligation": "new_lifecycle_guard.slow_live_progress_preserved + new_lifecycle_guard.accepted_packet_reassignment_rejected + new_lifecycle_guard.accepted_packet_race_repair + core_runtime.run_20260531_210441_health_family",
         "model_check": "python simulations/run_flowpilot_lifecycle_guard_checks.py && python simulations/run_flowpilot_fake_project_rehearsal_checks.py && python simulations/run_flowpilot_core_runtime_checks.py",
         "runtime_surface": "flowpilot_new.py foreground duty/status/current pointer, core runtime packet assignment, accepted-packet health, compact projection, node context package intake, evidence summary finalizer, ACK, and repair-accepted-packet command",
-        "runtime_test": "tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_progress_keeps_slow_live_result_wait_in_patrol; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_liveness_failure_allows_replacement_duty; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accepted_packet_rejects_reassignment_and_ack_regression; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_repair_accepted_packet_assignment_race_restores_original_result; tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_covers_normal_and_error_flows; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_reassignment_supersedes_older_active_packet_lease; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_blocks_stale_active_accepted_packet_lease; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_compact_status_projection_hides_sealed_bodies; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_recover_or_reissue_payload_names_concrete_command; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_nested_node_context_package_is_rejected; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_evidence_summary_finalizer_excludes_self_artifacts; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_current_pointer_status_uses_final_preflight",
+        "runtime_test": "tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_progress_keeps_slow_live_result_wait_in_patrol; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_liveness_failure_allows_replacement_duty; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accepted_packet_rejects_reassignment_and_ack_regression; tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_repair_accepted_packet_assignment_race_restores_original_result; tests.test_flowpilot_fake_project_rehearsal.FlowPilotFakeProjectRehearsalTests.test_blackbox_fake_project_rehearsal_smoke_uses_public_cli; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_reassignment_supersedes_older_active_packet_lease; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_blocks_stale_active_accepted_packet_lease; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_compact_status_projection_hides_sealed_bodies; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_recover_or_reissue_payload_names_concrete_command; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_nested_node_context_package_is_rejected; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_evidence_summary_finalizer_excludes_self_artifacts; tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_current_pointer_status_uses_final_preflight",
         "replay_fixture": "current_transcript.run-20260530-102304.packet-0003.accepted_result_reassignment_race + current_transcript.run-20260531-210441.health_family",
         "child_evidence_ids": [
             "historical_live_run_replay_matrix",
@@ -700,6 +701,7 @@ def _row_with_defect_family(row: dict[str, Any]) -> dict[str, Any]:
     friction_id = str(row["friction_id"])
     priority = str(row["priority"])
     defect_family_id = _defect_family_id(friction_id)
+    code_contract_id = "known_friction_contract:" + friction_id.removeprefix("known_friction.")
     enriched = dict(row)
     enriched.update(
         {
@@ -709,6 +711,7 @@ def _row_with_defect_family(row: dict[str, Any]) -> dict[str, Any]:
             "defect_family_authority_boundary": str(row["runtime_surface"]),
             "defect_family_gate_required": True,
             "defect_family_promoted": True,
+            "code_contract_id": code_contract_id,
         }
     )
     return enriched
@@ -1020,6 +1023,7 @@ def build_defect_family_risk_ledger_plan(
                 risk_id=str(row.get("friction_id") or ""),
                 description=str(row.get("historical_bad_case") or ""),
                 model_obligation_id=str(row.get("model_obligation") or ""),
+                code_contract_id=str(row.get("code_contract_id") or ""),
                 proof_evidence_ids=(proof_id,),
                 require_external_proof=True,
                 defect_family_id=defect_family_id,
@@ -1034,7 +1038,6 @@ def build_defect_family_risk_ledger_plan(
         "flowpilot_known_friction_risk_ledger",
         rows=tuple(ledger_rows),
         proof_evidence=tuple(proof_evidence),
-        require_code_contracts=False,
         allow_scoped_confidence=True,
         require_proof_artifacts=require_proof_artifacts,
     )

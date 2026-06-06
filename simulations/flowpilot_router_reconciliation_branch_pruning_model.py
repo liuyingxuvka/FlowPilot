@@ -680,7 +680,6 @@ def ownership_snapshot() -> dict[str, object]:
         "branch_owner_functions": {
             SCHEDULED_RECEIPT_SURFACE: "_reconcile_scheduled_controller_action_receipts",
             ROLE_OUTPUT_SURFACE: (
-                "_try_reconcile_startup_fact_role_output_ledger",
                 "_role_output_event_has_durable_authority",
                 "_try_reconcile_direct_role_output_event_ledger",
             ),

@@ -21,6 +21,12 @@ runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 lifecycle_runner = importlib.import_module("simulations.run_flowpilot_lifecycle_guard_checks")
 
 
+def role_result_body(summary: str, **fields: object) -> str:
+    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload.update(fields)
+    return json.dumps(payload)
+
+
 class FlowPilotLifecycleGuardTests(unittest.TestCase):
     def _lease_packet(
         self,
@@ -419,7 +425,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 lease_id=lease_id,
                 packet_id=packet_id,
-                body=json.dumps({"decision": "pass", "summary": "PM"}),
+                body=role_result_body("PM"),
             )
             shell = run_shell.load_run_shell(root, run_id="run-accepted-hard-gate")
             ledger = run_shell.load_run_ledger(shell)
@@ -462,7 +468,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 lease_id=original_lease,
                 packet_id=packet_id,
-                body=json.dumps({"decision": "pass", "summary": "PM"}),
+                body=role_result_body("PM"),
             )["result_id"]
             shell = run_shell.load_run_shell(root, run_id="run-accepted-race-repair")
             ledger = run_shell.load_run_ledger(shell)
@@ -545,7 +551,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
                 root,
                 lease_id=lease_id,
                 packet_id=packet_id,
-                body=json.dumps({"decision": "pass", "summary": "late inactive lease result"}),
+                body=role_result_body("late inactive lease result"),
             )
             self.assertEqual(result["next_action"]["action_type"], "repair_packet")
             self.assertEqual(result["lifecycle_guard"]["decision"], "quarantine_stale_result")
@@ -572,7 +578,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             ledger,
             lease_id,
             packet_id,
-            json.dumps({"decision": "pass", "summary": "late"}),
+            role_result_body("late"),
         )
         result = ledger["results"][result_id]
 

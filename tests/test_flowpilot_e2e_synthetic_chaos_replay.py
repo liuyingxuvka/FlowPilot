@@ -223,7 +223,7 @@ class FlowPilotEndToEndSyntheticChaosReplayTests(FlowPilotRouterRuntimeTestBase)
     def test_e2e_no_producer_pm_repair_then_packet_reissue_exposes_producer_evidence(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -388,3 +388,4 @@ if __name__ == "__main__":
     import unittest
 
     unittest.main()
+

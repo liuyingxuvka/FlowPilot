@@ -156,7 +156,7 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         self.assertFalse(
             card_settlement.is_startup_pm_card_bundle_ack_record(
                 record,
-                pre_review_startup_card_ids={"reviewer.startup_fact_check"},
+                pre_review_startup_card_ids={"pm.startup_intake"},
             )
         )
 
@@ -227,10 +227,10 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             system_catalog["planning_card_count"] + system_catalog["runtime_card_count"],
             system_catalog["card_count"],
         )
-        self.assertEqual(planning_catalog["card_ids"][0], "reviewer.startup_fact_check")
+        self.assertEqual(planning_catalog["card_ids"][0], "pm.core")
         self.assertEqual(runtime_catalog["card_ids"][-1], "pm.closure")
         self.assertIn("pm.route_skeleton", metadata_catalog["phase_card_ids"])
-        self.assertIn("reviewer.startup_fact_check", metadata_catalog["source_path_card_ids"])
+        self.assertIn("pm.startup_intake", planning_catalog["card_ids"])
 
     def test_startup_daemon_helpers_belong_to_owner_module(self) -> None:
         self.assertEqual(startup_daemon.ROUTER_DAEMON_LOCK_SCHEMA, "flowpilot.router_daemon_lock.v1")
@@ -249,7 +249,7 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
         )
         self.assertFalse(startup_daemon._router_daemon_lock_is_live({}))
         self.assertIn("owner_process_not_live", liveness["reasons"])
-        monitor = startup_daemon._router_daemon_heartbeat_monitor(
+        monitor = startup_daemon._router_daemon_patrol_monitor(
             {"status": "active"},
             {"schema_ok": True, "status_active": True, "process_live": True, "age_seconds": 0},
             status_exists=True,
@@ -273,12 +273,12 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
     def test_event_boundary_registry_covers_first_migrated_events(self) -> None:
         self.assertEqual(
             set(router_events.PRECHECK_EVENT_HANDLERS),
-            {"heartbeat_or_manual_resume_requested"},
+            {"manual_resume_requested"},
         )
         self.assertEqual(
             set(router_events.SIDE_EFFECT_EVENT_HANDLERS),
             {
-                "host_records_heartbeat_binding",
+                "host_records_manual_resume_binding",
                 "pm_activates_reviewed_route",
                 "user_requests_run_cancel",
                 "user_requests_run_stop",
@@ -313,7 +313,7 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
 
         def fake_precheck(received_router: object, *args: object, **kwargs: object) -> dict[str, object]:
             calls.append(received_router)
-            return {"ok": True, "event": "heartbeat_or_manual_resume_requested"}
+            return {"ok": True, "event": "manual_resume_requested"}
 
         original = router_events.handle_precheck_event
         router_events.handle_precheck_event = fake_precheck
@@ -328,8 +328,8 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                     root / ".flowpilot" / "current.json",
                     {
                         "schema_version": "flowpilot.current.v1",
-                        "current_run_id": run_id,
-                        "current_run_root": run_root_rel,
+                        "run_id": run_id,
+                        "run_root": run_root_rel,
                         "status": "controller_ready",
                     },
                 )
@@ -341,32 +341,35 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                 result = event_dispatcher._record_external_event_unchecked(
                     router,
                     root,
-                    "heartbeat_or_manual_resume_requested",
+                    "manual_resume_requested",
                     {},
                 )
         finally:
             router_events.handle_precheck_event = original
 
-        self.assertEqual(result["event"], "heartbeat_or_manual_resume_requested")
+        self.assertEqual(result["event"], "manual_resume_requested")
         self.assertEqual(calls, [router])
 
-    def test_coarse_owner_bind_router_refreshes_facade_globals_without_overwriting_owner_locals(self) -> None:
+    def test_coarse_owner_bind_router_is_idempotent_without_overwriting_owner_locals(self) -> None:
         sentinel = object()
         marker_name = "_boundary_test_dynamic_marker"
         original_router_marker = getattr(router, marker_name, sentinel)
         original_owner_marker = getattr(runtime_state, marker_name, sentinel)
+        original_bound_router = getattr(runtime_state, "_BOUND_ROUTER", None)
         original_owner_function = runtime_state.new_bootstrap_state
 
         try:
+            runtime_state._BOUND_ROUTER = None
             setattr(router, marker_name, "first")
             runtime_state._bind_router(router)
             self.assertEqual(getattr(runtime_state, marker_name), "first")
 
             setattr(router, marker_name, "second")
             runtime_state._bind_router(router)
-            self.assertEqual(getattr(runtime_state, marker_name), "second")
+            self.assertEqual(getattr(runtime_state, marker_name), "first")
             self.assertIs(runtime_state.new_bootstrap_state, original_owner_function)
         finally:
+            runtime_state._BOUND_ROUTER = original_bound_router
             if original_router_marker is sentinel:
                 delattr(router, marker_name)
             else:
@@ -386,7 +389,6 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
                 "role_recovery",
                 "resume",
                 "control_blocker",
-                "startup_heartbeat",
                 "display_plan",
                 "controller_boundary",
                 "startup_mechanical_audit",
@@ -523,8 +525,8 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             run_id="run-current",
             run_root=".flowpilot/runs/run-current",
             current_pointer={
-                "current_run_id": "run-current",
-                "current_run_root": ".flowpilot/runs/run-current",
+                "run_id": "run-current",
+                "run_root": ".flowpilot/runs/run-current",
             },
             run_index={
                 "runs": [
@@ -607,8 +609,8 @@ class FlowPilotRouterBoundaryTests(unittest.TestCase):
             self.assertEqual(route_payload["activated_from_draft_path"], ".flowpilot/runs/run-test/routes/route-001/flow.draft.json")
 
     def test_resume_domain_helpers_are_available_in_resume_owner(self) -> None:
-        self.assertTrue(callable(router_resume.write_host_heartbeat_binding))
-        self.assertTrue(callable(router_resume.append_heartbeat_tick))
+        self.assertTrue(callable(router_resume.write_manual_resume_binding))
+        self.assertTrue(callable(router_resume.append_manual_resume_tick))
         self.assertTrue(callable(router_resume.reset_resume_cycle_for_wakeup))
         flags = {
             "resume_reentry_requested": True,

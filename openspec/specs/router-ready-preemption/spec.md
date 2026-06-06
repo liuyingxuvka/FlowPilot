@@ -30,7 +30,9 @@ MUST be recorded as `timeout_unknown` rather than active continuity.
 
 #### Scenario: Ordinary role work is pending
 - **WHEN** Router exposes `await_card_return_event` or `await_role_decision` for ordinary role output
-- **THEN** Controller MUST record the controlled wait and stop or resume through heartbeat/manual continuation instead of waiting in the foreground for an arbitrary role response
+- **THEN** Controller MUST record the controlled wait and stop or resume through
+  current manual-resume or daemon-liveness continuation instead of waiting in
+  the foreground for an arbitrary role response
 
 #### Scenario: Router requests liveness preflight
 - **WHEN** Router returns a role-rehydration or role-recovery action requiring host liveness checks

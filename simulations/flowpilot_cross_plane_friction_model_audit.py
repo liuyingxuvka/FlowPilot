@@ -15,7 +15,7 @@ from flowpilot_cross_plane_friction_model_invariants import invariant_failures
 from flowpilot_cross_plane_friction_model_state import (
     BODY_PATH_NAMES,
     DONE_ITEM_STATUSES,
-    STANDARD_SIX_ROLES,
+    CURRENT_ROLE_ARCHETYPES,
     TERMINAL_STATUSES,
     State,
 )
@@ -79,36 +79,45 @@ def _resolve_run_root(project_root: Path, run_id: str | None = None) -> tuple[st
     current_path = project_root / ".flowpilot" / "current.json"
     current, current_error = _read_json(current_path)
     if isinstance(current, dict):
-        current_run_id = str(current.get("current_run_id") or current.get("active_run_id") or "")
-        current_run_root = str(
-            current.get("current_run_root")
-            or current.get("active_run_root")
-            or ""
-        )
+        current_run_id = str(current.get("run_id") or "")
+        current_run_root = str(current.get("run_root") or "")
         if current_run_id and current_run_root:
             return current_run_id, project_root / current_run_root, findings
-        if current_run_id:
-            return current_run_id, project_root / ".flowpilot" / "runs" / current_run_id, findings
+        findings.append(
+            _finding(
+                code="current_pointer_current_contract_invalid",
+                severity="error",
+                summary="current.json lacks current-contract run_id/run_root fields.",
+                matched_invariant="active_task_policy_hides_history",
+                evidence={
+                    "path": _rel(project_root, current_path),
+                    "has_run_id": bool(current.get("run_id")),
+                    "has_run_root": bool(current.get("run_root")),
+                    "legacy_aliases_rejected": [
+                        key
+                        for key in ("current_run_id", "current_run_root", "active_run_id", "active_run_root")
+                        if key in current
+                    ],
+                },
+                minimal_fix=(
+                    "Rewrite current.json with run_id/run_root. "
+                    "Do not translate current_run_id/current_run_root or active_run_id/active_run_root aliases."
+                ),
+            )
+        )
+        return None, None, findings
     elif current_error:
         findings.append(
             _finding(
-                code="current_pointer_unreadable",
+                code="current_pointer_missing",
                 severity="warning",
-                summary="current.json could not be read; falling back to newest run directory.",
+                summary=".flowpilot/current.json is missing; no current live-run audit can be claimed.",
                 matched_invariant="active_task_policy_hides_history",
                 evidence={"path": _rel(project_root, current_path), "error": current_error},
-                minimal_fix="Rewrite current.json with current_run_id and current_run_root.",
+                minimal_fix="Start or explicitly select a current FlowPilot run before claiming live-run evidence.",
             )
         )
-
-    runs_root = project_root / ".flowpilot" / "runs"
-    run_dirs = sorted(
-        [path for path in runs_root.glob("run-*") if path.is_dir()],
-        key=lambda path: path.name,
-    )
-    if not run_dirs:
-        return None, None, findings
-    return run_dirs[-1].name, run_dirs[-1], findings
+    return None, None, findings
 
 
 def _terminal(value: Any) -> bool:
@@ -409,15 +418,15 @@ def _audit_terminal(
             )
         )
     lifecycle_obj = closure.get("lifecycle") if isinstance(closure.get("lifecycle"), dict) else {}
-    if lifecycle_obj.get("heartbeat_active") is True:
+    if lifecycle_obj.get("manual_resume_binding_active") is True:
         findings.append(
             _finding(
-                code="terminal_heartbeat_still_active",
+                code="terminal_manual_resume_binding_still_active",
                 severity="error",
-                summary="Terminal closure records heartbeat_active=true.",
+                summary="Terminal closure records manual_resume_binding_active=true.",
                 matched_invariant="terminal_closure_has_single_authority",
                 evidence={"closure_lifecycle": lifecycle_obj},
-                minimal_fix="Set heartbeat_active=false in terminal closure and delete/update stale heartbeats.",
+                minimal_fix="Set manual_resume_binding_active=false in terminal closure and delete/update stale patrol records.",
             )
         )
     return findings
@@ -744,7 +753,7 @@ ROLE_GATE_NON_PASS_MARKERS = (
     "repair_required",
 )
 STRUCTURED_REPORT_GATES = {
-    "reviewer_startup_fact_check_card_delivered",
+    "pm_startup_intake_card_delivered",
 }
 
 
@@ -902,11 +911,11 @@ def _audit_role_liveness(*, router_state: Any) -> list[dict[str, object]]:
         _finding(
             code="runtime_role_liveness_unproven",
             severity="error",
-            summary="Standard role-binding support was requested without readiness proof or an early blocker.",
+            summary="Runtime-requested role binding support was requested without readiness proof or an early blocker.",
             matched_invariant="runtime_requested_roles_have_liveness_gate",
             evidence={"requested": requested, "ready": ready, "blocked": blocked},
             minimal_fix=(
-                "At startup/resume, write a role readiness record for the six standard roles "
+                "At startup/resume, write a role readiness record for the runtime-requested roles "
                 "or stop route work behind a router-visible blocker."
             ),
         )
@@ -923,11 +932,21 @@ def audit_live_run(project_root: str | Path = ".", run_id: str | None = None) ->
     root = Path(project_root).resolve()
     resolved_run_id, run_root, findings = _resolve_run_root(root, run_id)
     if run_root is None or resolved_run_id is None:
+        hard_failure = any(finding.get("severity") == "error" for finding in findings)
         return {
-            "ok": True,
+            "ok": not hard_failure,
             "skipped": True,
-            "skip_reason": "skipped_with_reason: no FlowPilot run root found",
-            "findings": findings,
+            "skip_reason": (
+                "skipped_with_reason: no current FlowPilot run root is selected; "
+                "live-run evidence is unavailable"
+            ),
+            "findings": findings if hard_failure else [],
+            "current_run_projection": {
+                "status": "missing_current_pointer" if findings else "no_current_run",
+                "current_run_can_continue": False,
+                "safe_to_claim_live_run_confidence": False,
+                "metadata_only": True,
+            },
             "projected_invariant_failures": [],
             "body_files_opened": False,
         }
@@ -1007,8 +1026,8 @@ def state_from_findings(findings: list[dict[str, object]]) -> State:
         )
     if "terminal_control_blocker_not_cleared" in codes:
         state = replace(state, terminal_control_blocker_cleared=False)
-    if "terminal_heartbeat_still_active" in codes:
-        state = replace(state, heartbeat_inactive_after_terminal=False)
+    if "terminal_manual_resume_binding_still_active" in codes:
+        state = replace(state, manual_resume_binding_inactive_after_terminal=False)
     if "route_state_snapshot_status_mismatch" in codes:
         state = replace(state, route_snapshot_status_derived_from_frontier=False)
     if "route_state_snapshot_completed_checklists_pending" in codes:
@@ -1046,3 +1065,4 @@ __all__ = [
     "audit_live_run",
     "state_from_findings",
 ]
+

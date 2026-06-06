@@ -31,6 +31,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -54,6 +56,34 @@ OWNER_MODULE = "flowpilot_router_system_cards"
 from flowpilot_router_system_cards_selection_tokens import _direct_router_ack_token_for_card
 
 
+def _current_role_agent_payload_contract(run_state: dict[str, Any], role: str) -> dict[str, Any]:
+    return {
+        "schema_version": "flowpilot.current_role_agent_payload_contract.v1",
+        "payload_key": "current_role_agent_binding",
+        "required_fields": [
+            "runtime_role_assistance_capability_status",
+            "current_role_agent_binding.role_key",
+            "current_role_agent_binding.agent_id",
+            "current_role_agent_binding.model_policy",
+            "current_role_agent_binding.reasoning_effort_policy",
+            "current_role_agent_binding.binding_open_result",
+            "current_role_agent_binding.opened_for_run_id",
+            "current_role_agent_binding.host_liveness_status",
+            "current_role_agent_binding.liveness_decision",
+        ],
+        "allowed_values": {
+            "runtime_role_assistance_capability_status": ["available"],
+            "current_role_agent_binding.role_key": [role],
+            "current_role_agent_binding.model_policy": [ROLE_BINDING_MODEL_POLICY],
+            "current_role_agent_binding.reasoning_effort_policy": [ROLE_BINDING_REASONING_EFFORT_POLICY],
+            "current_role_agent_binding.binding_open_result": ["opened_for_current_packet"],
+            "current_role_agent_binding.opened_for_run_id": [str(run_state.get("run_id") or "")],
+            "current_role_agent_binding.host_liveness_status": ["active"],
+            "current_role_agent_binding.liveness_decision": ["confirmed_existing_agent"],
+        },
+    }
+
+
 def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     flags = run_state["flags"]
     manifest = load_manifest_from_run(run_root)
@@ -66,18 +96,6 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
     resume_replayed_without_pm = _resume_mechanical_replay_completed_without_pm(run_state)
     resume_card_ids = {"controller.resume_reentry", "pm.role_binding_recovery_freshness", "pm.resume_decision"}
     for entry in SYSTEM_CARD_SEQUENCE:
-        if entry["card_id"] == REVIEWER_STARTUP_FACT_CARD_ID:
-            blockers = _startup_pre_review_reconciliation_blockers(project_root, run_root, run_state)
-            if blockers:
-                if any(blocker.get("kind") == "startup_prep_cards_not_all_sent" for blocker in blockers):
-                    continue
-                return _current_scope_pre_review_reconciliation_action(
-                    project_root,
-                    run_root,
-                    run_state,
-                    blockers=blockers,
-                    review_trigger=entry["card_id"],
-                )
         if resume_replayed_without_pm and entry["card_id"] in {"pm.role_binding_recovery_freshness", "pm.resume_decision"}:
             continue
         if resume_waiting_for_pm and entry["card_id"] not in resume_card_ids:
@@ -112,23 +130,6 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             if policy_action not in {str(item) for item in legal_context.get("legal_action_ids", [])}:
                 continue
         to_role = _system_card_to_role(run_root, entry)
-        if entry["card_id"] in STARTUP_ASYNC_CARD_IDS and to_role in RUNTIME_ROLE_KEYS and not _active_agent_id_for_role(run_root, to_role):
-            return _current_scope_pre_review_reconciliation_action(
-                project_root,
-                run_root,
-                run_state,
-                blockers=[
-                    {
-                        "kind": "startup_role_slots_not_ready",
-                        "target_role": to_role,
-                        "card_id": entry["card_id"],
-                        "reason": "startup role slots must be reconciled before role-dependent startup work",
-                        "scope_kind": "startup",
-                        "scope_id": "startup",
-                    }
-                ],
-                review_trigger=entry["card_id"],
-            )
         if not run_state.get("manifest_check_requested"):
             manifest_extra = {"next_card_id": entry["card_id"], "next_recipient_role": to_role}
             if legal_context is not None:
@@ -153,8 +154,6 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         pm_decision_contract = _pm_decision_payload_contract_for_card(project_root, run_root, entry["card_id"])
         if pm_decision_contract is not None:
             delivery_extra["payload_contract"] = pm_decision_contract
-        if entry["card_id"] == "reviewer.startup_fact_check":
-            delivery_extra.update(_startup_mechanical_audit_action_extra(project_root, run_root, run_state))
         resolved_entry = {**entry, "to_role": to_role}
         delivery_context = _live_card_delivery_context(project_root, run_root, run_state, resolved_entry, card)
         delivery_extra["delivery_context"] = delivery_context
@@ -171,7 +170,49 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
         expected_receipt_path = run_root / "runtime_receipts" / "card_reads" / f"{safe_delivery_id}.receipt.json"
         expected_return_path = run_root / "mailbox" / "outbox" / "card_acks" / f"{safe_delivery_id}.ack.json"
         card_return_event = _card_return_event_for_card(entry["card_id"])
-        target_agent_id = _active_agent_id_for_role(run_root, to_role)
+        target_agent_id = _system_card_target_agent_id(run_root, to_role)
+        if to_role in RUNTIME_ROLE_KEYS and not target_agent_id:
+            safe_role = _safe_delivery_component(to_role)
+            return make_action(
+                action_type="open_current_role_agent",
+                actor="host",
+                label=f"host_opens_current_role_agent_for_{safe_role}",
+                summary=(
+                    f"Open or attach the current-run background agent for {to_role} "
+                    f"before delivering system card {entry['card_id']}."
+                ),
+                allowed_reads=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "startup_answers.json"),
+                    project_relative(project_root, run_root / "runtime_kit" / "cards" / "roles"),
+                    project_relative(project_root, run_root / "role_binding_ledger.json"),
+                ],
+                allowed_writes=[
+                    project_relative(project_root, run_state_path(run_root)),
+                    project_relative(project_root, run_root / "role_binding_ledger.json"),
+                    project_relative(project_root, run_root / "role_binding_memory" / f"{safe_role}.json"),
+                    project_relative(project_root, _role_io_protocol_ledger_path(run_root)),
+                    project_relative(project_root, _role_io_protocol_receipt_dir(run_root)),
+                ],
+                to_role=to_role,
+                extra={
+                    "target_role_key": to_role,
+                    "requires_host_role_binding": True,
+                    "requires_payload": "current_role_agent_binding",
+                    "payload_contract": _current_role_agent_payload_contract(run_state, to_role),
+                    "background_role_agent_model_policy": {
+                        "model_policy": ROLE_BINDING_MODEL_POLICY,
+                        "reasoning_effort_policy": ROLE_BINDING_REASONING_EFFORT_POLICY,
+                        "preferred_reasoning_effort": ROLE_BINDING_PREFERRED_REASONING_EFFORT,
+                        "inherit_foreground_model_allowed": False,
+                    },
+                    "role_binding_open_policy": "open_only_current_role_for_current_packet",
+                    "required_before_card_id": entry["card_id"],
+                    "controller_visibility": "state_and_envelopes_only",
+                    "sealed_body_reads_allowed": False,
+                    "chat_history_progress_inference_allowed": False,
+                },
+            )
         card_checkin_instruction = _card_checkin_instruction(
             project_root,
             envelope_path=project_relative(project_root, envelope_path),
@@ -204,7 +245,7 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             agent_id=target_agent_id,
             resume_tick_id=resume_tick_id,
         )
-        if target_agent_id and role_io_receipt is None:
+        if to_role in RUNTIME_ROLE_KEYS and target_agent_id and role_io_receipt is None:
             return make_action(
                 action_type="inject_role_io_protocol",
                 actor="host",
@@ -281,13 +322,6 @@ def _next_system_card_action(project_root: Path, run_state: dict[str, Any], run_
             for path in delivery_context.get("source_paths", {}).values()
             if isinstance(path, str) and path
         )
-        if entry["card_id"] == "reviewer.startup_fact_check":
-            allowed_reads.extend(
-                [
-                    delivery_extra["startup_mechanical_audit_path"],
-                    delivery_extra["router_owned_check_proof_path"],
-                ]
-            )
         return make_action(
             action_type="deliver_system_card",
             actor="controller",
@@ -325,9 +359,16 @@ def _system_card_to_role(run_root: Path, entry: dict[str, Any]) -> str:
     return default_role
 
 
+def _system_card_target_agent_id(run_root: Path, to_role: str) -> str | None:
+    if to_role == "controller":
+        return CONTROLLER_RUNTIME_HELPER_AGENT_ID
+    return _active_agent_id_for_role(run_root, to_role)
+
+
 __all__ = (
     '_next_system_card_action',
     '_system_card_to_role',
+    '_system_card_target_agent_id',
 )
 
 _LOCAL_NAMES = set(globals())

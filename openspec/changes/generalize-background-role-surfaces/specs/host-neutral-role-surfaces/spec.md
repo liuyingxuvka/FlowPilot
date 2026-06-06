@@ -17,9 +17,12 @@ FlowPilot SHALL keep startup background collaboration as one authorization choic
 
 #### Scenario: User allows background collaboration
 - **WHEN** the user enables the startup background collaboration option
-- **THEN** FlowPilot records authorization for runtime-requested background role work
+- **THEN** FlowPilot records `background_collaboration_authorized=true` for
+  runtime-requested background role work
 - **AND** defers the concrete implementation choice to the current host-supported role surface selection rule
 
 #### Scenario: User declines background collaboration
 - **WHEN** the user disables the startup background collaboration option
-- **THEN** FlowPilot records single-agent continuity and MUST NOT claim live role bindings
+- **THEN** FlowPilot records that required background collaboration is disabled
+- **AND** FlowPilot stops formal startup without single-agent continuity,
+  compatibility translation, or live role-binding claims

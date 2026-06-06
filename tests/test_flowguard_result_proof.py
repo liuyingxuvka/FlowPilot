@@ -72,13 +72,21 @@ class FlowGuardResultProofTests(unittest.TestCase):
 
     def test_smoke_fast_only_marks_slow_model_checks_fast(self) -> None:
         commands: list[list[str]] = []
+        fast_flags: list[bool] = []
         old_run = smoke_flowpilot.run
         try:
-            smoke_flowpilot.run = lambda command: commands.append(command) or True
+            def fake_run(command: list[str], *, fast: bool = False) -> bool:
+                commands.append(command)
+                fast_flags.append(fast)
+                return True
+
+            smoke_flowpilot.run = fake_run
             self.assertEqual(smoke_flowpilot.main(["--fast"]), 0)
         finally:
             smoke_flowpilot.run = old_run
 
+        self.assertTrue(fast_flags)
+        self.assertTrue(all(fast_flags))
         self.assertIn([sys.executable, "simulations/run_meta_checks.py", "--fast"], commands)
         self.assertIn([sys.executable, "simulations/run_capability_checks.py", "--fast"], commands)
         self.assertIn(

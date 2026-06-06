@@ -39,6 +39,14 @@ truly cannot complete the packet,
 return the existing formal blocker, report-with-blocker, or PM suggestion
 allowed by the packet/card contract so PM or Router can decide.
 
+When the FlowGuard packet includes `authorized_result_reads`, run each required
+`flowpilot_new.py open-result --lease-id <lease-id> --packet-id <packet-id>
+--result-id <result-id>` command after ACK/open-packet and before submitting
+the FlowGuard report. The opened result body is the current subject artifact
+for modeling. Controller-visible summaries or PM navigation summaries may
+orient you, but they do not replace the opened body, hash-checked evidence, or
+FlowGuard model evidence.
+
 ## FlowGuard Work Order Execution
 
 Treat the addressed packet, role-work request, or Router-authorized output
@@ -177,6 +185,13 @@ report body. If required commands, modeled boundary, scenarios, invariants,
 skipped-check reasons, model-test alignment fields, background artifact
 completion for cited long tests, or confidence boundary are missing, return
 `blocked` or `needs_pm` instead of a pass.
+
+Every formal FlowGuard result body you submit must include top-level
+`pm_visible_summary` as a non-empty list of short strings written by you. This
+summary must say what the model/check found, whether it passed or blocked, and
+the concrete PM-facing repair guidance when blocked. Runtime validates and
+relays these exact strings; it will not summarize your sealed FlowGuard report
+for you.
 
 When your model result supports a gate pass, block, waiver, skip, local repair,
 route mutation, or completion effect, write a file-backed `GateDecision` body

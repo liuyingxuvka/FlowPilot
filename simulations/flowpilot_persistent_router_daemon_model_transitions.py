@@ -14,7 +14,7 @@ class PersistentRouterDaemonStep:
 
     Input x State -> Set(Output x State)
     reads: daemon lock/status, router state, mailbox evidence, controller
-    action ledger, controller receipts, heartbeat wake event, role cohort
+    action ledger, controller receipts, manual resume wake event, role cohort
     writes: daemon status, consumed mailbox evidence, controller actions,
     controller receipts, recovery records, terminal lifecycle
     idempotency: repeated ticks over the same durable evidence do not duplicate
@@ -30,7 +30,7 @@ class PersistentRouterDaemonStep:
         "mailbox",
         "controller_action_ledger",
         "controller_receipts",
-        "heartbeat_state",
+        "patrol_state",
         "role_binding_memory",
     )
     writes = (
@@ -71,7 +71,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 daemon_writer_count=1,
                 daemon_tick_seconds=1,
                 roles_live=True,
-                heartbeat_active=True,
+                manual_resume_binding_active=True,
                 current_work_owner_kind="router",
                 current_work_owner_key="router",
                 current_work_task_visible=True,
@@ -102,7 +102,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 foreground_standby_polling_daemon_status=False,
                 foreground_standby_polling_action_ledger=False,
                 roles_live=False,
-                heartbeat_active=False,
+                manual_resume_binding_active=False,
                 current_wait="terminal",
                 event_wait_action_open=False,
                 external_event_recorded=False,
@@ -116,7 +116,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 controller_action_ready=False,
                 startup_bootstrap_pending_action_open=False,
                 startup_row_scheduled_after_terminal_fence=False,
-                heartbeat_binding_scheduled_after_terminal_fence=False,
+                patrol_binding_scheduled_after_terminal_fence=False,
                 unsupported_historical_waiting_for_role_null=False,
                 active_packet_holder="",
                 packet_holder_projection_needed=False,
@@ -951,8 +951,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _step(state, mailbox_evidence_present=True, mailbox_evidence_valid=True),
         )
         yield Transition(
-            "heartbeat_wakes_and_finds_live_daemon",
-            _step(state, heartbeat_woke=True),
+            "patrol_wakes_and_finds_live_daemon",
+            _step(state, manual_resume_woke=True),
         )
         yield Transition(
             "user_requests_terminal_stop",
@@ -1002,3 +1002,4 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             ),
         )
         return
+

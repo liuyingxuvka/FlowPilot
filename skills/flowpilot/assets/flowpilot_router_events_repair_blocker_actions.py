@@ -31,6 +31,7 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 _ACTION_ENVELOPE_KEYS = {
     'schema_version',
     'action_id',
@@ -49,6 +50,10 @@ _MATERIAL_REPLAY_ACTION_TYPES = {'relay_material_scan_packets', 'relay_material_
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -69,7 +74,7 @@ def _control_blocker_wait_events(router: ModuleType, record: dict[str, Any], *, 
         repair_origin = str(record.get('repair_origin') or ('control_plane_reissue' if lane == 'control_plane_reissue' else 'none'))
         return (router._validated_event_capability_names(raw_events, context='control blocker wait', run_root=run_root, run_state=run_state, usage='wait', repair_origin=repair_origin), None)
     if lane in PM_DECISION_REQUIRED_CONTROL_BLOCKER_LANES:
-        return ([PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT], {**issue, 'fallback': 'pm_must_resubmit_control_blocker_repair_decision', 'previous_allowed_resolution_events': raw_events})
+        return ([PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT], {**issue, 'required_repair_command': 'pm_must_resubmit_control_blocker_repair_decision', 'previous_allowed_resolution_events': raw_events})
     raise RouterError(str(issue.get('error') or 'control blocker wait contains invalid allowed external events'))
 
 def _event_producer_roles(router: ModuleType, allowed_events: list[str]) -> set[str]:
@@ -84,14 +89,14 @@ def _role_set(router: ModuleType, to_role: str) -> set[str]:
     _bind_router(router)
     return {part.strip() for part in str(to_role or '').split(',') if part.strip()}
 
-def _control_blocker_followup_target_role(router: ModuleType, allowed_events: list[str], fallback_role: str) -> str:
+def _control_blocker_followup_target_role(router: ModuleType, allowed_events: list[str], default_role: str) -> str:
     _bind_router(router)
     roles = router._event_producer_roles(allowed_events)
     if not roles:
-        return fallback_role
-    fallback_roles = router._role_set(fallback_role)
-    if roles.issubset(fallback_roles):
-        return fallback_role
+        return default_role
+    default_roles = router._role_set(default_role)
+    if roles.issubset(default_roles):
+        return default_role
     return ','.join(sorted(roles))
 
 def _validate_wait_event_producer_binding(router: ModuleType, allowed_events: list[str], *, to_role: str, context: str) -> None:
@@ -188,7 +193,7 @@ def _next_control_blocker_action(router: ModuleType, project_root: Path, run_sta
             wait_target_role = 'project_manager'
             wait_extra['allowed_external_events'] = [PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT]
             wait_extra['target_role'] = wait_target_role
-            wait_extra['event_contract_issue'] = {'reason': 'repair_transaction_missing_producer_evidence', 'repair_transaction_id': transaction.get('transaction_id'), 'plan_kind': mode, 'fallback': 'pm_must_resubmit_control_blocker_repair_decision'}
+            wait_extra['event_contract_issue'] = {'reason': 'repair_transaction_missing_producer_evidence', 'repair_transaction_id': transaction.get('transaction_id'), 'plan_kind': mode, 'required_repair_command': 'pm_must_resubmit_control_blocker_repair_decision'}
     return make_action(action_type='await_role_decision', actor='controller', label='controller_waits_for_control_blocker_resolution', summary="A router control blocker has been delivered. Controller must wait for the target role's corrected event or PM recovery decision.", allowed_reads=[artifact_rel, project_relative(project_root, router.run_state_path(run_root))], allowed_writes=[project_relative(project_root, router.run_state_path(run_root))], to_role=wait_target_role, extra=wait_extra)
 
 def _mark_control_blocker_delivered(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], pending: dict[str, Any]) -> None:

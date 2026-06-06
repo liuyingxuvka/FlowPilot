@@ -55,10 +55,10 @@ class State:
     pm_controller_reset_card_delivered: bool = False
     pm_phase_map_delivered: bool = False
     pm_startup_intake_card_delivered: bool = False
-    reviewer_startup_fact_check_card_delivered: bool = False
-    startup_fact_reported: bool = False
-    pm_startup_activation_card_delivered: bool = False
-    startup_activation_approved: bool = False
+    startup_runtime_entry_completed: bool = False
+    startup_runtime_mechanical_audit_written: bool = False
+    startup_display_status_written: bool = False
+    startup_user_intake_released_to_pm: bool = False
     user_intake_delivered_to_pm: bool = False
     user_intake_controller_relayed: bool = False
     pm_controller_reset_decision_returned: bool = False
@@ -176,7 +176,7 @@ class State:
     final_backward_replay_passed: bool = False
     pm_closure_card_delivered: bool = False
     lifecycle_reconciled: bool = False
-    heartbeat_stopped_or_manual_recorded: bool = False
+    continuation_boundary_recorded: bool = False
     role_binding_ledger_archived: bool = False
     pm_completion_decision: bool = False
 
@@ -219,3 +219,4 @@ def initial_state() -> State:
 
 
 __all__ = ["Action", "State", "Tick", "Transition", "initial_state"]
+

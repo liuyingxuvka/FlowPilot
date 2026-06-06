@@ -30,6 +30,7 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 _CURRENT_NODE_PACKET_REQUIRED_FIELDS = ("body_path", "body_hash")
 _CURRENT_NODE_PACKET_RETIRED_ALIAS_FIELDS = ("packet_body_path", "packet_body_hash")
 _CURRENT_NODE_RESULT_REQUIRED_FIELDS = ("result_body_path", "result_body_hash", "next_recipient")
@@ -37,6 +38,10 @@ _CURRENT_NODE_RESULT_RETIRED_ALIAS_FIELDS = ("body_path", "body_hash", "to_role"
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():

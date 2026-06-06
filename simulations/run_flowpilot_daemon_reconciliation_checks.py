@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for `run_flowpilot_daemon_reconciliation_checks.py`."""
+"""Thin current-contract entrypoint for the FlowPilot daemon-reconciliation checks."""
 
 from __future__ import annotations
 

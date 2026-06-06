@@ -36,6 +36,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -55,78 +57,9 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_startup_role_recovery'
 
-def _role_spawn_action_extra(router: ModuleType, state: dict[str, Any]) -> dict[str, Any]:
-    _bind_router(router)
-    answers = state.get('startup_answers') if isinstance(state.get('startup_answers'), dict) else {}
-    mode = answers.get('runtime_role_assistances')
-    extra: dict[str, Any] = {'runtime_role_assistance_mode': mode, 'role_keys': list(RUNTIME_ROLE_KEYS), 'background_role_agent_model_policy': {'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['startup_live_role_binding', 'heartbeat_resume_rehydration', 'manual_resume_rehydration', 'missing_role_replacement']}}
-    if mode == 'allow':
-        extra.update({'requires_payload': 'role_bindings', 'requires_host_role_binding': True, 'role_binding_open_policy': 'open_runtime_required_role_bindings_before_controller_receipt', 'payload_contract': _role_slots_payload_contract(), 'role_spawn_request': [{'role_key': role, 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'binding_open_result': ROLE_BINDING_OPEN_RESULT, 'opened_for_run_id': state.get('run_id'), 'opened_after_startup_answers': True} for role in RUNTIME_ROLE_KEYS]})
-    elif mode == 'single-agent':
-        extra.update({'requires_host_role_binding': False, 'single_agent_continuity_authorized': True})
-    return extra
-
-def _normalize_role_agent_records(router: ModuleType, state: dict[str, Any], payload: dict[str, Any]) -> list[dict[str, Any]]:
-    _bind_router(router)
-    answers = state.get('startup_answers') if isinstance(state.get('startup_answers'), dict) else {}
-    mode = answers.get('runtime_role_assistances')
-    run_id = str(state.get('run_id') or '')
-    if mode == 'single-agent':
-        return [{'role_key': role, 'status': 'single_agent_continuity_authorized', 'agent_id': None, 'binding_open_result': 'not_requested_single_agent_continuity', 'fallback_authorized_by_startup_answer': True, 'recorded_at': utc_now()} for role in RUNTIME_ROLE_KEYS]
-    if mode != 'allow':
-        raise RouterError('cannot start roles before runtime_role_assistances startup answer is recorded')
-    raw_records = payload.get('role_bindings')
-    if isinstance(raw_records, dict):
-        iterable = list(raw_records.values())
-    elif isinstance(raw_records, list):
-        iterable = raw_records
-    else:
-        raise RouterError('start_role_slots requires payload.role_bindings list or object')
-    if payload.get('runtime_role_assistance_capability_status') != 'available':
-        raise RouterError('live role bindings require runtime_role_assistance_capability_status=available')
-    records_by_role: dict[str, dict[str, Any]] = {}
-    for raw in iterable:
-        if not isinstance(raw, dict):
-            raise RouterError('each role-binding record must be an object')
-        role = raw.get('role_key')
-        if role not in RUNTIME_ROLE_KEYS:
-            raise RouterError(f'role-binding record has unsupported role_key: {role!r}')
-        if role in records_by_role:
-            raise RouterError(f'duplicate role-binding record for {role}')
-        agent_id = raw.get('agent_id')
-        if not isinstance(agent_id, str) or not agent_id.strip():
-            raise RouterError(f'{role} requires a non-empty current agent_id')
-        if raw.get('model_policy') != ROLE_BINDING_MODEL_POLICY:
-            raise RouterError(f'{role} requires model_policy={ROLE_BINDING_MODEL_POLICY}')
-        if raw.get('reasoning_effort_policy') != ROLE_BINDING_REASONING_EFFORT_POLICY:
-            raise RouterError(f'{role} requires reasoning_effort_policy={ROLE_BINDING_REASONING_EFFORT_POLICY}')
-        if raw.get('binding_open_result') != ROLE_BINDING_OPEN_RESULT:
-            raise RouterError(f'{role} requires binding_open_result=opened_for_current_task')
-        if raw.get('opened_after_startup_answers') is not True:
-            raise RouterError(f'{role} must be opened_after_startup_answers=true')
-        if raw.get('opened_for_run_id') != run_id:
-            raise RouterError(f'{role} must be opened_for_run_id={run_id}')
-        host_role_binding_receipt = raw.get('host_role_binding_receipt')
-        if host_role_binding_receipt is not None:
-            if not isinstance(host_role_binding_receipt, dict):
-                raise RouterError(f'{role} host_role_binding_receipt must be an object')
-            if host_role_binding_receipt.get('source_kind') != 'host_receipt':
-                raise RouterError(f'{role} host_role_binding_receipt requires source_kind=host_receipt')
-            if host_role_binding_receipt.get('opened_for_run_id') != run_id:
-                raise RouterError(f'{role} host_role_binding_receipt opened_for_run_id mismatch')
-            if host_role_binding_receipt.get('role_key') != role:
-                raise RouterError(f'{role} host_role_binding_receipt role_key mismatch')
-            if host_role_binding_receipt.get('agent_id') != agent_id:
-                raise RouterError(f'{role} host_role_binding_receipt agent_id mismatch')
-        records_by_role[str(role)] = {'role_key': str(role), 'status': 'live_agent_started', 'agent_id': agent_id.strip(), 'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'binding_open_result': ROLE_BINDING_OPEN_RESULT, 'opened_for_run_id': run_id, 'opened_after_startup_answers': True, 'role_binding_generation': 1, 'role_binding_epoch': 1, **({'host_role_binding_receipt': host_role_binding_receipt} if isinstance(host_role_binding_receipt, dict) else {}), 'recorded_at': utc_now()}
-    missing = [role for role in RUNTIME_ROLE_KEYS if role not in records_by_role]
-    if missing:
-        raise RouterError(f"missing live role-binding records: {', '.join(missing)}")
-    return [records_by_role[role] for role in RUNTIME_ROLE_KEYS]
-
 def _latest_resume_tick_id(router: ModuleType, run_state: dict[str, Any]) -> str:
     _bind_router(router)
-    ticks = run_state.get('heartbeat_ticks') if isinstance(run_state.get('heartbeat_ticks'), list) else []
+    ticks = run_state.get('resume_ticks') if isinstance(run_state.get('resume_ticks'), list) else []
     for tick in reversed(ticks):
         if isinstance(tick, dict) and tick.get('tick_id'):
             return str(tick['tick_id'])
@@ -156,7 +89,7 @@ def _role_core_prompt_delivery_payload(router: ModuleType, project_root: Path, r
             raise RouterError(f'role core prompt card is missing for {role}')
         role_cards[role] = card_path.relative_to(run_root).as_posix()
         role_card_hashes[role] = packet_runtime.sha256_file(card_path)
-    return {'schema_version': 'flowpilot.role_core_prompt_delivery.v1', 'run_id': run_id, 'source': 'copied_runtime_kit', 'source_action': source_action, 'delivery_mode': 'same_action_with_role_start' if source_action == 'start_role_slots' else 'recovery_action', 'role_cards': role_cards, 'role_card_hashes': role_card_hashes, 'delivered_at': utc_now()}
+    return {'schema_version': 'flowpilot.role_core_prompt_delivery.v1', 'run_id': run_id, 'source': 'copied_runtime_kit', 'source_action': source_action, 'delivery_mode': 'current_role_recovery_action', 'role_cards': role_cards, 'role_card_hashes': role_card_hashes, 'delivered_at': utc_now()}
 
 def _resume_role_context(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], role: str) -> dict[str, Any]:
     _bind_router(router)
@@ -256,8 +189,6 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
     return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'runtime_roles_path': runtime_roles_path, 'runtime_roles_relpath': project_relative(project_root, runtime_roles_path), 'ready_role_keys': list(RUNTIME_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
 
 __all__ = (
-    '_role_spawn_action_extra',
-    '_normalize_role_agent_records',
     '_latest_resume_tick_id',
     '_role_core_prompt_path',
     '_role_memory_path',

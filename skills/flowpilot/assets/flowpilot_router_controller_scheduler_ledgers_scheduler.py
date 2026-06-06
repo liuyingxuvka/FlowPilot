@@ -11,7 +11,12 @@ import flowpilot_closure_kernel
 from flowpilot_router_errors import RouterError
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -88,7 +93,7 @@ def _action_is_startup_scoped(router: ModuleType, action: dict[str, Any] | None)
     if not isinstance(action, dict):
         return False
     action_type = str(action.get('action_type') or '')
-    if action_type in {'emit_startup_banner', 'start_role_slots', 'create_heartbeat_automation', 'confirm_controller_core_boundary', CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE, 'write_startup_mechanical_audit', 'write_display_surface_status'}:
+    if action_type in {'emit_startup_banner', 'confirm_controller_core_boundary', CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE, 'write_startup_mechanical_audit', 'write_display_surface_status'}:
         return True
     if action_type == 'sync_display_plan' and (not str(action.get('scope_kind') or '')):
         return True

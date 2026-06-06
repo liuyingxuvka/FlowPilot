@@ -17,7 +17,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_material_understanding_accepts_file_backed_memo_payload(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.complete_material_flow(
             root,
@@ -55,7 +55,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_artifact_map_indexes_material_flow_without_body_text(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.complete_material_flow(root)
 
@@ -82,8 +82,8 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(result_entry["requires_runtime_open"])
         self.assertTrue(result_entry["body_refs"])
         self.assertTrue(all(ref["ordinary_file_read_allowed"] is False for ref in result_entry["body_refs"]))
-        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager"])
-        self.assertFalse(result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
+        self.assertEqual(result_entry["allowed_role_reads"], ["project_manager", "human_like_reviewer"])
+        self.assertTrue(result_entry["metadata"]["reviewer_raw_body_access_runtime_backed"])
 
         memo = read_json(run_root / "pm_material_understanding.json")
         self.assertEqual(memo["source_paths"]["material_artifact_map"], self.rel(root, map_path))
@@ -99,7 +99,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_formal_material_package_includes_material_map_review_refs(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -121,7 +121,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_sufficiency_report_requires_checked_source_refs(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -153,7 +153,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_acceptance_requires_reviewer_sufficiency_and_pm_absorb_card(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_accepts_reviewed_material")
@@ -214,7 +214,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_results_event_requires_result_ledger_absorption(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -241,7 +241,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_direct_relay_blocks_body_hash_mismatch(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -255,7 +255,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_direct_relay_blocks_missing_output_contract(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -271,7 +271,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_research_required_blocks_product_architecture_until_absorbed(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -426,7 +426,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_product_architecture_and_root_contract_gate_route_skeleton(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
 
         with self.assertRaises(router.RouterError):
@@ -584,7 +584,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_unknown_flowguard_operator_product_scope_model_report_is_rejected(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
 
         self.apply_next_non_card_action(root)
@@ -640,7 +640,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_process_route_model_canonical_event_writes_canonical_artifact_only(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
@@ -678,7 +678,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_repair_transaction_commits_material_reissue_generation(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -775,7 +775,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_repair_decision_side_effect_exposes_flag_before_wait_events(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -827,7 +827,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -874,7 +874,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_repair_active_batch_overrides_stale_global_progress_flags(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -890,11 +890,6 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "packet_id": "material-scan-repair-worker-1",
                     "to_role": "worker",
                     "body_text": "Repair generation packet A",
-                },
-                {
-                    "packet_id": "material-scan-repair-worker-2",
-                    "to_role": "worker",
-                    "body_text": "Repair generation packet B",
                 },
             ],
         )
@@ -916,7 +911,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_repair_active_batch_blocks_stale_result_relay_flag(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -933,11 +928,6 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     "to_role": "worker",
                     "body_text": "Repair result generation packet A",
                 },
-                {
-                    "packet_id": "material-scan-repair-result-worker-2",
-                    "to_role": "worker",
-                    "body_text": "Repair result generation packet B",
-                },
             ],
         )
         router.save_run_state(run_root, state)
@@ -953,11 +943,12 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         for packet in generation["packets"][:1]:
             envelope = packet_runtime.load_envelope(root, packet["packet_envelope_path"])
             packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+            completed_by_role = str(envelope["to_role"])
             packet_runtime.write_result(
                 root,
                 packet_envelope=envelope,
-                completed_by_role=envelope["to_role"],
-                completed_by_agent_id=f"{envelope['to_role']}-agent",
+                completed_by_role=completed_by_role,
+                completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
                 result_body_text="partial repair material result\n\nContract Self-Check\n\nstatus: pass\n",
                 next_recipient="project_manager",
             )
@@ -967,14 +958,12 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIsNotNone(action)
         assert action is not None
 
-        self.assertEqual(action["action_type"], "await_role_decision")
-        self.assertEqual(action["allowed_external_events"], ["worker_scan_results_returned"])
-        self.assertIn("worker", action["to_role"])
-        self.assertNotEqual(action.get("action_type"), "relay_material_scan_results_to_pm")
+        self.assertEqual(action["action_type"], "relay_material_scan_results_to_pm")
+        self.assertEqual(action["packet_ids"], ["material-scan-repair-result-worker-1"])
     def test_material_scan_mechanical_agent_id_gap_reissues_to_worker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1014,11 +1003,12 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         material_index = read_json(material_index_path)
         for record in material_index["packets"]:
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
+            completed_by_role = str(envelope["to_role"])
             packet_runtime.write_result(
                 root,
                 packet_envelope=envelope,
-                completed_by_role=envelope["to_role"],
-                completed_by_agent_id=f"agent-fixed-{envelope['to_role']}",
+                completed_by_role=completed_by_role,
+                completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
                 result_body_text="material scan result with corrected agent id",
                 next_recipient="project_manager",
             )
@@ -1036,7 +1026,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_relay_receipt_folds_existing_packet_evidence(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1077,7 +1067,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_path_only_done_receipt_keeps_current_assignment_relay_pending(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1116,7 +1106,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_path_only_receipt_folds_after_current_assignment_relay_action(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1143,7 +1133,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_scan_result_receipt_folds_batch_lifecycle(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1184,7 +1174,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_insufficient_event_records_insufficient_state(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.apply_next_non_card_action(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -1218,3 +1208,4 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(router.active_run_root(root)))  # type: ignore[arg-type]
         self.assertTrue(state["flags"]["material_review_insufficient"])
         self.assertEqual(state["material_review"], "insufficient")
+

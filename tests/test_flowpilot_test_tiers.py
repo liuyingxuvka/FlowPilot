@@ -340,7 +340,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
         self.assertIn("router_startup_bootstrap_reconciliation", command_names)
         self.assertIn("router_startup_bootstrap_intake", command_names)
         self.assertIn("router_startup_bootstrap_review", command_names)
-        self.assertIn("router_startup_bootstrap_fact_heartbeat", command_names)
+        self.assertIn("router_startup_bootstrap_fact_manual_resume", command_names)
         self.assertIn("router_startup_daemon", command_names)
         self.assertIn("router_foreground", command_names)
         self.assertIn("router_controller", command_names)
@@ -425,7 +425,7 @@ class FlowPilotTestTierTests(unittest.TestCase):
                 "router_startup_bootstrap_reconciliation",
                 "router_startup_bootstrap_intake",
                 "router_startup_bootstrap_review",
-                "router_startup_bootstrap_fact_heartbeat",
+                "router_startup_bootstrap_fact_manual_resume",
                 "router_startup_daemon",
             ],
         )
@@ -788,3 +788,4 @@ class FlowPilotTestTierTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

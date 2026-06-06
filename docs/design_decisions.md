@@ -27,10 +27,14 @@ quality tier for a formal FlowPilot run. For small maintenance work inside an
 active project, FlowPilot may record continuity state, but it should not claim a
 full formal route unless the showcase-grade gates ran.
 
-The first user-facing startup gate asks for the work request and one option:
-whether FlowPilot may use background collaboration for the task. The assistant must
-stop immediately after asking and wait for the user's later reply before banner
-display, route writes, child skills, role bindings, heartbeat probes, image
+The first user-facing startup gate collects the work request and one option:
+whether FlowPilot may use background collaboration for the task. The native UI
+records the switch state. When the switch is on, that is the user's explicit
+authorization for background or parallel agents. When the switch is off,
+startup is blocked with `background_collaboration_required` instead of falling
+back to a foreground-only route. The assistant must stop immediately after
+opening the startup intake and wait for the startup result before banner
+display, route writes, child skills, role bindings, liveness probes, image
 generation, or implementation.
 
 Run modes are unsupported entirely. Host limits, invocation text, existing

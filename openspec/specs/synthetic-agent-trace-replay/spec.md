@@ -84,9 +84,9 @@ evidence paths cannot reuse old active packets or old proof as current proof.
 
 ### Requirement: Resume traces preserve sealed-body and PM authority
 
-Synthetic resume traces SHALL verify that heartbeat or manual resume uses
-current-run metadata and routes existing results to PM without reading sealed
-packet or result bodies.
+Synthetic resume traces SHALL verify that manual resume uses current-run
+metadata and routes existing results to PM without reading sealed packet or
+result bodies.
 
 #### Scenario: Resume relays existing result to PM
 

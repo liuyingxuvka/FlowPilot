@@ -25,18 +25,25 @@ FlowPilot launcher guidance SHALL distinguish the minimal pre-daemon bootloader 
 
 #### Scenario: Startup after daemon
 - **WHEN** the Router daemon has started or attached
-- **THEN** prompt text MUST state that startup UI, roles, heartbeat binding, Controller-core handoff rows, and later runtime rows are exposed through the Controller action ledger under Router daemon ownership
+- **THEN** prompt text MUST state that startup UI, current background
+  collaboration checks, Controller-core handoff rows, and later runtime rows
+  are exposed through the Controller action ledger under Router daemon
+  ownership
 
 ### Requirement: Resume prompts attach to daemon state and ledger
 
-Heartbeat and manual-resume prompts SHALL describe re-entry as attaching to current-run daemon status, daemon lock, and Controller action ledger, with repair only when daemon evidence is missing or stale.
+Manual-resume and daemon-liveness prompts SHALL describe re-entry as attaching
+to current-run daemon status, daemon lock, and Controller action ledger, with
+repair only when daemon evidence is missing or stale.
 
-#### Scenario: Heartbeat wakes with live daemon
-- **WHEN** a heartbeat or manual wakeup occurs and the daemon lock/status are live
+#### Scenario: Manual resume wakes with live daemon
+- **WHEN** a manual resume or daemon-liveness wakeup occurs and the daemon
+  lock/status are live
 - **THEN** prompt text MUST direct Controller to attach to the existing daemon and process only exposed Controller rows or standby
 
-#### Scenario: Heartbeat wakes with stale daemon
-- **WHEN** a heartbeat or manual wakeup occurs and daemon lock/status are missing or stale
+#### Scenario: Manual resume wakes with stale daemon
+- **WHEN** a manual resume or daemon-liveness wakeup occurs and daemon
+  lock/status are missing or stale
 - **THEN** prompt text MAY direct a daemon repair or restart from persisted current-run state and MUST NOT start a second Router writer while a live daemon lock exists
 
 ### Requirement: Prompt-boundary FlowGuard rejects ambiguous authority states
@@ -48,7 +55,8 @@ FlowPilot SHALL include a focused FlowGuard check that rejects prompt-boundary s
 - **THEN** the focused FlowGuard check MUST reject that state
 
 #### Scenario: Known-bad return-to-router resume prompt
-- **WHEN** a heartbeat/manual-resume prompt tells Controller to continue or return to the router loop without daemon/ledger attachment wording
+- **WHEN** a manual-resume prompt tells Controller to continue or return to the
+  router loop without daemon/ledger attachment wording
 - **THEN** the focused FlowGuard check MUST reject that state
 
 #### Scenario: Valid daemon-ledger prompt set

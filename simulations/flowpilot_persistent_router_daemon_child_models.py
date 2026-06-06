@@ -55,10 +55,10 @@ FAMILY_FIELDS: dict[str, dict[str, str]] = {
     },
     "terminal_projection": {
         "current_work_projects_active_owner": "current-work projection did not name the active role, Controller, or Router owner",
-        "heartbeat_no_second_daemon": "heartbeat could start a second live daemon",
+        "patrol_no_second_daemon": "patrol could start a second live daemon",
         "terminal_fence_immediate": "terminal lifecycle did not write an immediate daemon fence",
         "terminal_projection_cleared": "terminal projection still exposed nonterminal work",
-        "terminal_stops_runtime": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
+        "terminal_stops_runtime": "terminal lifecycle left daemon, Controller, roles, patrol, or route work active",
         "cleanup_failure_does_not_block_fence": "terminal cleanup failure blocked the immediate fence",
     },
 }
@@ -113,7 +113,7 @@ class State:
     external_event_closed_by_router: bool = True
     foreground_standby_polls: bool = True
     current_work_projects_active_owner: bool = True
-    heartbeat_no_second_daemon: bool = True
+    patrol_no_second_daemon: bool = True
     terminal_fence_immediate: bool = True
     terminal_projection_cleared: bool = True
     terminal_stops_runtime: bool = True
@@ -446,3 +446,4 @@ __all__ = [
     "required_labels",
     "scenarios_for",
 ]
+

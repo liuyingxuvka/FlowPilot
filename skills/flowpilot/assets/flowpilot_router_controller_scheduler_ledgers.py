@@ -48,7 +48,12 @@ _LEDGER_CHILD_MODULES = (
 )
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     for child_module in _LEDGER_CHILD_MODULES:
         child_module._bind_router(router)
 

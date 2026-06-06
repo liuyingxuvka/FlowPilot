@@ -7,13 +7,6 @@ from typing import Any
 
 PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
     {
-        "flag": "reviewer_startup_fact_check_card_delivered",
-        "label": "reviewer_startup_fact_check_card_delivered",
-        "card_id": "reviewer.startup_fact_check",
-        "requires_all_flags": ["startup_mechanical_audit_written", "startup_display_status_written"],
-        "to_role": "human_like_reviewer",
-    },
-    {
         "flag": "pm_core_delivered",
         "label": "pm_core_card_delivered",
         "card_id": "pm.core",
@@ -71,13 +64,6 @@ PLANNING_SYSTEM_CARD_SEQUENCE: tuple[dict[str, Any], ...] = (
         "label": "pm_resume_decision_card_delivered",
         "card_id": "pm.resume_decision",
         "requires_flag": "pm_role_binding_recovery_freshness_card_delivered",
-        "to_role": "project_manager",
-    },
-    {
-        "flag": "pm_startup_activation_card_delivered",
-        "label": "pm_startup_activation_card_delivered",
-        "card_id": "pm.startup_activation",
-        "requires_flag": "startup_fact_reported",
         "to_role": "project_manager",
     },
     {

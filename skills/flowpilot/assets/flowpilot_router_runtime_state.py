@@ -32,12 +32,17 @@ from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, Ro
 import flowpilot_router_runtime_state_persistence as runtime_state_persistence
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 _RUN_STATE_LOAD_META_HASH = runtime_state_persistence._RUN_STATE_LOAD_META_HASH
 _RUN_STATE_LOAD_META_FLAGS = runtime_state_persistence._RUN_STATE_LOAD_META_FLAGS
 _RUN_STATE_LOAD_META_PENDING = runtime_state_persistence._RUN_STATE_LOAD_META_PENDING
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -103,7 +108,7 @@ def _load_existing_bootstrap_state(router: ModuleType, project_root: Path) -> di
     raw = current.get('startup_bootstrap_path')
     candidate: Path | None = project_root / str(raw) if raw else None
     if candidate is None:
-        raw_root = current.get('current_run_root') or current.get('active_run_root') or current.get('run_root')
+        raw_root = current.get('run_root')
         if raw_root:
             candidate = run_bootstrap_state_path(project_root / str(raw_root))
     if candidate is None or not candidate.exists():
@@ -143,10 +148,10 @@ def active_run_root(router: ModuleType, project_root: Path, state: dict[str, Any
     if state and state.get('run_root'):
         return project_root / str(state['run_root'])
     current = read_json_if_exists(project_root / '.flowpilot' / 'current.json')
-    raw = current.get('current_run_root') or current.get('active_run_root') or current.get('run_root')
+    raw = current.get('run_root')
     if raw:
         return project_root / str(raw)
-    run_id = current.get('current_run_id') or current.get('active_run_id') or current.get('run_id')
+    run_id = current.get('run_id')
     if run_id:
         return project_root / '.flowpilot' / 'runs' / str(run_id)
     return None
@@ -314,11 +319,6 @@ def _startup_answers_from_run(router: ModuleType, run_root: Path) -> dict[str, A
     if not isinstance(answers, dict):
         return {}
     return dict(answers)
-
-def _scheduled_continuation_requested(router: ModuleType, answers: dict[str, Any]) -> bool:
-    _bind_router(router)
-    value = str(answers.get('scheduled_continuation') or '').lower()
-    return bool(value) and 'manual' not in value and ('no' not in value) and ('disable' not in value)
 
 def _continuation_binding_path(router: ModuleType, run_root: Path) -> Path:
     _bind_router(router)

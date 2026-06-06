@@ -30,7 +30,6 @@ RETIRED_CONTINUATION_PATHS = [
     "scripts/flowpilot_run_with_busy_lease.py",
     "scripts/flowpilot_watchdog.py",
     "scripts/register_windows_watchdog_task.ps1",
-    "templates/flowpilot/heartbeats/global-watchdog-supervisor.prompt.md",
     "templates/flowpilot/watchdog/watchdog.template.json",
 ]
 

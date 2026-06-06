@@ -656,7 +656,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="unsupported_historical_reviewer_relay_is_audit_only",
-        description="Unsupported_historical direct-reviewer relay flags cannot satisfy current PM disposition or gate proof.",
+        description="Retired direct-reviewer relay flags cannot satisfy current PM disposition or gate proof.",
         predicate=unsupported_historical_reviewer_relay_is_audit_only,
     ),
 )

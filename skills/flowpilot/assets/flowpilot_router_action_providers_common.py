@@ -22,7 +22,6 @@ PROVIDER_ORDER = (
     "role_recovery",
     "resume",
     "control_blocker",
-    "startup_heartbeat",
     "display_plan",
     "controller_boundary",
     "startup_mechanical_audit",

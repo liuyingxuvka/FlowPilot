@@ -12,7 +12,7 @@ Risk intent brief:
   mailbox evidence, ACK consumption, Controller action ledger entries,
   external-event wait row closure, Controller receipts, stateful Controller
   postcondition evidence, Router scheduler ledger parseability, atomic durable
-  ledger writes, daemon status/lock/process consistency, heartbeat/manual
+  ledger writes, daemon status/lock/process consistency, manual resume/patrol
   resume recovery, role cohort liveness, missing-deliverable repair
   issue/failure counts, and terminal cleanup.
 - Adversarial branches include formal startup skipping or failing daemon
@@ -24,7 +24,7 @@ Risk intent brief:
   the next startup row,
   Controller stopping at ordinary waits, foreground Controller ending while a
   live daemon-owned role wait is active, foreground Controller ending while
-  the daemon is live but no Controller action is ready, heartbeat starting a
+  the daemon is live but no Controller action is ready, patrol starting a
   second live daemon, Router scheduler ledger corruption from partial writes,
   monitor current-work projection dropping active packet holders or internal
   reconciliation owners after `pending_action` is cleared,
@@ -61,8 +61,8 @@ Risk intent brief:
   only after safe artifact checks and diagnostic evidence, durable ledgers are
   written atomically, and daemon active status never contradicts an error lock
   or missing process;
-  heartbeat restarts only dead/stale daemon state; and terminal stop disables
-  daemon, Controller, heartbeat, roles, and route work.
+  patrol restarts only dead/stale daemon state; and terminal stop disables
+  daemon, Controller, patrol, roles, and route work.
 """
 
 from __future__ import annotations
@@ -135,7 +135,7 @@ class State:
     foreground_controller_ended_while_controller_action_pending: bool = False
     foreground_controller_ended_while_daemon_active_no_action: bool = False
     roles_live: bool = False
-    heartbeat_active: bool = False
+    manual_resume_binding_active: bool = False
     current_wait: str = "none"  # none | ack | report | controller_receipt | controller_local | user | terminal
     event_wait_action_open: bool = False
     external_event_recorded: bool = False
@@ -201,12 +201,12 @@ class State:
     router_internal_fact_updated_from_receipt: bool = False
     router_cleared_pending_without_internal_fact: bool = False
     same_controller_action_reissue_count: int = 0
-    heartbeat_woke: bool = False
-    heartbeat_started_second_daemon: bool = False
-    heartbeat_restarted_dead_daemon: bool = False
-    heartbeat_restored_controller: bool = False
-    heartbeat_restored_roles: bool = False
-    heartbeat_binding_scheduled_after_terminal_fence: bool = False
+    manual_resume_woke: bool = False
+    patrol_started_second_daemon: bool = False
+    patrol_restarted_dead_daemon: bool = False
+    patrol_restored_controller: bool = False
+    patrol_restored_roles: bool = False
+    patrol_binding_scheduled_after_terminal_fence: bool = False
     stop_requested: bool = False
     terminal_fence_written: bool = False
     terminal_controller_cleanup_best_effort_failed: bool = False
@@ -226,3 +226,4 @@ def initial_state() -> State:
 
 def _step(state: State, **changes: object) -> State:
     return replace(state, **changes)
+

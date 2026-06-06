@@ -9,7 +9,12 @@ from __future__ import annotations
 from types import ModuleType
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():

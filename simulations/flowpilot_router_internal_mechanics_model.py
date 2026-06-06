@@ -27,7 +27,7 @@ Risk intent brief:
   work package is marked done internally, role interaction bypasses Controller,
   sealed body is read during local work, missing ACK/result becomes done,
   repeated ticks repeat side effects, display projection is counted as user
-  confirmation, host-boundary work is consumed locally, and internal failure is
+  confirmation, background-agent host-boundary work is consumed locally, and internal failure is
   recorded as success.
 - Hard invariants: Router-internal actions never create Controller rows;
   Controller work packages must not be self-completed by Router; Router must
@@ -119,7 +119,7 @@ class State:
 
     external_evidence_required: bool = False
     external_evidence_present: bool = False
-    host_automation_required: bool = False
+    host_background_surface_required: bool = False
     host_proof_present: bool = False
     role_interaction_required: bool = False
     system_card_or_packet_delivery: bool = False
@@ -220,12 +220,12 @@ def scenario_state(scenario: str) -> State:
     if scenario == HOST_BOUNDARY_PRESERVED:
         return _accepted(
             scenario,
-            action_type="create_heartbeat_automation",
+            action_type="lease_background_agent",
             action_owner="host_boundary",
             controller_row_written=True,
             router_event_written=False,
             done_recorded=False,
-            host_automation_required=True,
+            host_background_surface_required=True,
             host_proof_present=False,
         )
     if scenario == ROLE_RELAY_PRESERVED:
@@ -314,9 +314,9 @@ def scenario_state(scenario: str) -> State:
     if scenario == HOST_BOUNDARY_CONSUMED_LOCALLY:
         return _rejected(
             scenario,
-            action_type="create_heartbeat_automation",
+            action_type="lease_background_agent",
             action_owner="host_boundary",
-            host_automation_required=True,
+            host_background_surface_required=True,
             host_proof_present=False,
             controller_row_written=False,
             router_event_written=True,
@@ -365,8 +365,8 @@ def ownership_failures(state: State) -> list[str]:
         failures.append("Router-internal action repeated local side effects")
     if state.display_projection_written and state.user_display_confirmation_required and state.user_display_confirmed:
         failures.append("Local display projection was claimed as user display confirmation")
-    if state.host_automation_required and not state.host_proof_present and state.done_recorded:
-        failures.append("Host-boundary action was consumed locally without host proof")
+    if state.host_background_surface_required and not state.host_proof_present and state.done_recorded:
+        failures.append("Host-boundary action was consumed locally without host surface proof")
     if state.failure_seen and state.done_recorded and not state.router_blocker_written:
         failures.append("Router-internal failure was marked done")
     return failures
@@ -468,3 +468,4 @@ def build_workflow() -> Workflow:
 def terminal_predicate(input_obj: Tick, state: State, trace: tuple[object, ...]) -> bool:
     del input_obj, trace
     return is_terminal(state)
+

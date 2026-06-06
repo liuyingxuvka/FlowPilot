@@ -14,7 +14,7 @@ ROUTER_DAEMON_LOCK_SCHEMA = "flowpilot.router_daemon_lock.v1"
 ROUTER_DAEMON_STATUS_SCHEMA = "flowpilot.router_daemon_status.v1"
 ROUTER_DAEMON_EVENT_LOG_SCHEMA = "flowpilot.router_daemon_event_log.v1"
 ROUTER_DAEMON_TICK_SECONDS = 1
-ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS = 30.0
+ROUTER_DAEMON_PATROL_CHECK_SECONDS = 30.0
 ROUTER_DAEMON_LOCK_STALE_SECONDS = 30
 ROUTER_DAEMON_STARTUP_TIMEOUT_SECONDS = 5.0
 ROUTER_DAEMON_STARTUP_POLL_SECONDS = 0.1
@@ -73,7 +73,7 @@ def _router_daemon_lock_has_live_owner(liveness: dict[str, Any]) -> bool:
     )
 
 
-def _router_daemon_heartbeat_monitor(
+def _router_daemon_patrol_monitor(
     lock: dict[str, Any],
     liveness: dict[str, Any],
     *,
@@ -91,24 +91,24 @@ def _router_daemon_heartbeat_monitor(
     if not liveness.get("status_active"):
         reasons.append(f"lock_status_{lock.get('status') or 'missing'}")
     if age is None:
-        reasons.append("heartbeat_timestamp_missing_or_invalid")
-    elif float(age) > ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS:
-        reasons.append("heartbeat_older_than_thirty_seconds")
+        reasons.append("daemon_patrol_timestamp_missing_or_invalid")
+    elif float(age) > ROUTER_DAEMON_PATROL_CHECK_SECONDS:
+        reasons.append("daemon_patrol_older_than_thirty_seconds")
     if not liveness.get("process_live"):
         reasons.append("owner_process_liveness_needs_check")
     status = "check_liveness" if reasons else "ok"
     instruction = (
-        "Daemon heartbeat is normal; Controller should stay attached to the existing Router daemon."
+        "Daemon patrol is normal; Controller should stay attached to the existing Router daemon."
         if status == "ok"
         else (
-            "Daemon heartbeat needs a Controller liveness check. Check the daemon process, lock, "
+            "Daemon patrol needs a Controller liveness check. Check the daemon process, lock, "
             "and status for this run. If the daemon is alive, stay attached and continue. If it "
             "is dead, recover the current-run Router daemon without starting a second live writer."
         )
     )
     return {
         "status": status,
-        "check_after_seconds": ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
+        "check_after_seconds": ROUTER_DAEMON_PATROL_CHECK_SECONDS,
         "age_seconds": age,
         "last_tick_at": lock.get("last_tick_at") or lock.get("created_at"),
         "controller_liveness_check_required": status == "check_liveness",

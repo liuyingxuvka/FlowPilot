@@ -391,7 +391,7 @@ def _apply_write_startup_mechanical_audit(
     payload: dict[str, Any] | None,
 ) -> ActionHandlerOutcome:
     del pending, payload
-    computed_checks = router._startup_fact_checks(project_root, run_root, run_state)
+    computed_checks = router._startup_mechanical_checks(project_root, run_root, run_state)
     router._write_startup_mechanical_audit(project_root, run_root, run_state, computed_checks)
     context = router._startup_mechanical_audit_context(project_root, run_root, run_state)
     if context is None:
@@ -402,7 +402,7 @@ def _apply_write_startup_mechanical_audit(
         "sha256": context["audit_hash"],
         "proof_path": router.project_relative(project_root, context["proof_path"]),
         "proof_sha256": context["proof_hash"],
-        "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
+        "written_before_first_pm_work": not run_state["flags"].get("user_intake_delivered_to_pm"),
     }
     return ActionHandlerOutcome()
 

@@ -688,7 +688,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "router_loop.canary.happy.duplicate_resume",
-                test_name="test_canary_duplicate_heartbeat_resume_is_idempotent",
+                test_name="test_canary_duplicate_manual_resume_is_idempotent",
                 path="tests/test_flowpilot_control_plane_failure_canary_replay.py",
                 command="python -m pytest tests/test_flowpilot_control_plane_failure_canary_replay.py",
                 test_kind=HAPPY,
@@ -934,8 +934,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("repair_transactions.unsupported_event_replay_rejected",),
             ),
             _evidence(
-                "repair_transactions.negative.empty_followup_wait_fallback",
-                test_name="test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+                "repair_transactions.negative.empty_followup_wait_requires_pm_decision",
+                test_name="test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision",
                 path="tests/router_runtime/control_blockers.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_control_blockers",
                 test_kind=NEGATIVE,

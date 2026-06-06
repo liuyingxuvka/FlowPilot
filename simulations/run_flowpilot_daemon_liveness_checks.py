@@ -1,4 +1,4 @@
-"""Run checks for the FlowPilot daemon heartbeat liveness model."""
+"""Run checks for the FlowPilot daemon patrol liveness model."""
 
 from __future__ import annotations
 
@@ -26,9 +26,9 @@ REQUIRED_LABELS = (
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "delayed_heartbeat_reported_ok": "monitor reported ok after the thirty-second heartbeat window",
+    "delayed_patrol_reported_ok": "monitor reported ok after the thirty-second patrol window",
     "monitor_decides_restart_from_timestamp": "monitor decided recovery before Controller liveness check",
-    "controller_skips_liveness_check": "Controller continued after delayed heartbeat without liveness check",
+    "controller_skips_liveness_check": "Controller continued after delayed patrol without liveness check",
     "dead_daemon_left_dead_after_check": "Controller found dead daemon without recovering current run daemon",
     "recovery_starts_second_writer": "Controller recovery started a second live Router writer",
 }
@@ -37,7 +37,7 @@ HAZARD_EXPECTED_FAILURES = {
 def _state_id(state: model.State) -> str:
     return (
         f"life={state.lifecycle}|process={state.daemon_process}|"
-        f"age={state.heartbeat_age_seconds}|monitor={state.monitor_status}|"
+        f"age={state.patrol_age_seconds}|monitor={state.monitor_status}|"
         f"checked={state.controller_liveness_checked}|decision={state.controller_decision}|"
         f"second_writer={state.second_writer_started}|next={state.next_action_allowed}"
     )
@@ -169,7 +169,7 @@ def run_checks() -> dict[str, object]:
     hazards = _hazard_report()
     return {
         "ok": bool(safe["ok"]) and bool(progress["ok"]) and bool(flowguard["ok"]) and bool(hazards["ok"]),
-        "heartbeat_check_seconds": model.HEARTBEAT_CHECK_SECONDS,
+        "patrol_check_seconds": model.PATROL_CHECK_SECONDS,
         "safe_graph": safe,
         "progress": progress,
         "flowguard_explorer": flowguard,
@@ -191,3 +191,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+

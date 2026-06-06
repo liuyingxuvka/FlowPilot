@@ -20,9 +20,59 @@ flowpilot_new = importlib.import_module("flowpilot_new")
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
 entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entrypoint_checks")
+install_check_common = importlib.import_module("scripts.install_checks.common")
+
+
+def role_result_body(summary: str, **fields: object) -> str:
+    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload.update(fields)
+    return json.dumps(payload)
 
 
 class FlowPilotNewEntrypointTests(unittest.TestCase):
+    def test_split_entrypoint_modules_are_install_required(self) -> None:
+        required = set(install_check_common.REQUIRED_FILES)
+
+        for path in (
+            "skills/flowpilot/assets/flowpilot_new.py",
+            "skills/flowpilot/assets/flowpilot_new_cli.py",
+            "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+            "skills/flowpilot/assets/flowpilot_new_run_commands.py",
+            "skills/flowpilot/assets/flowpilot_new_shared.py",
+        ):
+            self.assertIn(path, required)
+
+    def test_role_handoff_uses_public_entrypoint_after_split(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            started = flowpilot_new.start_run(
+                root,
+                run_id="run-handoff-entrypoint",
+                headless_startup_text="Check split entrypoint handoff.",
+                require_formal_ui=False,
+            )
+            packet_id = str(started["next_action"]["subject_id"])
+            assignment = flowpilot_new.resolve_role_assignment(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                host_kind="fake",
+            )
+            self.assertTrue(assignment["ok"], assignment)
+            lease = flowpilot_new.lease_agent(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                assignment_id=assignment["assignment_id"],
+                agent_id="pm-handoff-agent",
+                host_kind="fake",
+            )
+
+            rendered = json.dumps(lease["role_handoff"], sort_keys=True)
+            self.assertIn("flowpilot_new.py", rendered)
+            self.assertNotIn("flowpilot_new_role_commands.py", rendered)
+            self.assertNotIn("flowpilot_new_cli.py", rendered)
+
     def test_resolve_stopped_blocker_cli_exposes_reattach_required_recheck(self) -> None:
         completed = subprocess.run(
             [
@@ -56,6 +106,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             agent_id=agent_id,
         )
         flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
+        self._open_authorized_result_reads(root, packet_id=packet_id, lease_id=lease_id)
         result_id = flowpilot_new.submit_result(
             root,
             lease_id=lease_id,
@@ -90,6 +141,19 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             kwargs["agent_id"] = agent_id
         lease = flowpilot_new.lease_agent(root, **kwargs)
         return str(lease["lease_id"])
+
+    def _open_authorized_result_reads(self, root: Path, *, packet_id: str, lease_id: str) -> None:
+        shell = run_shell.load_run_shell(root)
+        ledger = run_shell.load_run_ledger(shell)
+        packet = ledger["packets"][packet_id]
+        envelope = packet["envelope"]
+        for read in envelope.get("authorized_result_reads", []):
+            flowpilot_new.open_result(
+                root,
+                lease_id=lease_id,
+                packet_id=packet_id,
+                result_id=str(read["result_id"]),
+            )
 
     def _open_packet_by_kind(self, ledger: dict[str, object], packet_kind: str) -> str:
         packets = ledger["packets"]
@@ -129,6 +193,61 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             rendered = json.dumps(result["status"], sort_keys=True)
             self.assertNotIn("Build a tiny project through new FlowPilot.", rendered)
             self.assertIn("flowpilot_startup_intake.ps1", " ".join(flowpilot_new.startup_ui_command(root, "run-new-entry")[0]))
+
+    def test_manual_resume_uses_lifecycle_guard_without_heartbeat_or_role_prewarm(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            flowpilot_new.start_run(
+                root,
+                run_id="run-lifecycle-resume",
+                headless_startup_text="Exercise current lifecycle resume.",
+                require_formal_ui=False,
+            )
+
+            resumed = flowpilot_new.resume(root, reason="manual_resume")
+            shell = run_shell.load_run_shell(root, run_id="run-lifecycle-resume")
+            ledger = run_shell.load_run_ledger(shell)
+
+            self.assertEqual(resumed["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(resumed["next_action"]["responsibility"], "pm")
+            self.assertEqual(resumed["foreground_duty"]["action"], "process_next_action")
+            self.assertEqual(ledger["lifecycle"]["resume_source"], "manual_resume")
+            self.assertTrue(ledger.get("lifecycle_guard_history"))
+            self.assertEqual(ledger.get("role_assignments"), {})
+            self.assertEqual(ledger.get("leases"), {})
+            rendered = json.dumps({"result": resumed, "ledger": ledger}, sort_keys=True)
+            self.assertNotIn("heartbeat", rendered.lower())
+
+            packet_id = resumed["next_action"]["subject_id"]
+            assignment = flowpilot_new.resolve_role_assignment(
+                root,
+                packet_id=packet_id,
+                responsibility="pm",
+                host_kind="fake",
+            )
+            self.assertTrue(assignment["ok"], assignment)
+            self.assertEqual(assignment["role_assignment"]["packet_id"], packet_id)
+            self.assertEqual(assignment["role_assignment"]["responsibility"], "pm")
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(len(ledger["role_assignments"]), 1)
+            self.assertEqual({row["responsibility"] for row in ledger["role_assignments"].values()}, {"pm"})
+            self.assertEqual(ledger.get("leases"), {})
+
+            lease_id = str(
+                flowpilot_new.lease_agent(
+                    root,
+                    packet_id=packet_id,
+                    responsibility="pm",
+                    assignment_id=assignment["assignment_id"],
+                    agent_id="pm-agent",
+                    host_kind="fake",
+                )["lease_id"]
+            )
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertEqual(len(ledger["leases"]), 1)
+            self.assertEqual(ledger["leases"][lease_id]["responsibility"], "pm")
+            self.assertEqual(ledger["leases"][lease_id]["packet_id"], packet_id)
+            self.assertEqual(set(ledger["role_continuity"]["roles"]), {"pm"})
 
     def test_fake_end_to_end_rehearsal_reaches_final_closure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -220,7 +339,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body=json.dumps({"decision": "pass", "summary": "PM result is not enough for closure."}),
+                body=role_result_body("PM result is not enough for closure."),
             )
             self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
             self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
@@ -266,11 +385,17 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 pm_lease_kwargs["agent_id"] = "pm-agent"
             pm_lease = str(flowpilot_new.lease_agent(root, **pm_lease_kwargs)["lease_id"])
             flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
+            self._open_authorized_result_reads(root, packet_id=pm_packet, lease_id=pm_lease)
             flowpilot_new.submit_result(
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body=json.dumps({"decision": "block", "blocking": True, "recommended_resolution": "needs user decision"}),
+                body=role_result_body(
+                    "PM identified a blocker that needs a user decision.",
+                    decision="block",
+                    blocking=True,
+                    recommended_resolution="needs user decision",
+                ),
             )
             shell = run_shell.load_run_shell(root, run_id="run-stopped-blocker")
             ledger = run_shell.load_run_ledger(shell)
@@ -283,11 +408,16 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 agent_id="pm-repair",
             )
             flowpilot_new.ack(root, lease_id=repair_lease, packet_id=repair_packet)
+            self._open_authorized_result_reads(root, packet_id=repair_packet, lease_id=repair_lease)
             flowpilot_new.submit_result(
                 root,
                 lease_id=repair_lease,
                 packet_id=repair_packet,
-                body=json.dumps({"decision": "stop_for_user", "reason": "Need explicit user decision."}),
+                body=role_result_body(
+                    "PM stopped the blocker for explicit user decision.",
+                    decision="stop_for_user",
+                    reason="Need explicit user decision.",
+                ),
             )
 
             resumed = flowpilot_new.resume(root, reason="plain_resume")
@@ -347,7 +477,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body=json.dumps({"decision": "pass", "summary": "PM result"}),
+                body=role_result_body("PM result"),
             )
 
             self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
@@ -375,11 +505,12 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 flowguard_lease_kwargs["agent_id"] = "flowguard-agent"
             flowguard_lease = str(flowpilot_new.lease_agent(root, **flowguard_lease_kwargs)["lease_id"])
             flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
+            self._open_authorized_result_reads(root, packet_id=flowguard_packet, lease_id=flowguard_lease)
             flowpilot_new.submit_result(
                 root,
                 lease_id=flowguard_lease,
                 packet_id=flowguard_packet,
-                body=json.dumps({"decision": "pass", "summary": "FlowGuard result"}),
+                body=role_result_body("FlowGuard result"),
             )
 
             ledger = run_shell.load_run_ledger(shell)
@@ -408,7 +539,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=pm_packet,
                 responsibility="pm",
                 agent_id="pm-agent",
-                body=json.dumps({"decision": "pass", "summary": "PM result"}),
+                body=role_result_body("PM result"),
             )
             ledger = run_shell.load_run_ledger(shell)
             flowguard_packet = self._open_packet_by_kind(ledger, "flowguard_check")
@@ -417,7 +548,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=flowguard_packet,
                 responsibility="flowguard_operator",
                 agent_id="flowguard-agent",
-                body=json.dumps({"decision": "pass", "summary": "FlowGuard result"}),
+                body=role_result_body("FlowGuard result"),
             )
             ledger = run_shell.load_run_ledger(shell)
             review_packet = self._open_packet_by_kind(ledger, "review")
@@ -454,11 +585,12 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(reviewer_rows[0]["packet_id"], review_packet)
             self.assertTrue(reviewer_rows[0]["ack_received"])
 
+            self._open_authorized_result_reads(root, packet_id=review_packet, lease_id=reviewer_lease)
             flowpilot_new.submit_result(
                 root,
                 lease_id=reviewer_lease,
                 packet_id=review_packet,
-                body=json.dumps({"decision": "pass", "summary": "Reviewer accepted the FlowGuard-backed result."}),
+                body=role_result_body("Reviewer accepted the FlowGuard-backed result."),
             )
             after_review = flowpilot_new.status(root)["status"]
             self.assertFalse(
@@ -655,6 +787,80 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             result_path = Path(command_result["run"]["run_root"]) / "startup_intake" / "startup_intake_result.json"
             with self.assertRaisesRegex(Exception, "formal FlowPilot startup requires"):
                 flowpilot_new._assert_formal_interactive_result(result_path)
+
+    def test_formal_mode_rejects_confirmed_startup_without_background_ack(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result_path = root / "startup_intake_result.json"
+            result_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.startup_intake_result.v1",
+                        "status": "confirmed",
+                        "source": "native_wpf_startup_intake",
+                        "launch_mode": "interactive_native",
+                        "headless": False,
+                        "formal_startup_allowed": True,
+                        "startup_answers": {"background_collaboration_authorized": False},
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            with self.assertRaisesRegex(Exception, "background_collaboration_authorized=true required"):
+                flowpilot_new._assert_formal_interactive_result(result_path)
+
+    def test_blocked_startup_intake_records_structured_stop_without_bootstrap(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            shell = run_shell.create_run_shell(root, "Goal", "Contract", run_id="run-blocked-startup")
+            receipt_path = root / "startup_intake_receipt.json"
+            result_path = root / "startup_intake_result.json"
+            startup_answers = {"background_collaboration_authorized": False}
+            receipt_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.startup_intake_receipt.v1",
+                        "status": "blocked",
+                        "source": "native_wpf_startup_intake",
+                        "launch_mode": "interactive_native",
+                        "headless": False,
+                        "formal_startup_allowed": True,
+                        "startup_answers": startup_answers,
+                        "block_reason": "background_collaboration_required",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            result_path.write_text(
+                json.dumps(
+                    {
+                        "schema_version": "flowpilot.startup_intake_result.v1",
+                        "status": "blocked",
+                        "source": "native_wpf_startup_intake",
+                        "launch_mode": "interactive_native",
+                        "headless": False,
+                        "formal_startup_allowed": True,
+                        "startup_answers": startup_answers,
+                        "receipt_path": str(receipt_path),
+                        "controller_visibility": "block_status_only",
+                        "block_reason": "background_collaboration_required",
+                        "body_text_included": False,
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            flowpilot_new._assert_formal_interactive_result(result_path)
+            record = run_shell.record_startup_intake_result(shell, result_path)
+            ledger = run_shell.load_run_ledger(shell)
+
+            self.assertEqual(record["status"], "blocked")
+            self.assertEqual(runtime.terminal_lifecycle_status(ledger), "stopped_by_user")
+            self.assertEqual(ledger["terminal_lifecycle"]["startup_block_reason"], "background_collaboration_required")
+            self.assertEqual(runtime.router_next_action(ledger).action_type, "terminal_lifecycle")
+            self.assertEqual(ledger["packets"], {})
+            self.assertIsNone(ledger["active_route_version"])
 
     def test_flowguard_new_entrypoint_model_is_green_and_catches_hazards(self) -> None:
         result = entrypoint_runner.run_checks()

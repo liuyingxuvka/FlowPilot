@@ -14,7 +14,7 @@ Risk intent brief:
   PM instead of same-role reissue, material-scan packet dispatch with phase,
   contract, write-target, or canonical-body drift, PM repair reissue specs that
   never enter the packet runtime, success-only repair gates that cannot accept
-  reviewer recheck blockers, stopped runs with live heartbeat/runtime roles/packet
+  reviewer recheck blockers, stopped runs with live manual resume binding/runtime roles/packet
   state, stale snapshots treated as active UI state, ambiguous multi-active
   runs under current-json-only authority, product architecture delivery without
   PM material-understanding source paths, protocol blockers written outside
@@ -265,7 +265,7 @@ class State:
     gate_outcome_same_generation: bool = True
     gate_outcome_clear_target_matches_pass_gate: bool = True
     terminal_continuation_cleanup_recorded: bool = False
-    terminal_host_automation_cleanup_proven: bool = True
+    terminal_lifecycle_cleanup_proven: bool = True
     role_output_envelopes_recorded: bool = False
     role_output_hashes_replayable: bool = True
     stage_advanced_after_material_scan: bool = False
@@ -384,7 +384,7 @@ class State:
 
     stop_requested: bool = False
     current_status_stopped: bool = False
-    continuation_heartbeat_active: bool = False
+    manual_resume_binding_active: bool = False
     runtime_role_live_agents_active: bool = False
     packet_loop_active: bool = False
     frontier_terminal: bool = False
@@ -478,3 +478,6 @@ __all__ = [
     "Transition",
     "initial_state",
 ]
+
+
+

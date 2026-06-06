@@ -327,8 +327,9 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 meta_route_checked=False,
                 meta_route_flowguard_operator_route_scope_approved=False,
                 sidecar_role_status="none",
-                heartbeat_health_checked=False,
+                manual_resume_binding_health_checked=False,
                 quality_route_raises=state.quality_route_raises + 1,
                 **_reset_execution_quality_gates(),
             )
         return
+

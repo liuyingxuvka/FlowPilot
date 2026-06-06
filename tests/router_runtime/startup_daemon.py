@@ -72,6 +72,9 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertNotIn("initialize_mailbox", startup_types)
         self.assertNotIn("record_user_request", startup_types)
         self.assertNotIn("write_user_intake", startup_types)
+
+        load_action = result
+        self.assertEqual(load_action["action_type"], "load_controller_core")
     def test_run_until_wait_folds_user_intake_then_stops_before_role_boundary(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
@@ -117,18 +120,18 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
     def test_run_until_wait_reaches_card_boundary_after_router_internal_manifest_check(self) -> None:
         root = self.make_project()
-        run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        run_root = self.boot_to_controller(root, startup_answers=STARTUP_ANSWERS)
         while True:
             action = self.next_after_display_sync(root)
             if action["action_type"] in {"deliver_system_card", "deliver_system_card_bundle"}:
                 break
-            if action["action_type"] == "create_heartbeat_automation":
-                router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
-                continue
+            self.assertNotEqual(action["action_type"], "create_heartbeat_automation")
             if action["action_type"] in {
                 "confirm_controller_core_boundary",
                 "write_startup_mechanical_audit",
                 "write_display_surface_status",
+                "inject_role_io_protocol",
+                "open_current_role_agent",
             }:
                 router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
                 continue
@@ -406,6 +409,45 @@ class StartupDaemonRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(records[-1]["owner_is_self"])
         self.assertTrue(records[-1]["target_valid_json"])
         self.assertFalse(records[-1]["tmp_artifact_present"])
+
+    def test_runtime_json_self_owned_completed_write_lock_is_safely_recovered(self) -> None:
+        root = self.make_project()
+        path = root / "runtime" / "controller_action_ledger.json"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps({"schema_version": "flowpilot.controller_action_ledger.v1"}) + "\n", encoding="utf-8")
+        initial_signature = router_io._runtime_json_target_signature(path)  # type: ignore[attr-defined]
+        write_lock = router_io._json_write_lock_path(path)  # type: ignore[attr-defined]
+        write_lock.write_text(
+            json.dumps(
+                {
+                    "schema_version": "flowpilot.runtime_json_write_lock.v1",
+                    "path": str(path),
+                    "pid": os.getpid(),
+                    "target_initial_signature": initial_signature,
+                    "created_at": router.utc_now(),
+                },
+                sort_keys=True,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        path.write_text(
+            json.dumps({"schema_version": "flowpilot.controller_action_ledger.v1", "completed": True}) + "\n",
+            encoding="utf-8",
+        )
+
+        liveness = router_io._json_write_lock_liveness(path)  # type: ignore[attr-defined]
+        self.assertEqual(liveness["classification"], "self_owned_completed_write_takeover")
+        self.assertTrue(liveness["takeover_allowed"])
+        self.assertTrue(liveness["target_signature_changed"])
+        router_io.write_json_atomic(path, {"schema_version": "flowpilot.controller_action_ledger.v1", "ok": True})
+
+        self.assertFalse(write_lock.exists())
+        self.assertTrue(read_json(path)["ok"])
+        takeover_log_path = router_io._json_write_lock_takeover_log_path(path)  # type: ignore[attr-defined]
+        records = [json.loads(line) for line in takeover_log_path.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(records[-1]["classification"], "self_owned_completed_write_takeover")
+        self.assertTrue(records[-1]["target_signature_changed"])
 
     def test_runtime_json_fresh_self_owned_write_lock_is_not_stolen(self) -> None:
         root = self.make_project()

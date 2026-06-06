@@ -16,7 +16,12 @@ from flowpilot_router_system_cards_selection_tokens import *
 _OWNER_CHILD_MODULES = (_tokens, _next, _bundle, _reconcile)
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
     for name, value in vars(router).items():

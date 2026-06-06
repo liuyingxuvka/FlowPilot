@@ -30,6 +30,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -47,32 +49,24 @@ def _bound_router() -> ModuleType:
 
 def _resume_role_rehydration_action_extra(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
-    answers = router._startup_answers_from_run(run_root)
-    mode = answers.get('runtime_role_assistances')
+    startup_answers = run_state.get('startup_answers') if isinstance(run_state.get('startup_answers'), dict) else {}
+    background_authorized = startup_answers.get('background_collaboration_authorized') is True
     contexts = router._resume_role_contexts(project_root, run_root, run_state)
     missing_memory = [item['role_key'] for item in contexts if item['role_memory_status'] != 'available']
     resume_next = router._derive_resume_next_recipient_from_packet_ledger(run_root)
     liveness_probe_batch_id = router._resume_liveness_probe_batch_id(run_state)
-    extra: dict[str, Any] = {'runtime_role_assistance_mode': mode, 'role_keys': list(RUNTIME_ROLE_KEYS), 'resume_tick_id': router._latest_resume_tick_id(run_state), 'awaiting_role_from_packet_ledger': resume_next.get('next_recipient_role'), 'resume_next_recipient_from_packet_ledger': resume_next, 'role_rehydration_request': contexts, 'background_role_agent_model_policy': {'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['heartbeat_resume_rehydration', 'manual_resume_rehydration', 'missing_role_replacement']}, 'memory_missing_role_keys': missing_memory, 'role_binding_recovery_report_path': project_relative(project_root, run_root / 'continuation' / 'role_binding_recovery_report.json'), 'liveness_probe_batch_id': liveness_probe_batch_id, 'liveness_preflight_required': True, 'liveness_preflight_policy': {'roles_to_check': list(RUNTIME_ROLE_KEYS), 'current_waiting_role_source': 'packet_ledger.next_recipient_role', 'resume_agent_check_required': True, 'concurrent_probe_required': True, 'probe_mode': ROLE_BINDING_LIVENESS_PROBE_MODE, 'liveness_probe_batch_id': liveness_probe_batch_id, 'start_all_probes_before_waiting': True, 'bounded_wait_allowed': True, 'wait_agent_timeout_result': 'timeout_unknown', 'timeout_unknown_is_active': False, 'missing_cancelled_unknown_requires_replacement': True, 'heartbeat_and_manual_resume_share_path': True}, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
-    if mode == 'allow':
-        extra.update({'requires_payload': 'rehydrated_role_bindings', 'payload_contract': _resume_role_rehydration_payload_contract(run_state, contexts), 'requires_host_role_binding': False, 'requires_host_role_rehydration': True, 'requires_host_role_binding_for_replacements': True, 'new_binding_required_only_for_replacements': True, 'reuse_live_agents_when_active': True, 'role_binding_open_policy': 'reuse_confirmed_live_agents_spawn_only_missing_cancelled_completed_unknown_or_timeout', 'pm_memory_rehydration_required': True})
-    elif mode == 'single-agent':
-        extra.update({'requires_host_role_binding': False, 'single_agent_continuity_authorized': True})
-    return extra
+    return {'role_binding_mode': 'current_run_manual_resume_rehydration', 'role_keys': list(RUNTIME_ROLE_KEYS), 'resume_tick_id': router._latest_resume_tick_id(run_state), 'awaiting_role_from_packet_ledger': resume_next.get('next_recipient_role'), 'resume_next_recipient_from_packet_ledger': resume_next, 'role_rehydration_request': contexts, 'background_collaboration_authorized': background_authorized, 'background_role_agent_model_policy': {'model_policy': ROLE_BINDING_MODEL_POLICY, 'reasoning_effort_policy': ROLE_BINDING_REASONING_EFFORT_POLICY, 'preferred_reasoning_effort': ROLE_BINDING_PREFERRED_REASONING_EFFORT, 'inherit_foreground_model_allowed': False, 'applies_to': ['manual_resume_rehydration', 'missing_role_replacement']}, 'memory_missing_role_keys': missing_memory, 'role_binding_recovery_report_path': project_relative(project_root, run_root / 'continuation' / 'role_binding_recovery_report.json'), 'liveness_probe_batch_id': liveness_probe_batch_id, 'liveness_preflight_required': True, 'liveness_preflight_policy': {'roles_to_check': list(RUNTIME_ROLE_KEYS), 'current_waiting_role_source': 'packet_ledger.next_recipient_role', 'resume_agent_check_required': True, 'concurrent_probe_required': True, 'probe_mode': ROLE_BINDING_LIVENESS_PROBE_MODE, 'liveness_probe_batch_id': liveness_probe_batch_id, 'start_all_probes_before_waiting': True, 'bounded_wait_allowed': True, 'wait_agent_timeout_result': 'timeout_unknown', 'timeout_unknown_is_active': False, 'missing_cancelled_unknown_requires_replacement': True}, 'requires_payload': 'rehydrated_role_bindings', 'payload_contract': _resume_role_rehydration_payload_contract(run_state, contexts), 'requires_host_role_binding': False, 'requires_host_role_rehydration': True, 'requires_host_role_binding_for_replacements': True, 'new_binding_required_only_for_replacements': True, 'reuse_live_agents_when_active': True, 'role_binding_open_policy': 'reuse_confirmed_live_agents_spawn_only_missing_cancelled_completed_unknown_or_timeout', 'pm_memory_rehydration_required': True, 'controller_visibility': 'state_and_envelopes_only', 'sealed_body_reads_allowed': False, 'chat_history_progress_inference_allowed': False}
 
 def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
-    answers = router._startup_answers_from_run(run_root)
-    mode = answers.get('runtime_role_assistances')
     contexts = {item['role_key']: item for item in router._resume_role_contexts(project_root, run_root, run_state)}
     role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
     current_generation = router._current_role_binding_generation(role_binding)
     existing_slots = {str(slot.get('role_key')): slot for slot in (role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []) if isinstance(slot, dict) and slot.get('role_key') in RUNTIME_ROLE_KEYS}
     resume_tick_id = router._latest_resume_tick_id(run_state)
-    if mode == 'single-agent':
-        return [{'role_key': role, 'status': 'single_agent_resume_continuity_authorized', 'agent_id': None, 'rehydration_result': 'not_requested_single_agent_continuity', 'rehydrated_for_run_id': run_state['run_id'], 'rehydrated_after_resume_tick_id': resume_tick_id, 'host_liveness_status': 'not_applicable_single_agent', 'liveness_decision': 'single_agent_resume_continuity_authorized', 'resume_agent_attempted': False, 'bounded_wait_result': 'not_applicable', 'wait_agent_timeout_treated_as_active': False, 'fallback_authorized_by_startup_answer': True, 'recorded_at': utc_now()} for role in RUNTIME_ROLE_KEYS]
-    if mode != 'allow':
-        raise RouterError('cannot rehydrate roles before runtime_role_assistances startup answer is recorded')
+    startup_answers = run_state.get('startup_answers') if isinstance(run_state.get('startup_answers'), dict) else {}
+    if startup_answers.get('background_collaboration_authorized') is not True:
+        raise RouterError('resume role rehydration requires background_collaboration_authorized=true')
     if payload.get('runtime_role_assistance_capability_status') != 'available':
         raise RouterError('resume role rehydration requires runtime_role_assistance_capability_status=available')
     expected_batch_id = router._resume_liveness_probe_batch_id(run_state)
@@ -82,7 +76,9 @@ def _normalize_resume_role_agent_records(router: ModuleType, project_root: Path,
         raise RouterError(f'resume role rehydration requires liveness_probe_mode={ROLE_BINDING_LIVENESS_PROBE_MODE}')
     if payload.get('all_liveness_probes_started_before_wait') is not True:
         raise RouterError('resume role rehydration requires all_liveness_probes_started_before_wait=true')
-    raw_records = payload.get('rehydrated_role_bindings') or payload.get('role_bindings')
+    if 'role_bindings' in payload:
+        raise RouterError('rehydrate_role_bindings requires payload.rehydrated_role_bindings; old role_bindings aliases are unsupported')
+    raw_records = payload.get('rehydrated_role_bindings')
     if isinstance(raw_records, dict):
         iterable = list(raw_records.values())
     elif isinstance(raw_records, list):

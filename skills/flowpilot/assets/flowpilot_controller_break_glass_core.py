@@ -83,7 +83,7 @@ def current_run_root(project_root: Path, explicit: str | None = None) -> Path:
         run_root = Path(explicit)
         return run_root if run_root.is_absolute() else project_root / run_root
     current = read_json(project_root / ".flowpilot" / "current.json")
-    current_root = current.get("current_run_root")
+    current_root = current.get("run_root")
     if not current_root:
         raise SystemExit("No current run root found; pass --run-root explicitly.")
     run_root = Path(str(current_root))

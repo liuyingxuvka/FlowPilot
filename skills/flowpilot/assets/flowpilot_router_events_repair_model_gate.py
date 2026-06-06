@@ -38,7 +38,12 @@ from flowpilot_router_events_repair_gate_decisions import (
 
 _CHILD_MODULES = (_events_repair_model_miss, _events_repair_repair_decisions, _events_repair_gate_decisions,)
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     for child_module in _CHILD_MODULES:
         child_module._bind_router(router)
 

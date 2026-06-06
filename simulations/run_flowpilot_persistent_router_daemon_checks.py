@@ -58,7 +58,7 @@ REQUIRED_LABELS = (
     "role_writes_expected_mailbox_evidence",
     "daemon_consumes_mailbox_evidence_once",
     "daemon_continues_after_consumed_evidence",
-    "heartbeat_wakes_and_finds_live_daemon",
+    "patrol_wakes_and_finds_live_daemon",
     "user_requests_terminal_stop",
     "user_requests_terminal_stop_during_startup_scheduling",
     "user_requests_terminal_stop_while_cleanup_ledger_locked",
@@ -124,12 +124,12 @@ HAZARD_EXPECTED_FAILURES = {
     "packet_holder_projection_missing_current_work": "packet holder is active but current_work does not name the packet holder",
     "passive_reconciliation_projection_missing_current_work": "passive reconciliation wait is active but current_work does not name the internal owner",
     "router_internal_projection_missing_current_work": "Router internal work is active but current_work does not name Router",
-    "heartbeat_started_second_live_daemon": "heartbeat started a second Router daemon while one was live",
+    "patrol_started_second_live_daemon": "patrol started a second Router daemon while one was live",
     "terminal_stop_scheduled_startup_row": "terminal lifecycle scheduled startup work",
-    "terminal_stop_scheduled_heartbeat_binding": "terminal lifecycle scheduled heartbeat binding work",
+    "terminal_stop_scheduled_patrol_binding": "terminal lifecycle scheduled manual resume binding work",
     "terminal_projection_stale_next_step": "terminal projection still exposes a nonterminal next step",
     "terminal_cleanup_lock_blocked_fence": "terminal cleanup failure blocked immediate daemon fence",
-    "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active",
+    "terminal_left_runtime_active": "terminal lifecycle left daemon, Controller, roles, patrol, or route work active",
 }
 
 
@@ -181,8 +181,8 @@ def _state_id(state: model.State) -> str:
         f"ended_pending_action={state.foreground_controller_ended_while_controller_action_pending},"
         f"ended_no_action={state.foreground_controller_ended_while_daemon_active_no_action}|"
         f"roles={state.roles_live}|"
-        f"heartbeat={state.heartbeat_active},{state.heartbeat_woke},"
-        f"heartbeat_after_terminal={state.heartbeat_binding_scheduled_after_terminal_fence}|"
+        f"patrol={state.manual_resume_binding_active},{state.manual_resume_woke},"
+        f"patrol_after_terminal={state.patrol_binding_scheduled_after_terminal_fence}|"
         f"wait={state.current_wait}|"
         f"event_wait={state.event_wait_action_open},{state.external_event_recorded},"
         f"{state.external_event_matches_wait},{state.event_wait_closed_by_router},"
@@ -408,3 +408,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

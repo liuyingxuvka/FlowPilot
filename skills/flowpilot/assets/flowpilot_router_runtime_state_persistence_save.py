@@ -14,7 +14,12 @@ for _name, _value in vars(_parent).items():
         globals().setdefault(_name, _value)
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     _parent._bind_router(router)
     current = globals()
     for name, value in vars(_parent).items():

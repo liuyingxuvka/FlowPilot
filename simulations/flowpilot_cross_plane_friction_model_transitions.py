@@ -81,7 +81,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
                 run_lifecycle_record_written=True,
                 router_frontier_lifecycle_terminal_consistent=True,
                 terminal_control_blocker_cleared=True,
-                heartbeat_inactive_after_terminal=True,
+                manual_resume_binding_inactive_after_terminal=True,
             ),
         )
         return
@@ -167,7 +167,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.runtime_requested_roles_requested:
         yield Transition(
-            "standard_runtime_roles_ready_or_blocked_before_route_work",
+            "runtime_requested_roles_ready_or_blocked_before_route_work",
             _inc(
                 state,
                 runtime_requested_roles_requested=True,
@@ -197,3 +197,5 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
 
 __all__ = ["CrossPlaneReconciliationStep", "next_safe_states"]
+
+

@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for `run_flowpilot_model_hierarchy_checks.py`."""
+"""Thin current-contract entrypoint for the FlowPilot model-hierarchy checks."""
 
 from __future__ import annotations
 

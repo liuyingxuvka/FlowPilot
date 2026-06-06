@@ -535,7 +535,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_control_blockers_followup_fatal",
-        command="python -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_unsupported_historical_invalid_wait_falls_back_to_pm_repair_decision -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
+        command="python -m unittest -v -k test_control_blocker_reviewer_followup_rejects_pm_origin -k test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission -k test_fatal_control_blocker_rejects_pm_ordinary_waiver tests.router_runtime.control_blockers",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=3,
@@ -587,7 +587,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_quality_gates_background_manifest",
-        command="python -m unittest -v -k test_runtime_role_assistances_allow_requires_six_current_role_binding_records -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
+        command="python -m unittest -v -k test_startup_no_longer_schedules_legacy_role_slots -k test_child_skill_gate_manifest_block_records_repair_without_approval -k test_child_skill_gate_manifest_repair_pass_clears_active_gate_block -k test_manifest_references_existing_system_cards tests.router_runtime.quality_gates",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=4,
@@ -639,7 +639,7 @@ ROUTER_TEST_SUITES = (
     ),
     TestSuiteEvidence(
         "router_quality_gates_node_contracts",
-        command="python -m unittest -v -k test_next_effective_node_returns_parent_before_sibling_module_after_last_child -k test_node_completion_idempotency_is_scoped_to_active_node -k test_role_output_envelope_hash_survives_same_path_envelope_rewrite -k test_single_agent_answer_records_authorized_role_continuity_without_live_agents tests.router_runtime.quality_gates",
+        command="python -m unittest -v -k test_next_effective_node_returns_parent_before_sibling_module_after_last_child -k test_node_completion_idempotency_is_scoped_to_active_node -k test_role_output_envelope_hash_survives_same_path_envelope_rewrite -k test_single_agent_startup_answer_is_rejected_as_legacy_option tests.router_runtime.quality_gates",
         result_status=TEST_STATUS_PASSED,
         evidence_tier=EVIDENCE_CONFORMANCE_GREEN,
         test_count=4,
@@ -690,3 +690,4 @@ ROUTER_TEST_SUITES = (
         owns_state=("material_modeling_modelability",),
     ),
 )
+

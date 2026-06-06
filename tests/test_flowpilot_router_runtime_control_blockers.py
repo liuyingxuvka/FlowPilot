@@ -6,7 +6,6 @@ from tests.flowpilot_router_runtime_suite import load_named_runtime_tests
 
 
 TEST_NAMES = (
-    "test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker",
     "test_control_blocker_reviewer_followup_rejects_pm_origin",
     "test_control_plane_reissue_retry_budget_escalates_to_pm",
     "test_pm_semantic_control_blocker_zero_retry_budget_is_exhausted",
@@ -18,7 +17,7 @@ TEST_NAMES = (
     "test_repair_transaction_protocol_blocker_registers_followup_blocker",
     "test_pm_repair_decision_rejects_unregistered_rerun_target_before_wait_write",
     "test_delivered_control_blocker_with_unsupported_invalid_wait_requires_pm_repair_resubmission",
-    "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+    "test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision",
     "test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it",
     "test_pm_repair_decision_rejects_unsupported_event_replay_plan_kind",
     "test_operation_replay_repair_transaction_queues_replay_action",

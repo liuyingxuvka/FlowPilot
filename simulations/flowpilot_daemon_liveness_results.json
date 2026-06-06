@@ -12,9 +12,9 @@
     "hazards": {
       "controller_skips_liveness_check": {
         "detected": true,
-        "expected": "Controller continued after delayed heartbeat without liveness check",
+        "expected": "Controller continued after delayed patrol without liveness check",
         "failures": [
-          "Controller continued after delayed heartbeat without liveness check",
+          "Controller continued after delayed patrol without liveness check",
           "check_liveness was treated as final without Controller liveness check"
         ]
       },
@@ -25,12 +25,12 @@
           "Controller found dead daemon without recovering current run daemon"
         ]
       },
-      "delayed_heartbeat_reported_ok": {
+      "delayed_patrol_reported_ok": {
         "detected": true,
-        "expected": "monitor reported ok after the thirty-second heartbeat window",
+        "expected": "monitor reported ok after the thirty-second patrol window",
         "failures": [
-          "monitor reported ok after the thirty-second heartbeat window",
-          "Controller continued after delayed heartbeat without liveness check"
+          "monitor reported ok after the thirty-second patrol window",
+          "Controller continued after delayed patrol without liveness check"
         ]
       },
       "monitor_decides_restart_from_timestamp": {
@@ -38,7 +38,7 @@
         "expected": "monitor decided recovery before Controller liveness check",
         "failures": [
           "monitor decided recovery before Controller liveness check",
-          "Controller continued after delayed heartbeat without liveness check"
+          "Controller continued after delayed patrol without liveness check"
         ]
       },
       "recovery_starts_second_writer": {
@@ -51,8 +51,8 @@
     },
     "ok": true
   },
-  "heartbeat_check_seconds": 30,
   "ok": true,
+  "patrol_check_seconds": 30,
   "progress": {
     "cannot_reach_terminal_count": 0,
     "ok": true,

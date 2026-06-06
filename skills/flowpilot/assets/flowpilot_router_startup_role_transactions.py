@@ -76,6 +76,8 @@ _CHILD_MODULES = (
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     for module in _CHILD_MODULES:
         module._bind_router(router)

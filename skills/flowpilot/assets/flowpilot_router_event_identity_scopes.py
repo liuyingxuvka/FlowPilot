@@ -86,12 +86,6 @@ def _gate_decision_identity_scope(router: ModuleType, run_root: Path, payload_vi
     return {'event': router.GATE_DECISION_EVENT, 'gate_id': str(payload_view.get('gate_id') or 'missing-gate-id'), 'route_version': str(payload_view.get('route_version') or frontier.get('route_version') or 'no-route-version'), 'decided_by_role': str(payload_view.get('owner_role') or payload_view.get('decided_by_role') or 'unknown-role')}
 
 
-def _startup_repair_identity_scope(router: ModuleType, run_root: Path, run_state: dict[str, Any], payload_view: dict[str, Any]) -> dict[str, str]:
-    fact_report_path = run_root / 'startup' / 'startup_fact_report.json'
-    fact_hash = router.packet_runtime.sha256_file(fact_report_path) if fact_report_path.exists() else 'missing-startup-fact-report'
-    return {'event': 'pm_requests_startup_repair', 'startup_review_cycle': str(payload_view.get('startup_review_cycle') or int(run_state.get('startup_repair_cycle') or 0) + 1), 'startup_fact_report_hash': str(payload_view.get('startup_fact_report_hash') or payload_view.get('blocked_report_hash') or fact_hash), 'decision_hash': router._payload_body_hash(payload_view)}
-
-
 def _route_draft_identity_scope(router: ModuleType, payload_view: dict[str, Any]) -> dict[str, str]:
     route_payload = payload_view.get('route') if isinstance(payload_view.get('route'), dict) else {}
     route_id = str(payload_view.get('route_id') or route_payload.get('route_id') or 'route-001')
@@ -175,8 +169,6 @@ def _scoped_event_identity(router: ModuleType, project_root: Path, run_root: Pat
         scope = router._control_blocker_repair_outcome_identity_scope(payload_view, run_state, event)
     elif event == router.GATE_DECISION_EVENT:
         scope = router._gate_decision_identity_scope(run_root, payload_view)
-    elif event == 'pm_requests_startup_repair':
-        scope = router._startup_repair_identity_scope(run_root, run_state, payload_view)
     elif event == 'pm_writes_route_draft':
         scope = router._route_draft_identity_scope(payload_view)
     elif event == 'pm_completes_current_node_from_reviewed_result':
@@ -212,7 +204,6 @@ __all__ = (
     '_control_blocker_repair_decision_identity_scope',
     '_control_blocker_repair_outcome_identity_scope',
     '_gate_decision_identity_scope',
-    '_startup_repair_identity_scope',
     '_route_draft_identity_scope',
     '_current_node_completion_identity_scope',
     '_pm_role_work_request_identity_scope',

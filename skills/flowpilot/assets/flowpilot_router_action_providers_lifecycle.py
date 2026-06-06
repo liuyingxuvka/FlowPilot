@@ -61,7 +61,12 @@ def run_reconciliation_barrier(
     run_state: dict[str, Any],
     run_root: Path,
 ) -> None:
-    router._reconcile_controller_receipts(project_root, run_root, run_state)
+    router._reconcile_controller_receipts(
+        project_root,
+        run_root,
+        run_state,
+        scheduler_fold_owner="foreground_receipt",
+    )
     scheduled_reconciliation = router._reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
     receipt_reconciliation = router._reconcile_pending_controller_action_receipt(project_root, run_root, run_state)
     boundary_projection = router._reconcile_controller_boundary_confirmation_projection(

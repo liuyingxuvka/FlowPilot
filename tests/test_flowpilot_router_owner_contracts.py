@@ -35,64 +35,6 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
         artifact_validation._bind_router(router)
         child_skill_capability._bind_router(router)
 
-    def test_action_factory_and_dispatch_gate_external_contracts(self) -> None:
-        state: dict[str, object] = {}
-        action_factory_envelope.append_history(state, "router_owner_contract", {"ok": True})
-
-        action = action_factory_envelope.make_action(
-            action_type="deliver_system_card",
-            actor="controller",
-            label="deliver_reviewer_startup_fact",
-            summary="Deliver reviewer startup fact card.",
-            card_id="reviewer.startup_fact_check",
-            to_role="human_like_reviewer",
-        )
-
-        with tempfile.TemporaryDirectory(prefix="flowpilot-dispatch-owner-") as tmp:
-            project_root = Path(tmp)
-            run_root = project_root / ".flowpilot" / "runs" / "run-test"
-            run_root.mkdir(parents=True)
-            run_state = {"run_id": "run-test", "flags": {}, "events": []}
-            gated = action_factory_dispatch._apply_dispatch_recipient_gate(
-                project_root,
-                run_state,
-                run_root,
-                action,
-            )
-
-        gate = gated["dispatch_recipient_gate"]
-        self.assertEqual(state["history"][0]["label"], "router_owner_contract")
-        self.assertEqual(action["schema_version"], router.SCHEMA_VERSION)
-        self.assertEqual(action["next_step_contract"]["recipient_role"], "human_like_reviewer")
-        self.assertFalse(action["next_step_contract"]["sealed_body_reads_allowed"])
-        self.assertTrue(action["controller_user_reporting_policy"]["plain_language_required"])
-        self.assertTrue(action["controller_user_reporting_policy"]["speak_only_when_user_value"])
-        self.assertIn(
-            "quiet_patrol_continue",
-            action["controller_user_reporting_policy"]["silent_by_default_for"],
-        )
-        self.assertEqual(
-            action_factory_dispatch._dispatch_gate_output_events_for_card_id("reviewer.startup_fact_check"),
-            ["reviewer_reports_startup_facts"],
-        )
-        self.assertFalse(
-            action_factory_dispatch._dispatch_gate_action_is_ack_only_prompt(
-                {"action_type": "deliver_system_card", "card_id": "reviewer.startup_fact_check"}
-            )
-        )
-        self.assertEqual(
-            action_factory_dispatch._dispatch_gate_action_work_class(
-                {"action_type": "deliver_system_card", "card_id": "pm.post_ack_policy"}
-            ),
-            "ack_only_prompt",
-        )
-        self.assertTrue(gate["passed"])
-        self.assertEqual(gate["target_roles"], ["human_like_reviewer"])
-        self.assertEqual(gate["work_package_class"], "output_bearing_work_package")
-        self.assertEqual(gate["output_events"], ["reviewer_reports_startup_facts"])
-        self.assertFalse(gate["sealed_body_reads_allowed"])
-        self.assertEqual(gated["next_step_contract"]["dispatch_recipient_gate"], gate)
-
     def test_card_delivery_and_controller_ledger_external_contracts(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-card-ledger-owner-") as tmp:
             run_root = Path(tmp) / ".flowpilot" / "runs" / "run-test"

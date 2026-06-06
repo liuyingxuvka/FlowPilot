@@ -19,6 +19,7 @@ from flowpilot_router_protocol_scoped_event_identity import *
 
 __all__ = (
     'STARTUP_ANSWER_ENUMS',
+    'STARTUP_ANSWER_BOOLEANS',
     'GATE_DECISION_REQUIRED_FIELDS',
     'PM_PRIOR_PATH_CONTEXT_REVIEW_REQUIRED_FIELDS',
     'PM_RESUME_CONTROLLER_REMINDER_REQUIRED_FIELDS',

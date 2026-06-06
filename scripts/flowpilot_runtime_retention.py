@@ -96,12 +96,7 @@ def build_report(project_root: Path = ROOT, *, max_runs: int = 30) -> dict[str, 
     current = _read_json(current_path)
     index = _read_json(index_path)
     indexed = _index_entries(index)
-    current_run_id = (
-        current.get("current_run_id")
-        or current.get("active_run_id")
-        or current.get("run_id")
-        or index.get("current_run_id")
-    )
+    current_run_id = current.get("run_id")
 
     run_dirs = {path.name: path for path in runs_root.iterdir() if path.is_dir()} if runs_root.exists() else {}
     indexed_ids = set(indexed)

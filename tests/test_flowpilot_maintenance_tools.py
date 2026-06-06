@@ -143,8 +143,8 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
             (root / ".flowpilot" / "current.json").write_text(
                 json.dumps(
                     {
-                        "current_run_id": "run-20260503-030303",
-                        "current_run_root": ".flowpilot/runs/run-20260503-030303",
+                        "run_id": "run-20260503-030303",
+                        "run_root": ".flowpilot/runs/run-20260503-030303",
                     }
                 ),
                 encoding="utf-8",
@@ -152,7 +152,7 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
             (root / ".flowpilot" / "index.json").write_text(
                 json.dumps(
                     {
-                        "current_run_id": "run-20260503-030303",
+                        "run_id": "run-20260503-030303",
                         "runs": [
                             {"run_id": "run-20260501-010101", "created_at": "2026-05-01T01:01:01Z"},
                             {"run_id": "run-20260502-020202", "created_at": "2026-05-02T02:02:02Z"},
@@ -187,6 +187,53 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
             flowpilot_user_flow_diagram_wrapper.__file__,
             str(flowpilot_user_flow_diagram_wrapper.ASSET_PATH),
         )
+
+    def test_current_pointer_template_uses_only_current_contract_fields(self) -> None:
+        template = json.loads((ROOT / "templates" / "flowpilot" / "current.template.json").read_text(encoding="utf-8"))
+
+        self.assertEqual(template["run_id"], "run-001")
+        self.assertEqual(template["run_root"], ".flowpilot/runs/run-001")
+        self.assertNotIn("current_run_id", template)
+        self.assertNotIn("current_run_root", template)
+        self.assertNotIn("active_run_id", template)
+        self.assertNotIn("active_run_root", template)
+
+    def test_startup_templates_do_not_offer_fallback_modes(self) -> None:
+        paths = [
+            ROOT / "templates" / "flowpilot" / "state.template.json",
+            ROOT / "templates" / "flowpilot" / "startup_review.template.json",
+            ROOT / "templates" / "flowpilot" / "startup_pm_gate.template.json",
+            ROOT / "templates" / "flowpilot" / "standard_scenario_pack.template.json",
+            ROOT / "templates" / "flowpilot" / "capabilities.template.json",
+        ]
+
+        for path in paths:
+            with self.subTest(path=path.name):
+                text = path.read_text(encoding="utf-8").lower()
+                self.assertNotIn("fallback", text)
+
+    def test_current_runtime_templates_do_not_reintroduce_fallback_continuity(self) -> None:
+        checked_text = "\n".join(
+            path.read_text(encoding="utf-8").lower()
+            for path in [
+                ROOT / "templates" / "flowpilot" / "README.md",
+                ROOT / "templates" / "flowpilot" / "continuation_evidence.template.json",
+                ROOT / "templates" / "flowpilot" / "execution_frontier.template.json",
+                ROOT / "templates" / "flowpilot" / "role_binding_ledger.template.json",
+            ]
+        )
+
+        forbidden = [
+            "single-agent fallback",
+            "user fallback",
+            "fallback_node",
+            "fallback_projection_method",
+            "native/fallback",
+            "chat fallback",
+        ]
+        for phrase in forbidden:
+            with self.subTest(phrase=phrase):
+                self.assertNotIn(phrase, checked_text)
 
     def test_coverage_sweep_requests_json_stdout_when_runner_also_has_json_out(self) -> None:
         script_path = ROOT / "simulations" / "run_flowpilot_dispatch_recipient_gate_checks.py"

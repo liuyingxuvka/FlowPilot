@@ -34,7 +34,7 @@ history unless the current run records a same-task continuation match.
 
 #### Scenario: Fresh role recovery clears quarantine
 - **WHEN** a current-run role is opened, restored, or explicitly approved by
-  the allowed fallback path
+  the allowed recovery path
 - **THEN** the current-run role-binding ledger records the current role identity and the
   old `agent_id` remains non-authoritative history.
 

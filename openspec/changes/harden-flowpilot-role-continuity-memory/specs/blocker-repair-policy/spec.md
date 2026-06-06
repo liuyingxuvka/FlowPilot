@@ -28,7 +28,7 @@ fresh output is required to clear the blocker.
 
 #### Scenario: Sender reissue follows PM decision
 
-- **WHEN** PM chooses sender reissue, same-node repair fallback, or collect
+- **WHEN** PM chooses sender reissue, same-node repair, or collect
   more evidence for a blocker
 - **THEN** the repair packet includes the original packet output contract,
   target result id, required recheck role, and a repair completion contract.

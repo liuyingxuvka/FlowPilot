@@ -54,7 +54,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_route_check_results_require_router_delivered_check_cards(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
@@ -69,7 +69,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
             },
         )
 
-        with self.assertRaisesRegex(router.RouterError, "flowguard_operator_route_scope_route_check_card_delivered"):
+        with self.assertRaisesRegex(router.RouterError, "flowguard_operator_route_check_card_delivered"):
             router.record_external_event(
                 root,
                 "flowguard_operator_submits_process_route_model",
@@ -115,12 +115,12 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_route_draft_requires_product_behavior_model_report(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.assertFalse((run_root / "flowguard" / "product_architecture_modelability.json").exists())
         (run_root / "flowguard" / "product_behavior_model.json").unlink()
-        (run_root / "flowguard" / "product_architecture_modelability.json").unlink()
 
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
@@ -136,7 +136,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_route_check_reports_require_hard_gate_verdict_fields(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
@@ -165,7 +165,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         root = self.make_project()
         self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
@@ -201,7 +201,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_process_route_repair_required_blocks_activation_and_reopens_pm_route_draft(self) -> None:
         root = self.make_project()
         self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
@@ -242,110 +242,32 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertIn("pm_writes_route_draft", action["allowed_external_events"])
-    def test_host_role_mode_requires_fresh_role_binding_records(self) -> None:
-        def scheduled_role_slots_action() -> tuple[Path, Path, dict, dict]:
-            root = self.make_project()
-            router.run_until_wait(root, new_invocation=True)
-            router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
-            result = router.run_until_wait(root)
-            self.assertEqual(result["action_type"], "load_controller_core")
-            router.apply_action(root, "load_controller_core", self.payload_for_action(result))
-            run_root = self.run_root_for(root)
-            controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
-            row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "start_role_slots")
-            entry = read_json(run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json")
-            return root, run_root, entry["action"], row
+    def test_startup_no_longer_schedules_legacy_role_slots(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+        result = router.run_until_wait(root)
+        self.assertEqual(result["action_type"], "load_controller_core")
+        router.apply_action(root, "load_controller_core", self.payload_for_action(result))
 
-        root, run_root, action, row = scheduled_role_slots_action()
-
-        self.assert_controller_receipt_action_projection(action)
-        self.assertTrue(action["requires_host_role_binding"])
-        self.assertEqual(action["payload_contract"]["name"], "role_slots_startup_receipt")
-        self.assertEqual(action["role_binding_open_policy"], "open_runtime_required_role_bindings_before_controller_receipt")
-        self.assert_payload_contract_mentions(
-            action["payload_contract"],
-            "role_bindings[].role_key",
-            "role_bindings[].agent_id",
-            "role_bindings[].model_policy",
-            "role_bindings[].reasoning_effort_policy",
-            "role_bindings[].opened_for_run_id",
-            "role_bindings[].opened_after_startup_answers",
-            "role_bindings[].host_role_binding_receipt.source_kind",
-            "exactly one non-duplicate role-binding record",
-        )
-        self.assertEqual(action["background_role_agent_model_policy"]["model_policy"], "strongest_available")
-        self.assertEqual(
-            action["background_role_agent_model_policy"]["reasoning_effort_policy"],
-            "highest_available",
-        )
-        self.assertFalse(action["background_role_agent_model_policy"]["inherit_foreground_model_allowed"])
-        self.assertEqual(
-            {item["model_policy"] for item in action["role_spawn_request"]},
-            {"strongest_available"},
-        )
-        self.assertEqual(
-            {item["reasoning_effort_policy"] for item in action["role_spawn_request"]},
-            {"highest_available"},
-        )
-        self.assertEqual(len(action["role_spawn_request"]), 6)
-
-        def assert_role_slots_receipt_blocked(payload_factory, expected_text: str) -> None:
-            blocked_root, blocked_run_root, _, blocked_row = scheduled_role_slots_action()
-            payload = payload_factory(blocked_root)
-            router.record_controller_action_receipt(
-                blocked_root,
-                action_id=blocked_row["action_id"],
-                status="done",
-                payload=payload,
-            )
-            entry = read_json(blocked_run_root / "runtime" / "controller_actions" / f"{blocked_row['action_id']}.json")
-            self.assertIn(entry["router_reconciliation_status"], {"blocked", "retry_pending"})
-            reconciliation = (
-                entry.get("router_reconciliation_blocker")
-                if entry["router_reconciliation_status"] == "blocked"
-                else entry.get("router_reconciliation")
-            )
-            self.assertIn(expected_text, json.dumps(reconciliation, sort_keys=True))
-
-        assert_role_slots_receipt_blocked(lambda _: None, "role_bindings")
-
-        def missing_role_payload(blocked_root: Path) -> dict:
-            payload = self.role_agent_payload(blocked_root)
-            payload["role_bindings"] = payload["role_bindings"][:-1]
-            return payload
-
-        assert_role_slots_receipt_blocked(missing_role_payload, "missing live role-binding records")
-
-        def stale_run_payload(blocked_root: Path) -> dict:
-            payload = self.role_agent_payload(blocked_root)
-            payload["role_bindings"][0]["opened_for_run_id"] = "run-old"
-            return payload
-
-        assert_role_slots_receipt_blocked(stale_run_payload, "opened_for_run_id")
-
-        router.record_controller_action_receipt(
-            root,
-            action_id=row["action_id"],
-            status="done",
-            payload=self.role_agent_payload(root),
-        )
-        role_binding = read_json(run_root / "role_binding_ledger.json")
-        self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"live_agent_started"})
-        self.assertEqual({slot["binding_open_result"] for slot in role_binding["role_slots"]}, {"opened_for_current_task"})
-        self.assertEqual({slot["model_policy"] for slot in role_binding["role_slots"]}, {"strongest_available"})
-        self.assertEqual({slot["reasoning_effort_policy"] for slot in role_binding["role_slots"]}, {"highest_available"})
-        role_io = read_json(run_root / "role_io_protocol_ledger.json")
-        self.assertEqual(role_io["schema_version"], "flowpilot.role_io_protocol_ledger.v1")
-        self.assertEqual(len(role_io["injection_receipts"]), 6)
-        self.assertEqual({item["lifecycle_phase"] for item in role_io["injection_receipts"]}, {"fresh_spawn"})
-        self.assertTrue(all((root / item["receipt_path"]).exists() for item in role_io["injection_receipts"]))
-    def test_single_agent_answer_records_authorized_role_continuity_without_live_agents(self) -> None:
+        run_root = self.run_root_for(root)
+        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
+        action_types = {item.get("action_type") for item in controller_ledger["actions"]}
+        self.assertNotIn("start_role_slots", action_types)
+        self.assertNotIn("create_heartbeat_automation", action_types)
+        self.assertNotIn("inject_role_core_prompts", action_types)
+        self.assertNotIn("open_current_background_collaboration", action_types)
+        self.assertFalse((run_root / "role_binding_ledger.json").exists())
+    def test_single_agent_startup_answer_is_rejected_as_legacy_option(self) -> None:
         root = self.make_project()
         answers = {**STARTUP_ANSWERS, "runtime_role_assistances": "single-agent"}
-        run_root = self.boot_to_controller(root, startup_answers=answers)
-        role_binding = read_json(run_root / "role_binding_ledger.json")
-        self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"single_agent_continuity_authorized"})
-        self.assertEqual({slot["agent_id"] for slot in role_binding["role_slots"]}, {None})
+        router.run_until_wait(root, new_invocation=True)
+        with self.assertRaisesRegex(router.RouterError, "unsupported fields: runtime_role_assistances"):
+            router.apply_action(
+                root,
+                "open_startup_intake_ui",
+                self.startup_intake_payload(root, startup_answers=answers),
+            )
     def test_role_output_envelope_hash_survives_same_path_envelope_rewrite(self) -> None:
         root = self.make_project()
         body_path = root / "role_outputs" / "same_path_report.json"
@@ -458,7 +380,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_child_skill_gate_manifest_block_records_repair_without_approval(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
@@ -508,8 +430,8 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(state["flags"]["child_skill_manifest_reviewer_blocked"])
         self.assertFalse(state["flags"]["child_skill_manifest_reviewer_passed"])
         self.assertFalse(state["flags"]["child_skill_gate_manifest_written"])
-        self.assertFalse(state["flags"]["child_skill_flowguard_operator_route_scope_passed"])
-        self.assertFalse(state["flags"]["child_skill_flowguard_operator_product_scope_passed"])
+        self.assertFalse(state["flags"].get("child_skill_flowguard_operator_route_scope_passed", False))
+        self.assertFalse(state["flags"].get("child_skill_flowguard_operator_product_scope_passed", False))
         self.assertFalse(state["flags"]["child_skill_manifest_pm_approved_for_route"])
         self.assertTrue((run_root / "reviews" / "child_skill_gate_manifest_block.json").exists())
 
@@ -519,7 +441,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_child_skill_gate_manifest_repair_pass_clears_active_gate_block(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
@@ -929,7 +851,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         (root / ".flowpilot").mkdir(exist_ok=True)
         (root / ".flowpilot" / "current.json").write_text(
-            json.dumps({"current_run_root": ".flowpilot/runs/run-001"}) + "\n",
+            json.dumps({"run_id": "run-001", "run_root": ".flowpilot/runs/run-001"}) + "\n",
             encoding="utf-8",
         )
         self.write_self_interrogation_record(root, "startup", source_path=run_root / "contract.md")
@@ -966,7 +888,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("pm.product_architecture", card_ids)
         self.assertIn("pm.root_contract", card_ids)
         self.assertIn("reviewer.research_direct_source_check", card_ids)
-        self.assertIn("flowguard_operator_product_scope.root_contract_modelability", card_ids)
+        self.assertIn("flowguard_operator.root_contract_modelability", card_ids)
         self.assertIn("reviewer.worker_result_review", card_ids)
     def test_reviewer_block_events_are_registered_in_external_taxonomy(self) -> None:
         self.assertNotIn("reviewer_blocks_current_node_dispatch", router.EXTERNAL_EVENTS)
@@ -996,3 +918,4 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(set(card_flags_by_id), {"pm.model_miss_triage", "pm.review_repair", "pm.event.reviewer_blocked"})
         for card_flags in card_flags_by_id.values():
             self.assertEqual(card_flags, expected_flags)
+

@@ -42,7 +42,7 @@ Controller to stop or close the foreground Controller work.
   remains attached while FlowPilot is running
 
 ### Requirement: Continuous standby row is a watch duty that returns to row processing
-FlowPilot SHALL expose the final fallback row
+FlowPilot SHALL expose the final standby row
 `continuous_controller_standby` as a continuous monitoring duty when all
 ordinary Controller rows are complete and FlowPilot is still running. The row
 SHALL remain `in_progress`, watch

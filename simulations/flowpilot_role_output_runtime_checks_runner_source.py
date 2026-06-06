@@ -79,7 +79,6 @@ def _runtime_binding_contracts(contracts: list[dict[str, Any]]) -> list[dict[str
         for item in contracts
         if item.get("runtime_channel") == "role_output_runtime"
         or item.get("expected_return_envelope") == "role_output_envelope"
-        or item.get("task_family") == "pm.startup_activation"
     ]
 
 

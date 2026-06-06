@@ -155,12 +155,8 @@ ROLE_OUTPUT_BODY_FILENAME_PREFIXES = (
     "pm_package_result_disposition",
     "pm_parent_segment_decision",
     "pm_resume",
-    "pm_startup_activation_approval",
-    "pm_startup_protocol_dead_end",
-    "pm_startup_repair_request",
     "pm_terminal_closure_decision",
     "reviewer_review_report",
-    "startup_fact_report",
     "terminal_backward_replay_report",
 )
 

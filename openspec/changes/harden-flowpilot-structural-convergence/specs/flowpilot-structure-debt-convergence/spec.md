@@ -78,7 +78,7 @@ remain unresolved.
 
 The FlowGuard planning-quality model SHALL include negative scenarios and tests
 for missing structural convergence review, missing node hygiene expectation,
-missing packet/result hygiene delta, unowned fallback retention, repair paths
+missing packet/result hygiene delta, unowned recovery retention, repair paths
 that retain compatibility branches, and final ledgers with unresolved
 structure debt.
 

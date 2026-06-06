@@ -36,6 +36,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -96,7 +98,7 @@ def _pm_resume_decision_payload_contract(project_root: Path, run_root: Path) -> 
             "Use empty arrays explicitly when no completed, superseded, stale, blocked, or experimental history applies.",
         ],
         description=(
-            "PM heartbeat/manual-resume recovery decision. This is a role-output body contract, "
+            "PM manual-resume recovery decision. This is a role-output body contract, "
             "not Controller-authored project evidence; Controller waits for Router status after the runtime submits it."
         ),
     )

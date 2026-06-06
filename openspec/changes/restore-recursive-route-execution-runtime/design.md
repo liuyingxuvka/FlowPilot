@@ -68,9 +68,9 @@ draft becomes route nodes and an execution frontier. The next router action is
 the first node work packet unless route materialization is blocked.
 
 Alternative considered: require PM to output strict JSON in every live run
-before any progress. The implementation will support structured route plans but
-also provide a conservative fallback node plan for current live PM prose so
-older real runs can continue without trusting the prose as closure evidence.
+before any progress. The implementation now treats structured route plans as
+the only materialization authority and blocks PM prose until a current
+`flowpilot.route_plan.v1` result is submitted.
 
 ### Decision: Final closure consumes a route-wide ledger
 
@@ -101,9 +101,9 @@ missing node acceptance blocks final closure.
 - Broad old-flow parity can sprawl -> implement the minimum route/node/frontier
   kernel first, then verify exact old-flow obligations with focused tests and
   FlowGuard models.
-- PM prose may not be structured enough -> accept explicit structured route
-  JSON when available and fall back to a small conservative route plan while
-  recording that fallback as generated route materialization.
+- PM prose may not be structured enough -> block route materialization until PM
+  submits explicit structured route JSON and record the contract failure as a
+  repair target.
 - Closure evidence can become expensive -> keep final ledger machine-readable
   and derived from current ledger state; make public status a projection only.
 - Existing tests may assume single-chain terminal closure -> update them so
@@ -132,8 +132,8 @@ and cannot be reported as old-flow equivalent.
 
 ## Open Questions
 
-- Whether future live-host runs should require structured PM JSON route output
-  or allow the fallback route materializer permanently.
+- Whether future live-host runs need additional PM authoring assistance for
+  structured route output.
 - How much of the old parent/module topology should be promoted into the
   minimal black-box runtime versus delegated to the older router until a later
   cleanup pass.

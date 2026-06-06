@@ -34,11 +34,7 @@ def validate_for_reviewer(
     completed_by_role = result_envelope.get("completed_by_role")
     completed_by_agent_id = result_envelope.get("completed_by_agent_id")
     agent_role = (agent_role_map or {}).get(str(completed_by_agent_id))
-    agent_role_matches = (
-        agent_role == completed_by_role
-        if agent_role_map is not None and str(completed_by_agent_id) in agent_role_map
-        else completed_by_role != "controller"
-    )
+    agent_role_matches = agent_role == completed_by_role if agent_role_map is not None else completed_by_role != "controller"
     packet_open_record = packet_envelope.get("body_opened_by_role")
     packet_opened_by_target = (
         isinstance(packet_open_record, dict)
@@ -115,6 +111,9 @@ def validate_for_reviewer(
         blockers.append("result_completed_by_wrong_role")
     if _completed_agent_id_is_role_key(completed_by_agent_id):
         blockers.append("completed_agent_id_is_role_key_not_agent_id")
+        agent_role_matches = False
+    if agent_role_map is not None and str(completed_by_agent_id) not in agent_role_map:
+        blockers.append("completed_agent_id_not_in_current_role_binding_ledger")
         agent_role_matches = False
     if not agent_role_matches:
         blockers.append("completed_agent_id_not_assigned_to_role")

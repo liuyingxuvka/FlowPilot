@@ -1,25 +1,33 @@
 # resume-rehydration-obligation-replay Specification
 
 ## Purpose
-TBD - created by archiving change replay-resume-rehydration-obligations. Update Purpose after archive.
+Define current resume obligation replay without historical continuation
+compatibility or fixed-role startup assumptions.
+
 ## Requirements
 ### Requirement: Resume rehydration SHALL run Router obligation replay before default PM resume
 
 Router SHALL run metadata-only obligation replay before delivering a PM resume
-decision card after heartbeat or manual resume restores or replaces the six
-role bindings, unless current-run memory or resume state is missing.
+decision card after current manual resume restores or replaces current
+background role bindings, unless current-run memory or resume state is missing.
 
-#### Scenario: Heartbeat resume replays mechanical obligations
+#### Scenario: Manual resume replays mechanical obligations
 
-- **WHEN** `heartbeat_or_manual_resume_requested` has been recorded
+- **WHEN** `manual_resume_requested` has been recorded
 - **AND** `load_resume_state` has loaded current-run state and daemon evidence
-- **AND** `rehydrate_role_bindings` reports all runtime roles ready with current-run memory or common context
-- **THEN** Router scans current-run outstanding waits for the restored roles before delivering `pm.resume_decision`
+- **AND** `rehydrate_role_bindings` reports current background role bindings
+  ready with current-run memory, liveness preflight, and common context
+- **THEN** Router scans current-run outstanding waits for the restored role
+  bindings before delivering `pm.resume_decision`
 
-#### Scenario: Manual resume shares the same replay path
+#### Scenario: Current resume uses one replay path
 
-- **WHEN** a manual resume wake follows the same state load and runtime-role rehydration path
-- **THEN** Router uses the same obligation replay rules as heartbeat resume
+- **WHEN** a current resume wake follows the state load and role-binding
+  rehydration path
+- **THEN** Router uses the same obligation replay rules for all current resume
+  recovery work
+- **AND** Router MUST NOT use unsupported historical continuation events or
+  historical role evidence to satisfy resume replay.
 
 ### Requirement: Mechanical resume replay SHALL avoid PM when evidence is unambiguous
 
@@ -57,24 +65,24 @@ determine safe continuation.
 - **WHEN** no outstanding obligation can be settled or reissued and the next safe action is not mechanically derivable
 - **THEN** Router asks PM for recovery/repair/stop decision or records a control blocker
 
-### Requirement: Historical replay packages cover host role lifecycle recovery
-The system SHALL include host/role lifecycle replay packages that require full
-runtime-role liveness, memory, prompt, and PM resume-context evidence before normal
-work resumes.
+### Requirement: Current replay packages cover background role lifecycle recovery
+The system SHALL include current role lifecycle replay packages that require
+background role liveness, memory, prompt, and PM resume-context evidence before
+normal work resumes.
 
-#### Scenario: Partial role rehydration blocks normal work
-- **WHEN** a replay package omits a role, reports stale memory, treats unknown
-  liveness as active, or rehydrates before resume state is loaded
+#### Scenario: Partial role-binding rehydration blocks normal work
+- **WHEN** a replay package omits a required current role binding, reports stale
+  memory, treats unknown liveness as active, omits concurrent liveness
+  preflight, or rehydrates before resume state is loaded
 - **THEN** the Router rejects the package or keeps a recoverable control
   blocker until the standard rehydration evidence is present
 
 ### Requirement: Resume state load remains Router-owned under receipt projection
-Heartbeat and manual resume SHALL preserve Router ownership of resume state
-loading even when `load_resume_state` is represented by a Controller action
-receipt.
+Manual resume SHALL preserve Router ownership of resume state loading even when
+`load_resume_state` is represented by a Controller action receipt.
 
 #### Scenario: Resume load receipt sets resume state through Router replay
-- **WHEN** `heartbeat_or_manual_resume_requested` has been recorded
+- **WHEN** `manual_resume_requested` has been recorded
 - **AND** Controller records a valid `done` receipt for `load_resume_state`
 - **THEN** Router MUST replay the registered `load_resume_state` Router action
   handler
@@ -91,7 +99,8 @@ receipt.
 
 ### Requirement: Resume recovery reissues missing waits in original creation order
 Router SHALL preserve the durable creation order of missing Controller waits
-when resume or role recovery mechanically reissues replacement obligations.
+when current resume or role recovery mechanically reissues replacement
+obligations.
 
 #### Scenario: Multiple missing waits are reissued in creation order
 - **WHEN** role recovery finds multiple missing Controller waits for the same

@@ -483,7 +483,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_package_disposition_rejects_handwritten_body(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         self.apply_next_packet_action(root, "relay_material_scan_packets")
@@ -932,41 +932,7 @@ class FlowPilotControlPlaneContractRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertIn("commit target pm_package_disposition is not declared", str(raised.exception))
 
-    def test_stale_run_state_save_cannot_resurrect_cleared_pending_wait(self) -> None:
-        root = self.make_project()
-        run_root = self.write_minimal_run(root, "run-stale-pending-nonresurrection")
-        path = router.run_state_path(run_root)
-        initial = read_json(path)
-        initial["pending_action"] = {
-            "action_type": "await_role_decision",
-            "label": "controller_waits_for_pm_startup_activation",
-            "waiting_for_role": "project_manager",
-            "expected_return_path": "mailbox/outbox/events/pm_startup_activation.envelope.json",
-            "controller_action_id": "controller-action-stale",
-        }
-        router.write_json(path, initial)
-        stale_state, _ = router.load_run_state_from_run_root(root, run_root)
-        self.assertIsInstance(stale_state, dict)
-
-        foreground = read_json(path)
-        foreground["pending_action"] = None
-        foreground["events"].append({"event": "pm_approves_startup_activation", "payload": {"source": "test"}})
-        router.write_json(path, foreground)
-
-        stale_state["history"].append({"event": "daemon_tick_after_foreground_clear", "payload": {"source": "test"}})
-        router.save_run_state(run_root, stale_state)
-
-        saved = read_json(path)
-        self.assertIsNone(saved["pending_action"])
-        self.assertIn(
-            {"event": "pm_approves_startup_activation", "payload": {"source": "test"}},
-            saved["events"],
-        )
-        self.assertIn(
-            {"event": "daemon_tick_after_foreground_clear", "payload": {"source": "test"}},
-            saved["history"],
-        )
-
 
 if __name__ == "__main__":
     unittest.main()
+

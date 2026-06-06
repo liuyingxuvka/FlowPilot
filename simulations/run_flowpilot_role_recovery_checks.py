@@ -15,7 +15,6 @@ RESULTS_PATH = Path(__file__).with_name("flowpilot_role_recovery_results.json")
 
 
 REQUIRED_LABELS = (
-    "heartbeat_entered_unified_recovery",
     "manual_resume_entered_unified_recovery",
     "mid_run_liveness_fault_entered_unified_recovery",
     "user_stop_preempts_recovery",
@@ -118,10 +117,10 @@ def explore_safe_graph() -> dict[str, object]:
         if state.trigger_source == "mid_run_fault"
         and state.targeted_replace_result == "success"
     ]
-    heartbeat_success = [
+    manual_resume_success = [
         state
         for state in complete_states
-        if state.trigger_source in {"heartbeat", "manual_resume"}
+        if state.trigger_source == "manual_resume"
         and state.recovery_scope == "all_runtime_roles"
     ]
     full_recycle_success = [
@@ -163,7 +162,7 @@ def explore_safe_graph() -> dict[str, object]:
         "ok": not invariant_failures
         and not missing_labels
         and bool(targeted_success)
-        and bool(heartbeat_success)
+        and bool(manual_resume_success)
         and bool(full_recycle_success)
         and bool(environment_blocked)
         and bool(mechanical_success)
@@ -177,7 +176,7 @@ def explore_safe_graph() -> dict[str, object]:
         "complete_state_count": len(complete_states),
         "blocked_state_count": len(blocked_states),
         "targeted_success_count": len(targeted_success),
-        "heartbeat_success_count": len(heartbeat_success),
+        "manual_resume_success_count": len(manual_resume_success),
         "full_recycle_success_count": len(full_recycle_success),
         "environment_blocked_count": len(environment_blocked),
         "mechanical_success_count": len(mechanical_success),

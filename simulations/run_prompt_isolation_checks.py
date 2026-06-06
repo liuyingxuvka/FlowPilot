@@ -35,10 +35,10 @@ REQUIRED_LABELS = (
     "pm_core_card_delivered",
     "pm_phase_map_card_delivered",
     "pm_startup_intake_phase_card_delivered",
-    "reviewer_startup_fact_check_card_delivered",
-    "reviewer_reports_startup_facts_for_pm_activation",
-    "pm_startup_activation_phase_card_delivered",
-    "pm_approves_startup_activation_from_reviewed_facts",
+    "startup_runtime_entry_completed",
+    "startup_mechanical_audit_written_by_runtime",
+    "startup_display_status_written_by_runtime",
+    "startup_user_intake_released_to_pm_after_runtime_entry",
     "controller_relays_user_intake_to_pm",
     "pm_material_scan_phase_card_delivered",
     "pm_issues_material_and_capability_scan_packets",
@@ -131,7 +131,7 @@ REQUIRED_LABELS = (
     "reviewer_final_backward_replay_passed",
     "pm_closure_phase_card_delivered",
     "lifecycle_reconciled",
-    "heartbeat_stopped_or_manual_resume_recorded",
+    "continuation_boundary_recorded",
     "role_binding_ledger_archived",
     "pm_completion_decision_recorded",
     "completed",
@@ -157,10 +157,10 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_used_role_chat_body},"
         f"{state.controller_direct_free_text_instruction_used},"
         f"{state.controller_inspected_router_internal_hard_checks}|"
-        f"startup_activation={state.reviewer_startup_fact_check_card_delivered},"
-        f"{state.startup_fact_reported},"
-        f"{state.pm_startup_activation_card_delivered},"
-        f"{state.startup_activation_approved}|"
+        f"startup_runtime_entry={state.startup_runtime_entry_completed},"
+        f"{state.startup_runtime_mechanical_audit_written},"
+        f"{state.startup_display_status_written},"
+        f"{state.startup_user_intake_released_to_pm}|"
         f"user_intake={state.user_intake_delivered_to_pm},"
         f"relay={state.user_intake_controller_relayed}|"
         f"ctrl={state.controller_role_confirmed}|material={state.material_review},"
@@ -277,3 +277,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

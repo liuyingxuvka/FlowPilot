@@ -47,7 +47,7 @@ easier to maintain without reintroducing old workflow paths.
 - `flowpilot-packet-review-flow`: old reviewer-dispatch flags are retired audit
   history, not current evidence for new package review.
 - `flowpilot-prompt-boundary-policy`: active prompts/cards stay current-only while
-  preserving current fallback safety mechanisms.
+  preserving current recovery and blocking mechanisms.
 - `flowguard-thin-parent-models`: thin-parent evidence selection must prefer
   canonical current result artifacts over stale shadow check artifacts.
 - `tiered-flowpilot-test-validation`: validation should detect duplicate/stale result

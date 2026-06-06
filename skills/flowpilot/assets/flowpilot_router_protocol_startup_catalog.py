@@ -89,15 +89,6 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "actor": "bootloader",
     },
     {
-        "action_type": "bind_background_role_agents",
-        "flag": "background_role_agents_bound",
-        "label": "background_role_agents_bound_for_current_run",
-        "summary": "Bind current background or parallel agents to the active run before Controller work can proceed.",
-        "actor": "host",
-        "requires_host_role_binding": True,
-        "requires_payload": "background_agent_bindings",
-    },
-    {
         "action_type": "record_user_request",
         "flag": "user_request_recorded",
         "label": "user_request_recorded_from_startup_intake_ui",

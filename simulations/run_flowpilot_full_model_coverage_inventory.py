@@ -34,6 +34,16 @@ def _read_text(path: Path) -> str:
         return path.read_text(encoding="utf-8", errors="replace")
 
 
+def _repo_path(path: Path) -> Path:
+    if path.is_absolute():
+        return path
+    return ROOT / path
+
+
+def _repo_relative(path: Path) -> str:
+    return _repo_path(path).relative_to(ROOT).as_posix()
+
+
 def _runner_from_script(script: str) -> str:
     name = Path(script).stem
     if name.startswith("run_"):
@@ -189,6 +199,9 @@ def build_inventory(
     alignment_path: Path = DEFAULT_ALIGNMENT_PATH,
     replay_evidence_path: Path = DEFAULT_REPLAY_EVIDENCE_PATH,
 ) -> dict[str, Any]:
+    sweep_path = _repo_path(sweep_path)
+    alignment_path = _repo_path(alignment_path)
+    replay_evidence_path = _repo_path(replay_evidence_path)
     sweep = _read_json(sweep_path)
     alignment = _read_json(alignment_path)
     full_diagnostic = alignment.get("full_model_test_code_diagnostic")
@@ -256,11 +269,9 @@ def build_inventory(
         "schema_version": "flowpilot.full_model_coverage_inventory.v1",
         "result_type": "flowpilot_full_model_coverage_inventory",
         "read_only": True,
-        "sweep_path": sweep_path.relative_to(ROOT).as_posix(),
-        "alignment_path": alignment_path.relative_to(ROOT).as_posix(),
-        "replay_evidence_path": replay_evidence_path.relative_to(ROOT).as_posix()
-        if replay_evidence_path.exists()
-        else None,
+        "sweep_path": _repo_relative(sweep_path),
+        "alignment_path": _repo_relative(alignment_path),
+        "replay_evidence_path": _repo_relative(replay_evidence_path) if replay_evidence_path.exists() else None,
         "runner_count": len(records),
         "sweep_ok": bool(sweep.get("ok")),
         "alignment_ok": bool(alignment.get("ok")),

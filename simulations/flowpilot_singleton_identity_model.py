@@ -606,8 +606,8 @@ def build_live_singleton_audit(repo_root: Path | str = ROOT) -> dict[str, Any]:
         surfaces.append(_surface("current_run_pointer", "evidence_insufficient", current_error))
         return _live_summary(surfaces)
 
-    run_id = str(current.get("current_run_id") or "")
-    run_root_value = str(current.get("current_run_root") or "")
+    run_id = str(current.get("run_id") or "")
+    run_root_value = str(current.get("run_root") or "")
     run_root = root / run_root_value if run_root_value else root / ".flowpilot" / "runs" / run_id
     if run_id and run_root_value:
         surfaces.append(

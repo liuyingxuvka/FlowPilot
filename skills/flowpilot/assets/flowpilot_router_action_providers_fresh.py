@@ -24,8 +24,6 @@ def fresh_action_provider(
     if action is None:
         action = router._next_control_blocker_action(project_root, run_state, run_root)
     if action is None:
-        action = router._next_startup_heartbeat_binding_action(project_root, run_state, run_root)
-    if action is None:
         action = router._next_display_plan_action(project_root, run_state, run_root)
     if action is None:
         action = router._next_controller_boundary_confirmation_action(project_root, run_state, run_root)

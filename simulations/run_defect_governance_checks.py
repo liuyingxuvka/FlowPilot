@@ -40,7 +40,7 @@ REQUIRED_LABELS = (
     "controller_protocol_anomaly_observed",
     "skill_observation_reminder_emitted",
     "pause_requested",
-    "heartbeat_lifecycle_reconciled_for_pause",
+    "lifecycle_reconciled_for_pause",
     "pause_snapshot_written",
     "terminal_completion_started",
     "terminal_completion_allowed",
@@ -111,3 +111,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

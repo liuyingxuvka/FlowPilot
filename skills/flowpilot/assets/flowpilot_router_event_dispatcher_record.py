@@ -9,7 +9,12 @@ from typing import Any
 import flowpilot_router_event_dispatcher as _parent
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     _parent._bind_router(router)
     current = globals()
     for name, value in vars(_parent).items():
@@ -156,14 +161,6 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _write_role_block_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=_active_node_root(run_root, frontier) / 'reviews' / 'node_acceptance_plan_block.json', schema_version='flowpilot.node_acceptance_plan_block.v1', checked_paths=[_active_node_acceptance_plan_path(run_root, frontier), run_root / 'execution_frontier.json'])
         run_state['flags']['node_acceptance_plan_reviewer_passed'] = False
         run_state['flags']['node_acceptance_plan_revised_by_pm'] = False
-    elif event == 'reviewer_reports_startup_facts':
-        router._write_startup_fact_report(project_root, run_root, run_state, payload)
-    elif event == 'pm_approves_startup_activation':
-        router._write_startup_activation(project_root, run_root, run_state, payload)
-    elif event == 'pm_requests_startup_repair':
-        router._write_startup_repair_request(project_root, run_root, run_state, payload)
-    elif event == 'pm_declares_startup_protocol_dead_end':
-        router._write_startup_protocol_dead_end(project_root, run_root, run_state, payload)
     elif event == 'pm_issues_material_and_capability_scan_packets':
         router._write_material_scan_packets(project_root, run_root, run_state, payload)
     elif event == 'router_direct_material_scan_dispatch_recheck_blocked':

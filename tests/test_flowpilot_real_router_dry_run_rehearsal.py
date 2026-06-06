@@ -32,10 +32,8 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
             applied_payload = self.startup_intake_payload(root, startup_answers=STARTUP_ANSWERS)
         elif action_type == "record_user_request" and action.get("requires_payload") == "user_request":
             applied_payload = {"user_request": USER_REQUEST}
-        elif action_type == "start_role_slots":
-            applied_payload = self.role_agent_payload(root, STARTUP_ANSWERS)
-        elif action_type == "create_heartbeat_automation":
-            applied_payload = self.heartbeat_binding_payload(root)
+        elif action_type in {"bind_background_role_agents", "start_role_slots", "create_heartbeat_automation"}:
+            self.fail(f"legacy FlowPilot action reached dry-run rehearsal: {action_type}")
         else:
             applied_payload = self.payload_for_action(action)
         args = ["apply", "--action-type", action_type]
@@ -135,87 +133,10 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
 
         self.assert_rehearsal_runtime_receipts(root, run_root, packet_id)
 
-    def test_router_cli_boundary_runs_fake_role_output_through_public_commands(self) -> None:
-        root = self.make_project()
-
-        started = self.cli_json(root, ["start"])
-        self.assertTrue(started["folded_applied_actions"])
-        state = self.cli_json(root, ["state"])
-        self.assertTrue(state["run_root"])
-        run_root = self.cli_boot_to_controller(root)
-
-        self.deliver_startup_fact_check_card(root)
-        reviewer_envelope = self.cli_json(
-            root,
-            [
-                "role-output-envelope",
-                "--output-path",
-                str((run_root / "test_role_outputs" / "startup" / "cli_reviewer_startup_fact_report.json").relative_to(root)).replace("\\", "/"),
-                "--body-json",
-                json.dumps(self.startup_fact_report_body(root), sort_keys=True),
-                "--path-key",
-                "report_path",
-                "--hash-key",
-                "report_hash",
-                "--event-name",
-                "reviewer_reports_startup_facts",
-                "--from-role",
-                "human_like_reviewer",
-            ],
-        )
-        reviewer_recorded = self.cli_json(
-            root,
-            [
-                "record-event",
-                "--event",
-                "reviewer_reports_startup_facts",
-                "--payload-json",
-                json.dumps(reviewer_envelope, sort_keys=True),
-            ],
-        )
-        self.assertTrue(reviewer_recorded["ok"])
-
-        self.deliver_expected_card(root, "pm.startup_activation")
-        pm_envelope = self.cli_json(
-            root,
-            [
-                "role-output-envelope",
-                "--output-path",
-                str((run_root / "test_role_outputs" / "startup" / "cli_pm_startup_activation.json").relative_to(root)).replace("\\", "/"),
-                "--body-json",
-                json.dumps({"approved_by_role": "project_manager", "decision": "approved"}, sort_keys=True),
-                "--path-key",
-                "decision_path",
-                "--hash-key",
-                "decision_hash",
-                "--event-name",
-                "pm_approves_startup_activation",
-                "--from-role",
-                "project_manager",
-            ],
-        )
-        pm_recorded = self.cli_json(
-            root,
-            [
-                "record-event",
-                "--event",
-                "pm_approves_startup_activation",
-                "--payload-json",
-                json.dumps(pm_envelope, sort_keys=True),
-            ],
-        )
-        self.assertTrue(pm_recorded["ok"])
-
-        wait = self.cli_json(root, ["run-until-wait", "--max-steps", "8"])
-        self.assertIn("action_type", wait)
-        self.assertTrue((run_root / "test_role_outputs" / "startup" / "cli_reviewer_startup_fact_report.json").exists())
-        self.assertTrue((run_root / "test_role_outputs" / "startup" / "cli_pm_startup_activation.json").exists())
-        self.assertTrue(read_json(router.run_state_path(run_root))["flags"]["startup_activation_approved"])
-
     def test_recovery_rehearsal_resume_idempotency_and_background_proof_gate(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         lock_path = run_root / "runtime" / "router_daemon.lock"
         lock = read_json(lock_path)
@@ -223,7 +144,7 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
         lock["owner"] = {"pid": 999999999, "process_name": "missing-test-daemon"}
         router.write_json(lock_path, lock)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         first_action = router.next_action(root)
         self.assertEqual(first_action["action_type"], "load_resume_state")
         self.assertEqual(
@@ -231,7 +152,7 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
             "restart_router_daemon_from_current_state",
         )
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         second_action = router.next_action(root)
         self.assertEqual(second_action["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
@@ -274,7 +195,7 @@ class FlowPilotRealRouterDryRunRehearsalTests(FlowPilotRouterRuntimeTestBase):
     def test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -357,3 +278,4 @@ if __name__ == "__main__":
     import unittest
 
     unittest.main()
+

@@ -229,7 +229,7 @@ def _active_set_authority_snapshot_from_index(
     if not isinstance(index, dict):
         return None
     current_status = current.get("status") if isinstance(current, dict) else None
-    current_root = current.get("current_run_root") if isinstance(current, dict) else None
+    current_root = current.get("run_root") if isinstance(current, dict) else None
     running_entries: list[dict[str, object]] = []
     seen: set[str] = set()
     for item in index.get("runs", []):
@@ -2139,14 +2139,14 @@ def _terminal_continuation_cleanup_proven(project_root: Path, run_root: Path, cu
     cleanup_status = binding.get("host_automation_cleanup_status")
     automation_exists = automation_path.exists() if automation_id else None
     proven = (
-        binding.get("heartbeat_active") is False
+        binding.get("manual_resume_binding_active") is False
         and cleanup_status not in {"external_cleanup_may_be_required", "unknown", None}
     )
     if automation_id and not automation_exists and cleanup_status != "missing_verified":
         proven = False
     return proven, {
         "terminal_status": True,
-        "heartbeat_active": binding.get("heartbeat_active"),
+        "manual_resume_binding_active": binding.get("manual_resume_binding_active"),
         "host_automation_id": automation_id or None,
         "host_automation_cleanup_status": cleanup_status,
         "automation_toml_exists": automation_exists,
@@ -2574,15 +2574,26 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     current_path = root / ".flowpilot" / "current.json"
     current, current_error = _read_json(current_path)
     if not resolution.ok:
+        missing_current_pointer = resolution.error_code == "missing_file"
         return {
-            "ok": False,
-            "skipped": False,
+            "ok": missing_current_pointer,
+            "skipped": missing_current_pointer,
+            "skip_reason": (
+                "skipped_with_reason: .flowpilot/current.json is missing; "
+                "no current live-run audit can be claimed"
+            ) if missing_current_pointer else None,
             "run_id": resolution.run_id,
             "run_root": resolution.run_root.as_posix() if resolution.run_root else "",
-            "finding_count": 1,
-            "error_count": 1,
+            "finding_count": 0 if missing_current_pointer else 1,
+            "error_count": 0 if missing_current_pointer else 1,
             "warning_count": 0,
-            "findings": [resolution.finding()],
+            "findings": [] if missing_current_pointer else [resolution.finding()],
+            "current_run_projection": {
+                "status": "missing_current_pointer",
+                "current_run_can_continue": False,
+                "safe_to_claim_live_run_confidence": False,
+                "metadata_only": True,
+            } if missing_current_pointer else None,
             "projected_invariant_failures": [],
         }
     if not isinstance(current, dict):
@@ -3196,9 +3207,9 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     if terminal_cleanup_recorded and not terminal_cleanup_proven:
         _add_finding(
             findings,
-            code="terminal_heartbeat_cleanup_unproven",
+            code="terminal_manual_resume_binding_cleanup_unproven",
             severity="warning",
-            summary="terminal continuation cleanup lacks durable host automation proof",
+            summary="terminal continuation cleanup lacks durable foreground-patrol or manual-resume lifecycle proof",
             invariant="terminal_continuation_cleanup_is_proven",
             evidence=terminal_cleanup_evidence,
         )
@@ -3742,7 +3753,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
         pre_event_card_ack_auto_consumed=False,
         role_event_blocked_by_unresolved_card_return=bool(pre_event_ack.get("valid_ack_file_blocked_role_event")),
         terminal_continuation_cleanup_recorded=terminal_cleanup_recorded,
-        terminal_host_automation_cleanup_proven=terminal_cleanup_proven,
+        terminal_lifecycle_cleanup_proven=terminal_cleanup_proven,
         role_output_envelopes_recorded=role_output_envelope_count > 0,
         role_output_hashes_replayable=role_hashes_replayable,
         stage_advanced_after_material_scan=product_stage_advanced,
@@ -3776,3 +3787,5 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
 __all__ = [
     "audit_live_run",
 ]
+
+

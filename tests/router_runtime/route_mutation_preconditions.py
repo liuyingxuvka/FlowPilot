@@ -107,7 +107,7 @@ class RouteMutationPreconditionRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state = read_json(router.run_state_path(run_root))
             self.assertFalse(state["flags"]["route_activated_by_pm"])
             self.assertTrue(state["flags"]["route_draft_written_by_pm"])
-            self.assertFalse(state["flags"]["flowguard_operator_route_scope_route_check_passed"])
+            self.assertFalse(state["flags"].get("flowguard_operator_route_scope_route_check_passed", False))
             mutation = read_json(run_root / "routes" / "route-001" / "mutations.json")["items"][-1]
             self.assertEqual(mutation["repair_return_policy"]["repair_return_to_node_id"], "node-001")
             self.assertEqual(mutation["route_topology"]["topology_strategy"], "return_to_original")
@@ -160,8 +160,8 @@ class RouteMutationPreconditionRuntimeTests(FlowPilotRouterRuntimeTestBase):
             )
 
             current = read_json(root / ".flowpilot" / "current.json")
-            run_root = root / current["current_run_root"]
-            frontier = read_json(root / current["current_run_root"] / "execution_frontier.json")
+            run_root = root / current["run_root"]
+            frontier = read_json(root / current["run_root"] / "execution_frontier.json")
             self.assertEqual(frontier["status"], "route_mutation_pending_recheck")
             self.assertEqual(frontier["active_node_id"], "node-001")
             self.assertEqual(frontier["pending_route_mutation"]["candidate_node_id"], "node-001-repair")
@@ -179,7 +179,7 @@ class RouteMutationPreconditionRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "pm_activates_reviewed_route",
                 {"route_id": "route-001", "active_node_id": "node-001-repair"},
             )
-            frontier = read_json(root / current["current_run_root"] / "execution_frontier.json")
+            frontier = read_json(root / current["run_root"] / "execution_frontier.json")
             self.assertEqual(frontier["status"], "current_node_loop")
             self.assertEqual(frontier["active_node_id"], "node-001-repair")
             self.assertEqual(frontier["route_version"], 2)

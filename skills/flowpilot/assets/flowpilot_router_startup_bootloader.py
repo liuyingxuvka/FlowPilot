@@ -41,9 +41,9 @@ from flowpilot_router_startup_bootloader_progress import (
     _startup_bootloader_open_entries_by_action_type,
     _startup_open_entry_progress_class,
     _startup_bootloader_entry_is_nonblocking,
-    _startup_bootloader_action_depends_on_role_slots,
     _next_boot_action,
     _bootstrap_startup_cancelled,
+    _bootstrap_startup_blocked,
     _startup_bootloader_has_remaining_work,
     _startup_daemon_controls_bootstrap,
     _daemon_scheduled_bootloader_action,
@@ -77,6 +77,8 @@ _CHILD_MODULES = (
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     for module in _CHILD_MODULES:
         module._bind_router(router)

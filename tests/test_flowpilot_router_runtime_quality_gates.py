@@ -11,11 +11,10 @@ TEST_NAMES = (
     "test_route_draft_requires_product_behavior_model_report",
     "test_route_check_reports_require_hard_gate_verdict_fields",
     "test_process_route_repair_required_blocks_activation_and_reopens_pm_route_draft",
-    "test_runtime_role_assistances_allow_requires_six_current_role_binding_records",
-    "test_single_agent_answer_records_authorized_role_continuity_without_live_agents",
+    "test_startup_no_longer_schedules_legacy_role_slots",
+    "test_single_agent_startup_answer_is_rejected_as_legacy_option",
     "test_role_output_envelope_writes_body_and_keeps_controller_visible_payload_sealed",
     "test_role_output_envelope_hash_survives_same_path_envelope_rewrite",
-    "test_user_intake_settlement_finalizer_waits_for_controller_mail_after_activation",
     "test_router_owned_check_proof_rejects_self_attested_and_stale_audit",
     "test_child_skill_gates_block_raw_inventory_and_controller_approval",
     "test_reviewer_and_flowguard_operator_gate_event_groups_have_non_pass_outcomes",
@@ -43,3 +42,4 @@ def load_tests(loader: unittest.TestLoader, tests: unittest.TestSuite, pattern: 
 
 if __name__ == "__main__":
     unittest.main()
+

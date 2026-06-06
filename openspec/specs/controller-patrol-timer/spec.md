@@ -9,11 +9,11 @@ a requested interval, reads the existing Router daemon monitor and Controller
 action ledger, and returns a concrete Controller instruction.
 
 #### Scenario: Quiet monitor continues patrol
-- **WHEN** the Router daemon heartbeat is at most thirty seconds old, no ordinary Controller action is ready, and Controller runs the patrol timer command
+- **WHEN** the Router daemon status tick is at most thirty seconds old, no ordinary Controller action is ready, and Controller runs the patrol timer command
 - **THEN** the command returns `patrol_result=continue_patrol`, includes the anti-exit purpose, names the next command, and instructs Controller to rerun that command and wait for its next output
 
-#### Scenario: Delayed daemon heartbeat asks for liveness check
-- **WHEN** the Router daemon heartbeat is older than thirty seconds and no ordinary Controller action is ready
+#### Scenario: Delayed daemon status asks for liveness check
+- **WHEN** the Router daemon status tick is older than thirty seconds and no ordinary Controller action is ready
 - **THEN** the command returns a liveness-check instruction rather than a daemon repair or restart conclusion
 - **AND** the instruction tells Controller to check whether the daemon is still running, continue attached if alive, and recover only if stopped
 

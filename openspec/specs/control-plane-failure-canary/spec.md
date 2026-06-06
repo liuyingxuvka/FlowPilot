@@ -15,7 +15,9 @@ The system SHALL maintain a finite control-plane failure canary matrix where eac
 - **THEN** the matrix rejects the row as incomplete confidence evidence
 
 ### Requirement: Canary runtime replay covers realistic isolated control failures
-The system SHALL include executable tests for isolated lock, persistence, launcher/daemon, heartbeat/resume, peer-run authority, and terminal-fence failure scenarios without mutating live user state.
+The system SHALL include executable tests for isolated lock, persistence,
+launcher/daemon, manual resume, daemon-liveness, peer-run authority, and
+terminal-fence failure scenarios without mutating live user state.
 
 #### Scenario: File or task lock conflict routes to standard recovery
 - **WHEN** a lock conflict or stale lock condition prevents ordinary continuation
@@ -29,8 +31,9 @@ The system SHALL include executable tests for isolated lock, persistence, launch
 - **WHEN** launcher or daemon liveness is stale or dead
 - **THEN** the canary evidence proves the system enters liveness recovery, restart, or control-blocker handling before normal work resumes
 
-#### Scenario: Duplicate heartbeat does not double-advance work
-- **WHEN** two heartbeat or resume attempts target the same current run state
+#### Scenario: Duplicate resume does not double-advance work
+- **WHEN** two manual resume or daemon-liveness attempts target the same current
+  run state
 - **THEN** the canary evidence proves the duplicate wakeup is idempotent and does not create duplicate completion, duplicate blocker, or cross-run authority
 
 #### Scenario: Peer-run stop does not mutate current run

@@ -152,7 +152,7 @@ def _safe_base(**changes: object) -> State:
             gate_outcome_same_generation=True,
             gate_outcome_clear_target_matches_pass_gate=True,
             terminal_continuation_cleanup_recorded=False,
-            terminal_host_automation_cleanup_proven=True,
+            terminal_lifecycle_cleanup_proven=True,
             role_output_envelopes_recorded=False,
             role_output_hashes_replayable=True,
             stage_advanced_after_material_scan=True,
@@ -353,9 +353,9 @@ def hazard_states() -> dict[str, State]:
             control_blocker_lane="pm_repair_decision_required",
             control_blocker_target_role="project_manager",
         ),
-        "stopped_run_with_active_heartbeat": _safe_base(
+        "stopped_run_with_active_manual_resume_binding": _safe_base(
             current_status_stopped=True,
-            continuation_heartbeat_active=True,
+            manual_resume_binding_active=True,
             frontier_terminal=True,
         ),
         "stopped_run_with_active_packet_loop": _safe_base(
@@ -654,9 +654,9 @@ def hazard_states() -> dict[str, State]:
             duplicate_pm_repair_decision_seen=True,
             duplicate_repair_created_new_blocker=True,
         ),
-        "terminal_heartbeat_cleanup_unproven": _safe_base(
+        "terminal_manual_resume_binding_cleanup_unproven": _safe_base(
             terminal_continuation_cleanup_recorded=True,
-            terminal_host_automation_cleanup_proven=False,
+            terminal_lifecycle_cleanup_proven=False,
         ),
         "role_output_hash_replay_mismatch": _safe_base(
             role_output_envelopes_recorded=True,
@@ -1205,3 +1205,5 @@ def hazard_states() -> dict[str, State]:
 __all__ = [
     "hazard_states",
 ]
+
+

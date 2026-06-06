@@ -23,7 +23,7 @@ PARTITION_ITEMS = (
     "startup",
     "material_intake",
     "product_architecture",
-    "runtime_roles_and_heartbeat",
+    "runtime_roles_and_liveness",
     "router_daemon_resume",
     "packet_and_role_authority",
     "child_skill_capability",

@@ -35,6 +35,8 @@ class State:
     wrong_role_recovery_completed: bool = False
     route_mutation_recovered: bool = False
     missing_ack_result_blocked: bool = False
+    missing_current_result_fields_reissued: bool = False
+    missing_current_result_fields_repair_completed: bool = False
     ack_only_wait_observed: bool = False
     foreground_wait_patrol_observed: bool = False
     lifecycle_resume_rehydrated: bool = False
@@ -50,6 +52,8 @@ class State:
     result_body_leaked: bool = False
     wrong_role_lease_accepted: bool = False
     missing_ack_result_accepted: bool = False
+    missing_current_result_fields_accepted: bool = False
+    missing_current_result_reissue_missing_instruction: bool = False
     ack_only_terminal: bool = False
     lifecycle_resume_from_chat: bool = False
     lifecycle_patrol_allows_nonterminal_stop: bool = False
@@ -104,6 +108,8 @@ REQUIRED_SAFE_LABELS = (
     "recover_from_wrong_role_with_valid_packets",
     "observe_route_mutation_recovery",
     "observe_missing_ack_result_block",
+    "observe_missing_current_result_fields_reissue",
+    "repair_missing_current_result_fields_via_current_contract",
     "observe_ack_only_wait_not_terminal",
     "observe_foreground_wait_patrol_duty",
     "observe_lifecycle_resume_rehydration",
@@ -198,6 +204,20 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (Transition("observe_route_mutation_recovery", replace(state, route_mutation_recovered=True)),)
     if not state.missing_ack_result_blocked:
         return (Transition("observe_missing_ack_result_block", replace(state, missing_ack_result_blocked=True)),)
+    if not state.missing_current_result_fields_reissued:
+        return (
+            Transition(
+                "observe_missing_current_result_fields_reissue",
+                replace(state, missing_current_result_fields_reissued=True),
+            ),
+        )
+    if not state.missing_current_result_fields_repair_completed:
+        return (
+            Transition(
+                "repair_missing_current_result_fields_via_current_contract",
+                replace(state, missing_current_result_fields_repair_completed=True),
+            ),
+        )
     if not state.ack_only_wait_observed:
         return (Transition("observe_ack_only_wait_not_terminal", replace(state, ack_only_wait_observed=True)),)
     if not state.foreground_wait_patrol_observed:
@@ -274,6 +294,8 @@ def invariant_failures(state: State) -> list[str]:
         and state.wrong_role_recovery_completed
         and state.route_mutation_recovered
         and state.missing_ack_result_blocked
+        and state.missing_current_result_fields_reissued
+        and state.missing_current_result_fields_repair_completed
         and state.ack_only_wait_observed
         and state.foreground_wait_patrol_observed
         and state.lifecycle_resume_rehydrated
@@ -295,6 +317,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Wrong-role lease was accepted against another role's packet")
     if state.missing_ack_result_accepted:
         failures.append("Missing-ACK result was accepted as authoritative")
+    if state.missing_current_result_fields_repair_completed and not state.missing_current_result_fields_reissued:
+        failures.append("Missing-current-result-field repair completed before runtime reissued the packet")
+    if state.missing_current_result_fields_accepted:
+        failures.append("Missing current result fields were accepted instead of reissued with required fields")
+    if state.missing_current_result_reissue_missing_instruction:
+        failures.append("Missing-current-result-field reissue omitted required field names or repair instruction")
     if state.ack_only_terminal:
         failures.append("ACK-only path reached terminal completion")
     if state.foreground_wait_patrol_observed and not state.ack_only_wait_observed:
@@ -363,6 +391,8 @@ def hazard_states() -> dict[str, State]:
         "result_body_leak": replace(target, result_body_leaked=True),
         "wrong_role_lease_accepted": replace(target, wrong_role_lease_accepted=True),
         "missing_ack_result_accepted": replace(target, missing_ack_result_accepted=True),
+        "missing_current_result_fields_accepted": replace(target, missing_current_result_fields_accepted=True),
+        "missing_current_result_reissue_missing_instruction": replace(target, missing_current_result_reissue_missing_instruction=True),
         "ack_only_terminal": replace(target, ack_only_terminal=True),
         "lifecycle_resume_from_chat": replace(target, lifecycle_resume_from_chat=True),
         "lifecycle_patrol_allows_nonterminal_stop": replace(target, lifecycle_patrol_allows_nonterminal_stop=True),

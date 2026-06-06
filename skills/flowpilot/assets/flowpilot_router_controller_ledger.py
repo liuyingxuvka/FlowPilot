@@ -73,12 +73,10 @@ def router_scheduler_progress_class(
     explicit = str(action.get("scheduler_progress_class") or action.get("router_scheduler_progress_class") or "").strip()
     if explicit:
         return explicit
-    if action_type in {"emit_startup_banner", "create_heartbeat_automation", "write_display_surface_status"}:
+    if action_type in {"emit_startup_banner", "write_display_surface_status"}:
         return "parallel_obligation"
     if action_type == "sync_display_plan" and startup_scoped is not None and startup_scoped(action):
         return "parallel_obligation"
-    if action_type == "start_role_slots":
-        return "local_dependency"
     if action_type == "load_controller_core":
         return "phase_handoff"
     if action_type in {

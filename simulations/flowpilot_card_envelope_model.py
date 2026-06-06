@@ -38,7 +38,7 @@ Risk intent brief:
   metadata; missing-ACK recovery first checks Controller delivery facts and
   cannot remind the target role while Controller delivery is unconfirmed; role
   I/O protocol acknowledgement is required after
-  heartbeat/manual resume or replacement; gate/node movement and formal
+  manual resume or replacement; gate/node movement and formal
   work-packet relay wait for scoped/target-role ACK clearance; a missing ACK
   reminds the role to complete the original card or bundle ACK loop unless the
   original artifact is invalid, stale, lost, or tied to a replaced identity;
@@ -204,7 +204,6 @@ class State:
     packet_direct_router_result_prompt_present: bool = False
     controller_waits_on_router_notice_prompt_present: bool = False
 
-    heartbeat_resume_loaded_pending_return: bool = False
     manual_resume_loaded_pending_return: bool = False
     recovery_action_available: bool = False
 
@@ -370,14 +369,11 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         )
         return
 
-    if state.expected_return_missing_detected and not (
-        state.heartbeat_resume_loaded_pending_return or state.manual_resume_loaded_pending_return
-    ):
+    if state.expected_return_missing_detected and not state.manual_resume_loaded_pending_return:
         yield Transition(
-            "heartbeat_or_manual_resume_loads_pending_return",
+            "manual_resume_loads_pending_return",
             _inc(
                 state,
-                heartbeat_resume_loaded_pending_return=True,
                 manual_resume_loaded_pending_return=True,
                 recovery_action_available=True,
             ),
@@ -874,7 +870,7 @@ def pending_return_wait_has_recovery_path(state: State, trace) -> InvariantResul
     if state.status == "passed" and state.await_expected_return and not state.ack_report_returned and not (
         state.recovery_action_available or state.return_reminder_issued or state.redelivery_attempt_issued
     ):
-        return InvariantResult.fail("pending return wait had no heartbeat/manual resume recovery action")
+        return InvariantResult.fail("pending return wait had no manual-resume recovery action")
     return InvariantResult.pass_()
 
 
@@ -1017,7 +1013,7 @@ INVARIANTS = (
     ),
     Invariant(
         "pending_return_wait_has_recovery_path",
-        "Pending return waits must have a heartbeat/manual-resume recovery, reminder, or redelivery path.",
+        "Pending return waits must have a manual-resume recovery, reminder, or redelivery path.",
         pending_return_wait_has_recovery_path,
     ),
     Invariant(
@@ -1069,7 +1065,7 @@ REQUIRED_LABELS = (
     "router_issues_card_envelope_with_manifest_hash_and_card_return_event",
     "controller_relays_card_envelope_only",
     "router_detects_missing_expected_return_and_waits",
-    "heartbeat_or_manual_resume_loads_pending_return",
+    "manual_resume_loads_pending_return",
     "router_checks_controller_delivery_fact_before_missing_ack_recovery",
     "router_issues_missing_return_reminder",
     "router_blocks_gate_boundary_on_missing_scope_ack",
@@ -1213,7 +1209,6 @@ def target_v2_state() -> State:
         packet_direct_router_ack_prompt_present=True,
         packet_direct_router_result_prompt_present=True,
         controller_waits_on_router_notice_prompt_present=True,
-        heartbeat_resume_loaded_pending_return=True,
         manual_resume_loaded_pending_return=True,
         recovery_action_available=True,
         pm_decision_gate_kept=True,
@@ -1554,3 +1549,4 @@ def hazard_states() -> dict[str, State]:
             controller_waits_on_router_notice_prompt_present=False,
         ),
     }
+

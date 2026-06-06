@@ -44,6 +44,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -70,6 +72,9 @@ def _next_mail_action(project_root: Path, run_state: dict[str, Any], run_root: P
             continue
         required_flag = entry.get("requires_flag")
         if required_flag and not flags.get(required_flag):
+            continue
+        required_all = entry.get("requires_all_flags")
+        if required_all and not all(flags.get(str(flag)) for flag in required_all):
             continue
         if not run_state.get("ledger_check_requested"):
             return make_action(
@@ -217,7 +222,42 @@ def next_action(project_root: Path, *, new_invocation: bool = False) -> dict[str
     run_state, run_root = load_run_state(project_root, bootstrap)
     if run_state is None or run_root is None:
         raise RouterError("bootloader complete but run router state is missing")
-    return compute_controller_action(project_root, run_state, run_root)
+    try:
+        return compute_controller_action(project_root, run_state, run_root)
+    except (RouterError, packet_runtime.PacketRuntimeError) as exc:
+        existing_blocker = getattr(exc, "control_blocker", None)
+        if not isinstance(existing_blocker, dict):
+            message = str(exc)
+            if "active execution frontier is missing route or node" in message:
+                existing_blocker = _write_control_blocker(
+                    project_root,
+                    run_root,
+                    run_state,
+                    source="router_no_legal_next_action",
+                    error_message=(
+                        "Controller has no legal current route frontier; PM repair or routing decision is "
+                        "required before any further route, mail, packet, or project work."
+                    ),
+                    action_type="controller_no_legal_next_action",
+                    payload={
+                        "path": project_relative(project_root, run_state_path(run_root)),
+                        "role": "controller",
+                        "frontier_error": message,
+                    },
+                )
+            else:
+                existing_blocker = _try_write_control_blocker_for_exception(
+                    project_root,
+                    source="router.next_action",
+                    error_message=message,
+                )
+        if isinstance(existing_blocker, dict) and not existing_blocker.get("materialization_failed"):
+            refreshed_state = read_json(run_state_path(run_root))
+            action = _next_control_blocker_action(project_root, refreshed_state, run_root)
+            if action is not None:
+                return action
+            raise RouterError(str(exc), control_blocker=existing_blocker) from exc
+        raise
 
 def apply_controller_action(project_root: Path, action_type: str, payload: dict[str, Any] | None = None) -> dict[str, Any]:
     bootstrap = load_bootstrap_state(project_root, create_if_missing=False)
@@ -225,7 +265,12 @@ def apply_controller_action(project_root: Path, action_type: str, payload: dict[
     if run_state is None or run_root is None:
         raise RouterError("run state is missing")
     _ensure_daemon_runtime_state(project_root, run_root, run_state, lifecycle_status="controller_apply")
-    _reconcile_controller_receipts(project_root, run_root, run_state)
+    _reconcile_controller_receipts(
+        project_root,
+        run_root,
+        run_state,
+        scheduler_fold_owner="foreground_receipt",
+    )
     pending = _ensure_pending(run_state, action_type)
     result_extra: dict[str, Any] = {}
     handled_action = flowpilot_router_action_handlers.apply_registered_action(

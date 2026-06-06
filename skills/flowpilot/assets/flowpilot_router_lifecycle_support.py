@@ -44,6 +44,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -66,8 +68,8 @@ OWNER_MODULE = 'flowpilot_router_lifecycle_support'
 def _lifecycle_record_path(run_root: Path) -> Path:
     return run_root / "lifecycle" / "run_lifecycle.json"
 
-def _write_host_heartbeat_binding(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
-    flowpilot_router_resume.write_host_heartbeat_binding(
+def _write_manual_resume_binding(project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> None:
+    flowpilot_router_resume.write_manual_resume_binding(
         _bound_router(),
         project_root,
         run_root,

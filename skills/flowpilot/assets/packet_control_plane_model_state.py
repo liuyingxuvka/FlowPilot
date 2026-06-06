@@ -11,7 +11,7 @@ class NodeCase:
     result_origin: str
 
 @dataclass(frozen=True)
-class HeartbeatCase:
+class ManualResumeCase:
     case_id: str
 
 @dataclass(frozen=True)
@@ -97,9 +97,9 @@ class PMAdvanced:
 @dataclass(frozen=True)
 class State:
     packets: tuple[str, ...] = ()
-    heartbeat_loads: tuple[str, ...] = ()
-    heartbeat_state_blocks: tuple[str, ...] = ()
-    heartbeat_ambiguous_blocks: tuple[str, ...] = ()
+    manual_resume_loads: tuple[str, ...] = ()
+    manual_resume_state_blocks: tuple[str, ...] = ()
+    manual_resume_ambiguous_blocks: tuple[str, ...] = ()
     pm_resume_requests: tuple[str, ...] = ()
     resume_packets: tuple[str, ...] = ()
     reminder_checked: tuple[str, ...] = ()
@@ -191,7 +191,7 @@ def _packet_from_id(packet_id: str, *, has_controller_reminder: bool = True) -> 
 
 __all__ = [
     "NodeCase",
-    "HeartbeatCase",
+    "ManualResumeCase",
     "NodePacket",
     "ResumeRequest",
     "DispatchBlocked",

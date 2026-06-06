@@ -74,7 +74,7 @@ safe to replay after daemon/controller reconciliation.
 - **WHEN** the existing startup receipt effect handler cannot prove the
   startup postcondition from the receipt and run state
 - **THEN** FlowPilot keeps the existing unsupported-receipt or blocker path
-  instead of marking the row reconciled through a fallback owner.
+  instead of marking the row reconciled through a recovery owner.
 
 ### Requirement: Live projection accepts post-release startup packet states
 FlowPilot's focused startup-settlement projection SHALL treat a Router-released

@@ -161,7 +161,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 if isinstance(item, dict)
             )
         )
-    def test_pm_role_work_batch_waits_for_all_flowguard_operator_results_before_pm_relay(self) -> None:
+    def test_pm_role_work_batch_waits_for_all_distinct_role_results_before_pm_relay(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(root, packet_id="node-packet-role-work-batch")
         run_root = self.run_root_for(root)
@@ -192,7 +192,9 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
                     self.pm_role_work_request_payload(
                         root,
                         request_id="model-miss-process-001",
-                        to_role="flowguard_operator",
+                        to_role="worker",
+                        request_kind="implementation",
+                        output_contract_id="flowpilot.output_contract.pm_role_work_result.v1",
                         body_text="Analyze the missed process invariant and recommend a minimal model repair.",
                     ),
                 ],
@@ -220,7 +222,7 @@ class PmRoleWorkRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["role_work_result_returned"])
-        self.assertIn("flowguard_operator", action["to_role"])
+        self.assertEqual(action["to_role"], "worker")
 
         process_result_path = self.open_role_work_packet_and_write_result(root, request_id="model-miss-process-001")
         router.record_external_event(

@@ -1,7 +1,7 @@
 {
   "checks": {
     "classification": {
-      "candidate_count": 1020,
+      "candidate_count": 963,
       "candidates": [
         {
           "action": "keep_negative_rejection_evidence",
@@ -59,28 +59,6 @@
           "text": "- Remove alias hooks only when real code and tests already prove current rejection or"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/design.md:31",
-          "delete_required": false,
-          "line": 31,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/design.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "- No removal of current fallback safety paths: manual resume, Cockpit display fallback,"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/design.md:32",
-          "delete_required": false,
-          "line": 32,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/design.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "authorized single-agent fallback, or controller break-glass repair."
-        },
-        {
           "action": "keep_change_rationale_or_historical_note",
           "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/design.md:37",
           "delete_required": false,
@@ -134,17 +112,6 @@
           "structuremesh_gate_required": false,
           "surface": "change_context",
           "text": "current input. Remove them only after import sites are updated and packet alias"
-        },
-        {
-          "action": "keep_change_rationale_or_historical_note",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/design.md:59",
-          "delete_required": false,
-          "line": 59,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/design.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "runtime return, FlowGuard work-order, sealed-body, fallback, and authority language"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -279,17 +246,6 @@
           "text": "- `flowpilot-packet-review-flow`: old reviewer-dispatch flags are retired audit"
         },
         {
-          "action": "keep_change_rationale_or_historical_note",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/proposal.md:50",
-          "delete_required": false,
-          "line": 50,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/proposal.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "preserving current fallback safety mechanisms."
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/proposal.md:62",
           "delete_required": false,
@@ -390,28 +346,6 @@
         },
         {
           "action": "keep_change_rationale_or_historical_note",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/specs/flowpilot-prompt-boundary-policy/spec.md:5",
-          "delete_required": false,
-          "line": 5,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/specs/flowpilot-prompt-boundary-policy/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "fallback, FlowGuard, and sealed-body obligations when active runtime cards are"
-        },
-        {
-          "action": "keep_change_rationale_or_historical_note",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/specs/flowpilot-prompt-boundary-policy/spec.md:10",
-          "delete_required": false,
-          "line": 10,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/specs/flowpilot-prompt-boundary-policy/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "- **THEN** required identity-boundary, runtime command, current fallback, FlowGuard"
-        },
-        {
-          "action": "keep_change_rationale_or_historical_note",
           "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/specs/packet-open-authority-exits/spec.md:3",
           "delete_required": false,
           "line": 3,
@@ -507,7 +441,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "change_context",
-          "text": "- [x] 1.3 Classify old terms into rejected-test evidence, stale active specs, stale result artifacts, no-op hooks, current fallback mechanisms, or historical docs."
+          "text": "- [x] 1.3 Classify old terms into rejected-test evidence, stale active specs, stale result artifacts, no-op hooks, current recovery mechanisms, or historical docs."
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -519,17 +453,6 @@
           "structuremesh_gate_required": false,
           "surface": "change_context",
           "text": "- [x] 2.1 Update active OpenSpec specs so retired inputs are rejected or audit-only, not accepted aliases."
-        },
-        {
-          "action": "keep_change_rationale_or_historical_note",
-          "candidate_id": "openspec/changes/converge-new-only-maintenance-cleanup/tasks.md:11",
-          "delete_required": false,
-          "line": 11,
-          "path": "openspec/changes/converge-new-only-maintenance-cleanup/tasks.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "change_context",
-          "text": "- [x] 2.3 Compress long runtime cards while preserving required role, runtime, FlowGuard, fallback, and sealed-body obligations."
         },
         {
           "action": "keep_change_rationale_or_historical_note",
@@ -642,17 +565,6 @@
           "text": "#### Scenario: Old agent id appears in imported role-binding memory"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/continuation-state-quarantine/spec.md:37",
-          "delete_required": false,
-          "line": 37,
-          "path": "openspec/specs/continuation-state-quarantine/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "the allowed fallback path"
-        },
-        {
           "action": "manual_review",
           "candidate_id": "openspec/specs/continuation-state-quarantine/spec.md:39",
           "delete_required": false,
@@ -728,17 +640,6 @@
           "structuremesh_gate_required": false,
           "surface": "active_spec",
           "text": "- **WHEN** a unsupported historical boundary action has already been reconciled from valid"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/controller-ledger-table-prompt/spec.md:45",
-          "delete_required": false,
-          "line": 45,
-          "path": "openspec/specs/controller-ledger-table-prompt/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "FlowPilot SHALL expose the final fallback row"
         },
         {
           "action": "manual_review",
@@ -1742,28 +1643,6 @@
           "text": "- **AND** `flowpilot_router.py` SHALL keep only unsupported historical wrappers,"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/router-two-table-async-scheduler/spec.md:126",
-          "delete_required": false,
-          "line": 126,
-          "path": "openspec/specs/router-two-table-async-scheduler/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "operating as the Router-owned fallback lane"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/router-two-table-async-scheduler/spec.md:128",
-          "delete_required": false,
-          "line": 128,
-          "path": "openspec/specs/router-two-table-async-scheduler/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "- **AND** it records that fallback ownership in the reconciliation result."
-        },
-        {
           "action": "manual_review",
           "candidate_id": "openspec/specs/runtime-ledger-persistence/spec.md:33",
           "delete_required": false,
@@ -1872,28 +1751,6 @@
           "structuremesh_gate_required": false,
           "surface": "active_spec",
           "text": "- **AND** the original module SHALL preserve the import/export unsupported historical surface"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/settled-router-next-action/spec.md:23",
-          "delete_required": false,
-          "line": 23,
-          "path": "openspec/specs/settled-router-next-action/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "bootloader postcondition fallback."
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/settled-router-next-action/spec.md:29",
-          "delete_required": false,
-          "line": 29,
-          "path": "openspec/specs/settled-router-next-action/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "#### Scenario: Startup fallback requires satisfied postcondition"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2059,17 +1916,6 @@
           "structuremesh_gate_required": false,
           "surface": "active_spec",
           "text": "- **THEN** FlowPilot keeps the existing unsupported-receipt or blocker path"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "openspec/specs/startup-settlement-ownership/spec.md:77",
-          "delete_required": false,
-          "line": 77,
-          "path": "openspec/specs/startup-settlement-ownership/spec.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "active_spec",
-          "text": "instead of marking the row reconciled through a fallback owner."
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2391,28 +2237,6 @@
           "text": "return InvariantResult.fail(\"old FlowPilot control state was reused as the current capability run state\")"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/capability_model.py:2785",
-          "delete_required": false,
-          "line": 2785,
-          "path": "simulations/capability_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"PM allowed capability work before fresh current-task role bindings or explicit single-agent fallback were resolved\""
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/capability_model_material_phase.py:165",
-          "delete_required": false,
-          "line": 165,
-          "path": "simulations/capability_model_material_phase.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "action=\"project manager records whether local, browser, web search, account, or user-provided sources are available and routes missing capabilities to user clarification, fallback, or block\","
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "simulations/capability_model_material_phase.py:199",
           "delete_required": false,
@@ -2433,28 +2257,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "action=\"product-scope FlowGuard operator checks modelability, missing state fields, unsupported claims, and failure paths before approving the PM architecture\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/capability_model_resume_phase.py:172",
-          "delete_required": false,
-          "line": 172,
-          "path": "simulations/capability_model_resume_phase.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "action=\"controller calls the host native plan tool when available, or records the fallback method, and replaces the visible capability plan with a downstream PM runway projection\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/capability_model_route_phase.py:467",
-          "delete_required": false,
-          "line": 467,
-          "path": "simulations/capability_model_route_phase.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "action=\"emit visible capability user flow diagram with next gates, checks, and fallback branches\","
         },
         {
           "action": "manual_review",
@@ -2499,6 +2301,39 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "if bool(event.get(\"unsupported_historical\")):"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_blocker_repair_information_flow_model.py:9",
+          "delete_required": false,
+          "line": 9,
+          "path": "simulations/flowpilot_blocker_repair_information_flow_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "repeat the old failed packet; PM decisions that close blockers without a"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_canonical_repair_scope_rotation_model.py:7",
+          "delete_required": false,
+          "line": 7,
+          "path": "simulations/flowpilot_canonical_repair_scope_rotation_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "- Replace current, parent, or route scope cleanly instead of mutating an old"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_canonical_repair_scope_rotation_model.py:254",
+          "delete_required": false,
+          "line": 254,
+          "path": "simulations/flowpilot_canonical_repair_scope_rotation_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "failures.append(\"scope repair opened without superseded old scope and replacement scope\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2622,235 +2457,59 @@
           "text": "\"entrypoints without treating the old router as authority.\""
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:28",
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_control_plane_friction_model_invariants.py:658",
           "delete_required": false,
-          "line": 28,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
+          "line": 658,
+          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "(\"fallback\", \"fallback\", \"Use chat route-sign fallback when Cockpit is unavailable.\"),"
+          "text": "\"old packet outcome shape was accepted instead of mechanically blocked\""
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:41",
+          "candidate_id": "simulations/flowpilot_control_plane_friction_model_invariants.py:686",
           "delete_required": false,
-          "line": 41,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
+          "line": 686,
+          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "visible_controls=(\"open\", \"fallback\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:42",
-          "delete_required": false,
-          "line": 42,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "enabled_controls=(\"open\", \"fallback\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:69",
-          "delete_required": false,
-          "line": 69,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"fallback\","
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:74",
-          "delete_required": false,
-          "line": 74,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "rationale=\"Chat route-sign fallback renders the same projection without Cockpit.\","
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:91",
-          "delete_required": false,
-          "line": 91,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "UITransition(\"fallback_event\", \"fallback\", \"launch\", \"fallback\", function_block=\"chat_fallback\", output=\"chat fallback\", rationale=\"Cockpit unavailable or user chooses chat route signs.\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:102",
-          "delete_required": false,
-          "line": 102,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "UITransition(\"refresh_fallback\", \"refresh\", \"fallback\", \"fallback\", function_block=\"projection\", output=\"status\", rationale=\"Chat fallback refresh derives the same projection.\"),"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:114",
-          "delete_required": false,
-          "line": 114,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "rationale=\"Models startup intake, Cockpit status, chat fallback, and lifecycle controls as UI event x UI state transitions.\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:125",
-          "delete_required": false,
-          "line": 125,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "UIJourneyEntryPoint(\"entry_fallback\", \"fallback\", \"fallback_event\", source_state_ids=(\"launch\",), rationale=\"Chat route-sign fallback path.\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:152",
-          "delete_required": false,
-          "line": 152,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"fallback\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:153",
-          "delete_required": false,
-          "line": 153,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"Chat route-sign fallback status\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:155",
-          "delete_required": false,
-          "line": 155,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "required_state_ids=(\"launch\", \"fallback\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:157",
-          "delete_required": false,
-          "line": 157,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "success_terminal_state_ids=(\"fallback\",),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:170",
-          "delete_required": false,
-          "line": 170,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "UITerminalActionAllowance(\"fallback\", \"refresh_fallback\", \"recovery\", \"Refresh chat fallback projection.\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:191",
-          "delete_required": false,
-          "line": 191,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "owns_controls=(\"open\", \"fallback\", \"submit\", \"cancel\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:203",
-          "delete_required": false,
-          "line": 203,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "owns_states=(\"running\", \"paused\", \"fallback\", \"stopped\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:228",
-          "delete_required": false,
-          "line": 228,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "(\"fallback\", \"status\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:233",
-          "delete_required": false,
-          "line": 233,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "(\"fallback\", \"startup\"),"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:260",
-          "delete_required": false,
-          "line": 260,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "contextual_control_ids=(\"open\", \"fallback\", \"submit\", \"cancel\"),"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_complete_system_ui_model.py:263",
-          "delete_required": false,
-          "line": 263,
-          "path": "simulations/flowpilot_complete_system_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "rationale=\"Derives Cockpit and chat fallback structure from modeled UI state and controls.\","
+          "text": "\"control-plane fallback responsibility was used instead of hard blocking\""
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_control_plane_friction_model_invariants.py:1010",
+          "candidate_id": "simulations/flowpilot_control_plane_friction_model_invariants.py:1070",
           "delete_required": false,
-          "line": 1010,
+          "line": 1070,
           "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "return InvariantResult.fail(\"old pre-ACK report was revived after ACK instead of requiring a fresh report\")"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_control_plane_friction_model_invariants.py:1415",
+          "delete_required": false,
+          "line": 1415,
+          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "description=\"Old prose, alias, or missing-decision packet outcomes are mechanically blocked instead of being accepted as current pass/fail evidence.\","
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/flowpilot_control_plane_friction_model_invariants.py:1430",
+          "delete_required": false,
+          "line": 1430,
+          "path": "simulations/flowpilot_control_plane_friction_model_invariants.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "description=\"Recovery commands hard-block missing current responsibility instead of deriving fallback responsibility.\","
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -2963,21 +2622,21 @@
           "text": "\"missing or invalid evidence, not unsupported known action families\""
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_cross_plane_friction_model.py:1",
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_cross_plane_friction_model_audit.py:104",
           "delete_required": false,
-          "line": 1,
-          "path": "simulations/flowpilot_cross_plane_friction_model.py",
+          "line": 104,
+          "path": "simulations/flowpilot_cross_plane_friction_model_audit.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for the FlowPilot cross-plane friction model.\"\"\""
+          "text": "\"Do not translate current_run_id/current_run_root or active_run_id/active_run_root aliases.\""
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_cross_plane_friction_model_audit.py:763",
+          "candidate_id": "simulations/flowpilot_cross_plane_friction_model_audit.py:772",
           "delete_required": false,
-          "line": 763,
+          "line": 772,
           "path": "simulations/flowpilot_cross_plane_friction_model_audit.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3250,9 +2909,31 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_dynamic_return_path_model.py:1346",
+          "candidate_id": "simulations/flowpilot_dynamic_return_path_model.py:1241",
           "delete_required": false,
-          "line": 1346,
+          "line": 1241,
+          "path": "simulations/flowpilot_dynamic_return_path_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "projection[\"skip_reason\"] = \"current pointer uses unsupported legacy aliases\""
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_dynamic_return_path_model.py:1250",
+          "delete_required": false,
+          "line": 1250,
+          "path": "simulations/flowpilot_dynamic_return_path_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "\"legacy current_run_* or active_run_* aliases into current authority.\""
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/flowpilot_dynamic_return_path_model.py:1373",
+          "delete_required": false,
+          "line": 1373,
           "path": "simulations/flowpilot_dynamic_return_path_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3283,9 +2964,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_model.py:327",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_model.py:355",
           "delete_required": false,
-          "line": 327,
+          "line": 355,
           "path": "simulations/flowpilot_fake_project_rehearsal_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3293,10 +2974,32 @@
           "text": "failures.append(\"Unsupported side-command completion surface was still available\")"
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:760",
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:418",
           "delete_required": false,
-          "line": 760,
+          "line": 418,
+          "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "ensure(old_packet.get(\"status\") == \"superseded_after_repair\", f\"old packet was not superseded: {old_packet}\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:447",
+          "delete_required": false,
+          "line": 447,
+          "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "f\"repair packet instruction did not forbid synthesized compatibility: {repair_body}\","
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:786",
+          "delete_required": false,
+          "line": 786,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3305,9 +3008,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:761",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:787",
           "delete_required": false,
-          "line": 761,
+          "line": 787,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3316,9 +3019,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:764",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:790",
           "delete_required": false,
-          "line": 764,
+          "line": 790,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -3327,14 +3030,36 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:765",
+          "candidate_id": "simulations/flowpilot_fake_project_rehearsal_scenarios.py:791",
           "delete_required": false,
-          "line": 765,
+          "line": 791,
           "path": "simulations/flowpilot_fake_project_rehearsal_scenarios.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "ensure(\"invalid choice\" in rejected.stderr, f\"unsupported command did not fail as invalid choice: {rejected.stderr}\")"
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/flowpilot_full_model_replay_evidence.json:23",
+          "delete_required": false,
+          "line": 23,
+          "path": "simulations/flowpilot_full_model_replay_evidence.json",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "\"scope\": \"missing current pointer is a scoped no-live-evidence projection, not a history fallback or live confidence proof\""
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/flowpilot_full_model_replay_evidence.json:67",
+          "delete_required": false,
+          "line": 67,
+          "path": "simulations/flowpilot_full_model_replay_evidence.json",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "\"scope\": \"missing current pointer is a scoped no-live-evidence projection, not newest-run fallback or live confidence proof\""
         },
         {
           "action": "manual_review",
@@ -3368,6 +3093,28 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "\"protected_state_invariant\": \"route mutation stales old current-node and sibling evidence\","
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_information_flow_alignment_obligations.py:102",
+          "delete_required": false,
+          "line": 102,
+          "path": "simulations/flowpilot_information_flow_alignment_obligations.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "\"Reopened continuation may import old state only as history; \""
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/flowpilot_information_flow_alignment_obligations.py:103",
+          "delete_required": false,
+          "line": 103,
+          "path": "simulations/flowpilot_information_flow_alignment_obligations.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "\"old evidence and old agent ids cannot authorize current work.\""
         },
         {
           "action": "manual_review",
@@ -3744,6 +3491,28 @@
           "text": "\"Current FlowPilot inputs may advance, unsupported inputs must be rejected, \""
         },
         {
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/flowpilot_packet_lifecycle_model.py:359",
+          "delete_required": false,
+          "line": 359,
+          "path": "simulations/flowpilot_packet_lifecycle_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "return InvariantResult.fail(\"FlowGuard fallback evidence was accepted as current evidence\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/flowpilot_packet_lifecycle_model.py:412",
+          "delete_required": false,
+          "line": 412,
+          "path": "simulations/flowpilot_packet_lifecycle_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "\"FlowGuard API/model failure must be a toolchain blocker, not accepted fallback evidence.\","
+        },
+        {
           "action": "manual_review",
           "candidate_id": "simulations/flowpilot_parallel_packet_batch_model.py:7",
           "delete_required": false,
@@ -3786,17 +3555,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "unsupported_historical check. These child models provide the bounded evidence consumed by"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_persistent_router_daemon_model.py:1",
-          "delete_required": false,
-          "line": 1,
-          "path": "simulations/flowpilot_persistent_router_daemon_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for the FlowPilot persistent Router daemon model."
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -3986,17 +3744,6 @@
           "text": "return InvariantResult.fail(\"accepted unsupported_historical reviewer relay as current proof\")"
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_pm_package_absorption_model.py:659",
-          "delete_required": false,
-          "line": 659,
-          "path": "simulations/flowpilot_pm_package_absorption_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "description=\"Unsupported_historical direct-reviewer relay flags cannot satisfy current PM disposition or gate proof.\","
-        },
-        {
           "action": "manual_review",
           "candidate_id": "simulations/flowpilot_process_liveness_checks_runner_impl.py:103",
           "delete_required": false,
@@ -4075,6 +3822,28 @@
         },
         {
           "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_project_control_information_flow_model.py:495",
+          "delete_required": false,
+          "line": 495,
+          "path": "simulations/flowpilot_project_control_information_flow_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "failures.append(\"old agent id was treated as current role-binding evidence\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/flowpilot_project_control_information_flow_model.py:617",
+          "delete_required": false,
+          "line": 617,
+          "path": "simulations/flowpilot_project_control_information_flow_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "description=\"Historical state and old evidence cannot become current progress authority.\","
+        },
+        {
+          "action": "manual_review",
           "candidate_id": "simulations/flowpilot_protocol_contract_conformance_model.py:258",
           "delete_required": false,
           "line": 258,
@@ -4094,28 +3863,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "\"startup fact role submission can alias router canonical report path before router rewrites the canonical file\""
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_protocol_contract_conformance_model.py:570",
-          "delete_required": false,
-          "line": 570,
-          "path": "simulations/flowpilot_protocol_contract_conformance_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "failures.append(\"cockpit requested without host receipt or explicit fallback receipt\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_protocol_contract_conformance_model.py:576",
-          "delete_required": false,
-          "line": 576,
-          "path": "simulations/flowpilot_protocol_contract_conformance_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "failures.append(\"display fallback receipt is unavailable before startup reviewer fact review\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -4358,105 +4105,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "\"memory/context before readiness, quarantines old-generation \""
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:44",
-          "delete_required": false,
-          "line": 44,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"Cockpit unavailable, chat fallback required\","
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:45",
-          "delete_required": false,
-          "line": 45,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"Cockpit available, same graph source used by UI and chat fallback\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:473",
-          "delete_required": false,
-          "line": 473,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "return InvariantResult.fail(\"user-visible route sign generator allowed flow.draft.json fallback\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:506",
-          "delete_required": false,
-          "line": 506,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "return InvariantResult.fail(\"chat fallback displayed bullet list instead of Mermaid route sign\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:508",
-          "delete_required": false,
-          "line": 508,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "return InvariantResult.fail(\"chat fallback degraded without recording a Mermaid source reason\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:510",
-          "delete_required": false,
-          "line": 510,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "return InvariantResult.fail(\"chat fallback did not display a route sign\")"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:518",
-          "delete_required": false,
-          "line": 518,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "return InvariantResult.fail(\"Cockpit route map and chat fallback used different route sources\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:597",
-          "delete_required": false,
-          "line": 597,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "description=\"Chat fallback shows Mermaid route signs or a recorded degraded reason.\","
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/flowpilot_route_display_model.py:602",
-          "delete_required": false,
-          "line": 602,
-          "path": "simulations/flowpilot_route_display_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "description=\"Cockpit and chat fallback use the same route source semantics.\","
         },
         {
           "action": "manual_review",
@@ -5197,17 +4845,6 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/flowpilot_startup_control_model.py:126",
-          "delete_required": false,
-          "line": 126,
-          "path": "simulations/flowpilot_startup_control_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "# Unsupported_historical receipt fields are retained as modeled hazards only. The current"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
           "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:17",
           "delete_required": false,
           "line": 17,
@@ -5251,17 +4888,6 @@
           "text": "return InvariantResult.fail(\"Router startup intake JSON reader is not BOM-compatible\")"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:488",
-          "delete_required": false,
-          "line": 488,
-          "path": "simulations/flowpilot_startup_intake_ui_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "return InvariantResult.fail(\"chat display choice reached Controller without chat fallback record\")"
-        },
-        {
           "action": "manual_review",
           "candidate_id": "simulations/flowpilot_startup_intake_ui_model.py:497",
           "delete_required": false,
@@ -5271,6 +4897,17 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "return InvariantResult.fail(\"UI-confirmed startup still required old chat answers\")"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "simulations/flowpilot_stopped_blocker_recheck_model.py:188",
+          "delete_required": false,
+          "line": 188,
+          "path": "simulations/flowpilot_stopped_blocker_recheck_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "failures.append(\"stopped blocker recovery reused old recheck packet\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -5735,28 +5372,6 @@
           "text": "failures.append(\"old workflow acceptance was kept as current behavior\")"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_unsupported_transition_pruning_model.py:236",
-          "delete_required": false,
-          "line": 236,
-          "path": "simulations/flowpilot_unsupported_transition_pruning_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "failures.append(\"current safety fallback was classified for deletion\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/flowpilot_unsupported_transition_pruning_model.py:246",
-          "delete_required": false,
-          "line": 246,
-          "path": "simulations/flowpilot_unsupported_transition_pruning_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "failures.append(\"safety fallback keep action did not preserve fallback gate\")"
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "simulations/flowpilot_validation_artifact_canonicalization_model.py:7",
           "delete_required": false,
@@ -5802,9 +5417,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_validation_pm_gate_model.py:245",
+          "candidate_id": "simulations/flowpilot_validation_pm_gate_model.py:281",
           "delete_required": false,
-          "line": 245,
+          "line": 281,
           "path": "simulations/flowpilot_validation_pm_gate_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5813,9 +5428,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/flowpilot_validation_pm_gate_model.py:247",
+          "candidate_id": "simulations/flowpilot_validation_pm_gate_model.py:283",
           "delete_required": false,
-          "line": 247,
+          "line": 283,
           "path": "simulations/flowpilot_validation_pm_gate_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -5865,17 +5480,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "return InvariantResult.fail(\"old FlowPilot control state was reused as the current run state\")"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/meta_model.py:2219",
-          "delete_required": false,
-          "line": 2219,
-          "path": "simulations/meta_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"PM allowed work beyond startup before fresh current-task role bindings or explicit single-agent fallback were resolved\""
         },
         {
           "action": "keep_current_structural_term",
@@ -5933,7 +5537,7 @@
           "text": "action=\"write verified checkpoint; when another route node remains, invalidate old route-sign display evidence before the next node entry\","
         },
         {
-          "action": "keep_current_safety_fallback",
+          "action": "keep_current_recovery_branch",
           "candidate_id": "simulations/meta_model_route_phase.py:362",
           "delete_required": false,
           "line": 362,
@@ -5975,17 +5579,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "action=\"verify prior top-level control state is absent, unsupported-only, or quarantined before current work continues\","
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/prompt_isolation_model.py:1",
-          "delete_required": false,
-          "line": 1,
-          "path": "simulations/prompt_isolation_model.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for the FlowPilot prompt-isolation model.\"\"\""
         },
         {
           "action": "keep_current_structural_term",
@@ -6142,43 +5735,32 @@
           "text": "ledger[\"old_ui_evidence\"].append(\"old screenshot\")"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/run_flowpilot_complete_system_runtime_checks.py:301",
+          "action": "manual_review",
+          "candidate_id": "simulations/run_flowpilot_control_plane_friction_checks.py:147",
           "delete_required": false,
-          "line": 301,
-          "path": "simulations/run_flowpilot_complete_system_runtime_checks.py",
+          "line": 147,
+          "path": "simulations/run_flowpilot_control_plane_friction_checks.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "fallback = cockpit.record_display_surface_fallback(ledger, \"cockpit_unavailable\")"
+          "text": "\"old_packet_outcome_shape_accepted\": \"old packet outcome shape was accepted instead of mechanically blocked\","
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_complete_system_runtime_checks.py:305",
+          "candidate_id": "simulations/run_flowpilot_control_plane_friction_checks.py:152",
           "delete_required": false,
-          "line": 305,
-          "path": "simulations/run_flowpilot_complete_system_runtime_checks.py",
+          "line": 152,
+          "path": "simulations/run_flowpilot_control_plane_friction_checks.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "fallback[\"fallback\"][\"route_sign_required\"]"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_complete_system_runtime_checks.py:308",
-          "delete_required": false,
-          "line": 308,
-          "path": "simulations/run_flowpilot_complete_system_runtime_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "{\"fallback\": fallback[\"fallback\"]},"
+          "text": "\"fallback_responsibility_used\": \"control-plane fallback responsibility was used instead of hard blocking\","
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/run_flowpilot_control_plane_friction_checks.py:213",
+          "candidate_id": "simulations/run_flowpilot_control_plane_friction_checks.py:223",
           "delete_required": false,
-          "line": 213,
+          "line": 223,
           "path": "simulations/run_flowpilot_control_plane_friction_checks.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -6274,17 +5856,6 @@
           "text": "\"unsupported_material_packets_left_unrejected\": \"material-scan dispatch lacks unsupported packet rejection\","
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/run_flowpilot_daemon_reconciliation_checks.py:1",
-          "delete_required": false,
-          "line": 1,
-          "path": "simulations/run_flowpilot_daemon_reconciliation_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for `run_flowpilot_daemon_reconciliation_checks.py`.\"\"\""
-        },
-        {
           "action": "keep_current_structural_term",
           "candidate_id": "simulations/run_flowpilot_derived_view_prompt_boundary_checks.py:29",
           "delete_required": false,
@@ -6351,15 +5922,15 @@
           "text": "\"Reject unsupported generic repair outcome tables instead of collapsing non-success rows onto the success event.\","
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/run_flowpilot_model_hierarchy_checks.py:1",
+          "action": "keep_current_structural_term",
+          "candidate_id": "simulations/run_flowpilot_packet_lifecycle_checks.py:30",
           "delete_required": false,
-          "line": 1,
-          "path": "simulations/run_flowpilot_model_hierarchy_checks.py",
+          "line": 30,
+          "path": "simulations/run_flowpilot_packet_lifecycle_checks.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for `run_flowpilot_model_hierarchy_checks.py`.\"\"\""
+          "text": "\"fallback_flowguard_evidence_accepted\": \"FlowGuard fallback evidence was accepted as current evidence\","
         },
         {
           "action": "manual_review",
@@ -6404,17 +5975,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "model.REPAIR_LEAVES_COMPAT_BRANCH: \"repair path retained a compatibility branch instead of reissuing or blocking current structured work\","
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/run_flowpilot_process_liveness_checks.py:1",
-          "delete_required": false,
-          "line": 1,
-          "path": "simulations/run_flowpilot_process_liveness_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for `run_flowpilot_process_liveness_checks.py`.\"\"\""
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -6503,72 +6063,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "\"unsupported_historical_flowguard_operator_event_handlers_removed\": \"Reviewer-only gate simplification removed unsupported_historical FlowGuard operator event unsupported_historical\","
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "simulations/run_flowpilot_role_output_runtime_checks.py:1",
-          "delete_required": false,
-          "line": 1,
-          "path": "simulations/run_flowpilot_role_output_runtime_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"\"\"Unsupported_historical facade for `run_flowpilot_role_output_runtime_checks.py`.\"\"\""
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_route_display_checks.py:35",
-          "delete_required": false,
-          "line": 35,
-          "path": "simulations/run_flowpilot_route_display_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"draft_backed_chat_route_sign\": \"user-visible route sign generator allowed flow.draft.json fallback\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_route_display_checks.py:46",
-          "delete_required": false,
-          "line": 46,
-          "path": "simulations/run_flowpilot_route_display_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"chat_fallback_bullet_list_after_route_draft\": \"chat fallback displayed bullet list instead of Mermaid route sign\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_route_display_checks.py:47",
-          "delete_required": false,
-          "line": 47,
-          "path": "simulations/run_flowpilot_route_display_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"degraded_mermaid_without_reason\": \"chat fallback degraded without recording a Mermaid source reason\","
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/run_flowpilot_route_display_checks.py:48",
-          "delete_required": false,
-          "line": 48,
-          "path": "simulations/run_flowpilot_route_display_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"cockpit_chat_source_drift\": \"Cockpit route map and chat fallback used different route sources\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_route_display_checks.py:197",
-          "delete_required": false,
-          "line": 197,
-          "path": "simulations/run_flowpilot_route_display_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"route_state_snapshot.route.nodes is the stable fallback when a committed route file is unavailable\","
         },
         {
           "action": "manual_review",
@@ -6689,7 +6183,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "\"unsupported_historical_bom_json_without_router_fallback\": \"Router startup intake JSON reader is not BOM-compatible\","
+          "text": "\"unsupported_historical_bom_json_without_reader_support\": \"Router startup intake JSON reader is not BOM-compatible\","
         },
         {
           "action": "manual_review",
@@ -6701,17 +6195,6 @@
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
           "text": "\"ui_confirm_requires_old_chat\": \"UI-confirmed startup still required old chat answers\","
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_flowpilot_startup_intake_ui_checks.py:68",
-          "delete_required": false,
-          "line": 68,
-          "path": "simulations/run_flowpilot_startup_intake_ui_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "f\"fallback={state.chat_display_fallback_recorded}|\""
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -6964,7 +6447,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "is_current_safety_fallback = \"fallback\" in lower and bool(SAFETY_FALLBACK_RE.search(text)) and not ("
+          "text": "is_current_recovery_branch = \"fallback\" in lower and bool(SAFETY_FALLBACK_RE.search(text)) and not ("
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -7132,17 +6615,6 @@
           "text": "\"startup_fact_hash_alias\": \"startup fact role submission can alias\","
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "simulations/run_protocol_contract_conformance_checks.py:67",
-          "delete_required": false,
-          "line": 67,
-          "path": "simulations/run_protocol_contract_conformance_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "flowguard_model",
-          "text": "\"display_fallback_after_pm_activation\": \"display fallback receipt is unavailable before startup reviewer fact review\","
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "simulations/run_router_next_recipient_checks.py:28",
           "delete_required": false,
@@ -7155,9 +6627,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/startup_pm_review_model.py:755",
+          "candidate_id": "simulations/startup_pm_review_model.py:717",
           "delete_required": false,
-          "line": 755,
+          "line": 717,
           "path": "simulations/startup_pm_review_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7166,9 +6638,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "simulations/startup_pm_review_model.py:807",
+          "candidate_id": "simulations/startup_pm_review_model.py:769",
           "delete_required": false,
-          "line": 807,
+          "line": 769,
           "path": "simulations/startup_pm_review_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7176,37 +6648,70 @@
           "text": "failures.append(\"PM opened startup before old-route cleanup matched the user request\")"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/startup_pm_review_model.py:937",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/startup_pm_review_model.py:871",
           "delete_required": false,
-          "line": 937,
+          "line": 871,
           "path": "simulations/startup_pm_review_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "failures.append(\"PM recorded single-agent fallback without reviewer-verified role-binding capability evidence\")"
+          "text": "failures.append(\"PM recorded unsupported role continuity without reviewer-verified role-binding capability evidence\")"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/startup_pm_review_model.py:942",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/startup_pm_review_model.py:873",
           "delete_required": false,
-          "line": 942,
+          "line": 873,
           "path": "simulations/startup_pm_review_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "failures.append(\"PM recorded manual-resume fallback without reviewer-verified scheduled-continuation evidence\")"
+          "text": "failures.append(\"PM recorded unsupported role continuity instead of blocking or repairing the current capability gap\")"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "simulations/startup_pm_review_model.py:947",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/startup_pm_review_model.py:878",
           "delete_required": false,
-          "line": 947,
+          "line": 878,
           "path": "simulations/startup_pm_review_model.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "flowguard_model",
-          "text": "failures.append(\"PM recorded chat-display fallback without reviewer-verified Cockpit evidence\")"
+          "text": "failures.append(\"PM recorded unsupported manual continuation without reviewer-verified scheduled-continuation evidence\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/startup_pm_review_model.py:880",
+          "delete_required": false,
+          "line": 880,
+          "path": "simulations/startup_pm_review_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "failures.append(\"PM recorded unsupported manual continuation instead of blocking or repairing the current continuation gap\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/startup_pm_review_model.py:885",
+          "delete_required": false,
+          "line": 885,
+          "path": "simulations/startup_pm_review_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "failures.append(\"PM recorded unsupported chat display without reviewer-verified Cockpit evidence\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "simulations/startup_pm_review_model.py:887",
+          "delete_required": false,
+          "line": 887,
+          "path": "simulations/startup_pm_review_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "flowguard_model",
+          "text": "failures.append(\"PM recorded unsupported chat display instead of blocking or repairing the current display gap\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -7240,39 +6745,6 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "try:  # pragma: no cover - direct script fallback."
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py:34",
-          "delete_required": false,
-          "line": 34,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "fallback = {"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py:41",
-          "delete_required": false,
-          "line": 41,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "ledger[\"display_surface\"] = fallback"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py:43",
-          "delete_required": false,
-          "line": 43,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/cockpit.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "return {\"fallback\": fallback, \"event\": event}"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -7331,9 +6803,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:343",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py:347",
           "delete_required": false,
-          "line": 343,
+          "line": 347,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/control_surface.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7353,9 +6825,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py:117",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py:151",
           "delete_required": false,
-          "line": 117,
+          "line": 151,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/role_handoff.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7375,9 +6847,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:19",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:18",
           "delete_required": false,
-          "line": 19,
+          "line": 18,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7386,9 +6858,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:418",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:457",
           "delete_required": false,
-          "line": 418,
+          "line": 457,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7397,9 +6869,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:487",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:526",
           "delete_required": false,
-          "line": 487,
+          "line": 526,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7408,9 +6880,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:1085",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:1124",
           "delete_required": false,
-          "line": 1085,
+          "line": 1124,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7419,9 +6891,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:1963",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:2040",
           "delete_required": false,
-          "line": 1963,
+          "line": 2040,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7429,10 +6901,65 @@
           "text": "f\"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] has unsupported kind\""
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:4664",
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:2598",
           "delete_required": false,
-          "line": 4664,
+          "line": 2598,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "\"\"\"Retire old repair-chain packet targets once a fresh current packet exists.\"\"\""
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:4307",
+          "delete_required": false,
+          "line": 4307,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "raise BlackBoxRuntimeError(f\"unsupported role assignment disposition: {disposition}\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5171",
+          "delete_required": false,
+          "line": 5171,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "return \"packet result uses unsupported outcome alias field(s): \" + \",\".join(alias_keys)"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5236",
+          "delete_required": false,
+          "line": 5236,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "return \"FlowGuard fallback evidence is forbidden; submit real FlowGuard evidence or a toolchain blocker\""
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5282",
+          "delete_required": false,
+          "line": 5282,
+          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "\"Do not reuse obsolete field names, wrapper shapes, fallback evidence, or prior blocked text as passing evidence. \""
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:6936",
+          "delete_required": false,
+          "line": 6936,
           "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7440,55 +6967,11 @@
           "text": "raise BlackBoxRuntimeError(f\"unsupported router-internal action: {action_type}\")"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5363",
-          "delete_required": false,
-          "line": 5363,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "def _packet_recovery_responsibility(ledger: Mapping[str, Any], packet_id: str, fallback: str = \"\") -> str:"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py:5370",
-          "delete_required": false,
-          "line": 5370,
-          "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "return fallback"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_new.py:4",
-          "delete_required": false,
-          "line": 4,
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "then hands all authority to ``flowpilot_core_runtime``. The old router remains"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_new.py:35",
-          "delete_required": false,
-          "line": 35,
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "try:  # pragma: no cover - direct script fallback."
-        },
-        {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_new.py:620",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_new_cli.py:204",
           "delete_required": false,
-          "line": 620,
-          "path": "skills/flowpilot/assets/flowpilot_new.py",
+          "line": 204,
+          "path": "skills/flowpilot/assets/flowpilot_new_cli.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
@@ -7562,9 +7045,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_artifact_validation.py:234",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_artifact_validation.py:236",
           "delete_required": false,
-          "line": 234,
+          "line": 236,
           "path": "skills/flowpilot/assets/flowpilot_router_artifact_validation.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7573,9 +7056,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:198",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:200",
           "delete_required": false,
-          "line": 198,
+          "line": 200,
           "path": "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7584,9 +7067,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:205",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:207",
           "delete_required": false,
-          "line": 205,
+          "line": 207,
           "path": "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7595,25 +7078,14 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:214",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:216",
           "delete_required": false,
-          "line": 214,
+          "line": 216,
           "path": "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "issues.append(f\"{context}: unsupported optional_commit_target: {target}\")"
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:217",
-          "delete_required": false,
-          "line": 217,
-          "path": "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "issues.append(f\"{context}: unsupported packet_authority_required policy\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -7624,13 +7096,24 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
-          "text": "issues.append(f\"{context}: unsupported repair_transaction_required policy\")"
+          "text": "issues.append(f\"{context}: unsupported packet_authority_required policy\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:221",
           "delete_required": false,
           "line": 221,
+          "path": "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
+          "text": "issues.append(f\"{context}: unsupported repair_transaction_required policy\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_control_transactions.py:223",
+          "delete_required": false,
+          "line": 223,
           "path": "skills/flowpilot/assets/flowpilot_router_control_transactions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7650,9 +7133,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_evidence.py:51",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_evidence.py:56",
           "delete_required": false,
-          "line": 51,
+          "line": 56,
           "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_packet_fold_evidence.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7661,25 +7144,14 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_writes.py:164",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_writes.py:169",
           "delete_required": false,
-          "line": 164,
+          "line": 169,
           "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_writes.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise RouterError(f'unsupported controller receipt status: {status}')"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_writes.py:208",
-          "delete_required": false,
-          "line": 208,
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_writes.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, scheduler_fold_owner: str='fallback') -> dict[str, Any]:"
         },
         {
           "action": "needs_structuremesh_before_facade_delete",
@@ -7691,17 +7163,6 @@
           "structuremesh_gate_required": true,
           "surface": "runtime_code",
           "text": "dependency so shared state writers and public entrypoints remain compatible."
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby_task.py:102",
-          "delete_required": false,
-          "line": 102,
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_standby_task.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "\"plan_item\": f\"FlowPilot continuous standby: this is the final fallback row when all ordinary Controller rows are complete but FlowPilot is still running. Keep this row in progress as a continuous monitoring duty and foreground anti-exit pa"
         },
         {
           "action": "needs_structuremesh_before_facade_delete",
@@ -7735,28 +7196,6 @@
           "structuremesh_gate_required": true,
           "surface": "runtime_code",
           "text": "dependency so shared state writers and public entrypoints remain compatible."
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_blocker_actions.py:72",
-          "delete_required": false,
-          "line": 72,
-          "path": "skills/flowpilot/assets/flowpilot_router_events_repair_blocker_actions.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "return ([PM_CONTROL_BLOCKER_REPAIR_DECISION_EVENT], {**issue, 'fallback': 'pm_must_resubmit_control_blocker_repair_decision', 'previous_allowed_resolution_events': raw_events})"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_blocker_actions.py:191",
-          "delete_required": false,
-          "line": 191,
-          "path": "skills/flowpilot/assets/flowpilot_router_events_repair_blocker_actions.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "wait_extra['event_contract_issue'] = {'reason': 'repair_transaction_missing_producer_evidence', 'repair_transaction_id': transaction.get('transaction_id'), 'plan_kind': mode, 'fallback': 'pm_must_resubmit_control_blocker_repair_decision'}"
         },
         {
           "action": "needs_structuremesh_before_facade_delete",
@@ -7804,9 +7243,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_gate_decisions.py:73",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_gate_decisions.py:78",
           "delete_required": false,
-          "line": 73,
+          "line": 78,
           "path": "skills/flowpilot/assets/flowpilot_router_events_repair_gate_decisions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7815,9 +7254,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_gate_decisions.py:138",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_gate_decisions.py:143",
           "delete_required": false,
-          "line": 138,
+          "line": 143,
           "path": "skills/flowpilot/assets/flowpilot_router_events_repair_gate_decisions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7870,9 +7309,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py:147",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py:152",
           "delete_required": false,
-          "line": 147,
+          "line": 152,
           "path": "skills/flowpilot/assets/flowpilot_router_events_repair_repair_decisions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7947,9 +7386,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_internal_actions.py:194",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_internal_actions.py:196",
           "delete_required": false,
-          "line": 194,
+          "line": 196,
           "path": "skills/flowpilot/assets/flowpilot_router_internal_actions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -7957,114 +7396,15 @@
           "text": "raise RouterError(f\"unsupported Router-internal mechanical action: {action_type}\")"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py:4",
-          "delete_required": false,
-          "line": 4,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "record writing, and exception blocker fallback helpers. Public and private"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py:1",
-          "delete_required": false,
-          "line": 1,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "\"\"\"Exception blocker fallback helpers for FlowPilot router lifecycle requests.\"\"\""
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py:68",
-          "delete_required": false,
-          "line": 68,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "fallback = {"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py:82",
-          "delete_required": false,
-          "line": 82,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "handle.write(json.dumps(fallback, sort_keys=True) + \"\\n\")"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py:83",
-          "delete_required": false,
-          "line": 83,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "fallback[\"fallback_diagnostic_path\"] = project_relative(project_root, failure_path)"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py:84",
-          "delete_required": false,
-          "line": 84,
-          "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "return fallback"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py:113",
-          "delete_required": false,
-          "line": 113,
-          "path": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "\"fallback display was attempted, include display_surface_receipt with the actual surface and host result.\""
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py:115",
-          "delete_required": false,
-          "line": 115,
-          "path": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "reviewer_check=\"Reviewer checks requested cockpit versus actual cockpit/fallback reality when Cockpit was requested.\","
-        },
-        {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py:252",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py:254",
           "delete_required": false,
-          "line": 252,
+          "line": 254,
           "path": "skills/flowpilot/assets/flowpilot_router_payload_contracts_startup.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "\"missing, cancelled, completed, unknown, or timeout_unknown host liveness must open a replacement from current-run memory instead of continuing to wait on the old role.\","
-        },
-        {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_role_output_bridge.py:318",
-          "delete_required": false,
-          "line": 318,
-          "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "raise RouterError(f\"unsupported role envelope path key: {path_key}\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -8075,13 +7415,24 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
+          "text": "raise RouterError(f\"unsupported role envelope path key: {path_key}\")"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_role_output_bridge.py:322",
+          "delete_required": false,
+          "line": 322,
+          "path": "skills/flowpilot/assets/flowpilot_router_role_output_bridge.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
           "text": "raise RouterError(f\"unsupported role envelope hash key: {hash_key}\")"
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_evidence.py:135",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_evidence.py:137",
           "delete_required": false,
-          "line": 135,
+          "line": 137,
           "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_evidence.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8090,9 +7441,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py:158",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py:160",
           "delete_required": false,
-          "line": 158,
+          "line": 160,
           "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_nodes_parent.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8101,9 +7452,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_capabilities.py:116",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_capabilities.py:118",
           "delete_required": false,
-          "line": 116,
+          "line": 118,
           "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_capabilities.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8112,9 +7463,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_resume.py:76",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_resume.py:78",
           "delete_required": false,
-          "line": 76,
+          "line": 78,
           "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_planning_resume.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8134,9 +7485,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_frontier_policy_registry.py:147",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_route_frontier_policy_registry.py:152",
           "delete_required": false,
-          "line": 147,
+          "line": 152,
           "path": "skills/flowpilot/assets/flowpilot_router_route_frontier_policy_registry.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8156,9 +7507,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_self_interrogation_proofs.py:73",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_self_interrogation_proofs.py:75",
           "delete_required": false,
-          "line": 73,
+          "line": 75,
           "path": "skills/flowpilot/assets/flowpilot_router_self_interrogation_proofs.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8167,9 +7518,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_bootloader_actions.py:143",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_bootloader_actions.py:145",
           "delete_required": false,
-          "line": 143,
+          "line": 145,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_bootloader_actions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8178,9 +7529,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_bootloader_actions.py:163",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_bootloader_actions.py:165",
           "delete_required": false,
-          "line": 163,
+          "line": 165,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_bootloader_actions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8189,36 +7540,14 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_closure.py:158",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_closure.py:160",
           "delete_required": false,
-          "line": 158,
+          "line": 160,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_closure.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "issues.append('imported old artifacts still claim current authority')"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_display.py:297",
-          "delete_required": false,
-          "line": 297,
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_display.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "return make_action(action_type='write_display_surface_status', actor='controller', label='controller_writes_startup_display_surface_status', summary='Display the startup FlowPilot Route Sign Mermaid in chat, then write startup display-surfa"
-        },
-        {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_checks.py:143",
-          "delete_required": false,
-          "line": 143,
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_checks.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "requirements.append({'id': 'cockpit_or_display_fallback_reality', 'reason': 'Router can record selected display mode and chat fallback, but live Cockpit availability or fallback necessity requires direct review when requested.', 'self_attes"
         },
         {
           "action": "needs_structuremesh_before_facade_delete",
@@ -8233,9 +7562,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_intake_validation.py:196",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_intake_validation.py:198",
           "delete_required": false,
-          "line": 196,
+          "line": 198,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_validation.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8244,9 +7573,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_intake_validation.py:206",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_intake_validation.py:208",
           "delete_required": false,
-          "line": 206,
+          "line": 208,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_intake_validation.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8255,9 +7584,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_resume_binding_records.py:108",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_resume_binding_records.py:110",
           "delete_required": false,
-          "line": 108,
+          "line": 110,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_resume_binding_records.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8266,9 +7595,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py:93",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py:95",
           "delete_required": false,
-          "line": 93,
+          "line": 95,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8277,9 +7606,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py:210",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py:212",
           "delete_required": false,
-          "line": 210,
+          "line": 212,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_role_context.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8288,25 +7617,14 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py:216",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py:218",
           "delete_required": false,
-          "line": 216,
+          "line": 218,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "old = slots_by_role.get(role, {})"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py:217",
-          "delete_required": false,
-          "line": 217,
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "old_epoch = old.get('role_binding_epoch')"
         },
         {
           "action": "manual_review",
@@ -8317,13 +7635,24 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
+          "text": "old_epoch = old.get('role_binding_epoch')"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py:221",
+          "delete_required": false,
+          "line": 221,
+          "path": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
           "text": "superseded = list(old.get('superseded_agent_ids') or []) if isinstance(old.get('superseded_agent_ids'), list) else []"
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py:223",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py:225",
           "delete_required": false,
-          "line": 223,
+          "line": 225,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_role_no_output.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8332,9 +7661,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_core.py:132",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_core.py:134",
           "delete_required": false,
-          "line": 132,
+          "line": 134,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_core.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8343,25 +7672,14 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py:97",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py:99",
           "delete_required": false,
-          "line": 97,
+          "line": 99,
           "path": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
           "text": "raise RouterError(f'role recovery record has unsupported role_key: {role!r}')"
-        },
-        {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py:145",
-          "delete_required": false,
-          "line": 145,
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_code",
-          "text": "raise RouterError(f'{role} old-agent restore result requires restore_attempted=true and restore_result=success')"
         },
         {
           "action": "manual_review",
@@ -8372,13 +7690,24 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_code",
+          "text": "raise RouterError(f'{role} old-agent restore result requires restore_attempted=true and restore_result=success')"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py:149",
+          "delete_required": false,
+          "line": 149,
+          "path": "skills/flowpilot/assets/flowpilot_router_startup_role_transactions_records.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_code",
           "text": "raise RouterError(f'{role} old-agent restore requires confirmed_existing_agent liveness decision')"
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_system_cards_returns.py:222",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_system_cards_returns.py:224",
           "delete_required": false,
-          "line": 222,
+          "line": 224,
           "path": "skills/flowpilot/assets/flowpilot_router_system_cards_returns.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8420,9 +7749,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py:102",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py:107",
           "delete_required": false,
-          "line": 102,
+          "line": 107,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8431,9 +7760,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py:105",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py:110",
           "delete_required": false,
-          "line": 105,
+          "line": 110,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8442,9 +7771,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py:106",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py:111",
           "delete_required": false,
-          "line": 106,
+          "line": 111,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8464,9 +7793,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py:53",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py:58",
           "delete_required": false,
-          "line": 53,
+          "line": 58,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8475,9 +7804,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py:54",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py:59",
           "delete_required": false,
-          "line": 54,
+          "line": 59,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8486,9 +7815,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py:55",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py:60",
           "delete_required": false,
-          "line": 55,
+          "line": 60,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_validation.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8519,9 +7848,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py:237",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py:242",
           "delete_required": false,
-          "line": 237,
+          "line": 242,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_next_actions.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8541,9 +7870,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py:116",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py:121",
           "delete_required": false,
-          "line": 116,
+          "line": 121,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8552,9 +7881,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py:58",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py:63",
           "delete_required": false,
-          "line": 58,
+          "line": 63,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_flowguard_operator.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8563,9 +7892,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py:59",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py:64",
           "delete_required": false,
-          "line": 59,
+          "line": 64,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_lifecycle_index.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8574,9 +7903,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py:81",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py:86",
           "delete_required": false,
-          "line": 81,
+          "line": 86,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_package_disposition.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8585,9 +7914,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_request.py:170",
+          "candidate_id": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_request.py:175",
           "delete_required": false,
-          "line": 170,
+          "line": 175,
           "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_request.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8915,9 +8244,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md:154",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md:156",
           "delete_required": false,
-          "line": 154,
+          "line": 156,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_closure.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -8936,26 +8265,26 @@
           "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md:31",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md:33",
           "delete_required": false,
-          "line": 31,
+          "line": 33,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "- any heartbeat claim cites the latest current-run heartbeat record, not old state;"
+          "text": "- unsupported continuation capability becomes a PM blocker or explicit"
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md:32",
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md:36",
           "delete_required": false,
-          "line": 32,
+          "line": 36,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_continuation_capability_binding.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "- unsupported continuation capability becomes a PM blocker or manual-resume plan."
+          "text": "Do not let Controller continue route work from a stale status note, old Router"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -9212,9 +8541,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:65",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:72",
           "delete_required": false,
-          "line": 65,
+          "line": 72,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9223,9 +8552,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:123",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:130",
           "delete_required": false,
-          "line": 123,
+          "line": 130,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9234,9 +8563,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:176",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:183",
           "delete_required": false,
-          "line": 176,
+          "line": 183,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9245,9 +8574,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:194",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md:201",
           "delete_required": false,
-          "line": 194,
+          "line": 201,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_node_acceptance_plan.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9388,25 +8717,25 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md:31",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md:30",
           "delete_required": false,
-          "line": 31,
+          "line": 30,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "or old concept assets as current route authority."
+          "text": "screenshots, prior icons, old concept assets, stale role reports, or fixed"
         },
         {
-          "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md:64",
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md:77",
           "delete_required": false,
-          "line": 64,
+          "line": 77,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "run `agent_id` values, old role slots, or unrehydrated memory packets cannot"
+          "text": "only for currently requested responsibilities. Prior run `agent_id` values, old"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -9421,9 +8750,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:88",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:99",
           "delete_required": false,
-          "line": 88,
+          "line": 99,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9432,9 +8761,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:89",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:100",
           "delete_required": false,
-          "line": 89,
+          "line": 100,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9443,9 +8772,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:111",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:124",
           "delete_required": false,
-          "line": 111,
+          "line": 124,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9454,9 +8783,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:153",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:166",
           "delete_required": false,
-          "line": 153,
+          "line": 166,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9465,9 +8794,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:154",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md:167",
           "delete_required": false,
-          "line": 154,
+          "line": 167,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9486,32 +8815,10 @@
           "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md:32",
-          "delete_required": false,
-          "line": 32,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "- explicit user-approved fallback for dispatched role work."
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md:47",
-          "delete_required": false,
-          "line": 47,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "until PM records a replacement or fallback decision."
-        },
-        {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md:50",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md:54",
           "delete_required": false,
-          "line": 50,
+          "line": 54,
           "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_role_binding_recovery_freshness.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9638,17 +8945,6 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "status, chat history, old route files, or your own assumptions."
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md:46",
-          "delete_required": false,
-          "line": 46,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_startup_activation.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "- coverage for runtime-requested role bindings or an explicit fallback path;"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -9795,9 +9091,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md:60",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md:70",
           "delete_required": false,
-          "line": 60,
+          "line": 70,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9806,9 +9102,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md:61",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md:71",
           "delete_required": false,
-          "line": 61,
+          "line": 71,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9882,28 +9178,6 @@
           "text": "next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Co"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md:46",
-          "delete_required": false,
-          "line": 46,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "Cockpit/fallback behavior is real. Those facts remain reviewer-owned unless the"
-        },
-        {
-          "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md:71",
-          "delete_required": false,
-          "line": 71,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "explicit same-task rehydration/fallback evidence;"
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/strict_gate_obligation_review.md:8",
           "delete_required": false,
@@ -9927,9 +9201,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:102",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:106",
           "delete_required": false,
-          "line": 102,
+          "line": 106,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9938,9 +9212,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:138",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:142",
           "delete_required": false,
-          "line": 138,
+          "line": 142,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9949,9 +9223,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:139",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:143",
           "delete_required": false,
-          "line": 139,
+          "line": 143,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9960,9 +9234,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:142",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:146",
           "delete_required": false,
-          "line": 142,
+          "line": 146,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9971,9 +9245,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:143",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md:147",
           "delete_required": false,
-          "line": 143,
+          "line": 147,
           "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/worker_result_review.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -9993,9 +9267,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:105",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:116",
           "delete_required": false,
-          "line": 105,
+          "line": 116,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10004,9 +9278,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:183",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:195",
           "delete_required": false,
-          "line": 183,
+          "line": 195,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10015,20 +9289,20 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:184",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:196",
           "delete_required": false,
-          "line": 184,
+          "line": 196,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "explicit diagnostic or repair instruction names that old-run fallback."
+          "text": "explicit diagnostic or repair instruction names that old-run recovery target."
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:276",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md:289",
           "delete_required": false,
-          "line": 276,
+          "line": 289,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10070,9 +9344,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:110",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:119",
           "delete_required": false,
-          "line": 110,
+          "line": 119,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10081,9 +9355,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:152",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:161",
           "delete_required": false,
-          "line": 152,
+          "line": 161,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10092,9 +9366,9 @@
         },
         {
           "action": "keep_current_structural_term",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:153",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:162",
           "delete_required": false,
-          "line": 153,
+          "line": 162,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10103,14 +9377,47 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:159",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:168",
           "delete_required": false,
-          "line": 159,
+          "line": 168,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
           "text": "and validation evidence. Do not silently translate old artifacts, old field"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:411",
+          "delete_required": false,
+          "line": 411,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "FlowPilot is a current-contract runtime. PM must not ask roles to preserve old"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:412",
+          "delete_required": false,
+          "line": 412,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "field names, old packet families, newest-run fallbacks, repo-root fallbacks, or"
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md:423",
+          "delete_required": false,
+          "line": 423,
+          "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_card",
+          "text": "candidate ledgers, compatibility aliases, fallback paths, or prose-only"
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -10136,9 +9443,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md:62",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md:63",
           "delete_required": false,
-          "line": 62,
+          "line": 63,
           "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10169,9 +9476,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:135",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:139",
           "delete_required": false,
-          "line": 135,
+          "line": 139,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10180,9 +9487,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:172",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md:176",
           "delete_required": false,
-          "line": 172,
+          "line": 176,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10202,14 +9509,14 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:18",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:19",
           "delete_required": false,
-          "line": 18,
+          "line": 19,
           "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "runtime_card",
-          "text": "the returned lifecycle guard and foreground duty. Do not classify the old work"
+          "text": "returned lifecycle guard and foreground duty. Do not classify the old work"
         },
         {
           "action": "manual_review",
@@ -10245,17 +9552,6 @@
           "text": "old icons, old concept assets, or chat history as route authority."
         },
         {
-          "action": "manual_review",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md:79",
-          "delete_required": false,
-          "line": 79,
-          "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_card",
-          "text": "For mid-run role recovery, follow the same ladder in order: restore the old"
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/cards/system/startup_banner.md:9",
           "delete_required": false,
@@ -10278,17 +9574,6 @@
           "text": "Do not infer the next FlowPilot action from this card, chat history, prior prompts, unsupported command text, daemon state, or historical artifacts. System-card ACKs, current work-package outputs, and formal role-output submissions go direc"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "skills/flowpilot/assets/runtime_kit/prompts/controller/action_ledger_table.md:9",
-          "delete_required": false,
-          "line": 9,
-          "path": "skills/flowpilot/assets/runtime_kit/prompts/controller/action_ledger_table.md",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "runtime_prompt",
-          "text": "If all ordinary rows are complete, enter the final fallback row: continuous_controller_standby. This row is a continuous monitoring duty, not a finishable checklist item. Its purpose is to prevent accidental foreground exit while FlowPilot "
-        },
-        {
           "action": "keep_current_structural_term",
           "candidate_id": "skills/flowpilot/assets/runtime_kit/prompts/README.md:20",
           "delete_required": false,
@@ -10298,6 +9583,17 @@
           "structuremesh_gate_required": false,
           "surface": "runtime_prompt",
           "text": "PromptStore. Do not add inline fallback copies for hash-managed prompt text."
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md:1",
+          "delete_required": false,
+          "line": 1,
+          "path": "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "runtime_prompt",
+          "text": "Resume the active FlowPilot run ${run_id} in ${project_root} by recording a manual lifecycle resume through `flowpilot_new.py resume --reason manual_resume`, then follow the returned lifecycle guard and foreground duty. Every resume must re"
         },
         {
           "action": "keep_current_structural_term",
@@ -10363,7 +9659,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "self.assertNotEqual(current[\"current_run_id\"], \"run-old-running\")"
+          "text": "self.assertNotEqual(current[\"run_id\"], \"run-old-running\")"
         },
         {
           "action": "manual_review",
@@ -10454,17 +9750,6 @@
           "text": "payload={\"report_path\": \".flowpilot/runs/test/reviews/unsupported.json\"},"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "tests/router_runtime/control_blockers.py:535",
-          "delete_required": false,
-          "line": 535,
-          "path": "tests/router_runtime/control_blockers.py",
-          "rewrite_required": false,
-          "structuremesh_gate_required": false,
-          "surface": "test",
-          "text": "action[\"event_contract_issue\"][\"fallback\"],"
-        },
-        {
           "action": "keep_negative_rejection_evidence",
           "candidate_id": "tests/router_runtime/control_blockers.py:551",
           "delete_required": false,
@@ -10477,9 +9762,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "tests/router_runtime/control_blockers.py:646",
+          "candidate_id": "tests/router_runtime/control_blockers.py:650",
           "delete_required": false,
-          "line": 646,
+          "line": 650,
           "path": "tests/router_runtime/control_blockers.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10693,7 +9978,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "\"current_run_id\": \"run-old-stopped\","
+          "text": "\"run_id\": \"run-old-stopped\","
         },
         {
           "action": "manual_review",
@@ -10704,7 +9989,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "\"current_run_root\": \".flowpilot/runs/run-old-stopped\","
+          "text": "\"run_root\": \".flowpilot/runs/run-old-stopped\","
         },
         {
           "action": "manual_review",
@@ -10715,7 +10000,7 @@
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "self.assertNotEqual(current[\"current_run_id\"], \"run-old-stopped\")"
+          "text": "self.assertNotEqual(current[\"run_id\"], \"run-old-stopped\")"
         },
         {
           "action": "manual_review",
@@ -10774,9 +10059,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:92",
+          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:110",
           "delete_required": false,
-          "line": 92,
+          "line": 110,
           "path": "tests/test_flowpilot_complete_system_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10785,9 +10070,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:133",
+          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:362",
           "delete_required": false,
-          "line": 133,
+          "line": 362,
           "path": "tests/test_flowpilot_complete_system_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10796,9 +10081,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:165",
+          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:394",
           "delete_required": false,
-          "line": 165,
+          "line": 394,
           "path": "tests/test_flowpilot_complete_system_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10807,9 +10092,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:197",
+          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:426",
           "delete_required": false,
-          "line": 197,
+          "line": 426,
           "path": "tests/test_flowpilot_complete_system_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10817,32 +10102,32 @@
           "text": "ledger[\"old_ui_evidence\"].append(\"old screenshot\")"
         },
         {
-          "action": "keep_current_safety_fallback",
-          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:234",
+          "action": "manual_review",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:410",
           "delete_required": false,
-          "line": 234,
-          "path": "tests/test_flowpilot_complete_system_runtime.py",
+          "line": 410,
+          "path": "tests/test_flowpilot_core_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "fallback = cockpit.record_display_surface_fallback(ledger, \"cockpit_unavailable\")"
+          "text": "\"route_nodes\": [{\"node_id\": \"node-1\", \"title\": \"Old alias\"}],"
         },
         {
-          "action": "keep_current_structural_term",
-          "candidate_id": "tests/test_flowpilot_complete_system_runtime.py:237",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:656",
           "delete_required": false,
-          "line": 237,
-          "path": "tests/test_flowpilot_complete_system_runtime.py",
+          "line": 656,
+          "path": "tests/test_flowpilot_core_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
-          "text": "self.assertTrue(fallback[\"fallback\"][\"route_sign_required\"])"
+          "text": "\"FlowGuard attempted forbidden fallback evidence.\","
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_core_runtime.py:220",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:852",
           "delete_required": false,
-          "line": 220,
+          "line": 852,
           "path": "tests/test_flowpilot_core_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10851,14 +10136,36 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_core_runtime.py:526",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:1327",
           "delete_required": false,
-          "line": 526,
+          "line": 1327,
           "path": "tests/test_flowpilot_core_runtime.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
           "surface": "test",
           "text": "\"The old topology check failed before this repair.\","
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:1474",
+          "delete_required": false,
+          "line": 1474,
+          "path": "tests/test_flowpilot_core_runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "json.dumps({\"decision\": removed, \"reason\": \"old menu value\"}),"
+        },
+        {
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "tests/test_flowpilot_core_runtime.py:1770",
+          "delete_required": false,
+          "line": 1770,
+          "path": "tests/test_flowpilot_core_runtime.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"summary\": \"legacy reason fallback must not be accepted\","
         },
         {
           "action": "manual_review",
@@ -10895,9 +10202,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:479",
+          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:621",
           "delete_required": false,
-          "line": 479,
+          "line": 621,
           "path": "tests/test_flowpilot_high_standard_control_flow.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10906,9 +10213,9 @@
         },
         {
           "action": "keep_negative_rejection_evidence",
-          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:491",
+          "candidate_id": "tests/test_flowpilot_high_standard_control_flow.py:633",
           "delete_required": false,
-          "line": 491,
+          "line": 633,
           "path": "tests/test_flowpilot_high_standard_control_flow.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -10936,6 +10243,61 @@
           "structuremesh_gate_required": false,
           "surface": "test",
           "text": "json.dumps({\"ok\": True, \"note\": \"retaining modelability names as unsupported_historical aliases\"}),"
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "tests/test_flowpilot_maintenance_tools.py:213",
+          "delete_required": false,
+          "line": 213,
+          "path": "tests/test_flowpilot_maintenance_tools.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "self.assertNotIn(\"fallback\", text)"
+        },
+        {
+          "action": "keep_current_recovery_branch",
+          "candidate_id": "tests/test_flowpilot_maintenance_tools.py:227",
+          "delete_required": false,
+          "line": 227,
+          "path": "tests/test_flowpilot_maintenance_tools.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"single-agent fallback\","
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "tests/test_flowpilot_maintenance_tools.py:228",
+          "delete_required": false,
+          "line": 228,
+          "path": "tests/test_flowpilot_maintenance_tools.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"user fallback\","
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "tests/test_flowpilot_maintenance_tools.py:231",
+          "delete_required": false,
+          "line": 231,
+          "path": "tests/test_flowpilot_maintenance_tools.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"native/fallback\","
+        },
+        {
+          "action": "keep_current_structural_term",
+          "candidate_id": "tests/test_flowpilot_maintenance_tools.py:232",
+          "delete_required": false,
+          "line": 232,
+          "path": "tests/test_flowpilot_maintenance_tools.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"chat fallback\","
         },
         {
           "action": "keep_negative_rejection_evidence",
@@ -11005,9 +10367,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_router_boundaries.py:532",
+          "candidate_id": "tests/test_flowpilot_router_boundaries.py:535",
           "delete_required": false,
-          "line": 532,
+          "line": 535,
           "path": "tests/test_flowpilot_router_boundaries.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -11016,9 +10378,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_router_boundaries.py:533",
+          "candidate_id": "tests/test_flowpilot_router_boundaries.py:536",
           "delete_required": false,
-          "line": 533,
+          "line": 536,
           "path": "tests/test_flowpilot_router_boundaries.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -11059,10 +10421,21 @@
           "text": "names.add(alias.asname or alias.name)"
         },
         {
-          "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_synthetic_agent_trace_replay.py:579",
+          "action": "keep_negative_rejection_evidence",
+          "candidate_id": "tests/test_flowpilot_startup_pm_review_model.py:38",
           "delete_required": false,
-          "line": 579,
+          "line": 38,
+          "path": "tests/test_flowpilot_startup_pm_review_model.py",
+          "rewrite_required": false,
+          "structuremesh_gate_required": false,
+          "surface": "test",
+          "text": "\"PM recorded unsupported role continuity instead of blocking or repairing the current capability gap\","
+        },
+        {
+          "action": "manual_review",
+          "candidate_id": "tests/test_flowpilot_synthetic_agent_trace_replay.py:536",
+          "delete_required": false,
+          "line": 536,
           "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -11071,9 +10444,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_synthetic_agent_trace_replay.py:594",
+          "candidate_id": "tests/test_flowpilot_synthetic_agent_trace_replay.py:551",
           "delete_required": false,
-          "line": 594,
+          "line": 551,
           "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -11082,9 +10455,9 @@
         },
         {
           "action": "manual_review",
-          "candidate_id": "tests/test_flowpilot_synthetic_agent_trace_replay.py:602",
+          "candidate_id": "tests/test_flowpilot_synthetic_agent_trace_replay.py:559",
           "delete_required": false,
-          "line": 602,
+          "line": 559,
           "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
           "rewrite_required": false,
           "structuremesh_gate_required": false,
@@ -11225,17 +10598,17 @@
         }
       ],
       "counts": {
-        "keep_change_rationale_or_historical_note": 34,
-        "keep_current_safety_fallback": 27,
-        "keep_current_structural_term": 133,
-        "keep_negative_rejection_evidence": 511,
-        "manual_review": 280,
+        "keep_change_rationale_or_historical_note": 29,
+        "keep_current_recovery_branch": 2,
+        "keep_current_structural_term": 82,
+        "keep_negative_rejection_evidence": 519,
+        "manual_review": 296,
         "needs_structuremesh_before_facade_delete": 35
       },
       "invariant_failures": [],
       "labels": [
         "keep_change_rationale_or_historical_note",
-        "keep_current_safety_fallback",
+        "keep_current_recovery_branch",
         "keep_current_structural_term",
         "keep_negative_rejection_evidence",
         "manual_review",
@@ -11249,15 +10622,15 @@
       "ok": true,
       "reachability_failure_count": 0,
       "reachability_failures": [],
-      "summary": "sequences=1020 initial_states=1 traces=1020",
+      "summary": "sequences=963 initial_states=1 traces=963",
       "violation_count": 0
     },
     "hazards": {
       "hazards": {
-        "current_safety_deleted": {
+        "current_recovery_deleted": {
           "detected": true,
           "failures": [
-            "current safety fallback was classified for deletion",
+            "current recovery branch was classified for deletion",
             "delete action did not mark deletion required"
           ],
           "state": {
@@ -11265,14 +10638,14 @@
             "candidate_id": "",
             "delete_required": false,
             "kept_context_note": false,
-            "kept_current_safety_fallback": false,
+            "kept_current_recovery_branch": false,
             "kept_current_structural_term": false,
             "kept_negative_evidence": false,
             "manual_review_required": false,
             "rewrite_required": false,
             "status": "classified",
             "structuremesh_gate_required": false,
-            "wrongly_deleted_current_safety": true,
+            "wrongly_deleted_current_recovery": true,
             "wrongly_deleted_negative_evidence": false,
             "wrongly_kept_old_acceptance": false
           }
@@ -11287,14 +10660,14 @@
             "candidate_id": "",
             "delete_required": false,
             "kept_context_note": false,
-            "kept_current_safety_fallback": false,
+            "kept_current_recovery_branch": false,
             "kept_current_structural_term": false,
             "kept_negative_evidence": false,
             "manual_review_required": false,
             "rewrite_required": false,
             "status": "classified",
             "structuremesh_gate_required": false,
-            "wrongly_deleted_current_safety": false,
+            "wrongly_deleted_current_recovery": false,
             "wrongly_deleted_negative_evidence": false,
             "wrongly_kept_old_acceptance": false
           }
@@ -11310,14 +10683,14 @@
             "candidate_id": "",
             "delete_required": false,
             "kept_context_note": false,
-            "kept_current_safety_fallback": false,
+            "kept_current_recovery_branch": false,
             "kept_current_structural_term": false,
             "kept_negative_evidence": false,
             "manual_review_required": false,
             "rewrite_required": false,
             "status": "classified",
             "structuremesh_gate_required": false,
-            "wrongly_deleted_current_safety": false,
+            "wrongly_deleted_current_recovery": false,
             "wrongly_deleted_negative_evidence": true,
             "wrongly_kept_old_acceptance": false
           }
@@ -11332,14 +10705,14 @@
             "candidate_id": "",
             "delete_required": false,
             "kept_context_note": false,
-            "kept_current_safety_fallback": false,
+            "kept_current_recovery_branch": false,
             "kept_current_structural_term": false,
             "kept_negative_evidence": false,
             "manual_review_required": false,
             "rewrite_required": false,
             "status": "classified",
             "structuremesh_gate_required": false,
-            "wrongly_deleted_current_safety": false,
+            "wrongly_deleted_current_recovery": false,
             "wrongly_deleted_negative_evidence": false,
             "wrongly_kept_old_acceptance": true
           }
@@ -11354,20 +10727,20 @@
       "stuck_state_samples": []
     },
     "safe_graph": {
-      "edge_count": 1020,
+      "edge_count": 963,
       "invariant_failure_count": 0,
       "invariant_failures": [],
       "labels": [
         "keep_change_rationale_or_historical_note",
-        "keep_current_safety_fallback",
+        "keep_current_recovery_branch",
         "keep_current_structural_term",
         "keep_negative_rejection_evidence",
         "manual_review",
         "needs_structuremesh_before_facade_delete"
       ],
       "ok": true,
-      "state_count": 1021,
-      "terminal_count": 1020
+      "state_count": 964,
+      "terminal_count": 963
     }
   },
   "immediate_cleanup_count": 0,

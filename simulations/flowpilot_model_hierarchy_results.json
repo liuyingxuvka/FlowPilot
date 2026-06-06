@@ -278,7 +278,7 @@
     "heavyweight_threshold": 10000,
     "large_child_models": [],
     "missing_child_results": [],
-    "ok": true,
+    "ok": false,
     "parents": [
       {
         "edge_count": 18,
@@ -320,7 +320,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-04T21:13:14.181983+00:00",
+            "created_at": "2026-06-05T21:20:38.435526+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -342,7 +342,7 @@
         "tier": "small"
       },
       {
-        "edge_count": 14,
+        "edge_count": 15,
         "layered_full_regression": {
           "current": false,
           "proof": {
@@ -358,7 +358,7 @@
           }
         },
         "model_id": "capability",
-        "ok": true,
+        "ok": false,
         "proof": {
           "created_at": "2026-06-04T18:30:24.412361+00:00",
           "edge_count": 16,
@@ -375,28 +375,28 @@
         "result_file": "simulations/capability_thin_parent_results.json",
         "result_type": "thin_parent",
         "role": "thin_parent",
-        "routine_confidence": "current",
+        "routine_confidence": "blocked",
         "routine_validation_command": "python simulations/run_capability_checks.py --fast",
         "split_review_required": true,
-        "state_count": 8,
+        "state_count": 9,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-04T21:13:18.258711+00:00",
+            "created_at": "2026-06-05T21:52:30.074492+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
-            "reason": "valid proof",
+            "reason": "previous proof was not successful",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
-            "valid": true
+            "valid": false
           },
           "result": {
-            "edge_count": 14,
+            "edge_count": 15,
             "model_id": "capability",
-            "ok": true,
+            "ok": false,
             "release_confidence": "requires_full_regression",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
-            "routine_confidence": "current",
-            "state_count": 8,
+            "routine_confidence": "blocked",
+            "state_count": 9,
             "tier": "small"
           }
         },
@@ -1238,11 +1238,11 @@
       {
         "edge_count": null,
         "model_id": "card_instruction_coverage",
-        "ok": true,
+        "ok": false,
         "registered_in_partition": true,
         "result_file": "simulations/card_instruction_coverage_results.json",
         "role": "child_evidence",
-        "state_count": 65,
+        "state_count": 2,
         "tier": "small"
       },
       {
@@ -1596,13 +1596,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 3148,
+        "edge_count": 2012,
         "model_id": "startup_pm_review",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/startup_pm_review_results.json",
         "role": "child_evidence",
-        "state_count": 3149,
+        "state_count": 2013,
         "tier": "medium"
       },
       {
@@ -1621,16 +1621,18 @@
       "capability": "python simulations/run_capability_checks.py --full",
       "meta": "python simulations/run_meta_checks.py --full"
     },
-    "routine_confidence": "current",
+    "routine_confidence": "blocked",
     "routine_validation_commands": {
       "capability": "python simulations/run_capability_checks.py --fast",
       "hierarchy": "python simulations/run_flowpilot_model_hierarchy_checks.py --json-out simulations/flowpilot_model_hierarchy_results.json",
       "meta": "python simulations/run_meta_checks.py --fast"
     },
-    "thin_parent_obligations": []
+    "thin_parent_obligations": [
+      "capability"
+    ]
   },
   "model": "flowpilot_model_hierarchy",
-  "ok": true,
+  "ok": false,
   "progress": {
     "cannot_reach_terminal_count": 0,
     "cannot_reach_terminal_samples": [],

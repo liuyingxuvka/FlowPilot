@@ -79,21 +79,21 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("roles started before copied kit, placeholders, and mailbox were ready")
     if state.roles_started and not state.fresh_role_bindings_started:
         failures.append("roles were marked started without fresh current-run role-binding evidence")
-    if state.startup_fact_reported and not state.reviewer_startup_fact_check_card_delivered:
-        failures.append("reviewer startup fact report was accepted before startup fact-check card delivery")
-    if state.startup_activation_approved and not (
-        state.startup_fact_reported and state.pm_startup_activation_card_delivered
+    if state.startup_runtime_mechanical_audit_written and not state.startup_runtime_entry_completed:
+        failures.append("startup mechanical audit was recorded before Runtime startup entry completed")
+    if state.startup_user_intake_released_to_pm and not (
+        state.startup_runtime_mechanical_audit_written and state.startup_display_status_written
     ):
-        failures.append("startup activation was approved before reviewer facts and PM activation card")
+        failures.append("startup user intake was released before Runtime mechanical audit and display status")
     if state.user_intake_delivered_to_pm and not (
         state.controller_core_loaded
         and state.pm_core_delivered
         and state.pm_phase_map_delivered
         and state.pm_startup_intake_card_delivered
-        and state.startup_activation_approved
+        and state.startup_user_intake_released_to_pm
         and state.user_intake_ready
     ):
-        failures.append("user intake delivered before Controller, PM startup cards, and startup activation")
+        failures.append("user intake delivered before Controller, PM startup cards, and Runtime startup entry")
     if state.user_intake_delivered_to_pm and not state.user_intake_controller_relayed:
         failures.append("user intake delivered to PM without Controller relay")
     if state.controller_role_confirmed and not (
@@ -104,8 +104,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("Controller role confirmed without Router-owned controller.core boundary confirmation")
     role_output_exists = any(
         (
-            state.startup_fact_reported,
-            state.startup_activation_approved,
+            state.startup_runtime_mechanical_audit_written,
+            state.startup_user_intake_released_to_pm,
             state.pm_controller_reset_decision_returned,
             state.pm_material_scan_packets_issued,
             state.reviewer_dispatch_allowed,
@@ -494,7 +494,7 @@ def invariant_failures(state: State) -> list[str]:
         and state.final_ledger_built_by_pm
         and state.final_backward_replay_passed
         and state.lifecycle_reconciled
-        and state.heartbeat_stopped_or_manual_recorded
+        and state.continuation_boundary_recorded
         and state.role_binding_ledger_archived
     ):
         failures.append("PM completion decision before closure card, final replay, lifecycle, continuation cleanup, and role binding archive")
@@ -558,3 +558,4 @@ INVARIANTS = (
 
 
 __all__ = ["INVARIANTS", "invariant_failures", "prompt_isolation_invariant"]
+

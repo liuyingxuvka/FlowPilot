@@ -69,7 +69,7 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
             render_prompt_text("missing.prompt")
 
         with self.assertRaisesRegex(PromptStoreError, "missing template variables"):
-            render_prompt_text("startup.heartbeat_resume", {"run_id": "run-test"})
+            render_prompt_text("startup.lifecycle_resume", {"run_id": "run-test"})
 
         temp_root = Path(tempfile.mkdtemp(prefix="flowpilot-prompt-store-missing-"))
         try:
@@ -103,8 +103,36 @@ class FlowPilotPromptStoreTests(unittest.TestCase):
 
         encoded = json.dumps(manifest, sort_keys=True)
         self.assertIn("controller.action_ledger_table", encoded)
-        self.assertIn("startup.heartbeat_resume", encoded)
+        self.assertIn("startup.lifecycle_resume", encoded)
+        self.assertNotIn("startup.manual_resume", encoded)
         self.assertIn("packets.packet_identity_boundary", encoded)
+
+    def test_lifecycle_resume_prompt_uses_current_runtime_without_heartbeat(self) -> None:
+        text = render_prompt_text(
+            "startup.lifecycle_resume",
+            {
+                "project_root": "C:/repo",
+                "run_id": "run-test",
+            },
+        )
+
+        self.assertIn("flowpilot_new.py resume --reason manual_resume", text)
+        self.assertIn("lifecycle guard", text)
+        self.assertIn("foreground duty", text)
+        self.assertIn("currently requested responsibility", text)
+        self.assertIn("do not restore a fixed role set or prewarm all roles", text)
+        self.assertNotIn("heartbeat", text.lower())
+        self.assertNotIn("rehydrat", text.lower())
+
+    def test_current_runtime_kit_cards_and_prompts_do_not_use_manual_resume(self) -> None:
+        runtime_kit = ASSETS / "runtime_kit"
+        scanned = list((runtime_kit / "cards").rglob("*.md")) + list((runtime_kit / "prompts").rglob("*.md"))
+        self.assertTrue(scanned)
+        for path in scanned:
+            with self.subTest(path=str(path.relative_to(runtime_kit))):
+                text = path.read_text(encoding="utf-8").lower()
+                self.assertNotIn("heartbeat", text)
+                self.assertNotIn("rehydrat", text)
 
     def test_packet_prompt_assets_render_without_inline_fallback(self) -> None:
         packet_boundary = render_prompt_text(

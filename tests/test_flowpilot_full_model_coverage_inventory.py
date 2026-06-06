@@ -18,8 +18,16 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         runner_count = len(list((ROOT / "simulations").glob("run_*checks.py")))
         self.assertEqual(report["runner_count"], runner_count)
         self.assertGreaterEqual(report["runner_count"], 90)
-        self.assertNotIn("runner_not_ok", report["gap_class_counts"])
-        self.assertNotIn("live_runtime_or_state_findings", report["gap_class_counts"])
+        self.assertEqual(
+            report["gap_class_counts"].get("runner_not_ok"),
+            1,
+            "only the final confidence gate may be blocked in an offline maintenance clone",
+        )
+        self.assertEqual(
+            report["gap_class_counts"].get("live_runtime_or_state_findings"),
+            1,
+            "only the no-current-run live boundary may be present in an offline maintenance clone",
+        )
         self.assertNotIn("source_or_code_findings", report["gap_class_counts"])
         self.assertNotIn("missing_or_scoped_replay_adapter", report["gap_class_counts"])
         self.assertNotIn("skipped_or_scoped_evidence", report["gap_class_counts"])
@@ -35,6 +43,13 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         if not report["full_coverage_ok"]:
             self.assertGreater(report["deferred_structure_split_count"], 0)
         self.assertIn("replay evidence manifest", report["claim_boundary"])
+
+        records = {record["runner"]: record for record in report["records"]}
+        self.assertIn("runner_not_ok", records["flowpilot_final_confidence_gate"]["gap_classes"])
+        self.assertEqual(
+            records["flowpilot_model_mesh"]["finding_counts"],
+            {"modeled_current_live_hit_fix_runtime_or_current_state": 1},
+        )
 
     def test_inventory_marks_source_audited_and_scoped_replay_boundaries(self) -> None:
         report = inventory.build_inventory()
@@ -54,6 +69,19 @@ class FlowPilotFullModelCoverageInventoryTests(unittest.TestCase):
         )
         self.assertNotIn("runner_not_ok", records["meta"]["gap_classes"])
         self.assertIn("currently_consumable_inventory_evidence", records["meta"]["gap_classes"])
+
+    def test_inventory_accepts_repository_relative_evidence_paths(self) -> None:
+        report = inventory.build_inventory(
+            sweep_path=Path("simulations/flowpilot_full_model_coverage_sweep_results.json"),
+            alignment_path=Path("simulations/flowpilot_model_test_alignment_results.json"),
+            replay_evidence_path=Path("simulations/flowpilot_full_model_replay_evidence.json"),
+        )
+
+        self.assertEqual(report["sweep_path"], "simulations/flowpilot_full_model_coverage_sweep_results.json")
+        self.assertEqual(report["alignment_path"], "simulations/flowpilot_model_test_alignment_results.json")
+        self.assertEqual(report["replay_evidence_path"], "simulations/flowpilot_full_model_replay_evidence.json")
+        self.assertTrue(report["sweep_ok"])
+        self.assertTrue(report["alignment_ok"])
 
 
 if __name__ == "__main__":

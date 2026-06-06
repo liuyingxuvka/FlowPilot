@@ -5,31 +5,10 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
 
 class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
-    def test_runtime_write_lock_exception_does_not_materialize_pm_semantic_blocker(self) -> None:
-        root = self.make_project()
-        self.boot_to_controller(root)
-
-        blocker = router._try_write_control_blocker_for_exception(  # type: ignore[attr-defined]
-            root,
-            source="router.record_external_event",
-            error_message=(
-                "runtime ledger write is still in progress: "
-                f"{root / '.flowpilot' / 'runs' / 'run-test' / 'runtime' / 'controller_actions' / 'controller-action-1.json'} "
-                "(active runtime JSON write lock)"
-            ),
-            event="reviewer_reports_startup_facts",
-            payload=self.role_report_envelope(
-                root,
-                "reviews/startup_facts_runtime_write_lock",
-                {"reviewed_by_role": "human_like_reviewer", "passed": True},
-            ),
-        )
-
-        self.assertIsNone(blocker)
     def test_control_blocker_reviewer_followup_rejects_pm_origin(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
 
@@ -219,8 +198,8 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state["flags"]["continuation_binding_recorded"] = True
         state["events"].append(
             {
-                "event": "host_records_heartbeat_binding",
-                "summary": "Host recorded the active run heartbeat/manual-resume binding before startup fact review.",
+                "event": "host_records_manual_resume_binding",
+                "summary": "Host recorded the active run manual-resume binding before PM startup work.",
                 "payload": {},
                 "recorded_at": "2026-05-05T00:00:00Z",
             }
@@ -231,13 +210,13 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="envelope payload leaked role body fields to Controller: passed",
-            event="host_records_heartbeat_binding",
+            event="host_records_manual_resume_binding",
             payload={"from_role": "host", "passed": True},
         )
         self.assertEqual(blocker["handling_lane"], "fatal_protocol_violation")
 
         self.assertTrue(self.handle_pending_control_blocker(root))
-        result = router.record_external_event(root, "host_records_heartbeat_binding")
+        result = router.record_external_event(root, "host_records_manual_resume_binding")
 
         self.assertTrue(result["already_recorded"])
         self.assertNotIn("control_blocker_resolved", result)
@@ -253,8 +232,8 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state["flags"]["continuation_binding_recorded"] = True
         state["events"].append(
             {
-                "event": "host_records_heartbeat_binding",
-                "summary": "Host recorded the active run heartbeat/manual-resume binding before startup fact review.",
+                "event": "host_records_manual_resume_binding",
+                "summary": "Host recorded the active run manual-resume binding before PM startup work.",
                 "payload": {},
                 "recorded_at": "2026-05-05T00:00:00Z",
             }
@@ -265,7 +244,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="envelope payload leaked role body fields to Controller: passed",
-            event="host_records_heartbeat_binding",
+            event="host_records_manual_resume_binding",
             payload={"from_role": "host", "passed": True},
         )
         self.assertEqual(blocker["handling_lane"], "fatal_protocol_violation")
@@ -273,7 +252,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(self.handle_pending_control_blocker(root))
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
-            rerun_target="host_records_heartbeat_binding",
+            rerun_target="host_records_manual_resume_binding",
         )
         decision["repair_transaction"] = {"plan_kind": "await_existing_event"}
         router.record_external_event(
@@ -289,9 +268,9 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(state_path)
         self.assertEqual(state["active_control_blocker"]["blocker_id"], blocker["blocker_id"])
         self.assertEqual(state["active_control_blocker"]["pm_repair_decision_status"], "recorded")
-        self.assertIn("host_records_heartbeat_binding", state["active_control_blocker"]["allowed_resolution_events"])
+        self.assertIn("host_records_manual_resume_binding", state["active_control_blocker"]["allowed_resolution_events"])
 
-        result = router.record_external_event(root, "host_records_heartbeat_binding")
+        result = router.record_external_event(root, "host_records_manual_resume_binding")
 
         self.assertTrue(result["already_recorded"])
         self.assertTrue(result["control_blocker_resolved"])
@@ -311,7 +290,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
             state,
             source="test",
             error_message="envelope payload leaked role body fields to Controller: passed",
-            event="host_records_heartbeat_binding",
+            event="host_records_manual_resume_binding",
             payload={"from_role": "host", "passed": True},
         )
         self.assertEqual(blocker["policy_row_id"], "fatal_protocol_violation")
@@ -320,10 +299,10 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(self.handle_pending_control_blocker(root))
         body = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
-            rerun_target="host_records_heartbeat_binding",
+            rerun_target="host_records_manual_resume_binding",
         )
         body["recovery_option"] = "allowed_waiver"
-        body["return_gate"] = "host_records_heartbeat_binding"
+        body["return_gate"] = "host_records_manual_resume_binding"
         with self.assertRaisesRegex(router.RouterError, "not allowed by blocker policy"):
             router.record_external_event(
                 root,
@@ -333,7 +312,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_repair_transaction_recheck_blocker_registers_followup_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -398,7 +377,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_repair_transaction_protocol_blocker_registers_followup_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -532,11 +511,11 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["pm_records_control_blocker_repair_decision"])
         self.assertEqual(
-            action["event_contract_issue"]["fallback"],
+            action["event_contract_issue"]["required_repair_command"],
             "pm_must_resubmit_control_blocker_repair_decision",
         )
 
-    def test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision(self) -> None:
+    def test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         state_path = router.run_state_path(run_root)
@@ -597,6 +576,10 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["to_role"], "project_manager")
         self.assertEqual(action["allowed_external_events"], ["pm_records_control_blocker_repair_decision"])
         self.assertEqual(action["event_contract_issue"]["reason"], "repair_transaction_missing_producer_evidence")
+        self.assertEqual(
+            action["event_contract_issue"]["required_repair_command"],
+            "pm_must_resubmit_control_blocker_repair_decision",
+        )
     def test_pm_repair_decision_accepts_registered_rerun_target_and_waits_for_it(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
@@ -650,7 +633,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(self.handle_pending_control_blocker(root))
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
-            rerun_target="host_records_heartbeat_binding",
+            rerun_target="host_records_manual_resume_binding",
         )
         decision["repair_transaction"] = {"plan_kind": "event_replay"}
 
@@ -676,7 +659,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(self.handle_pending_control_blocker(root))
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
-            rerun_target="host_records_heartbeat_binding",
+            rerun_target="host_records_manual_resume_binding",
         )
         decision["repair_transaction"] = {
             "plan_kind": "operation_replay",
@@ -698,7 +681,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_material_operation_replay_uses_current_generation_action(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         material_index = read_json(run_root / "material" / "material_scan_packets.json")
@@ -715,7 +698,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(self.handle_pending_control_blocker(root))
         decision = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
-            rerun_target="host_records_heartbeat_binding",
+            rerun_target="host_records_manual_resume_binding",
         )
         decision["repair_transaction"] = {
             "plan_kind": "operation_replay",
@@ -1011,3 +994,4 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "handle_control_blocker")
         self.assertEqual(action["to_role"], "human_like_reviewer")
+

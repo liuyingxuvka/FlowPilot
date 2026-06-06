@@ -11,8 +11,8 @@ entrypoint for migrated events.
 
 #### Scenario: Stable event handlers are migrated first
 
-- **GIVEN** heartbeat/manual resume, stop/cancel, heartbeat binding, or route
-  activation events are submitted
+- **GIVEN** manual resume, stop/cancel, daemon-liveness, or route activation
+  events are submitted
 - **WHEN** the unsupported historical entrypoint receives the event
 - **THEN** it MAY delegate to a handler table
 - **AND** the observable result and persisted state MUST match the pre-refactor

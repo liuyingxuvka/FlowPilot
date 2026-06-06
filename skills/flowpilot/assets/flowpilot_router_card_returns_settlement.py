@@ -75,8 +75,11 @@ def _reconcile_card_bundle_wait_rows(router: ModuleType, project_root: Path, run
 
 def _router_release_startup_user_intake_to_pm(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, source: str) -> dict[str, Any]:
     del project_root, run_root
-    if not run_state.get('flags', {}).get('startup_activation_approved'):
-        return {'released': False, 'reason': 'startup_activation_not_approved', 'requires_flag': 'startup_activation_approved'}
+    flags = run_state.get('flags', {})
+    required_flags = ['startup_mechanical_audit_written', 'startup_display_status_written']
+    missing_flags = [flag for flag in required_flags if not flags.get(flag)]
+    if missing_flags:
+        return {'released': False, 'reason': 'startup_runtime_mechanics_not_ready', 'requires_all_flags': required_flags, 'missing_flags': missing_flags}
     return {'released': False, 'reason': 'controller_deliver_mail_required', 'requires_action': 'deliver_mail', 'mail_id': 'user_intake', 'to_role': 'project_manager', 'source': source}
 
 def _run_router_return_settlement_finalizers(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, source: str) -> dict[str, Any]:
@@ -211,7 +214,7 @@ def _run_router_return_settlement_finalizers(router: ModuleType, project_root: P
             run_state['pending_action'] = None
             router.append_history(run_state, 'router_return_settlement_cleared_pending_card_bundle_wait', {'source': source, 'card_bundle_id': bundle_id, 'card_return_event': event})
         if router._startup_pm_card_bundle_ack_record(record):
-            startup_release = {'released': False, 'reason': 'controller_deliver_mail_required' if run_state.get('flags', {}).get('startup_activation_approved') else 'startup_activation_not_approved', 'requires_flag': 'startup_activation_approved', 'requires_action': 'deliver_mail', 'mail_id': 'user_intake', 'to_role': 'project_manager', 'source': source}
+            startup_release = router._router_release_startup_user_intake_to_pm(project_root, run_root, run_state, source=source)
     startup_release_changed = bool(startup_release and (startup_release.get('ledger_changed') or startup_release.get('state_changed') or (startup_release.get('released') and (not startup_release.get('already_released')))))
     if normalized or wait_rows_reconciled or startup_release_changed:
         router.append_history(run_state, 'router_return_settlement_finalizers_completed', {'source': source, 'normalized_return_acks': normalized, 'normalized_card_bundle_acks': normalized_card_bundle_acks, 'normalized_single_card_acks': normalized_card_acks, 'wait_rows_reconciled': wait_rows_reconciled, 'startup_user_intake_release': startup_release})

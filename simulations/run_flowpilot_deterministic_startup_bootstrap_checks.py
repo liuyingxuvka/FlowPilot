@@ -29,8 +29,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.SEED_FAILURE_AS_PM_BLOCKER: "bootstrap seed failure was converted into a PM repair blocker before route start",
     model.RECONCILED_ROW_FALSE_PM_BLOCKER: "already reconciled scheduled row produced a control blocker",
     model.UNSUPPORTED_STARTUP_RECEIPT_ESCALATED_TO_PM: "unsupported startup receipt was escalated to PM after row reconciliation",
-    model.ROLE_SLOTS_BYPASS_SCHEDULER: "startup role slots bypassed the unified Router scheduler",
-    model.HEARTBEAT_BYPASS_SCHEDULER: "startup heartbeat binding bypassed the unified Router scheduler",
+    model.LEGACY_ROLE_SLOTS_BYPASS_SCHEDULER: "legacy startup role-slot actions bypassed the unified Router scheduler",
+    model.LEGACY_HEARTBEAT_BYPASS_SCHEDULER: "legacy startup heartbeat binding bypassed the unified Router scheduler",
     model.CONTROLLER_CORE_BEFORE_SEED_AND_SCHEDULER: "Controller core loaded before deterministic seed and scheduler handoff",
     model.CONTROLLER_READS_SEALED_USER_BODY: "Controller could read sealed startup user request body",
     model.INTAKE_WRITTEN_WITHOUT_USER_REQUEST_REF: "user intake scaffold was written without a user request reference",
@@ -48,8 +48,8 @@ def _state_id(state: model.State) -> str:
         f"{state.mailbox_initialized},{state.startup_answers_recorded},{state.user_request_ref_recorded},"
         f"{state.user_intake_scaffold_written},proof={state.bootstrap_evidence_written}|"
         f"scheduler={state.scheduler_started},deterministic_rows={state.deterministic_setup_controller_rows},"
-        f"roles={state.role_slots_scheduled},role_bypass={state.role_slots_bypassed_scheduler},"
-        f"heartbeat={state.heartbeat_requested},{state.heartbeat_scheduled},bypass={state.heartbeat_bypassed_scheduler},"
+        f"background_agent_lease={state.background_agent_lease_scheduled},legacy_role_bypass={state.legacy_role_slots_bypassed_scheduler},"
+        f"manual_resume_binding={state.manual_resume_binding_requested},{state.manual_resume_binding_scheduled},legacy_heartbeat_bypass={state.legacy_heartbeat_bypassed_scheduler},"
         f"core_sched={state.controller_core_scheduled},core_loaded={state.controller_core_loaded}|"
         f"reconcile={state.row_reconciled},replay={state.receipt_replayed},unsupported={state.unsupported_startup_receipt_action},"
         f"blocker={state.control_blocker_written},real_unsat={state.real_unsatisfied_postcondition}|"

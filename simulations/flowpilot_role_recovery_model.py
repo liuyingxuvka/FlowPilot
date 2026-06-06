@@ -1,7 +1,7 @@
 """FlowGuard model for unified FlowPilot background-role recovery.
 
 Risk intent brief:
-- Recovery is a hard control-plane priority. Any heartbeat/manual resume
+- Recovery is a hard control-plane priority. Any manual resume
   recovery or mid-run role liveness fault must enter the same recovery engine
   before normal route work, waits, gates, packets, or active blockers proceed.
 - The engine prefers targeted repair: restore the old role first, then open a
@@ -40,7 +40,7 @@ class Action:
 @dataclass(frozen=True)
 class State:
     status: str = "new"  # new | running | blocked | complete
-    trigger_source: str = "none"  # none | heartbeat | manual_resume | mid_run_fault
+    trigger_source: str = "none"  # none | manual_resume | mid_run_fault
     recovery_scope: str = "none"  # none | all_runtime_roles | targeted | full_role_binding
     target_failed_roles: int = 0
 
@@ -49,7 +49,7 @@ class State:
     priority_confirmed: bool = False
     normal_work_suspended: bool = False
     normal_work_attempted_before_recovery: bool = False
-    heartbeat_bypassed_unified_recovery: bool = False
+    resume_bypassed_unified_recovery: bool = False
     mid_run_fault_treated_as_wait: bool = False
 
     transaction_opened: bool = False
@@ -181,10 +181,6 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
 
     if state.trigger_source == "none":
-        yield Transition(
-            "heartbeat_entered_unified_recovery",
-            _start_recovery("heartbeat", "all_runtime_roles", 0),
-        )
         yield Transition(
             "manual_resume_entered_unified_recovery",
             _start_recovery("manual_resume", "all_runtime_roles", 0),
@@ -527,10 +523,10 @@ def invariant_failures(state: State) -> list[str]:
     if state.recovery_pending and state.normal_work_attempted_before_recovery:
         failures.append("normal work preempted a pending role recovery")
     if (
-        state.trigger_source in {"heartbeat", "manual_resume"}
-        and state.heartbeat_bypassed_unified_recovery
+        state.trigger_source == "manual_resume"
+        and state.resume_bypassed_unified_recovery
     ):
-        failures.append("heartbeat/manual resume bypassed unified recovery")
+        failures.append("manual resume bypassed unified recovery")
     if (
         state.trigger_source == "mid_run_fault"
         and state.mid_run_fault_treated_as_wait
@@ -634,7 +630,7 @@ INVARIANTS = (
         name="flowpilot_unified_role_recovery",
         description=(
             "Role recovery preempts normal work, uses one unified engine for "
-            "heartbeat/manual and mid-run faults, escalates from restore to "
+            "manual resume and mid-run faults, escalates from restore to "
             "targeted replacement to full role binding recycle, injects current-run "
             "memory/context before readiness, quarantines old-generation "
             "output, reconciles packet ownership, replays obligations "
@@ -702,10 +698,10 @@ def hazard_states() -> dict[str, State]:
             recovery_pending=True,
             normal_work_attempted_before_recovery=True,
         ),
-        "heartbeat_bypasses_unified_recovery": State(
+        "manual_resume_bypasses_unified_recovery": State(
             status="running",
-            trigger_source="heartbeat",
-            heartbeat_bypassed_unified_recovery=True,
+            trigger_source="manual_resume",
+            resume_bypassed_unified_recovery=True,
         ),
         "mid_run_fault_treated_as_wait": State(
             status="running",

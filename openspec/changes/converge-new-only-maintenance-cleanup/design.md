@@ -21,15 +21,15 @@ the runtime is mostly clean, but maintenance surfaces still create confusion:
 - Remove alias hooks only when real code and tests already prove current rejection or
   canonical behavior.
 - Reduce prompt/test maintenance load while preserving required card terms, role
-  boundaries, current fallbacks, and rejection tests.
+  boundaries, current recovery branches, and rejection tests.
 - Sync the installed local FlowPilot skill and commit the final local repository state.
 
 **Non-Goals:**
 
 - No release, push, tag, deploy, binary packaging, or default-branch publication.
 - No deletion of `.flowpilot/runs`, backups, or archived OpenSpec history.
-- No removal of current fallback safety paths: manual resume, Cockpit display fallback,
-  authorized single-agent fallback, or controller break-glass repair.
+- No removal of current recovery or blocking paths: manual resume, required
+  chat display, blocked role-binding recovery, or controller break-glass repair.
 - No broad router rewrite or public API contraction without parity evidence.
 
 ## Decisions
@@ -56,7 +56,7 @@ rejection tests still pass.
 ### Decision: prompt compression is obligation-preserving
 
 Runtime cards may be shortened by removing duplication, but required identity,
-runtime return, FlowGuard work-order, sealed-body, fallback, and authority language
+runtime return, FlowGuard work-order, sealed-body, recovery, and authority language
 must remain checkable by existing prompt/card validators.
 
 ### Decision: validation order matters

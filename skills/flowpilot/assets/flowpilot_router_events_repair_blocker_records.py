@@ -30,9 +30,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -267,7 +272,7 @@ def _control_blocker_matches_reconciled_action(router: ModuleType, record: dict[
     if originating_action_type == action_type and blocker_postcondition and postcondition and (blocker_postcondition == postcondition) and postcondition_satisfied:
         return 'matching_postcondition'
     if record.get('source') == 'controller_action_receipt_missing_router_postcondition' and router._boot_action_meta(action_type) is not None and postcondition and postcondition_satisfied:
-        return 'startup_bootloader_postcondition_fallback'
+        return 'startup_bootloader_postcondition_repair'
     return None
 
 __all__ = (

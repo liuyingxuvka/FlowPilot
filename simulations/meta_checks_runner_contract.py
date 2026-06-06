@@ -8,11 +8,9 @@ import meta_model as model
 REQUIRED_LABELS = (
     "startup_intake_ui_completed",
     "startup_dialog_stopped_for_user_answers",
-    "startup_display_surface_option_recorded",
     "startup_display_entry_action_done",
     "startup_banner_emitted_after_controller_core",
-    "startup_runtime_role_assistance_option_recorded",
-    "startup_continuation_option_recorded",
+    "startup_background_collaboration_ack_recorded",
     "run_directory_created",
     "current_pointer_written",
     "run_index_updated",
@@ -88,9 +86,9 @@ REQUIRED_LABELS = (
     "product_architecture_self_interrogation_record_written",
     "product_architecture_self_interrogation_findings_dispositioned",
     "dependency_plan_recorded",
-    "host_continuation_capability_supported",
-    "host_continuation_capability_unsupported_manual_resume",
-    "heartbeat_schedule_created",
+    "manual_resume_binding_capability_recorded",
+    "manual_resume_binding_unavailable_manual_resume_boundary",
+    "manual_resume_binding_configured",
     "persistent_router_daemon_started_before_controller_core",
     "pm_initial_route_decision_recorded",
     "pm_child_skill_selection_manifest_written",
@@ -120,28 +118,28 @@ REQUIRED_LABELS = (
     "user_flow_diagram_refreshed",
     "visible_user_flow_diagram_emitted",
     "user_flow_diagram_reviewer_display_checked",
-    "runtime_role_binding_start_authorized",
-    "fresh_six_runtime_role_bindings_opened",
-    "startup_preflight_reviewer_fact_report_blocked",
+    "background_collaboration_start_authorized",
+    "current_background_agents_opened",
+    "runtime_startup_entry_blocked",
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
-    "startup_preflight_reviewer_fact_report_clean",
-    "startup_pm_independent_gate_audit_done",
-    "pm_start_gate_opened_from_fact_report",
+    "runtime_startup_entry_clean",
+    "pm_first_round_startup_entry_audit_done",
+    "pm_first_round_started_after_runtime_entry",
     "continuation_resume_ready_checked",
-    "heartbeat_loaded_state",
-    "heartbeat_loaded_execution_frontier",
-    "heartbeat_loaded_packet_ledger",
-    "heartbeat_checked_or_restarted_persistent_router_daemon",
-    "heartbeat_loaded_role_binding_memory",
-    "heartbeat_host_spawn_or_rehydrate_runtime_roles",
-    "heartbeat_restored_required_role_binding_coverage",
-    "heartbeat_rehydrated_required_role_binding_coverage",
-    "heartbeat_injected_current_run_memory_into_roles",
+    "resume_loaded_state",
+    "resume_loaded_execution_frontier",
+    "resume_loaded_packet_ledger",
+    "resume_checked_or_restarted_persistent_router_daemon",
+    "resume_loaded_role_binding_memory",
+    "resume_host_spawn_or_rehydrate_runtime_roles",
+    "resume_restored_required_role_binding_coverage",
+    "resume_rehydrated_required_role_binding_coverage",
+    "resume_injected_current_run_memory_into_roles",
     "role_binding_recovery_report_written",
-    "heartbeat_asked_project_manager",
-    "heartbeat_pm_controller_reminder_checked",
-    "heartbeat_reviewer_dispatch_policy_checked",
+    "resume_asked_project_manager",
+    "resume_pm_controller_reminder_checked",
+    "resume_reviewer_dispatch_policy_checked",
     "pm_resume_completion_runway_recorded",
     "pm_runway_synced_to_visible_plan",
     "pm_node_work_decision_recorded",
@@ -354,11 +352,7 @@ def _state_id(state: model.State) -> str:
         f"{state.product_architecture_self_interrogation_record_written},"
         f"{state.product_architecture_self_interrogation_findings_dispositioned}|"
         f"user_flow={state.visible_user_flow_diagram_emitted}|"
-        f"runtime_roles={state.role_binding_policy_written},{state.role_binding_count},"
-        f"{state.project_manager_ready},{state.reviewer_ready},"
-        f"{state.flowguard_operator_route_scope_ready},"
-        f"{state.flowguard_operator_product_scope_ready},"
-        f"{state.worker_ready},{state.worker_ready},"
+        f"runtime_roles={state.role_binding_policy_written},"
         f"{state.role_binding_ledger_written},{state.role_binding_memory_policy_written},"
         f"{state.role_binding_memory_packets_written},"
         f"{state.pm_initial_route_decision_recorded},"
@@ -385,21 +379,21 @@ def _state_id(state: model.State) -> str:
         f"{state.child_skill_manifest_flowguard_operator_product_scope_approved},"
         f"{state.child_skill_manifest_pm_approved_for_route}|"
         f"continuation={state.continuation_probe_done},"
-        f"{state.host_continuation_supported},"
-        f"{state.manual_resume_mode_recorded},"
+        f"{state.manual_resume_binding_supported},"
+        f"{state.manual_resume_boundary_recorded},"
         f"{state.continuation_host_kind_recorded},"
         f"{state.continuation_evidence_written}|"
-        f"heartbeat_schedule={state.heartbeat_schedule_created}|"
-        f"heartbeat_recovery={state.heartbeat_loaded_state},"
-        f"{state.heartbeat_loaded_frontier},"
-        f"{state.heartbeat_loaded_role_binding_memory},"
-        f"{state.heartbeat_host_rehydrate_requested},"
-        f"{state.heartbeat_restored_runtime_roles},"
-        f"{state.heartbeat_rehydrated_runtime_roles},"
-        f"{state.heartbeat_injected_current_run_memory_into_roles},"
+        f"manual_resume_binding={state.manual_resume_binding_configured}|"
+        f"resume_recovery={state.resume_loaded_state},"
+        f"{state.resume_loaded_frontier},"
+        f"{state.resume_loaded_role_binding_memory},"
+        f"{state.resume_host_rehydrate_requested},"
+        f"{state.resume_restored_runtime_roles},"
+        f"{state.resume_rehydrated_runtime_roles},"
+        f"{state.resume_injected_current_run_memory_into_roles},"
         f"{state.role_binding_recovery_report_written},"
         f"{state.replacement_roles_seeded_from_memory},"
-        f"{state.heartbeat_pm_decision_requested},"
+        f"{state.resume_pm_decision_requested},"
         f"{state.pm_resume_decision_recorded},"
         f"{state.pm_completion_runway_recorded},"
         f"{state.pm_runway_hard_stops_recorded},"
@@ -408,11 +402,11 @@ def _state_id(state: model.State) -> str:
         f"{state.plan_sync_method_recorded},"
         f"{state.visible_plan_has_runway_depth},"
         f"{state.pm_node_decision_recorded}|"
-        f"stable_heartbeat={state.stable_heartbeat_launcher_recorded}|"
-        f"continuation_ready={state.heartbeat_health_checked}|"
-        f"continuation_lifecycle={state.heartbeat_schedule_created},"
-        f"{state.route_heartbeat_interval_minutes},"
-        f"{state.manual_resume_mode_recorded},"
+        f"stable_manual_resume_binding={state.stable_manual_resume_launcher_recorded}|"
+        f"continuation_ready={state.manual_resume_binding_health_checked}|"
+        f"continuation_lifecycle={state.manual_resume_binding_configured},"
+        f"{state.manual_resume_binding_interval_seconds},"
+        f"{state.manual_resume_boundary_recorded},"
         f"{state.lifecycle_reconciliation_done},"
         f"{state.terminal_lifecycle_frontier_written}|"
         f"fg_design={state.flowguard_process_design_done},"
@@ -432,15 +426,14 @@ def _state_id(state: model.State) -> str:
         f"resource_ledgers={state.generated_resource_ledger_initialized},"
         f"{state.activity_stream_initialized},"
         f"{state.activity_stream_latest_event_written}|"
-        f"runtime_role_bindings={state.runtime_role_assistance_decision_recorded},"
+        f"background_collaboration={state.background_collaboration_start_decision_recorded},"
         f"{state.runtime_role_bindings_opened},"
         f"{state.runtime_role_bindings_current_task_ready},"
         f"{state.historical_agent_ids_compared},"
-        f"{state.reused_historical_agent_ids},"
-        f"{state.single_agent_role_continuity_authorized}|"
+        f"{state.reused_historical_agent_ids}|"
         f"startup_review_run={state.startup_reviewer_checked_run_isolation},"
         f"{state.startup_reviewer_checked_prior_work_boundary},"
-        f"{state.startup_pm_independent_gate_audit_done}|"
+        f"{state.pm_first_round_startup_entry_audit_done}|"
         f"work_beyond_startup={state.work_beyond_startup_allowed}|"
         f"unfinished_recovery={state.unfinished_current_node_recovery_checked}|"
         f"parent_subtree={state.parent_subtree_review_checked},"
@@ -580,3 +573,4 @@ def _state_id(state: model.State) -> str:
         f"sub={state.sidecar_role_status}|gate={state.high_risk_gate}|"
         f"rev={state.route_revisions}|retry={state.impl_retries}|exp={state.experiments}"
     )
+

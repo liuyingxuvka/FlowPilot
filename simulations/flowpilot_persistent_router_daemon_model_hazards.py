@@ -25,7 +25,7 @@ def hazard_states() -> dict[str, State]:
         startup_next_row_scheduled_after_receipt=True,
         controller_attached=True,
         roles_live=True,
-        heartbeat_active=True,
+        manual_resume_binding_active=True,
         route_work_allowed=True,
     )
     return {
@@ -514,10 +514,10 @@ def hazard_states() -> dict[str, State]:
             safe_active,
             controller_called_router_next_as_metronome=True,
         ),
-        "heartbeat_started_second_live_daemon": replace(
+        "patrol_started_second_live_daemon": replace(
             safe_active,
-            heartbeat_woke=True,
-            heartbeat_started_second_daemon=True,
+            manual_resume_woke=True,
+            patrol_started_second_daemon=True,
             daemon_writer_count=2,
         ),
         "terminal_stop_scheduled_startup_row": replace(
@@ -531,11 +531,11 @@ def hazard_states() -> dict[str, State]:
             daemon_writer_count=0,
             controller_attached=False,
             roles_live=False,
-            heartbeat_active=False,
+            manual_resume_binding_active=False,
             route_work_allowed=False,
             startup_row_scheduled_after_terminal_fence=True,
         ),
-        "terminal_stop_scheduled_heartbeat_binding": replace(
+        "terminal_stop_scheduled_patrol_binding": replace(
             safe_active,
             lifecycle="terminal",
             terminal_fence_written=True,
@@ -546,9 +546,9 @@ def hazard_states() -> dict[str, State]:
             daemon_writer_count=0,
             controller_attached=False,
             roles_live=False,
-            heartbeat_active=False,
+            manual_resume_binding_active=False,
             route_work_allowed=False,
-            heartbeat_binding_scheduled_after_terminal_fence=True,
+            patrol_binding_scheduled_after_terminal_fence=True,
         ),
         "terminal_projection_stale_next_step": replace(
             safe_active,
@@ -561,7 +561,7 @@ def hazard_states() -> dict[str, State]:
             daemon_writer_count=0,
             controller_attached=False,
             roles_live=False,
-            heartbeat_active=False,
+            manual_resume_binding_active=False,
             route_work_allowed=False,
         ),
         "terminal_cleanup_lock_blocked_fence": replace(
@@ -576,7 +576,7 @@ def hazard_states() -> dict[str, State]:
             daemon_writer_count=0,
             controller_attached=False,
             roles_live=False,
-            heartbeat_active=False,
+            manual_resume_binding_active=False,
             route_work_allowed=False,
         ),
         "terminal_left_runtime_active": State(
@@ -590,8 +590,9 @@ def hazard_states() -> dict[str, State]:
             controller_core_loaded=True,
             controller_attached=True,
             roles_live=True,
-            heartbeat_active=True,
+            manual_resume_binding_active=True,
             route_work_allowed=True,
             current_wait="ack",
         ),
     }
+

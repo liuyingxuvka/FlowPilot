@@ -167,7 +167,7 @@ INVARIANTS = (
         name="control_plane_duty_invariants",
         description=(
             "New FlowPilot control-plane duty must reuse the old 1s internal tick "
-            "and 60s foreground patrol split, fold safe internals to a boundary, "
+            "and 60s manual resume binding split, fold safe internals to a boundary, "
             "keep status read-only, and require structured PM repair decisions."
         ),
         predicate=invariant,

@@ -446,7 +446,7 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         packet_template = normalized(ROOT / "templates/flowpilot/packets/packet_body.template.md")
         pm_card = normalized(_card_path_by_id("pm.core"))
         pm_startup_intake_card = _card_path_by_id("pm.startup_intake")
-        pm_verified_open_cards = _card_paths_by_id("pm.startup_activation", "pm.review_repair")
+        pm_verified_open_cards = _card_paths_by_id("pm.review_repair")
         ordinary_role_cards = _card_paths_by_id(
             "worker.core",
             "worker.research_report",
@@ -464,15 +464,14 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             self.assertIn("flowpilot_new.py ack", text)
             self.assertIn("flowpilot_new.py open-packet", text)
             self.assertIn("flowpilot_new.py submit-result", text)
-            self.assertIn("pm_startup_repair_request", text)
-            self.assertIn("pm_startup_protocol_dead_end", text)
-            self.assertIn("pm_control_blocker_repair_decision", text)
             self.assertIn("ordinary blocker back to pm", text)
+        self.assertIn("current control-blocker repair decision", packet_template)
+        self.assertIn("pm_control_blocker_repair_decision", pm_card)
 
         intake_text = normalized(pm_startup_intake_card)
         self.assertIn("flowpilot_new.py open-packet", intake_text)
         self.assertIn("runtime-generated", intake_text)
-        self.assertIn("full `user_intake` body remains router-held until pm approves startup activation", intake_text)
+        self.assertIn("full `user_intake` body before runtime delivers the current pm mail item", intake_text)
         self.assertIn("ordinary blocker back to pm", intake_text)
 
         for path in pm_verified_open_cards:

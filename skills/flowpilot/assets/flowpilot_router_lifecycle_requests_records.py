@@ -15,6 +15,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -85,7 +87,7 @@ def _write_run_lifecycle_request(
 
     current_path = project_root / ".flowpilot" / "current.json"
     current = read_json_if_exists(current_path) or {}
-    if (current.get("run_id") or current.get("current_run_id")) == run_state.get("run_id"):
+    if current.get("run_id") == run_state.get("run_id"):
         current["status"] = mode
         current["updated_at"] = utc_now()
         write_json(current_path, current)
@@ -122,7 +124,7 @@ def _write_protocol_dead_end_lifecycle(
             "run_id": run_state.get("run_id"),
             "status": mode,
             "requested_by": "project_manager",
-            "request_event": "pm_declares_startup_protocol_dead_end",
+            "request_event": "protocol_dead_end",
             "reason": reason,
             "protocol_dead_end_path": project_relative(project_root, dead_end_path),
             "previous_pending_action": previous_pending,
@@ -144,7 +146,7 @@ def _write_protocol_dead_end_lifecycle(
 
     current_path = project_root / ".flowpilot" / "current.json"
     current = read_json_if_exists(current_path) or {}
-    if (current.get("run_id") or current.get("current_run_id")) == run_state.get("run_id"):
+    if current.get("run_id") == run_state.get("run_id"):
         current["status"] = mode
         current["updated_at"] = utc_now()
         write_json(current_path, current)

@@ -59,7 +59,7 @@ class State:
     controller_read_sealed_body: bool = False
     pm_or_target_role_wait_exposed: bool = False
     chain_broken: bool = False
-    heartbeat_required_for_recovery: bool = False
+    current_resume_recovery_required: bool = False
     non_control_error_swallowed: bool = False
 
 
@@ -196,7 +196,7 @@ def hazard_states() -> dict[str, State]:
             status="plain_error_failed",
             runtime_exit_code="failure",
             chain_broken=True,
-            heartbeat_required_for_recovery=True,
+            current_resume_recovery_required=True,
         ),
         "blocked_result_missing_control_blocker": replace(
             safe_blocked,
@@ -244,7 +244,7 @@ def hazard_states() -> dict[str, State]:
 
 def control_blocker_error_does_not_break_controller_chain(state: State, trace) -> InvariantResult:
     del trace
-    if state.control_blocker_written and (state.chain_broken or state.heartbeat_required_for_recovery):
+    if state.control_blocker_written and (state.chain_broken or state.current_resume_recovery_required):
         return InvariantResult.fail("control blocker RouterError broke controller chain instead of returning Router next_action")
     if state.control_blocker_written and state.runtime_exit_code == "failure":
         return InvariantResult.fail("control blocker RouterError exited as failure")

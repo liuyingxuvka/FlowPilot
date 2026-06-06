@@ -61,5 +61,5 @@ and the role rehydration report.
 - Do not expose sealed packet, result, or role-output bodies to Controller.
 - Do not use progress status as a pass/fail decision or approval signal.
 - Do not remove the required-role resume gate.
-- Do not change single-agent fallback semantics.
+- Do not loosen single-agent continuity block/repair semantics.
 - Do not run repo-wide formatting or broad cleanup.

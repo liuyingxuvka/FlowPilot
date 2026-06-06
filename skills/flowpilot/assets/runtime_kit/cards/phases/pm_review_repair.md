@@ -58,6 +58,13 @@ context and the reviewer block source path. Do not create a repair node from
 the current block alone if older completed, failed, superseded, stale, or
 experimental history changes the correct repair shape.
 
+Also read `recent_role_report_summary` when the PM repair packet includes it.
+It contains role-authored summaries, not runner-generated prose. Use concrete
+Reviewer `blocking_findings[].required_repair` and role summaries to avoid
+repeating the same small defect in each new repair node. If the summary is
+missing from a role result, treat that as a runtime result-contract issue, not
+as permission for PM to infer the role's sealed findings.
+
 If PM runs a focused repair-strategy self-interrogation, write a
 `flowpilot.self_interrogation_record.v1` with scope `repair` and register it
 in `self_interrogation_index.json`. Hard/current findings from that record

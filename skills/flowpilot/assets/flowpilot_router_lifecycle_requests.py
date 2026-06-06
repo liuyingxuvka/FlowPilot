@@ -1,7 +1,7 @@
 """Lifecycle request owner public facade for the FlowPilot router.
 
 The behavior is split into terminal fencing, terminal reconciliation, lifecycle
-record writing, and exception blocker fallback helpers. Public and private
+record writing, and exception blocker diagnostic helpers. Public and private
 public names remain available from this module.
 """
 
@@ -31,6 +31,8 @@ _OWNER_CHILD_MODULES = (
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())

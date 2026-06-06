@@ -1042,14 +1042,14 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _inc(
                 state,
                 current_status_stopped=True,
-                continuation_heartbeat_active=False,
+                manual_resume_binding_active=False,
                 runtime_role_live_agents_active=False,
                 packet_loop_active=False,
                 frontier_terminal=True,
                 terminal_snapshot_published=True,
                 terminal_snapshot_flags_consistent=True,
                 terminal_continuation_cleanup_recorded=True,
-                terminal_host_automation_cleanup_proven=True,
+                terminal_lifecycle_cleanup_proven=True,
             ),
         )
         return
@@ -1072,3 +1072,5 @@ __all__ = [
     "ControlPlaneStep",
     "next_safe_states",
 ]
+
+

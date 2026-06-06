@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -56,6 +58,9 @@ OWNER_MODULE = 'flowpilot_router_startup_role_recovery'
 
 def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], payload: dict[str, Any]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     _bind_router(router)
+    startup_answers = run_state.get('startup_answers') if isinstance(run_state.get('startup_answers'), dict) else {}
+    if startup_answers.get('background_collaboration_authorized') is not True:
+        raise RouterError('role recovery requires background_collaboration_authorized=true')
     if payload.get('runtime_role_assistance_capability_status') != 'available':
         raise RouterError('role recovery requires runtime_role_assistance_capability_status=available')
     transaction = router._latest_role_recovery_transaction(run_root)
@@ -74,7 +79,9 @@ def _normalize_role_recovery_agent_records(router: ModuleType, project_root: Pat
     payload_targets = payload.get('target_role_keys')
     if payload_targets != target_roles:
         raise RouterError('role recovery target_role_keys mismatch')
-    raw_records = payload.get('recovered_role_bindings') or payload.get('role_bindings')
+    if 'role_bindings' in payload:
+        raise RouterError('role recovery requires payload.recovered_role_bindings; old role_bindings aliases are unsupported')
+    raw_records = payload.get('recovered_role_bindings')
     if isinstance(raw_records, dict):
         iterable = list(raw_records.values())
     elif isinstance(raw_records, list):

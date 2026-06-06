@@ -30,9 +30,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -105,6 +110,8 @@ def _should_materialize_control_blocker(router: ModuleType, message: str, *, eve
         return False
     if 'requires a file-backed body path' in lowered and (not payload):
         return False
+    if 'active execution frontier is missing route or node' in lowered:
+        return True
     material_markers = ('requires a file-backed body path', 'requires a body/report/decision hash', 'role body path is missing', 'role body hash mismatch', 'leaked role body fields to controller', 'must be reviewed_by_role', 'must explicitly pass', 'gate report must', 'requires direct_material_sources_checked', 'requires packet_matches_checked_sources', 'requires pm_ready', 'packet group reviewer audit failed', 'reviewer pass rejected by packet audit', 'current-node result failed packet runtime audit', 'controller-origin', 'wrong role', 'wrong-role', 'result_completed_by_wrong_role', 'completed_agent_id', 'packet_ledger_missing_result_absorption', 'packet_ledger_missing_packet_body_open_receipt', 'packet_ledger_missing_result_body_open_receipt', 'ledger open receipt is invalid', 'packet ledger missing packet body open receipt', 'packet ledger missing result absorption', 'packet ledger missing result body open receipt', 'envelope target mismatch', 'private role-to-role', 'controller delivery violation', 'contaminated envelope', 'body was not opened', 'unopened', 'packet body hash mismatch', 'result body hash mismatch', 'role output runtime receipt', 'body_ref', 'runtime_receipt_ref', 'quality_pack_checks', 'self-interrogation', 'self_interrogation')
     if any((marker in lowered for marker in material_markers)):
         return True
@@ -124,8 +131,8 @@ def _skill_observation_reminder(router: ModuleType, message: str, *, event: str 
         suggested_kind = 'ledger_gap'
     elif 'display_plan' in lowered or 'visible plan' in lowered:
         suggested_kind = 'display_projection_gap'
-    elif 'heartbeat' in lowered or 'pause' in lowered or 'resume' in lowered:
-        suggested_kind = 'heartbeat_gap'
+    elif 'pause' in lowered or 'resume' in lowered or 'manual resume binding' in lowered:
+        suggested_kind = 'resume_lifecycle_gap'
     elif 'schema' in lowered or 'field' in lowered or 'hash' in lowered or ('path' in lowered):
         suggested_kind = 'schema_gap'
     return {'schema_version': 'flowpilot.skill_observation_reminder.v1', 'should_consider_recording': True, 'reason': 'router_control_plane_exception', 'originating_event': event, 'originating_action_type': action_type, 'handling_lane': category, 'suggested_kind': suggested_kind, 'summary': message, 'write_path': '.flowpilot/runs/<run_id>/flowpilot_skill_improvement_report.json', 'record_only_if': 'This reflects a FlowPilot skill/protocol/router weakness, not ordinary project work.', 'do_not_include': ['sealed packet bodies', 'sealed result bodies', 'private role reasoning', 'secrets']}

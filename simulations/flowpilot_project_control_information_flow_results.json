@@ -1,0 +1,194 @@
+{
+  "claim_boundary": {
+    "covers": [
+      "parent information sufficiency across major FlowPilot control surfaces",
+      "stale historical evidence rejection",
+      "same-work/no-new-information loop rejection",
+      "break-glass reintegration requirements",
+      "route mutation information and replay requirements"
+    ],
+    "does_not_cover": [
+      "full concrete runtime conformance for every packet builder",
+      "all prompt/card wording checks",
+      "release or install synchronization"
+    ]
+  },
+  "coverage_matrix": {
+    "break_glass": "normal repair failure, bounded control-plane repair, PM/reviewer reintegration required",
+    "closure_or_stop": "unresolved information gaps block closure; terminal stop preserves unresolved work",
+    "interrupt_resume": "current run/frontier/ledger/blocker/PM runway required",
+    "ordinary_repair_packet": "covered_by_parent_and_child_blocker_repair_information_flow_model",
+    "reopen_continuation": "history import must remain historical; current run and current role assignment required",
+    "role_assignment": "requested role, current packet context, and current-task binding required",
+    "route_mutation": "blocker context, new route version, stale evidence invalidation, acceptance plan, replay scope required"
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=132",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "failures": [],
+    "hazards": {
+      "break_glass_bypasses_pm_reviewer_reintegration": {
+        "detected": true,
+        "expected_failure": "break-glass did not reintegrate through PM/reviewer validation",
+        "failures": [
+          "break-glass did not reintegrate through PM/reviewer validation"
+        ]
+      },
+      "break_glass_unbounded_or_target_project_repair": {
+        "detected": true,
+        "expected_failure": "break-glass attempted target-project repair",
+        "failures": [
+          "break-glass incident lacks record or bounded reads/writes",
+          "break-glass attempted target-project repair instead of control-plane repair"
+        ]
+      },
+      "break_glass_without_normal_repair_failure": {
+        "detected": true,
+        "expected_failure": "break-glass used before normal PM/control-blocker repair was proven blocked",
+        "failures": [
+          "break-glass used before normal PM/control-blocker repair was proven blocked"
+        ]
+      },
+      "final_closure_with_unresolved_information_gap": {
+        "detected": true,
+        "expected_failure": "closure was claimed with unresolved information gap",
+        "failures": [
+          "closure was claimed with unresolved information gap"
+        ]
+      },
+      "followup_blocker_not_propagated_to_next_runway": {
+        "detected": true,
+        "expected_failure": "follow-up blocker did not propagate",
+        "failures": [
+          "PM runway lacks current state, active blocker, next owner, or executable command",
+          "follow-up blocker did not propagate into the next PM runway"
+        ]
+      },
+      "historical_evidence_promoted_to_current": {
+        "detected": true,
+        "expected_failure": "historical state or evidence was promoted to current authority",
+        "failures": [
+          "historical state or evidence was promoted to current authority"
+        ]
+      },
+      "pm_runway_omits_active_blocker": {
+        "detected": true,
+        "expected_failure": "PM runway lacks current state, active blocker",
+        "failures": [
+          "PM runway lacks current state, active blocker, next owner, or executable command",
+          "work packet lacks minimum executable information"
+        ]
+      },
+      "reopen_reuses_old_agent_ids_as_current": {
+        "detected": true,
+        "expected_failure": "role assignment lacks requested role",
+        "failures": [
+          "role assignment lacks requested role, packet context, or current-task binding",
+          "old agent id was treated as current role-binding evidence"
+        ]
+      },
+      "resume_from_chat_history_loses_blocker": {
+        "detected": true,
+        "expected_failure": "current run, frontier, and packet ledger were not loaded",
+        "failures": [
+          "current run, frontier, and packet ledger were not loaded before next action"
+        ]
+      },
+      "resume_loads_old_run_as_current": {
+        "detected": true,
+        "expected_failure": "historical state or evidence was promoted to current authority",
+        "failures": [
+          "historical state or evidence was promoted to current authority",
+          "current run, frontier, and packet ledger were not loaded before next action"
+        ]
+      },
+      "role_assignment_without_current_packet_context": {
+        "detected": true,
+        "expected_failure": "role assignment lacks requested role",
+        "failures": [
+          "role assignment lacks requested role, packet context, or current-task binding"
+        ]
+      },
+      "route_mutation_does_not_invalidate_stale_evidence": {
+        "detected": true,
+        "expected_failure": "route mutation lacks blocker context",
+        "failures": [
+          "route mutation lacks blocker context, new route version, stale-evidence invalidation, acceptance plan, or replay scope"
+        ]
+      },
+      "route_mutation_omits_blocker_or_acceptance_plan": {
+        "detected": true,
+        "expected_failure": "route mutation lacks blocker context",
+        "failures": [
+          "route mutation lacks blocker context, new route version, stale-evidence invalidation, acceptance plan, or replay scope"
+        ]
+      },
+      "same_work_repeated_with_no_new_info": {
+        "detected": true,
+        "expected_failure": "work packet has no new information delta",
+        "failures": [
+          "work packet has no new information delta and no loop escape",
+          "same work repeated without new information, blocker, terminal stop, or route mutation"
+        ]
+      },
+      "work_packet_lacks_minimum_information": {
+        "detected": true,
+        "expected_failure": "work packet lacks minimum executable information",
+        "failures": [
+          "work packet lacks minimum executable information"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_project_control_information_flow",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0,
+    "terminal_state_count": 22
+  },
+  "result_type": "flowpilot_project_control_information_flow_checks",
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_break_glass_control_repair",
+      "valid_interrupt_resume_with_blocker_context",
+      "valid_reopen_imports_history_and_current_run",
+      "valid_repair_packet_progress",
+      "valid_role_assignment_reissues_current_packet",
+      "valid_route_mutation_with_replay_scope",
+      "valid_terminal_stop_preserves_unresolved_work"
+    ],
+    "edge_count": 44,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "break_glass_bypasses_pm_reviewer_reintegration",
+      "break_glass_unbounded_or_target_project_repair",
+      "break_glass_without_normal_repair_failure",
+      "final_closure_with_unresolved_information_gap",
+      "followup_blocker_not_propagated_to_next_runway",
+      "historical_evidence_promoted_to_current",
+      "pm_runway_omits_active_blocker",
+      "reopen_reuses_old_agent_ids_as_current",
+      "resume_from_chat_history_loses_blocker",
+      "resume_loads_old_run_as_current",
+      "role_assignment_without_current_packet_context",
+      "route_mutation_does_not_invalidate_stale_evidence",
+      "route_mutation_omits_blocker_or_acceptance_plan",
+      "same_work_repeated_with_no_new_info",
+      "work_packet_lacks_minimum_information"
+    ],
+    "state_count": 45
+  }
+}

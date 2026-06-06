@@ -2,7 +2,7 @@
 
 The model keeps the new-only maintenance contract explicit: prior workflow
 acceptance branches and active prompt/spec references must be removed or
-rewritten, while current safety fallbacks, negative rejection evidence, and
+rewritten, while current recovery branches, negative rejection evidence, and
 public facade work that still needs StructureMesh parity evidence are not
 silently deleted.
 """
@@ -18,7 +18,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 DELETE_RUNTIME_ACCEPTANCE_BRANCH = "delete_runtime_acceptance_branch"
 REWRITE_ACTIVE_PROMPT_OR_SPEC = "rewrite_active_prompt_or_spec"
 KEEP_NEGATIVE_REJECTION_EVIDENCE = "keep_negative_rejection_evidence"
-KEEP_CURRENT_SAFETY_FALLBACK = "keep_current_safety_fallback"
+KEEP_CURRENT_RECOVERY_BRANCH = "keep_current_recovery_branch"
 NEEDS_STRUCTUREMESH_BEFORE_FACADE_DELETE = "needs_structuremesh_before_facade_delete"
 KEEP_CHANGE_RATIONALE_OR_HISTORICAL_NOTE = "keep_change_rationale_or_historical_note"
 KEEP_CURRENT_STRUCTURAL_TERM = "keep_current_structural_term"
@@ -28,7 +28,7 @@ TERMINAL_ACTIONS = (
     DELETE_RUNTIME_ACCEPTANCE_BRANCH,
     REWRITE_ACTIVE_PROMPT_OR_SPEC,
     KEEP_NEGATIVE_REJECTION_EVIDENCE,
-    KEEP_CURRENT_SAFETY_FALLBACK,
+    KEEP_CURRENT_RECOVERY_BRANCH,
     NEEDS_STRUCTUREMESH_BEFORE_FACADE_DELETE,
     KEEP_CHANGE_RATIONALE_OR_HISTORICAL_NOTE,
     KEEP_CURRENT_STRUCTURAL_TERM,
@@ -58,7 +58,7 @@ class Candidate:
     is_active_spec: bool = False
     is_change_context: bool = False
     is_test_or_model_evidence: bool = False
-    is_current_safety_fallback: bool = False
+    is_current_recovery_branch: bool = False
     is_public_facade_boundary: bool = False
     is_historical_doc: bool = False
 
@@ -77,13 +77,13 @@ class State:
     delete_required: bool = False
     rewrite_required: bool = False
     kept_negative_evidence: bool = False
-    kept_current_safety_fallback: bool = False
+    kept_current_recovery_branch: bool = False
     structuremesh_gate_required: bool = False
     kept_context_note: bool = False
     kept_current_structural_term: bool = False
     manual_review_required: bool = False
     wrongly_kept_old_acceptance: bool = False
-    wrongly_deleted_current_safety: bool = False
+    wrongly_deleted_current_recovery: bool = False
     wrongly_deleted_negative_evidence: bool = False
 
 
@@ -107,7 +107,7 @@ class UnsupportedTransitionPruningStep:
         "candidate_surface",
         "unsupported_transition_terms",
         "acceptance_or_rejection_semantics",
-        "fallback_kind",
+        "recovery_branch_kind",
         "facade_boundary",
     )
     writes = ("pruning_action", "retention_gate", "manual_review_gate")
@@ -139,12 +139,12 @@ def next_states(input_obj: Candidate, state: State) -> tuple[Transition, ...]:
 
     candidate = input_obj
 
-    if candidate.is_current_safety_fallback:
+    if candidate.is_current_recovery_branch:
         return (
             _terminal(
                 candidate,
-                KEEP_CURRENT_SAFETY_FALLBACK,
-                kept_current_safety_fallback=True,
+                KEEP_CURRENT_RECOVERY_BRANCH,
+                kept_current_recovery_branch=True,
             ),
         )
 
@@ -232,8 +232,8 @@ def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.wrongly_kept_old_acceptance:
         failures.append("old workflow acceptance was kept as current behavior")
-    if state.wrongly_deleted_current_safety:
-        failures.append("current safety fallback was classified for deletion")
+    if state.wrongly_deleted_current_recovery:
+        failures.append("current recovery branch was classified for deletion")
     if state.wrongly_deleted_negative_evidence:
         failures.append("negative rejection evidence was classified for deletion")
     if state.status == "classified" and state.action not in TERMINAL_ACTIONS:
@@ -242,8 +242,8 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("delete action did not mark deletion required")
     if state.status == "classified" and state.action == REWRITE_ACTIVE_PROMPT_OR_SPEC and not state.rewrite_required:
         failures.append("rewrite action did not mark rewrite required")
-    if state.status == "classified" and state.action == KEEP_CURRENT_SAFETY_FALLBACK and not state.kept_current_safety_fallback:
-        failures.append("safety fallback keep action did not preserve fallback gate")
+    if state.status == "classified" and state.action == KEEP_CURRENT_RECOVERY_BRANCH and not state.kept_current_recovery_branch:
+        failures.append("current recovery keep action did not preserve recovery gate")
     if state.status == "classified" and state.action == KEEP_NEGATIVE_REJECTION_EVIDENCE and not state.kept_negative_evidence:
         failures.append("negative evidence keep action did not preserve rejection evidence")
     if state.status == "classified" and state.action == NEEDS_STRUCTUREMESH_BEFORE_FACADE_DELETE and not state.structuremesh_gate_required:
@@ -264,7 +264,7 @@ INVARIANTS = (
         name="unsupported_transition_pruning",
         description=(
             "Prior workflow acceptance branches and active prompt/spec prior-path "
-            "guidance must be pruned, while current safety fallbacks, negative "
+            "guidance must be pruned, while current recovery branches, negative "
             "rejection evidence, and StructureMesh-gated public facades are not "
             "silently removed."
         ),
@@ -292,10 +292,10 @@ def hazard_states() -> dict[str, State]:
             action=KEEP_CURRENT_STRUCTURAL_TERM,
             wrongly_kept_old_acceptance=True,
         ),
-        "current_safety_deleted": State(
+        "current_recovery_deleted": State(
             status="classified",
             action=DELETE_RUNTIME_ACCEPTANCE_BRANCH,
-            wrongly_deleted_current_safety=True,
+            wrongly_deleted_current_recovery=True,
         ),
         "negative_evidence_deleted": State(
             status="classified",
@@ -313,7 +313,7 @@ def hazard_states() -> dict[str, State]:
 __all__ = [
     "DELETE_RUNTIME_ACCEPTANCE_BRANCH",
     "KEEP_CHANGE_RATIONALE_OR_HISTORICAL_NOTE",
-    "KEEP_CURRENT_SAFETY_FALLBACK",
+    "KEEP_CURRENT_RECOVERY_BRANCH",
     "KEEP_CURRENT_STRUCTURAL_TERM",
     "KEEP_NEGATIVE_REJECTION_EVIDENCE",
     "MANUAL_REVIEW",

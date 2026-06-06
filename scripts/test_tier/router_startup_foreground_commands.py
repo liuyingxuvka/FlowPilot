@@ -74,16 +74,16 @@ ROUTER_STARTUP_COMMANDS = (
         description="Startup reviewer, PM activation, and repair-decision slice.",
     ),
     _unittest_k(
-        "router_startup_bootstrap_fact_heartbeat",
+        "router_startup_bootstrap_fact_manual_resume",
         "tests.router_runtime.startup_bootstrap",
         patterns=(
             "startup_fact",
             "record_event_accepts_runtime_envelope_ref",
-            "heartbeat_startup",
+            "manual_resume_startup",
             "reconciled_startup_display",
             "cockpit_requested",
         ),
-        description="Startup fact-report, heartbeat, and display fallback slice.",
+        description="Startup fact-report, manual-resume, and display rejection slice.",
     ),
     _unittest(
         "router_startup_daemon",
@@ -171,9 +171,9 @@ ROUTER_FOREGROUND_COMMANDS = (
             "foreground_controller_standby_self_audits_controller_local_wait",
             "foreground_controller_standby_waits_on_live_daemon_role_wait",
             "controller_patrol_timer_allows_terminal_return_only_when_stopped",
-            "controller_patrol_timer_continues_for_daemon_heartbeat_inside_thirty_second_window",
+            "controller_patrol_timer_continues_for_daemon_patrol_inside_thirty_second_window",
             "controller_patrol_timer_continue_patrol_restarts_and_waits",
-            "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_heartbeat",
+            "controller_patrol_timer_requests_liveness_check_after_delayed_daemon_patrol",
             "nonterminal_user_status_return_is_not_controller_stop",
         ),
         description="Foreground standby and patrol timer slice.",
@@ -224,3 +224,4 @@ ROUTER_FOREGROUND_COMMANDS = (
         description="Foreground Controller repair and confirmation slice.",
     ),
 )
+

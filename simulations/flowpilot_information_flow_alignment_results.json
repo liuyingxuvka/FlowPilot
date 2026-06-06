@@ -1,0 +1,4021 @@
+{
+  "alignment_ok": true,
+  "alignment_report": {
+    "binding_rows": [
+      {
+        "code_contract_id": "info_flow.runtime.ensure_pm_repair_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.ensure_pm_repair_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.missing_pm_summary_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.recent_role_reports",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.authorized_result_reads",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_opened_body_validation"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.ensure_pm_repair_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_repair_edge"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_no_fallback_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.recent_role_reports",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_opened_body_validation"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.worker_repair_packet_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_repair_edge"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_summary_no_fallback_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.issue_current_scope_repair_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.worker_repair_packet_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.issue_current_scope_repair_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_repair_edge"
+      },
+      {
+        "code_contract_id": "info_flow.router.controller_repair_work_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.controller_repair_work_packet_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.required_recheck_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.reviewer_recheck_followup",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_recheck_packet_positive"
+      },
+      {
+        "code_contract_id": "info_flow.closure.classify_control_blocker",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.reviewer_recheck_followup",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.followup_recheck_positive"
+      },
+      {
+        "code_contract_id": "info_flow.closure.classify_control_blocker",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.reviewer_recheck_followup",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.followup_protocol_edge"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resume_entrypoint",
+        "gaps": [],
+        "model_obligation_id": "info_flow.resume.current_authority_context",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resume_entrypoint",
+        "gaps": [],
+        "model_obligation_id": "info_flow.resume.current_authority_context",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.plain_resume_does_not_reissue_stopped_blocker_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.record_resume_request",
+        "gaps": [],
+        "model_obligation_id": "info_flow.resume.current_authority_context",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "gaps": [],
+        "model_obligation_id": "info_flow.resume.current_authority_context",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "gaps": [],
+        "model_obligation_id": "info_flow.resume.current_authority_context",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.plain_resume_does_not_reissue_stopped_blocker_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "gaps": [],
+        "model_obligation_id": "info_flow.resume.current_authority_context",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.resume_fake_package_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "gaps": [],
+        "model_obligation_id": "info_flow.reopen.history_not_current_authority",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.resume_fake_package_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "gaps": [],
+        "model_obligation_id": "info_flow.reopen.history_not_current_authority",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.historical_replay_negative"
+      },
+      {
+        "code_contract_id": "info_flow.router.controller_repair_work_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.controller_repair_work_packet_positive"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.open_incident",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.break_glass_incident_positive"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.record_control_plane_blocker",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.break_glass_positive"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.close_incident",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.break_glass_negative"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.open_recovery_transaction",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.break_glass_positive"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.record_controller_reinjection",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.break_glass_positive"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.close_recovery_transaction",
+        "gaps": [],
+        "model_obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.break_glass_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.redesign_route_from_pm_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.route_mutation.blocker_acceptance_replay_scope",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.route_mutation_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.redesign_route_from_pm_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.route_mutation.blocker_acceptance_replay_scope",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.route_mutation_edge"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.redesign_route_from_pm_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.route_mutation.blocker_acceptance_replay_scope",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.route_mutation_stale_replay"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.role_assignment_wrong_responsibility_negative"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.role_assignment_packet_specific_positive"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.lease_agent",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.lease_agent",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.role_assignment_packet_specific_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.resolve_role_assignment",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.resolve_role_assignment",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.role_assignment_wrong_responsibility_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.resolve_role_assignment",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.role_assignment_packet_specific_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.lease_agent",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.lease_agent",
+        "gaps": [],
+        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.role_assignment_packet_specific_positive"
+      },
+      {
+        "code_contract_id": "info_flow.closure.classify_control_blocker",
+        "gaps": [],
+        "model_obligation_id": "info_flow.closure.unresolved_gap_stop_boundary",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.protocol_dead_end_terminal_negative"
+      },
+      {
+        "code_contract_id": "info_flow.closure.closure_blocks_progress",
+        "gaps": [],
+        "model_obligation_id": "info_flow.closure.unresolved_gap_stop_boundary",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.terminal_closure_negative"
+      },
+      {
+        "code_contract_id": "info_flow.closure.closure_blocks_progress",
+        "gaps": [],
+        "model_obligation_id": "info_flow.closure.unresolved_gap_stop_boundary",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.user_stop_positive"
+      },
+      {
+        "code_contract_id": "info_flow.closure.closure_blocks_progress",
+        "gaps": [],
+        "model_obligation_id": "info_flow.closure.unresolved_gap_stop_boundary",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.terminal_quarantine_replay"
+      }
+    ],
+    "decision": "model_test_alignment_green",
+    "findings": [],
+    "model_id": "flowpilot_information_flow_alignment",
+    "ok": true,
+    "summary": "OK: model=flowpilot_information_flow_alignment decision=model_test_alignment_green findings=0"
+  },
+  "claim_boundary": {
+    "covers": [
+      "model obligations for blocker repair and project-control information sufficiency",
+      "declared runtime code owners for each obligation",
+      "existence of targeted tests/cards/markers for required information fields",
+      "source-symbol existence for declared code contracts"
+    ],
+    "does_not_cover": [
+      "executing every referenced test command in this runner",
+      "full release/install synchronization",
+      "semantic proof that every private helper branch is correct"
+    ]
+  },
+  "code_contract_count": 24,
+  "code_symbol_ok": true,
+  "code_symbol_report": {
+    "contract_count": 24,
+    "evidence": [
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_blocker_authorized_result_reads",
+          "_blocker_repeat_context",
+          "_copy_jsonable",
+          "_current_pm_repair_decision_packet_reusable",
+          "_event",
+          "_find_packet",
+          "_require",
+          "blocker.get",
+          "bool",
+          "get",
+          "isinstance",
+          "issue_task_packet",
+          "json.dumps",
+          "ledger.get",
+          "ledger.setdefault",
+          "list",
+          "now_iso",
+          "repair_target_envelope.get",
+          "repair_target_packet.get",
+          "sorted",
+          "stale_existing.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.ensure_pm_repair_packet",
+        "found": true,
+        "parameters": [
+          "blocker_id",
+          "ledger"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [
+          "packet_id",
+          "str"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "Mapping",
+          "REQUIRED_FLOWGUARD_TARGET",
+          "_CLEARABLE_SEMANTIC_BLOCKER_STATUSES",
+          "_CURRENT_PACKET_BLOCKING_STATUSES",
+          "_PM_REPAIR_DECISIONS",
+          "_blocker_authorized_result_reads",
+          "_blocker_repeat_context",
+          "_copy_jsonable",
+          "_current_pm_repair_decision_packet_reusable",
+          "_event",
+          "_find_packet",
+          "_require",
+          "authorized_result_reads",
+          "blocker",
+          "blocker_id",
+          "bool",
+          "dict",
+          "dumps",
+          "existing",
+          "gate_kind",
+          "get",
+          "isinstance",
+          "issue_task_packet",
+          "json",
+          "ledger",
+          "list",
+          "now_iso",
+          "packet_id",
+          "repair_target_envelope",
+          "repair_target_packet",
+          "repair_target_packet_id",
+          "repeat_context",
+          "required_recheck_role",
+          "setdefault",
+          "sorted",
+          "stale_existing",
+          "str"
+        ],
+        "state_writes": [
+          "active_blocker_id",
+          "authorized_result_reads",
+          "blocker",
+          "existing",
+          "packet_id",
+          "pm_repair_packet_id",
+          "repair_target_envelope",
+          "repair_target_packet",
+          "repeat_context",
+          "stale_existing",
+          "status",
+          "superseded_at",
+          "superseded_by_outcome_id",
+          "superseded_reason"
+        ],
+        "symbol": "_ensure_pm_repair_decision_packet_for_blocker"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_issue_current_scope_repair_packet",
+          "_mark_blocker_repair_packet_open",
+          "_nearest_parent_route_node_id",
+          "_redesign_route_from_pm_decision",
+          "_replace_scope_and_open_repair_packet",
+          "_require",
+          "blocker.get",
+          "get",
+          "isinstance",
+          "ledger.get",
+          "ledger.setdefault",
+          "now_iso",
+          "str",
+          "target_packet.get"
+        ],
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "found": true,
+        "parameters": [
+          "blocker_id",
+          "decision_id",
+          "ledger"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [],
+        "returns_value": false,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "_REMOVED_PM_REPAIR_DECISIONS",
+          "_issue_current_scope_repair_packet",
+          "_mark_blocker_repair_packet_open",
+          "_nearest_parent_route_node_id",
+          "_redesign_route_from_pm_decision",
+          "_replace_scope_and_open_repair_packet",
+          "_require",
+          "authority_ref",
+          "blocker",
+          "blocker_id",
+          "decision",
+          "decision_id",
+          "dict",
+          "fresh_packet_id",
+          "get",
+          "isinstance",
+          "ledger",
+          "now_iso",
+          "parent_node_id",
+          "pm_repair_decisions",
+          "reason",
+          "route_node_id",
+          "setdefault",
+          "str",
+          "target_packet"
+        ],
+        "state_writes": [
+          "_node_ids",
+          "_replacement_id",
+          "authority_ref",
+          "blocker",
+          "cleared_by_outcome_id",
+          "decision",
+          "fresh_packet_id",
+          "parent_node_id",
+          "pm_stop_previous_status",
+          "reason",
+          "route_node_id",
+          "status",
+          "stopped_at",
+          "target_packet",
+          "waived_at"
+        ],
+        "symbol": "_apply_pm_repair_decision"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_blocker_authorized_result_reads",
+          "_blocker_repeat_context",
+          "_copy_jsonable",
+          "_event",
+          "_mark_repair_target_noncurrent_after_current_reissue",
+          "_record_repair_transaction",
+          "_require",
+          "blocker.get",
+          "issue_task_packet",
+          "json.dumps",
+          "list",
+          "str",
+          "target_envelope.get"
+        ],
+        "code_contract_id": "info_flow.runtime.issue_current_scope_repair_packet",
+        "found": true,
+        "parameters": [
+          "blocker",
+          "decision_id",
+          "ledger"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [
+          "packet_id"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "Mapping",
+          "_blocker_authorized_result_reads",
+          "_blocker_repeat_context",
+          "_copy_jsonable",
+          "_event",
+          "_mark_repair_target_noncurrent_after_current_reissue",
+          "_record_repair_transaction",
+          "_require",
+          "blocker",
+          "blocker_id",
+          "decision_id",
+          "dict",
+          "dumps",
+          "envelope",
+          "get",
+          "issue_task_packet",
+          "json",
+          "ledger",
+          "list",
+          "packet_id",
+          "packet_kind",
+          "packets",
+          "repair_role",
+          "repeat_context",
+          "str",
+          "target_envelope",
+          "target_packet",
+          "target_packet_id"
+        ],
+        "state_writes": [
+          "packet_id",
+          "packet_kind",
+          "repair_blocker_id",
+          "repair_role",
+          "repeat_context",
+          "target_envelope",
+          "target_packet",
+          "target_packet_id"
+        ],
+        "symbol": "_issue_current_scope_repair_packet"
+      },
+      {
+        "calls": [
+          "_recent_role_report_summary",
+          "_strict_json_object_from_body",
+          "json.dumps",
+          "payload.setdefault"
+        ],
+        "code_contract_id": "info_flow.runtime.recent_role_reports",
+        "found": true,
+        "parameters": [
+          "body",
+          "ledger",
+          "responsibility"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [
+          "body",
+          "dumps"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Mapping",
+          "_recent_role_report_summary",
+          "_strict_json_object_from_body",
+          "body",
+          "dumps",
+          "json",
+          "ledger",
+          "payload",
+          "responsibility",
+          "setdefault",
+          "str"
+        ],
+        "state_writes": [
+          "payload",
+          "recent_role_report_summary"
+        ],
+        "symbol": "_pm_packet_body_with_recent_role_reports"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_merge_authorized_result_reads",
+          "_normalize_authorized_result_reads",
+          "_packet_body_with_authorized_result_reads",
+          "_require",
+          "envelope.get",
+          "hash_text",
+          "isinstance",
+          "list",
+          "packet.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.authorized_result_reads",
+        "found": true,
+        "parameters": [
+          "ledger",
+          "packet_id",
+          "reads"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [],
+        "returns_value": false,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "Mapping",
+          "_merge_authorized_result_reads",
+          "_normalize_authorized_result_reads",
+          "_packet_body_with_authorized_result_reads",
+          "_require",
+          "body",
+          "body_hash",
+          "dict",
+          "envelope",
+          "existing",
+          "get",
+          "hash_text",
+          "isinstance",
+          "ledger",
+          "list",
+          "merged",
+          "normalized",
+          "packet",
+          "packet_id",
+          "packets",
+          "reads",
+          "str"
+        ],
+        "state_writes": [
+          "authorized_result_reads",
+          "body",
+          "body_hash",
+          "envelope",
+          "existing",
+          "merged",
+          "normalized",
+          "packet"
+        ],
+        "symbol": "_attach_authorized_result_reads_to_packet"
+      },
+      {
+        "calls": [
+          "RouterError",
+          "_bind_router",
+          "isinstance",
+          "opened.get",
+          "packet_runtime.load_envelope",
+          "result.get",
+          "router._result_envelope_path_from_packet_record"
+        ],
+        "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
+        "found": true,
+        "parameters": [
+          "project_root",
+          "records",
+          "router",
+          "run_state"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_role_result.py",
+        "raised_errors": [
+          "RouterError"
+        ],
+        "return_values": [],
+        "returns_value": false,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "ModuleType",
+          "Path",
+          "RouterError",
+          "_bind_router",
+          "_result_envelope_path_from_packet_record",
+          "dict",
+          "get",
+          "isinstance",
+          "list",
+          "load_envelope",
+          "opened",
+          "packet_runtime",
+          "project_root",
+          "record",
+          "records",
+          "result",
+          "result_path",
+          "router",
+          "run_state",
+          "str"
+        ],
+        "state_writes": [
+          "opened",
+          "result",
+          "result_path"
+        ],
+        "symbol": "_validate_result_bodies_opened_by_pm"
+      },
+      {
+        "calls": [
+          "_ensure_flowguard_packet_for_task_result",
+          "_ensure_review_packet_for_task_result",
+          "_require",
+          "_stopped_blocker_recheck_kind",
+          "_stopped_blocker_recheck_subject_packet_id",
+          "_stopped_blocker_target_result",
+          "blocker.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.required_recheck_packet",
+        "found": true,
+        "parameters": [
+          "blocker",
+          "ledger",
+          "reason"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Mapping",
+          "_ensure_flowguard_packet_for_task_result",
+          "_ensure_review_packet_for_task_result",
+          "_require",
+          "_stopped_blocker_recheck_kind",
+          "_stopped_blocker_recheck_subject_packet_id",
+          "_stopped_blocker_target_result",
+          "blocker",
+          "dict",
+          "fresh_packet_id",
+          "get",
+          "ledger",
+          "packets",
+          "reason",
+          "recheck_kind",
+          "recheck_reason",
+          "repair_blocker_id",
+          "result",
+          "str",
+          "subject_packet",
+          "subject_packet_id",
+          "tuple"
+        ],
+        "state_writes": [
+          "fresh_packet_id",
+          "recheck_kind",
+          "recheck_reason",
+          "repair_blocker_id",
+          "result",
+          "subject_packet",
+          "subject_packet_id"
+        ],
+        "symbol": "_issue_required_recheck_packet_for_stopped_blocker"
+      },
+      {
+        "calls": [
+          "_run_until_wait_and_save",
+          "_runtime_state",
+          "_status_projection",
+          "run_shell.load_run_ledger",
+          "run_shell.load_run_shell",
+          "runtime.reconcile_resume_request",
+          "runtime.record_resume_request",
+          "shell.to_json"
+        ],
+        "code_contract_id": "info_flow.new_runtime.resume_entrypoint",
+        "found": true,
+        "parameters": [
+          "reason",
+          "root"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_new_run_commands.py",
+        "raised_errors": [],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Path",
+          "_run_until_wait_and_save",
+          "_runtime_state",
+          "_status_projection",
+          "dict",
+          "folded",
+          "ledger",
+          "load_run_ledger",
+          "load_run_shell",
+          "reason",
+          "reconcile_resume_request",
+          "record_resume_request",
+          "root",
+          "run_shell",
+          "runtime",
+          "shell",
+          "str",
+          "to_json"
+        ],
+        "state_writes": [
+          "folded",
+          "ledger",
+          "shell"
+        ],
+        "symbol": "resume"
+      },
+      {
+        "calls": [
+          "_event"
+        ],
+        "code_contract_id": "info_flow.runtime.record_resume_request",
+        "found": true,
+        "parameters": [
+          "ledger",
+          "reason"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [],
+        "returns_value": false,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "_event",
+          "dict",
+          "ledger",
+          "reason",
+          "str"
+        ],
+        "state_writes": [
+          "lifecycle"
+        ],
+        "symbol": "record_resume_request"
+      },
+      {
+        "calls": [
+          "_event",
+          "dict",
+          "ledger.get",
+          "now_iso",
+          "previous.get",
+          "refresh_lifecycle_guard"
+        ],
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "found": true,
+        "parameters": [
+          "ledger",
+          "resume_source"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [
+          "refresh_lifecycle_guard"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "_event",
+          "dict",
+          "get",
+          "ledger",
+          "now_iso",
+          "previous",
+          "refresh_lifecycle_guard",
+          "resume_source",
+          "str"
+        ],
+        "state_writes": [
+          "lifecycle",
+          "previous"
+        ],
+        "symbol": "reconcile_resume_request"
+      },
+      {
+        "calls": [
+          "_role_assignment_commit_command",
+          "_runtime_state",
+          "assignment.get",
+          "bool",
+          "run_shell.load_run_ledger",
+          "run_shell.load_run_shell",
+          "run_shell.save_run_ledger",
+          "runtime.resolve_role_assignment",
+          "str"
+        ],
+        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "found": true,
+        "parameters": [
+          "host_kind",
+          "packet_id",
+          "responsibility",
+          "root"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+        "raised_errors": [],
+        "return_values": [
+          "payload"
+        ],
+        "returns_value": true,
+        "side_effects": [
+          "save_run_ledger"
+        ],
+        "state_reads": [
+          "Any",
+          "Path",
+          "_role_assignment_commit_command",
+          "_runtime_state",
+          "assignment",
+          "bool",
+          "dict",
+          "get",
+          "host_kind",
+          "ledger",
+          "load_run_ledger",
+          "load_run_shell",
+          "ok",
+          "packet_id",
+          "payload",
+          "resolve_role_assignment",
+          "responsibility",
+          "root",
+          "run_shell",
+          "runtime",
+          "save_run_ledger",
+          "shell",
+          "str"
+        ],
+        "state_writes": [
+          "assignment",
+          "error",
+          "lease_commit_command",
+          "ledger",
+          "payload",
+          "shell"
+        ],
+        "symbol": "resolve_role_assignment"
+      },
+      {
+        "calls": [
+          "_runtime_state",
+          "assignment.get",
+          "get",
+          "host.lease_responsibility",
+          "isinstance",
+          "ledger.get",
+          "role_handoff.render_current_packet_handoff",
+          "run_shell.load_run_ledger",
+          "run_shell.load_run_shell",
+          "run_shell.save_run_ledger",
+          "runtime.BlackBoxRuntimeError",
+          "runtime.assign_packet",
+          "str"
+        ],
+        "code_contract_id": "info_flow.new_runtime.lease_agent",
+        "found": true,
+        "parameters": [
+          "agent_id",
+          "assignment_id",
+          "host_kind",
+          "packet_id",
+          "responsibility",
+          "root"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_run_ledger"
+        ],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "ENTRYPOINT_PATH",
+          "Path",
+          "_runtime_state",
+          "agent_id",
+          "assign_packet",
+          "assignment",
+          "assignment_id",
+          "dict",
+          "disposition",
+          "get",
+          "handoff",
+          "host",
+          "host_kind",
+          "isinstance",
+          "lease_id",
+          "lease_responsibility",
+          "ledger",
+          "load_run_ledger",
+          "load_run_shell",
+          "packet_id",
+          "render_current_packet_handoff",
+          "responsibility",
+          "role_handoff",
+          "root",
+          "run_id",
+          "run_shell",
+          "runtime",
+          "save_run_ledger",
+          "shell",
+          "str",
+          "text"
+        ],
+        "state_writes": [
+          "assignment",
+          "disposition",
+          "handoff",
+          "lease_id",
+          "ledger",
+          "shell"
+        ],
+        "symbol": "lease_agent"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_assert_not_terminal_lifecycle",
+          "_copy_jsonable",
+          "_event",
+          "_hydrate_role_slot_from_current_run_history",
+          "_next_id",
+          "_require",
+          "_role_assignment_reuse_forbidden_reason",
+          "_role_assignment_table",
+          "_role_continuity_table",
+          "_role_slot_reusable",
+          "assignments.values",
+          "background_collaboration_blocker",
+          "envelope.get",
+          "existing.get",
+          "isinstance",
+          "list",
+          "now_iso",
+          "packet.get",
+          "reversed",
+          "roles.get",
+          "slot.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.resolve_role_assignment",
+        "found": true,
+        "parameters": [
+          "host_kind",
+          "ledger",
+          "packet_id",
+          "responsibility"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [
+          "_copy_jsonable"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BACKGROUND_COLLABORATION_REQUIRED_MESSAGE",
+          "BlackBoxRuntimeError",
+          "Mapping",
+          "RESPONSIBILITIES",
+          "_assert_not_terminal_lifecycle",
+          "_copy_jsonable",
+          "_event",
+          "_hydrate_role_slot_from_current_run_history",
+          "_next_id",
+          "_require",
+          "_role_assignment_reuse_forbidden_reason",
+          "_role_assignment_table",
+          "_role_continuity_table",
+          "_role_slot_reusable",
+          "assignment",
+          "assignment_id",
+          "assignments",
+          "background_blocker",
+          "background_collaboration_blocker",
+          "blocker_reason",
+          "dict",
+          "disposition",
+          "effective_agent_id",
+          "envelope",
+          "event",
+          "existing",
+          "get",
+          "host_kind",
+          "hydration_reason",
+          "isinstance",
+          "ledger",
+          "list",
+          "memory_seed_required",
+          "now_iso",
+          "packet",
+          "packet_id",
+          "packets",
+          "prior_agent_id",
+          "replacement_reason",
+          "responsibility",
+          "reusable",
+          "reuse_forbidden_reason",
+          "reversed",
+          "role_surface_required",
+          "roles",
+          "slot",
+          "status",
+          "str",
+          "values"
+        ],
+        "state_writes": [
+          "assignment",
+          "assignment_id",
+          "assignments",
+          "background_blocker",
+          "blocker_reason",
+          "disposition",
+          "effective_agent_id",
+          "envelope",
+          "event",
+          "hydration_reason",
+          "memory_seed_required",
+          "packet",
+          "prior_agent_id",
+          "replacement_reason",
+          "reusable",
+          "reuse_forbidden_reason",
+          "role_surface_required",
+          "roles",
+          "slot",
+          "status"
+        ],
+        "symbol": "resolve_role_assignment"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_assert_not_terminal_lifecycle",
+          "_attach_role_memory_seed",
+          "_build_role_memory_seed",
+          "_event",
+          "_mark_role_slot_after_lease",
+          "_next_id",
+          "_require",
+          "_require_background_collaboration_authorized",
+          "_role_assignment_table",
+          "assignment.get",
+          "isinstance",
+          "now_iso",
+          "resolve_role_assignment",
+          "str",
+          "strip"
+        ],
+        "code_contract_id": "info_flow.runtime.lease_agent",
+        "found": true,
+        "parameters": [
+          "agent_id",
+          "assignment_id",
+          "ledger",
+          "packet_id",
+          "responsibility"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [
+          "lease_id"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "RESPONSIBILITIES",
+          "_assert_not_terminal_lifecycle",
+          "_attach_role_memory_seed",
+          "_build_role_memory_seed",
+          "_event",
+          "_mark_role_slot_after_lease",
+          "_next_id",
+          "_require",
+          "_require_background_collaboration_authorized",
+          "_role_assignment_table",
+          "agent_id",
+          "assignment",
+          "assignment_id",
+          "assignments",
+          "dict",
+          "disposition",
+          "effective_agent_id",
+          "get",
+          "isinstance",
+          "lease",
+          "lease_id",
+          "leases",
+          "ledger",
+          "memory_required",
+          "memory_seed",
+          "now_iso",
+          "packet_id",
+          "prior_agent_id",
+          "raw_assignment",
+          "replacement_reason",
+          "requested_agent_id",
+          "resolve_role_assignment",
+          "responsibility",
+          "reused",
+          "str",
+          "strip"
+        ],
+        "state_writes": [
+          "assignment",
+          "assignment_id",
+          "assignments",
+          "consumed_at",
+          "consumed_lease_id",
+          "disposition",
+          "effective_agent_id",
+          "lease",
+          "lease_id",
+          "memory_required",
+          "memory_seed",
+          "prior_agent_id",
+          "raw_assignment",
+          "replacement_reason",
+          "requested_agent_id",
+          "reused",
+          "status"
+        ],
+        "symbol": "lease_agent"
+      },
+      {
+        "calls": [
+          "ActionHandlerOutcome",
+          "get",
+          "isinstance",
+          "pending.get",
+          "router.RouterError",
+          "router._repair_transaction_path",
+          "router.read_json_if_exists",
+          "router.utc_now",
+          "router.write_json",
+          "str",
+          "transaction.get"
+        ],
+        "code_contract_id": "info_flow.router.controller_repair_work_packet",
+        "found": true,
+        "parameters": [
+          "payload",
+          "pending",
+          "project_root",
+          "router",
+          "run_root",
+          "run_state"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "raised_errors": [
+          "RouterError"
+        ],
+        "return_values": [
+          "ActionHandlerOutcome"
+        ],
+        "returns_value": true,
+        "side_effects": [
+          "write_json"
+        ],
+        "state_reads": [
+          "ActionHandlerOutcome",
+          "Any",
+          "ModuleType",
+          "Path",
+          "REPAIR_TRANSACTION_SCHEMA",
+          "RouterError",
+          "_repair_transaction_path",
+          "dict",
+          "get",
+          "isinstance",
+          "payload",
+          "pending",
+          "read_json_if_exists",
+          "recorded_at",
+          "repair_result",
+          "router",
+          "run_root",
+          "str",
+          "transaction",
+          "transaction_id",
+          "transaction_path",
+          "utc_now",
+          "write_json"
+        ],
+        "state_writes": [
+          "controller_repair_work_packet_result",
+          "repair_result",
+          "status",
+          "transaction",
+          "transaction_id",
+          "transaction_path",
+          "updated_at"
+        ],
+        "symbol": "_apply_controller_repair_work_packet"
+      },
+      {
+        "calls": [
+          "Path",
+          "append",
+          "break_glass_root",
+          "incident_path.relative_to",
+          "index.get",
+          "is_relative_to",
+          "item.get",
+          "load_index",
+          "path.is_absolute",
+          "relative_to",
+          "safe_id",
+          "save_index",
+          "sha256_path",
+          "source_records.append",
+          "str",
+          "utc_now",
+          "write_json"
+        ],
+        "code_contract_id": "info_flow.break_glass.open_incident",
+        "found": true,
+        "parameters": [
+          "failure_kind",
+          "incident_id",
+          "normal_lanes",
+          "project_root",
+          "run_root",
+          "sources",
+          "trigger_summary"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "raised_errors": [],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_index",
+          "write_json"
+        ],
+        "state_reads": [
+          "Any",
+          "INCIDENT_SCHEMA",
+          "Path",
+          "absolute",
+          "append",
+          "break_glass_root",
+          "dict",
+          "failure_kind",
+          "get",
+          "incident",
+          "incident_id",
+          "incident_path",
+          "incidents",
+          "index",
+          "is_absolute",
+          "is_relative_to",
+          "item",
+          "lane",
+          "list",
+          "load_index",
+          "name",
+          "normal_lanes",
+          "path",
+          "project_root",
+          "relative_to",
+          "run_root",
+          "safe_id",
+          "save_index",
+          "sha256_path",
+          "source",
+          "source_records",
+          "sources",
+          "str",
+          "trigger_summary",
+          "utc_now",
+          "write_json"
+        ],
+        "state_writes": [
+          "absolute",
+          "incident",
+          "incident_id",
+          "incident_path",
+          "incidents",
+          "index",
+          "path",
+          "source_records"
+        ],
+        "symbol": "open_incident"
+      },
+      {
+        "calls": [
+          "SystemExit",
+          "_source_records",
+          "append",
+          "bool",
+          "control_plane_blocker_ledger_path",
+          "item.get",
+          "ledger.get",
+          "load_control_plane_blocker_ledger",
+          "project_relative",
+          "safe_id",
+          "save_control_plane_blocker_ledger",
+          "sorted",
+          "utc_now"
+        ],
+        "code_contract_id": "info_flow.break_glass.record_control_plane_blocker",
+        "found": true,
+        "parameters": [
+          "blocker_id",
+          "classification",
+          "current",
+          "family_id",
+          "project_root",
+          "recovery_transaction_id",
+          "requires_body_access",
+          "run_root",
+          "sources",
+          "status",
+          "summary"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "raised_errors": [
+          "SystemExit"
+        ],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_control_plane_blocker_ledger"
+        ],
+        "state_reads": [
+          "Any",
+          "Path",
+          "SystemExit",
+          "_source_records",
+          "allowed_statuses",
+          "append",
+          "blocker_id",
+          "blockers",
+          "bool",
+          "classification",
+          "control_plane_blocker_ledger_path",
+          "current",
+          "dict",
+          "family_id",
+          "get",
+          "item",
+          "ledger",
+          "list",
+          "load_control_plane_blocker_ledger",
+          "project_relative",
+          "project_root",
+          "record",
+          "recovery_transaction_id",
+          "requires_body_access",
+          "run_root",
+          "safe_id",
+          "save_control_plane_blocker_ledger",
+          "sorted",
+          "sources",
+          "status",
+          "str",
+          "summary",
+          "utc_now"
+        ],
+        "state_writes": [
+          "allowed_statuses",
+          "blocker_id",
+          "blockers",
+          "family_id",
+          "ledger",
+          "record"
+        ],
+        "symbol": "record_control_plane_blocker"
+      },
+      {
+        "calls": [
+          "SystemExit",
+          "_incident_closure_review",
+          "break_glass_root",
+          "closure_review.get",
+          "finalize_patch",
+          "finalized_patches.append",
+          "get",
+          "incident.get",
+          "incident_path.relative_to",
+          "index.get",
+          "item.get",
+          "len",
+          "load_index",
+          "patch.get",
+          "patch_errors.append",
+          "read_json",
+          "safe_id",
+          "save_index",
+          "str",
+          "utc_now",
+          "write_json"
+        ],
+        "code_contract_id": "info_flow.break_glass.close_incident",
+        "found": true,
+        "parameters": [
+          "disposition",
+          "incident_id",
+          "project_root",
+          "run_root"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "raised_errors": [
+          "SystemExit"
+        ],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_index",
+          "write_json"
+        ],
+        "state_reads": [
+          "Any",
+          "INCIDENT_BLOCKED_DISPOSITIONS",
+          "INCIDENT_QUARANTINE_DISPOSITIONS",
+          "INCIDENT_SCHEMA",
+          "PATCH_SCHEMA",
+          "Path",
+          "SystemExit",
+          "_incident_closure_review",
+          "append",
+          "break_glass_root",
+          "closure_review",
+          "dict",
+          "disposition",
+          "finalize_patch",
+          "finalized",
+          "finalized_patches",
+          "get",
+          "incident",
+          "incident_id",
+          "incident_path",
+          "index",
+          "item",
+          "len",
+          "list",
+          "load_index",
+          "patch",
+          "patch_errors",
+          "patch_id",
+          "patch_path",
+          "project_root",
+          "read_json",
+          "relative_to",
+          "run_root",
+          "safe_id",
+          "save_index",
+          "status",
+          "str",
+          "utc_now",
+          "write_json"
+        ],
+        "state_writes": [
+          "closed_at",
+          "closure_path",
+          "closure_review",
+          "final_disposition",
+          "finalized",
+          "finalized_patches",
+          "incident",
+          "incident_id",
+          "incident_path",
+          "index",
+          "patch",
+          "patch_errors",
+          "patch_finalization",
+          "patch_path",
+          "status"
+        ],
+        "symbol": "close_incident"
+      },
+      {
+        "calls": [
+          "_core",
+          "append",
+          "core._save_recovery_transaction",
+          "core.break_glass_root",
+          "core.load_index",
+          "core.read_json",
+          "core.safe_id",
+          "core.save_index",
+          "core.utc_now",
+          "core.write_json",
+          "incident.get",
+          "index.get",
+          "item.get",
+          "list",
+          "related.append"
+        ],
+        "code_contract_id": "info_flow.break_glass.open_recovery_transaction",
+        "found": true,
+        "parameters": [
+          "blocker_ids",
+          "controller_generation_id",
+          "failure_kind",
+          "family_ids",
+          "flowguard_obligations",
+          "incident_id",
+          "normal_lanes",
+          "project_root",
+          "run_root",
+          "transaction_id",
+          "trigger_summary"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "raised_errors": [],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_index",
+          "write_json"
+        ],
+        "state_reads": [
+          "Any",
+          "INCIDENT_SCHEMA",
+          "Path",
+          "RECOVERY_TRANSACTION_SCHEMA",
+          "_core",
+          "_save_recovery_transaction",
+          "append",
+          "blocker_ids",
+          "break_glass_root",
+          "controller_generation_id",
+          "core",
+          "dict",
+          "failure_kind",
+          "family_ids",
+          "flowguard_obligations",
+          "get",
+          "incident",
+          "incident_id",
+          "incident_path",
+          "index",
+          "item",
+          "lane",
+          "list",
+          "load_index",
+          "name",
+          "normal_lanes",
+          "obligation",
+          "path",
+          "project_root",
+          "read_json",
+          "recovery_transactions",
+          "related",
+          "run_root",
+          "safe_id",
+          "save_index",
+          "str",
+          "transaction",
+          "transaction_id",
+          "trigger_summary",
+          "tx_ref",
+          "utc_now",
+          "write_json"
+        ],
+        "state_writes": [
+          "core",
+          "incident",
+          "incident_id",
+          "incident_path",
+          "index",
+          "recovery_transactions",
+          "related",
+          "related_recovery_transaction_ids",
+          "transaction",
+          "transaction_id",
+          "tx_ref"
+        ],
+        "symbol": "open_recovery_transaction"
+      },
+      {
+        "calls": [
+          "Path",
+          "SystemExit",
+          "_core",
+          "append",
+          "core._load_recovery_transaction",
+          "core._save_recovery_transaction",
+          "core._source_records",
+          "core.controller_reinjection_path",
+          "core.load_index",
+          "core.project_relative",
+          "core.safe_id",
+          "core.save_index",
+          "core.sha256_path",
+          "core.utc_now",
+          "core.write_json",
+          "core_path.is_absolute",
+          "index.get",
+          "item.get",
+          "transaction.get"
+        ],
+        "code_contract_id": "info_flow.break_glass.record_controller_reinjection",
+        "found": true,
+        "parameters": [
+          "boundary_proof_path",
+          "controller_core_path",
+          "next_generation_id",
+          "previous_generation_id",
+          "project_root",
+          "proof_artifacts",
+          "reinjection_id",
+          "run_root",
+          "transaction_id"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "raised_errors": [
+          "SystemExit"
+        ],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_index",
+          "write_json"
+        ],
+        "state_reads": [
+          "Any",
+          "CONTROLLER_REINJECTION_SCHEMA",
+          "Path",
+          "SystemExit",
+          "_core",
+          "_load_recovery_transaction",
+          "_save_recovery_transaction",
+          "_source_records",
+          "absolute_core",
+          "append",
+          "boundary_proof_path",
+          "controller_core_path",
+          "controller_reinjection_path",
+          "controller_reinjections",
+          "core",
+          "core_path",
+          "dict",
+          "get",
+          "index",
+          "is_absolute",
+          "item",
+          "list",
+          "load_index",
+          "name",
+          "next_generation_id",
+          "previous_generation_id",
+          "project_relative",
+          "project_root",
+          "proof_artifacts",
+          "proof_records",
+          "reinjection",
+          "reinjection_id",
+          "reinjection_path",
+          "run_root",
+          "safe_id",
+          "save_index",
+          "sha256_path",
+          "str",
+          "transaction",
+          "transaction_id",
+          "utc_now",
+          "write_json"
+        ],
+        "state_writes": [
+          "absolute_core",
+          "controller_reinjection",
+          "controller_reinjections",
+          "core",
+          "core_path",
+          "index",
+          "proof_records",
+          "reinjection",
+          "reinjection_id",
+          "reinjection_path",
+          "transaction"
+        ],
+        "symbol": "record_controller_reinjection"
+      },
+      {
+        "calls": [
+          "SystemExit",
+          "_core",
+          "core._load_recovery_transaction",
+          "core._save_recovery_transaction",
+          "core._source_records",
+          "core.load_control_plane_blocker_ledger",
+          "core.load_index",
+          "core.save_index",
+          "core.utc_now",
+          "index.get",
+          "item.get",
+          "join",
+          "ledger.get",
+          "str",
+          "transaction.get"
+        ],
+        "code_contract_id": "info_flow.break_glass.close_recovery_transaction",
+        "found": true,
+        "parameters": [
+          "disposition",
+          "project_root",
+          "run_root",
+          "same_family_evidence",
+          "transaction_id"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "raised_errors": [
+          "SystemExit"
+        ],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [
+          "save_index"
+        ],
+        "state_reads": [
+          "Any",
+          "Path",
+          "SystemExit",
+          "_core",
+          "_load_recovery_transaction",
+          "_save_recovery_transaction",
+          "_source_records",
+          "blocker_ids",
+          "core",
+          "dict",
+          "disposition",
+          "evidence_records",
+          "get",
+          "index",
+          "item",
+          "join",
+          "ledger",
+          "list",
+          "load_control_plane_blocker_ledger",
+          "load_index",
+          "path",
+          "project_root",
+          "run_root",
+          "same_family_evidence",
+          "same_family_repair",
+          "save_index",
+          "str",
+          "transaction",
+          "transaction_id",
+          "tx_ref",
+          "unresolved",
+          "utc_now"
+        ],
+        "state_writes": [
+          "blocker_ids",
+          "closed_at",
+          "core",
+          "evidence",
+          "evidence_records",
+          "final_disposition",
+          "index",
+          "ledger",
+          "normal_controller_suspended",
+          "status",
+          "transaction",
+          "tx_ref",
+          "unresolved"
+        ],
+        "symbol": "close_recovery_transaction"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_event",
+          "_latest_open_packet_for_repair",
+          "_mark_repair_target_noncurrent_after_current_reissue",
+          "_next_id",
+          "_normalize_modeled_target",
+          "_normalize_node_responsibility",
+          "_normalize_strict_route_plan_nodes",
+          "_parse_strict_route_plan",
+          "_record_repair_transaction",
+          "append",
+          "ensure_node_acceptance_plan_packet",
+          "ensure_node_prework_flowguard_packet",
+          "envelope.get",
+          "get",
+          "high_standard_flow_required",
+          "int",
+          "isinstance",
+          "items",
+          "json.dumps",
+          "ledger.get",
+          "ledger.setdefault",
+          "list",
+          "materialized_ids.append",
+          "node.get",
+          "node.setdefault",
+          "now_iso",
+          "packet.get",
+          "route_plan.get",
+          "row.get",
+          "set",
+          "spec.get",
+          "str",
+          "values"
+        ],
+        "code_contract_id": "info_flow.runtime.redesign_route_from_pm_decision",
+        "found": true,
+        "parameters": [
+          "blocker",
+          "decision_id",
+          "ledger",
+          "reason"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "Mapping",
+          "_event",
+          "_latest_open_packet_for_repair",
+          "_mark_repair_target_noncurrent_after_current_reissue",
+          "_next_id",
+          "_normalize_modeled_target",
+          "_normalize_node_responsibility",
+          "_normalize_strict_route_plan_nodes",
+          "_parse_strict_route_plan",
+          "_record_repair_transaction",
+          "append",
+          "before_packets",
+          "blocker",
+          "blocker_id",
+          "criteria",
+          "decision_id",
+          "dict",
+          "dumps",
+          "ensure_node_acceptance_plan_packet",
+          "ensure_node_prework_flowguard_packet",
+          "envelope",
+          "execution_frontier",
+          "first_node_id",
+          "fresh_packet_id",
+          "get",
+          "high_standard_flow_required",
+          "int",
+          "isinstance",
+          "item",
+          "items",
+          "json",
+          "ledger",
+          "list",
+          "materialized_ids",
+          "new_version",
+          "node",
+          "node_id",
+          "node_specs",
+          "now_iso",
+          "old_node_ids",
+          "old_version",
+          "packet",
+          "packets",
+          "pending_route_mutation",
+          "reason",
+          "route_nodes",
+          "route_plan",
+          "routes",
+          "row",
+          "set",
+          "setdefault",
+          "spec",
+          "status",
+          "str",
+          "title",
+          "tuple",
+          "values"
+        ],
+        "state_writes": [
+          "active_route_version",
+          "before_packets",
+          "criteria",
+          "envelope",
+          "execution_frontier",
+          "first_node_id",
+          "fresh_packet_id",
+          "materialized_ids",
+          "new_version",
+          "node",
+          "node_id",
+          "node_specs",
+          "old_node_ids",
+          "old_route_disposition",
+          "old_version",
+          "repair_blocker_id",
+          "route_nodes",
+          "route_plan",
+          "row",
+          "status",
+          "superseded_by",
+          "superseded_by_route_version"
+        ],
+        "symbol": "_redesign_route_from_pm_decision"
+      },
+      {
+        "calls": [
+          "_decision",
+          "_normalized",
+          "record.get"
+        ],
+        "code_contract_id": "info_flow.closure.classify_control_blocker",
+        "found": true,
+        "parameters": [
+          "record"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "raised_errors": [],
+        "return_values": [
+          "_decision"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "CLOSURE_CLOSED_TERMINAL",
+          "CLOSURE_INVALID_OR_INCOMPLETE",
+          "CLOSURE_OPEN",
+          "CONTROL_BLOCKER_CLOSED_STATUSES",
+          "ClosureDecision",
+          "_decision",
+          "_normalized",
+          "dict",
+          "get",
+          "record",
+          "status",
+          "str"
+        ],
+        "state_writes": [
+          "status"
+        ],
+        "symbol": "classify_control_blocker"
+      },
+      {
+        "calls": [
+          "classify_closure"
+        ],
+        "code_contract_id": "info_flow.closure.closure_blocks_progress",
+        "found": true,
+        "parameters": [
+          "record",
+          "record_kind"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "raised_errors": [],
+        "return_values": [
+          "blocks_progress"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "blocks_progress",
+          "bool",
+          "classify_closure",
+          "dict",
+          "record",
+          "record_kind",
+          "str"
+        ],
+        "state_writes": [],
+        "symbol": "closure_blocks_progress"
+      }
+    ],
+    "finding_counts": {},
+    "findings": [],
+    "ok": true
+  },
+  "command": "python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json",
+  "finding_count": 0,
+  "finding_counts": {},
+  "findings": [],
+  "marker_ok": true,
+  "model_id": "flowpilot_information_flow_alignment",
+  "obligation_count": 10,
+  "ok": true,
+  "plan": {
+    "allow_orphan_code_contracts": false,
+    "allow_orphan_tests": false,
+    "boundary_contracts": [],
+    "boundary_observations": [],
+    "code_contracts": [
+      {
+        "code_contract_id": "info_flow.runtime.ensure_pm_repair_packet",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "blocker_id"
+        ],
+        "external_outputs": [
+          "pm_repair_packet_id"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "current_blocker",
+          "role_result",
+          "packet_ledger"
+        ],
+        "state_writes": [
+          "pm_repair_packet",
+          "packet_ledger"
+        ],
+        "surface_type": "function",
+        "symbol": "_ensure_pm_repair_decision_packet_for_blocker"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "blocker_id",
+          "decision_id"
+        ],
+        "external_outputs": [
+          "repair_packet_or_route_mutation"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.required_repair_to_pm_package",
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "pm_repair_decision",
+          "active_blocker"
+        ],
+        "state_writes": [
+          "repair_packet",
+          "blocker_status",
+          "route_mutation"
+        ],
+        "surface_type": "function",
+        "symbol": "_apply_pm_repair_decision"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.issue_current_scope_repair_packet",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "blocker",
+          "decision"
+        ],
+        "external_outputs": [
+          "fresh_repair_packet"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "current_packet",
+          "active_blocker"
+        ],
+        "state_writes": [
+          "packet_ledger"
+        ],
+        "surface_type": "function",
+        "symbol": "_issue_current_scope_repair_packet"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.recent_role_reports",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "body"
+        ],
+        "external_outputs": [
+          "pm_packet_body"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "role_results"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "_pm_packet_body_with_recent_role_reports"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.authorized_result_reads",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "packet_id",
+          "reads"
+        ],
+        "external_outputs": [
+          "updated_packet"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.current_payload_to_pm"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "result_envelopes"
+        ],
+        "state_writes": [
+          "packet_envelope"
+        ],
+        "surface_type": "function",
+        "symbol": "_attach_authorized_result_reads_to_packet"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
+        "error_paths": [],
+        "external_inputs": [
+          "records"
+        ],
+        "external_outputs": [
+          "validation_or_error"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_role_result.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "result_body_opened_by_role"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "_validate_result_bodies_opened_by_pm"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.required_recheck_packet",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "blocker_id"
+        ],
+        "external_outputs": [
+          "reviewer_recheck_packet"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.reviewer_recheck_followup"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "active_blocker"
+        ],
+        "state_writes": [
+          "packet_ledger"
+        ],
+        "surface_type": "function",
+        "symbol": "_issue_required_recheck_packet_for_stopped_blocker"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resume_entrypoint",
+        "error_paths": [],
+        "external_inputs": [
+          "root",
+          "reason"
+        ],
+        "external_outputs": [
+          "lifecycle_guard",
+          "foreground_duty",
+          "next_action"
+        ],
+        "implements_obligations": [
+          "info_flow.resume.current_authority_context"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_new_run_commands.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "current_run_shell",
+          "current_run_ledger"
+        ],
+        "state_writes": [
+          "resume_request",
+          "resume_reconciliation",
+          "lifecycle_guard"
+        ],
+        "surface_type": "function",
+        "symbol": "resume"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.record_resume_request",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "reason"
+        ],
+        "external_outputs": [
+          "resume_request_record"
+        ],
+        "implements_obligations": [
+          "info_flow.resume.current_authority_context"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": [
+          "resume_request"
+        ],
+        "surface_type": "function",
+        "symbol": "record_resume_request"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.reconcile_resume_request",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "resume_source"
+        ],
+        "external_outputs": [
+          "resume_reconciliation"
+        ],
+        "implements_obligations": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.reopen.history_not_current_authority"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "current_run",
+          "packet_ledger",
+          "active_blockers"
+        ],
+        "state_writes": [
+          "resume_state"
+        ],
+        "surface_type": "function",
+        "symbol": "reconcile_resume_request"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "error_paths": [],
+        "external_inputs": [
+          "root",
+          "packet_id",
+          "responsibility",
+          "host_kind"
+        ],
+        "external_outputs": [
+          "role_assignment",
+          "lease_commit_command"
+        ],
+        "implements_obligations": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "current_run_ledger",
+          "current_packet",
+          "role_continuity"
+        ],
+        "state_writes": [
+          "role_assignments"
+        ],
+        "surface_type": "function",
+        "symbol": "resolve_role_assignment"
+      },
+      {
+        "code_contract_id": "info_flow.new_runtime.lease_agent",
+        "error_paths": [],
+        "external_inputs": [
+          "root",
+          "packet_id",
+          "responsibility",
+          "assignment_id",
+          "agent_id"
+        ],
+        "external_outputs": [
+          "lease_id",
+          "role_handoff"
+        ],
+        "implements_obligations": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "role_assignment",
+          "current_packet"
+        ],
+        "state_writes": [
+          "lease",
+          "packet_assignment",
+          "role_continuity"
+        ],
+        "surface_type": "function",
+        "symbol": "lease_agent"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.resolve_role_assignment",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "responsibility",
+          "packet_id",
+          "host_kind"
+        ],
+        "external_outputs": [
+          "role_assignment"
+        ],
+        "implements_obligations": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "current_packet",
+          "role_continuity",
+          "same_responsibility_lease_history"
+        ],
+        "state_writes": [
+          "role_assignments"
+        ],
+        "surface_type": "function",
+        "symbol": "resolve_role_assignment"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.lease_agent",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "responsibility",
+          "packet_id",
+          "assignment_id",
+          "agent_id"
+        ],
+        "external_outputs": [
+          "lease_id"
+        ],
+        "implements_obligations": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "role_assignment",
+          "role_memory_seed"
+        ],
+        "state_writes": [
+          "leases",
+          "role_continuity"
+        ],
+        "surface_type": "function",
+        "symbol": "lease_agent"
+      },
+      {
+        "code_contract_id": "info_flow.router.controller_repair_work_packet",
+        "error_paths": [],
+        "external_inputs": [
+          "repair_transaction_id",
+          "payload"
+        ],
+        "external_outputs": [
+          "controller_repair_work_packet_result"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair",
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "control_blocker",
+          "repair_transaction"
+        ],
+        "state_writes": [
+          "repair_transaction"
+        ],
+        "surface_type": "function",
+        "symbol": "_apply_controller_repair_work_packet"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.open_incident",
+        "error_paths": [],
+        "external_inputs": [
+          "incident_id",
+          "trigger",
+          "sources"
+        ],
+        "external_outputs": [
+          "incident_record"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": [
+          "controller_break_glass/incidents"
+        ],
+        "surface_type": "function",
+        "symbol": "open_incident"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.record_control_plane_blocker",
+        "error_paths": [],
+        "external_inputs": [
+          "blocker_id",
+          "summary",
+          "sources"
+        ],
+        "external_outputs": [
+          "control_plane_blocker_record"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": [
+          "control_plane_blocker_ledger"
+        ],
+        "surface_type": "function",
+        "symbol": "record_control_plane_blocker"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.close_incident",
+        "error_paths": [],
+        "external_inputs": [
+          "incident_id",
+          "disposition"
+        ],
+        "external_outputs": [
+          "closed_or_blocked_incident"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "validation_evidence",
+          "recovery_transactions"
+        ],
+        "state_writes": [
+          "controller_break_glass/index"
+        ],
+        "surface_type": "function",
+        "symbol": "close_incident"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.open_recovery_transaction",
+        "error_paths": [],
+        "external_inputs": [
+          "transaction_id",
+          "incident_id",
+          "failure_kind"
+        ],
+        "external_outputs": [
+          "recovery_transaction"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": [
+          "controller_break_glass/recovery_transactions"
+        ],
+        "surface_type": "function",
+        "symbol": "open_recovery_transaction"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.record_controller_reinjection",
+        "error_paths": [],
+        "external_inputs": [
+          "previous_generation_id",
+          "next_generation_id"
+        ],
+        "external_outputs": [
+          "controller_reinjection"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "boundary_proof"
+        ],
+        "state_writes": [
+          "controller_reinjections"
+        ],
+        "surface_type": "function",
+        "symbol": "record_controller_reinjection"
+      },
+      {
+        "code_contract_id": "info_flow.break_glass.close_recovery_transaction",
+        "error_paths": [],
+        "external_inputs": [
+          "transaction_id",
+          "same_family_evidence"
+        ],
+        "external_outputs": [
+          "closed_recovery_transaction"
+        ],
+        "implements_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass_recovery.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "controller_reinjection"
+        ],
+        "state_writes": [
+          "recovery_transaction"
+        ],
+        "surface_type": "function",
+        "symbol": "close_recovery_transaction"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.redesign_route_from_pm_decision",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "blocker",
+          "decision"
+        ],
+        "external_outputs": [
+          "route_mutation"
+        ],
+        "implements_obligations": [
+          "info_flow.route_mutation.blocker_acceptance_replay_scope"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "active_blocker",
+          "route_memory",
+          "stale_evidence"
+        ],
+        "state_writes": [
+          "route_version",
+          "execution_frontier"
+        ],
+        "surface_type": "function",
+        "symbol": "_redesign_route_from_pm_decision"
+      },
+      {
+        "code_contract_id": "info_flow.closure.classify_control_blocker",
+        "error_paths": [],
+        "external_inputs": [
+          "control_blocker_record"
+        ],
+        "external_outputs": [
+          "closure_decision"
+        ],
+        "implements_obligations": [
+          "info_flow.closure.unresolved_gap_stop_boundary",
+          "info_flow.blocker.reviewer_recheck_followup"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "control_blocker_status"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "classify_control_blocker"
+      },
+      {
+        "code_contract_id": "info_flow.closure.closure_blocks_progress",
+        "error_paths": [],
+        "external_inputs": [
+          "record_kind",
+          "record"
+        ],
+        "external_outputs": [
+          "blocks_progress"
+        ],
+        "implements_obligations": [
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_closure_kernel.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "terminal_or_unresolved_status"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "closure_blocks_progress"
+      }
+    ],
+    "family_evidence": [],
+    "field_lifecycle_projections": [],
+    "field_lifecycle_reports": [],
+    "model_id": "flowpilot_information_flow_alignment",
+    "obligation_families": [],
+    "obligations": [
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Current blocker payload reaches PM with blocker id, source result, specific failure, PM-visible role summary, and authorized result reads.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "obligation_type": "information_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Reviewer required_repair and recommendation are preserved into the PM repair decision/package instead of being replaced by a generic reason.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "obligation_type": "information_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "edge_path",
+          "negative_path"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Repair packets issued to workers carry current blocker context, new repair direction, allowed reads/writes, forbidden actions, success evidence, and a fresh generation.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.blocker.worker_packet_progress_delta",
+        "obligation_type": "progress_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Reviewer recheck is bound to the current blocker and worker evidence; failed recheck produces a visible follow-up blocker instead of silent closure.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.blocker.reviewer_recheck_followup",
+        "obligation_type": "gate_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "edge_path"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Manual resume/reentry loads current run, frontier, packet ledger, active blocker, and PM decision state before any next action.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.resume.current_authority_context",
+        "obligation_type": "resume_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path",
+          "replay"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Reopened continuation may import old state only as history; old evidence and old agent ids cannot authorize current work.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.reopen.history_not_current_authority",
+        "obligation_type": "authority_boundary",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "negative_path",
+          "replay"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Break-glass is limited to FlowPilot control-plane repair after normal repair failure and must record bounded scope, evidence, validation, and PM/reviewer/FlowGuard reintegration.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.break_glass.bounded_reintegrated_repair",
+        "obligation_type": "emergency_control_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Route mutation carries the blocker context, new route version, replacement acceptance plan, stale-evidence invalidation, and replay scope.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.route_mutation.blocker_acceptance_replay_scope",
+        "obligation_type": "route_mutation_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "edge_path",
+          "replay"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Manual resume and role dispatch name only the currently requested responsibility, bind any assignment or lease to the current packet/task, and do not restore, prewarm, or infer a fixed role set from stale role state.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.role_assignment.current_packet_binding",
+        "obligation_type": "role_assignment_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "Closure cannot pass with unresolved information gaps; user or protocol stop preserves unresolved work and quarantines stale control-plane artifacts.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.closure.unresolved_gap_stop_boundary",
+        "obligation_type": "terminal_boundary",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path",
+          "replay"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      }
+    ],
+    "require_proof_artifacts": false,
+    "require_runtime_path_evidence": false,
+    "runtime_node_contracts": [],
+    "runtime_node_observations": [],
+    "runtime_path_runs": [],
+    "similarity_handoff": null,
+    "test_evidence": [
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_packet_includes_recent_role_report_summary -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.ensure_pm_repair_packet",
+          "info_flow.runtime.recent_role_reports",
+          "info_flow.runtime.authorized_result_reads"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.pm_summary_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_pm_repair_packet_includes_recent_role_report_summary"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_information_flow_alignment.py -k test_pm_result_disposition_requires_opened_result_body -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.pm_opened_result_bodies"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.pm_opened_body_validation",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_information_flow_alignment.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_pm_result_disposition_requires_opened_result_body"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_missing_pm_visible_summary_is_mechanically_reissued -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.ensure_pm_repair_packet"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.current_payload_to_pm"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.missing_pm_summary_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_missing_pm_visible_summary_is_mechanically_reissued"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_reviewer_required_repair_reaches_pm_repair_packet -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.apply_pm_repair_decision",
+          "info_flow.runtime.issue_current_scope_repair_packet"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.worker_repair_packet_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_reviewer_required_repair_reaches_pm_repair_packet"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_reviewer_required_repair_reaches_pm_repair_packet -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.apply_pm_repair_decision",
+          "info_flow.runtime.issue_current_scope_repair_packet"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.required_repair_to_pm_package",
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.required_repair_edge",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "edge_path",
+        "test_name": "test_reviewer_required_repair_reaches_pm_repair_packet"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_decision_summary_is_not_reason_fallback -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.apply_pm_repair_decision"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.required_repair_to_pm_package",
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.pm_summary_no_fallback_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_pm_repair_decision_summary_is_not_reason_fallback"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_repair_transaction_recheck_blocker_registers_followup_blocker",
+        "covered_code_contracts": [
+          "info_flow.closure.classify_control_blocker"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.reviewer_recheck_followup"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.followup_recheck_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/control_blockers.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_repair_transaction_recheck_blocker_registers_followup_blocker"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_repair_transaction_protocol_blocker_registers_followup_blocker",
+        "covered_code_contracts": [
+          "info_flow.closure.classify_control_blocker"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.reviewer_recheck_followup"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.followup_protocol_edge",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/control_blockers.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "edge_path",
+        "test_name": "test_repair_transaction_protocol_blocker_registers_followup_blocker"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.required_recheck_packet"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.reviewer_recheck_followup"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.required_recheck_packet_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_manual_resume_uses_lifecycle_guard_without_heartbeat_or_role_prewarm -q",
+        "covered_code_contracts": [
+          "info_flow.new_runtime.resume_entrypoint",
+          "info_flow.runtime.record_resume_request",
+          "info_flow.runtime.reconcile_resume_request",
+          "info_flow.new_runtime.resolve_role_assignment",
+          "info_flow.new_runtime.lease_agent",
+          "info_flow.runtime.resolve_role_assignment",
+          "info_flow.runtime.lease_agent"
+        ],
+        "covered_obligations": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_manual_resume_uses_lifecycle_guard_without_heartbeat_or_role_prewarm"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_resolve_stopped_blocker_requires_explicit_user_request_before_reissue -q",
+        "covered_code_contracts": [
+          "info_flow.new_runtime.resume_entrypoint",
+          "info_flow.runtime.reconcile_resume_request"
+        ],
+        "covered_obligations": [
+          "info_flow.resume.current_authority_context"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.plain_resume_does_not_reissue_stopped_blocker_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_resolve_stopped_blocker_requires_explicit_user_request_before_reissue"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_flowguard_operator_is_leased_through_its_own_packet -q",
+        "covered_code_contracts": [
+          "info_flow.new_runtime.resolve_role_assignment",
+          "info_flow.runtime.resolve_role_assignment"
+        ],
+        "covered_obligations": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.role_assignment_wrong_responsibility_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -k test_resume_active_blocker_and_ambiguous_state_preempt_fake_package -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.reconcile_resume_request"
+        ],
+        "covered_obligations": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.reopen.history_not_current_authority"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.resume_fake_package_replay",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "replay",
+        "test_name": "test_resume_active_blocker_and_ambiguous_state_preempt_fake_package"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_historical_live_run_replay.py -k test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.reconcile_resume_request"
+        ],
+        "covered_obligations": [
+          "info_flow.reopen.history_not_current_authority"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.historical_replay_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_historical_live_run_replay.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_historical_snapshot_and_background_packages_reject_stale_or_incomplete_evidence"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_controller_break_glass.py -k test_break_glass_helper_records_incident_and_patch -q",
+        "covered_code_contracts": [
+          "info_flow.break_glass.open_incident"
+        ],
+        "covered_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.break_glass_incident_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_controller_break_glass.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_break_glass_helper_records_incident_and_patch"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_controller_break_glass.py -k test_recovery_supervisor_records_transaction_body_grant_and_reinjection -q",
+        "covered_code_contracts": [
+          "info_flow.break_glass.record_control_plane_blocker",
+          "info_flow.break_glass.open_recovery_transaction",
+          "info_flow.break_glass.record_controller_reinjection",
+          "info_flow.break_glass.close_recovery_transaction"
+        ],
+        "covered_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.break_glass_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_controller_break_glass.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_recovery_supervisor_records_transaction_body_grant_and_reinjection"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_controller_break_glass.py -k test_break_glass_close_rejects_unvalidated_permanent_patch -q",
+        "covered_code_contracts": [
+          "info_flow.break_glass.close_incident"
+        ],
+        "covered_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.break_glass_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_controller_break_glass.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_break_glass_close_rejects_unvalidated_permanent_patch"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_controller_repair_work_packet_queues_bounded_controller_action",
+        "covered_code_contracts": [
+          "info_flow.router.controller_repair_work_packet"
+        ],
+        "covered_obligations": [
+          "info_flow.break_glass.bounded_reintegrated_repair",
+          "info_flow.blocker.worker_packet_progress_delta"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.controller_repair_work_packet_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/foreground_controller.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_controller_repair_work_packet_queues_bounded_controller_action"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.route_mutation_acceptance_repair.RouteMutationAcceptanceRepairRuntimeTests.test_node_acceptance_plan_block_can_be_revised_on_same_node",
+        "covered_code_contracts": [
+          "info_flow.runtime.redesign_route_from_pm_decision"
+        ],
+        "covered_obligations": [
+          "info_flow.route_mutation.blocker_acceptance_replay_scope"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.route_mutation_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/route_mutation_acceptance_repair.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_node_acceptance_plan_block_can_be_revised_on_same_node"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/flowpilot_route_mutation_contracts.py -k test_parent_contract_route_mutation_new_transaction_is_not_swallowed_by_old_flag -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.redesign_route_from_pm_decision"
+        ],
+        "covered_obligations": [
+          "info_flow.route_mutation.blocker_acceptance_replay_scope"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.route_mutation_edge",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/flowpilot_route_mutation_contracts.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "edge_path",
+        "test_name": "test_parent_contract_route_mutation_new_transaction_is_not_swallowed_by_old_flag"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_synthetic_agent_trace_replay.py -k test_route_mutation_stale_sibling_proof_fake_package -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.redesign_route_from_pm_decision"
+        ],
+        "covered_obligations": [
+          "info_flow.route_mutation.blocker_acceptance_replay_scope"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.route_mutation_stale_replay",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_synthetic_agent_trace_replay.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "replay",
+        "test_name": "test_route_mutation_stale_sibling_proof_fake_package"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_flowguard_operator_is_leased_through_its_own_packet -q",
+        "covered_code_contracts": [
+          "info_flow.new_runtime.resolve_role_assignment",
+          "info_flow.new_runtime.lease_agent",
+          "info_flow.runtime.resolve_role_assignment",
+          "info_flow.runtime.lease_agent"
+        ],
+        "covered_obligations": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.role_assignment_packet_specific_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_ack_only_and_pm_only_result_do_not_reach_terminal_closure -q",
+        "covered_code_contracts": [
+          "info_flow.closure.closure_blocks_progress"
+        ],
+        "covered_obligations": [
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.terminal_closure_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_ack_only_and_pm_only_result_do_not_reach_terminal_closure"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.control_blockers.ControlBlockersRuntimeTests.test_protocol_dead_end_terminal_family_suppresses_reopened_blocker",
+        "covered_code_contracts": [
+          "info_flow.closure.classify_control_blocker"
+        ],
+        "covered_obligations": [
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.protocol_dead_end_terminal_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/control_blockers.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_protocol_dead_end_terminal_family_suppresses_reopened_blocker"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.terminal.TerminalRuntimeTests.test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
+        "covered_code_contracts": [
+          "info_flow.closure.closure_blocks_progress"
+        ],
+        "covered_obligations": [
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.user_stop_positive",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/terminal.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m unittest -v tests.router_runtime.terminal.TerminalRuntimeTests.test_user_stop_quarantines_active_repair_and_historical_control_plane_artifacts",
+        "covered_code_contracts": [
+          "info_flow.closure.closure_blocks_progress"
+        ],
+        "covered_obligations": [
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.terminal_quarantine_replay",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/router_runtime/terminal.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "replay",
+        "test_name": "test_user_stop_quarantines_active_repair_and_historical_control_plane_artifacts"
+      }
+    ]
+  },
+  "result_type": "flowpilot_information_flow_alignment",
+  "source_marker_report": {
+    "check_count": 15,
+    "checks": [
+      {
+        "covers": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "requirement_id": "runtime.pm_blocker_details"
+      },
+      {
+        "covers": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_pm_role_writes_decisions_role_result.py",
+        "requirement_id": "runtime.pm_body_open_receipt"
+      },
+      {
+        "covers": [
+          "info_flow.blocker.required_repair_to_pm_package",
+          "info_flow.blocker.worker_packet_progress_delta",
+          "info_flow.route_mutation.blocker_acceptance_replay_scope"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_review_repair.md",
+        "requirement_id": "card.pm_review_repair_work_packet_minimums"
+      },
+      {
+        "covers": [
+          "info_flow.blocker.current_payload_to_pm"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/prompts/packets/output_contract_section.md",
+        "requirement_id": "card.role_outputs_pm_visible_summary"
+      },
+      {
+        "covers": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.reopen.history_not_current_authority"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
+        "requirement_id": "card.resume_current_authority"
+      },
+      {
+        "covers": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md",
+        "requirement_id": "prompt.lifecycle_resume_current_runtime"
+      },
+      {
+        "covers": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.reopen.history_not_current_authority"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_resume_decision.md",
+        "requirement_id": "card.pm_resume_prior_path_context"
+      },
+      {
+        "covers": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
+        "requirement_id": "card.break_glass_scope_and_reintegration"
+      },
+      {
+        "covers": [
+          "info_flow.break_glass.bounded_reintegrated_repair"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_controller_break_glass.py",
+        "requirement_id": "runtime.break_glass_bounded_records"
+      },
+      {
+        "covers": [
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "requirement_id": "runtime.role_assignment_current_packet_binding"
+      },
+      {
+        "covers": [
+          "info_flow.resume.current_authority_context",
+          "info_flow.role_assignment.current_packet_binding"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "tests/test_flowpilot_new_entrypoint.py",
+        "requirement_id": "test.lifecycle_resume_no_role_prewarm"
+      },
+      {
+        "covers": [
+          "info_flow.blocker.reviewer_recheck_followup"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "tests/router_runtime/control_blockers.py",
+        "requirement_id": "test.followup_blocker_visible"
+      },
+      {
+        "covers": [
+          "info_flow.route_mutation.blocker_acceptance_replay_scope"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "tests/flowpilot_route_mutation_contracts.py",
+        "requirement_id": "test.route_mutation_stale_replay"
+      },
+      {
+        "covers": [
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "tests/router_runtime/terminal.py",
+        "requirement_id": "test.terminal_stop_quarantine"
+      },
+      {
+        "covers": [
+          "info_flow.reopen.history_not_current_authority",
+          "info_flow.closure.unresolved_gap_stop_boundary"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "tests/test_flowpilot_historical_live_run_replay.py",
+        "requirement_id": "test.historical_not_current"
+      }
+    ],
+    "finding_counts": {},
+    "findings": [],
+    "ok": true
+  },
+  "test_evidence_count": 26,
+  "underlying_model_ok": true,
+  "underlying_model_reports": {
+    "blocker_repair_information_flow": {
+      "accepted": [
+        "valid_followup_blocker_recording",
+        "valid_loop_escape_route_mutation",
+        "valid_reviewer_blocker_repair_packet",
+        "valid_worker_blocker_reissue"
+      ],
+      "hazard_failure_count": 0,
+      "model_id": "flowpilot_blocker_repair_information_flow",
+      "ok": true,
+      "rejected": [
+        "blocker_routed_without_pm_decision",
+        "current_blocker_payload_missing_details",
+        "followup_blocker_lost",
+        "no_success_evidence_contract",
+        "pm_closes_blocker_without_recheck",
+        "pm_did_not_open_required_report",
+        "pm_repair_package_omits_new_blocker_content",
+        "reviewer_advice_not_integrated",
+        "reviewer_recheck_not_bound_to_blocker",
+        "reviewer_required_repair_dropped",
+        "same_blocker_repeat_loop_allowed",
+        "stale_blocker_used_for_pm_repair",
+        "stale_context_copied_without_disposition",
+        "worker_packet_has_no_semantic_delta",
+        "worker_packet_omits_repair_direction"
+      ]
+    },
+    "ok": true,
+    "project_control_information_flow": {
+      "accepted": [
+        "valid_break_glass_control_repair",
+        "valid_interrupt_resume_with_blocker_context",
+        "valid_reopen_imports_history_and_current_run",
+        "valid_repair_packet_progress",
+        "valid_role_assignment_reissues_current_packet",
+        "valid_route_mutation_with_replay_scope",
+        "valid_terminal_stop_preserves_unresolved_work"
+      ],
+      "hazard_failure_count": 0,
+      "model_id": "flowpilot_project_control_information_flow",
+      "ok": true,
+      "rejected": [
+        "break_glass_bypasses_pm_reviewer_reintegration",
+        "break_glass_unbounded_or_target_project_repair",
+        "break_glass_without_normal_repair_failure",
+        "final_closure_with_unresolved_information_gap",
+        "followup_blocker_not_propagated_to_next_runway",
+        "historical_evidence_promoted_to_current",
+        "pm_runway_omits_active_blocker",
+        "reopen_reuses_old_agent_ids_as_current",
+        "resume_from_chat_history_loses_blocker",
+        "resume_loads_old_run_as_current",
+        "role_assignment_without_current_packet_context",
+        "route_mutation_does_not_invalidate_stale_evidence",
+        "route_mutation_omits_blocker_or_acceptance_plan",
+        "same_work_repeated_with_no_new_info",
+        "work_packet_lacks_minimum_information"
+      ]
+    }
+  }
+}

@@ -7,9 +7,9 @@
     "safe_graph": "pass"
   },
   "counts": {
-    "accepted": 6,
+    "accepted": 5,
     "edges": 132,
-    "rejected": 16,
+    "rejected": 17,
     "states": 133
   },
   "ok": true,
@@ -21,7 +21,7 @@
       "asset_unified_runtime_path_exists": true,
       "binding_report": {
         "facts": {
-          "bound_contract_count": 18,
+          "bound_contract_count": 14,
           "declared_output_types": [
             "controller_boundary_confirmation",
             "current_node_result_review_pass",
@@ -34,12 +34,8 @@
             "pm_package_result_disposition",
             "pm_parent_segment_decision",
             "pm_resume_decision",
-            "pm_startup_activation_approval",
-            "pm_startup_protocol_dead_end",
-            "pm_startup_repair_request",
             "pm_terminal_closure_decision",
             "reviewer_review_report",
-            "startup_fact_report",
             "terminal_backward_replay_report"
           ]
         },
@@ -68,12 +64,8 @@
         "pm_package_result_disposition",
         "pm_parent_segment_decision",
         "pm_resume_decision",
-        "pm_startup_activation_approval",
-        "pm_startup_protocol_dead_end",
-        "pm_startup_repair_request",
         "pm_terminal_closure_decision",
         "reviewer_review_report",
-        "startup_fact_report",
         "terminal_backward_replay_report"
       ],
       "runtime_path_exists": true,

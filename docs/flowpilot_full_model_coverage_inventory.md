@@ -6,25 +6,30 @@ This inventory proves that FlowGuard model/check entrypoints were enumerated and
 
 ## Summary
 
-- Runner count: `106`
-- Sweep ok: `true`
+- Runner count: `140`
+- Sweep ok: `false`
 - Model-test alignment ok: `true`
 - Source audit ok: `true`
 - Full coverage ok: `false`
 - Release convergence ok: `true`
-- Deferred structure split count: `5`
+- Deferred structure split count: `1`
 - Unresolved non-deferred gap count: `0`
-- Finding count across sweep records: `42`
+- Finding count across sweep records: `140`
 
 ## Prioritized Gap Groups
 
 | Gap class | Runner count | First runners |
 | --- | --- | --- |
+| runner_unparsed_or_unavailable | 1 | flowpilot_process_liveness |
+| runner_not_ok | 1 | flowpilot_final_confidence_gate |
+| live_runtime_or_state_findings | 1 | flowpilot_model_mesh |
 
 ## Not-OK Or Unparsed Runners
 
 | Runner | Issue | Mode | Notes |
 | --- | --- | --- | --- |
+| flowpilot_final_confidence_gate | not_ok | executed_read_only | runner_not_ok |
+| flowpilot_process_liveness | unparsed | executed_read_only | runner_unparsed_or_unavailable |
 
 ## Evidence Notes
 

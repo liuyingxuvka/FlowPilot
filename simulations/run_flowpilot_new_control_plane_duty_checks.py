@@ -57,7 +57,9 @@ def _hazard_report() -> dict[str, Any]:
 
 def _source_contract_report() -> dict[str, Any]:
     runtime_text = (REPO_ROOT / "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py").read_text(encoding="utf-8")
-    entrypoint_text = (REPO_ROOT / "skills/flowpilot/assets/flowpilot_new.py").read_text(encoding="utf-8")
+    entrypoint_text = (
+        REPO_ROOT / "skills/flowpilot/assets/flowpilot_new_run_commands.py"
+    ).read_text(encoding="utf-8")
     fake_text = (REPO_ROOT / "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py").read_text(encoding="utf-8")
     runtime_tests = (REPO_ROOT / "tests/test_flowpilot_core_runtime.py").read_text(encoding="utf-8")
     entrypoint_tests = (REPO_ROOT / "tests/test_flowpilot_new_entrypoint.py").read_text(encoding="utf-8")

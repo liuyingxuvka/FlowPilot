@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for the FlowPilot prompt-isolation model."""
+"""Thin current-contract entrypoint for the FlowPilot prompt-isolation model."""
 
 from __future__ import annotations
 

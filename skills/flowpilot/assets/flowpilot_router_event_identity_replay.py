@@ -263,8 +263,6 @@ def _external_event_flag_replay_requires_new_processing(router: ModuleType, run_
         return True
     if event in router.CONTROL_BLOCKER_REPAIR_NON_SUCCESS_EVENTS or event == router.PM_PARENT_PROTOCOL_BLOCKER_EVENT:
         return True
-    if event == 'pm_requests_startup_repair' and run_state['flags'].get(flag) and run_state['flags'].get('startup_fact_reported') and run_state['flags'].get('pm_startup_activation_card_delivered'):
-        return True
     if event == 'pm_writes_route_draft' and run_state['flags'].get(flag) and (not run_state['flags'].get('route_activated_by_pm')):
         return True
     if event in {'pm_completes_current_node_from_reviewed_result', 'pm_completes_parent_node_from_backward_replay'} and run_state['flags'].get(flag) and router._active_node_completion_write_missing(run_root, run_state, payload):

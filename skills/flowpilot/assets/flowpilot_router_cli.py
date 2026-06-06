@@ -50,6 +50,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -268,7 +270,7 @@ def main(argv: list[str] | None = None) -> int:
                     "daemon_live": status.get("daemon_live"),
                     "last_tick_at": status.get("last_tick_at"),
                     "lock": status.get("lock"),
-                    "heartbeat": status.get("heartbeat"),
+                    "daemon_patrol": status.get("daemon_patrol"),
                     "current_work": status.get("current_work"),
                     "current_wait": status.get("current_wait"),
                     "current_action": status.get("current_action"),

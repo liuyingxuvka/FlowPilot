@@ -7,7 +7,7 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def _prepare_material_scan_batch(self, root: Path) -> tuple[Path, Path]:
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(
             root,
@@ -19,11 +19,6 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
                         "to_role": "worker",
                         "body_text": "Inspect local materials.",
                     },
-                    {
-                        "packet_id": "material-family-worker-2",
-                        "to_role": "worker",
-                        "body_text": "Inspect repository state.",
-                    },
                 ]
             },
         )
@@ -32,7 +27,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
     def _prepare_research_batch(self, root: Path) -> tuple[Path, Path]:
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         self.apply_next_packet_action(root, "relay_material_scan_packets")
@@ -74,7 +69,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "batch_id": "research-family-batch-001",
                 "packets": [
                     {"packet_id": "research-family-worker-1", "to_role": "worker"},
-                    {"packet_id": "research-family-worker-2", "to_role": "worker"},
+                    {"packet_id": "research-family-flowguard-1", "to_role": "flowguard_operator"},
                 ],
                 "stop_conditions": ["Do not edit production code."],
             },
@@ -91,7 +86,10 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.activate_route(root)
         self.deliver_current_node_cards(root)
         packet_paths: dict[str, str] = {}
-        for packet_id, role in (("family-node-worker-1", "worker"), ("family-node-worker-2", "worker")):
+        for packet_id, role in (
+            ("family-node-worker-1", "worker"),
+            ("family-node-flowguard-1", "flowguard_operator"),
+        ):
             packet = packet_runtime.create_packet(
                 root,
                 packet_id=packet_id,
@@ -140,7 +138,14 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 "batch_id": "pm-role-work-family-batch-001",
                 "requests": [
                     self.pm_role_work_request_payload(root, request_id=request_ids[0], to_role="flowguard_operator"),
-                    self.pm_role_work_request_payload(root, request_id=request_ids[1], to_role="flowguard_operator"),
+                    self.pm_role_work_request_payload(
+                        root,
+                        request_id=request_ids[1],
+                        to_role="worker",
+                        request_kind="implementation",
+                        output_contract_id="flowpilot.output_contract.pm_role_work_result.v1",
+                        body_text="Carry out the bounded PM repair support task.",
+                    ),
                 ],
             },
         )
@@ -152,18 +157,17 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root, material_index_path = self._prepare_material_scan_batch(root)
         index = read_json(material_index_path)
         first = index["packets"][0]
-        second = index["packets"][1]
-        for record, next_recipient in ((first, "human_like_reviewer"), (second, "project_manager")):
-            envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
-            packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
-            packet_runtime.write_result(
-                root,
-                packet_envelope=envelope,
-                completed_by_role=envelope["to_role"],
-                completed_by_agent_id=f"{envelope['to_role']}-agent",
-                result_body_text=f"{record['packet_id']} result\n\nContract Self-Check\n\nstatus: pass\n",
-                next_recipient=next_recipient,
-            )
+        envelope = packet_runtime.load_envelope(root, first["packet_envelope_path"])
+        packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+        completed_by_role = str(envelope["to_role"])
+        packet_runtime.write_result(
+            root,
+            packet_envelope=envelope,
+            completed_by_role=completed_by_role,
+            completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
+            result_body_text=f"{first['packet_id']} result\n\nContract Self-Check\n\nstatus: pass\n",
+            next_recipient="human_like_reviewer",
+        )
 
         action = self.next_after_display_sync(root)
 
@@ -172,7 +176,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["to_role"], "worker")
         batch_ref = read_json(run_root / "packet_batches" / "active_material_scan.json")
         batch = read_json(root / batch_ref["batch_path"])
-        self.assertEqual(batch["member_status"]["returned_roles"], ["worker"])
+        self.assertEqual(batch["member_status"]["returned_roles"], [])
         self.assertEqual(batch["member_status"]["missing_roles"], ["worker"])
         self.assertEqual(batch["member_status"]["invalid_result_roles"], ["worker"])
         state = read_json(router.run_state_path(run_root))
@@ -191,7 +195,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue((run_root / "research" / "worker_research_report.json").exists())
         event = next(item for item in state["events"] if item.get("event") == "worker_research_report_returned")
         self.assertTrue(event["payload"]["reconciled_from_result_envelopes"])
-        self.assertEqual(sorted(event["payload"]["packet_ids"]), ["research-family-worker-1", "research-family-worker-2"])
+        self.assertEqual(sorted(event["payload"]["packet_ids"]), ["research-family-flowguard-1", "research-family-worker-1"])
 
     def test_research_partial_batch_waits_only_for_missing_durable_result_member(self) -> None:
         root = self.make_project()
@@ -200,11 +204,12 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         first = index["packets"][0]
         envelope = packet_runtime.load_envelope(root, first["packet_envelope_path"])
         packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+        completed_by_role = str(envelope["to_role"])
         packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role=envelope["to_role"],
-            completed_by_agent_id=f"{envelope['to_role']}-agent",
+            completed_by_role=completed_by_role,
+            completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
             result_body_text="research worker a result\n\nContract Self-Check\n\nstatus: pass\n",
             next_recipient="project_manager",
         )
@@ -213,10 +218,10 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["worker_research_report_returned"])
-        self.assertEqual(action["to_role"], "worker")
+        self.assertEqual(action["to_role"], "flowguard_operator")
         batch = read_json(run_root / "packet_batches" / "research-family-batch-001.json")
         self.assertEqual(batch["member_status"]["returned_roles"], ["worker"])
-        self.assertEqual(batch["member_status"]["missing_roles"], ["worker"])
+        self.assertEqual(batch["member_status"]["missing_roles"], ["flowguard_operator"])
 
     def test_current_node_mixed_manual_and_durable_members_records_remaining_event(self) -> None:
         root = self.make_project()
@@ -233,11 +238,11 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         )
         wait = self.next_after_display_sync(root)
         self.assertEqual(wait["action_type"], "await_role_decision")
-        self.assertEqual(wait["to_role"], "worker")
+        self.assertEqual(wait["to_role"], "flowguard_operator")
         self.submit_current_node_result_via_active_holder(
             root,
-            packet_id="family-node-worker-2",
-            result_body_text="worker b result",
+            packet_id="family-node-flowguard-1",
+            result_body_text="flowguard result",
         )
 
         action = self.next_after_display_sync(root)
@@ -249,7 +254,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
             for item in state["events"]
             if item.get("event") == "worker_current_node_result_returned"
         )
-        self.assertEqual(returned_packets, ["family-node-worker-1", "family-node-worker-2"])
+        self.assertEqual(returned_packets, ["family-node-flowguard-1", "family-node-worker-1"])
 
     def test_current_node_full_batch_reconciles_from_durable_results_without_manual_events(self) -> None:
         root = self.make_project()
@@ -277,7 +282,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_root, packet_paths = self._prepare_current_node_batch(root)
         for packet_id, next_recipient in (
             ("family-node-worker-1", "human_like_reviewer"),
-            ("family-node-worker-2", "project_manager"),
+            ("family-node-flowguard-1", "project_manager"),
         ):
             lease = self.active_holder_lease_for_packet(root, packet_id)
             packet_runtime.active_holder_ack(
@@ -307,7 +312,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["to_role"], "worker")
         batch = read_json(run_root / "packet_batches" / "current-node-family-batch-001.json")
-        self.assertEqual(batch["member_status"]["returned_roles"], ["worker"])
+        self.assertEqual(batch["member_status"]["returned_roles"], ["flowguard_operator"])
         self.assertEqual(batch["member_status"]["missing_roles"], ["worker"])
         self.assertEqual(batch["member_status"]["invalid_result_roles"], ["worker"])
 
@@ -337,8 +342,7 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["role_work_result_returned"])
-        self.assertIn("flowguard_operator", action["to_role"])
-        self.assertNotIn("flowguard_operator", action["to_role"])
+        self.assertEqual(action["to_role"], "worker")
 
     def test_wrong_recipient_envelope_is_not_counted_as_family_result(self) -> None:
         root = self.make_project()
@@ -349,11 +353,12 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         for record, next_recipient in ((first, "human_like_reviewer"), (second, "project_manager")):
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
             packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+            completed_by_role = str(envelope["to_role"])
             packet_runtime.write_result(
                 root,
                 packet_envelope=envelope,
-                completed_by_role=envelope["to_role"],
-                completed_by_agent_id=f"{envelope['to_role']}-agent",
+                completed_by_role=completed_by_role,
+                completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
                 result_body_text=f"{record['packet_id']} result\n\nContract Self-Check\n\nstatus: pass\n",
                 next_recipient=next_recipient,
             )
@@ -363,8 +368,9 @@ class PacketResultFamilyRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["to_role"], "worker")
         batch = read_json(run_root / "packet_batches" / "research-family-batch-001.json")
-        self.assertEqual(batch["member_status"]["returned_roles"], ["worker"])
+        self.assertEqual(batch["member_status"]["returned_roles"], ["flowguard_operator"])
         self.assertEqual(batch["member_status"]["missing_roles"], ["worker"])
         self.assertEqual(batch["member_status"]["invalid_result_roles"], ["worker"])
         state = read_json(router.run_state_path(run_root))
         self.assertFalse(state["flags"].get("worker_research_report_returned"))
+

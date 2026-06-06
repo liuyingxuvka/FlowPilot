@@ -26,8 +26,9 @@ Use this card only for Controller boundary recovery.
 Normal startup does not use this card. In normal startup, Router delivers
 `controller.core`, Controller records
 `controller_role_confirmed_from_router_core`, Router writes the startup
-mechanical audit, Reviewer fact-checks startup facts, and PM decides startup
-activation.
+mechanical audit and display status, then Router exposes the first PM
+`user_intake` mail item. Normal startup has no additional role gate between
+those runtime mechanics and first PM work.
 
 Use this recovery duty only when Router or PM has explicit evidence that
 Controller's boundary is polluted, untrusted after resume, or affected by a

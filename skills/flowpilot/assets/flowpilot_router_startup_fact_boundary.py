@@ -37,13 +37,10 @@ OWNER_MODULE = 'flowpilot_router_startup_fact_boundary'
 
 import flowpilot_router_startup_fact_boundary_checks as _flowpilot_router_startup_fact_boundary_checks
 from flowpilot_router_startup_fact_boundary_checks import (
-    _startup_fact_checks,
+    _startup_mechanical_checks,
     _startup_intake_record_context,
-    _role_slots_have_host_role_binding_receipts,
-    _continuation_has_host_bound_automation_receipt,
-    _startup_external_fact_requirements,
-    _startup_fact_review_ownership,
-    _validate_startup_external_fact_review,
+    _startup_mechanical_required_evidence,
+    _startup_mechanical_ownership,
 )
 import flowpilot_router_startup_fact_boundary_controller as _flowpilot_router_startup_fact_boundary_controller
 from flowpilot_router_startup_fact_boundary_controller import (
@@ -66,23 +63,17 @@ from flowpilot_router_startup_fact_boundary_audit import (
     _startup_mechanical_audit_action_extra,
     _next_startup_mechanical_audit_action,
 )
-import flowpilot_router_startup_fact_boundary_reports as _flowpilot_router_startup_fact_boundary_reports
-from flowpilot_router_startup_fact_boundary_reports import (
-    _write_startup_fact_report,
-    _write_startup_activation,
-    _write_startup_repair_request,
-    _write_startup_protocol_dead_end,
-)
 
 _CHILD_MODULES = (
     _flowpilot_router_startup_fact_boundary_checks,
     _flowpilot_router_startup_fact_boundary_controller,
     _flowpilot_router_startup_fact_boundary_audit,
-    _flowpilot_router_startup_fact_boundary_reports,
 )
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     for module in _CHILD_MODULES:
         module._bind_router(router)
@@ -104,7 +95,6 @@ __all__ = (
     *_flowpilot_router_startup_fact_boundary_checks.__all__,
     *_flowpilot_router_startup_fact_boundary_controller.__all__,
     *_flowpilot_router_startup_fact_boundary_audit.__all__,
-    *_flowpilot_router_startup_fact_boundary_reports.__all__,
 )
 
 _LOCAL_NAMES = set(globals())

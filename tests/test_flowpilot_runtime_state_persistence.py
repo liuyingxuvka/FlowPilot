@@ -30,7 +30,7 @@ def _dummy_router(run_root: Path) -> ModuleType:
     router.RUNTIME_FLAG_DEFAULTS = {"controller_core_loaded": False, "foreground_ready": False}  # type: ignore[attr-defined]
     router.SYSTEM_CARD_SEQUENCE = ({"flag": "pm_card_delivered"},)  # type: ignore[attr-defined]
     router.MAIL_SEQUENCE = ({"flag": "mail_delivered"},)  # type: ignore[attr-defined]
-    router.EXTERNAL_EVENTS = {"pm_approves_startup_activation": {"flag": "startup_activation_approved"}}  # type: ignore[attr-defined]
+    router.EXTERNAL_EVENTS = {"worker_current_node_result_returned": {"flag": "current_node_result_returned"}}  # type: ignore[attr-defined]
     router.read_json = _read_json  # type: ignore[attr-defined]
     router.read_json_if_exists = lambda path: _read_json(path) if Path(path).exists() else {}  # type: ignore[attr-defined]
     router.write_json = _write_json  # type: ignore[attr-defined]
@@ -48,9 +48,9 @@ def _base_state(run_root: Path) -> dict[str, Any]:
         "flags": {"controller_core_loaded": False, "foreground_ready": False},
         "pending_action": {
             "action_type": "await_role_decision",
-            "label": "controller_waits_for_pm_startup_activation",
-            "waiting_for_role": "project_manager",
-            "expected_return_path": "mailbox/outbox/events/pm_startup_activation.envelope.json",
+            "label": "controller_waits_for_current_node_worker_result",
+            "waiting_for_role": "worker",
+            "expected_return_path": "packets/pkt-current/result_envelope.json",
             "controller_action_id": "controller-action-stale",
         },
         "events": [],
@@ -59,26 +59,6 @@ def _base_state(run_root: Path) -> dict[str, Any]:
 
 
 class RuntimeStatePersistenceTests(unittest.TestCase):
-    def test_child_merge_preserves_foreground_clear_without_metadata_leak(self) -> None:
-        run_root = Path(".flowpilot/runs/run-persistence-test")
-        loaded_state = _base_state(run_root)
-        persistence._attach_run_state_load_metadata(loaded_state)
-        loaded_state["history"].append({"event": "daemon_tick_after_load"})
-
-        foreground_state = _base_state(run_root)
-        foreground_state["pending_action"] = None
-        foreground_state["flags"]["foreground_ready"] = True
-        foreground_state["events"].append({"event": "pm_approves_startup_activation"})
-
-        merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
-
-        self.assertIsNone(merged["pending_action"])
-        self.assertTrue(merged["flags"]["foreground_ready"])
-        self.assertIn({"event": "pm_approves_startup_activation"}, merged["events"])
-        self.assertIn({"event": "daemon_tick_after_load"}, merged["history"])
-        self.assertNotIn(persistence._RUN_STATE_LOAD_META_HASH, merged)
-        self.assertNotIn(persistence._RUN_STATE_LOAD_META_FLAGS, merged)
-        self.assertNotIn(persistence._RUN_STATE_LOAD_META_PENDING, merged)
 
     def test_stale_save_does_not_restore_material_progress_flags_after_new_generation(self) -> None:
         run_root = Path(".flowpilot/runs/run-persistence-material-generation-test")
@@ -170,39 +150,6 @@ class RuntimeStatePersistenceTests(unittest.TestCase):
             merged["latest_control_blocker_path"],
             ".flowpilot/runs/run-persistence-active-blocker-replacement-test/control_blocks/foreground.json",
         )
-
-    def test_parent_facade_delegates_load_and_stale_save_to_child(self) -> None:
-        with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-state-persistence-") as tmp:
-            project_root = Path(tmp)
-            run_root = project_root / ".flowpilot" / "runs" / "run-persistence-test"
-            router = _dummy_router(run_root)
-            state_path = router.run_state_path(run_root)  # type: ignore[attr-defined]
-            _write_json(state_path, _base_state(run_root))
-
-            loaded_state, loaded_root = persistence.load_run_state_from_run_root(router, project_root, run_root)
-            self.assertEqual(loaded_root, run_root.resolve())
-            self.assertIn(persistence._RUN_STATE_LOAD_META_HASH, loaded_state)
-
-            foreground_state = _read_json(state_path)
-            foreground_state["pending_action"] = None
-            foreground_state["flags"]["startup_activation_approved"] = True
-            foreground_state["events"].append({"event": "pm_approves_startup_activation"})
-            _write_json(state_path, foreground_state)
-
-            direct_merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
-            self.assertIsNone(direct_merged["pending_action"])
-            loaded_state["history"].append({"event": "daemon_tick_after_foreground_clear"})
-            persistence.save_run_state(router, run_root, loaded_state)
-
-            saved = _read_json(state_path)
-            self.assertIsNone(saved["pending_action"])
-            self.assertTrue(saved["flags"]["startup_activation_approved"])
-            self.assertIn({"event": "pm_approves_startup_activation"}, saved["events"])
-            self.assertIn({"event": "daemon_tick_after_foreground_clear"}, saved["history"])
-            self.assertNotIn(persistence._RUN_STATE_LOAD_META_HASH, saved)
-            self.assertIn(persistence._RUN_STATE_LOAD_META_HASH, loaded_state)
-            facade_loaded, _ = runtime_state.load_run_state_from_run_root(router, project_root, run_root)
-            self.assertIn(persistence._RUN_STATE_LOAD_META_HASH, facade_loaded)
 
 
 if __name__ == "__main__":

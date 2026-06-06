@@ -103,9 +103,6 @@ def run_checks(result: dict[str, object]) -> None:
             role_output_runtime_ok = bool(
                 getattr(role_output_runtime, "ROLE_OUTPUT_RUNTIME_SCHEMA", None)
                 and "pm_resume_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
-                and "pm_startup_activation_approval" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
-                and "pm_startup_repair_request" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
-                and "pm_startup_protocol_dead_end" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and "gate_decision" in getattr(role_output_runtime, "SUPPORTED_OUTPUT_TYPES", set())
                 and hasattr(role_output_runtime, "quality_pack_checks_for_run")
             )
@@ -208,7 +205,7 @@ def run_checks(result: dict[str, object]) -> None:
                     str(ROOT),
                     "prepare-" + "output",
                     "--output-type",
-                    "pm_startup_activation_approval",
+                    "pm_resume_decision",
                     "--role",
                     "project_manager",
                     "--agent-id",
@@ -252,7 +249,7 @@ def run_checks(result: dict[str, object]) -> None:
                     str(ROOT),
                     "prepare-" + "output",
                     "--output-type",
-                    "pm_startup_activation_approval",
+                    "pm_resume_decision",
                     "--role",
                     "project_manager",
                     "--agent-id",

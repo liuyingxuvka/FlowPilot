@@ -54,6 +54,8 @@ OWNER_MODULE = "flowpilot_router_action_factory"
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     for child_module in _CHILD_MODULES:
         child_module._bind_router(router)

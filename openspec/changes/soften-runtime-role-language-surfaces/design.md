@@ -17,8 +17,8 @@ contracts are already current.
 - Avoid negative historical reminders such as "do not use fixed six" in active
   prompts and user-facing copy.
 - Keep evidence requirements explicit: current run, requested responsibility,
-  addressable id, ACK/result path, sealed-body isolation, and explicit fallback
-  when host support is absent.
+  addressable id, ACK/result path, sealed-body isolation, and blocked-role
+  recovery when host support is absent.
 - Preserve existing data fields where changing them would be a schema
   migration rather than prompt cleanup.
 
@@ -39,7 +39,7 @@ contracts are already current.
 
 2. **Use binding coverage instead of role counts.** PM startup activation checks
    the role bindings requested for the current run, same-task rehydration
-   evidence, or explicit fallback authorization.
+   evidence, or explicit blocked-role recovery authorization.
 
 3. **Keep internal schemas stable.** Field names that encode prior vocabulary
    stay in place for compatibility, while surrounding prompt and docs explain

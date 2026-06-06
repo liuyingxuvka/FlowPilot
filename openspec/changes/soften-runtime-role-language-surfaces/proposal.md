@@ -11,7 +11,7 @@ the current requested-role binding contract.
 - Replace startup UI labels that say "background agents" and "six-role crew"
   with softer runtime role assistance wording.
 - Replace active startup activation checklist wording that asks for a fixed
-  role-slot count with runtime-requested binding coverage or explicit fallback
+  role-slot count with runtime-requested binding coverage or explicit blocked-role recovery
   evidence.
 - Update public protocol and handoff text that still describes fixed crew
   recovery as current authority.

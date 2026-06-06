@@ -4,6 +4,7 @@
       "failures": [],
       "ok": true,
       "results": {
+        "background_collaboration_start_fold": "rejected:role_boundary_requires_dedicated_replay",
         "card_bundle_fold": "rejected:multi_card_delivery_requires_dedicated_replay",
         "final_replay_fold": "rejected:final_replay_boundary_requires_dedicated_replay",
         "guarded_same_role_card_bundle_fold": "accepted:none",
@@ -15,7 +16,6 @@
         "post_user_request_intake_safe_fold": "accepted:none",
         "post_user_request_intake_unfolded": "accepted:none",
         "role_output_preflight_fold": "rejected:role_output_preflight_requires_error_semantics_replay",
-        "role_slot_start_fold": "rejected:role_boundary_requires_dedicated_replay",
         "startup_fact_card_fold": "rejected:startup_fact_card_crosses_reviewer_delivery_boundary",
         "startup_safe_fold": "accepted:none",
         "startup_unfolded": "accepted:none",
@@ -53,13 +53,13 @@
       "missing_labels": [],
       "ok": true,
       "rejected_scenarios": [
+        "background_collaboration_start_fold",
         "card_bundle_fold",
         "final_replay_fold",
         "host_continuation_fold",
         "ledger_finalization_fold",
         "packet_relay_fold",
         "role_output_preflight_fold",
-        "role_slot_start_fold",
         "startup_fact_card_fold",
         "user_request_recording_fold"
       ],

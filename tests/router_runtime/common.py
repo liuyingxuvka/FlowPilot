@@ -25,16 +25,15 @@ import flowpilot_router as router  # noqa: E402
 import card_runtime  # noqa: E402
 import packet_runtime  # noqa: E402
 import role_output_runtime  # noqa: E402
+import flowpilot_router_action_handlers_roles as role_action_handlers  # noqa: E402
 
 
 STARTUP_ANSWERS = {
-    "runtime_role_assistances": "allow",
-    "scheduled_continuation": "manual",
-    "display_surface": "chat",
+    "background_collaboration_authorized": True,
     "provenance": "explicit_user_reply",
 }
 
-HEARTBEAT_STARTUP_ANSWERS = {
+UNSUPPORTED_HEARTBEAT_STARTUP_ANSWERS = {
     **STARTUP_ANSWERS,
     "scheduled_continuation": "allow",
 }
@@ -99,7 +98,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         return router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
     def run_root_for(self, root: Path) -> Path:
         current = read_json(root / ".flowpilot" / "current.json")
-        return root / (current.get("run_root") or current["current_run_root"])
+        return root / current["run_root"]
     def active_holder_lease_for_packet(self, root: Path, packet_id: str) -> dict:
         run_root = self.run_root_for(root)
         ledger = read_json(run_root / "packet_ledger.json")
@@ -232,11 +231,11 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         envelope_path.parent.mkdir(parents=True, exist_ok=True)
         envelope_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return self.rel(root, envelope_path), hashlib.sha256(envelope_path.read_bytes()).hexdigest()
-    def startup_fact_runtime_envelope(self, root: Path, name: str = "startup/reviewer_startup_fact_report") -> tuple[dict, str, str]:
+    def legacy_startup_fact_runtime_envelope(self, root: Path, name: str = "startup/reviewer_startup_fact_report") -> tuple[dict, str, str]:
         run_root = self.run_root_for(root)
         body_path = run_root / "test_role_outputs" / f"{name}.json"
         body_path.parent.mkdir(parents=True, exist_ok=True)
-        body_path.write_text(json.dumps(self.startup_fact_report_body(root), indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        body_path.write_text(json.dumps(self.legacy_startup_fact_report_body(root), indent=2, sort_keys=True) + "\n", encoding="utf-8")
         body_ref = {
             "path": self.rel(root, body_path),
             "hash": hashlib.sha256(body_path.read_bytes()).hexdigest(),
@@ -288,9 +287,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
         envelope_path, envelope_hash = self.write_event_envelope(root, name, envelope)
         return envelope, envelope_path, envelope_hash
-    def submit_startup_fact_runtime_output_to_ledger(self, root: Path, name: str = "startup/reviewer_startup_fact_report") -> dict:
+    def submit_legacy_startup_fact_runtime_output_to_ledger(self, root: Path, name: str = "startup/reviewer_startup_fact_report") -> dict:
         run_root = self.run_root_for(root)
-        envelope, _, _ = self.startup_fact_runtime_envelope(root, name)
+        envelope, _, _ = self.legacy_startup_fact_runtime_envelope(root, name)
         ledger_path = run_root / "role_output_ledger.json"
         body_ref = envelope["body_ref"]
         receipt_ref = envelope["runtime_receipt_ref"]
@@ -517,8 +516,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
     def apply_next_packet_action(self, root: Path, expected_action_type: str) -> dict:
         action = self.next_after_display_sync(root)
-        if action["action_type"] == "check_packet_ledger":
-            router.apply_action(root, "check_packet_ledger")
+        while action["action_type"] in {"check_packet_ledger", "open_current_role_agent"}:
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
             action = router.next_action(root)
         self.assertEqual(action["action_type"], expected_action_type)
         return router.apply_action(root, expected_action_type)
@@ -536,11 +535,12 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         for record in index["packets"]:
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
             packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+            agent_id = self.ensure_current_role_agent_for_role(root, str(envelope["to_role"]))
             packet_runtime.write_result(
                 root,
                 packet_envelope=envelope,
                 completed_by_role=envelope["to_role"],
-                completed_by_agent_id=f"{envelope['to_role']}-agent",
+                completed_by_agent_id=str(agent_id),
                 result_body_text=result_text,
                 next_recipient=next_recipient,
             )
@@ -638,19 +638,20 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         record = next(item for item in index["requests"] if item["request_id"] == request_id)
         envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
         packet_runtime.read_packet_body_for_role(root, envelope, role=envelope["to_role"])
+        completed_by_role = str(envelope["to_role"])
         result = packet_runtime.write_result(
             root,
             packet_envelope=envelope,
-            completed_by_role=envelope["to_role"],
-            completed_by_agent_id=f"{envelope['to_role']}-agent",
+            completed_by_role=completed_by_role,
+            completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
             result_body_text=result_text,
             next_recipient="project_manager",
         )
         return result["result_body_path"].replace("result_body.md", "result_envelope.json")
     def next_after_display_sync(self, root: Path) -> dict:
         action = router.next_action(root)
-        while action["action_type"] == "sync_display_plan":
-            router.apply_action(root, "sync_display_plan", self.payload_for_action(action))
+        while action["action_type"] in {"sync_display_plan", "inject_role_io_protocol"}:
+            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
             action = router.next_action(root)
         return action
     def router_internal_action_types(self, root: Path) -> list[str]:
@@ -705,9 +706,63 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         )
     def payload_for_action(self, action: dict, payload: dict | None = None) -> dict:
         payload = dict(payload or {})
+        if action.get("action_type") == "open_current_role_agent" and not payload:
+            payload.update(self.current_role_agent_payload(action))
         if action.get("requires_user_dialog_display_confirmation"):
             payload["display_confirmation"] = action["payload_template"]["display_confirmation"]
         return payload
+    def current_role_agent_payload(self, action: dict) -> dict:
+        role = str(action.get("target_role_key") or action.get("to_role") or "")
+        contract = action.get("payload_contract") if isinstance(action.get("payload_contract"), dict) else {}
+        allowed_values = contract.get("allowed_values") if isinstance(contract.get("allowed_values"), dict) else {}
+        run_values = allowed_values.get("current_role_agent_binding.opened_for_run_id")
+        run_id = str(run_values[0]) if isinstance(run_values, list) and run_values else "unknown-run"
+        return {
+            "runtime_role_assistance_capability_status": "available",
+            "current_role_agent_binding": {
+                "role_key": role,
+                "agent_id": f"live-agent-current-{role}",
+                "model_policy": "strongest_available",
+                "reasoning_effort_policy": "highest_available",
+                "binding_open_result": "opened_for_current_packet",
+                "opened_for_run_id": run_id,
+                "host_liveness_status": "active",
+                "liveness_decision": "confirmed_existing_agent",
+            },
+        }
+    def apply_current_role_agent_if_requested(self, root: Path, action: dict | None = None) -> dict:
+        action = action or router.run_until_wait(root)
+        if action["action_type"] == "open_current_role_agent":
+            router.apply_action(root, "open_current_role_agent", self.payload_for_action(action))
+            return router.run_until_wait(root)
+        return action
+    def active_agent_id_for_role(self, root: Path, role: str) -> str:
+        run_root = self.run_root_for(root)
+        agent_id = router._active_agent_id_for_role(run_root, role)  # type: ignore[attr-defined]
+        self.assertIsNotNone(agent_id, f"missing current role binding for {role}")
+        return str(agent_id)
+    def ensure_current_role_agent_for_role(self, root: Path, role: str) -> str:
+        run_root = self.run_root_for(root)
+        agent_id = router._active_agent_id_for_role(run_root, role)  # type: ignore[attr-defined]
+        if agent_id:
+            return str(agent_id)
+        state = read_json(router.run_state_path(run_root))
+        payload = {
+            "runtime_role_assistance_capability_status": "available",
+            "current_role_agent_binding": {
+                "role_key": role,
+                "agent_id": f"live-agent-current-{role}",
+                "model_policy": "strongest_available",
+                "reasoning_effort_policy": "highest_available",
+                "binding_open_result": "opened_for_current_packet",
+                "opened_for_run_id": state["run_id"],
+                "host_liveness_status": "active",
+                "liveness_decision": "confirmed_existing_agent",
+            },
+        }
+        role_action_handlers._write_current_role_agent_binding(router, root, run_root, state, role, payload)
+        router.save_run_state(run_root, state)
+        return str(router._active_agent_id_for_role(run_root, role))  # type: ignore[attr-defined]
     def terminal_summary_payload(self, root: Path, action: dict, run_root: Path, *, note: str = "Run ended.") -> dict:
         summary = (
             f"{router.TERMINAL_SUMMARY_ATTRIBUTION}\n\n"
@@ -745,7 +800,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         self.assertFalse(run_entry["final_user_report_is_completion_authority"])
         self.assertEqual(run_entry["flowpilot_project_url"], router.FLOWPILOT_PROJECT_URL)
         return result
-    def heartbeat_binding_payload(self, root: Path, automation_id: str = "codex-test-heartbeat") -> dict:
+    def unsupported_heartbeat_binding_payload(self, root: Path, automation_id: str = "codex-test-heartbeat") -> dict:
         run_root = self.run_root_for(root)
         run_id = read_json(router.run_state_path(run_root))["run_id"]
         return {
@@ -760,11 +815,10 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "heartbeat_bound_to_current_run": True,
             },
         }
-    def apply_startup_heartbeat_if_requested(self, root: Path) -> dict | None:
+    def assert_no_startup_heartbeat_action(self, root: Path) -> dict | None:
         action = self.next_after_display_sync(root)
-        if action["action_type"] != "create_heartbeat_automation":
-            return None
-        return router.apply_action(root, "create_heartbeat_automation", self.heartbeat_binding_payload(root))
+        self.assertNotEqual(action["action_type"], "create_heartbeat_automation")
+        return None
     def handle_pending_control_blocker(self, root: Path) -> bool:
         action = self.next_after_display_sync(root)
         if action["action_type"] != "handle_control_blocker":
@@ -799,6 +853,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         while action["action_type"] in {
             "confirm_controller_core_boundary",
             "check_prompt_manifest",
+            "inject_role_io_protocol",
+            "open_current_role_agent",
             "write_startup_mechanical_audit",
             "write_display_surface_status",
         }:
@@ -821,7 +877,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             self.ack_system_card_bundle_action(root, action)
             return
         role = str(action["to_role"])
-        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or f"{role}-agent"
+        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or self.active_agent_id_for_role(root, role)
         open_result = card_runtime.open_card(
             root,
             envelope_path=str(action["card_envelope_path"]),
@@ -851,7 +907,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         )
     def ack_system_card_bundle_action(self, root: Path, action: dict) -> None:
         role = str(action["to_role"])
-        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or f"{role}-agent"
+        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or self.active_agent_id_for_role(root, role)
         open_result = card_runtime.open_card_bundle(
             root,
             envelope_path=str(action["card_bundle_envelope_path"]),
@@ -882,7 +938,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         )
     def submit_system_card_ack_without_router_next(self, root: Path, action: dict) -> None:
         role = str(action["to_role"])
-        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or f"{role}-agent"
+        agent_id = action.get("target_agent_id") or action.get("waiting_for_agent_id") or self.active_agent_id_for_role(root, role)
         if action["action_type"] == "deliver_system_card_bundle":
             open_result = card_runtime.open_card_bundle(
                 root,
@@ -1025,10 +1081,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                     router.apply_action(root, action_type, {"user_request": USER_REQUEST})
                 else:
                     router.apply_action(root, action_type)
-            elif action_type == "start_role_slots":
-                router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
-            elif action_type == "create_heartbeat_automation":
-                router.apply_action(root, action_type, self.heartbeat_binding_payload(root))
             elif action_type == "load_controller_core":
                 router.apply_action(root, action_type, self.payload_for_action(action))
                 self.complete_startup_async_controller_rows(root, startup_answers=startup_answers)
@@ -1036,7 +1088,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             else:
                 router.apply_action(root, action_type, self.payload_for_action(action))
         current = read_json(root / ".flowpilot" / "current.json")
-        return root / (current.get("run_root") or current["current_run_root"])
+        return root / current["run_root"]
     def controller_boundary_recovery_action(self, root: Path) -> tuple[Path, dict, dict]:
         run_root = self.run_root_for(root)
         state = read_json(router.run_state_path(run_root))
@@ -1068,10 +1120,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                     router.apply_action(root, action_type, {"user_request": USER_REQUEST})
                 else:
                     router.apply_action(root, action_type)
-            elif action_type == "start_role_slots":
-                router.apply_action(root, action_type, self.role_agent_payload(root, startup_answers))
-            elif action_type == "create_heartbeat_automation":
-                router.apply_action(root, action_type, self.heartbeat_binding_payload(root))
             else:
                 router.apply_action(root, action_type, self.payload_for_action(action))
     def release_startup_daemon_for_explicit_daemon_test(self, root: Path) -> None:
@@ -1091,19 +1139,17 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             if entry.get("status") in router.CONTROLLER_ACTION_CLOSED_STATUSES and entry.get("router_reconciliation_status") == "reconciled":
                 continue
             action_type = entry.get("action_type")
-            if action_type not in {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"}:
+            if action_type not in {"emit_startup_banner"}:
                 continue
             action = entry.get("action") if isinstance(entry.get("action"), dict) else {}
             if action_type == "emit_startup_banner":
                 payload = self.payload_for_action(action)
-            elif action_type == "start_role_slots":
-                payload = self.role_agent_payload(root, startup_answers)
             else:
-                payload = self.heartbeat_binding_payload(root)
+                payload = self.payload_for_action(action)
             router.record_controller_action_receipt(root, action_id=entry["action_id"], status="done", payload=payload)
             completed.append(str(action_type))
         return completed
-    def force_startup_fact_role_wait(self, root: Path) -> dict:
+    def force_current_role_result_wait(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
         runtime_dir = run_root / "runtime"
         for name in ("controller_actions", "controller_receipts"):
@@ -1118,13 +1164,13 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         wait_action = router.make_action(
             action_type="await_role_decision",
             actor="controller",
-            label="controller_waits_for_reviewer_startup_facts",
-            summary="Controller waits for reviewer startup fact report through Router-directed runtime output.",
-            to_role="human_like_reviewer",
+            label="controller_waits_for_current_role_result",
+            summary="Controller waits for a current runtime role result through Router-directed runtime output.",
+            to_role="worker",
             extra={
-                "waiting_for_role": "human_like_reviewer",
-                "allowed_external_events": ["reviewer_reports_startup_facts"],
-                "expected_return_path": "startup/startup_fact_report.json",
+                "waiting_for_role": "worker",
+                "allowed_external_events": ["role_work_result_returned"],
+                "expected_return_path": "pm_role_work/current_role_result.json",
             },
         )
         state["pending_action"] = wait_action
@@ -1163,10 +1209,11 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         receipt_path = output_dir / "startup_intake_receipt.json"
         result_path = output_dir / "startup_intake_result.json"
         recorded_at = "2026-05-13T00:00:00Z"
-        if status == "cancelled":
+        if status in {"cancelled", "blocked"}:
+            blocked = status == "blocked"
             receipt = {
                 "schema_version": router.STARTUP_INTAKE_RECEIPT_SCHEMA,
-                "status": "cancelled",
+                "status": status,
                 "ui_surface": "native_wpf_startup_intake",
                 "launch_mode": launch_mode,
                 "headless": headless,
@@ -1174,21 +1221,26 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
                 "language": "en",
                 "startup_answers": startup_answers,
                 "confirmed_by_user": False,
-                "cancelled_by_user": True,
+                "cancelled_by_user": not blocked,
                 "recorded_at": recorded_at,
             }
+            if blocked:
+                receipt["block_reason"] = "background_collaboration_required"
             receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             result = {
                 "schema_version": router.STARTUP_INTAKE_RESULT_SCHEMA,
-                "status": "cancelled",
+                "status": status,
                 "launch_mode": launch_mode,
                 "headless": headless,
                 "formal_startup_allowed": formal_startup_allowed,
                 "receipt_path": self.rel(root, receipt_path),
-                "controller_visibility": "cancel_status_only",
+                "controller_visibility": "block_status_only" if blocked else "cancel_status_only",
                 "body_text_included": False,
                 "recorded_at": recorded_at,
             }
+            if blocked:
+                result["startup_answers"] = startup_answers
+                result["block_reason"] = "background_collaboration_required"
             result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             return {"startup_intake_result": {"result_path": self.rel(root, result_path)}}
 
@@ -1252,27 +1304,6 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         }
         result_path.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         return {"startup_intake_result": {"result_path": self.rel(root, result_path)}}
-    def role_agent_payload(self, root: Path, startup_answers: dict | None = None) -> dict:
-        startup_answers = startup_answers or STARTUP_ANSWERS
-        if startup_answers.get("runtime_role_assistances") == "single-agent":
-            return {}
-        bootstrap = self.bootstrap_state(root)
-        run_id = bootstrap["run_id"]
-        return {
-            "runtime_role_assistance_capability_status": "available",
-            "role_bindings": [
-                {
-                    "role_key": role,
-                    "agent_id": f"agent-{run_id}-{role}",
-                    "model_policy": "strongest_available",
-                    "reasoning_effort_policy": "highest_available",
-                    "binding_open_result": "opened_for_current_task",
-                    "opened_for_run_id": run_id,
-                    "opened_after_startup_answers": True,
-                }
-                for role in router.RUNTIME_ROLE_KEYS
-            ],
-        }
     def resume_role_agent_payload(self, root: Path, action: dict | None = None) -> dict:
         action = action or self.next_after_display_sync(root)
         records = []
@@ -1406,63 +1437,27 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
     def bootstrap_state(self, root: Path) -> dict:
         return read_json(router.bootstrap_state_path(root))
     def deliver_startup_fact_check_card(self, root: Path) -> dict:
-        self.apply_startup_heartbeat_if_requested(root)
-        self.complete_startup_pre_review_join(root)
-        return self.deliver_expected_card(root, "reviewer.startup_fact_check")
+        raise AssertionError("reviewer.startup_fact_check is not part of the current startup path")
     def deliver_startup_fact_check_card_without_ack(self, root: Path) -> dict:
-        self.apply_startup_heartbeat_if_requested(root)
-        self.complete_startup_pre_review_join(root)
-        action = self.next_after_display_sync(root)
-        while action["action_type"] in {
-            "confirm_controller_core_boundary",
-            "check_prompt_manifest",
-            "write_startup_mechanical_audit",
-            "write_display_surface_status",
-        }:
-            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
-            action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_system_card")
-        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
-        return action
-    def complete_startup_pre_review_join(self, root: Path) -> None:
+        raise AssertionError("reviewer.startup_fact_check is not part of the current startup path")
+    def deliver_startup_runtime_prompt_cards(self, root: Path) -> None:
         self.deliver_expected_card(root, "pm.core")
         self.deliver_expected_card(root, "pm.output_contract_catalog")
         self.deliver_expected_card(root, "pm.role_work_request")
         self.deliver_expected_card(root, "pm.phase_map")
         self.deliver_expected_card(root, "pm.startup_intake")
     def deliver_initial_pm_cards_and_user_intake(self, root: Path) -> None:
-        self.complete_startup_pre_review_join(root)
-        self.assert_startup_user_intake_held_by_router(root)
-    def complete_startup_activation(self, root: Path) -> None:
+        self.complete_startup_runtime_entry(root)
+    def complete_startup_runtime_entry(self, root: Path) -> None:
         run_root = self.run_root_for(root)
-        self.deliver_startup_fact_check_card(root)
-        self.assert_startup_user_intake_held_by_router(root)
-        router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(
-                root,
-                "startup/reviewer_startup_fact_report",
-                self.startup_fact_report_body(root),
-            ),
-        )
-        self.deliver_expected_card(root, "pm.startup_activation")
-        router.record_external_event(
-            root,
-            "pm_approves_startup_activation",
-            self.role_decision_envelope(
-                root,
-                "startup/pm_startup_activation",
-                {"approved_by_role": "project_manager", "decision": "approved"},
-            ),
-        )
+        self.deliver_startup_runtime_prompt_cards(root)
         self.assert_startup_user_intake_held_by_router(root)
         self.deliver_user_intake_mail(root)
         self.assert_startup_user_intake_released_to_pm(root)
         self.write_self_interrogation_record(
             root,
             "startup",
-            source_path=run_root / "test_role_outputs" / "startup" / "pm_startup_activation.json",
+            source_path=run_root / "mailbox" / "outbox" / "user_intake.json",
         )
         self.assertTrue((run_root / "display" / "display_surface.json").exists())
     def material_review_source_paths(self, root: Path) -> list[str]:
@@ -1660,7 +1655,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         router.record_external_event(root, "pm_approves_child_skill_manifest_for_route")
         self.next_after_display_sync(root)
     def complete_pre_route_gates(self, root: Path) -> None:
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.complete_material_flow(root)
         self.complete_product_architecture_and_contract(root)
     def activate_route(self, root: Path, node_id: str = "node-001") -> None:
@@ -1932,7 +1927,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         self.assertTrue(projection["ui_or_chat_is_display_only"])
     def rel(self, root: Path, path: Path) -> str:
         return str(path.relative_to(root)).replace("\\", "/")
-    def startup_fact_report_body(self, root: Path) -> dict:
+    def legacy_startup_fact_report_body(self, root: Path) -> dict:
         run_root = self.run_root_for(root)
         return {
             "reviewed_by_role": "human_like_reviewer",
@@ -1940,16 +1935,8 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "external_fact_review": {
                 "reviewed_by_role": "human_like_reviewer",
                 "self_attested_ai_claims_accepted_as_proof": False,
-                "reviewer_checked_requirement_ids": [
-                    "live_agent_spawn_freshness",
-                    "heartbeat_host_automation_current_run_binding",
-                    "cockpit_display_surface_reality",
-                ],
-                "direct_evidence_paths_checked": [
-                    self.rel(root, run_root / "startup_answers.json"),
-                    self.rel(root, run_root / "role_binding_ledger.json"),
-                    self.rel(root, run_root / "continuation" / "continuation_binding.json"),
-                ],
+                "reviewer_checked_requirement_ids": [],
+                "direct_evidence_paths_checked": [],
             },
         }
     def prior_path_context_review(self, root: Path, impact: str = "PM considered current route memory before deciding") -> dict:
@@ -2380,14 +2367,27 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
         return run_root, packet_path, result_path
     def apply_until_action(self, root: Path, expected_action_type: str, max_steps: int = 12) -> dict:
         for _ in range(max_steps):
-            action = router.next_action(root)
+            action = self.next_after_display_sync(root)
             action_type = str(action["action_type"])
             if action_type == "deliver_system_card":
                 self.ack_system_card_action(root, action)
+            elif action_type == "deliver_system_card_bundle":
+                self.ack_system_card_bundle_action(root, action)
             elif action_type == "await_card_return_event":
                 self.ack_system_card_action(root, action)
+            elif action_type in {
+                "check_packet_ledger",
+                "open_current_role_agent",
+                "confirm_controller_core_boundary",
+                "inject_role_io_protocol",
+                "write_startup_mechanical_audit",
+                "write_display_surface_status",
+            }:
+                router.apply_action(root, action_type, self.payload_for_action(action))
             else:
-                router.apply_action(root, action_type)
+                router.apply_action(root, action_type, self.payload_for_action(action))
             if action_type == expected_action_type:
                 return action
         raise AssertionError(f"did not apply {expected_action_type} within {max_steps} router steps")
+
+

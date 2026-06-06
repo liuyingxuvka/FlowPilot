@@ -4,14 +4,14 @@
   "full_diagnostic": {
     "actionable_summary": [
       {
-        "dedupe_key": "flowpilot_new|defer_structure_split|needs_structure_split",
+        "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
         "finding_count": 1,
         "gap_codes": [
           "needs_structure_split"
         ],
-        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
+        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
         "paths": [
-          "skills/flowpilot/assets/flowpilot_new.py"
+          "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py"
         ],
         "primary_code": "needs_structure_split",
         "priority_score": 29,
@@ -19,53 +19,25 @@
         "repair_type": "defer_structure_split",
         "severity": "medium",
         "surface_ids": [
-          "asset:flowpilot_new"
+          "asset:flowpilot_router_work_packets_parallel"
         ],
-        "surface_owner": "flowpilot_new"
-      },
-      {
-        "dedupe_key": "script:flowguard_project_topology|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
-        "paths": [
-          "scripts/flowguard_project_topology.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 31,
-        "release_relevance": "public_cli",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "script:flowguard_project_topology"
-        ],
-        "surface_owner": "script:flowguard_project_topology"
+        "surface_owner": "flowpilot_router_work_packets_parallel"
       }
     ],
     "blocking_actionable_findings": [],
     "deferred_structure_split_findings": [
       {
         "code": "full_diagnostic_actionable_finding",
-        "message": "flowpilot_new has 549 lines, above the 450 line diagnostic threshold",
-        "path": "skills/flowpilot/assets/flowpilot_new.py",
+        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
         "repair_type": "defer_structure_split",
         "source_code": "needs_structure_split",
-        "surface_id": "asset:flowpilot_new"
-      },
-      {
-        "code": "full_diagnostic_actionable_finding",
-        "message": "flowguard_project_topology has 755 lines, above the 650 line diagnostic threshold",
-        "path": "scripts/flowguard_project_topology.py",
-        "repair_type": "defer_structure_split",
-        "source_code": "needs_structure_split",
-        "surface_id": "script:flowguard_project_topology"
+        "surface_id": "asset:flowpilot_router_work_packets_parallel"
       }
     ],
     "full_coverage_ok": false,
     "gap_counts": {
-      "needs_structure_split": 2
+      "needs_structure_split": 1
     },
     "ok": true,
     "release_convergence_ok": true

@@ -16,7 +16,7 @@ background-agent topology.
 #### Scenario: PM startup activation checks binding coverage
 - **WHEN** PM reviews startup activation evidence
 - **THEN** PM checks coverage for the runtime-requested role bindings, same-task
-  rehydration evidence, or explicit fallback authorization
+  rehydration evidence, or explicit blocked-role recovery authorization
 - **AND** PM does not require a fixed role-count phrase as the checklist item
 
 #### Scenario: Reference handoffs use recipient-role language

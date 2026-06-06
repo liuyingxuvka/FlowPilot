@@ -20,7 +20,12 @@ _PACKAGE_DISPOSITION_BATCH_KIND_BY_EVENT = {
 }
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
     for name, value in vars(router).items():
@@ -36,94 +41,6 @@ def _role_output_ledger_outputs(router: ModuleType, run_root: Path) -> list[dict
     ledger = read_json_if_exists(run_root / "role_output_ledger.json")
     outputs = ledger.get("outputs") if isinstance(ledger.get("outputs"), list) else []
     return [item for item in outputs if isinstance(item, dict)]
-
-
-def _startup_fact_canonical_report_is_valid(
-    router: ModuleType,
-    run_root: Path,
-    run_state: dict[str, Any],
-) -> bool:
-    _bind_router(router)
-    report = read_json_if_exists(run_root / "startup" / "startup_fact_report.json")
-    return (
-        report.get("schema_version") == "flowpilot.startup_fact_report.v1"
-        and report.get("run_id") == run_state.get("run_id")
-        and report.get("reviewed_by_role") == "human_like_reviewer"
-        and report.get("status") in {"pass", "findings"}
-    )
-
-
-def _try_reconcile_startup_fact_role_output_ledger(
-    router: ModuleType,
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-) -> dict[str, Any]:
-    _bind_router(router)
-    event = "reviewer_reports_startup_facts"
-    meta = EXTERNAL_EVENTS[event]
-    flag = str(meta["flag"])
-    flags = run_state.setdefault("flags", {})
-    required_flag = str(meta.get("requires_flag") or "")
-    changed = False
-    reconciled = 0
-    skipped_invalid = 0
-    if flags.get(flag) and _run_state_has_event(run_state, event):
-        return {"changed": False, "reconciled": 0, "skipped_invalid": 0}
-    for record in _role_output_ledger_outputs(router, run_root):
-        envelope = record.get("envelope")
-        if not isinstance(envelope, dict):
-            continue
-        if str(envelope.get("event_name") or "") != event:
-            continue
-        if required_flag and not flags.get(required_flag):
-            continue
-        try:
-            role_output_runtime.validate_envelope_runtime_receipt(project_root, envelope)
-        except role_output_runtime.RoleOutputRuntimeError:
-            skipped_invalid += 1
-            continue
-        _preconsume_pending_card_return_ack_before_external_event(
-            project_root,
-            run_root,
-            run_state,
-            event=event,
-        )
-        if _pending_card_return_blocker_for_event(run_root, str(run_state["run_id"]), event, run_state) is not None:
-            continue
-        if not _startup_fact_canonical_report_is_valid(router, run_root, run_state):
-            try:
-                _write_startup_fact_report(project_root, run_root, run_state, envelope)
-            except (RouterError, role_output_runtime.RoleOutputRuntimeError, OSError, json.JSONDecodeError):
-                skipped_invalid += 1
-                continue
-        if _run_state_has_event(run_state, event):
-            if not flags.get(flag):
-                flags[flag] = True
-                append_history(
-                    run_state,
-                    "router_synced_startup_fact_flag_from_role_output_ledger",
-                    {
-                        "event": event,
-                        "output_id": record.get("output_id"),
-                        "canonical_report_path": project_relative(
-                            project_root,
-                            run_root / "startup" / "startup_fact_report.json",
-                        ),
-                    },
-                )
-                changed = True
-                reconciled += 1
-            break
-        if _record_router_reconciled_external_event(project_root, run_root, run_state, event, envelope):
-            changed = True
-            reconciled += 1
-            break
-    return {
-        "changed": changed,
-        "reconciled": reconciled,
-        "skipped_invalid": skipped_invalid,
-    }
 
 
 def _role_output_body_payload_from_record(

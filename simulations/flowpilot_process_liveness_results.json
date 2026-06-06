@@ -1,37 +1,18 @@
 {
   "current_run_projection": {
-    "daemon_lifecycle": "released",
-    "evidence_paths": [
-      ".flowpilot\\current.json",
-      ".flowpilot\\runs\\run-20260521-053456\\execution_frontier.json",
-      ".flowpilot\\runs\\run-20260521-053456\\router_state.json",
-      ".flowpilot\\runs\\run-20260521-053456\\runtime\\router_daemon_status.json",
-      ".flowpilot\\runs\\run-20260521-053456\\packet_ledger.json",
-      ".flowpilot\\runs\\run-20260521-053456\\route_memory\\route_history_index.json"
-    ],
+    "current_run_can_continue": false,
     "findings": [
       {
-        "completed_node_count": 0,
-        "id": "route_nodes_never_activated",
-        "review_pass_count": 0,
-        "route_node_count": 0,
-        "severity": "info",
-        "summary": "no route nodes were activated, so per-node execution and reviewer coverage cannot be claimed"
-      },
-      {
-        "id": "normal_completion_not_claimed",
-        "severity": "info",
-        "summary": "normal route-wide completion was not claimed for the current run"
+        "id": "missing_current_pointer",
+        "severity": "blocking",
+        "summary": ".flowpilot/current.json is missing; no active run can be continued or claimed"
       }
     ],
-    "frontier_status": "material_scan",
-    "frontier_terminal": false,
+    "metadata_only": true,
     "ok": true,
-    "run_root": ".flowpilot\\runs\\run-20260521-053456",
-    "severity_counts": {
-      "info": 2
-    },
-    "status": "running"
+    "permission": "no_current_run",
+    "safe_to_claim_live_run_confidence": false,
+    "status": "missing_current_pointer"
   },
   "flowguard_explorer": {
     "dead_branch_count": 0,

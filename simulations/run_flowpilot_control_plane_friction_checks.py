@@ -110,9 +110,9 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_formal_gate_package_missing_artifact": "PM formal gate package release lacked reviewer-readable artifact path, hash, or scope",
     "reviewer_report_without_result_open_receipt": "reviewer report was accepted before delivery, packet-open, result-return, PM relay, PM disposition, formal gate package, and result-open receipts existed",
     "missing_receipt_blocker_escalated_to_pm": "missing receipt blocker was not routed as same-role reviewer control-plane reissue",
-    "stopped_run_with_active_heartbeat": "stopped run left heartbeat, runtime roles, packet loop, or frontier authority active",
-    "stopped_run_with_active_packet_loop": "stopped run left heartbeat, runtime roles, packet loop, or frontier authority active",
-    "stopped_run_without_terminal_frontier": "stopped run left heartbeat, runtime roles, packet loop, or frontier authority active",
+    "stopped_run_with_active_manual_resume_binding": "stopped run left manual resume binding, runtime roles, packet loop, or frontier authority active",
+    "stopped_run_with_active_packet_loop": "stopped run left manual resume binding, runtime roles, packet loop, or frontier authority active",
+    "stopped_run_without_terminal_frontier": "stopped run left manual resume binding, runtime roles, packet loop, or frontier authority active",
     "stale_snapshot_published_as_active": "active route_state_snapshot is stale against frontier or packet ledger",
     "product_architecture_delivery_missing_material_context": "product architecture card was delivered without PM material-understanding source paths",
     "protocol_blocker_file_unregistered": "protocol blocker file existed without router-visible blocker registration",
@@ -163,7 +163,7 @@ HAZARD_EXPECTED_FAILURES = {
     "pm_impersonates_reviewer_followup": "reviewer follow-up event was accepted from the PM repair target role",
     "no_legal_next_with_valid_role_output": "no-legal-next control blocker was created while a valid role output was receivable",
     "duplicate_pm_repair_created_new_blocker": "duplicate PM repair decision created a new control blocker",
-    "terminal_heartbeat_cleanup_unproven": "terminal continuation cleanup lacked host automation proof",
+    "terminal_manual_resume_binding_cleanup_unproven": "terminal continuation cleanup lacked foreground-patrol or manual-resume lifecycle proof",
     "role_output_hash_replay_mismatch": "persisted role-output envelope hashes were not replayable against body paths",
     "frontier_stale_after_product_architecture_delivery": "execution frontier remained at material_scan after product architecture delivery",
     "display_view_stale_after_product_architecture_delivery": "route snapshot or display plan remained stale after product architecture delivery",
@@ -472,3 +472,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

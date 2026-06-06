@@ -99,3 +99,9 @@ for consultation advice, answer only the bounded question in a formal
 advice/report artifact; PM still owns the final disposition.
 
 The report is not approval. It must go to the reviewer for direct checking.
+
+Every formal research result body you submit must include top-level
+`pm_visible_summary` as a non-empty list of short strings written by you. This
+summary tells PM what you found, what evidence changed, and what PM still needs
+to decide. Runtime validates and relays these exact strings; it will not
+summarize your sealed report body for you.

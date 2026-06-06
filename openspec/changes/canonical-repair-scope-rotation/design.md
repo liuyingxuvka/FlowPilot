@@ -10,8 +10,8 @@ was actually produced.
 The existing runtime already has most primitives needed for a minimal repair:
 route nodes, parent/child route metadata, route versioning, PM gates,
 repair transactions, packet status, and strict route-plan parsing. The fix
-should reuse those surfaces instead of adding a new repair ledger or fallback
-router.
+should reuse those surfaces instead of adding a new repair ledger or redundant
+recovery router.
 
 ## Goals / Non-Goals
 

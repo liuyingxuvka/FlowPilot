@@ -1,4 +1,4 @@
-"""startup mechanical audit actions and context helpers for ``flowpilot_router_startup_fact_boundary``.
+"""Startup mechanical audit actions and context helpers for ``flowpilot_router_startup_fact_boundary``.
 
 This child module is imported by the public facade and keeps
 router binding behavior explicit for the startup StructureMesh split.
@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -58,18 +60,18 @@ def _write_startup_mechanical_audit(router: ModuleType, project_root: Path, run_
     _bind_router(router)
     audit_path = run_root / 'startup' / 'startup_mechanical_audit.json'
     proof_path = _router_owned_check_proof_path(audit_path)
-    evidence_paths = [run_root / 'startup_answers.json', project_root / '.flowpilot' / 'current.json', project_root / '.flowpilot' / 'index.json', run_root / 'role_binding_ledger.json', router._continuation_binding_path(run_root), router.run_state_path(run_root)]
+    evidence_paths = [run_root / 'startup_answers.json', project_root / '.flowpilot' / 'current.json', project_root / '.flowpilot' / 'index.json', router._continuation_binding_path(run_root), router.run_state_path(run_root)]
     startup_intake_context = router._startup_intake_record_context(project_root, run_root, run_state)
     if startup_intake_context is not None:
         evidence_paths.extend([startup_intake_context['record_path'], startup_intake_context['result_path'], startup_intake_context['receipt_path'], startup_intake_context['envelope_path'], startup_intake_context['body_path']])
     boundary_path = router._controller_boundary_confirmation_path(run_root)
     if boundary_path.exists():
         evidence_paths.append(boundary_path)
-    external_requirements = router._startup_external_fact_requirements(run_root, run_state)
-    review_ownership = router._startup_fact_review_ownership(computed_checks, external_requirements)
-    audit = {'schema_version': STARTUP_MECHANICAL_AUDIT_SCHEMA, 'run_id': run_state['run_id'], 'check_owner': 'flowpilot_router', 'mechanical_checks': computed_checks, 'mechanical_checks_passed': all(computed_checks.values()), 'router_replacement_scope': 'mechanical_only', 'self_attested_ai_claims_accepted_as_proof': False, 'fact_review_ownership': review_ownership, 'reviewer_required_external_facts': external_requirements, 'router_owned_check_proof_path': project_relative(project_root, proof_path), 'source_paths': [_evidence_path_record(project_root, path) for path in evidence_paths], 'written_at': utc_now()}
-    if not review_ownership['all_required_facts_have_owner']:
-        raise RouterError('startup fact ownership map left unowned requirements')
+    runtime_requirements = router._startup_mechanical_required_evidence(run_root, run_state)
+    mechanical_ownership = router._startup_mechanical_ownership(computed_checks, runtime_requirements)
+    audit = {'schema_version': STARTUP_MECHANICAL_AUDIT_SCHEMA, 'run_id': run_state['run_id'], 'check_owner': 'flowpilot_router', 'mechanical_checks': computed_checks, 'mechanical_checks_passed': all(computed_checks.values()), 'router_replacement_scope': 'mechanical_only', 'self_attested_ai_claims_accepted_as_proof': False, 'mechanical_ownership': mechanical_ownership, 'runtime_required_evidence': runtime_requirements, 'router_owned_check_proof_path': project_relative(project_root, proof_path), 'source_paths': [_evidence_path_record(project_root, path) for path in evidence_paths], 'written_at': utc_now()}
+    if not mechanical_ownership['all_required_requirements_have_owner']:
+        raise RouterError('startup mechanical ownership map left unowned requirements')
     write_json(audit_path, audit)
     proof_record = _write_router_owned_check_proof(project_root, run_root, check_name='startup_mechanical_checks', audit_path=audit_path, source_kind='router_computed', evidence_paths=evidence_paths)
     _validate_router_owned_check_proof(project_root, run_root, check_name='startup_mechanical_checks', audit_path=audit_path)
@@ -97,11 +99,11 @@ def _startup_mechanical_audit_action_extra(router: ModuleType, project_root: Pat
     _bind_router(router)
     context = router._startup_mechanical_audit_context(project_root, run_root, run_state)
     if context is None:
-        raise RouterError('startup mechanical audit must be written before reviewer startup fact card delivery')
+        raise RouterError('startup mechanical audit must be written before PM startup work')
     display_path = run_root / 'display' / 'display_surface.json'
     if not display_path.exists():
-        raise RouterError('startup display-surface status must be written before reviewer startup fact card delivery')
-    return {'startup_mechanical_audit_path': project_relative(project_root, context['audit_path']), 'startup_mechanical_audit_hash': context['audit_hash'], 'router_owned_check_proof_path': project_relative(project_root, context['proof_path']), 'router_owned_check_proof_hash': context['proof_hash'], 'startup_intake_record_path': router._optional_source_path(project_root, run_root / 'startup_intake' / 'startup_intake_record.json'), 'startup_display_surface_path': project_relative(project_root, display_path), 'startup_display_surface_hash': packet_runtime.sha256_file(display_path), 'reviewer_has_direct_display_evidence': True, 'router_computable_checks_already_enforced': True, 'reviewer_should_not_reprove_router_computable_checks': True, 'reviewer_required_external_facts': context['audit'].get('reviewer_required_external_facts') or [], 'router_replacement_scope': 'mechanical_only'}
+        raise RouterError('startup display-surface status must be written before PM startup work')
+    return {'startup_mechanical_audit_path': project_relative(project_root, context['audit_path']), 'startup_mechanical_audit_hash': context['audit_hash'], 'router_owned_check_proof_path': project_relative(project_root, context['proof_path']), 'router_owned_check_proof_hash': context['proof_hash'], 'startup_intake_record_path': router._optional_source_path(project_root, run_root / 'startup_intake' / 'startup_intake_record.json'), 'startup_display_surface_path': project_relative(project_root, display_path), 'startup_display_surface_hash': packet_runtime.sha256_file(display_path), 'router_computable_checks_enforced': True, 'router_replacement_scope': 'mechanical_only'}
 
 def _next_startup_mechanical_audit_action(router: ModuleType, project_root: Path, run_state: dict[str, Any], run_root: Path) -> dict[str, Any] | None:
     _bind_router(router)
@@ -112,14 +114,14 @@ def _next_startup_mechanical_audit_action(router: ModuleType, project_root: Path
         return None
     if router._controller_action_open_for(run_root, action_type='write_startup_mechanical_audit', postcondition='startup_mechanical_audit_written'):
         return None
-    allowed_reads = [project_relative(project_root, run_root / 'startup_answers.json'), project_relative(project_root, project_root / '.flowpilot' / 'current.json'), project_relative(project_root, project_root / '.flowpilot' / 'index.json'), project_relative(project_root, run_root / 'role_binding_ledger.json'), project_relative(project_root, router._continuation_binding_path(run_root)), project_relative(project_root, router.run_state_path(run_root))]
+    allowed_reads = [project_relative(project_root, run_root / 'startup_answers.json'), project_relative(project_root, project_root / '.flowpilot' / 'current.json'), project_relative(project_root, project_root / '.flowpilot' / 'index.json'), project_relative(project_root, router._continuation_binding_path(run_root)), project_relative(project_root, router.run_state_path(run_root))]
     boundary_path = router._controller_boundary_confirmation_path(run_root)
     if boundary_path.exists():
         allowed_reads.append(project_relative(project_root, boundary_path))
     startup_intake_context = router._startup_intake_record_context(project_root, run_root, run_state)
     if startup_intake_context is not None:
         allowed_reads.extend([project_relative(project_root, startup_intake_context['record_path']), project_relative(project_root, startup_intake_context['result_path']), project_relative(project_root, startup_intake_context['receipt_path']), project_relative(project_root, startup_intake_context['envelope_path'])])
-    return make_action(action_type='write_startup_mechanical_audit', actor='router', label='router_writes_startup_mechanical_audit', summary='Router writes the startup mechanical audit and proof before exposing the reviewer startup fact-check card.', allowed_reads=allowed_reads, allowed_writes=[project_relative(project_root, run_root / 'startup' / 'startup_mechanical_audit.json'), project_relative(project_root, run_root / 'startup' / 'startup_mechanical_audit.json.proof.json'), project_relative(project_root, router.run_state_path(run_root))], extra={'postcondition': 'startup_mechanical_audit_written', 'reviewer_card_waiting_for_audit': 'reviewer.startup_fact_check', 'router_replacement_scope': 'mechanical_only'})
+    return make_action(action_type='write_startup_mechanical_audit', actor='router', label='router_writes_startup_mechanical_audit', summary='Router writes the startup mechanical audit and proof before PM startup work.', allowed_reads=allowed_reads, allowed_writes=[project_relative(project_root, run_root / 'startup' / 'startup_mechanical_audit.json'), project_relative(project_root, run_root / 'startup' / 'startup_mechanical_audit.json.proof.json'), project_relative(project_root, router.run_state_path(run_root))], extra={'postcondition': 'startup_mechanical_audit_written', 'next_startup_work_waiting_for_audit': 'user_intake', 'router_replacement_scope': 'mechanical_only'})
 
 __all__ = (
     '_write_startup_mechanical_audit',

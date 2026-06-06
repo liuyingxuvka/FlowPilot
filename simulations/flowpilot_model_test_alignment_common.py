@@ -211,7 +211,6 @@ FACADE_PARITY_EXTERNAL_CONTRACT_SURFACE_IDS = {
     "asset:flowpilot_router_startup_fact_boundary_audit",
     "asset:flowpilot_router_startup_fact_boundary_checks",
     "asset:flowpilot_router_startup_fact_boundary_controller",
-    "asset:flowpilot_router_startup_fact_boundary_reports",
     "asset:flowpilot_router_startup_intake",
     "asset:flowpilot_router_startup_intake_materialization",
     "asset:flowpilot_router_startup_intake_ui",
@@ -342,17 +341,32 @@ SCRIPT_SURFACE_CONTRACT_TEST_MARKER = "SCRIPT_SURFACE_CONTRACT_TEST_PATH"
 TEST_TIER_COMMAND_CONTRACT_TEST_MARKER = "test_all_tier_commands_have_external_command_contracts"
 
 STRUCTURE_SPLIT_REPAIR_PLAN = {
-    "flowguard_project_topology": {
-        "split_status": "deferred_split",
-        "split_reason": "new project topology CLI is externally contracted before any structure split",
-        "deferred_split_reason": (
-            "orientation_artifact_contract_current | "
-            "requires_dedicated_structuremesh_claim_before_cli_split"
+    "flowpilot_new": {
+        "split_status": "completed_split",
+        "split_reason": "current_flowpilot_entrypoint_command_families_extracted_without_legacy_acceptance",
+        "completed_split_paths": (
+            "skills/flowpilot/assets/flowpilot_new_shared.py",
+            "skills/flowpilot/assets/flowpilot_new_role_commands.py",
+            "skills/flowpilot/assets/flowpilot_new_run_commands.py",
+            "skills/flowpilot/assets/flowpilot_new_cli.py",
         ),
-        "peer_safety_status": "do_not_edit_without_claim",
+        "peer_safety_status": "claimed_by_split_flowpilot_hff_structure_surfaces",
+        "safe_split_class": "current_runtime_entrypoint",
+        "recommended_next_action": "monitor_flowpilot_new_child_contracts",
+        "structure_split_status": "completed",
+    },
+    "flowguard_project_topology": {
+        "split_status": "completed_split",
+        "split_reason": "project_topology_collect_render_check_partitions_extracted_without_changing_cli",
+        "completed_split_paths": (
+            "scripts/flowguard_project_topology_lib/common.py",
+            "scripts/flowguard_project_topology_lib/collectors.py",
+            "scripts/flowguard_project_topology_lib/render.py",
+        ),
+        "peer_safety_status": "claimed_by_split_flowpilot_hff_structure_surfaces",
         "safe_split_class": "project_topology_cli",
-        "recommended_next_action": "split_topology_generator_after_contract_parity_tests",
-        "structure_split_status": "deferred",
+        "recommended_next_action": "monitor_topology_generator_child_contracts",
+        "structure_split_status": "completed",
     },
     "flowpilot_router": {
         "split_status": "completed_split",
@@ -858,16 +872,15 @@ STRUCTURE_SPLIT_REPAIR_PLAN = {
     },
     "flowpilot_router_startup_fact_boundary": {
         "split_status": "completed_split",
-        "split_reason": "startup_fact_check_controller_audit_and_report_helpers_extracted",
+        "split_reason": "startup_mechanical_check_controller_and_audit_helpers_extracted",
         "completed_split_paths": (
             "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_checks.py",
             "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_controller.py",
             "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_audit.py",
-            "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_reports.py",
         ),
         "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
         "safe_split_class": "stateful_runtime_flow",
-        "recommended_next_action": "monitor_startup_fact_boundary_child_contracts",
+        "recommended_next_action": "monitor_startup_mechanical_audit_child_contracts",
     },
     "flowpilot_router_startup_intake": {
         "split_status": "completed_split",

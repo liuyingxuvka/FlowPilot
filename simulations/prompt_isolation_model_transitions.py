@@ -194,12 +194,15 @@ def _next_required_channel(state: State) -> str:
             and state.pm_startup_intake_card_delivered
         ):
             return "prompt"
-        if not state.reviewer_startup_fact_check_card_delivered:
-            return "prompt"
-        if state.startup_fact_reported and not state.pm_startup_activation_card_delivered:
-            return "prompt"
+        if not (
+            state.startup_runtime_entry_completed
+            and state.startup_runtime_mechanical_audit_written
+            and state.startup_display_status_written
+            and state.startup_user_intake_released_to_pm
+        ):
+            return "none"
         if (
-            state.startup_activation_approved
+            state.startup_user_intake_released_to_pm
             and not state.user_intake_delivered_to_pm
             and state.user_intake_ready
         ):
@@ -535,28 +538,28 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             _prompt(state, pm_startup_intake_card_delivered=True, phase="startup_intake"),
         )
         return
-    if not state.reviewer_startup_fact_check_card_delivered:
+    if not state.startup_runtime_entry_completed:
         yield Transition(
-            "reviewer_startup_fact_check_card_delivered",
-            _prompt(state, reviewer_startup_fact_check_card_delivered=True, holder="reviewer"),
+            "startup_runtime_entry_completed",
+            replace(state, startup_runtime_entry_completed=True, holder="controller"),
         )
         return
-    if not state.startup_fact_reported:
+    if not state.startup_runtime_mechanical_audit_written:
         yield Transition(
-            "reviewer_reports_startup_facts_for_pm_activation",
-            _role_return(state, startup_fact_reported=True, holder="controller"),
+            "startup_mechanical_audit_written_by_runtime",
+            replace(state, startup_runtime_mechanical_audit_written=True, holder="controller"),
         )
         return
-    if not state.pm_startup_activation_card_delivered:
+    if not state.startup_display_status_written:
         yield Transition(
-            "pm_startup_activation_phase_card_delivered",
-            _prompt(state, pm_startup_activation_card_delivered=True, holder="pm"),
+            "startup_display_status_written_by_runtime",
+            replace(state, startup_display_status_written=True, holder="controller"),
         )
         return
-    if not state.startup_activation_approved:
+    if not state.startup_user_intake_released_to_pm:
         yield Transition(
-            "pm_approves_startup_activation_from_reviewed_facts",
-            _role_return(state, startup_activation_approved=True, holder="controller"),
+            "startup_user_intake_released_to_pm_after_runtime_entry",
+            replace(state, startup_user_intake_released_to_pm=True, holder="controller"),
         )
         return
     if not state.user_intake_delivered_to_pm:
@@ -1238,8 +1241,8 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.lifecycle_reconciled:
         yield Transition("lifecycle_reconciled", replace(state, lifecycle_reconciled=True))
         return
-    if not state.heartbeat_stopped_or_manual_recorded:
-        yield Transition("heartbeat_stopped_or_manual_resume_recorded", replace(state, heartbeat_stopped_or_manual_recorded=True))
+    if not state.continuation_boundary_recorded:
+        yield Transition("continuation_boundary_recorded", replace(state, continuation_boundary_recorded=True))
         return
     if not state.role_binding_ledger_archived:
         yield Transition("role_binding_ledger_archived", replace(state, role_binding_ledger_archived=True))
@@ -1267,3 +1270,4 @@ __all__ = [
     "_role_return",
     "_stale_history_context",
 ]
+

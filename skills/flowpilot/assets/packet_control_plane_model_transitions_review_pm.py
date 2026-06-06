@@ -9,7 +9,7 @@ from packet_control_plane_model_state import (
     ApprovedPacket,
     CheckedResult,
     DispatchBlocked,
-    HeartbeatCase,
+    ManualResumeCase,
     NodeCase,
     NodePacket,
     NodeResult,
@@ -22,8 +22,8 @@ from packet_control_plane_model_state import (
     _packet_from_id,
 )
 
-class ReviewerResultEnvelopeCheck:
-    name = "ReviewerResultEnvelopeCheck"
+class RuntimeResultEnvelopeCheck:
+    name = "RuntimeResultEnvelopeCheck"
     accepted_input_type = (NodeResult, ReviewBlock)
     reads = ("result_envelopes", "result_ledger_records")
     writes = (
@@ -41,9 +41,9 @@ class ReviewerResultEnvelopeCheck:
         "review_blocks",
         "pm_repair_requirements",
     )
-    input_description = "result envelope"
-    output_description = "checked result or review block"
-    idempotency = "Result envelope check is keyed by packet ID."
+    input_description = "runtime result envelope"
+    output_description = "runtime-checked result or mechanical block"
+    idempotency = "Runtime result envelope check is keyed by packet ID."
 
     def apply(self, input_obj: NodeResult, state: State) -> Iterable[FunctionResult]:
         if not isinstance(input_obj, NodeResult):
@@ -197,7 +197,7 @@ class ReviewerResultEnvelopeCheck:
                 input_obj.result_body_stale_after_route_mutation,
             ),
             checked_state,
-            "result_envelope_checked",
+            "runtime_result_envelope_checked",
         )
 
 class ReviewerResult:
@@ -214,8 +214,8 @@ class ReviewerResult:
         "review_blocks",
     )
     input_description = "node result"
-    output_description = "ReviewPass or ReviewBlock"
-    idempotency = "Review result is keyed by packet ID."
+    output_description = "quality ReviewPass or ReviewBlock"
+    idempotency = "Reviewer quality result is keyed by packet ID after runtime mechanics pass."
 
     def apply(self, input_obj: CheckedResult | ReviewBlock, state: State) -> Iterable[FunctionResult]:
         if not isinstance(input_obj, CheckedResult):
@@ -295,7 +295,7 @@ class PMAdvance:
         yield FunctionResult(PMAdvanced(input_obj.packet_id), new_state, "pm_advanced")
 
 __all__ = [
-    "ReviewerResultEnvelopeCheck",
+    "RuntimeResultEnvelopeCheck",
     "ReviewerResult",
     "PMRepairAfterInvalidOrigin",
     "PMAdvance",

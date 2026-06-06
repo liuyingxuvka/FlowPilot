@@ -36,7 +36,7 @@ class FlowPilotControlPlaneFailureCanaryReplayTests(FlowPilotRouterRuntimeTestBa
         )
 
         def finish_write() -> None:
-            time.sleep(0.05)
+            time.sleep(0.25)
             ledger = router._empty_router_scheduler_ledger(root, run_root, state)  # type: ignore[attr-defined]
             scheduler_path.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
             unlink_with_windows_retry(write_lock)
@@ -77,14 +77,14 @@ class FlowPilotControlPlaneFailureCanaryReplayTests(FlowPilotRouterRuntimeTestBa
     def test_canary_dead_daemon_resume_restart_path_before_normal_work(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         lock_path = run_root / "runtime" / "router_daemon.lock"
         lock = read_json(lock_path)
         lock["last_tick_at"] = "2000-01-01T00:00:00Z"
         lock["owner"] = {"pid": 999999999, "process_name": "missing-test-daemon"}
         router.write_json(lock_path, lock)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
         recovery = action["router_daemon_resume_recovery"]
@@ -98,14 +98,14 @@ class FlowPilotControlPlaneFailureCanaryReplayTests(FlowPilotRouterRuntimeTestBa
         self.assertTrue(resume_evidence["router_daemon_restarted_if_dead"])
         self.assertTrue(resume_evidence["controller_action_ledger_loaded"])
 
-    def test_canary_duplicate_heartbeat_resume_is_idempotent(self) -> None:
+    def test_canary_duplicate_manual_resume_is_idempotent(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         first_action = router.next_action(root)
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         second_action = router.next_action(root)
 
         self.assertEqual(first_action["action_type"], "load_resume_state")
@@ -214,3 +214,4 @@ class FlowPilotControlPlaneFailureCanaryReplayTests(FlowPilotRouterRuntimeTestBa
 
 if __name__ == "__main__":
     unittest.main()
+

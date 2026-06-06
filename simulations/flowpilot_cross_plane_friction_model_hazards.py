@@ -58,8 +58,8 @@ def hazard_states() -> dict[str, State]:
         "terminal_control_blocker_not_cleared": _safe_base(
             terminal_control_blocker_cleared=False,
         ),
-        "terminal_heartbeat_still_active": _safe_base(
-            heartbeat_inactive_after_terminal=False,
+        "terminal_manual_resume_binding_still_active": _safe_base(
+            manual_resume_binding_inactive_after_terminal=False,
         ),
         "route_state_snapshot_status_mismatch": _safe_base(
             route_snapshot_status_derived_from_frontier=False,
@@ -113,3 +113,4 @@ def hazard_states() -> dict[str, State]:
 
 
 __all__ = ["hazard_states", "repair_solution_state"]
+

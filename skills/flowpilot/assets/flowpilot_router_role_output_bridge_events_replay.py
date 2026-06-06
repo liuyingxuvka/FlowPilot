@@ -10,7 +10,12 @@ import flowpilot_router_role_output_bridge_events as _parent
 from flowpilot_runtime_gateway import GATEWAY_ROUTER_JSON, assert_runtime_gateway_write
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     _parent._bind_router(router)
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -135,8 +140,6 @@ def _try_reconcile_direct_role_output_event_ledger(
             continue
         event = str(envelope.get("event_name") or "")
         if not event or event not in EXTERNAL_EVENTS:
-            continue
-        if event == "reviewer_reports_startup_facts":
             continue
         meta = EXTERNAL_EVENTS[event]
         flag = str(meta["flag"])

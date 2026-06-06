@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for the FlowPilot persistent Router daemon model.
+"""Thin current-contract entrypoint for the FlowPilot persistent Router daemon model.
 
 FlowGuard model for FlowPilot persistent Router daemon control.
 
@@ -12,7 +12,7 @@ Risk intent brief:
   mailbox evidence, ACK consumption, Controller action ledger entries,
   external-event wait row closure, Controller receipts, stateful Controller
   postcondition evidence, Router scheduler ledger parseability, atomic durable
-  ledger writes, daemon status/lock/process consistency, heartbeat/manual
+  ledger writes, daemon status/lock/process consistency, manual resume/patrol
   resume recovery, role cohort liveness, missing-deliverable repair
   issue/failure counts, and terminal cleanup.
 - Adversarial branches include formal startup skipping or failing daemon
@@ -24,7 +24,7 @@ Risk intent brief:
   the next startup row,
   Controller stopping at ordinary waits, foreground Controller ending while a
   live daemon-owned role wait is active, foreground Controller ending while
-  the daemon is live but no Controller action is ready, heartbeat starting a
+  the daemon is live but no Controller action is ready, patrol starting a
   second live daemon, Router scheduler ledger corruption from partial writes,
   monitor current-work projection dropping active packet holders or internal
   reconciliation owners after `pending_action` is cleared,
@@ -61,8 +61,8 @@ Risk intent brief:
   cleared only after safe artifact checks and diagnostic evidence, durable
   ledgers are written atomically, and daemon active status never contradicts an
   error lock or missing process;
-  heartbeat restarts only dead/stale daemon state; and terminal stop disables
-  daemon, Controller, heartbeat, roles, and route work.
+  patrol restarts only dead/stale daemon state; and terminal stop disables
+  daemon, Controller, patrol, roles, and route work.
 """
 
 from __future__ import annotations
@@ -112,3 +112,4 @@ __all__ = [
     "next_safe_states",
     "next_states",
 ]
+

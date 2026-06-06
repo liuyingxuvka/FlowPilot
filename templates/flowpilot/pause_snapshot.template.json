@@ -20,7 +20,6 @@
     "fixture_only_evidence_to_disclose": []
   },
   "lifecycle_summary": {
-    "legacy_automation_ids": [],
     "codex_automation_status_checked": false,
     "active_background_collaboration": [],
     "closed_or_paused_background_collaboration": [],

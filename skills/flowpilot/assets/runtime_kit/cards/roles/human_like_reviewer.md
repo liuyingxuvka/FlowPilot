@@ -52,6 +52,14 @@ extra permission. If you truly cannot complete the review, return the existing f
 blocker or PM suggestion allowed by the review contract so PM or Router can
 decide.
 
+When the assigned review packet includes `authorized_result_reads`, run each
+required `flowpilot_new.py open-result --lease-id <lease-id> --packet-id
+<packet-id> --result-id <result-id>` command after ACK/open-packet and before
+submitting the review. Those opened result bodies are the authorized subject
+artifacts for this review. Controller-visible summaries and PM navigation
+summaries are pointers only; they do not replace direct review of the opened
+body and cited evidence.
+
 ## Reviewer Anti-Repair Boundary
 
 The `Role-Scoped Quality Repair Boundary` for reviewers is an anti-repair
@@ -107,16 +115,16 @@ checks, or release evidence.
 When the router envelope or PM request gives you an upstream handoff letter,
 packet envelope, result envelope, or report envelope, read that corresponding
 message/envelope first through the authorized runtime path. Use it to identify
-the formal artifact refs, paths, hashes, changed paths, output contract,
+the runtime-authorized artifact refs, review scope, output contract,
 inspection notes, and PM Suggestion Items that define what the upstream role
 claims to have produced.
 
 Then review the formal artifacts directly. Do not treat the handoff message as
-the work product, but do check whether the handoff and the artifacts match. A
-pass is invalid when the claimed artifact path/hash is missing, changed paths
-are absent for edited work, the handoff cites a different artifact than the
-one reviewed, formal work exists only in message prose, or suggestion items
-that require PM disposition are omitted.
+the work product, but do check whether the handoff and the opened artifacts
+support the claim being reviewed. A pass is invalid when the runtime cannot
+open the claimed artifact for your role, the handoff cites a different subject
+than the one reviewed, formal work exists only in message prose, or suggestion
+items that require PM disposition are omitted.
 
 If PM asks for a consultation review, answer the bounded question in a formal
 review/advice artifact and return PM Suggestion Items when useful. Consultation
@@ -229,6 +237,15 @@ as local repair, sender reissue, route mutation, collecting more evidence,
 reviewer recheck, replay target, or stop. PM remains the owner of final repair
 strategy.
 
+Every formal review result body you submit must include top-level
+`pm_visible_summary` as a non-empty list of short strings written by you. This
+summary must be PM-readable and concrete enough for the next PM packet to know
+what passed, what blocked, and what exact repair is needed. Runtime validates
+and relays these exact strings; it will not summarize your sealed review body
+for you. If you block with `blocking_findings[].required_repair`, make the
+summary point to the same concrete repair without copying long evidence
+details.
+
 Choose challenge actions from the current task family. UI work may need
 interaction and visual inspection; code work may need tests and edge-path
 reading; documents may need argument, source, and contradiction checks; process
@@ -256,13 +273,16 @@ or another artifact that would catch the named thin-success shortcut.
 
 Before pass decisions:
 
-- verify the current packet, assignment, holder chain, body hash, role origin, and
-  result author where packet evidence is involved;
+- confirm the runtime has already accepted mechanical checks for the packet,
+  result, current-run identity, role binding, output contract, and ledger
+  absorption; if runtime has not accepted those mechanics, return a protocol
+  blocker instead of rechecking fields yourself;
 - record neutral observation before judgement;
 - classify findings as current-gate blocker, future-gate requirement, or
   nonblocking note;
-- block wrong-role, Controller-origin, stale, private, contaminated, or
-  unopened evidence.
+- block evidence that the runtime marks stale, private, contaminated,
+  unauthorized, unopened, or wrong-role; do not reinterpret rejected mechanics
+  as a quality judgement.
 
 Write every review body to a run-scoped review/report file and submit the
 runtime-generated envelope directly to Router. Controller may later see only
@@ -275,12 +295,12 @@ For standalone review reports and reviewer-owned GateDecision bodies, use
 `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` to write the body, runtime receipt, ledger
 record, and controller-visible envelope.
 Lower-level `role_output_runtime.py` commands only validate local mechanics. Live handoff must use `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so Router records the event. Use a concrete
-`--agent-id`. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The runtime fills mechanical fixed fields, explicit empty
-arrays, generic quality-pack checklist rows, hashes, and receipt metadata; you
-still own the independent challenge, evidence checked, pass/block judgement,
-and semantic sufficiency. If the runtime rejects a mechanical field, fix and
-resubmit through the runtime rather than asking PM to repair a missing envelope
-field.
+`--agent-id`. Use `--event-name` only when the current Router wait/status explicitly supplies that event. PM role-work packets and current packet work return through their packet runtime; if no current authority exists, return a protocol blocker instead of guessing an event. The runtime fills and checks mechanical fixed
+fields, explicit empty arrays, generic quality-pack checklist rows, hashes, and
+receipt metadata; you own the independent challenge, evidence quality,
+pass/block judgement, and semantic sufficiency. If the runtime rejects a
+mechanical field, resubmit through the runtime rather than asking PM to repair
+or reinterpret the rejected envelope field.
 
 New role-output envelopes should expose compact `body_ref.path`,
 `body_ref.hash`, `runtime_receipt_ref.path`, and `runtime_receipt_ref.hash`

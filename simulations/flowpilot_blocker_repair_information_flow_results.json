@@ -1,0 +1,181 @@
+{
+  "claim_boundary": {
+    "covers": [
+      "blocker payload currency",
+      "PM repair decision body-open and current-blocker references",
+      "reviewer required repair and advice propagation",
+      "fresh PM repair package generation",
+      "worker repair packet semantic delta and success evidence",
+      "reviewer recheck binding",
+      "same-blocker no-progress loop escape"
+    ],
+    "does_not_cover": [
+      "concrete runtime packet builder conformance",
+      "prompt-card wording conformance",
+      "installed skill synchronization"
+    ]
+  },
+  "flowguard_explorer": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=3 initial_states=1 traces=114",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "failures": [],
+    "hazards": {
+      "blocker_routed_without_pm_decision": {
+        "detected": true,
+        "expected_failure": "repair packet was issued without a PM repair decision",
+        "failures": [
+          "repair packet was issued without a PM repair decision"
+        ]
+      },
+      "current_blocker_payload_missing_details": {
+        "detected": true,
+        "expected_failure": "current blocker payload lacks blocker id",
+        "failures": [
+          "current blocker payload lacks blocker id, source result reference, or specific failure"
+        ]
+      },
+      "followup_blocker_lost": {
+        "detected": true,
+        "expected_failure": "follow-up blocker returned by recheck was not recorded as current work",
+        "failures": [
+          "follow-up blocker returned by recheck was not recorded as current work"
+        ]
+      },
+      "no_success_evidence_contract": {
+        "detected": true,
+        "expected_failure": "worker packet lacks success evidence contract",
+        "failures": [
+          "worker packet lacks success evidence contract"
+        ]
+      },
+      "pm_closes_blocker_without_recheck": {
+        "detected": true,
+        "expected_failure": "blocker was closed without a bound reviewer recheck pass",
+        "failures": [
+          "blocker was closed without a bound reviewer recheck pass"
+        ]
+      },
+      "pm_did_not_open_required_report": {
+        "detected": true,
+        "expected_failure": "PM repair decision was made before opening the required report body",
+        "failures": [
+          "PM repair decision was made before opening the required report body"
+        ]
+      },
+      "pm_repair_package_omits_new_blocker_content": {
+        "detected": true,
+        "expected_failure": "PM repair package omits current blocker",
+        "failures": [
+          "PM repair package omits current blocker, specific failure, or new work content"
+        ]
+      },
+      "reviewer_advice_not_integrated": {
+        "detected": true,
+        "expected_failure": "PM repair decision did not integrate reviewer repair advice",
+        "failures": [
+          "PM repair decision did not integrate reviewer repair advice"
+        ]
+      },
+      "reviewer_recheck_not_bound_to_blocker": {
+        "detected": true,
+        "expected_failure": "reviewer recheck is not bound to the current blocker",
+        "failures": [
+          "reviewer recheck is not bound to the current blocker and repair evidence",
+          "blocker was closed without a bound reviewer recheck pass"
+        ]
+      },
+      "reviewer_required_repair_dropped": {
+        "detected": true,
+        "expected_failure": "PM repair decision dropped the role required_repair",
+        "failures": [
+          "PM repair decision dropped the role required_repair",
+          "PM repair package dropped required repair guidance"
+        ]
+      },
+      "same_blocker_repeat_loop_allowed": {
+        "detected": true,
+        "expected_failure": "same blocker repeated with same work packet",
+        "failures": [
+          "same blocker repeated with same work packet and no route mutation or terminal blocker"
+        ]
+      },
+      "stale_blocker_used_for_pm_repair": {
+        "detected": true,
+        "expected_failure": "PM repair used stale blocker payload",
+        "failures": [
+          "PM repair used stale blocker payload instead of current blocker generation"
+        ]
+      },
+      "stale_context_copied_without_disposition": {
+        "detected": true,
+        "expected_failure": "PM repair package copied stale context without disposition or quarantine",
+        "failures": [
+          "PM repair package copied stale context without disposition or quarantine"
+        ]
+      },
+      "worker_packet_has_no_semantic_delta": {
+        "detected": true,
+        "expected_failure": "worker packet repeats the failed work without semantic delta",
+        "failures": [
+          "worker packet repeats the failed work without semantic delta"
+        ]
+      },
+      "worker_packet_omits_repair_direction": {
+        "detected": true,
+        "expected_failure": "worker packet lacks concrete repair direction",
+        "failures": [
+          "worker packet lacks concrete repair direction",
+          "worker result did not address the required repair"
+        ]
+      }
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_blocker_repair_information_flow",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "ok": true,
+    "samples": [],
+    "stuck_state_count": 0,
+    "terminal_state_count": 19
+  },
+  "result_type": "flowpilot_blocker_repair_information_flow_checks",
+  "safe_graph": {
+    "accepted_scenarios": [
+      "valid_followup_blocker_recording",
+      "valid_loop_escape_route_mutation",
+      "valid_reviewer_blocker_repair_packet",
+      "valid_worker_blocker_reissue"
+    ],
+    "edge_count": 38,
+    "invariant_failures": [],
+    "missing_labels": [],
+    "ok": true,
+    "rejected_scenarios": [
+      "blocker_routed_without_pm_decision",
+      "current_blocker_payload_missing_details",
+      "followup_blocker_lost",
+      "no_success_evidence_contract",
+      "pm_closes_blocker_without_recheck",
+      "pm_did_not_open_required_report",
+      "pm_repair_package_omits_new_blocker_content",
+      "reviewer_advice_not_integrated",
+      "reviewer_recheck_not_bound_to_blocker",
+      "reviewer_required_repair_dropped",
+      "same_blocker_repeat_loop_allowed",
+      "stale_blocker_used_for_pm_repair",
+      "stale_context_copied_without_disposition",
+      "worker_packet_has_no_semantic_delta",
+      "worker_packet_omits_repair_direction"
+    ],
+    "state_count": 39
+  }
+}

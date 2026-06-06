@@ -14,7 +14,7 @@ Risk intent brief:
   PM instead of same-role reissue, material-scan packet dispatch with phase,
   contract, write-target, or canonical-body drift, PM repair reissue specs that
   never enter the packet runtime, success-only repair gates that cannot accept
-  reviewer recheck blockers, stopped runs with live heartbeat/runtime roles/packet
+  reviewer recheck blockers, stopped runs with live manual resume binding/runtime roles/packet
   state, stale snapshots treated as active UI state, ambiguous multi-active
   runs under current-json-only authority, product architecture delivery without
   PM material-understanding source paths, protocol blockers written outside
@@ -144,3 +144,4 @@ __all__ = [
     "next_safe_states",
     "next_states",
 ]
+

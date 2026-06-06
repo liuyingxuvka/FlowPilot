@@ -60,7 +60,10 @@ def _card_ack_handoff_projection_findings(
     user_intake_delivery_exists = _user_intake_delivery_action_exists(actions)
     user_intake_mail_folded = _mail_ledger_has_user_intake(packet_ledger)
     flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
-    startup_activation_approved = flags.get("startup_activation_approved") is True
+    startup_runtime_ready_for_pm_intake = (
+        flags.get("startup_mechanical_audit_written") is True
+        and flags.get("startup_display_status_written") is True
+    )
 
     for key, resolved in sorted(resolved_by_bundle.items()):
         bundle_id, expected_return_path, event = key
@@ -125,10 +128,10 @@ def _card_ack_handoff_projection_findings(
                     "user_intake_packet": user_intake_packet,
                 }
             )
-        if user_intake_delivery_exists and not startup_activation_approved:
+        if user_intake_delivery_exists and not startup_runtime_ready_for_pm_intake:
             findings.append(
                 {
-                    "id": "pm_ack_resolved_queued_controller_user_intake_delivery_before_activation",
+                    "id": "pm_ack_resolved_queued_controller_user_intake_delivery_before_startup_runtime_ready",
                     "card_bundle_id": bundle_id,
                     "card_return_event": event,
                     "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
@@ -139,11 +142,11 @@ def _card_ack_handoff_projection_findings(
             user_intake_packet
             and str(user_intake_packet.get("to_role") or user_intake_packet.get("next_holder") or "") == "project_manager"
             and not user_intake_released
-            and startup_activation_approved
+            and startup_runtime_ready_for_pm_intake
         ):
             findings.append(
                 {
-                    "id": "startup_activation_user_intake_not_controller_relayed",
+                    "id": "startup_runtime_ready_user_intake_not_controller_relayed",
                     "card_bundle_id": bundle_id,
                     "card_return_event": event,
                     "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),
@@ -152,10 +155,14 @@ def _card_ack_handoff_projection_findings(
                     "user_intake_controller_relayed": user_intake_released,
                 }
             )
-        if user_intake_packet and user_intake_packet.get("router_release_recorded") is True and not startup_activation_approved:
+        if (
+            user_intake_packet
+            and user_intake_packet.get("router_release_recorded") is True
+            and not startup_runtime_ready_for_pm_intake
+        ):
             findings.append(
                 {
-                    "id": "pm_ack_resolved_user_intake_router_released_before_activation",
+                    "id": "pm_ack_resolved_user_intake_router_released_before_startup_runtime_ready",
                     "card_bundle_id": bundle_id,
                     "card_return_event": event,
                     "ack_path": resolved.get("ack_path") or resolved.get("expected_return_path"),

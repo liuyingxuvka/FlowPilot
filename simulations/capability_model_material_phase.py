@@ -162,7 +162,7 @@ def apply_material_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="research_tool_capability_decision_recorded",
-                action="project manager records whether local, browser, web search, account, or user-provided sources are available and routes missing capabilities to user clarification, fallback, or block",
+                action="project manager records whether local, browser, web search, account, or user-provided sources are available and routes missing capabilities to user clarification, repair, or block",
                 research_tool_capability_decision_recorded=True,
             )
             return

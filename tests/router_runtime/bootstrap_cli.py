@@ -252,11 +252,11 @@ class BootstrapCliRuntimeTests(FlowPilotRouterRuntimeTestBase):
             with self.assertRaises(SystemExit):
                 with contextlib.redirect_stderr(io.StringIO()):
                     router.parse_args(["--root", "C:/tmp/project", command, "--json"])
-    def test_skill_entrypoint_remains_small_router_launcher(self) -> None:
+    def test_skill_entrypoint_remains_small_flowpilot_new_launcher(self) -> None:
         skill_text = (ROOT / "skills" / "flowpilot" / "SKILL.md").read_text(encoding="utf-8")
         line_count = len(skill_text.splitlines())
 
         self.assertLess(line_count, 120)
-        self.assertIn("flowpilot_router.py", skill_text)
+        self.assertIn("flowpilot_new.py", skill_text)
         self.assertIn("Do not read FlowPilot reference files", skill_text)
         self.assertNotIn("Final Route-Wide Gate Ledger", skill_text)

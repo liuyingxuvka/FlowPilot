@@ -40,7 +40,7 @@ class FlowPilotControlPlaneFailureCanaryMatrixTests(unittest.TestCase):
             "runtime_json_lock",
             "runtime_persistence",
             "daemon_liveness",
-            "heartbeat_resume",
+            "manual_resume",
             "run_authority",
             "background_evidence",
             "terminal_fence",

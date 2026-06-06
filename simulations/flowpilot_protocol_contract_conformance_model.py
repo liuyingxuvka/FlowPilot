@@ -20,14 +20,14 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
 VALID_FIXED_PROTOCOL = "valid_fixed_protocol"
-STARTUP_FACT_JSONPATH_MISMATCH = "startup_fact_jsonpath_mismatch"
+STARTUP_MECHANICAL_AUDIT_FIELD_MISMATCH = "startup_mechanical_audit_field_mismatch"
 CONTROL_BLOCKER_AMBIGUOUS_EVENT = "control_blocker_ambiguous_event"
 CONTROL_BLOCKER_WEAK_DECISION_CONTRACT = "control_blocker_weak_decision_contract"
 PM_RESUME_DECISION_WEAK_CONTRACT = "pm_resume_decision_weak_contract"
-STARTUP_FACT_HASH_ALIAS = "startup_fact_hash_alias"
+STARTUP_MECHANICAL_AUDIT_HASH_ALIAS = "startup_mechanical_audit_hash_alias"
 COCKPIT_MISSING_HOST_RECEIPT = "cockpit_missing_host_receipt"
-DISPLAY_FALLBACK_AFTER_PM_ACTIVATION = "display_fallback_after_pm_activation"
-STARTUP_REPAIR_DEDUPES_NEW_REPORT = "startup_repair_dedupes_new_report"
+DISPLAY_MANUAL_RECEIPT_AFTER_PM_STARTUP_INTAKE = "display_manual_receipt_after_pm_startup_intake"
+STARTUP_REPAIR_DEDUPES_CURRENT_BLOCKER = "startup_repair_dedupes_current_blocker"
 ROLE_OUTPUT_ENVELOPE_AMBIGUITY = "role_output_envelope_ambiguity"
 MATERIAL_SCAN_INLINE_BODY_ONLY = "material_scan_inline_body_only"
 MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT = "material_dispatch_unknown_block_event"
@@ -39,14 +39,14 @@ PROCESS_RESULT_RECIPIENT_COMPENSATION = "process_result_recipient_compensation"
 WAIT_EVENT_PRODUCER_MISMATCH = "wait_event_producer_mismatch"
 
 NEGATIVE_SCENARIOS = (
-    STARTUP_FACT_JSONPATH_MISMATCH,
+    STARTUP_MECHANICAL_AUDIT_FIELD_MISMATCH,
     CONTROL_BLOCKER_AMBIGUOUS_EVENT,
     CONTROL_BLOCKER_WEAK_DECISION_CONTRACT,
     PM_RESUME_DECISION_WEAK_CONTRACT,
-    STARTUP_FACT_HASH_ALIAS,
+    STARTUP_MECHANICAL_AUDIT_HASH_ALIAS,
     COCKPIT_MISSING_HOST_RECEIPT,
-    DISPLAY_FALLBACK_AFTER_PM_ACTIVATION,
-    STARTUP_REPAIR_DEDUPES_NEW_REPORT,
+    DISPLAY_MANUAL_RECEIPT_AFTER_PM_STARTUP_INTAKE,
+    STARTUP_REPAIR_DEDUPES_CURRENT_BLOCKER,
     ROLE_OUTPUT_ENVELOPE_AMBIGUITY,
     MATERIAL_SCAN_INLINE_BODY_ONLY,
     MATERIAL_DISPATCH_UNKNOWN_BLOCK_EVENT,
@@ -59,11 +59,10 @@ NEGATIVE_SCENARIOS = (
 )
 SCENARIOS = (VALID_FIXED_PROTOCOL, *NEGATIVE_SCENARIOS)
 
-STARTUP_FACT_CONTRACT_ID = "flowpilot.output_contract.startup_fact_report.v1"
 PM_CONTROL_BLOCKER_CONTRACT_ID = "flowpilot.output_contract.pm_control_blocker_repair_decision.v1"
 PM_RESUME_DECISION_CONTRACT_ID = "flowpilot.output_contract.pm_resume_decision.v1"
-REVIEWER_IDS_PATH = "external_fact_review.reviewer_checked_requirement_ids"
-TOP_LEVEL_REVIEWER_IDS_PATH = "reviewer_checked_requirement_ids"
+STARTUP_MECHANICAL_REQUIRED_PATH = "startup_intake_receipt_envelope_hash_current"
+UNSUPPORTED_LEGACY_STARTUP_GATE_FIELD = "unsupported_legacy_startup_gate_ids"
 PM_CONTROL_BLOCKER_EVENT = "pm_records_control_blocker_repair_decision"
 PM_STARTUP_REPAIR_EVENT = "pm_requests_startup_repair"
 MATERIAL_DISPATCH_BLOCK_EVENT = "router_direct_material_scan_dispatch_recheck_blocked"
@@ -178,7 +177,7 @@ class State:
 
     pm_control_blocker_allowed_events: frozenset[str] = field(default_factory=frozenset)
     pm_control_blocker_card_events: frozenset[str] = field(default_factory=frozenset)
-    pm_startup_repair_requires_activation_card: bool = True
+    pm_startup_repair_event_absent: bool = True
     control_blocker_action_delivers_review_repair_card: bool = False
 
     pm_control_blocker_contract_fields: frozenset[str] = field(default_factory=frozenset)
@@ -189,14 +188,14 @@ class State:
     pm_resume_card_fields: frozenset[str] = field(default_factory=frozenset)
     pm_resume_action_contract_fields: frozenset[str] = field(default_factory=frozenset)
 
-    router_rewrites_startup_fact_canonical: bool = True
-    startup_role_may_submit_to_canonical_path: bool = True
-    router_blocks_startup_fact_canonical_alias: bool = False
+    router_writes_startup_mechanical_audit: bool = True
+    startup_role_may_alias_runtime_audit_path: bool = True
+    router_forbids_runtime_audit_alias: bool = False
 
     display_requested_cockpit: bool = False
     display_has_host_receipt: bool = False
-    display_has_explicit_fallback: bool = False
-    display_status_available_before_startup_fact_review: bool = True
+    display_has_manual_receipt: bool = False
+    display_status_available_before_pm_startup_intake: bool = True
 
     startup_repair_request_repeatable_for_new_blocking_report: bool = True
     startup_repair_request_tracks_cycle_identity: bool = True
@@ -292,17 +291,18 @@ def initial_state() -> State:
 def _valid_state() -> State:
     startup_paths = frozenset(
         {
-            "reviewed_by_role",
-            "passed",
-            "external_fact_review",
-            "external_fact_review.reviewed_by_role",
-            "external_fact_review.direct_evidence_paths_checked",
-            "external_fact_review.self_attested_ai_claims_accepted_as_proof",
-            REVIEWER_IDS_PATH,
-            "findings",
-            "blockers",
-            "residual_risks",
-            "contract_self_check",
+            "controller_boundary_confirmed",
+            "startup_intake_record_current",
+            STARTUP_MECHANICAL_REQUIRED_PATH,
+            "runtime_uses_startup_intake_record_as_sealed_input",
+            "startup_answers_complete",
+            "startup_answer_provenance_current",
+            "startup_answers_use_current_fields_only",
+            "background_collaboration_authorized",
+            "current_pointer_matches_run",
+            "index_points_to_run",
+            "prior_state_quarantined",
+            "router_owned_check_proof_path",
         }
     )
     return State(
@@ -310,9 +310,9 @@ def _valid_state() -> State:
         scenario=VALID_FIXED_PROTOCOL,
         startup_contract_paths=startup_paths,
         startup_card_example_paths=startup_paths,
-        startup_card_prose_paths=frozenset({REVIEWER_IDS_PATH}),
-        startup_router_validator_paths=frozenset({REVIEWER_IDS_PATH}),
-        startup_router_canonical_paths=frozenset({REVIEWER_IDS_PATH}),
+        startup_card_prose_paths=frozenset({STARTUP_MECHANICAL_REQUIRED_PATH}),
+        startup_router_validator_paths=frozenset({STARTUP_MECHANICAL_REQUIRED_PATH}),
+        startup_router_canonical_paths=frozenset({STARTUP_MECHANICAL_REQUIRED_PATH}),
         pm_control_blocker_allowed_events=frozenset({PM_CONTROL_BLOCKER_EVENT}),
         pm_control_blocker_card_events=frozenset({PM_CONTROL_BLOCKER_EVENT}),
         pm_control_blocker_contract_fields=PM_CONTROL_BLOCKER_REQUIRED_FIELDS,
@@ -322,12 +322,12 @@ def _valid_state() -> State:
         pm_resume_router_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
         pm_resume_card_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
         pm_resume_action_contract_fields=PM_RESUME_DECISION_REQUIRED_FIELDS,
-        router_rewrites_startup_fact_canonical=True,
-        startup_role_may_submit_to_canonical_path=False,
-        router_blocks_startup_fact_canonical_alias=True,
+        router_writes_startup_mechanical_audit=True,
+        startup_role_may_alias_runtime_audit_path=False,
+        router_forbids_runtime_audit_alias=True,
         display_requested_cockpit=True,
         display_has_host_receipt=True,
-        display_has_explicit_fallback=False,
+        display_has_manual_receipt=False,
         role_output_contract_path_hash_pairs=ROLE_OUTPUT_REQUIRED_PAIRS,
         role_output_router_path_hash_pairs=ROLE_OUTPUT_REQUIRED_PAIRS,
         role_output_card_path_hash_pairs=ROLE_OUTPUT_REQUIRED_PAIRS,
@@ -359,13 +359,13 @@ def _valid_state() -> State:
 def _scenario_state(scenario: str) -> State:
     state = _valid_state()
     state = replace(state, scenario=scenario)
-    if scenario == STARTUP_FACT_JSONPATH_MISMATCH:
+    if scenario == STARTUP_MECHANICAL_AUDIT_FIELD_MISMATCH:
         return replace(
             state,
-            startup_contract_paths=(state.startup_contract_paths - frozenset({REVIEWER_IDS_PATH}))
-            | frozenset({TOP_LEVEL_REVIEWER_IDS_PATH}),
-            startup_card_example_paths=(state.startup_card_example_paths - frozenset({REVIEWER_IDS_PATH}))
-            | frozenset({TOP_LEVEL_REVIEWER_IDS_PATH}),
+            startup_contract_paths=(state.startup_contract_paths - frozenset({STARTUP_MECHANICAL_REQUIRED_PATH}))
+            | frozenset({UNSUPPORTED_LEGACY_STARTUP_GATE_FIELD}),
+            startup_card_example_paths=(state.startup_card_example_paths - frozenset({STARTUP_MECHANICAL_REQUIRED_PATH}))
+            | frozenset({UNSUPPORTED_LEGACY_STARTUP_GATE_FIELD}),
         )
     if scenario == CONTROL_BLOCKER_AMBIGUOUS_EVENT:
         return replace(
@@ -389,28 +389,28 @@ def _scenario_state(scenario: str) -> State:
             pm_resume_card_fields=weak_fields,
             pm_resume_action_contract_fields=weak_fields,
         )
-    if scenario == STARTUP_FACT_HASH_ALIAS:
+    if scenario == STARTUP_MECHANICAL_AUDIT_HASH_ALIAS:
         return replace(
             state,
-            startup_role_may_submit_to_canonical_path=True,
-            router_blocks_startup_fact_canonical_alias=False,
+            startup_role_may_alias_runtime_audit_path=True,
+            router_forbids_runtime_audit_alias=False,
         )
     if scenario == COCKPIT_MISSING_HOST_RECEIPT:
         return replace(
             state,
             display_requested_cockpit=True,
             display_has_host_receipt=False,
-            display_has_explicit_fallback=False,
+            display_has_manual_receipt=False,
         )
-    if scenario == DISPLAY_FALLBACK_AFTER_PM_ACTIVATION:
+    if scenario == DISPLAY_MANUAL_RECEIPT_AFTER_PM_STARTUP_INTAKE:
         return replace(
             state,
             display_requested_cockpit=True,
             display_has_host_receipt=False,
-            display_has_explicit_fallback=True,
-            display_status_available_before_startup_fact_review=False,
+            display_has_manual_receipt=True,
+            display_status_available_before_pm_startup_intake=False,
         )
-    if scenario == STARTUP_REPAIR_DEDUPES_NEW_REPORT:
+    if scenario == STARTUP_REPAIR_DEDUPES_CURRENT_BLOCKER:
         return replace(
             state,
             startup_repair_request_repeatable_for_new_blocking_report=False,
@@ -487,18 +487,18 @@ def _scenario_state(scenario: str) -> State:
 def _jsonpath_failures(state: State) -> list[str]:
     failures: list[str] = []
     router_paths = state.startup_router_validator_paths | state.startup_router_canonical_paths
-    if REVIEWER_IDS_PATH not in router_paths:
-        failures.append("startup fact router validator does not require nested reviewer_checked_requirement_ids")
+    if STARTUP_MECHANICAL_REQUIRED_PATH not in router_paths:
+        failures.append("startup mechanical audit router validator does not require startup_intake_receipt_envelope_hash_current")
     sources = {
-        "startup fact output contract": state.startup_contract_paths,
-        "startup fact card example": state.startup_card_example_paths,
-        "startup fact card prose": state.startup_card_prose_paths,
+        "startup mechanical audit source contract": state.startup_contract_paths,
+        "PM startup intake card example": state.startup_card_example_paths,
+        "startup mechanical audit card prose": state.startup_card_prose_paths,
     }
     for name, paths in sources.items():
-        if REVIEWER_IDS_PATH not in paths:
-            failures.append(f"{name} does not expose router-required {REVIEWER_IDS_PATH}")
-        if TOP_LEVEL_REVIEWER_IDS_PATH in paths and REVIEWER_IDS_PATH not in paths:
-            failures.append(f"{name} exposes top-level reviewer_checked_requirement_ids instead of nested path")
+        if STARTUP_MECHANICAL_REQUIRED_PATH not in paths:
+            failures.append(f"{name} does not expose router-required {STARTUP_MECHANICAL_REQUIRED_PATH}")
+        if UNSUPPORTED_LEGACY_STARTUP_GATE_FIELD in paths:
+            failures.append(f"{name} still exposes obsolete reviewer startup-fact ids")
     return failures
 
 
@@ -511,11 +511,10 @@ def _control_blocker_event_failures(state: State) -> list[str]:
         and not state.control_blocker_action_delivers_review_repair_card
     ):
         failures.append("PM control-blocker guidance does not name the legal repair-decision event")
-    if (
-        PM_STARTUP_REPAIR_EVENT in state.pm_control_blocker_allowed_events
-        and state.pm_startup_repair_requires_activation_card
-    ):
-        failures.append("PM control-blocker lane allows startup repair event whose startup activation card precondition may be unsatisfied")
+    if PM_STARTUP_REPAIR_EVENT in state.pm_control_blocker_allowed_events:
+        failures.append("PM control-blocker lane allows obsolete startup repair event")
+    if not state.pm_startup_repair_event_absent:
+        failures.append("obsolete startup repair event is still registered")
     return failures
 
 
@@ -552,12 +551,12 @@ def _pm_resume_decision_contract_failures(state: State) -> list[str]:
 
 def _hash_lifecycle_failures(state: State) -> list[str]:
     if (
-        state.router_rewrites_startup_fact_canonical
-        and state.startup_role_may_submit_to_canonical_path
-        and not state.router_blocks_startup_fact_canonical_alias
+        state.router_writes_startup_mechanical_audit
+        and state.startup_role_may_alias_runtime_audit_path
+        and not state.router_forbids_runtime_audit_alias
     ):
         return [
-            "startup fact role submission can alias router canonical report path before router rewrites the canonical file"
+            "role guidance can alias the router-owned startup mechanical audit path"
         ]
     return []
 
@@ -565,24 +564,24 @@ def _hash_lifecycle_failures(state: State) -> list[str]:
 def _display_receipt_failures(state: State) -> list[str]:
     failures: list[str] = []
     if state.display_requested_cockpit and not (
-        state.display_has_host_receipt or state.display_has_explicit_fallback
+        state.display_has_host_receipt or state.display_has_manual_receipt
     ):
-        failures.append("cockpit requested without host receipt or explicit fallback receipt")
+        failures.append("cockpit requested without host receipt or manual display receipt")
     if (
         state.display_requested_cockpit
-        and state.display_has_explicit_fallback
-        and not state.display_status_available_before_startup_fact_review
+        and state.display_has_manual_receipt
+        and not state.display_status_available_before_pm_startup_intake
     ):
-        failures.append("display fallback receipt is unavailable before startup reviewer fact review")
+        failures.append("manual display receipt is unavailable before PM startup intake")
     return failures
 
 
 def _startup_repair_cycle_failures(state: State) -> list[str]:
     failures: list[str] = []
     if not state.startup_repair_request_repeatable_for_new_blocking_report:
-        failures.append("startup repair event is deduped by a one-shot flag instead of current report and decision identity")
+        failures.append("startup repair event is deduped by a one-shot flag instead of current blocker and decision identity")
     if not state.startup_repair_request_tracks_cycle_identity:
-        failures.append("startup repair request does not record repair cycle identity and current blocking report hash")
+        failures.append("startup repair request does not record repair cycle identity and current blocker hash")
     if not state.startup_repair_exact_duplicate_rejected:
         failures.append("startup repair exact duplicate replay is not rejected or ignored distinctly from a new repair cycle")
     return failures
@@ -1171,13 +1170,14 @@ def _first_json_block_paths(text: str) -> frozenset[str]:
 
 
 def _startup_card_prose_paths(text: str) -> frozenset[str]:
-    marker = "Your report body must include `external_fact_review` with:"
-    if marker not in text:
-        return frozenset()
-    section = text.split(marker, 1)[1].split("## Report Contract", 1)[0]
+    lower = text.lower()
     paths: set[str] = set()
-    if "reviewer_checked_requirement_ids" in section:
-        paths.add(REVIEWER_IDS_PATH)
+    if (
+        ("startup mechanical audit" in lower or "mechanical startup audit" in lower)
+        and "startup_intake/startup_intake_record.json" in lower
+        and "path/hash" in lower
+    ):
+        paths.add(STARTUP_MECHANICAL_REQUIRED_PATH)
     return frozenset(paths)
 
 
@@ -1193,17 +1193,34 @@ def _router_source_bundle(project_root: Path) -> str:
 
 
 def _startup_router_validator_paths(router_source: str) -> frozenset[str]:
-    segment = _function_segment(router_source, "_validate_startup_external_fact_review")
-    paths = {"external_fact_review"}
-    for field_name in re.findall(r"""review\.get\(['"]([^'"]+)['"]\)""", segment):
-        paths.add(f"external_fact_review.{field_name}")
+    segment = _function_segment(router_source, "_startup_mechanical_checks")
+    paths: set[str] = set()
+    for field_name in (
+        "controller_boundary_confirmed",
+        "startup_intake_record_current",
+        STARTUP_MECHANICAL_REQUIRED_PATH,
+        "runtime_uses_startup_intake_record_as_sealed_input",
+        "startup_answers_complete",
+        "startup_answer_provenance_current",
+        "startup_answers_use_current_fields_only",
+        "background_collaboration_authorized",
+        "current_pointer_matches_run",
+        "index_points_to_run",
+        "prior_state_quarantined",
+    ):
+        if field_name in segment:
+            paths.add(field_name)
     return frozenset(paths)
 
 
 def _startup_router_canonical_paths(router_source: str) -> frozenset[str]:
-    segment = _function_segment(router_source, "_validate_startup_external_fact_review")
-    if f'"{TOP_LEVEL_REVIEWER_IDS_PATH}"' in segment:
-        return frozenset({REVIEWER_IDS_PATH})
+    context_segment = _function_segment(router_source, "_startup_intake_record_context")
+    audit_segment = _function_segment(router_source, "_startup_mechanical_audit_action_extra")
+    if (
+        "receipt_envelope_body_hash_current" in context_segment
+        and "startup_mechanical_audit_hash" in audit_segment
+    ):
+        return frozenset({STARTUP_MECHANICAL_REQUIRED_PATH})
     return frozenset()
 
 
@@ -1271,13 +1288,13 @@ def _pm_control_blocker_card_events(*texts: str) -> frozenset[str]:
 
 def _pm_control_blocker_allowed_events(router: Any) -> frozenset[str]:
     policy_row = router._control_blocker_policy_row(  # noqa: SLF001 - source conformance probe
-        "reviewer_reports_startup_facts",
+        "current control blocker requires PM repair decision",
         "pm_repair_decision_required",
     )
     policy = router._control_blocker_policy(  # noqa: SLF001 - source conformance probe
         "pm_repair_decision_required",
         responsible_role="project_manager",
-        event="reviewer_reports_startup_facts",
+        event=PM_CONTROL_BLOCKER_EVENT,
         policy_row=policy_row,
         target_role="project_manager",
     )
@@ -1287,21 +1304,29 @@ def _pm_control_blocker_allowed_events(router: Any) -> frozenset[str]:
     return frozenset(str(item) for item in raw)
 
 
-def _router_rewrites_startup_fact_canonical(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_startup_fact_report")
-    return 'run_root / "startup" / "startup_fact_report.json"' in segment and "write_json(" in segment
+def _router_writes_startup_mechanical_audit(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_write_startup_mechanical_audit")
+    return (
+        ('run_root / "startup" / "startup_mechanical_audit.json"' in segment
+        or "run_root / 'startup' / 'startup_mechanical_audit.json'" in segment)
+        and "write_json(" in segment
+    )
 
 
-def _router_blocks_startup_fact_canonical_alias(router_source: str) -> bool:
-    segment = _function_segment(router_source, "_write_startup_fact_report")
-    return "canonical startup_fact_report.json" in segment and "report_path" in segment
+def _router_forbids_runtime_audit_alias(router_source: str) -> bool:
+    segment = _function_segment(router_source, "_write_startup_mechanical_audit")
+    return (
+        "'check_owner': 'flowpilot_router'" in segment
+        and "router_owned_check_proof_path" in segment
+        and "self_attested_ai_claims_accepted_as_proof" in segment
+    )
 
 
-def _display_status_available_before_startup_fact_review(router_source: str) -> bool:
+def _display_status_available_before_pm_startup_intake(router_source: str) -> bool:
     segment = _function_segment(router_source, "_next_startup_display_action")
     if not segment:
         return False
-    if "startup_activation_approved" in segment:
+    if "startup_intake_approved" in segment:
         return False
     for provider_segment in (
         _function_segment(router_source, "compute_controller_action"),
@@ -1315,16 +1340,20 @@ def _display_status_available_before_startup_fact_review(router_source: str) -> 
 
 
 def _startup_repair_request_repeatable_for_new_blocking_report(router_source: str) -> bool:
+    if PM_STARTUP_REPAIR_EVENT not in router_source:
+        return True
     segment = _function_segment(router_source, "_external_event_flag_replay_requires_new_processing")
     return (
         ('event == "pm_requests_startup_repair"' in segment or "event == 'pm_requests_startup_repair'" in segment)
         and ("run_state[\"flags\"].get(flag)" in segment or "run_state['flags'].get(flag)" in segment)
-        and "startup_fact_reported" in segment
-        and "pm_startup_activation_card_delivered" in segment
+        and "startup_mechanical_audited" in segment
+        and "pm_startup_intake_card_delivered" in segment
     )
 
 
 def _startup_repair_request_tracks_cycle_identity(router_source: str) -> bool:
+    if PM_STARTUP_REPAIR_EVENT not in router_source:
+        return True
     segment = _function_segment(router_source, "_write_startup_repair_request")
     return (
         "startup_repair_cycle" in segment
@@ -1335,6 +1364,8 @@ def _startup_repair_request_tracks_cycle_identity(router_source: str) -> bool:
 
 
 def _startup_repair_exact_duplicate_rejected(router_source: str) -> bool:
+    if PM_STARTUP_REPAIR_EVENT not in router_source:
+        return True
     segment = _function_segment(router_source, "_write_startup_repair_request")
     return (
         "last_decision_hash" in segment
@@ -1343,15 +1374,15 @@ def _startup_repair_exact_duplicate_rejected(router_source: str) -> bool:
     )
 
 
-def _startup_role_may_submit_to_canonical_path(card_text: str) -> bool:
+def _startup_role_may_alias_runtime_audit_path(card_text: str) -> bool:
     lower = card_text.lower()
-    asks_for_startup_fact_report_file = "startup fact report file" in lower
+    asks_for_startup_mechanical_audit_file = "write startup mechanical audit" in lower
     separates_submission = (
-        "startup fact report submission" in lower
-        or "raw submission" in lower
-        or "must not be the router canonical" in lower
+        "router writes the startup mechanical audit" in lower
+        or "runtime writes the mechanical startup audit" in lower
+        or "do not invent a startup repair gate" in lower
     )
-    return asks_for_startup_fact_report_file and not separates_submission
+    return asks_for_startup_mechanical_audit_file and not separates_submission
 
 
 def _router_process_contract_bindings(router_source: str) -> frozenset[str]:
@@ -1410,12 +1441,11 @@ def collect_source_state(project_root: Path) -> State:
     router = _load_router(project_root)
     router_source = _router_source_bundle(project_root)
     runtime_root = project_root / "skills" / "flowpilot" / "assets" / "runtime_kit"
-    startup_card_text = (runtime_root / "cards" / "reviewer" / "startup_fact_check.md").read_text(encoding="utf-8")
     pm_core_text = (runtime_root / "cards" / "roles" / "project_manager.md").read_text(encoding="utf-8")
     reviewer_core_text = (runtime_root / "cards" / "roles" / "human_like_reviewer.md").read_text(encoding="utf-8")
     worker_core_text = (runtime_root / "cards" / "roles" / "worker.md").read_text(encoding="utf-8")
-    worker_core_text = (runtime_root / "cards" / "roles" / "worker.md").read_text(encoding="utf-8")
-    pm_startup_text = (runtime_root / "cards" / "phases" / "pm_startup_activation.md").read_text(encoding="utf-8")
+    pm_startup_text = (runtime_root / "cards" / "phases" / "pm_startup_intake.md").read_text(encoding="utf-8")
+    startup_card_text = pm_startup_text
     pm_repair_text = (runtime_root / "cards" / "phases" / "pm_review_repair.md").read_text(encoding="utf-8")
     pm_resume_text = (runtime_root / "cards" / "phases" / "pm_resume_decision.md").read_text(encoding="utf-8")
     pm_material_scan_text = (runtime_root / "cards" / "phases" / "pm_material_scan.md").read_text(encoding="utf-8")
@@ -1428,10 +1458,8 @@ def collect_source_state(project_root: Path) -> State:
         pm_repair_text,
     )
 
-    pm_startup_repair_requires_activation = (
-        router.EXTERNAL_EVENTS.get(PM_STARTUP_REPAIR_EVENT, {}).get("requires_flag")
-        == "pm_startup_activation_card_delivered"
-    )
+    startup_source_paths = _startup_router_validator_paths(router_source) | _startup_router_canonical_paths(router_source)
+    pm_startup_repair_event_absent = PM_STARTUP_REPAIR_EVENT not in getattr(router, "EXTERNAL_EVENTS", {})
     declared_model_miss_flags = _declared_model_miss_review_block_flags(router, router_source)
     model_miss_card_flags, model_miss_cards_aligned = _model_miss_review_block_card_flag_sets(router)
     gate_outcome_block_flags = _gate_outcome_block_lane_flags(router)
@@ -1439,8 +1467,8 @@ def collect_source_state(project_root: Path) -> State:
     return State(
         status="accepted",
         scenario="current_source",
-        startup_contract_paths=_contract_fields(project_root, STARTUP_FACT_CONTRACT_ID),
-        startup_card_example_paths=_first_json_block_paths(startup_card_text),
+        startup_contract_paths=startup_source_paths,
+        startup_card_example_paths=_startup_card_prose_paths(startup_card_text),
         startup_card_prose_paths=_startup_card_prose_paths(startup_card_text),
         startup_router_validator_paths=_startup_router_validator_paths(router_source),
         startup_router_canonical_paths=_startup_router_canonical_paths(router_source),
@@ -1450,7 +1478,7 @@ def collect_source_state(project_root: Path) -> State:
             pm_startup_text,
             pm_repair_text,
         ),
-        pm_startup_repair_requires_activation_card=pm_startup_repair_requires_activation,
+        pm_startup_repair_event_absent=pm_startup_repair_event_absent,
         control_blocker_action_delivers_review_repair_card="card_id=\"pm.review_repair\"" in router_source
         or '"card_id": "pm.review_repair"' in router_source,
         pm_control_blocker_contract_fields=_contract_fields(project_root, PM_CONTROL_BLOCKER_CONTRACT_ID),
@@ -1460,13 +1488,13 @@ def collect_source_state(project_root: Path) -> State:
         pm_resume_router_fields=_pm_resume_router_fields(router),
         pm_resume_card_fields=_first_json_block_paths(pm_resume_text),
         pm_resume_action_contract_fields=_pm_resume_action_contract_fields(router_source),
-        router_rewrites_startup_fact_canonical=_router_rewrites_startup_fact_canonical(router_source),
-        startup_role_may_submit_to_canonical_path=_startup_role_may_submit_to_canonical_path(startup_card_text),
-        router_blocks_startup_fact_canonical_alias=_router_blocks_startup_fact_canonical_alias(router_source),
+        router_writes_startup_mechanical_audit=_router_writes_startup_mechanical_audit(router_source),
+        startup_role_may_alias_runtime_audit_path=_startup_role_may_alias_runtime_audit_path(startup_card_text),
+        router_forbids_runtime_audit_alias=_router_forbids_runtime_audit_alias(router_source),
         display_requested_cockpit=True,
         display_has_host_receipt=False,
-        display_has_explicit_fallback=True,
-        display_status_available_before_startup_fact_review=_display_status_available_before_startup_fact_review(
+        display_has_manual_receipt=True,
+        display_status_available_before_pm_startup_intake=_display_status_available_before_pm_startup_intake(
             router_source
         ),
         startup_repair_request_repeatable_for_new_blocking_report=_startup_repair_request_repeatable_for_new_blocking_report(

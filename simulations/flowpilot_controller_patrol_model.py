@@ -58,7 +58,7 @@ class State:
     patrol_command_named_in_prompt: bool = False
     patrol_interval_seconds: int = 60
     router_daemon_tick_seconds: int = 1
-    heartbeat_check_seconds: int = 30
+    patrol_check_seconds: int = 30
     patrol_command_started: bool = False
     patrol_timer_elapsed: bool = False
     patrol_result: str = "none"  # none | continue_patrol | new_controller_work | terminal_return
@@ -329,8 +329,8 @@ def invariant_failures(state: State) -> list[str]:
     if state.router_daemon_tick_seconds != 1:
         failures.append("patrol cadence changed the Router daemon tick")
 
-    if state.heartbeat_check_seconds != 30:
-        failures.append("patrol cadence changed daemon heartbeat check window")
+    if state.patrol_check_seconds != 30:
+        failures.append("patrol cadence changed daemon patrol check window")
 
     if state.user_visible_message_emitted and not (
         state.meaningful_user_visible_change
@@ -412,7 +412,7 @@ INVARIANTS = (
     _invariant("quiet_continue_patrol_stays_silent", "quiet continue_patrol emitted a user-visible message"),
     _invariant("quiet_patrol_default_sixty_seconds", "quiet standby patrol default was not sixty seconds"),
     _invariant("patrol_does_not_change_daemon_tick", "patrol cadence changed the Router daemon tick"),
-    _invariant("patrol_does_not_change_heartbeat_window", "patrol cadence changed daemon heartbeat check window"),
+    _invariant("patrol_does_not_change_patrol_window", "patrol cadence changed daemon patrol check window"),
     _invariant("internal_patrol_work_stays_silent", "Controller emitted user-visible message for internal-only patrol work"),
     _invariant("rerun_waits_for_next_output", "Controller reran patrol command without waiting for next output"),
     _invariant("new_work_requires_ready_action", "patrol reported new Controller work when no action was ready"),
@@ -492,7 +492,7 @@ def hazard_states() -> dict[str, State]:
         ),
         "quiet_patrol_still_ten_seconds": replace(base, patrol_interval_seconds=10),
         "patrol_changes_daemon_tick": replace(base, router_daemon_tick_seconds=60),
-        "patrol_changes_heartbeat_window": replace(base, heartbeat_check_seconds=60),
+        "patrol_changes_patrol_window": replace(base, patrol_check_seconds=60),
         "internal_patrol_work_user_message": replace(
             base,
             patrol_result="continue_patrol",
@@ -588,3 +588,4 @@ __all__ = [
     "is_terminal",
     "next_states",
 ]
+

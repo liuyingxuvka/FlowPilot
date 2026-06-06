@@ -33,7 +33,7 @@ The ledger stores:
 
 - user goal and acceptance contract;
 - route versions and active route pointer;
-- role-binding leases and heartbeats;
+- role-binding leases and current liveness receipts;
 - task packet envelopes and bodies;
 - result packet envelopes and bodies;
 - review reports;

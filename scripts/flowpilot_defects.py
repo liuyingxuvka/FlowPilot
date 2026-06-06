@@ -84,6 +84,9 @@ def split_csv(value: str) -> list[str]:
 
 def context(root: Path) -> dict[str, Any]:
     paths = resolve_flowpilot_paths(root)
+    if paths.get("path_status") != "ok":
+        findings = "; ".join(str(item) for item in paths.get("path_findings", []))
+        raise ValueError(f"FlowPilot current run path is blocked: {findings or 'unknown path finding'}")
     state = read_json_if_exists(Path(paths["state_path"]))
     frontier = read_json_if_exists(Path(paths["frontier_path"]))
     run_root = Path(paths["run_root"])
@@ -452,10 +455,9 @@ def build_pause_snapshot(args: argparse.Namespace) -> dict[str, Any]:
             "fixture_only_evidence_to_disclose": [item.get("evidence_id") for item in fixture_only],
         },
         "lifecycle_summary": {
-            "heartbeat_automation_ids": split_csv(args.heartbeat_ids),
             "codex_automation_status_checked": args.automation_checked,
-            "active_runtime_role_assistances": split_csv(args.active_agents),
-            "closed_or_paused_runtime_role_assistances": split_csv(args.closed_agents),
+            "active_background_agents": split_csv(args.active_background_agents),
+            "closed_or_paused_background_agents": split_csv(args.closed_background_agents),
             "manual_resume_notice_required": args.manual_resume_notice_required,
         },
         "cleanup_boundary": {
@@ -548,10 +550,9 @@ def build_parser() -> argparse.ArgumentParser:
     pause = subparsers.add_parser("pause-snapshot", help="Write a controlled pause snapshot.")
     pause.add_argument("--reason", default="manual_pause")
     pause.add_argument("--next-allowed-action", default="resume_current_gate")
-    pause.add_argument("--heartbeat-ids", default="")
     pause.add_argument("--automation-checked", action="store_true")
-    pause.add_argument("--active-agents", default="")
-    pause.add_argument("--closed-agents", default="")
+    pause.add_argument("--active-background-agents", default="")
+    pause.add_argument("--closed-background-agents", default="")
     pause.add_argument("--manual-resume-notice-required", action="store_true")
     pause.add_argument("--safe-to-delete", default="")
     pause.add_argument("--preserve", default="")
@@ -588,3 +589,4 @@ def main(argv: list[str] | None = None) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

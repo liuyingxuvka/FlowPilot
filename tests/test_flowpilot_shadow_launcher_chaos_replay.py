@@ -99,7 +99,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
     def test_crash_recovery_bundle_handles_dead_daemon_duplicate_resume_and_progress_only_proof(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         lock_path = run_root / "runtime" / "router_daemon.lock"
         lock = read_json(lock_path)
@@ -107,9 +107,9 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         lock["owner"] = {"pid": 999999999, "process_name": "missing-shadow-daemon"}
         router.write_json(lock_path, lock)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         first_action = router.next_action(root)
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         second_action = router.next_action(root)
         self.assertEqual(first_action["action_type"], "load_resume_state")
         self.assertEqual(second_action["action_type"], "load_resume_state")
@@ -210,28 +210,6 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(copied_router.exists())
         self.assertTrue((copied_router.parent / "flowpilot_router_cli.py").exists())
 
-    def test_malformed_fake_ai_package_generator_rejects_finite_bad_classes(self) -> None:
-        bad_classes = {
-            "missing_runtime_envelope": self._reject_missing_runtime_envelope,
-            "wrong_event_schema": self._reject_wrong_event_schema,
-            "controller_visible_body_leak": self._reject_controller_visible_body_leak,
-            "wrong_author_role": self._reject_wrong_author_role,
-            "stale_hash_or_path": self._reject_stale_hash_or_path,
-        }
-
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-
-        self.assertEqual(set(bad_classes), set(self.required_malformed_package_classes()))
-        for name, reject_case in bad_classes.items():
-            with self.subTest(name=name):
-                reject_case(root)
-                state = read_json(router.run_state_path(run_root))
-                startup_fact_flag = router.EXTERNAL_EVENTS["reviewer_reports_startup_facts"]["flag"]
-                self.assertFalse(state["flags"][startup_fact_flag])
-                self.assertFalse(state["flags"]["startup_activation_approved"])
-
     def required_malformed_package_classes(self) -> tuple[str, ...]:
         return (
             "missing_runtime_envelope",
@@ -250,7 +228,7 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
             )
 
     def _reject_wrong_event_schema(self, root: Path) -> None:
-        envelope, envelope_path, _ = self.startup_fact_runtime_envelope(root, "shadow_bad/wrong_schema")
+        envelope, envelope_path, _ = self.legacy_startup_fact_runtime_envelope(root, "shadow_bad/wrong_schema")
         event_path = root / envelope_path
         envelope["schema_version"] = "flowpilot.untrusted_event_envelope.v0"
         event_path.write_text(json.dumps(envelope, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -281,11 +259,11 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
                 role="project_manager",
                 agent_id="agent-pm-wrong-startup-fact-author",
                 event_name="reviewer_reports_startup_facts",
-                body=self.startup_fact_report_body(root),
+                body=self.legacy_startup_fact_report_body(root),
             )
 
     def _reject_stale_hash_or_path(self, root: Path) -> None:
-        _, envelope_path, _ = self.startup_fact_runtime_envelope(root, "shadow_bad/stale_hash")
+        _, envelope_path, _ = self.legacy_startup_fact_runtime_envelope(root, "shadow_bad/stale_hash")
         with self.assertRaises(router.RouterError):
             router.record_external_event(
                 root,
@@ -298,14 +276,14 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
         for cycle in range(2):
             root = self.make_project()
             run_root = self.boot_to_controller(root)
-            self.complete_startup_activation(root)
+            self.complete_startup_runtime_entry(root)
 
             lock_path = run_root / "runtime" / "router_daemon.lock"
             lock = read_json(lock_path)
             lock["last_tick_at"] = "2000-01-01T00:00:00Z"
             lock["owner"] = {"pid": 999999999, "process_name": f"missing-shadow-soak-{cycle}"}
             router.write_json(lock_path, lock)
-            router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+            router.record_external_event(root, "manual_resume_requested")
             self.assertEqual(router.next_action(root)["action_type"], "load_resume_state")
             router.apply_action(root, "load_resume_state")
             stopped = router.stop_router_daemon(root, reason=f"shadow_soak_cleanup_{cycle}")
@@ -331,3 +309,5 @@ if __name__ == "__main__":
     import unittest
 
     unittest.main()
+
+

@@ -46,6 +46,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -111,18 +113,6 @@ def _role_output_envelope_record_for_mutable_artifact(
     )
     return {"_role_output_envelope": snapshot_envelope}
 
-def _try_reconcile_startup_fact_role_output_ledger(
-    project_root: Path,
-    run_root: Path,
-    run_state: dict[str, Any],
-) -> dict[str, Any]:
-    return role_output_bridge_events._try_reconcile_startup_fact_role_output_ledger(
-        _bound_router(),
-        project_root,
-        run_root,
-        run_state,
-    )
-
 def _role_output_body_payload_from_record(
     project_root: Path,
     record: dict[str, Any],
@@ -173,13 +163,6 @@ def _try_reconcile_direct_role_output_event_ledger(
 
 def _role_output_ledger_outputs(run_root: Path) -> list[dict[str, Any]]:
     return role_output_bridge_events._role_output_ledger_outputs(_bound_router(), run_root)
-
-def _startup_fact_canonical_report_is_valid(run_root: Path, run_state: dict[str, Any]) -> bool:
-    return role_output_bridge_events._startup_fact_canonical_report_is_valid(
-        _bound_router(),
-        run_root,
-        run_state,
-    )
 
 def _repair_role_output_envelope_hashes(project_root: Path, run_root: Path) -> int:
     repaired = 0
@@ -286,7 +269,7 @@ def _sync_current_and_index_status(project_root: Path, run_state: dict[str, Any]
     now = utc_now()
     current_path = project_root / ".flowpilot" / "current.json"
     current = read_json_if_exists(current_path) or {}
-    if (current.get("run_id") or current.get("current_run_id")) == run_state.get("run_id"):
+    if current.get("run_id") == run_state.get("run_id"):
         current["status"] = run_state.get("status") or current.get("status")
         current["updated_at"] = now
         write_json(current_path, current)

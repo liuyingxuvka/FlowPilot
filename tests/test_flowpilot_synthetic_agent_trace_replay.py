@@ -17,6 +17,10 @@ import role_output_runtime  # noqa: E402
 import flowpilot_router as router  # noqa: E402
 from scripts.test_tier import background as test_tier_background  # noqa: E402
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase  # noqa: E402
+from tests.flowpilot_route_mutation_contracts import (  # noqa: E402
+    ROUTE_MUTATION_CHILD_CONTRACT_SCHEMA,
+    RouteMutationContractHarness,
+)
 from tests.synthetic_agent_trace_replay import (  # noqa: E402
     SyntheticTracePackage,
     read_json,
@@ -423,7 +427,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             state,
             source="synthetic_trace",
             error_message="envelope payload leaked role body fields to Controller: passed",
-            event="host_records_heartbeat_binding",
+            event="host_records_manual_resume_binding",
             payload={"from_role": "host", "passed": True},
         )
         self.assertEqual(blocker["policy_row_id"], "fatal_protocol_violation")
@@ -432,10 +436,10 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
         body = self.pm_control_blocker_decision_body(
             blocker["blocker_id"],
-            rerun_target="host_records_heartbeat_binding",
+            rerun_target="host_records_manual_resume_binding",
         )
         body["recovery_option"] = "allowed_waiver"
-        body["return_gate"] = "host_records_heartbeat_binding"
+        body["return_gate"] = "host_records_manual_resume_binding"
         with self.assertRaisesRegex(router.RouterError, "not allowed by blocker policy"):
             router.record_external_event(
                 root,
@@ -446,7 +450,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
     def test_resume_active_blocker_and_ambiguous_state_preempt_fake_package(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         state = read_json(router.run_state_path(run_root))
         blocker = router._write_control_blocker(  # type: ignore[attr-defined]
             root,
@@ -458,7 +462,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             payload={"path": self.rel(root, router.run_state_path(run_root)), "role": "controller"},
         )
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(root, "manual_resume_requested")
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "load_resume_state")
         router.apply_action(root, "load_resume_state")
@@ -473,7 +477,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
         ambiguous_root = self.make_project()
         ambiguous_run_root = self.boot_to_controller(ambiguous_root)
         (ambiguous_run_root / "role_binding_memory" / "worker.json").unlink()
-        router.record_external_event(ambiguous_root, "heartbeat_or_manual_resume_requested")
+        router.record_external_event(ambiguous_root, "manual_resume_requested")
         action = self.next_after_display_sync(ambiguous_root)
         self.assertEqual(action["action_type"], "load_resume_state")
         router.apply_action(ambiguous_root, "load_resume_state")
@@ -510,62 +514,15 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
             )
 
     def test_route_mutation_stale_sibling_proof_fake_package(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.complete_pre_route_gates(root)
-        self.deliver_expected_card(root, "pm.prior_path_context")
-        self.deliver_expected_card(root, "pm.route_skeleton")
-        router.record_external_event(
+        contract_harness = RouteMutationContractHarness(methodName="runTest")
+        root = contract_harness.make_project()
+        run_root, contract = contract_harness.seed_route_mutation_child_contract(
             root,
-            "pm_writes_route_draft",
-            {
-                "route": {
-                    "schema_version": "flowpilot.route.v1",
-                    "route_id": "route-001",
-                    "route_version": 1,
-                    "active_node_id": "node-001",
-                    "nodes": [
-                        {"node_id": "route-root", "node_kind": "parent", "title": "Route root", "child_node_ids": ["node-001", "node-002"]},
-                        {"node_id": "node-001", "node_kind": "leaf", "parent_node_id": "route-root", "title": "First branch", "leaf_readiness_gate": {"status": "pass"}},
-                        {"node_id": "node-002", "node_kind": "leaf", "parent_node_id": "route-root", "title": "Sibling branch", "leaf_readiness_gate": {"status": "pass"}},
-                    ],
-                },
-                **self.prior_path_context_review(root, "Synthetic route draft includes sibling branches for replacement policy."),
-            },
-        )
-        self.complete_route_checks(root)
-        router.record_external_event(root, "pm_activates_reviewed_route", {"route_id": "route-001", "active_node_id": "node-001"})
-        self.deliver_current_node_cards(root)
-        packet = packet_runtime.create_packet(
-            root,
+            route_shape="sibling",
             packet_id="synthetic-node-packet-sibling-replacement",
-            from_role="project_manager",
-            to_role="worker",
-            node_id="node-001",
-            body_text="synthetic current node work",
-            metadata={"route_version": 1},
         )
-        packet_path = packet["body_path"].replace("packet_body.md", "packet_envelope.json")
-        router.record_external_event(
-            root,
-            "pm_registers_current_node_packet",
-            {"packet_id": "synthetic-node-packet-sibling-replacement", "packet_envelope_path": packet_path},
-        )
-        self.apply_until_action(root, "relay_current_node_packet")
-        _, result_path = self.submit_current_node_result_via_active_holder(
-            root,
-            packet_id="synthetic-node-packet-sibling-replacement",
-            result_body_text="synthetic reviewable result",
-        )
-        router.record_external_event(
-            root,
-            "worker_current_node_result_returned",
-            {"packet_id": "synthetic-node-packet-sibling-replacement", "result_envelope_path": result_path},
-        )
-        self.absorb_current_node_results_with_pm(root, [result_path])
-        self.deliver_expected_card(root, "reviewer.worker_result_review")
-        router.record_external_event(root, "current_node_reviewer_blocks_result")
-        self.close_model_miss_triage(root, output_name="synthetic/decisions/sibling_branch_replacement_triage")
+        self.assertEqual(contract["schema_version"], ROUTE_MUTATION_CHILD_CONTRACT_SCHEMA)
+        self.assertIn("deliver_current_node_cards", contract["forbidden_parent_helpers"])
 
         with self.assertRaisesRegex(router.RouterError, "affected_sibling_nodes"):
             router.record_external_event(
@@ -673,7 +630,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
     def test_material_repair_generation_blocks_stale_flags_fake_package(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
@@ -770,7 +727,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
     def test_system_story_failed_pm_repair_loop_registers_followup_blocker(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         self.deliver_expected_card(root, "pm.material_scan")
         router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
         state = read_json(router.run_state_path(run_root))
@@ -864,7 +821,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
         self.assertEqual(stopped["run_id"], "run-a")
         current = read_json(root / ".flowpilot" / "current.json")
-        self.assertEqual(current.get("run_id") or current.get("current_run_id"), "run-b")
+        self.assertEqual(current.get("run_id"), "run-b")
         self.assertEqual(read_json(run_a / "runtime" / "router_daemon.lock")["status"], "released")
         self.assertEqual(read_json(run_b / "runtime" / "router_daemon.lock")["status"], "active")
         self.assertFalse(read_json(router.run_state_path(run_a))["daemon_mode_enabled"])
@@ -932,3 +889,4 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for the FlowPilot cross-plane friction model."""
+"""Thin current-contract entrypoint for the FlowPilot cross-plane friction model."""
 
 from __future__ import annotations
 
@@ -20,7 +20,7 @@ from flowpilot_cross_plane_friction_model_state import (
     ACTIVE_STATUSES,
     BODY_PATH_NAMES,
     DONE_ITEM_STATUSES,
-    STANDARD_SIX_ROLES,
+    CURRENT_ROLE_ARCHETYPES,
     TERMINAL_STATUSES,
     Action,
     State,
@@ -66,7 +66,7 @@ __all__ = [
     "ROLE_GATE_EVENT_PREFIXES",
     "ROLE_GATE_NON_PASS_MARKERS",
     "ROLE_GATE_PASS_MARKERS",
-    "STANDARD_SIX_ROLES",
+    "CURRENT_ROLE_ARCHETYPES",
     "STRUCTURED_REPORT_GATES",
     "TERMINAL_STATUSES",
     "Action",
@@ -87,3 +87,4 @@ __all__ = [
     "repair_solution_state",
     "state_from_findings",
 ]
+

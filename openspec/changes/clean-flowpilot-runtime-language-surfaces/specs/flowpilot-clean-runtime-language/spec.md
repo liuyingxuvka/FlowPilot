@@ -41,7 +41,8 @@ role binding or background-sidecar role count.
 #### Scenario: Startup readiness is dynamic
 - **WHEN** startup activation is modeled
 - **THEN** readiness depends on requested role binding policy, required binding
-  coverage, current-run binding evidence, and explicit fallback decisions
+  coverage, current-run binding evidence, and explicit blocked-role recovery
+  decisions
 - **AND** it does not require `REQUIRED_ROLE_BINDING_COUNT = 6` or a role-binding policy as the
   modeled startup authority
 

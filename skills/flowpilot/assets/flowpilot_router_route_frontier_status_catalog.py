@@ -25,9 +25,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -113,8 +118,8 @@ def _active_ui_task_catalog(router: ModuleType, project_root: Path, run_root: Pa
     index = read_json_if_exists(project_root / '.flowpilot' / 'index.json') or {}
     run_id = str(run_state.get('run_id') or '')
     run_root_rel = project_relative(project_root, run_root)
-    current_run_id = str(current.get('current_run_id') or current.get('active_run_id') or '')
-    current_run_root = str(current.get('current_run_root') or current.get('active_run_root') or '')
+    current_run_id = str(current.get('run_id') or '')
+    current_run_root = str(current.get('run_root') or '')
     run_status = str(run_state.get('status') or '')
     current_status = str(current.get('status') or '')
     hidden_statuses = {'completed', 'closed', 'stopped', 'stopped_by_user', 'cancelled_by_user', 'protocol_dead_end', 'abandoned', 'discarded', 'stale'}

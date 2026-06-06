@@ -199,7 +199,7 @@ from flowpilot_router_prompt_delivery import (
     card_checkin_instruction as _card_checkin_instruction,
     controller_break_glass_reminder as _controller_break_glass_reminder,
     controller_table_prompt as _controller_table_prompt,
-    startup_heartbeat_prompt as _startup_heartbeat_prompt,
+    startup_lifecycle_resume_prompt as _startup_lifecycle_resume_prompt,
 )
 from flowpilot_router_role_io_protocol import (
     ROLE_IO_PROTOCOL_INJECTION_RECEIPT_SCHEMA,
@@ -217,7 +217,7 @@ from flowpilot_router_role_io_protocol import (
 )
 from flowpilot_router_startup_daemon import (
     ROUTER_DAEMON_EVENT_LOG_SCHEMA,
-    ROUTER_DAEMON_HEARTBEAT_CHECK_SECONDS,
+    ROUTER_DAEMON_PATROL_CHECK_SECONDS,
     ROUTER_DAEMON_LOCK_SCHEMA,
     ROUTER_DAEMON_LOCK_STALE_SECONDS,
     ROUTER_DAEMON_MAX_QUEUE_ACTIONS_PER_TICK,
@@ -227,7 +227,7 @@ from flowpilot_router_startup_daemon import (
     ROUTER_DAEMON_TICK_SECONDS,
     _lock_age_seconds,
     _process_is_live,
-    _router_daemon_heartbeat_monitor,
+    _router_daemon_patrol_monitor,
     _router_daemon_lock_has_live_owner,
     _router_daemon_lock_is_live,
     _router_daemon_lock_liveness,

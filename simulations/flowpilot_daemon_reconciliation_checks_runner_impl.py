@@ -31,8 +31,8 @@ STARTUP_BLOCKER_RECONCILIATION_RESOLUTIONS = {
 REQUIRED_LABELS = (
     "daemon_tick_starts_durable_reconciliation_barrier",
     "role_output_submitted_while_router_waits",
-    "heartbeat_opens_rehydrate_pending_action",
-    "heartbeat_opens_rehydrate_pending_action_after_role_output",
+    "manual_resume_opens_rehydrate_pending_action",
+    "manual_resume_opens_rehydrate_pending_action_after_role_output",
     "role_output_submitted_while_rehydrate_pending",
     "controller_writes_complete_rehydrate_receipt",
     "controller_writes_incomplete_rehydrate_receipt",

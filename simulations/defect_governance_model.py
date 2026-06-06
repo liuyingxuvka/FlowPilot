@@ -46,7 +46,7 @@ class State:
     controller_protocol_anomaly_observed: bool = False
     skill_observation_reminder_emitted: bool = False
     pause_requested: bool = False
-    heartbeat_reconciled: bool = False
+    lifecycle_reconciled: bool = False
     pause_snapshot_written: bool = False
     terminal_completion_started: bool = False
     terminal_completion_allowed: bool = False
@@ -266,13 +266,13 @@ def next_safe_states(state: State) -> Iterable[Transition]:
     if not state.pause_requested:
         yield Transition("pause_requested", replace(state, pause_requested=True))
         return
-    if state.pause_requested and not state.heartbeat_reconciled:
+    if state.pause_requested and not state.lifecycle_reconciled:
         yield Transition(
-            "heartbeat_lifecycle_reconciled_for_pause",
-            replace(state, heartbeat_reconciled=True),
+            "lifecycle_reconciled_for_pause",
+            replace(state, lifecycle_reconciled=True),
         )
         return
-    if state.heartbeat_reconciled and not state.pause_snapshot_written:
+    if state.lifecycle_reconciled and not state.pause_snapshot_written:
         yield Transition(
             "pause_snapshot_written",
             replace(state, pause_snapshot_written=True),
@@ -344,8 +344,8 @@ def invariant_failures(state: State) -> list[str]:
     if state.controller_protocol_anomaly_observed and not state.skill_observation_reminder_emitted:
         if state.pause_snapshot_written or state.terminal_completion_allowed:
             failures.append("controller protocol anomaly reached pause or completion without skill-observation reminder")
-    if state.pause_requested and state.pause_snapshot_written and not state.heartbeat_reconciled:
-        failures.append("pause snapshot was written before heartbeat lifecycle reconciliation")
+    if state.pause_requested and state.pause_snapshot_written and not state.lifecycle_reconciled:
+        failures.append("pause snapshot was written before lifecycle reconciliation")
     if state.pause_requested and state.terminal_completion_allowed and not state.pause_snapshot_written:
         failures.append("terminal completion or restart path skipped pause snapshot after pause request")
     return failures
@@ -481,7 +481,7 @@ def hazard_states() -> dict[str, State]:
             evidence_ledger_initialized=True,
             skill_improvement_live_report_initialized=True,
             pause_requested=True,
-            heartbeat_reconciled=True,
+            lifecycle_reconciled=True,
             terminal_completion_started=True,
             terminal_completion_allowed=True,
         ),
@@ -494,7 +494,8 @@ def hazard_states() -> dict[str, State]:
             skill_issue_live_report_updated=True,
             controller_protocol_anomaly_observed=True,
             pause_requested=True,
-            heartbeat_reconciled=True,
+            lifecycle_reconciled=True,
             pause_snapshot_written=True,
         ),
     }
+

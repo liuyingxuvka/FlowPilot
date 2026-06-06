@@ -8,7 +8,7 @@ REPAIR_ACTIONS = {
         "fixes": [
             "terminal_authority_mismatch",
             "terminal_control_blocker_not_cleared",
-            "terminal_heartbeat_still_active",
+            "terminal_manual_resume_binding_still_active",
         ],
         "scope": (
             "Terminal closure writer and reconcile_current_run only; no changes "
@@ -108,11 +108,11 @@ REPAIR_ACTIONS = {
         ),
     },
     "runtime_role_readiness_gate": {
-        "title": "Standard role-binding readiness gate",
+        "title": "Runtime-requested role-binding readiness gate",
         "fixes": ["runtime_role_liveness_unproven"],
         "scope": "Startup/resume readiness record or early blocker only.",
         "proof_obligation": (
-            "A role-binding run cannot begin route work until all standard roles are "
+            "A role-binding run cannot begin route work until all runtime-requested roles are "
             "ready or a router-visible blocker stops it."
         ),
     },
@@ -152,3 +152,4 @@ def minimal_repair_strategy(findings: list[dict[str, object]]) -> dict[str, obje
 
 
 __all__ = ["REPAIR_ACTIONS", "minimal_repair_strategy"]
+

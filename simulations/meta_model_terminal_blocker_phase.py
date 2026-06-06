@@ -28,8 +28,9 @@ def apply_terminal_blocker_phase(self, state: State) -> Iterable[FunctionResult]
         label="blocked_unhandled_state",
         action="block because no valid transition exists and emit a nonterminal resume notice",
         status="blocked",
-        heartbeat_active=False,
+        manual_resume_binding_active=False,
         controlled_stop_notice_recorded=True,
         pause_snapshot_written=True,
         active_node="blocked",
     )
+

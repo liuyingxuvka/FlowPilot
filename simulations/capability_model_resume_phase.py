@@ -24,30 +24,30 @@ __all__ = ["apply_resume_phase"]
 
 
 def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
-    if _route_scaffold_ready(state) and not state.heartbeat_loaded_state:
+    if _route_scaffold_ready(state) and not state.resume_loaded_state:
         yield _step(
             state,
-            label="heartbeat_loaded_state",
-            action="continuation turn loads local state, active route, capability evidence, latest heartbeat or manual-resume evidence, lifecycle evidence, and role-binding ledger",
-            heartbeat_loaded_state=True,
+            label="resume_loaded_state",
+            action="continuation turn loads local state, active route, capability evidence, latest manual-resume and foreground-duty evidence, lifecycle evidence, and role-binding ledger",
+            resume_loaded_state=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_loaded_frontier:
+    if _route_scaffold_ready(state) and not state.resume_loaded_frontier:
         yield _step(
             state,
-            label="heartbeat_loaded_execution_frontier",
+            label="resume_loaded_execution_frontier",
             action="continuation turn loads execution_frontier.json before selecting capability work",
-            heartbeat_loaded_frontier=True,
+            resume_loaded_frontier=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_loaded_packet_ledger:
+    if _route_scaffold_ready(state) and not state.resume_loaded_packet_ledger:
         yield _step(
             state,
-            label="heartbeat_loaded_packet_ledger",
+            label="resume_loaded_packet_ledger",
             action="continuation turn loads packet_ledger.json before asking PM or dispatching capability work",
-            heartbeat_loaded_packet_ledger=True,
+            resume_loaded_packet_ledger=True,
         )
         return
 
@@ -58,7 +58,7 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
     ):
         yield _step(
             state,
-            label="heartbeat_checked_or_restarted_persistent_router_daemon",
+            label="resume_checked_or_restarted_persistent_router_daemon",
             action="continuation turn checks the persistent Router daemon lock/status, restarts only a dead or stale daemon, and rescans the Controller action ledger before role recovery or PM resume",
             router_daemon_started=True,
             router_daemon_lock_acquired=True,
@@ -71,49 +71,49 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_loaded_role_binding_memory:
+    if _route_scaffold_ready(state) and not state.resume_loaded_role_binding_memory:
         yield _step(
             state,
-            label="heartbeat_loaded_role_binding_memory",
+            label="resume_loaded_role_binding_memory",
             action="continuation turn loads all runtime roles compact role memory packets before restoring or replacing runtime responsibilities",
-            heartbeat_loaded_role_binding_memory=True,
+            resume_loaded_role_binding_memory=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_host_rehydrate_requested:
+    if _route_scaffold_ready(state) and not state.resume_host_rehydrate_requested:
         yield _step(
             state,
-            label="heartbeat_host_spawn_or_rehydrate_runtime_roles",
+            label="resume_host_spawn_or_rehydrate_runtime_roles",
             action="router asks the host to restore or open all runtime-requested roles before PM resume",
-            heartbeat_host_rehydrate_requested=True,
+            resume_host_rehydrate_requested=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_restored_runtime_roles:
+    if _route_scaffold_ready(state) and not state.resume_restored_runtime_roles:
         yield _step(
             state,
-            label="heartbeat_restored_required_role_binding_coverage",
+            label="resume_restored_required_role_binding_coverage",
             action="continuation turn restores live runtime responsibilities when available and prepares memory-seeded replacements otherwise",
-            heartbeat_restored_runtime_roles=True,
+            resume_restored_runtime_roles=True,
             replacement_roles_seeded_from_memory=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_rehydrated_runtime_roles:
+    if _route_scaffold_ready(state) and not state.resume_rehydrated_runtime_roles:
         yield _step(
             state,
-            label="heartbeat_rehydrated_required_role_binding_coverage",
+            label="resume_rehydrated_required_role_binding_coverage",
             action="rehydrate the six FlowPilot roles from role memory packets before asking the project manager for the next capability runway",
-            heartbeat_rehydrated_runtime_roles=True,
+            resume_rehydrated_runtime_roles=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_injected_current_run_memory_into_roles:
+    if _route_scaffold_ready(state) and not state.resume_injected_current_run_memory_into_roles:
         yield _step(
             state,
-            label="heartbeat_injected_current_run_memory_into_roles",
+            label="resume_injected_current_run_memory_into_roles",
             action="host injects each role's current-run memory and PM resume context before PM runway",
-            heartbeat_injected_current_run_memory_into_roles=True,
+            resume_injected_current_run_memory_into_roles=True,
         )
         return
 
@@ -126,30 +126,30 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_pm_decision_requested:
+    if _route_scaffold_ready(state) and not state.resume_pm_decision_requested:
         yield _step(
             state,
-            label="heartbeat_asked_project_manager",
+            label="resume_asked_project_manager",
             action="continuation turn asks the project manager for PM_DECISION from the current frontier and packet ledger",
-            heartbeat_pm_decision_requested=True,
+            resume_pm_decision_requested=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_pm_controller_reminder_checked:
+    if _route_scaffold_ready(state) and not state.resume_pm_controller_reminder_checked:
         yield _step(
             state,
-            label="heartbeat_pm_controller_reminder_checked",
+            label="resume_pm_controller_reminder_checked",
             action="controller requires PM_DECISION to include controller_reminder before dispatching any capability packet",
-            heartbeat_pm_controller_reminder_checked=True,
+            resume_pm_controller_reminder_checked=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_reviewer_dispatch_policy_checked:
+    if _route_scaffold_ready(state) and not state.resume_reviewer_dispatch_policy_checked:
         yield _step(
             state,
-            label="heartbeat_reviewer_dispatch_policy_checked",
+            label="resume_reviewer_dispatch_policy_checked",
             action="controller confirms NODE_PACKET dispatch requires reviewer approval and ambiguous worker state blocks controller execution",
-            heartbeat_reviewer_dispatch_policy_checked=True,
+            resume_reviewer_dispatch_policy_checked=True,
         )
         return
 
@@ -169,18 +169,18 @@ def apply_resume_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="pm_runway_synced_to_visible_plan",
-            action="controller calls the host native plan tool when available, or records the fallback method, and replaces the visible capability plan with a downstream PM runway projection",
+            action="controller calls the host native plan tool when available, or records the manual projection method, and replaces the visible capability plan with a downstream PM runway projection",
             pm_runway_synced_to_plan=True,
             plan_sync_method_recorded=True,
             visible_plan_has_runway_depth=True,
         )
         return
 
-    if _route_scaffold_ready(state) and not state.heartbeat_health_checked:
+    if _route_scaffold_ready(state) and not state.manual_resume_binding_health_checked:
         yield _step(
             state,
             label="continuation_resume_ready_checked",
-            action="check automated heartbeat health when supported, or check manual-resume state/frontier/role-binding-memory readiness when no real wakeup exists",
-            heartbeat_health_checked=True,
+            action="check manual resume binding health when supported, or check manual-resume state/frontier/role-binding-memory readiness when no real wakeup exists",
+            manual_resume_binding_health_checked=True,
         )
         return

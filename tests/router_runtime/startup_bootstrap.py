@@ -25,58 +25,17 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         run_state = read_json(router.run_state_path(self.run_root_for(root)))
         self.assertTrue(run_state["flags"]["formal_router_daemon_started"])
         self.assertFalse(run_state["flags"]["controller_core_loaded"])
-    def test_scheduled_startup_heartbeat_is_queued_after_controller_core(self) -> None:
+    def test_unsupported_scheduled_continuation_startup_answer_is_rejected(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
-        router.apply_action(
-            root,
-            "open_startup_intake_ui",
-            self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
-        )
-        action = router.run_until_wait(root)
-        self.assertEqual(action["action_type"], "load_controller_core")
+        with self.assertRaisesRegex(router.RouterError, "unsupported fields: scheduled_continuation"):
+            router.apply_action(
+                root,
+                "open_startup_intake_ui",
+                self.startup_intake_payload(root, startup_answers=UNSUPPORTED_HEARTBEAT_STARTUP_ANSWERS),
+            )
 
-        run_root = self.run_root_for(root)
-        run_state = read_json(router.run_state_path(run_root))
-        self.assertFalse(run_state["flags"]["controller_core_loaded"])
-        self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
-        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
-        self.assertFalse(any(item.get("action_type") == "create_heartbeat_automation" for item in controller_ledger["actions"]))
-        router.apply_action(root, "load_controller_core", self.payload_for_action(action))
-        run_state = read_json(router.run_state_path(run_root))
-        self.assertTrue(run_state["flags"]["controller_core_loaded"])
-        self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
-        controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
-        heartbeat_row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "create_heartbeat_automation")
-        heartbeat_action = read_json(run_root / "runtime" / "controller_actions" / f"{heartbeat_row['action_id']}.json")["action"]
-        self.assertEqual(heartbeat_action["actor"], "bootloader")
-        self.assertEqual(heartbeat_action["postcondition"], "continuation_binding_recorded")
-        self.assertTrue(heartbeat_action["requires_host_automation"])
-        self.assertEqual(heartbeat_action["router_scheduler_progress_class"], "parallel_obligation")
-        self.assertEqual(heartbeat_action["automation_update_request"]["kind"], "heartbeat")
-        self.assertNotIn("otherwise keep the run alive", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("Every heartbeat wake must record the resume request", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("Rehydrate only the currently required requested responsibilities", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertIn("stop only at a real role, user, host, payload, packet, blocker, or terminal-return boundary", heartbeat_action["automation_update_request"]["prompt"])
-        self.assertEqual(heartbeat_action["automation_update_request"]["rrule"], "FREQ=MINUTELY;INTERVAL=1")
-        self.assertEqual(heartbeat_action["expected_payload"]["route_heartbeat_interval_minutes"], 1)
-        self.assert_controller_receipt_action_projection(heartbeat_action)
-        self.assertTrue(heartbeat_action["proof_required_before_controller_receipt"])
-        self.assertFalse(heartbeat_action.get("proof_required_before_apply", False))
-        self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["route_heartbeat_interval_minutes"], [1])
-        self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["host_automation_verified"], [True])
-        self.assertEqual(heartbeat_action["payload_contract"]["allowed_values"]["host_automation_proof.heartbeat_bound_to_current_run"], [True])
-
-        self.complete_startup_async_controller_rows(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
-        self.assertTrue(action["startup_daemon_scheduled"])
-        self.assertTrue(action["scheduled_by_router_daemon"])
-        run_state = read_json(router.run_state_path(run_root))
-        self.assertTrue(run_state["flags"]["controller_core_loaded"])
-        self.assertTrue(run_state["flags"]["formal_router_daemon_started"])
-        continuation = read_json(run_root / "continuation" / "continuation_binding.json")
-        self.assertEqual(continuation["mode"], "scheduled_heartbeat")
-        self.assertTrue(continuation["heartbeat_active"])
-    def test_manual_startup_skips_heartbeat_after_controller_core(self) -> None:
+    def test_manual_startup_writes_current_resume_binding_after_controller_core(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root, startup_answers=STARTUP_ANSWERS)
         state = read_json(router.run_state_path(run_root))
@@ -84,8 +43,12 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(state["flags"]["controller_core_loaded"])
         continuation = read_json(run_root / "continuation" / "continuation_binding.json")
         self.assertEqual(continuation["mode"], "manual_resume")
-        self.assertFalse(continuation["heartbeat_active"])
-        self.assertFalse(continuation["host_automation_verified"])
+        self.assertTrue(continuation["manual_resume_required"])
+        self.assertTrue(continuation["manual_resume_binding_active"])
+        self.assertFalse(continuation["host_automation_supported"])
+        self.assertNotIn("host_heartbeat_supported", continuation)
+        self.assertNotIn("heartbeat_active", continuation)
+        self.assertNotIn("host_automation_verified", continuation)
     def test_formal_startup_starts_router_daemon_before_controller_core(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_router_daemon_start(root)
@@ -389,14 +352,14 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(blocker["direct_retry_budget"], 2)
         self.assertEqual(blocker["direct_retry_attempts_used"], 2)
         self.assertTrue(blocker["direct_retry_budget_exhausted"])
-    def test_startup_daemon_queues_role_heartbeat_and_controller_core_without_role_wait(self) -> None:
+    def test_startup_daemon_queues_controller_core_without_legacy_role_or_automation_wait(self) -> None:
         root = self.make_project()
-        run_root = self.boot_to_router_daemon_start(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        run_root = self.boot_to_router_daemon_start(root, startup_answers=STARTUP_ANSWERS)
         router.apply_action(root, "start_router_daemon")
         router.apply_action(
             root,
             "open_startup_intake_ui",
-            self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
+            self.startup_intake_payload(root, startup_answers=STARTUP_ANSWERS),
         )
 
         while True:
@@ -422,8 +385,8 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_types = [item.get("action_type") for item in controller_ledger["actions"] if item.get("scope_kind") == "startup"]
         self.assertEqual(startup_types.count("emit_startup_banner"), 1)
-        self.assertEqual(startup_types.count("start_role_slots"), 1)
-        self.assertEqual(startup_types.count("create_heartbeat_automation"), 1)
+        self.assertEqual(startup_types.count("start_role_slots"), 0)
+        self.assertEqual(startup_types.count("create_heartbeat_automation"), 0)
         state = read_json(router.run_state_path(run_root))
         blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
         blocker_kinds = [item["kind"] for item in blockers]
@@ -431,12 +394,12 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIn("missing_startup_flag", blocker_kinds)
     def test_startup_async_receipts_update_bootstrap_flags_and_scheduler_rows(self) -> None:
         root = self.make_project()
-        run_root = self.boot_to_router_daemon_start(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        run_root = self.boot_to_router_daemon_start(root, startup_answers=STARTUP_ANSWERS)
         router.apply_action(root, "start_router_daemon")
         router.apply_action(
             root,
             "open_startup_intake_ui",
-            self.startup_intake_payload(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS),
+            self.startup_intake_payload(root, startup_answers=STARTUP_ANSWERS),
         )
         while True:
             action = router.next_action(root)
@@ -446,21 +409,21 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             router.apply_action(root, str(action["action_type"]), payload)
 
         router.apply_action(root, "load_controller_core", self.payload_for_action(action))
-        completed = self.complete_startup_async_controller_rows(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
-        self.assertEqual(set(completed), {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"})
+        completed = self.complete_startup_async_controller_rows(root, startup_answers=STARTUP_ANSWERS)
+        self.assertEqual(set(completed), {"emit_startup_banner"})
 
         bootstrap = self.bootstrap_state(root)
         self.assertTrue(bootstrap["flags"]["banner_emitted"])
-        self.assertTrue(bootstrap["flags"]["roles_started"])
-        self.assertTrue(bootstrap["flags"]["role_core_prompts_injected"])
-        self.assertTrue(bootstrap["flags"]["continuation_binding_recorded"])
+        self.assertFalse(bootstrap["flags"].get("roles_started", False))
+        self.assertFalse(bootstrap["flags"].get("role_core_prompts_injected", False))
+        self.assertFalse(bootstrap["flags"].get("continuation_binding_recorded", False))
         scheduler = read_json(run_root / "runtime" / "router_scheduler_ledger.json")
         async_rows = [
             item
             for item in scheduler["rows"]
             if item.get("action_type") in {"emit_startup_banner", "start_role_slots", "create_heartbeat_automation"}
         ]
-        self.assertEqual(len(async_rows), 3)
+        self.assertEqual(len(async_rows), 1)
         self.assertTrue(all(item["router_state"] == "reconciled" for item in async_rows))
     def test_formal_startup_daemon_failure_blocks_controller_core(self) -> None:
         root = self.make_project()
@@ -530,19 +493,9 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {"card_id": "startup_banner", "requires_user_dialog_display_confirmation": True},
             ),
             (
-                "create_heartbeat_automation",
-                "parallel_obligation",
-                {"requires_host_automation": True},
-            ),
-            (
                 "write_display_surface_status",
                 "parallel_obligation",
                 {"requires_user_dialog_display_confirmation": True},
-            ),
-            (
-                "start_role_slots",
-                "local_dependency",
-                {"requires_host_role_binding": True},
             ),
         )
 
@@ -566,7 +519,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(run_root))
         bootstrap = self.bootstrap_state(root)
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
-        row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "start_role_slots")
+        row = next(item for item in controller_ledger["actions"] if item.get("action_type") == "emit_startup_banner")
         action_path = run_root / "runtime" / "controller_actions" / f"{row['action_id']}.json"
         action_record = read_json(action_path)
 
@@ -581,7 +534,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             root,
             bootstrap,
             action_record["action"],
-            applied_action_type="start_role_slots",
+            applied_action_type="emit_startup_banner",
         )
 
         self.assertTrue(result["already_reconciled"])
@@ -715,6 +668,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
         self.assertTrue(bootstrap["flags"]["startup_answers_recorded"])
         self.assertTrue(bootstrap["flags"]["deterministic_bootstrap_seed_completed"])
+        self.assertFalse(bootstrap["flags"].get("current_background_collaboration_opened", False))
         control_blocks = run_root / "control_blocks"
         self.assertFalse(control_blocks.exists() and list(control_blocks.glob("*.json")))
     def test_startup_review_join_checks_bootstrap_banner_and_role_flags(self) -> None:
@@ -723,7 +677,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state = read_json(router.run_state_path(run_root))
         bootstrap = self.bootstrap_state(root)
         bootstrap["flags"]["banner_emitted"] = False
-        bootstrap["flags"]["roles_started"] = False
         router.write_json(router.bootstrap_state_path(root), bootstrap)
 
         blockers = router._startup_pre_review_reconciliation_blockers(root, run_root, state)  # type: ignore[attr-defined]
@@ -733,86 +686,44 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             if blocker.get("kind") == "missing_startup_bootstrap_flag"
         }
         self.assertIn("banner_emitted", missing_flags)
-        self.assertIn("roles_started", missing_flags)
-    def test_startup_reviewer_event_uses_current_scope_reconciliation(self) -> None:
+        self.assertNotIn("roles_started", missing_flags)
+    def test_startup_rejects_legacy_reviewer_event_before_pm_work(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.deliver_startup_runtime_prompt_cards(root)
 
-        self.apply_startup_heartbeat_if_requested(root)
-        action = self.next_after_display_sync(root)
-        while action["action_type"] in {
-            "confirm_controller_core_boundary",
-            "check_prompt_manifest",
-            "write_startup_mechanical_audit",
-            "write_display_surface_status",
-        }:
-            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
-            action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
-        self.mark_controller_action_done(root, action, {"delivery_relayed": True})
-
-        result = router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(
+        with self.assertRaises(router.RouterError):
+            router.record_external_event(
                 root,
-                "startup/reviewer_report_before_startup_scope_clean",
-                self.startup_fact_report_body(root),
-            ),
-        )
+                "reviewer_reports_startup_facts",
+                self.role_report_envelope(
+                    root,
+                    "startup/legacy_reviewer_report_before_pm_work",
+                    self.legacy_startup_fact_report_body(root),
+                ),
+            )
 
-        self.assertFalse(result["ok"])
-        self.assertTrue(result["current_scope_reconciliation_blocked"])
-        self.assertEqual(result["scope_kind"], "startup")
-        self.assertEqual(result["next_required_action"]["action_type"], "await_current_scope_reconciliation")
         state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"]["startup_fact_reported"])
-    def test_startup_fact_role_output_ledger_is_reconciled_by_router_tick(self) -> None:
+        self.assertFalse(state["flags"].get("startup_fact_reported", False))
+        self.assertFalse((run_root / "startup" / "startup_fact_report.json").exists())
+
+    def test_startup_rejects_legacy_startup_fact_role_output_ledger(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.deliver_startup_fact_check_card(root)
-        wait_action = self.force_startup_fact_role_wait(root)
-        self.assertEqual(wait_action["action_type"], "await_role_decision")
-        router.stop_router_daemon(root, reason="test_release_before_role_output_reconciliation")
+        self.submit_legacy_startup_fact_runtime_output_to_ledger(root)
 
-        self.submit_startup_fact_runtime_output_to_ledger(root)
         before = read_json(router.run_state_path(run_root))
-        self.assertFalse(before["flags"]["startup_fact_reported"])
-
+        self.assertFalse(before["flags"].get("startup_fact_reported", False))
         router.run_router_daemon(root, max_ticks=1, release_lock_on_exit=True)
 
         after = read_json(router.run_state_path(run_root))
-        self.assertTrue(after["flags"]["startup_fact_reported"])
-        self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
-        events = [item for item in after["events"] if isinstance(item, dict) and item.get("event") == "reviewer_reports_startup_facts"]
-        self.assertEqual(len(events), 1)
-        self.assertNotEqual((after.get("pending_action") or {}).get("label"), wait_action["label"])
-    def test_startup_fact_canonical_artifact_drift_syncs_flag_once(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.release_startup_daemon_for_explicit_daemon_test(root)
-        wait_action = self.force_startup_fact_role_wait(root)
-        envelope = self.submit_startup_fact_runtime_output_to_ledger(root)
-        state = read_json(router.run_state_path(run_root))
-        router._write_startup_fact_report(root, run_root, state, envelope)  # type: ignore[attr-defined]
-        state["flags"]["startup_fact_reported"] = False
-        state["events"] = [
-            item
-            for item in state["events"]
-            if not isinstance(item, dict) or item.get("event") != "reviewer_reports_startup_facts"
-        ]
-        state["pending_action"] = wait_action
-        router.save_run_state(run_root, state)
-
-        router.next_action(root)
-        router.next_action(root)
-
-        after = read_json(router.run_state_path(run_root))
-        self.assertTrue(after["flags"]["startup_fact_reported"])
-        events = [item for item in after["events"] if isinstance(item, dict) and item.get("event") == "reviewer_reports_startup_facts"]
-        self.assertEqual(len(events), 1)
+        self.assertFalse(after["flags"].get("startup_fact_reported", False))
+        self.assertFalse((run_root / "startup" / "startup_fact_report.json").exists())
+        self.assertFalse(any(
+            isinstance(item, dict) and item.get("event") == "reviewer_reports_startup_facts"
+            for item in after.get("events", [])
+        ))
     def test_startup_intake_cancel_is_terminal_after_daemon_first_shell(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
@@ -828,11 +739,59 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue((root / bootstrap["run_root"] / "router_state.json").exists())
         run_state = read_json(router.run_state_path(self.run_root_for(root)))
         self.assertFalse(run_state["flags"]["controller_core_loaded"])
-        self.assertFalse(bootstrap["flags"]["roles_started"])
+        self.assertFalse(bootstrap["flags"].get("roles_started", False))
         self.assertFalse(run_state["flags"]["continuation_binding_recorded"])
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "startup_cancelled")
         self.assertTrue(action["terminal"])
+
+    def test_startup_intake_background_ack_disabled_blocks_startup(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        answers = {**STARTUP_ANSWERS, "background_collaboration_authorized": False}
+        payload = self.startup_intake_payload(root, startup_answers=answers, status="blocked")
+        result = router.apply_action(root, "open_startup_intake_ui", payload)
+        self.assertEqual(result["startup_intake"]["status"], "blocked")
+        self.assertEqual(result["startup_intake"]["block_reason"], "background_collaboration_required")
+        bootstrap = self.bootstrap_state(root)
+        self.assertEqual(bootstrap["status"], "startup_blocked")
+        self.assertEqual(bootstrap["startup_state"], "startup_blocked")
+        self.assertFalse(bootstrap["flags"]["controller_core_loaded"])
+        self.assertFalse(bootstrap["flags"].get("roles_started", False))
+        action = router.next_action(root)
+        self.assertEqual(action["action_type"], "startup_blocked")
+        self.assertTrue(action["terminal"])
+
+    def test_startup_intake_rejects_confirmed_background_ack_disabled(self) -> None:
+        root = self.make_project()
+        router.run_until_wait(root, new_invocation=True)
+        answers = {**STARTUP_ANSWERS, "background_collaboration_authorized": False}
+        payload = self.startup_intake_payload(root, startup_answers=answers)
+        with self.assertRaisesRegex(router.RouterError, "background_collaboration_authorized=true"):
+            router.apply_action(root, "open_startup_intake_ui", payload)
+
+    def test_startup_does_not_schedule_background_role_prewarm_action(self) -> None:
+        root = self.make_project()
+        run_root = self.boot_to_router_daemon_start(root)
+        router.apply_action(root, "start_router_daemon")
+        router.apply_action(root, "open_startup_intake_ui", self.startup_intake_payload(root))
+
+        seen_actions: list[str] = []
+        while True:
+            action = router.next_action(root)
+            action_type = action["action_type"]
+            if action_type == "load_controller_core":
+                break
+            seen_actions.append(action_type)
+            self.assertNotEqual(action_type, "bind_background_role_agents")
+            router.apply_action(root, action_type, self.payload_for_action(action))
+
+        self.assertNotIn("bind_background_role_agents", seen_actions)
+        state = read_json(router.run_state_path(run_root))
+        self.assertFalse(state["flags"].get("background_role_agents_bound", False))
+        self.assertFalse(state["flags"].get("current_background_collaboration_opened", False))
+        self.assertFalse((run_root / "role_binding_ledger.json").exists())
+
     def test_startup_intake_rejects_body_hash_mismatch(self) -> None:
         root = self.make_project()
         router.run_until_wait(root, new_invocation=True)
@@ -872,35 +831,27 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(bootstrap["bootstrap_scope"], "run_scoped")
         self.assertEqual(root / bootstrap["run_root"], run_root)
         self.assertGreaterEqual(bootstrap["bootloader_actions"], 6)
-        self.assertGreaterEqual(bootstrap["router_action_requests"], 8)
+        self.assertGreaterEqual(bootstrap["router_action_requests"], 7)
         self.assertIsNone(bootstrap["pending_action"])
         self.assertEqual(bootstrap["startup_answers"], STARTUP_ANSWERS)
         self.assertEqual(bootstrap["user_request"]["schema_version"], router.USER_REQUEST_REF_SCHEMA)
         self.assertFalse(bootstrap["user_request"]["controller_may_read_body"])
-        self.assertTrue(bootstrap["flags"]["role_core_prompts_injected"])
+        self.assertFalse(bootstrap["flags"].get("role_core_prompts_injected", False))
         self.assertTrue(bootstrap["flags"]["router_daemon_started"])
 
         self.assertTrue((run_root / "runtime_kit" / "manifest.json").exists())
         self.assertTrue((run_root / "packet_ledger.json").exists())
         self.assertTrue((run_root / "execution_frontier.json").exists())
-        self.assertEqual(len(list((run_root / "role_binding_memory").glob("*.json"))), len(router.RUNTIME_ROLE_KEYS))
+        role_memory_files = sorted((run_root / "role_binding_memory").glob("*.json"))
+        self.assertEqual(role_memory_files, [])
+        self.assertFalse((run_root / "role_binding_ledger.json").exists())
         self.assertTrue((run_root / "user_request.json").exists())
         user_request_record = read_json(run_root / "user_request.json")
         self.assertNotIn(USER_REQUEST["text"], json.dumps(user_request_record))
         self.assertEqual(user_request_record["source"], "startup_intake_ui")
         self.assertTrue((run_root / "startup_intake" / "startup_intake_record.json").exists())
         self.assertTrue((run_root / "mailbox" / "outbox" / "user_intake.json").exists())
-        self.assertTrue((run_root / "role_core_prompt_delivery.json").exists())
-        role_core_delivery = read_json(run_root / "role_core_prompt_delivery.json")
-        self.assertEqual(role_core_delivery["delivery_mode"], "same_action_with_role_start")
-        self.assertEqual(role_core_delivery["source_action"], "start_role_slots")
-        self.assertEqual(set(role_core_delivery["role_card_hashes"]), set(router.ROLE_CARD_KEYS))
-
-        role_binding = read_json(run_root / "role_binding_ledger.json")
-        self.assertEqual(len(role_binding["role_slots"]), len(router.RUNTIME_ROLE_KEYS))
-        self.assertNotIn("controller", {slot["role_key"] for slot in role_binding["role_slots"]})
-        self.assertEqual({slot["status"] for slot in role_binding["role_slots"]}, {"live_agent_started"})
-        self.assertTrue(all(slot["agent_id"] for slot in role_binding["role_slots"]))
+        self.assertFalse((run_root / "role_core_prompt_delivery.json").exists())
 
         controller_ledger = read_json(run_root / "runtime" / "controller_action_ledger.json")
         startup_rows = {
@@ -909,7 +860,11 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             if row.get("scope_kind") == "startup"
         }
         self.assertEqual(
-            {"emit_startup_banner", "load_controller_core", "start_role_slots", "open_startup_intake_ui"},
+            {
+                "emit_startup_banner",
+                "load_controller_core",
+                "open_startup_intake_ui",
+            },
             set(startup_rows),
         )
         self.assertEqual(
@@ -931,7 +886,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(action["payload_contract"]["payload_key"], "startup_intake_result")
         self.assertIn("flowpilot_startup_intake.ps1", action["startup_intake_ui"]["launcher_path"])
         self.assertTrue(action["startup_intake_ui"]["body_text_is_never_router_payload"])
-        self.assertIn("Router daemon status", action["plain_instruction"])
+        self.assertIn("background driver status", action["plain_instruction"])
         self.assertIn("Controller action ledger", action["plain_instruction"])
         self.assertNotIn("apply this pending action", action["plain_instruction"])
         self.assertNotIn("apply its confirmed or cancelled result", action["summary"])
@@ -951,7 +906,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(bootstrap["flags"]["run_shell_created"])
         self.assertTrue(bootstrap["flags"]["router_daemon_started"])
         self.assertFalse(bootstrap["flags"]["controller_core_loaded"])
-        self.assertFalse(bootstrap["flags"]["roles_started"])
+        self.assertFalse(bootstrap["flags"].get("roles_started", False))
         self.assertTrue((root / ".flowpilot" / "current.json").exists())
         self.assertTrue((root / bootstrap["run_root"] / "bootstrap" / "startup_state.json").exists())
         self.assertTrue((root / bootstrap["run_root"] / "router_state.json").exists())
@@ -1090,8 +1045,8 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             json.dumps(
                 {
                     "schema_version": "flowpilot.current.v1",
-                    "current_run_id": "run-old-stopped",
-                    "current_run_root": ".flowpilot/runs/run-old-stopped",
+                    "run_id": "run-old-stopped",
+                    "run_root": ".flowpilot/runs/run-old-stopped",
                     "status": "stopped_by_user",
                 },
                 indent=2,
@@ -1109,149 +1064,69 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertIsNone(bootstrap["startup_answers"])
         self.assertFalse(bootstrap["flags"].get("startup_answers_recorded", False))
         self.assertEqual(action["allowed_reads"], [current["startup_bootstrap_path"]])
-    def test_reviewer_startup_report_preconsumes_pre_review_pm_bundle_ack(self) -> None:
+    def test_startup_current_path_releases_user_intake_without_startup_role_gate(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
 
-        self.apply_startup_heartbeat_if_requested(root)
-        action = self.next_after_display_sync(root)
-        while action["action_type"] in {
-            "confirm_controller_core_boundary",
-            "check_prompt_manifest",
-            "write_startup_mechanical_audit",
-            "write_display_surface_status",
-        }:
-            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
-            action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
-        self.assertIn("pm.core", action["card_ids"])
-
-        opened = card_runtime.open_card_bundle(
-            root,
-            envelope_path=str(action["card_bundle_envelope_path"]),
-            role=str(action["to_role"]),
-            agent_id=str(action["target_agent_id"]),
-        )
-        card_runtime.submit_card_bundle_ack(
-            root,
-            envelope_path=str(action["card_bundle_envelope_path"]),
-            role=str(action["to_role"]),
-            agent_id=str(action["target_agent_id"]),
-            receipt_paths=[str(path) for path in opened["read_receipt_paths"]],
-        )
-        self.deliver_expected_card(root, "reviewer.startup_fact_check")
-
-        envelope = self.role_report_envelope(
-            root,
-            "startup/reviewer_startup_fact_report",
-            self.startup_fact_report_body(root),
-        )
-        result = router.record_external_event(root, "reviewer_reports_startup_facts", envelope)
-        self.assertTrue(result["ok"])
-
-        return_ledger = read_json(run_root / "return_event_ledger.json")
-        bundle_completed = [
-            item for item in return_ledger["completed_returns"]
-            if item.get("return_kind") == "system_card_bundle"
-            and item.get("card_bundle_id") == action.get("card_bundle_id")
-        ]
-        self.assertEqual(len(bundle_completed), 1)
-        bundle_pending = [
-            item for item in return_ledger["pending_returns"]
-            if item.get("return_kind") == "system_card_bundle"
-            and item.get("card_bundle_id") == action.get("card_bundle_id")
-        ][0]
-        self.assertIn(bundle_pending["status"], {"returned", "resolved"})
+        self.deliver_startup_runtime_prompt_cards(root)
+        self.assert_startup_user_intake_held_by_router(root)
         state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["startup_fact_reported"])
+        self.assertTrue(state["flags"]["startup_mechanical_audit_written"])
+        self.assertTrue(state["flags"]["startup_display_status_written"])
+        self.assertFalse(state["flags"].get("startup_fact_reported", False))
+        self.assertFalse(state["flags"].get("startup_activation_approved", False))
+        self.assertFalse((run_root / "startup" / "startup_fact_report.json").exists())
+        self.assertFalse((run_root / "startup" / "startup_activation.json").exists())
 
-        duplicate = router.record_external_event(root, "reviewer_reports_startup_facts", envelope)
-        self.assertTrue(duplicate["already_recorded"])
-        return_ledger = read_json(run_root / "return_event_ledger.json")
-        bundle_completed = [
-            item for item in return_ledger["completed_returns"]
-            if item.get("return_kind") == "system_card_bundle"
-            and item.get("card_bundle_id") == action.get("card_bundle_id")
-        ]
-        self.assertEqual(len(bundle_completed), 1)
-    def test_startup_pre_review_ack_join_blocks_reviewer_card(self) -> None:
+        self.deliver_user_intake_mail(root)
+        self.assert_startup_user_intake_released_to_pm(root)
+        self.deliver_expected_card(root, "pm.material_scan")
+
+        state = read_json(router.run_state_path(run_root))
+        self.assertTrue(state["flags"]["user_intake_delivered_to_pm"])
+        self.assertFalse(state["flags"].get("startup_fact_reported", False))
+        self.assertFalse(state["flags"].get("startup_activation_approved", False))
+
+    def test_startup_old_role_gate_events_are_unsupported(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
+        self.deliver_startup_runtime_prompt_cards(root)
 
-        self.apply_startup_heartbeat_if_requested(root)
-        action = self.next_after_display_sync(root)
-        while action["action_type"] in {
-            "confirm_controller_core_boundary",
-            "check_prompt_manifest",
-            "write_startup_mechanical_audit",
-            "write_display_surface_status",
-        }:
-            router.apply_action(root, str(action["action_type"]), self.payload_for_action(action))
-            action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_system_card_bundle")
-        self.assertIn("pm.core", action["card_ids"])
-        self.mark_controller_action_done(root, action, {"delivery_relayed": True})
-
-        next_action = self.next_after_display_sync(root)
-        self.assertEqual(next_action["action_type"], "await_card_bundle_return_event")
-        self.assertEqual(next_action["ack_clearance_reason"], "current_scope_pre_review_reconciliation")
-        self.assertEqual(next_action["scope_kind"], "startup")
-
-        return_ledger = read_json(run_root / "return_event_ledger.json")
-        pm_pending = [
-            item
-            for item in return_ledger["pending_returns"]
-            if item.get("return_kind") == "system_card_bundle"
-            and "pm.core" in item.get("card_ids", [])
-        ]
-        self.assertEqual(len(pm_pending), 1)
-        self.assertEqual(pm_pending[0]["status"], "pending")
-        self.assertNotEqual(next_action.get("card_id"), "reviewer.startup_fact_check")
-    def test_pm_startup_activation_uses_existing_same_role_card_ack_blocker(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-        report = router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(
+        old_events = {
+            "reviewer_reports_startup_facts": self.role_report_envelope(
                 root,
-                "startup/reviewer_startup_fact_report_with_pm_ack_pending",
-                self.startup_fact_report_body(root),
+                "startup/legacy_reviewer_startup_fact_report",
+                self.legacy_startup_fact_report_body(root),
             ),
-        )
-        self.assertTrue(report["ok"])
-
-        action = self.next_after_display_sync(root)
-        if action["action_type"] == "check_prompt_manifest":
-            self.assertEqual(action["next_card_id"], "pm.startup_activation")
-            router.apply_action(root, "check_prompt_manifest")
-            action = self.next_after_display_sync(root)
-        self.assertEqual(action["action_type"], "deliver_system_card")
-        self.assertEqual(action["card_id"], "pm.startup_activation")
-        self.mark_controller_action_done(root, action, {"delivery_relayed": True})
-
-        result = router.record_external_event(
-            root,
-            "pm_approves_startup_activation",
-            self.role_decision_envelope(
+            "pm_approves_startup_activation": self.role_decision_envelope(
                 root,
-                "startup/pm_startup_activation_before_card_ack",
+                "startup/legacy_pm_startup_activation",
                 {"approved_by_role": "project_manager", "decision": "approved"},
             ),
-        )
+            "pm_requests_startup_repair": self.role_decision_envelope(
+                root,
+                "startup/legacy_pm_startup_repair_request",
+                {"decided_by_role": "project_manager", "decision": "startup_repair_requested"},
+            ),
+            "pm_declares_startup_protocol_dead_end": self.role_decision_envelope(
+                root,
+                "startup/legacy_pm_startup_protocol_dead_end",
+                {"declared_by_role": "project_manager", "decision": "protocol_dead_end"},
+            ),
+        }
+        for event, payload in old_events.items():
+            with self.subTest(event=event):
+                with self.assertRaises(router.RouterError):
+                    router.record_external_event(root, event, payload)
 
-        self.assertFalse(result["ok"])
-        self.assertTrue(result["report_quarantined"])
-        self.assertTrue(result["recoverable"])
-        self.assertEqual(result["next_required_action"]["action_type"], "await_card_return_event")
         state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"]["startup_activation_approved"])
-        self.assertEqual(state["pending_action"]["ack_clearance_reason"], "router_progress")
-        self.assertEqual(state["pending_action"]["card_id"], "pm.startup_activation")
-    def test_daemon_folds_stable_startup_role_flags_from_bootstrap(self) -> None:
+        self.assertFalse(state["flags"].get("startup_fact_reported", False))
+        self.assertFalse(state["flags"].get("startup_activation_approved", False))
+        self.assertFalse((run_root / "startup" / "startup_fact_report.json").exists())
+        self.assertFalse((run_root / "startup" / "startup_activation.json").exists())
+        self.assertFalse((run_root / "startup" / "startup_repair_request.json").exists())
+
+    def test_daemon_ignores_old_startup_role_flags_from_bootstrap(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-startup-role-fold")
         bootstrap_path = run_root / "bootstrap" / "startup_state.json"
@@ -1271,10 +1146,11 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         result = router._fold_stable_startup_role_flags_from_bootstrap(root, run_root, state)  # type: ignore[attr-defined]
 
-        self.assertTrue(result["changed"])
-        self.assertTrue(state["flags"]["roles_started"])
-        self.assertTrue(state["flags"]["role_core_prompts_injected"])
-    def test_partial_startup_role_flags_wait_for_settlement(self) -> None:
+        self.assertFalse(result["changed"])
+        self.assertTrue(result["ignored_old_startup_role_flags"])
+        self.assertFalse(state["flags"].get("roles_started", False))
+        self.assertFalse(state["flags"].get("role_core_prompts_injected", False))
+    def test_partial_old_startup_role_flags_are_ignored_without_settlement_wait(self) -> None:
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-startup-role-partial")
         bootstrap_path = run_root / "bootstrap" / "startup_state.json"
@@ -1295,536 +1171,49 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         result = router._fold_stable_startup_role_flags_from_bootstrap(root, run_root, state)  # type: ignore[attr-defined]
 
         self.assertFalse(result["changed"])
-        self.assertTrue(result["waiting_for_settlement"])
+        self.assertTrue(result["ignored_old_startup_role_flags"])
         self.assertFalse(state["flags"].get("roles_started", False))
         self.assertFalse(state["flags"].get("role_core_prompts_injected", False))
-    def test_startup_activation_requires_reviewer_facts_before_work(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "pm_issues_material_and_capability_scan_packets")
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "pm_activates_reviewed_route")
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "pm_approves_startup_activation", {"decision": "approved"})
-
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "pm_first_decision_resets_controller")
-        reset_confirmation = router.record_external_event(root, "controller_role_confirmed_from_pm_reset")
-        self.assertTrue(reset_confirmation["already_recorded"])
-        boundary = read_json(run_root / "startup" / "controller_boundary_confirmation.json")
-        self.assertEqual(boundary["event"], "controller_role_confirmed_from_router_core")
-        self.assertFalse(boundary["sealed_body_reads_allowed"])
-
-        self.assertTrue((run_root / "display" / "display_surface.json").exists())
-        startup_audit = read_json(run_root / "startup" / "startup_mechanical_audit.json")
-        self.assertTrue(startup_audit["mechanical_checks_passed"])
-        self.assertTrue(startup_audit["mechanical_checks"]["startup_intake_record_current"])
-        self.assertTrue(startup_audit["mechanical_checks"]["startup_intake_receipt_envelope_hash_current"])
-        self.assertTrue(startup_audit["mechanical_checks"]["reviewer_live_review_uses_startup_intake_record"])
-        self.assertIn(
-            f"{run_root.relative_to(root).as_posix()}/startup_intake/startup_intake_record.json",
-            {item["path"] for item in startup_audit["source_paths"]},
-        )
-        self.assertFalse(startup_audit["self_attested_ai_claims_accepted_as_proof"])
-        self.assertEqual(startup_audit["router_replacement_scope"], "mechanical_only")
-        proof_path = root / startup_audit["router_owned_check_proof_path"]
-        self.assertTrue(proof_path.exists())
-        proof = read_json(proof_path)
-        self.assertEqual(proof["source_kind"], "router_computed")
-        self.assertFalse(proof["self_attested_ai_claims_accepted_as_proof"])
-
-        invalid_root = self.make_project()
-        self.boot_to_controller(invalid_root)
-        self.deliver_startup_fact_check_card(invalid_root)
-        self.deliver_initial_pm_cards_and_user_intake(invalid_root)
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(invalid_root, "reviewer_reports_startup_facts", {"passed": True})
-        second_invalid = router.record_external_event(
-            invalid_root,
-            "reviewer_reports_startup_facts",
-            {"reviewed_by_role": "human_like_reviewer", "passed": True},
-        )
-        self.assertTrue(second_invalid["current_scope_reconciliation_blocked"])
-        router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(
-                root,
-                "startup/reviewer_startup_fact_report",
-                self.startup_fact_report_body(root),
-            ),
-        )
-        self.assertTrue((run_root / "startup" / "startup_fact_report.json").exists())
-        fact_report = read_json(run_root / "startup" / "startup_fact_report.json")
-        self.assertEqual(fact_report["startup_mechanical_audit_hash"], hashlib.sha256((run_root / "startup" / "startup_mechanical_audit.json").read_bytes()).hexdigest())
-        self.assertNotIn("router_mechanical_audit_hash", fact_report["external_fact_review"])
-
-        self.deliver_expected_card(root, "pm.startup_activation")
-
-        with self.assertRaises(router.RouterError):
-            router.record_external_event(root, "pm_approves_startup_activation", {"decision": "blocked"})
-        with self.assertRaisesRegex(router.RouterError, "file-backed body path"):
-            router.record_external_event(root, "pm_approves_startup_activation", {"decision": "approved"})
-        self.assertTrue(self.handle_pending_control_blocker(root))
-        startup_activation_payload = self.role_decision_envelope(
-            root,
-            "startup/pm_startup_activation",
-            {"approved_by_role": "project_manager", "decision": "approved"},
-        )
-        router.record_external_event(
-            root,
-            "pm_approves_startup_activation",
-            startup_activation_payload,
-        )
-
-        self.assertTrue((run_root / "startup" / "startup_activation.json").exists())
-        self.assertTrue((run_root / "display" / "display_surface.json").exists())
-        self.assertTrue((run_root / "diagrams" / "current_route_sign.md").exists())
-        self.assertTrue((run_root / "diagrams" / "user-flow-diagram.md").exists())
-        self.assertTrue((run_root / "diagrams" / "user-flow-diagram.mmd").exists())
-        route_sign_markdown = (run_root / "diagrams" / "current_route_sign.md").read_text(encoding="utf-8")
-        self.assertIn("```mermaid", route_sign_markdown)
-        self.assertNotIn("Display gate:", route_sign_markdown)
-        self.assertNotIn("Chat evidence:", route_sign_markdown)
-        display_surface = read_json(run_root / "display" / "display_surface.json")
-        self.assertTrue(display_surface["chat_displayed_by_controller"])
-        self.assertEqual(display_surface["selected_surface"], "chat_route_sign")
-        self.assertFalse(display_surface["generated_files_alone_satisfy_chat_display"])
-
-        active_blocker = read_json(router.run_state_path(run_root)).get("active_control_blocker")
-        self.assertEqual(active_blocker["originating_event"], "pm_approves_startup_activation")
-        router.record_external_event(
-            root,
-            "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(
-                root,
-                "control_blocks/pm_startup_activation_payload_repair",
-                self.pm_control_blocker_decision_body(
-                    active_blocker["blocker_id"],
-                    decision="repair_completed",
-                    rerun_target="pm_approves_startup_activation",
-                ),
-            ),
-        )
-        replay = router.record_external_event(root, "pm_approves_startup_activation", startup_activation_payload)
-        self.assertTrue(replay["control_blocker_resolved"])
-
-        self.deliver_user_intake_mail(root)
-        self.deliver_expected_card(root, "pm.material_scan")
-        router.record_external_event(root, "pm_issues_material_and_capability_scan_packets", self.material_scan_payload())
-        state = read_json(router.run_state_path(run_root))
-        self.assertTrue(state["flags"]["pm_material_packets_issued"])
-    def test_reviewer_startup_findings_go_to_pm_without_control_blocker(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        block_body = self.startup_fact_report_body(root)
-        block_body.update(
-            {
-                "passed": False,
-                "checks": {"startup_user_answer_authenticity": False},
-                "blockers": ["startup_user_answer_authenticity"],
-            }
-        )
-        router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(
-                root,
-                "startup/reviewer_startup_fact_block",
-                block_body,
-            ),
-        )
-        report = read_json(run_root / "startup" / "startup_fact_report.json")
-        self.assertFalse(report["passed"])
-        self.assertEqual(report["status"], "findings")
-        self.assertTrue(report["requires_pm_startup_decision"])
-        self.assertFalse(report["reviewer_directly_blocks_route"])
-        state = read_json(router.run_state_path(run_root))
-        self.assertIsNone(state["active_control_blocker"])
-
-        self.deliver_expected_card(root, "pm.startup_activation")
-        with self.assertRaisesRegex(router.RouterError, "accepts_startup_findings_with_reason"):
-            router.record_external_event(
-                root,
-                "pm_approves_startup_activation",
-                self.role_decision_envelope(
-                    root,
-                    "startup/pm_startup_activation_after_block",
-                    {"approved_by_role": "project_manager", "decision": "approved"},
-                ),
-            )
-
-        router.record_external_event(
-            root,
-            "pm_declares_startup_protocol_dead_end",
-            self.role_decision_envelope(
-                root,
-                "startup/pm_startup_protocol_dead_end",
-                {
-                    "declared_by_role": "project_manager",
-                    "decision": "protocol_dead_end",
-                    "no_legal_repair_path": True,
-                    "why_no_existing_path_applies": "No startup repair event can safely represent this synthetic test block.",
-                    "attempted_legal_paths": ["pm_requests_startup_repair", "reviewer_reports_startup_facts"],
-                    "unsafe_to_continue_reason": "PM cannot open startup from a blocking reviewer report.",
-                    "resume_conditions": ["Add or select a legal startup repair path, then restart startup fact review."],
-                },
-            ),
-        )
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "write_terminal_summary")
-        self.assertEqual(action["read_scope"], router.TERMINAL_SUMMARY_READ_SCOPE)
-        self.assertIn(f"{self.rel(root, run_root)}/**", action["allowed_reads"])
-        self.assertEqual(action["run_lifecycle_status"], "protocol_dead_end")
-        self.apply_terminal_summary(root, action, run_root, note="Startup protocol dead end.")
-        action = router.next_action(root)
-        self.assertEqual(action["action_type"], "run_lifecycle_terminal")
-        self.assertEqual(action["run_lifecycle_status"], "protocol_dead_end")
-        lifecycle = read_json(run_root / "lifecycle" / "run_lifecycle.json")
-        self.assertEqual(lifecycle["status"], "protocol_dead_end")
-        dead_end = read_json(run_root / "lifecycle" / "startup_protocol_dead_end.json")
-        self.assertTrue(dead_end["effects"]["cancel_or_suspend_pending_mail"])
-        self.assertFalse(dead_end["effects"]["heartbeat_should_stop"])
-        self.assertTrue(dead_end["effects"]["heartbeat_should_remain_for_resume_or_user_decision"])
-    def test_pm_can_approve_startup_findings_with_file_backed_decision(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        findings_body = self.startup_fact_report_body(root)
-        findings_body.update(
-            {
-                "passed": False,
-                "checks": {"startup_user_answer_authenticity": False},
-                "blockers": ["startup_user_answer_authenticity"],
-            }
-        )
-        router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(root, "startup/reviewer_startup_fact_findings", findings_body),
-        )
-        self.deliver_expected_card(root, "pm.startup_activation")
-
-        router.record_external_event(
-            root,
-            "pm_approves_startup_activation",
-            self.role_decision_envelope(
-                root,
-                "startup/pm_startup_activation_findings_decision",
-                {
-                    "approved_by_role": "project_manager",
-                    "decision": "approved",
-                    "reviewed_report_path": self.rel(root, run_root / "startup" / "startup_fact_report.json"),
-                    "accepts_startup_findings_with_reason": True,
-                    "startup_findings_decision": "unreviewable_requirement_demoted",
-                    "startup_findings_decision_reason": "The router task contract is the startup-answer authority; original chat authenticity is not independently reviewable by this role.",
-                    "demoted_unreviewable_requirement_ids": ["startup_user_answer_authenticity"],
-                },
-            ),
-        )
-        activation = read_json(run_root / "startup" / "startup_activation.json")
-        self.assertEqual(activation["approval_basis"], "pm_file_backed_findings_decision")
-        self.assertEqual(
-            activation["pm_findings_decision"]["startup_findings_decision"],
-            "unreviewable_requirement_demoted",
-        )
-    def test_pm_startup_repair_request_resets_fact_review_cycle(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        block_body = self.startup_fact_report_body(root)
-        block_body.update(
-            {
-                "passed": False,
-                "checks": {"startup_user_answer_authenticity": False},
-                "blockers": ["startup_user_answer_authenticity"],
-            }
-        )
-        router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            self.role_report_envelope(root, "startup/reviewer_startup_fact_block", block_body),
-        )
-        self.deliver_expected_card(root, "pm.startup_activation")
-
-        router.record_external_event(
-            root,
-            "pm_requests_startup_repair",
-            self.role_decision_envelope(
-                root,
-                "startup/pm_startup_repair_request",
-                {
-                    "decided_by_role": "project_manager",
-                    "decision": "startup_repair_requested",
-                    "repair_target_kind": "system",
-                    "target_role_or_system": "flowpilot_router",
-                    "repair_action": "rewrite_startup_mechanical_audit_and_reissue_reviewer_fact_check",
-                    "blocked_report_path": self.rel(root, run_root / "startup" / "startup_fact_report.json"),
-                    "resume_event": "reviewer_reports_startup_facts",
-                    "resume_condition": "Router rewrites the audit and reviewer files a fresh startup fact report.",
-                },
-            ),
-        )
-        state = read_json(router.run_state_path(run_root))
-        self.assertFalse(state["flags"]["startup_fact_reported"])
-        self.assertFalse(state["flags"]["reviewer_startup_fact_check_card_delivered"])
-        self.assertFalse(state["flags"]["pm_startup_activation_card_delivered"])
-        self.assertTrue((run_root / "startup" / "startup_repair_request.json").exists())
-
-        action = self.next_after_display_sync(root)
-        self.assertIn("write_startup_mechanical_audit", self.router_internal_action_types(root))
-        self.assertEqual(action["action_type"], "deliver_system_card")
-        self.assertEqual(action["card_id"], "reviewer.startup_fact_check")
-        self.deliver_expected_card(root, "reviewer.startup_fact_check")
-    def test_pm_startup_repair_request_can_repeat_for_new_blocking_report(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        def submit_blocking_report(name: str, blocker: str) -> None:
-            block_body = self.startup_fact_report_body(root)
-            block_body.update(
-                {
-                    "passed": False,
-                    "checks": {blocker: False},
-                    "blockers": [blocker],
-                }
-            )
-            router.record_external_event(
-                root,
-                "reviewer_reports_startup_facts",
-                self.role_report_envelope(root, f"startup/{name}", block_body),
-            )
-
-        def repair_decision(name: str, action: str) -> dict:
-            return self.role_decision_envelope(
-                root,
-                f"startup/{name}",
-                {
-                    "decided_by_role": "project_manager",
-                    "decision": "startup_repair_requested",
-                    "repair_target_kind": "system",
-                    "target_role_or_system": "flowpilot_router",
-                    "repair_action": action,
-                    "blocked_report_path": self.rel(root, run_root / "startup" / "startup_fact_report.json"),
-                    "resume_event": "reviewer_reports_startup_facts",
-                    "resume_condition": "Router repair is complete and reviewer writes a fresh startup fact report.",
-                },
-            )
-
-        submit_blocking_report("reviewer_startup_fact_block_1", "startup_user_answer_authenticity")
-        self.deliver_expected_card(root, "pm.startup_activation")
-        first_decision = repair_decision(
-            "pm_startup_repair_request_1",
-            "rewrite_startup_mechanical_audit_and_reissue_reviewer_fact_check",
-        )
-        first_result = router.record_external_event(root, "pm_requests_startup_repair", first_decision)
-        self.assertNotIn("already_recorded", first_result)
-        state = read_json(router.run_state_path(run_root))
-        self.assertEqual(state["startup_repair_request"]["startup_repair_cycle"], 1)
-
-        self.deliver_expected_card(root, "reviewer.startup_fact_check")
-        submit_blocking_report("reviewer_startup_fact_block_2", "cockpit_display_surface_reality")
-        self.deliver_expected_card(root, "pm.startup_activation")
-
-        with self.assertRaisesRegex(router.RouterError, "repeats the previous PM decision"):
-            router.record_external_event(root, "pm_requests_startup_repair", first_decision)
-
-        second_result = router.record_external_event(
-            root,
-            "pm_requests_startup_repair",
-            repair_decision(
-                "pm_startup_repair_request_2",
-                "write_display_surface_receipt_and_reissue_reviewer_fact_check",
-            ),
-        )
-        self.assertNotIn("already_recorded", second_result)
-        state = read_json(router.run_state_path(run_root))
-        self.assertEqual(state["startup_repair_request"]["startup_repair_cycle"], 2)
-        ledger = read_json(run_root / "startup" / "startup_repair_requests.json")
-        self.assertEqual(ledger["latest_cycle"], 2)
-        self.assertEqual(len(ledger["entries"]), 2)
-    def test_cockpit_requested_startup_display_records_display_blocker(self) -> None:
+    def test_cockpit_startup_answer_is_rejected_as_legacy_option(self) -> None:
         root = self.make_project()
         cockpit_answers = {**STARTUP_ANSWERS, "display_surface": "cockpit"}
-        run_root = self.boot_to_controller(root, cockpit_answers)
+        router.run_until_wait(root, new_invocation=True)
 
-        self.complete_startup_activation(root)
-
-        display_surface = read_json(run_root / "display" / "display_surface.json")
-        self.assertEqual(display_surface["requested_display_surface"], "cockpit")
-        self.assertEqual(display_surface["selected_surface"], "display_blocked")
-        self.assertEqual(display_surface["cockpit_status"], "blocked_unverified")
-        self.assertTrue(display_surface["cockpit_probe_required_for_requested_cockpit"])
-        self.assertTrue(display_surface["display_surface_blocked"])
-        self.assertEqual(display_surface["display_block_reason"], "cockpit_unavailable_or_unverified")
-        self.assertIn("user-flow-diagram.md", display_surface["standard_route_sign_markdown_path"])
-        self.assertFalse(display_surface["chat_displayed_by_controller"])
-        display_packet = read_json(run_root / "diagrams" / "user-flow-diagram-display.json")
-        self.assertFalse(display_packet["canonical_route_available"])
-        self.assertEqual(display_packet["display_role"], "startup_placeholder")
-        self.assertTrue(display_packet["is_placeholder"])
-        self.assertEqual(display_packet["replacement_rule"], "replace_when_canonical_route_available")
-        route_sign_markdown = (run_root / "diagrams" / "current_route_sign.md").read_text(encoding="utf-8")
-        self.assertIn("```mermaid", route_sign_markdown)
-        self.assertNotIn("Display gate:", route_sign_markdown)
-        self.assertNotIn("Chat evidence:", route_sign_markdown)
-    def test_startup_fact_report_accepts_file_backed_envelope_only_payload(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        report_body = self.startup_fact_report_body(root)
-        report_text = json.dumps(report_body, indent=2, sort_keys=True)
-        private_report = run_root / "startup" / "reviewer_private_startup_fact_report.json"
-        private_report.parent.mkdir(parents=True, exist_ok=True)
-        private_report.write_text(report_text, encoding="utf-8")
-        report_hash = hashlib.sha256(private_report.read_bytes()).hexdigest()
-        report_path = str(private_report.relative_to(root))
-
-        with self.assertRaisesRegex(router.RouterError, "leaked role body fields"):
-            router.record_external_event(
+        with self.assertRaisesRegex(router.RouterError, "unsupported fields: display_surface"):
+            router.apply_action(
                 root,
-                "reviewer_reports_startup_facts",
-                {
-                    "report_path": report_path,
-                    "report_hash": report_hash,
-                    "controller_visibility": "role_output_envelope_only",
-                    "blockers": [],
-                },
+                "open_startup_intake_ui",
+                self.startup_intake_payload(root, startup_answers=cockpit_answers),
             )
-
+    def test_old_startup_role_output_contracts_are_absent(self) -> None:
+        self.assertNotIn("startup_fact_report", role_output_runtime.SUPPORTED_OUTPUT_TYPES)
+        self.assertNotIn("pm_startup_activation_approval", role_output_runtime.SUPPORTED_OUTPUT_TYPES)
+        contract_index = read_json(ROOT / "skills" / "flowpilot" / "assets" / "runtime_kit" / "contracts" / "contract_index.json")
+        contract_ids = {item.get("contract_id") for item in contract_index.get("contracts", []) if isinstance(item, dict)}
+        self.assertNotIn("flowpilot.output_contract.startup_fact_report.v1", contract_ids)
+        self.assertNotIn("flowpilot.output_contract.pm_startup_activation_approval.v1", contract_ids)
+    def test_manual_startup_records_current_resume_binding_for_resume_reentry(self) -> None:
         root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-        report_body = self.startup_fact_report_body(root)
-        report_text = json.dumps(report_body, indent=2, sort_keys=True)
-        private_report = run_root / "startup" / "reviewer_private_startup_fact_report.json"
-        private_report.parent.mkdir(parents=True, exist_ok=True)
-        private_report.write_text(report_text, encoding="utf-8")
-        report_hash = hashlib.sha256(private_report.read_bytes()).hexdigest()
-        report_path = str(private_report.relative_to(root))
-
-        router.record_external_event(
-            root,
-            "reviewer_reports_startup_facts",
-            {
-                "report_path": report_path,
-                "report_hash": report_hash,
-                "controller_visibility": "role_output_envelope_only",
-            },
-        )
-
-        canonical_report = read_json(run_root / "startup" / "startup_fact_report.json")
-        self.assertEqual(
-            canonical_report["_role_output_envelope"]["controller_visibility"],
-            "role_output_envelope_only",
-        )
-        self.assertFalse(canonical_report["_role_output_envelope"]["chat_response_body_allowed"])
-    def test_record_event_accepts_runtime_envelope_ref_for_startup_fact_report(self) -> None:
-        for mode in ("payload_ref", "cli_ref", "full_envelope"):
-            with self.subTest(mode=mode):
-                root = self.make_project()
-                run_root = self.boot_to_controller(root)
-                self.deliver_startup_fact_check_card(root)
-                self.deliver_initial_pm_cards_and_user_intake(root)
-                envelope, envelope_path, envelope_hash = self.startup_fact_runtime_envelope(root)
-
-                if mode == "payload_ref":
-                    result = router.record_external_event(
-                        root,
-                        "reviewer_reports_startup_facts",
-                        {"event_envelope_ref": {"path": envelope_path, "hash": envelope_hash}},
-                    )
-                elif mode == "cli_ref":
-                    parsed = router.parse_args(
-                        [
-                            "--root",
-                            str(root),
-                            "record-event",
-                            "--event",
-                            "reviewer_reports_startup_facts",
-                            "--envelope-path",
-                            envelope_path,
-                            "--envelope-hash",
-                            envelope_hash,
-                        ]
-                    )
-                    self.assertEqual(parsed.envelope_path, envelope_path)
-                    self.assertEqual(parsed.envelope_hash, envelope_hash)
-                    result = router.record_external_event(
-                        root,
-                        "reviewer_reports_startup_facts",
-                        envelope_path=envelope_path,
-                        envelope_hash=envelope_hash,
-                    )
-                else:
-                    result = router.record_external_event(root, "reviewer_reports_startup_facts", envelope)
-
-                self.assertTrue(result["ok"])
-                canonical_report = read_json(run_root / "startup" / "startup_fact_report.json")
-                source_envelope = canonical_report["_role_output_envelope"]
-                self.assertEqual(source_envelope["role_output_runtime_receipt_path"], envelope["runtime_receipt_ref"]["path"])
-                self.assertTrue(source_envelope["role_output_runtime_validated"])
-                self.assertFalse(source_envelope["chat_response_body_allowed"])
-                self.assertNotIn("runtime_receipt_path", source_envelope)
-    def test_startup_fact_report_rejects_canonical_submission_alias(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.deliver_startup_fact_check_card(root)
-        self.deliver_initial_pm_cards_and_user_intake(root)
-
-        canonical_report = run_root / "startup" / "startup_fact_report.json"
-        canonical_report.write_text(
-            json.dumps(self.startup_fact_report_body(root), indent=2, sort_keys=True),
-            encoding="utf-8",
-        )
-        report_hash = hashlib.sha256(canonical_report.read_bytes()).hexdigest()
-
-        with self.assertRaisesRegex(router.RouterError, "canonical startup_fact_report.json"):
-            router.record_external_event(
-                root,
-                "reviewer_reports_startup_facts",
-                {
-                    "report_path": self.rel(root, canonical_report),
-                    "report_hash": report_hash,
-                    "controller_visibility": "role_output_envelope_only",
-                },
-            )
-    def test_heartbeat_startup_records_one_minute_active_binding_for_resume_reentry(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root, startup_answers=HEARTBEAT_STARTUP_ANSWERS)
+        run_root = self.boot_to_controller(root, startup_answers=STARTUP_ANSWERS)
         action = self.next_after_display_sync(root)
         self.assertNotEqual(action["action_type"], "create_heartbeat_automation")
         self.assertEqual(action["action_type"], "write_display_surface_status")
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
 
         binding_path = run_root / "continuation" / "continuation_binding.json"
         self.assertTrue(binding_path.exists())
         binding = read_json(binding_path)
         self.assertEqual(binding["run_id"], read_json(run_root / "router_state.json")["run_id"])
-        self.assertEqual(binding["mode"], "scheduled_heartbeat")
-        self.assertEqual(binding["route_heartbeat_interval_minutes"], 1)
-        self.assertTrue(binding["heartbeat_active"])
-        self.assertEqual(binding["host_automation_id"], "codex-test-heartbeat")
-        self.assertTrue(binding["host_automation_verified"])
-        self.assertEqual(binding["host_automation_proof"]["source_kind"], "host_receipt")
+        self.assertEqual(binding["mode"], "manual_resume")
+        self.assertTrue(binding["manual_resume_required"])
+        self.assertTrue(binding["manual_resume_binding_active"])
+        self.assertFalse(binding["host_automation_supported"])
+        self.assertNotIn("route_heartbeat_interval_minutes", binding)
+        self.assertNotIn("heartbeat_active", binding)
+        self.assertNotIn("host_automation_id", binding)
+        self.assertNotIn("host_automation_verified", binding)
 
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested", {"source": "heartbeat", "work_chain_status": "broken_or_unknown"})
+        router.record_external_event(root, "manual_resume_requested", {"source": "manual_resume", "work_chain_status": "broken_or_unknown"})
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
         self.assertEqual(
@@ -1963,7 +1352,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             blockers=blockers,
-            review_trigger="reviewer.startup_fact_check",
+            review_trigger="pm.startup_intake",
         )
         state["pending_action"] = wait
         router.save_run_state(run_root, state)
@@ -1984,8 +1373,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         flags = state.setdefault("flags", {})
         for flag in (
             "banner_emitted",
-            "roles_started",
-            "role_core_prompts_injected",
             "controller_role_confirmed",
             "startup_mechanical_audit_written",
             "startup_display_status_written",
@@ -1996,7 +1383,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state.pop("active_control_blocker", None)
         bootstrap = self.bootstrap_state(root)
         bootstrap.setdefault("flags", {})["banner_emitted"] = True
-        bootstrap.setdefault("flags", {})["roles_started"] = True
         router.write_json(router.bootstrap_state_path(root), bootstrap)
         return_ledger_path = run_root / "return_event_ledger.json"
         if return_ledger_path.exists():
@@ -2020,7 +1406,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             run_root,
             state,
             blockers=[{"kind": "test_reconciled_startup_blocker", "scope_kind": "startup"}],
-            review_trigger="reviewer.startup_fact_check",
+            review_trigger="pm.startup_intake",
         )
         state["pending_action"] = wait
         entry = router._write_controller_action_entry(root, run_root, state, wait)  # type: ignore[attr-defined]
@@ -2052,8 +1438,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         flags = state.setdefault("flags", {})
         for flag in (
             "banner_emitted",
-            "roles_started",
-            "role_core_prompts_injected",
             "controller_role_confirmed",
             "startup_mechanical_audit_written",
             "startup_display_status_written",
@@ -2064,7 +1448,6 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
         state.pop("active_control_blocker", None)
         bootstrap = self.bootstrap_state(root)
         bootstrap.setdefault("flags", {})["banner_emitted"] = True
-        bootstrap.setdefault("flags", {})["roles_started"] = True
         router.write_json(router.bootstrap_state_path(root), bootstrap)
         return_ledger_path = run_root / "return_event_ledger.json"
         if return_ledger_path.exists():
@@ -2094,3 +1477,7 @@ class StartupBootstrapRuntimeTests(FlowPilotRouterRuntimeTestBase):
             [item for item in blockers if item.get("kind") == "pending_startup_controller_row"],
             [],
         )
+
+
+
+

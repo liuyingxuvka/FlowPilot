@@ -14,10 +14,16 @@ from typing import Any, Callable
 
 from flowpilot_router_facade_export_manifest import OWNER_EXPORTS, PUBLIC_EXPORT_NAMES
 
+_BOUND_OWNER_MODULES: set[tuple[str, int]] = set()
+
+
 def _owner_target(module_name: str, target_name: str, router_module: ModuleType, bind_router: bool) -> Callable[..., Any]:
     module = importlib.import_module(module_name)
     if bind_router and hasattr(module, "_bind_router"):
-        module._bind_router(router_module)
+        bind_key = (module_name, id(router_module))
+        if bind_key not in _BOUND_OWNER_MODULES:
+            module._bind_router(router_module)
+            _BOUND_OWNER_MODULES.add(bind_key)
     return getattr(module, target_name)
 
 def _make_proxy(
@@ -38,7 +44,7 @@ def _make_proxy(
     _proxy.__name__ = public_name
     _proxy.__qualname__ = public_name
     _proxy.__module__ = router_module.__name__
-    _proxy.__doc__ = f"Transitional owner export for {module_name}.{target_name}."
+    _proxy.__doc__ = f"Owner export for {module_name}.{target_name}."
     return _proxy
 
 def resolve_facade_export(name: str, router_module: ModuleType) -> Callable[..., Any]:

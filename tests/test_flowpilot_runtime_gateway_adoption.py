@@ -102,7 +102,11 @@ class FlowPilotRuntimeGatewayAdoptionTests(unittest.TestCase):
             root = Path(tmp)
             flowpilot_router_io_json.write_json_atomic(
                 root / ".flowpilot" / "current.json",
-                {"schema_version": "flowpilot.current.v1", "current_run_id": "run-test"},
+                {
+                    "schema_version": "flowpilot.current.v1",
+                    "run_id": "run-test",
+                    "run_root": ".flowpilot/runs/run-test",
+                },
             )
             packet_runtime_schema.write_json_atomic(
                 root / ".flowpilot" / "runs" / "run-test" / "packets" / "packet-1" / "packet_envelope.json",

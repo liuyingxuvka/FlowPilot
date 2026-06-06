@@ -15,6 +15,10 @@ def submit_result(ledger: dict[str, Any], lease_id: str, packet_id: str, body: s
     return runtime.submit_result(ledger, lease_id, packet_id, body, **kwargs)
 
 
+def open_result_body_for_role(ledger: dict[str, Any], packet_id: str, lease_id: str, result_id: str) -> dict[str, Any]:
+    return runtime.open_result_body_for_role(ledger, packet_id, lease_id, result_id)
+
+
 def open_sealed_body_for_role(ledger: dict[str, Any], packet_id: str, lease_id: str) -> str:
     packet = runtime._require(ledger["packets"], packet_id, "packet")
     lease = runtime._require(ledger["leases"], lease_id, "lease")

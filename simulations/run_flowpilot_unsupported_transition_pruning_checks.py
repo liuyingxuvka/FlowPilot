@@ -127,7 +127,7 @@ def _candidate_from_line(path: Path, line_no: int, text: str) -> model.Candidate
     is_active_prompt_or_card = surface in {"runtime_prompt", "runtime_card"}
     is_active_spec = surface == "active_spec"
     is_change_context = surface == "change_context"
-    is_current_safety_fallback = "fallback" in lower and bool(SAFETY_FALLBACK_RE.search(text)) and not (
+    is_current_recovery_branch = "fallback" in lower and bool(SAFETY_FALLBACK_RE.search(text)) and not (
         "unsupported_historical" in lower or "unsupported" in lower or "alias" in lower or "compatib" in lower or "old" in lower
     )
     is_public_facade_boundary = bool(PUBLIC_FACADE_RE.search(text))
@@ -154,7 +154,7 @@ def _candidate_from_line(path: Path, line_no: int, text: str) -> model.Candidate
         is_active_spec=is_active_spec,
         is_change_context=is_change_context,
         is_test_or_model_evidence=is_test_or_model_evidence,
-        is_current_safety_fallback=is_current_safety_fallback,
+        is_current_recovery_branch=is_current_recovery_branch,
         is_public_facade_boundary=is_public_facade_boundary,
         is_historical_doc=False,
     )
@@ -178,7 +178,7 @@ def _state_id(state: model.State) -> str:
     return (
         f"candidate={state.candidate_id}|status={state.status}|action={state.action}|"
         f"delete={state.delete_required},rewrite={state.rewrite_required},"
-        f"negative={state.kept_negative_evidence},safety={state.kept_current_safety_fallback},"
+        f"negative={state.kept_negative_evidence},recovery={state.kept_current_recovery_branch},"
         f"structuremesh={state.structuremesh_gate_required},manual={state.manual_review_required}"
     )
 

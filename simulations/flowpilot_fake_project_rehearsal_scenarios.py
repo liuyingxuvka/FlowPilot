@@ -13,7 +13,9 @@ try:  # pragma: no cover
         assert_public_projection_is_sealed,
         complete_full_packet_chain,
         complete_planning_chain_only,
+        current_contract_body_for_packet,
         ensure,
+        open_current_packet_inputs,
         packet_row,
         resolve_and_lease_packet,
         reset_scenario_root,
@@ -29,7 +31,9 @@ except ImportError:  # pragma: no cover
         assert_public_projection_is_sealed,
         complete_full_packet_chain,
         complete_planning_chain_only,
+        current_contract_body_for_packet,
         ensure,
+        open_current_packet_inputs,
         packet_row,
         resolve_and_lease_packet,
         reset_scenario_root,
@@ -165,7 +169,7 @@ def scenario_route_mutation_recovery(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "route_mutation_recovery")
     start_payload = start_rehearsal(root, command_log, "run-fake-route-mutation")
-    chain = complete_full_packet_chain(root, command_log, start_payload, first_pm_disposition_decision="mutate_route")
+    chain = complete_full_packet_chain(root, command_log, start_payload, first_pm_disposition_decision="redesign_route")
     projection = status_projection(root, command_log)
     superseded = [node for node in projection.get("route_nodes", []) if node.get("status") == "superseded"]
     accepted = [node for node in projection.get("route_nodes", []) if node.get("status") == "accepted"]
@@ -345,73 +349,132 @@ def scenario_lifecycle_guard_resume_and_patrol(work_root: Path) -> dict[str, Any
 
 
 def _planning_body_for(packet_kind: str, route_scope: str, route_node_id: str = "") -> str:
-    if packet_kind == "task" and route_scope == "high_standard_contract":
-        return json.dumps(
-            {
-                "decision": "pass",
-                "requirements": [
-                    {
-                        "requirement_id": "hsr-001",
-                        "classification": "hard_current",
-                        "summary": "Complete the fake project to a high standard.",
-                    }
-                ]
-            }
-        )
-    if packet_kind == "task" and route_scope == "discovery":
-        return json.dumps(
-            {
-                "decision": "pass",
-                "material_sources": ["startup"],
-                "local_skill_inventory": ["flowguard-development-process-flow"],
-            }
-        )
-    if packet_kind == "task" and route_scope == "skill_standard":
-        return json.dumps(
-            {
-                "decision": "pass",
-                "obligations": [
-                    {
-                        "obligation_id": "skill-std-001",
-                        "skill": "flowguard-development-process-flow",
-                        "classification": "required",
-                    }
-                ]
-            }
-        )
-    if packet_kind == "task" and route_scope == "planning":
-        return _route_plan_body()
-    if packet_kind == "task" and route_scope == "node_acceptance_plan":
-        return json.dumps(
-            {
-                "decision": "pass",
-                "route_node_id": route_node_id,
-                "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
-                "repair_policy": "same_node_repair_default",
-                "low_quality_success_risks": ["existence-only evidence", "missing skill evidence"],
-                "node_context_package": {
-                    "node_id": route_node_id,
-                    "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
-                    "acceptance_criteria": [
-                        "worker result satisfies the node packet",
-                        "pre-work and post-result FlowGuard evidence are current",
-                        "reviewer independently challenges the node outcome",
-                    ],
-                    "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
-                    "evidence_targets": ["worker result body", "FlowGuard report", "reviewer report", "validation output"],
-                    "inspection_targets": ["changed files", "command output", "model artifacts", "runtime ledger"],
-                    "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
-                    "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
-                    "reviewer_starting_points": [
-                        "worker result",
-                        "node context package",
-                        "FlowGuard reports",
-                        "validation evidence",
-                    ],
-                },
-            }
-        )
-    return json.dumps({"decision": "pass", "summary": f"fake planning {packet_kind}"})
+    return current_contract_body_for_packet(
+        {
+            "packet_id": "planning-helper-packet",
+            "packet_kind": packet_kind,
+            "route_scope": route_scope,
+            "route_node_id": route_node_id,
+        }
+    )
+
+
+def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str, Any]:
+    command_log: list[dict[str, Any]] = []
+    root = reset_scenario_root(work_root, "missing_current_result_fields_reissue")
+    current_payload = start_rehearsal(root, command_log, "run-fake-missing-fields")
+    pm_packet = str(current_payload["next_action"]["subject_id"])
+    projection = status_projection(root, command_log)
+    pm_packet_row = packet_row(projection, pm_packet)
+    pm_lease = resolve_and_lease_packet(
+        root,
+        command_log,
+        packet_id=pm_packet,
+        responsibility="pm",
+        agent_id="fake-pm-current-contract",
+    )
+    pm_lease_id = str(pm_lease["lease_id"])
+    run_cli(root, command_log, "ack", "--lease-id", pm_lease_id, "--packet-id", pm_packet)
+    open_current_packet_inputs(root, command_log, lease_id=pm_lease_id, packet=pm_packet_row)
+    first_flowguard = run_cli(
+        root,
+        command_log,
+        "submit-result",
+        "--lease-id",
+        pm_lease_id,
+        "--packet-id",
+        pm_packet,
+        "--body",
+        current_contract_body_for_packet(pm_packet_row),
+    )
+    flowguard_packet = str(first_flowguard["next_action"]["subject_id"])
+    projection = status_projection(root, command_log)
+    flowguard_packet_row = packet_row(projection, flowguard_packet)
+    fg_lease = resolve_and_lease_packet(
+        root,
+        command_log,
+        packet_id=flowguard_packet,
+        responsibility="flowguard_operator",
+        agent_id="fake-flowguard-missing-fields",
+    )
+    fg_lease_id = str(fg_lease["lease_id"])
+    run_cli(root, command_log, "ack", "--lease-id", fg_lease_id, "--packet-id", flowguard_packet)
+    open_current_packet_inputs(root, command_log, lease_id=fg_lease_id, packet=flowguard_packet_row)
+    blocked = run_cli(
+        root,
+        command_log,
+        "submit-result",
+        "--lease-id",
+        fg_lease_id,
+        "--packet-id",
+        flowguard_packet,
+        "--body",
+        json.dumps({"decision": "pass", "summary": "legacy fake AI result missing current fields"}, sort_keys=True),
+    )
+    repair_packet = str(blocked["next_action"]["subject_id"])
+    projection = status_projection(root, command_log)
+    old_packet = packet_row(projection, flowguard_packet)
+    repair_packet_row = packet_row(projection, repair_packet)
+    ensure(old_packet.get("status") == "superseded_after_repair", f"old packet was not superseded: {old_packet}")
+    ensure(repair_packet_row.get("packet_kind") == "flowguard_check", f"repair packet kind changed: {repair_packet_row}")
+    ensure(
+        repair_packet_row.get("route_scope") == flowguard_packet_row.get("route_scope"),
+        f"repair packet lost route scope: {repair_packet_row}",
+    )
+
+    repair_lease = resolve_and_lease_packet(
+        root,
+        command_log,
+        packet_id=repair_packet,
+        responsibility="flowguard_operator",
+        agent_id="fake-flowguard-current-fields",
+    )
+    repair_lease_id = str(repair_lease["lease_id"])
+    run_cli(root, command_log, "ack", "--lease-id", repair_lease_id, "--packet-id", repair_packet)
+    opened_repair = run_cli(root, command_log, "open-packet", "--lease-id", repair_lease_id, "--packet-id", repair_packet)
+    sealed_body = str(opened_repair.get("sealed_packet_body") or "")
+    ensure(sealed_body, "repair packet did not expose sealed instructions to the authorized fake AI")
+    repair_body = json.loads(sealed_body)
+    required_fields = repair_body.get("required_result_body_fields")
+    ensure(required_fields == ["decision", "pm_visible_summary"], f"repair packet did not name required fields: {repair_body}")
+    ensure(repair_body.get("blocked_packet_id") == flowguard_packet, f"repair packet lost blocked packet id: {repair_body}")
+    ensure(
+        "pm_visible_summary" in str(repair_body.get("blocked_reason") or ""),
+        f"repair packet did not explain missing pm_visible_summary: {repair_body}",
+    )
+    ensure(
+        "runtime cannot synthesize" in str(repair_body.get("instruction") or ""),
+        f"repair packet instruction did not forbid synthesized compatibility: {repair_body}",
+    )
+    corrected = run_cli(
+        root,
+        command_log,
+        "submit-result",
+        "--lease-id",
+        repair_lease_id,
+        "--packet-id",
+        repair_packet,
+        "--body",
+        current_contract_body_for_packet(repair_packet_row),
+    )
+    next_action = corrected.get("next_action", {})
+    ensure(next_action.get("responsibility") == "reviewer", f"corrected fake AI result did not resume reviewer path: {corrected}")
+    projection = status_projection(root, command_log)
+    corrected_packet = packet_row(projection, repair_packet)
+    ensure(corrected_packet.get("status") in {"result_submitted", "accepted"}, f"corrected packet did not submit: {corrected_packet}")
+    assert_public_projection_is_sealed(projection)
+    return {
+        "name": "missing_current_result_fields_reissue",
+        "ok": True,
+        "root": str(root),
+        "observations": {
+            "blocked_packet_id": flowguard_packet,
+            "repair_packet_id": repair_packet,
+            "required_fields": required_fields,
+            "next_responsibility_after_fix": next_action.get("responsibility"),
+        },
+        "commands": command_log,
+    }
 
 
 def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]:
@@ -439,6 +502,7 @@ def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
+        open_current_packet_inputs(root, command_log, lease_id=lease_id, packet=packet)
 
         if responsibility == "reviewer" or packet_kind == "review":
             progress_payload = run_cli(
@@ -524,6 +588,7 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
+        open_current_packet_inputs(root, command_log, lease_id=lease_id, packet=current_packet)
         current_payload = run_cli(
             root,
             command_log,
@@ -741,6 +806,7 @@ SCENARIOS: tuple[tuple[str, Callable[[Path], dict[str, Any]]], ...] = (
     ("missing_ack_block", scenario_missing_ack_block),
     ("ack_only_wait", scenario_ack_only_wait),
     ("lifecycle_guard_resume_and_patrol", scenario_lifecycle_guard_resume_and_patrol),
+    ("missing_current_result_fields_reissue", scenario_missing_current_result_fields_reissue),
     ("slow_reviewer_progress_preserved", scenario_slow_reviewer_progress_preserved),
     ("accepted_packet_reassignment_rejected", scenario_accepted_packet_reassignment_rejected),
     ("stop_terminal_fence", scenario_stop_terminal_fence),

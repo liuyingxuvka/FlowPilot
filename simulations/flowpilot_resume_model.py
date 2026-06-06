@@ -1,4 +1,4 @@
-"""FlowGuard model for FlowPilot heartbeat/manual-resume re-entry.
+"""FlowGuard model for FlowPilot manual-resume re-entry.
 
 Risk intent brief:
 - Prevent resume launchers from becoming a second route-control authority.
@@ -10,14 +10,14 @@ Risk intent brief:
   recovery blocks.
 - Adversarial branches include ambiguous worker state, duplicate resume ticks,
   old run control state, body reads, missing manifest/ledger checks, dynamic
-  launchers, heartbeat keepalive self-classification, stale role binding ids, missing
-  one-minute heartbeat evidence, stale lifecycle flags, host role liveness
+  launchers, launcher self-keepalive self-classification, stale role binding ids, missing
+  current-run manual resume evidence, stale lifecycle flags, host role liveness
   ambiguity, unnecessary replacement of live roles, replacing all runtime roles
   when only one role failed, active control blockers racing ahead of resume
   re-entry, and route progress inferred from chat history.
 - Hard invariants: stable launcher only; Controller is relay-only; PM decisions
-  happen after heartbeat/manual wake records re-entry to the router, one-minute
-  heartbeat evidence when automated, current-run state, visible plan
+  happen after manual wake records re-entry to the router, current-run
+  manual resume evidence, current-run state, visible plan
   restoration, role-binding liveness checking, lifecycle reconciliation, and runtime roles
   rehydration;
   prompt/mail delivery is ledger gated; route progress can only come from
@@ -47,7 +47,7 @@ class Action:
 @dataclass(frozen=True)
 class State:
     status: str = "new"  # new | running | blocked | complete
-    entry_mode: str = "none"  # none | heartbeat | manual
+    entry_mode: str = "none"  # none | manual_resume
     holder: str = "none"  # none | launcher | controller | pm | reviewer | worker
     work_branch: str = "unknown"  # unknown | existing_result | fresh_worker
     ambiguous_state: str = "unknown"  # unknown | clear | ambiguous
@@ -56,10 +56,10 @@ class State:
     dynamic_launcher_used: bool = False
     launcher_prompt_contains_route_state: bool = False
     resume_wake_recorded_to_router: bool = False
-    heartbeat_self_keepalive_without_router: bool = False
-    heartbeat_trigger_evidence_loaded: bool = False
-    heartbeat_interval_minutes: int = 0
-    heartbeat_trigger_bound_to_current_run: bool = False
+    launcher_self_keepalive_without_router: bool = False
+    manual_resume_trigger_evidence_loaded: bool = False
+    manual_resume_trigger_sequence: int = 0
+    manual_resume_trigger_bound_to_current_run: bool = False
     active_control_blocker_scan_done: bool = False
     active_control_blocker_present: bool = False
     active_control_blocker_deferred_until_resume_ready: bool = False
@@ -132,7 +132,7 @@ class State:
     pm_controller_reminder_included: bool = False
     pm_decision_returned: bool = False
     pm_decision_from_chat_history: bool = False
-    heartbeat_prompt_continuation_boundary_stated: bool = False
+    resume_prompt_continuation_boundary_stated: bool = False
     pm_resume_pending_action_status_synced: bool = False
     pm_resume_status_next_step_matches_manifest_check: bool = False
     pm_resume_manifest_check_folded: bool = False
@@ -192,7 +192,7 @@ class ResumeReentryStep:
     name = "ResumeReentryStep"
     reads = ("status", "entry_mode", "loaded_state", "runtime_responsibilities", "prompt_mail_gates")
     writes = ("control_plane_fact", "manifest_or_ledger_check", "terminal_status")
-    input_description = "heartbeat/manual resume tick"
+    input_description = "manual resume tick"
     output_description = "one abstract FlowPilot resume control-plane action"
     idempotency = "repeat ticks do not duplicate completed facts"
 
@@ -264,17 +264,16 @@ def _loaded_current_run_state(state: State) -> bool:
     )
 
 
-def _heartbeat_trigger_ready(state: State) -> bool:
+def _manual_resume_trigger_ready(state: State) -> bool:
     if state.entry_mode == "none":
         return True
     if not state.resume_wake_recorded_to_router:
         return False
-    if state.entry_mode != "heartbeat":
-        return True
+    if state.entry_mode != "manual_resume":
+        return False
     return (
-        state.heartbeat_trigger_evidence_loaded
-        and state.heartbeat_interval_minutes == 1
-        and state.heartbeat_trigger_bound_to_current_run
+        state.manual_resume_trigger_evidence_loaded
+        and state.manual_resume_trigger_bound_to_current_run
     )
 
 
@@ -385,53 +384,43 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if not state.stable_launcher_entered:
         yield Transition(
-            "stable_heartbeat_launcher_entered",
-            replace(
-                state,
-                status="running",
-                entry_mode="heartbeat",
-                holder="launcher",
-                stable_launcher_entered=True,
-            ),
-        )
-        yield Transition(
             "stable_manual_resume_launcher_entered",
             replace(
                 state,
                 status="running",
-                entry_mode="manual",
+                entry_mode="manual_resume",
                 holder="launcher",
                 stable_launcher_entered=True,
             ),
         )
         return
-    if state.entry_mode in {"heartbeat", "manual"} and not state.resume_wake_recorded_to_router:
+    if state.entry_mode == "manual_resume" and not state.resume_wake_recorded_to_router:
         yield Transition(
             "resume_wake_recorded_to_router",
             replace(state, resume_wake_recorded_to_router=True),
         )
         return
-    if state.entry_mode == "heartbeat" and not state.heartbeat_trigger_evidence_loaded:
+    if state.entry_mode == "manual_resume" and not state.manual_resume_trigger_evidence_loaded:
         yield Transition(
-            "one_minute_heartbeat_resume_trigger_confirmed",
+            "manual_resume_trigger_confirmed",
             replace(
                 state,
-                heartbeat_trigger_evidence_loaded=True,
-                heartbeat_interval_minutes=1,
-                heartbeat_trigger_bound_to_current_run=True,
+                manual_resume_trigger_evidence_loaded=True,
+                manual_resume_trigger_sequence=1,
+                manual_resume_trigger_bound_to_current_run=True,
             ),
         )
         return
     if (
-        state.entry_mode == "heartbeat"
-        and not state.heartbeat_prompt_continuation_boundary_stated
+        state.entry_mode == "manual_resume"
+        and not state.resume_prompt_continuation_boundary_stated
     ):
         yield Transition(
-            "heartbeat_prompt_manifest_checkpoint_boundary_stated",
-            replace(state, heartbeat_prompt_continuation_boundary_stated=True),
+            "resume_prompt_manifest_checkpoint_boundary_stated",
+            replace(state, resume_prompt_continuation_boundary_stated=True),
         )
         return
-    if state.entry_mode in {"heartbeat", "manual"} and not state.active_control_blocker_scan_done:
+    if state.entry_mode == "manual_resume" and not state.active_control_blocker_scan_done:
         yield Transition(
             "no_active_control_blocker_pending_on_resume",
             replace(state, active_control_blocker_scan_done=True),
@@ -802,10 +791,10 @@ def invariant_failures(state: State) -> list[str]:
         or state.frontier_loaded
     ) and not state.stable_launcher_entered:
         failures.append("current-run state loaded before stable launcher entry")
-    if state.heartbeat_self_keepalive_without_router:
+    if state.launcher_self_keepalive_without_router:
         failures.append("resume wake self-classified keepalive instead of entering the router")
     if (
-        state.entry_mode in {"heartbeat", "manual"}
+        state.entry_mode == "manual_resume"
         and (
             state.current_pointer_loaded
             or state.run_root_loaded
@@ -816,21 +805,19 @@ def invariant_failures(state: State) -> list[str]:
         and not state.resume_wake_recorded_to_router
     ):
         failures.append("resume loaded or acted on current state before recording the wake to the router")
-    if state.heartbeat_trigger_evidence_loaded and state.heartbeat_interval_minutes != 1:
-        failures.append("heartbeat resume trigger evidence was not one-minute cadence")
-    if state.heartbeat_trigger_evidence_loaded and not state.heartbeat_trigger_bound_to_current_run:
-        failures.append("heartbeat resume trigger evidence was not bound to the current run")
+    if state.manual_resume_trigger_evidence_loaded and not state.manual_resume_trigger_bound_to_current_run:
+        failures.append("manual resume trigger evidence was not bound to the current run")
     if (
-        state.entry_mode == "heartbeat"
+        state.entry_mode == "manual_resume"
         and (
             state.current_pointer_loaded
             or state.pm_decision_requested
             or state.route_progress_recorded
             or state.status == "complete"
         )
-        and not _heartbeat_trigger_ready(state)
+        and not _manual_resume_trigger_ready(state)
     ):
-        failures.append("heartbeat resume continued before current-run one-minute trigger evidence")
+        failures.append("manual resume continued before current-run trigger evidence")
     if state.active_control_blocker_present and not state.active_control_blocker_scan_done:
         failures.append("active control blocker was present without a resume blocker scan")
     if (
@@ -1050,7 +1037,7 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("PM decision was requested while resume state was ambiguous")
 
     if state.pm_decision_requested and not (
-        _heartbeat_trigger_ready(state)
+        _manual_resume_trigger_ready(state)
         and _lifecycle_flags_current(state)
         and _loaded_current_run_state(state)
         and state.controller_relay_boundary_confirmed
@@ -1064,15 +1051,15 @@ def invariant_failures(state: State) -> list[str]:
     if state.pm_decision_prompt_delivered and not state.pm_controller_reminder_included:
         failures.append("PM decision card omitted the Controller relay-only reminder")
     if (
-        state.entry_mode == "heartbeat"
+        state.entry_mode == "manual_resume"
         and (
             state.pm_decision_requested
             or state.pm_decision_prompt_delivered
             or state.pm_decision_returned
         )
-        and not state.heartbeat_prompt_continuation_boundary_stated
+        and not state.resume_prompt_continuation_boundary_stated
     ):
-        failures.append("heartbeat resume prompt did not state that manifest check is an internal checkpoint before real wait boundaries")
+        failures.append("manual resume prompt did not state that manifest check is an internal checkpoint before real wait boundaries")
     if state.pm_resume_pending_action_status_synced and state.manifest_check_requests < 1:
         failures.append("status summary claimed pending prompt-manifest action before Controller requested the check")
     if state.pm_resume_manifest_check_folded and state.manifest_check_requests < 1:
@@ -1162,7 +1149,7 @@ INVARIANTS = (
         name="flowpilot_resume_reentry_control_plane",
         description=(
             "Heartbeat and manual resume re-enter through a stable launcher, "
-            "confirm one-minute heartbeat evidence when automated, load current-run "
+            "confirm current-run manual resume evidence when automated, load current-run "
             "state and ledgers, reconcile lifecycle flags, recover role binding before PM "
             "decision, defer active control blockers until PM resume decision, "
             "keep Controller relay-only, and gate prompt/mail/project progress "
@@ -1196,13 +1183,13 @@ def is_success(state: State) -> bool:
 def _ready_for_pm(**changes: object) -> State:
     base = State(
         status="running",
-        entry_mode="heartbeat",
+        entry_mode="manual_resume",
         holder="controller",
         stable_launcher_entered=True,
         resume_wake_recorded_to_router=True,
-        heartbeat_trigger_evidence_loaded=True,
-        heartbeat_interval_minutes=1,
-        heartbeat_trigger_bound_to_current_run=True,
+        manual_resume_trigger_evidence_loaded=True,
+        manual_resume_trigger_sequence=1,
+        manual_resume_trigger_bound_to_current_run=True,
         active_control_blocker_scan_done=True,
         current_pointer_loaded=True,
         current_pointer_valid=True,
@@ -1245,7 +1232,7 @@ def _ready_for_pm(**changes: object) -> State:
         ambiguous_state="clear",
         resume_obligation_replay_scanned=True,
         resume_obligation_replay_pm_escalation_required=True,
-        heartbeat_prompt_continuation_boundary_stated=True,
+        resume_prompt_continuation_boundary_stated=True,
     )
     return replace(base, **changes)
 
@@ -1274,28 +1261,28 @@ def hazard_states() -> dict[str, State]:
             stable_launcher_entered=True,
             launcher_prompt_contains_route_state=True,
         ),
-        "heartbeat_self_keepalive_without_router": State(
+        "launcher_self_keepalive_without_router": State(
             status="running",
-            entry_mode="heartbeat",
+            entry_mode="manual_resume",
             stable_launcher_entered=True,
-            heartbeat_self_keepalive_without_router=True,
+            launcher_self_keepalive_without_router=True,
         ),
         "load_pointer_without_stable_launcher": State(current_pointer_loaded=True),
         "manual_resume_continues_without_router_wake": State(
             status="running",
-            entry_mode="manual",
+            entry_mode="manual_resume",
             stable_launcher_entered=True,
             current_pointer_loaded=True,
             current_pointer_valid=True,
         ),
         "packet_ledger_loaded_without_router_daemon_check": State(
             status="running",
-            entry_mode="heartbeat",
+            entry_mode="manual_resume",
             stable_launcher_entered=True,
             resume_wake_recorded_to_router=True,
-            heartbeat_trigger_evidence_loaded=True,
-            heartbeat_interval_minutes=1,
-            heartbeat_trigger_bound_to_current_run=True,
+            manual_resume_trigger_evidence_loaded=True,
+            manual_resume_trigger_sequence=1,
+            manual_resume_trigger_bound_to_current_run=True,
             active_control_blocker_scan_done=True,
             current_pointer_loaded=True,
             current_pointer_valid=True,
@@ -1306,41 +1293,32 @@ def hazard_states() -> dict[str, State]:
             router_state_loaded=True,
             packet_ledger_loaded=True,
         ),
-        "heartbeat_continues_without_one_minute_trigger": State(
+        "manual_resume_continues_without_current_run_trigger": State(
             status="running",
-            entry_mode="heartbeat",
+            entry_mode="manual_resume",
             stable_launcher_entered=True,
             resume_wake_recorded_to_router=True,
             current_pointer_loaded=True,
             current_pointer_valid=True,
         ),
-        "heartbeat_trigger_wrong_interval": State(
+        "manual_resume_trigger_not_current_run_bound": State(
             status="running",
-            entry_mode="heartbeat",
+            entry_mode="manual_resume",
             stable_launcher_entered=True,
             resume_wake_recorded_to_router=True,
-            heartbeat_trigger_evidence_loaded=True,
-            heartbeat_interval_minutes=5,
-            heartbeat_trigger_bound_to_current_run=True,
-        ),
-        "heartbeat_trigger_not_current_run_bound": State(
-            status="running",
-            entry_mode="heartbeat",
-            stable_launcher_entered=True,
-            resume_wake_recorded_to_router=True,
-            heartbeat_trigger_evidence_loaded=True,
-            heartbeat_interval_minutes=1,
-            heartbeat_trigger_bound_to_current_run=False,
+            manual_resume_trigger_evidence_loaded=True,
+            manual_resume_trigger_sequence=1,
+            manual_resume_trigger_bound_to_current_run=False,
         ),
         "active_blocker_handled_before_resume_state_load": State(
             status="running",
-            entry_mode="heartbeat",
+            entry_mode="manual_resume",
             holder="controller",
             stable_launcher_entered=True,
             resume_wake_recorded_to_router=True,
-            heartbeat_trigger_evidence_loaded=True,
-            heartbeat_interval_minutes=1,
-            heartbeat_trigger_bound_to_current_run=True,
+            manual_resume_trigger_evidence_loaded=True,
+            manual_resume_trigger_sequence=1,
+            manual_resume_trigger_bound_to_current_run=True,
             active_control_blocker_scan_done=True,
             active_control_blocker_present=True,
             active_control_blocker_deferred_until_resume_ready=True,
@@ -1348,13 +1326,13 @@ def hazard_states() -> dict[str, State]:
         ),
         "active_blocker_waited_before_role_rehydration": State(
             status="running",
-            entry_mode="heartbeat",
+            entry_mode="manual_resume",
             holder="controller",
             stable_launcher_entered=True,
             resume_wake_recorded_to_router=True,
-            heartbeat_trigger_evidence_loaded=True,
-            heartbeat_interval_minutes=1,
-            heartbeat_trigger_bound_to_current_run=True,
+            manual_resume_trigger_evidence_loaded=True,
+            manual_resume_trigger_sequence=1,
+            manual_resume_trigger_bound_to_current_run=True,
             active_control_blocker_scan_done=True,
             active_control_blocker_present=True,
             active_control_blocker_deferred_until_resume_ready=True,
@@ -1557,8 +1535,8 @@ def hazard_states() -> dict[str, State]:
             pm_resume_status_next_step_matches_manifest_check=True,
             pm_resume_manifest_check_folded=True,
         ),
-        "heartbeat_prompt_allows_manifest_checkpoint_stop": _with_pm_decision(
-            heartbeat_prompt_continuation_boundary_stated=False,
+        "manual_resume_prompt_allows_manifest_checkpoint_stop": _with_pm_decision(
+            resume_prompt_continuation_boundary_stated=False,
         ),
         "run_until_wait_stops_at_manifest_check": _ready_for_pm(
             run_until_wait_stopped_at_manifest_check=True,
@@ -1681,3 +1659,4 @@ __all__ = [
     "next_states",
     "resume_reentry_invariant",
 ]
+

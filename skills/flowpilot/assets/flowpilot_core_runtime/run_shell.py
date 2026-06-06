@@ -161,8 +161,72 @@ def record_startup_intake_result(shell: RunShell, result_path: Path) -> dict[str
     if not result_path.is_absolute():
         result_path = (shell.root / result_path).resolve()
     result = _read_json(result_path)
-    if result.get("status") != "confirmed":
+    status = str(result.get("status") or "")
+    startup_answers = result.get("startup_answers") if isinstance(result.get("startup_answers"), dict) else {}
+    if status == "blocked":
+        if startup_answers.get(runtime.BACKGROUND_COLLABORATION_ACK_FIELD) is not False:
+            raise runtime.BlackBoxRuntimeError(
+                "blocked startup intake must record background_collaboration_authorized=false"
+            )
+        startup_root = shell.run_root / "startup_intake"
+        startup_root.mkdir(parents=True, exist_ok=True)
+        copied_result = startup_root / "startup_intake_result.json"
+        shutil.copy2(result_path, copied_result)
+        copied: dict[str, str] = {"result": str(copied_result)}
+        raw_receipt = result.get("receipt_path")
+        if isinstance(raw_receipt, str) and raw_receipt:
+            source = _resolve_record_path(shell.root, result_path, raw_receipt)
+            if source.exists():
+                target = startup_root / "startup_intake_receipt.json"
+                shutil.copy2(source, target)
+                copied["receipt"] = str(target)
+
+        ledger = load_run_ledger(shell)
+        record = {
+            "schema_version": "black_box_flowpilot.startup_intake.v1",
+            "status": "blocked",
+            "source": result.get("source", ""),
+            "launch_mode": result.get("launch_mode", ""),
+            "headless": result.get("headless"),
+            "formal_startup_allowed": result.get("formal_startup_allowed"),
+            "startup_answers": startup_answers,
+            "block_reason": str(result.get("block_reason") or "background_collaboration_required"),
+            "body_visibility": "none",
+            "controller_may_read_body": False,
+            "body_text_included": False,
+            "current_run_authority": True,
+            "imported_from": str(result_path),
+            "run_paths": copied,
+            "recorded_at": runtime.now_iso(),
+        }
+        ledger["startup_intake"] = record
+        runtime._event(
+            ledger,
+            "startup_intake_recorded",
+            status="blocked",
+            block_reason=record["block_reason"],
+            source=str(result_path),
+        )
+        runtime.record_terminal_lifecycle(
+            ledger,
+            "stopped_by_user",
+            reason=record["block_reason"],
+            actor="startup_intake",
+        )
+        if isinstance(ledger.get("terminal_lifecycle"), dict):
+            ledger["terminal_lifecycle"]["startup_block_reason"] = record["block_reason"]
+        if isinstance(ledger.get("lifecycle"), dict):
+            ledger["lifecycle"]["startup_block_reason"] = record["block_reason"]
+        save_run_ledger(shell, ledger, guard_trigger="startup_blocked")
+        return record
+    if status != "confirmed":
         raise runtime.BlackBoxRuntimeError("startup intake must be confirmed")
+    if startup_answers.get(runtime.BACKGROUND_COLLABORATION_ACK_FIELD) is not True:
+        raise runtime.BlackBoxRuntimeError(
+            runtime.BACKGROUND_COLLABORATION_REQUIRED_MESSAGE
+            + ": "
+            + runtime.background_collaboration_blocker({"startup_intake": {"startup_answers": startup_answers}})
+        )
     body_path = _resolve_record_path(shell.root, result_path, str(result.get("body_path", "")))
     if not body_path.exists():
         raise runtime.BlackBoxRuntimeError(f"missing startup body: {body_path}")

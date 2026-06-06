@@ -36,13 +36,10 @@ def _current_node_pre_review_reconciliation_blockers(router: ModuleType, project
             blockers.append({'kind': 'pending_current_node_card_return', 'card_id': pending_return.get('card_id'), 'card_ids': pending_return.get('card_ids') or [], 'target_role': pending_return.get('target_role'), 'card_return_event': pending_return.get('card_return_event'), 'expected_return_path': pending_return.get('expected_return_path'), 'reason': 'current-node system-card ACK/read receipt must close before reviewer work', 'scope_kind': 'current_node', 'node_id': active_node_id})
     return blockers
 
-def _startup_pre_review_reconciliation_blockers(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+def _startup_runtime_entry_reconciliation_blockers(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     flags = run_state.get('flags') if isinstance(run_state.get('flags'), dict) else {}
     blockers: list[dict[str, Any]] = []
-    required_flags = (('banner_emitted', 'startup banner display must be reconciled before startup fact review'), ('roles_started', 'startup role slots must be reconciled before startup fact review'), ('role_core_prompts_injected', 'startup role core prompts must be reconciled before startup fact review'), ('controller_role_confirmed', 'Controller boundary confirmation must be reconciled before startup fact review'), ('startup_mechanical_audit_written', 'startup mechanical audit must be reconciled before startup fact review'), ('startup_display_status_written', 'startup display status must be reconciled before startup fact review'))
-    answers = router._startup_answers_from_run(run_root)
-    if router._scheduled_continuation_requested(answers):
-        required_flags = (('continuation_binding_recorded', 'startup heartbeat binding must be reconciled before startup fact review'), *required_flags)
+    required_flags = (('banner_emitted', 'startup banner display must be reconciled before PM startup work'), ('controller_role_confirmed', 'Controller boundary confirmation must be reconciled before PM startup work'), ('startup_mechanical_audit_written', 'startup mechanical audit must be reconciled before PM startup work'), ('startup_display_status_written', 'startup display status must be reconciled before PM startup work'))
     for flag, reason in required_flags:
         if not flags.get(flag):
             blockers.append({'kind': 'missing_startup_flag', 'flag': flag, 'reason': reason, 'scope_kind': 'startup', 'scope_id': 'startup'})
@@ -51,13 +48,13 @@ def _startup_pre_review_reconciliation_blockers(router: ModuleType, project_root
     except router.RouterError:
         bootstrap = {}
     bootstrap_flags = bootstrap.get('flags') if isinstance(bootstrap.get('flags'), dict) else {}
-    for flag, reason in (('banner_emitted', 'startup banner display must be reconciled before startup fact review'), ('roles_started', 'startup role slots must be reconciled before startup fact review')):
+    for flag, reason in (('banner_emitted', 'startup banner display must be reconciled before PM startup work'),):
         if not bootstrap_flags.get(flag):
             blockers.append({'kind': 'missing_startup_bootstrap_flag', 'flag': flag, 'reason': reason, 'scope_kind': 'startup', 'scope_id': 'startup'})
     if not router._startup_pre_review_cards_delivered(run_state):
-        blockers.append({'kind': 'startup_prep_cards_not_all_sent', 'missing_card_flags': sorted((flag for flag in router._startup_pre_review_card_flags() if not flags.get(flag))), 'reason': 'startup prep cards must be sent before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
+        blockers.append({'kind': 'startup_prep_cards_not_all_sent', 'missing_card_flags': sorted((flag for flag in router._startup_pre_review_card_flags() if not flags.get(flag))), 'reason': 'startup PM prep cards must be sent before PM startup work', 'scope_kind': 'startup', 'scope_id': 'startup'})
     for pending_return in router._startup_pre_review_pending_returns(run_root, run_state):
-        blockers.append({'kind': 'pending_startup_prep_card_return', 'card_id': pending_return.get('card_id'), 'card_ids': pending_return.get('card_ids') or [], 'target_role': pending_return.get('target_role'), 'card_return_event': pending_return.get('card_return_event'), 'expected_return_path': pending_return.get('expected_return_path'), 'reason': 'startup prep card ACK/read receipt must close before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
+        blockers.append({'kind': 'pending_startup_prep_card_return', 'card_id': pending_return.get('card_id'), 'card_ids': pending_return.get('card_ids') or [], 'target_role': pending_return.get('target_role'), 'card_return_event': pending_return.get('card_return_event'), 'expected_return_path': pending_return.get('expected_return_path'), 'reason': 'startup prep card ACK/read receipt must close before PM startup work', 'scope_kind': 'startup', 'scope_id': 'startup'})
     action_dir = router._controller_actions_dir(run_root)
     if action_dir.exists():
         for action_path in sorted(action_dir.glob('*.json')):
@@ -78,14 +75,17 @@ def _startup_pre_review_reconciliation_blockers(router: ModuleType, project_root
             if entry.get('action_type') in {'await_card_return_event', 'await_card_bundle_return_event'}:
                 continue
             if closure.blocks_progress:
-                blockers.append({'kind': 'pending_startup_controller_row', 'action_id': entry.get('action_id'), 'action_type': entry.get('action_type'), 'status': entry.get('status'), 'router_reconciliation_status': entry.get('router_reconciliation_status'), 'closure_classification': closure.classification, 'closure_reason': closure.reason, 'reason': 'startup-local Controller row must be closed by the shared closure kernel before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
+                blockers.append({'kind': 'pending_startup_controller_row', 'action_id': entry.get('action_id'), 'action_type': entry.get('action_type'), 'status': entry.get('status'), 'router_reconciliation_status': entry.get('router_reconciliation_status'), 'closure_classification': closure.classification, 'closure_reason': closure.reason, 'reason': 'startup-local Controller row must be closed by the shared closure kernel before PM startup work', 'scope_kind': 'startup', 'scope_id': 'startup'})
     active_blocker = run_state.get('active_control_blocker')
     if isinstance(active_blocker, dict) and flowpilot_closure_kernel.closure_blocks_progress('control_blocker', active_blocker) and (not router._resume_reentry_gate_pending(run_state)):
-        blockers.append({'kind': 'active_startup_control_blocker', 'control_blocker_id': active_blocker.get('control_blocker_id'), 'source': active_blocker.get('source'), 'reason': 'active local control blocker must be resolved before Reviewer startup fact review', 'scope_kind': 'startup', 'scope_id': 'startup'})
+        blockers.append({'kind': 'active_startup_control_blocker', 'control_blocker_id': active_blocker.get('control_blocker_id'), 'source': active_blocker.get('source'), 'reason': 'active local control blocker must be resolved before PM startup work', 'scope_kind': 'startup', 'scope_id': 'startup'})
     return blockers
 
+def _startup_pre_review_reconciliation_blockers(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
+    return _startup_runtime_entry_reconciliation_blockers(router, project_root, run_root, run_state)
+
 def _pre_review_reconciliation_blockers_for_trigger(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], review_trigger: str) -> list[dict[str, Any]]:
-    if review_trigger in router.STARTUP_REVIEW_BEGIN_JOIN_EVENTS or review_trigger == router.REVIEWER_STARTUP_FACT_CARD_ID:
+    if review_trigger in router.STARTUP_REVIEW_BEGIN_JOIN_EVENTS:
         return router._startup_pre_review_reconciliation_blockers(project_root, run_root, run_state)
     return router._current_node_pre_review_reconciliation_blockers(project_root, run_root, run_state)
 

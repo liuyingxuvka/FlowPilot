@@ -50,16 +50,15 @@ def mutual_role_reminder(*, source_role: str, target_role: str, envelope_kind: s
 def packet_open_work_authority(*, role: str, packet_type: str, source: str) -> dict[str, Any]:
     """Successful current assignment authority: do not wait for another prompt.
 
-    PM packets may exit through pm_startup_repair_request,
-    pm_startup_protocol_dead_end, or pm_control_blocker_repair_decision;
-    ordinary role packets return their ordinary blocker back to PM.
+    PM packets may exit through the current packet output contract or
+    pm_control_blocker_repair_decision when Router has delivered a current
+    control blocker; ordinary role packets return their ordinary blocker back
+    to PM.
     """
     if role == "project_manager":
         required_exit = "expected_pm_packet_output_or_existing_pm_recovery_decision"
         legal_exits = [
             "expected_packet_result",
-            "pm_startup_repair_request",
-            "pm_startup_protocol_dead_end",
             "pm_control_blocker_repair_decision",
         ]
     else:

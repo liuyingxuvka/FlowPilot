@@ -1207,7 +1207,12 @@ def router_supplied_contracts(project_root: Path) -> dict[str, dict]:
 
 def project_live_run_projection(project_root: Path) -> dict[str, object]:
     current = _read_json(project_root / ".flowpilot" / "current.json")
-    run_root_value = current.get("current_run_root")
+    legacy_pointer_keys = sorted(
+        key
+        for key in ("current_run_id", "current_run_root", "active_run_id", "active_run_root")
+        if current.get(key)
+    )
+    run_root_value = current.get("run_root")
     run_root = project_root / run_root_value if run_root_value else None
     contracts = router_supplied_contracts(project_root)
     contract_ids = set(contracts)
@@ -1216,18 +1221,40 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
 
     projection: dict[str, object] = {
         "ok": True,
-        "current_run_id": current.get("current_run_id"),
+        "current_run_id": current.get("run_id"),
         "current_run_root": run_root_value,
         "router_supplied_contracts": sorted(contract_ids),
         "current_findings": [],
         "historical_gate_alignment_findings": [],
         "risk_surfaces": [],
         "mitigated_paths": [],
+        "metadata_only": True,
+        "safe_to_claim_live_run_confidence": False,
+        "skipped": False,
+        "skip_reason": "",
         "current_run_can_continue": True,
         "classification": "no_active_dynamic_return_path_findings",
     }
-    if not run_root or not run_root.exists():
+    if legacy_pointer_keys:
         projection["ok"] = False
+        projection["skipped"] = True
+        projection["skip_reason"] = "current pointer uses unsupported legacy aliases"
+        projection["classification"] = "current_pointer_current_contract_invalid"
+        projection["current_run_can_continue"] = False
+        projection["current_findings"].append(
+            {
+                "kind": "current_pointer_current_contract_invalid",
+                "legacy_aliases_rejected": legacy_pointer_keys,
+                "model_meaning": (
+                    "Current-run projection accepts only run_id/run_root. It must not translate "
+                    "legacy current_run_* or active_run_* aliases into current authority."
+                ),
+            }
+        )
+        return projection
+    if not run_root or not run_root.exists():
+        projection["skipped"] = True
+        projection["skip_reason"] = "no .flowpilot/current.json with current run_id/run_root found"
         projection["classification"] = "current_run_missing"
         projection["current_run_can_continue"] = False
         return projection
@@ -1382,6 +1409,8 @@ def project_live_run_projection(project_root: Path) -> dict[str, object]:
     if findings:
         projection["current_run_can_continue"] = False
         projection["classification"] = "blocked_by_dynamic_return_path_findings"
+    else:
+        projection["safe_to_claim_live_run_confidence"] = True
     projection["current_finding_count"] = len(findings)
     projection["historical_gate_alignment_finding_count"] = len(projection["historical_gate_alignment_findings"])
     projection["risk_surface_count"] = len(projection["risk_surfaces"])

@@ -31,6 +31,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -59,8 +61,6 @@ def _reconcile_durable_wait_evidence(
 ) -> dict[str, Any]:
     batch_reconciliation = _refresh_all_parallel_packet_batches_from_durable_results(project_root, run_root, run_state)
     changed = bool(batch_reconciliation.get("changed"))
-    role_output_reconciliation = _try_reconcile_startup_fact_role_output_ledger(project_root, run_root, run_state)
-    changed = bool(role_output_reconciliation.get("changed")) or changed
     direct_role_output_reconciliation = _try_reconcile_direct_role_output_event_ledger(project_root, run_root, run_state)
     changed = bool(direct_role_output_reconciliation.get("changed")) or changed
     changed = _try_reconcile_material_scan_body_delivery(project_root, run_root, run_state) or changed
@@ -77,14 +77,12 @@ def _reconcile_durable_wait_evidence(
                 "changed": changed,
                 "controller_visibility": "metadata_only",
                 "batches": batch_reconciliation.get("batches"),
-                "role_output_reconciliation": role_output_reconciliation,
                 "direct_role_output_reconciliation": direct_role_output_reconciliation,
             },
         )
     return {
         **batch_reconciliation,
         "changed": changed,
-        "role_output_reconciliation": role_output_reconciliation,
         "direct_role_output_reconciliation": direct_role_output_reconciliation,
     }
 

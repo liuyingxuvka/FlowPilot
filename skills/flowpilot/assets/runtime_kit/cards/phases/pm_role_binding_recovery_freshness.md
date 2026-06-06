@@ -21,8 +21,9 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Put reviewer, worker, or bounded consultation advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 
 
-Before resume or startup activation, decide whether the runtime-requested role
-assignments and leases for the current formal task are fresh.
+Before resume, current assignment recovery, or any role handoff, decide
+whether the runtime-requested role assignments and leases for the current
+formal task are fresh.
 
 Accept only:
 

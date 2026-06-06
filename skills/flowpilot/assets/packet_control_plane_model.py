@@ -40,11 +40,11 @@ EXTERNAL_INPUTS = (
     NodeCase("result_body_hash_mismatch_packet", "block", "worker"),
     NodeCase("stale_result_body_packet", "block", "worker"),
     NodeCase("missing_reminder_packet", "pass", "worker"),
-    HeartbeatCase("heartbeat_valid_packet"),
-    HeartbeatCase("heartbeat_missing_state"),
-    HeartbeatCase("heartbeat_ambiguous_worker_state"),
-    HeartbeatCase("heartbeat_worker_result_pending_review"),
-    HeartbeatCase("heartbeat_missing_reminder"),
+    ManualResumeCase("manual_resume_valid_packet"),
+    ManualResumeCase("manual_resume_missing_state"),
+    ManualResumeCase("manual_resume_ambiguous_worker_state"),
+    ManualResumeCase("manual_resume_worker_result_pending_review"),
+    ManualResumeCase("manual_resume_missing_reminder"),
 )
 
 def initial_state() -> State:
@@ -58,7 +58,7 @@ def build_workflow() -> Workflow:
     return Workflow(
         (
             PMIssuePacket(),
-            HeartbeatResumeLoad(),
+            ManualResumeLoad(),
             ControllerAskPMOnResume(),
             PMResumeDecision(),
             PacketRuntimeWrite(),
@@ -68,7 +68,7 @@ def build_workflow() -> Workflow:
             RouterDirectDispatch(),
             WorkerOrControllerResult(),
             ControllerResultRelay(),
-            ReviewerResultEnvelopeCheck(),
+            RuntimeResultEnvelopeCheck(),
             ReviewerResult(),
             PMRepairAfterInvalidOrigin(),
             PMAdvance(),

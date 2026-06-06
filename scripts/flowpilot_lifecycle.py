@@ -1,4 +1,4 @@
-"""FlowPilot lifecycle inventory for heartbeat/manual-resume continuation."""
+"""FlowPilot lifecycle inventory for manual-resume continuation."""
 
 from __future__ import annotations
 
@@ -106,21 +106,6 @@ def inspect_codex_automations(codex_home: Path, known_ids: set[str]) -> dict[str
     return result
 
 
-def collect_known_automation_ids(state: dict[str, Any], frontier: dict[str, Any]) -> set[str]:
-    ids = set()
-    for payload in (state, frontier):
-        for key in ("heartbeat_automation_id", "automation_id"):
-            value = payload.get(key)
-            if isinstance(value, str) and value:
-                ids.add(value)
-    heartbeat = frontier.get("heartbeat_launcher") if isinstance(frontier.get("heartbeat_launcher"), dict) else {}
-    for key in ("automation_id", "heartbeat_automation_id"):
-        value = heartbeat.get(key)
-        if isinstance(value, str) and value:
-            ids.add(value)
-    return ids
-
-
 def classify_required_actions(
     mode: str,
     state: dict[str, Any],
@@ -129,36 +114,15 @@ def classify_required_actions(
 ) -> list[dict[str, Any]]:
     actions: list[dict[str, Any]] = []
     state_status = str(state.get("status") or "unknown").lower()
-    frontier_heartbeat = frontier.get("heartbeat_launcher") if isinstance(frontier.get("heartbeat_launcher"), dict) else {}
     desired_inactive = mode in {"pause", "terminal"} or state_status in TERMINAL_STATUSES
 
-    if desired_inactive:
-        for record in codex.get("active", []):
-            actions.append(
-                {
-                    "kind": "codex_automation_update",
-                    "target": record.get("id") or record.get("path"),
-                    "action": "set_status_PAUSED",
-                    "reason": "route pause or terminal state requires no active FlowPilot heartbeat automation",
-                }
-            )
-    elif mode == "restart" and not codex.get("active"):
+    for record in codex.get("active", []):
         actions.append(
             {
                 "kind": "codex_automation_update",
-                "target": frontier_heartbeat.get("automation_id"),
-                "action": "set_status_ACTIVE_or_create",
-                "reason": "route restart requires an active stable heartbeat automation",
-            }
-        )
-
-    if desired_inactive and str(frontier_heartbeat.get("status") or "").upper() == "ACTIVE":
-        actions.append(
-            {
-                "kind": "local_frontier_writeback",
-                "target": frontier.get("_path"),
-                "action": "write_inactive_heartbeat_lifecycle_snapshot",
-                "reason": "local execution frontier still reports active heartbeat lifecycle",
+                "target": record.get("id") or record.get("path"),
+                "action": "set_status_PAUSED",
+                "reason": "current FlowPilot uses manual resume and foreground patrol, not Codex heartbeat automation",
             }
         )
 
@@ -171,7 +135,7 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
     paths = resolve_flowpilot_paths(root)
     state = read_json_if_exists(Path(paths["state_path"]))
     frontier = read_json_if_exists(Path(paths["frontier_path"]))
-    known_ids = collect_known_automation_ids(state, frontier)
+    known_ids: set[str] = set()
     codex = inspect_codex_automations(codex_home, known_ids)
     actions = classify_required_actions(args.mode, state, frontier, codex)
     return {
@@ -185,8 +149,8 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
         "ok": not actions,
         "decision": "reconciled" if not actions else "actions_required",
         "boundary": (
-            "This helper scans FlowPilot heartbeat/manual-resume lifecycle evidence only. "
-            "Codex automations must be changed through the Codex app automation interface."
+            "This helper scans current FlowPilot manual-resume lifecycle evidence and Codex automation status only. "
+            "Codex automations must be changed through the Codex app automation interface; current FlowPilot does not create them."
         ),
         "state": {
             "path": state.get("_path"),
@@ -202,7 +166,6 @@ def build_payload(args: argparse.Namespace) -> dict[str, Any]:
             "active_route": frontier.get("active_route"),
             "route_version": frontier.get("route_version"),
             "frontier_version": frontier.get("frontier_version"),
-            "heartbeat_launcher": frontier.get("heartbeat_launcher"),
         },
         "codex_automations": codex,
         "required_actions": actions,
@@ -221,7 +184,7 @@ def write_lifecycle_record(root: Path, payload: dict[str, Any]) -> dict[str, Any
 
 
 def parse_args(argv: list[str]) -> argparse.Namespace:
-    parser = argparse.ArgumentParser(description="Scan FlowPilot heartbeat/manual-resume lifecycle before pause, restart, or terminal cleanup.")
+    parser = argparse.ArgumentParser(description="Scan FlowPilot manual-resume lifecycle before pause, restart, or terminal cleanup.")
     parser.add_argument("--root", default=".", help="Project root containing .flowpilot")
     parser.add_argument("--mode", choices=("scan", "pause", "restart", "terminal"), default="scan")
     parser.add_argument("--codex-home", default="", help="Override CODEX_HOME; defaults to ~/.codex")

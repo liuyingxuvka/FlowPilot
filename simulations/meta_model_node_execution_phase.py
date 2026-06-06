@@ -31,31 +31,31 @@ __all__ = ["apply_node_execution_phase"]
 
 def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
     if _route_ready(state) and state.completed_chunks < TARGET_CHUNKS:
-        if not state.heartbeat_loaded_state:
+        if not state.resume_loaded_state:
             yield _step(
                 state,
-                label="heartbeat_loaded_state",
-                action="continuation turn loads local state, active route, latest heartbeat or manual-resume evidence, lifecycle evidence, and role-binding ledger",
-                heartbeat_loaded_state=True,
-                active_node="heartbeat_load_frontier",
+                label="resume_loaded_state",
+                action="continuation turn loads local state, active route, latest manual-resume and foreground-duty evidence, lifecycle evidence, and role-binding ledger",
+                resume_loaded_state=True,
+                active_node="resume_load_frontier",
             )
             return
-        if not state.heartbeat_loaded_frontier:
+        if not state.resume_loaded_frontier:
             yield _step(
                 state,
-                label="heartbeat_loaded_execution_frontier",
+                label="resume_loaded_execution_frontier",
                 action="continuation turn loads execution_frontier.json before selecting work",
-                heartbeat_loaded_frontier=True,
-                active_node="heartbeat_load_packet_ledger",
+                resume_loaded_frontier=True,
+                active_node="resume_load_packet_ledger",
             )
             return
-        if not state.heartbeat_loaded_packet_ledger:
+        if not state.resume_loaded_packet_ledger:
             yield _step(
                 state,
-                label="heartbeat_loaded_packet_ledger",
+                label="resume_loaded_packet_ledger",
                 action="continuation turn loads packet_ledger.json before asking PM or dispatching worker work",
-                heartbeat_loaded_packet_ledger=True,
-                active_node="heartbeat_load_role_binding_memory",
+                resume_loaded_packet_ledger=True,
+                active_node="resume_load_role_binding_memory",
             )
             return
         if (
@@ -64,7 +64,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
         ):
             yield _step(
                 state,
-                label="heartbeat_checked_or_restarted_persistent_router_daemon",
+                label="resume_checked_or_restarted_persistent_router_daemon",
                 action="continuation turn checks the persistent Router daemon lock/status, restarts only a dead or stale daemon, and rescans the Controller action ledger before role recovery or PM resume",
                 router_daemon_started=True,
                 router_daemon_lock_acquired=True,
@@ -74,52 +74,52 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 controller_action_watch_active=True,
                 router_daemon_recovered_on_resume=True,
                 terminal_router_daemon_stopped=False,
-                active_node="heartbeat_load_role_binding_memory",
+                active_node="resume_load_role_binding_memory",
             )
             return
-        if not state.heartbeat_loaded_role_binding_memory:
+        if not state.resume_loaded_role_binding_memory:
             yield _step(
                 state,
-                label="heartbeat_loaded_role_binding_memory",
+                label="resume_loaded_role_binding_memory",
                 action="continuation turn loads structured role memory packets before restoring or replacing roles",
-                heartbeat_loaded_role_binding_memory=True,
-                active_node="heartbeat_rehydrate_runtime_roles",
+                resume_loaded_role_binding_memory=True,
+                active_node="resume_rehydrate_runtime_roles",
             )
             return
-        if not state.heartbeat_host_rehydrate_requested:
+        if not state.resume_host_rehydrate_requested:
             yield _step(
                 state,
-                label="heartbeat_host_spawn_or_rehydrate_runtime_roles",
+                label="resume_host_spawn_or_rehydrate_runtime_roles",
                 action="router asks the host to restore or open all runtime-requested roles before PM resume",
-                heartbeat_host_rehydrate_requested=True,
-                active_node="heartbeat_rehydrate_runtime_roles",
+                resume_host_rehydrate_requested=True,
+                active_node="resume_rehydrate_runtime_roles",
             )
             return
-        if not state.heartbeat_restored_runtime_roles:
+        if not state.resume_restored_runtime_roles:
             yield _step(
                 state,
-                label="heartbeat_restored_required_role_binding_coverage",
+                label="resume_restored_required_role_binding_coverage",
                 action="continuation turn resumes available role bindings or prepares replacements from role memory",
-                heartbeat_restored_runtime_roles=True,
+                resume_restored_runtime_roles=True,
                 replacement_roles_seeded_from_memory=True,
-                active_node="heartbeat_rehydrate_runtime_roles",
+                active_node="resume_rehydrate_runtime_roles",
             )
             return
-        if not state.heartbeat_rehydrated_runtime_roles:
+        if not state.resume_rehydrated_runtime_roles:
             yield _step(
                 state,
-                label="heartbeat_rehydrated_required_role_binding_coverage",
+                label="resume_rehydrated_required_role_binding_coverage",
                 action="continuation turn records full role-binding rehydration status before asking the PM",
-                heartbeat_rehydrated_runtime_roles=True,
+                resume_rehydrated_runtime_roles=True,
                 active_node="write_role_binding_recovery_report",
             )
             return
-        if not state.heartbeat_injected_current_run_memory_into_roles:
+        if not state.resume_injected_current_run_memory_into_roles:
             yield _step(
                 state,
-                label="heartbeat_injected_current_run_memory_into_roles",
+                label="resume_injected_current_run_memory_into_roles",
                 action="host injects each role's current-run memory and PM resume context before PM runway",
-                heartbeat_injected_current_run_memory_into_roles=True,
+                resume_injected_current_run_memory_into_roles=True,
                 active_node="write_role_binding_recovery_report",
             )
             return
@@ -129,33 +129,33 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 label="role_binding_recovery_report_written",
                 action="write the role-binding rehydration report with restored, replaced, blocked, and memory-seeded role status before any PM resume decision",
                 role_binding_recovery_report_written=True,
-                active_node="heartbeat_ask_project_manager",
+                active_node="resume_ask_project_manager",
             )
             return
-        if not state.heartbeat_pm_decision_requested:
+        if not state.resume_pm_decision_requested:
             yield _step(
                 state,
-                label="heartbeat_asked_project_manager",
+                label="resume_asked_project_manager",
                 action="continuation turn asks the project manager for PM_DECISION from the current frontier and packet ledger",
-                heartbeat_pm_decision_requested=True,
+                resume_pm_decision_requested=True,
                 active_node="check_pm_controller_reminder",
             )
             return
-        if not state.heartbeat_pm_controller_reminder_checked:
+        if not state.resume_pm_controller_reminder_checked:
             yield _step(
                 state,
-                label="heartbeat_pm_controller_reminder_checked",
+                label="resume_pm_controller_reminder_checked",
                 action="controller requires PM_DECISION to include controller_reminder before dispatching any packet",
-                heartbeat_pm_controller_reminder_checked=True,
+                resume_pm_controller_reminder_checked=True,
                 active_node="check_router_direct_dispatch_policy",
             )
             return
-        if not state.heartbeat_reviewer_dispatch_policy_checked:
+        if not state.resume_reviewer_dispatch_policy_checked:
             yield _step(
                 state,
-                label="heartbeat_reviewer_dispatch_policy_checked",
+                label="resume_reviewer_dispatch_policy_checked",
                 action="controller confirms NODE_PACKET dispatch requires router direct-dispatch preflight and ambiguous worker state blocks controller execution",
-                heartbeat_reviewer_dispatch_policy_checked=True,
+                resume_reviewer_dispatch_policy_checked=True,
                 active_node="await_pm_resume_decision",
             )
             return
@@ -182,12 +182,12 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                 active_node="check_continuation_resume_ready",
             )
             return
-        if not state.heartbeat_health_checked:
+        if not state.manual_resume_binding_health_checked:
             yield _step(
                 state,
                 label="continuation_resume_ready_checked",
-                action="check automated heartbeat health when supported, or check manual-resume state/frontier/role-binding-memory readiness when no real wakeup exists",
-                heartbeat_health_checked=True,
+                action="check manual resume binding health when supported, or check manual-resume state/frontier/role-binding-memory readiness when no real wakeup exists",
+                manual_resume_binding_health_checked=True,
                 active_node="check_unfinished_current_node",
             )
             return
@@ -204,7 +204,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="unfinished_current_node_recovery_checked",
-                action="confirm heartbeat should resume the current node or may advance",
+                action="confirm foreground duty should resume the current node or may advance",
                 unfinished_current_node_recovery_checked=True,
                 active_node="parent_focused_interrogation",
             )
@@ -377,7 +377,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="lightweight_self_check_completed",
-                action="run 5-10 lightweight self-check questions for the current heartbeat micro-step",
+                action="run 5-10 lightweight self-check questions for the current foreground-duty micro-step",
                 lightweight_self_check_done=True,
                 lightweight_self_check_questions=DEFAULT_LIGHTWEIGHT_SELF_CHECK_QUESTIONS,
                 lightweight_self_check_scope_id="active-micro-step",
@@ -639,7 +639,7 @@ def apply_node_execution_phase(self, state: State) -> Iterable[FunctionResult]:
                     chunk_state="none",
                     verification_defined=False,
                     checkpoint_written=False,
-                    heartbeat_health_checked=False,
+                    manual_resume_binding_health_checked=False,
                     parent_focused_interrogation_done=False,
                     parent_focused_interrogation_questions=0,
                     parent_focused_interrogation_scope_id="",

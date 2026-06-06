@@ -91,7 +91,7 @@ INVARIANTS = (
     ),
     Invariant(
         "review_pass_requires_result_envelope_body_and_agent_checks",
-        "Reviewer pass requires result envelope, result body hash, and completed-agent role checks.",
+        "Reviewer quality pass requires prior Runtime/Router result envelope, body hash, and completed-agent role checks.",
         review_pass_requires_result_envelope_body_and_agent_checks,
     ),
     Invariant(
@@ -125,14 +125,14 @@ INVARIANTS = (
         packet_open_blocks_never_produce_result_or_advance,
     ),
     Invariant(
-        "heartbeat_resume_packet_requires_pm_request",
-        "Heartbeat cannot mint a resume packet without first asking PM.",
-        heartbeat_resume_packet_requires_pm_request,
+        "manual_resume_packet_requires_pm_request",
+        "Manual resume cannot mint a resume packet without first asking PM.",
+        manual_resume_packet_requires_pm_request,
     ),
     Invariant(
-        "heartbeat_resume_packet_requires_loaded_state",
-        "Heartbeat resume packets require loaded current-run state.",
-        heartbeat_resume_packet_requires_loaded_state,
+        "manual_resume_packet_requires_loaded_state",
+        "Manual resume packets require loaded current-run state.",
+        manual_resume_packet_requires_loaded_state,
     ),
     Invariant(
         "ambiguous_worker_state_never_advances",
@@ -140,9 +140,9 @@ INVARIANTS = (
         ambiguous_worker_state_never_advances,
     ),
     Invariant(
-        "missing_heartbeat_state_never_advances",
-        "Missing current-run state blocks heartbeat execution.",
-        missing_heartbeat_state_never_advances,
+        "missing_manual_resume_state_never_advances",
+        "Missing current-run state blocks manual resume execution.",
+        missing_manual_resume_state_never_advances,
     ),
 )
 
@@ -170,9 +170,9 @@ __all__ = [
     "result_requires_dispatch",
     "dispatch_requires_controller_reminder",
     "packet_open_blocks_never_produce_result_or_advance",
-    "heartbeat_resume_packet_requires_pm_request",
-    "heartbeat_resume_packet_requires_loaded_state",
+    "manual_resume_packet_requires_pm_request",
+    "manual_resume_packet_requires_loaded_state",
     "ambiguous_worker_state_never_advances",
-    "missing_heartbeat_state_never_advances",
+    "missing_manual_resume_state_never_advances",
     "INVARIANTS",
 ]

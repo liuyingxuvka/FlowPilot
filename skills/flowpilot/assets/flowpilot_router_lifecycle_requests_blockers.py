@@ -1,4 +1,4 @@
-"""Exception blocker fallback helpers for FlowPilot router lifecycle requests."""
+"""Exception blocker diagnostic helpers for FlowPilot router lifecycle requests."""
 
 from __future__ import annotations
 
@@ -15,6 +15,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -65,7 +67,7 @@ def _try_write_control_blocker_for_exception(
         )
     except Exception:
         try:
-            fallback = {
+            failure_record = {
                 "schema_version": "flowpilot.control_blocker_materialization_failure.v1",
                 "materialization_failed": True,
                 "source": source,
@@ -79,9 +81,9 @@ def _try_write_control_blocker_for_exception(
             assert_runtime_gateway_write(failure_path, GATEWAY_ROUTER_JSON, operation="append_control_blocker_materialization_failure")
             failure_path.parent.mkdir(parents=True, exist_ok=True)
             with failure_path.open("a", encoding="utf-8") as handle:
-                handle.write(json.dumps(fallback, sort_keys=True) + "\n")
-            fallback["fallback_diagnostic_path"] = project_relative(project_root, failure_path)
-            return fallback
+                handle.write(json.dumps(failure_record, sort_keys=True) + "\n")
+            failure_record["diagnostic_path"] = project_relative(project_root, failure_path)
+            return failure_record
         except Exception:
             return {
                 "schema_version": "flowpilot.control_blocker_materialization_failure.v1",

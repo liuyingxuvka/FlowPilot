@@ -7,7 +7,7 @@ TBD - created by archiving change deterministic-startup-bootstrap. Update Purpos
 FlowPilot SHALL create deterministic startup foundation files through code
 before the unified Router scheduler starts. The seed MUST be limited to local
 file and ledger initialization that requires no AI judgment, host automation,
-role opening, heartbeat creation, Controller core loading, or PM repair
+background role liveness work, foreground patrol setup, Controller core loading, or PM repair
 decision.
 
 #### Scenario: Seed creates the foundation before scheduling
@@ -41,13 +41,14 @@ startup intake seed.
 
 ### Requirement: Startup obligations use the unified scheduler
 FlowPilot SHALL schedule startup work that requires waiting, host automation,
-role state, or explicit postcondition reconciliation through the unified
+background role state, foreground patrol, or explicit postcondition reconciliation through the unified
 Router scheduler.
 
 #### Scenario: Non-deterministic startup work remains scheduled
 - **WHEN** startup foundation is ready
-- **THEN** role-slot startup, heartbeat binding when requested, and Controller
-  core loading are represented as scheduler rows with postcondition contracts
+- **THEN** current background collaboration checks, foreground patrol setup when
+  supported, and Controller core loading are represented as scheduler rows with
+  postcondition contracts
 
 ### Requirement: Scheduled row reconciliation is idempotent
 FlowPilot SHALL reconcile scheduled rows through one generic

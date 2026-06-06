@@ -16,10 +16,9 @@ model-backed project-control runtime:
 7. execute bounded chunks;
 8. verify each chunk before moving on;
 9. update the model and route when new facts invalidate the current route;
-10. open or restore runtime-required role bindings for each new formal
-  FlowPilot task, with a project manager as route-decision and
-  completion-runway authority and worker roles limited to bounded Helper
-  tasks;
+10. open, reuse, or replace only the currently requested packet responsibility
+  for each new formal FlowPilot task, with a project manager as route-decision
+  authority and worker roles limited to bounded Helper tasks;
 11. finish only after evidence proves the frozen contract is met.
 
 ## Current Maintenance Gate
@@ -70,6 +69,56 @@ when one member changes; keep false friends such as route display versus route
 mutation separate; and classify branch-fold candidates before Architecture
 Reduction, Model-Test Alignment, ModelMesh, StructureMesh, or replay work.
 
+The maintenance baseline also includes a focused blocker repair information-flow
+gate. It lives in
+`simulations/flowpilot_blocker_repair_information_flow_model.py`, is checked by
+`simulations/run_flowpilot_blocker_repair_information_flow_checks.py`, and
+records `simulations/flowpilot_blocker_repair_information_flow_results.json`.
+It validates that current blocker details, reviewer required-repair guidance,
+PM repair decisions, fresh repair package content, worker semantic deltas,
+success evidence contracts, reviewer recheck bindings, and same-blocker loop
+escapes remain connected end to end.
+
+The information-flow baseline also includes a broader project-control parent
+gate. It lives in
+`simulations/flowpilot_project_control_information_flow_model.py`, is checked
+by `simulations/run_flowpilot_project_control_information_flow_checks.py`, and
+records `simulations/flowpilot_project_control_information_flow_results.json`.
+It keeps interruption/manual lifecycle resume, reopened continuation runs,
+Controller break-glass repair, route mutation, on-demand role assignment,
+follow-up blockers, terminal stop, and closure paths under the same rule:
+nonterminal work needs current run state plus new information, or it must
+block, mutate, or stop instead of repeating stale work.
+
+The information-flow baseline is now also bound to concrete code contracts,
+test evidence, and prompt/card source markers through
+`simulations/run_flowpilot_information_flow_alignment_checks.py`, which records
+`simulations/flowpilot_information_flow_alignment_results.json`. That alignment
+gate checks 10 information-flow obligations across blocker repair, manual
+lifecycle resume, reopen, break-glass, route mutation, on-demand role
+assignment, closure, and terminal stop. The current contract forbids treating
+heartbeat automation, stale role reports, or fixed role-set restoration
+as current formal-run authority. PM result disposition has a direct opened-body
+validation test, and resume/role-dispatch evidence is bound to
+`flowpilot_new.py resume`, `resolve-role-assignment`, and `lease-agent`.
+
+The current startup trunk is Runtime/Router mechanical entry followed by PM
+first-round work. Startup no longer has a Reviewer startup fact gate or a PM
+startup activation gate. Runtime creates the current run, seals startup input,
+writes startup mechanical audit, writes display/status evidence, audits current
+run identity, and records any structured stop/block reason. When those
+mechanical conditions pass, Router delivers the sealed `user_intake` packet to
+PM for the first material/intake decision. Background or parallel roles remain
+mandatory FlowPilot capability: if the user-facing acknowledgement is disabled
+or the host cannot open the requested current role surface, Runtime stops or
+blocks; after authorization it opens, reuses, replaces, or leases only the
+currently requested packet responsibility through `resolve-role-assignment` and
+`lease-agent`. Reviewer judges human quality, evidence credibility, requirement
+satisfaction, and repair need only after Runtime accepts mechanics. FlowGuard
+operator judges model/process/state risks; Runtime/Router owns fields, hashes,
+paths, packet/result/current-run ids, role-agent binding, output-contract shape,
+and ledger absorption.
+
 As of the new-only FlowPilot contract, the active maintenance baseline is
 recorded in `docs/flowpilot_maintenance_convergence_20260527.md` and the
 current new-only surface-removal change. Completed OpenSpec changes were archived,
@@ -104,8 +153,8 @@ this gate are:
   runtime factories;
 - `flowpilot_router_protocol_catalog.py` for schema constants, action/event
   catalogs, system-card tables, gate contracts, and protocol lookup helpers;
-- `flowpilot_router_startup_flow.py` for startup, bootloader, resume, and
-  role-recovery phase bodies;
+- `flowpilot_router_startup_flow.py` for legacy Router startup, bootloader,
+  resume, and role-assignment/replacement phase bodies;
 - `flowpilot_router_self_interrogation.py` for early understanding checks,
   concise fallback summaries, and self-interrogation report helpers;
 - `flowpilot_router_controller_scheduler.py` for Controller scheduler rows,
@@ -240,15 +289,14 @@ and model-confidence overclaims must also fail.
   authoritative user reference; authenticity proves the content is an
   independent concept, not an existing screenshot, screenshot variant, desktop
   capture, old route UI, or prior failed evidence with cosmetic changes.
-- Heartbeat resume is an execution gate, not a status note. When an unfinished
-  node exists, the heartbeat must load the persisted frontier, execute the
-  current subnode/gate or record a concrete blocker, and cannot stop after only
-  writing "continue to the next gate."
-- Heartbeat is optional host capability. Unsupported hosts run in
-  `manual-resume` mode from the same `.flowpilot/` state, frontier, packet,
-  and role-binding memory evidence and must not require heartbeat automation.
-  Any controlled nonterminal stop records and displays a resume notice; terminal
-  completion records a completion notice instead of a resume prompt.
+- Manual lifecycle resume is an execution gate, not a status note. When an
+  unfinished node exists, `flowpilot_new.py resume --reason manual_resume` must
+  load current-run authority and return a concrete foreground duty; Controller
+  cannot stop after only writing "continue to the next gate."
+- There is no current heartbeat requirement. Nonterminal waiting uses
+  foreground duty and patrol refresh from the current ledger. Any controlled
+  nonterminal stop records and displays a resume notice; terminal completion
+  records a completion notice instead of a resume prompt.
 - Human-like inspection now begins with a neutral observation pass before
   judgement. The inspector first records what the artifact, screenshot, output,
   or exercised feature actually appears to be, then compares that observation
@@ -268,35 +316,29 @@ and model-confidence overclaims must also fail.
   existing child, inserts an adjacent repair/regeneration sibling, splits the
   finding into multiple focused children, or rebuilds/bubbles the subtree.
 - Pause, restart, and terminal cleanup now require unified lifecycle
-  reconciliation across Codex heartbeat automations, local state, execution
-  frontier, and heartbeat/manual-resume evidence.
-- Heartbeat recovery now restores or replaces runtime-required role bindings
-  before asking the project manager for a completion-oriented runway from the
-  current position to project completion. The controller no longer decides route
-  advancement directly from the frontier, and it must replace the visible plan
-  projection from each PM runway instead of working from a one-step gate.
-- Runtime-required roles are persistent as role responsibilities, but each new
-  formal FlowPilot task must receive fresh current-run role-binding evidence
-  when the user authorizes host-supported role assistance. FlowPilot writes
-  compact per-role memory packets under `.flowpilot/runs/<run-id>/role_binding_memory/`;
-  heartbeat and manual resume may load and resume stored agent ids only when
-  they belong to the same active task-born cohort.
-  Prior-route or earlier-task `agent_id` values are audit history only, not
-  startup evidence. Replacement from memory is allowed only inside same-task
-  continuation or after explicit user fallback approval. The project manager is
-  asked for a runway only after role memory rehydration and the
-  requested-role/fallback startup decision are recorded.
+  reconciliation across current-run ledger state, execution frontier,
+  packet/lease state, lifecycle guard, and foreground-duty evidence.
+- Manual lifecycle resume does not restore a fixed role set. It returns the
+  current foreground duty; when that duty asks for role work, Controller opens,
+  reuses, or replaces only the requested packet responsibility through
+  `resolve-role-assignment` and `lease-agent`.
+- Runtime-required roles are persistent as responsibilities, but each new
+  formal FlowPilot task must receive fresh current-run assignment/lease evidence
+  when the user authorizes host-supported role assistance. Prior-route or
+  earlier-task `agent_id` values are audit history only, not startup evidence.
+  Replacement memory is allowed only for the currently requested responsibility
+  and current packet/task boundary.
 - Public invocation text should explicitly say: use FlowPilot full protocol,
   including permission for FlowPilot to request additional runtime role
   assistance where the host and current tool policy support it,
-  heartbeat/manual-resume continuation, and the startup hard gate. If requested
+  manual lifecycle resume continuation, and the startup hard gate. If requested
   host role bindings are unavailable or not yet authorized, FlowPilot pauses and
   asks. It continues with explicit fallback continuity only after user approval;
   it blocks when neither requested role bindings nor user-authorized fallback
   are recorded, when a required role cannot be recovered, or when a hard gate
   cannot be satisfied.
 - Role authority is now an explicit protocol gate. Startup self-interrogation,
-  product-function architecture synthesis, route advancement, heartbeat
+  product-function architecture synthesis, route advancement, manual lifecycle
   resume, repair strategy, route mutation, and completion require
   project-manager decisions; FlowGuard modelability and model execution
   require the FlowGuard operator; product usefulness challenge,
@@ -347,15 +389,15 @@ and model-confidence overclaims must also fail.
   files only. Continuing old work creates a new run and imports old outputs as
   read-only evidence; old control state, agent IDs, screenshots, icons, or
   route files must not become current state.
-- Heartbeat/manual-resume lifecycle state now trusts current-run `state.json`,
-  latest heartbeat evidence, execution frontier, and role-binding memory. There is no
-  extra reset path or registry layer.
-- Heartbeat/manual-resume now re-enters the packet-gated controller loop. The
-  stable launcher loads the active run and packet ledger, restores roles, asks
-  PM for `PM_DECISION` with `controller_reminder`, runs router direct-dispatch
-  preflight before worker execution, routes existing worker results to PM for
-  package-result disposition, and blocks ambiguous worker state for PM recovery
-  rather than letting Controller infer or finish work.
+- Manual lifecycle resume now trusts the current-run ledger, lifecycle guard,
+  foreground duty, execution frontier, packet/lease state, and on-demand role
+  assignment records. There is no heartbeat evidence requirement, extra reset
+  path, or registry layer.
+- Manual lifecycle resume re-enters the packet-gated controller loop through
+  `flowpilot_new.py`. The stable launcher loads the active run and packet ledger,
+  follows the returned foreground duty, routes existing worker results through
+  the runtime, and blocks ambiguous worker state rather than letting Controller
+  infer or finish work.
 - Material scan, research, and current-node execution now use physical
   packet/result envelopes. Controller may relay envelope metadata only; workers
   open packet bodies, worker results return to PM, PM records a package-result
@@ -390,29 +432,25 @@ and model-confidence overclaims must also fail.
 - Role-binding records now separate `role_key`, `display_name`, and
   diagnostic-only `agent_id` so UI and authority checks do not drift when host
   agent names or handles change.
-- Formal startup now has a PM-owned startup activation gate. Before any child
-  skill, imagegen, implementation, route chunk, or completion work, the
-  human-like reviewer must personally check real state/frontier/route,
-  runtime role-binding ledger, role memory packets, role-binding freshness for
-  the current task, continuation, heartbeat/manual-resume lifecycle, and
-  cleanup evidence, current run pointer/index evidence, and prior-work import
-  boundary when continuing, then write
-  `.flowpilot/runs/<run-id>/startup_review/latest.json` as a factual report.
-  The PM is the only role that may open
-  `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and set
-  `work_beyond_startup_allowed: true`; there is no third startup opener or
-  runtime startup-check script. Route-local artifacts without that canonical match
-  are shadow routes to quarantine or supersede.
+- Formal startup now has no Reviewer startup fact gate and no PM startup
+  activation gate. Before any child skill, imagegen, implementation, route
+  chunk, or completion work, Runtime/Router must create the current run, seal
+  startup input, write startup mechanical audit, write display/status evidence,
+  audit current run identity, and either stop/block with a structured reason or
+  deliver the sealed `user_intake` packet to PM. The PM then owns the first
+  material/intake decision, repair, stop, or route-continuation decision.
+  Route-local artifacts without that canonical runtime entry are shadow routes
+  to quarantine or supersede.
 - Formal startup now begins with a single-option pre-banner gate. On
   `Use FlowPilot` / `使用开始`, the assistant asks for the user's work request and
-  whether FlowPilot may open background agents, then the assistant response must
-  stop immediately and wait for the user's reply. The startup banner, route
-  writes, child skills, role bindings, heartbeat probes, imagegen, and
-  implementation are blocked until a later user reply explicitly answers that
-  background-agent question and `startup_activation.startup_questions` records
-  both the stop-and-wait evidence and banner-after-answers evidence. Removed
-  startup choices are recorded as fixed defaults: manual continuation and chat
-  route signs.
+  whether FlowPilot may use mandatory background or parallel collaboration,
+  then the assistant response must stop immediately and wait for the user's
+  reply. The startup banner, route writes, child skills, role bindings,
+  imagegen, and implementation are blocked until a later user reply explicitly
+  acknowledges that required background-collaboration capability and Runtime
+  records both the stop-and-wait evidence and banner-after-answers evidence.
+  Removed startup choices are recorded as fixed defaults: manual continuation
+  and chat route signs.
 - Long operations no longer carry a FlowPilot stale-heartbeat wrapper; use
   ordinary checkpoints, logs, and host tool status for bounded-operation
   evidence.
@@ -471,10 +509,10 @@ FlowGuard caught and fixed these design issues:
     mutation, or completion decision must record the correct approving role,
     and route repair must invalidate stale approvals together with stale
     product evidence.
-15. Live helper responsibility continuity is not reliable enough to be a source of truth
-    after heartbeat sleep or manual resume. Role continuity must be persisted
-    through structured role memory packets; replacement roles must be seeded
-    from those packets before they can approve gates.
+15. Live helper responsibility continuity is not reliable enough to be a source
+    of truth after a wait or manual resume. Role continuity is audit context;
+    replacement roles must be explicitly assigned and leased for the currently
+    requested packet responsibility before they can approve gates.
 16. Product-function models and final feature reviews cannot substitute for a
     pre-contract PM product-function architecture package. Without feature
     necessity, display rationale, missing-feature review, negative scope, and
@@ -509,10 +547,10 @@ FlowGuard caught and fixed these design issues:
     the final ledger before completion can claim zero unresolved work.
 20. A new formal FlowPilot task cannot treat historical role `agent_id` values
     as current role-binding evidence. The reviewer must check that every
-    runtime-requested role binding, when authorized, was opened or rehydrated
-    after the current startup answers and current route allocation. Counting
-    role records is insufficient if any ID was resumed from a prior route or
-    older task.
+    runtime-requested role binding, when authorized, was explicitly assigned and
+    leased for the current packet responsibility after the current startup
+    answers and current route allocation. Counting role records is insufficient
+    if any ID was resumed from a prior route or older task.
 21. A new formal FlowPilot invocation must create a new target-project run
     directory under `.flowpilot/runs/<run-id>/`. Top-level `.flowpilot`
     control files are forbidden except `current.json` and `index.json`.
@@ -527,11 +565,14 @@ FlowGuard caught and fixed these design issues:
 - Prompt-isolated runtime cards live under
   `skills/flowpilot/assets/runtime_kit/` and are listed in
   `skills/flowpilot/assets/runtime_kit/manifest.json`.
-- Resume re-entry now has explicit Controller and PM system cards:
-  `controller.resume_reentry` and `pm.resume_decision`. The Controller loads
-  current-run state, frontier, packet ledger, and role-binding memory into
-  `continuation/resume_reentry.json` without reading sealed bodies or inferring
-  progress from chat history; ambiguous resume state blocks for PM recovery.
+- Manual lifecycle resume now uses `flowpilot_new.py resume --reason
+  manual_resume` and the returned lifecycle guard plus foreground duty. The
+  Controller loads current-run ledger, packet/lease state, active blockers, and
+  status projection without reading sealed bodies or inferring progress from
+  chat history. Role work is opened only through the current
+  `resolve-role-assignment` / `lease-agent` pair for the requested packet
+  responsibility; fixed role-set restoration and heartbeat recovery are not
+  current runtime mechanisms.
 - `flowpilot_new.py` now drives the fresh current-run packet loop through the
   physical envelope/body system. It requires route activation, current-node
   packet registration, runtime dispatch preflight, packet ledger checks,
@@ -553,8 +594,8 @@ FlowGuard caught and fixed these design issues:
   equivalence checklists; `scripts/check_install.py` verifies the current
   runtime card manifest, packet schema alignment, model result artifacts, and
   repository-owned install surfaces.
-- FlowGuard coverage now includes prompt isolation, heartbeat/manual resume,
-  and current-node/router-loop models:
+- FlowGuard coverage now includes prompt isolation, manual lifecycle resume,
+  on-demand role assignment, and current-node/router-loop models:
   `simulations/prompt_isolation_model.py`,
   `simulations/flowpilot_resume_model.py`, and
   `simulations/flowpilot_router_loop_model.py`.
@@ -609,7 +650,7 @@ FlowGuard caught and fixed these design issues:
   protocol semantics stable while reducing several heavy active files.
   The internal router facade remains a source-level diagnostic entrypoint, while event dispatch,
   event finalization, event intake, Controller action providers, Controller
-  action handlers, route activation/mutation, and heartbeat/resume helpers now
+  action handlers, route activation/mutation, and legacy Router resume helpers now
   live in focused modules:
   `flowpilot_router_events.py`,
   `flowpilot_router_event_intake.py`,
@@ -712,6 +753,9 @@ python simulations/run_flowpilot_singleton_identity_checks.py --json-out simulat
 python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
 python simulations/run_flowpilot_similarity_convergence_checks.py --json-out simulations/flowpilot_similarity_convergence_results.json
 python simulations/run_flowpilot_model_maturation_checks.py --json-out simulations/flowpilot_model_maturation_results.json
+python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json
+python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json
+python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json
 python scripts/check_install.py
 python scripts/smoke_flowpilot.py
 ```

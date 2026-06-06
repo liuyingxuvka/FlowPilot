@@ -10,7 +10,6 @@ else:
     import meta_model as _model
 
 _REQUIRED_MODEL_NAMES = (
-    "REQUIRED_ROLE_BINDING_COUNT",
     "FunctionResult",
     "Iterable",
     "MIN_FULL_SELF_INTERROGATION_QUESTIONS_PER_LAYER",
@@ -35,7 +34,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
             status="running",
             flowpilot_enabled=True,
             run_scoped_startup_bootstrap_created=True,
-            heartbeat_active=True,
+            foreground_control_loop_active=True,
             active_node="open_startup_intake_ui",
         )
         return
@@ -56,36 +55,16 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
             label="startup_intake_result_recorded",
             action="record the confirmed native startup intake result without accepting chat-body substitutes",
             startup_intake_result_recorded=True,
-            active_node="record_startup_runtime_role_assistance_option",
+            active_node="record_startup_background_collaboration_ack",
         )
         return
 
-    if not state.startup_runtime_role_assistance_option_recorded:
+    if not state.startup_background_collaboration_ack_recorded:
         yield _step(
             state,
-            label="startup_runtime_role_assistance_option_recorded",
-            action="record the startup intake background-collaboration option for host-supported addressable isolated role surfaces versus single-agent continuity",
-            startup_runtime_role_assistance_option_recorded=True,
-            active_node="record_startup_fixed_continuation_default",
-        )
-        return
-
-    if not state.startup_continuation_option_recorded:
-        yield _step(
-            state,
-            label="startup_continuation_option_recorded",
-            action="record the startup intake fixed manual-continuation default; no continuation toggle is shown",
-            startup_continuation_option_recorded=True,
-            active_node="record_startup_fixed_display_surface_default",
-        )
-        return
-
-    if not state.startup_display_surface_option_recorded:
-        yield _step(
-            state,
-            label="startup_display_surface_option_recorded",
-            action="record the startup intake fixed chat display-surface default; no Cockpit UI toggle is shown",
-            startup_display_surface_option_recorded=True,
+            label="startup_background_collaboration_ack_recorded",
+            action="record explicit user acknowledgement that FlowPilot must use host-supported addressable background or parallel agents",
+            startup_background_collaboration_ack_recorded=True,
             startup_answer_values_valid=True,
             startup_answer_provenance="explicit_user_reply",
             active_node="create_run_directory",
@@ -156,7 +135,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="activity_stream_initialized",
-            action="create the run-level activity stream so PM, reviewer, FlowGuard operator, worker, route, heartbeat, and user-visible progress events can be displayed without manual refresh",
+            action="create the run-level activity stream so PM, reviewer, FlowGuard operator, worker, route, manual resume binding, and user-visible progress events can be displayed without manual refresh",
             activity_stream_initialized=True,
             activity_stream_latest_event_written=True,
             active_node="initialize_flowpilot_improvement_report",
@@ -282,75 +261,9 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
     if not state.role_binding_policy_written:
         yield _step(
             state,
-            label="required_role_binding_role_binding_policy_written",
-            action="write runtime role-binding authority policy for project manager, reviewer, route-scope FlowGuard operator, product-scope FlowGuard operator, worker A, and worker B responsibilities",
+            label="current_background_collaboration_policy_written",
+            action="write the current background or parallel agent authority policy without prewarming a fixed role roster",
             role_binding_policy_written=True,
-            active_node="spawn_project_manager",
-        )
-        return
-
-    if state.role_binding_count == 0:
-        yield _step(
-            state,
-            label="project_manager_opened_for_current_task",
-            action="open a fresh project manager for the new formal FlowPilot task before route work",
-            role_binding_count=1,
-            project_manager_ready=True,
-            active_node="spawn_reviewer",
-        )
-        return
-
-    if state.role_binding_count == 1:
-        yield _step(
-            state,
-            label="human_like_reviewer_opened_for_current_task",
-            action="open a fresh human-like reviewer for the new formal FlowPilot task before route work",
-            role_binding_count=2,
-            reviewer_ready=True,
-            active_node="spawn_flowguard_operator_route_scope",
-        )
-        return
-
-    if state.role_binding_count == 2:
-        yield _step(
-            state,
-            label="flowguard_operator_route_scope_opened_for_current_task",
-            action="open a fresh route-scope FlowGuard operator for the new formal FlowPilot task before route work",
-            role_binding_count=3,
-            flowguard_operator_route_scope_ready=True,
-            active_node="spawn_flowguard_operator_product_scope",
-        )
-        return
-
-    if state.role_binding_count == 3:
-        yield _step(
-            state,
-            label="flowguard_operator_product_scope_opened_for_current_task",
-            action="open a fresh product-scope FlowGuard operator for the new formal FlowPilot task before route work",
-            role_binding_count=4,
-            flowguard_operator_product_scope_ready=True,
-            active_node="spawn_worker",
-        )
-        return
-
-    if state.role_binding_count == 4:
-        yield _step(
-            state,
-            label="worker_opened_for_current_task",
-            action="open a fresh worker A for bounded sidecar work in the new formal FlowPilot task",
-            role_binding_count=5,
-            worker_ready=True,
-            active_node="spawn_worker",
-        )
-        return
-
-    if state.role_binding_count == 5:
-        yield _step(
-            state,
-            label="worker_opened_for_current_task",
-            action="open a fresh worker B for bounded sidecar work in the new formal FlowPilot task",
-            role_binding_count=REQUIRED_ROLE_BINDING_COUNT,
-            worker_ready=True,
             active_node="write_role_binding_ledger",
         )
         return
@@ -358,8 +271,8 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
     if not state.role_binding_ledger_written:
         yield _step(
             state,
-            label="role_binding_ledger_written",
-            action="persist role binding names, role authority, agent ids, status, and recovery rules before route work",
+            label="current_background_collaboration_ledger_written",
+            action="persist current task background-collaboration authority, agent-id freshness rules, and recovery rules before route work",
             role_binding_ledger_written=True,
             active_node="record_role_identity_protocol",
         )
@@ -429,9 +342,9 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="role_binding_memory_packets_written",
-            action="write compact role memory packets for runtime-required roles before route work",
+            action="write the compact current background-collaboration memory policy before route work",
             role_binding_memory_policy_written=True,
-            role_binding_memory_packets_written=REQUIRED_ROLE_BINDING_COUNT,
+            role_binding_memory_packets_written=1,
             active_node="bootstrap_continuation",
         )
         return
@@ -469,44 +382,44 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
             action="emit the FlowPilot startup banner in the user dialog after Controller core is loaded",
             startup_banner_emitted=True,
             startup_banner_user_dialog_confirmed=True,
-            active_node="record_startup_continuation_mode",
+            active_node="record_manual_resume_binding_boundary",
         )
         return
 
     if not state.continuation_probe_done:
         yield _step(
             state,
-            label="host_continuation_capability_supported",
-            action="after Controller core loads, record host-kind continuation evidence and confirm real heartbeat setup is supported before startup review or route work",
+            label="manual_resume_binding_capability_recorded",
+            action="after Controller core loads, record host-kind continuation evidence and confirm real manual resume binding setup is supported before startup review or route work",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
-            host_continuation_supported=True,
-            active_node="create_startup_heartbeat",
+            manual_resume_binding_supported=True,
+            active_node="configure_manual_resume_binding",
         )
         yield _step(
             state,
-            label="host_continuation_capability_unsupported_manual_resume",
+            label="manual_resume_binding_unavailable_manual_resume_boundary",
             action="after Controller core loads, record manual-resume mode when host automation is unavailable or not requested",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
-            host_continuation_supported=False,
-            manual_resume_mode_recorded=True,
+            manual_resume_binding_supported=False,
+            manual_resume_boundary_recorded=True,
             active_node="pm_ratify_startup_self_interrogation",
         )
         return
 
-    if state.host_continuation_supported and not state.heartbeat_schedule_created:
+    if state.manual_resume_binding_supported and not state.manual_resume_binding_configured:
         yield _step(
             state,
-            label="heartbeat_schedule_created",
-            action="create one-minute route heartbeat as a stable launcher bound to the current run before startup review or route work",
-            heartbeat_schedule_created=True,
-            route_heartbeat_interval_minutes=1,
-            stable_heartbeat_launcher_recorded=True,
-            heartbeat_bound_to_current_run=True,
-            heartbeat_same_name_only_checked=False,
+            label="manual_resume_binding_configured",
+            action="create one-second manual resume binding as a stable launcher bound to the current run before startup review or route work",
+            manual_resume_binding_configured=True,
+            manual_resume_binding_interval_seconds=1,
+            stable_manual_resume_launcher_recorded=True,
+            manual_resume_binding_bound_to_current_run=True,
+            manual_resume_binding_name_only_checked=False,
             active_node="pm_ratify_startup_self_interrogation",
         )
         return

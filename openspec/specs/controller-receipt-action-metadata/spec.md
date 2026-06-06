@@ -39,6 +39,7 @@ FlowPilot SHALL ensure Controller-visible instructions for ledger rows use recei
 - **AND** it SHALL NOT tell Controller to apply the action
 
 #### Scenario: Host setup rows request receipt payloads
-- **WHEN** a Controller ledger row starts roles, creates a heartbeat automation, writes a terminal summary, or updates a display surface
+- **WHEN** a Controller ledger row records background role liveness, writes a
+  terminal summary, or updates a display surface
 - **THEN** its Controller-visible wording SHALL tell Controller to write a Controller receipt with the required evidence payload
 - **AND** it SHALL NOT use "before applying" or "apply only" as the ledger-row completion instruction

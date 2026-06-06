@@ -10,147 +10,6 @@
         "message": "maturation signal is stale and cannot support a current model claim",
         "metadata": {
           "current": false,
-          "description": "ACK wait settlement must remain separate from durable role-output completion.",
-          "evidence_id": "simulations/flowpilot_role_output_runtime_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1780174678.9795644,
-              "missing_sources": [],
-              "result": "simulations/flowpilot_role_output_runtime_results.json",
-              "result_missing": false,
-              "result_mtime": 1780165139.940007,
-              "sources": [
-                "simulations\\flowpilot_role_output_runtime_model.py",
-                "simulations\\run_flowpilot_role_output_runtime_checks.py",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\wait-reconciliation\\spec.md"
-              ]
-            },
-            "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": true,
-              "result": "simulations/flowpilot_role_output_runtime_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "flowpilot_role_output_runtime",
-          "required": true,
-          "resolved": false,
-          "risk_id": "ack_only_closure_false_positive",
-          "signal_id": "ack_settlement_vs_output_completion",
-          "signal_type": "state_too_coarse",
-          "source_route": "wait_reconciliation",
-          "suggested_actions": [
-            "add_state_field",
-            "add_transition_case"
-          ]
-        },
-        "model_id": "flowpilot_role_output_runtime",
-        "risk_id": "ack_only_closure_false_positive",
-        "severity": "blocker",
-        "signal_id": "ack_settlement_vs_output_completion"
-      },
-      {
-        "action": "add_state_field",
-        "code": "model_upgrade_required",
-        "message": "unresolved in-scope maturation signal requires model upgrade action",
-        "metadata": {
-          "current": false,
-          "description": "ACK wait settlement must remain separate from durable role-output completion.",
-          "evidence_id": "simulations/flowpilot_role_output_runtime_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1780174678.9795644,
-              "missing_sources": [],
-              "result": "simulations/flowpilot_role_output_runtime_results.json",
-              "result_missing": false,
-              "result_mtime": 1780165139.940007,
-              "sources": [
-                "simulations\\flowpilot_role_output_runtime_model.py",
-                "simulations\\run_flowpilot_role_output_runtime_checks.py",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\wait-reconciliation\\spec.md"
-              ]
-            },
-            "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": true,
-              "result": "simulations/flowpilot_role_output_runtime_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "flowpilot_role_output_runtime",
-          "required": true,
-          "resolved": false,
-          "risk_id": "ack_only_closure_false_positive",
-          "signal_id": "ack_settlement_vs_output_completion",
-          "signal_type": "state_too_coarse",
-          "source_route": "wait_reconciliation",
-          "suggested_actions": [
-            "add_state_field",
-            "add_transition_case"
-          ]
-        },
-        "model_id": "flowpilot_role_output_runtime",
-        "risk_id": "ack_only_closure_false_positive",
-        "severity": "blocker",
-        "signal_id": "ack_settlement_vs_output_completion"
-      },
-      {
-        "action": "add_transition_case",
-        "code": "model_upgrade_required",
-        "message": "unresolved in-scope maturation signal requires model upgrade action",
-        "metadata": {
-          "current": false,
-          "description": "ACK wait settlement must remain separate from durable role-output completion.",
-          "evidence_id": "simulations/flowpilot_role_output_runtime_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1780174678.9795644,
-              "missing_sources": [],
-              "result": "simulations/flowpilot_role_output_runtime_results.json",
-              "result_missing": false,
-              "result_mtime": 1780165139.940007,
-              "sources": [
-                "simulations\\flowpilot_role_output_runtime_model.py",
-                "simulations\\run_flowpilot_role_output_runtime_checks.py",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\wait-reconciliation\\spec.md"
-              ]
-            },
-            "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": true,
-              "result": "simulations/flowpilot_role_output_runtime_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "flowpilot_role_output_runtime",
-          "required": true,
-          "resolved": false,
-          "risk_id": "ack_only_closure_false_positive",
-          "signal_id": "ack_settlement_vs_output_completion",
-          "signal_type": "state_too_coarse",
-          "source_route": "wait_reconciliation",
-          "suggested_actions": [
-            "add_state_field",
-            "add_transition_case"
-          ]
-        },
-        "model_id": "flowpilot_role_output_runtime",
-        "risk_id": "ack_only_closure_false_positive",
-        "severity": "blocker",
-        "signal_id": "ack_settlement_vs_output_completion"
-      },
-      {
-        "action": "refresh_evidence",
-        "code": "model_maturation_signal_stale",
-        "message": "maturation signal is stale and cannot support a current model claim",
-        "metadata": {
-          "current": false,
           "description": "Replacement route activation must dispose old active packets and reattach parent evidence.",
           "evidence_id": "simulations/flowpilot_route_mutation_activation_results.json",
           "in_scope": true,
@@ -292,95 +151,48 @@
         "message": "maturation signal is stale and cannot support a current model claim",
         "metadata": {
           "current": false,
-          "description": "Prompt assets and manifests must be model-visible contract inputs.",
-          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780214468.5856385,
+              "max_source_mtime": 1780663141.4496834,
               "missing_sources": [],
-              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result": "simulations/flowpilot_singleton_identity_results.json",
               "result_missing": false,
-              "result_mtime": 1780174768.5441625,
+              "result_mtime": 1779906688.729564,
               "sources": [
-                "simulations\\flowpilot_prompt_boundary_model.py",
-                "simulations\\run_flowpilot_prompt_boundary_checks.py",
-                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
               ]
             },
             "json": {
-              "confidence": "",
+              "confidence": "full",
               "decision": "",
-              "ok": false,
-              "result": "simulations/flowpilot_prompt_boundary_results.json",
-              "result_type": ""
+              "ok": true,
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
             }
           },
-          "model_id": "flowpilot_prompt_boundary",
+          "model_id": "flowpilot_singleton_identity_authority",
           "required": true,
           "resolved": false,
-          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
-          "signal_id": "prompt_assets_are_contract_inputs",
-          "signal_type": "missing_code_boundary_observation",
-          "source_route": "flowpilot_prompt_boundary_policy",
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
           "suggested_actions": [
+            "add_model_obligation",
             "add_code_boundary_observation",
-            "add_model_obligation"
+            "refresh_evidence"
           ]
         },
-        "model_id": "flowpilot_prompt_boundary",
-        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
         "severity": "blocker",
-        "signal_id": "prompt_assets_are_contract_inputs"
-      },
-      {
-        "action": "add_code_boundary_observation",
-        "code": "model_upgrade_required",
-        "message": "unresolved in-scope maturation signal requires model upgrade action",
-        "metadata": {
-          "current": false,
-          "description": "Prompt assets and manifests must be model-visible contract inputs.",
-          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1780214468.5856385,
-              "missing_sources": [],
-              "result": "simulations/flowpilot_prompt_boundary_results.json",
-              "result_missing": false,
-              "result_mtime": 1780174768.5441625,
-              "sources": [
-                "simulations\\flowpilot_prompt_boundary_model.py",
-                "simulations\\run_flowpilot_prompt_boundary_checks.py",
-                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
-              ]
-            },
-            "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": false,
-              "result": "simulations/flowpilot_prompt_boundary_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "flowpilot_prompt_boundary",
-          "required": true,
-          "resolved": false,
-          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
-          "signal_id": "prompt_assets_are_contract_inputs",
-          "signal_type": "missing_code_boundary_observation",
-          "source_route": "flowpilot_prompt_boundary_policy",
-          "suggested_actions": [
-            "add_code_boundary_observation",
-            "add_model_obligation"
-          ]
-        },
-        "model_id": "flowpilot_prompt_boundary",
-        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
-        "severity": "blocker",
-        "signal_id": "prompt_assets_are_contract_inputs"
+        "signal_id": "singleton_identity_authority_current"
       },
       {
         "action": "add_model_obligation",
@@ -388,92 +200,97 @@
         "message": "unresolved in-scope maturation signal requires model upgrade action",
         "metadata": {
           "current": false,
-          "description": "Prompt assets and manifests must be model-visible contract inputs.",
-          "evidence_id": "simulations/flowpilot_prompt_boundary_results.json",
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780214468.5856385,
+              "max_source_mtime": 1780663141.4496834,
               "missing_sources": [],
-              "result": "simulations/flowpilot_prompt_boundary_results.json",
+              "result": "simulations/flowpilot_singleton_identity_results.json",
               "result_missing": false,
-              "result_mtime": 1780174768.5441625,
+              "result_mtime": 1779906688.729564,
               "sources": [
-                "simulations\\flowpilot_prompt_boundary_model.py",
-                "simulations\\run_flowpilot_prompt_boundary_checks.py",
-                "skills\\flowpilot\\assets\\runtime_kit\\prompts\\manifest.json",
-                "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowpilot-prompt-boundary-policy\\spec.md"
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
               ]
             },
             "json": {
-              "confidence": "",
-              "decision": "",
-              "ok": false,
-              "result": "simulations/flowpilot_prompt_boundary_results.json",
-              "result_type": ""
-            }
-          },
-          "model_id": "flowpilot_prompt_boundary",
-          "required": true,
-          "resolved": false,
-          "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
-          "signal_id": "prompt_assets_are_contract_inputs",
-          "signal_type": "missing_code_boundary_observation",
-          "source_route": "flowpilot_prompt_boundary_policy",
-          "suggested_actions": [
-            "add_code_boundary_observation",
-            "add_model_obligation"
-          ]
-        },
-        "model_id": "flowpilot_prompt_boundary",
-        "risk_id": "prompt_asset_drift_not_seen_by_code_scan",
-        "severity": "blocker",
-        "signal_id": "prompt_assets_are_contract_inputs"
-      },
-      {
-        "action": "refresh_evidence",
-        "code": "model_maturation_signal_stale",
-        "message": "maturation signal is stale and cannot support a current model claim",
-        "metadata": {
-          "current": false,
-          "description": "Protocol contract conformance result must be current for the model and checker.",
-          "evidence_id": "simulations/protocol_contract_conformance_results.json",
-          "in_scope": true,
-          "metadata": {
-            "freshness": {
-              "max_source_mtime": 1780174679.007632,
-              "missing_sources": [],
-              "result": "simulations/protocol_contract_conformance_results.json",
-              "result_missing": false,
-              "result_mtime": 1780174630.7907722,
-              "sources": [
-                "simulations\\flowpilot_protocol_contract_conformance_model.py",
-                "simulations\\run_protocol_contract_conformance_checks.py"
-              ]
-            },
-            "json": {
-              "confidence": "",
+              "confidence": "full",
               "decision": "",
               "ok": true,
-              "result": "simulations/protocol_contract_conformance_results.json",
-              "result_type": ""
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
             }
           },
-          "model_id": "flowpilot_protocol_contract_conformance",
+          "model_id": "flowpilot_singleton_identity_authority",
           "required": true,
           "resolved": false,
-          "risk_id": "protocol_contract_result_stale",
-          "signal_id": "protocol_contract_conformance_fresh",
-          "signal_type": "stale_evidence",
-          "source_route": "existing_model_preflight",
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
           "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
             "refresh_evidence"
           ]
         },
-        "model_id": "flowpilot_protocol_contract_conformance",
-        "risk_id": "protocol_contract_result_stale",
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
         "severity": "blocker",
-        "signal_id": "protocol_contract_conformance_fresh"
+        "signal_id": "singleton_identity_authority_current"
+      },
+      {
+        "action": "add_code_boundary_observation",
+        "code": "model_upgrade_required",
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "current": false,
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+          "in_scope": true,
+          "metadata": {
+            "freshness": {
+              "max_source_mtime": 1780663141.4496834,
+              "missing_sources": [],
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_missing": false,
+              "result_mtime": 1779906688.729564,
+              "sources": [
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
+              ]
+            },
+            "json": {
+              "confidence": "full",
+              "decision": "",
+              "ok": true,
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
+            }
+          },
+          "model_id": "flowpilot_singleton_identity_authority",
+          "required": true,
+          "resolved": false,
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
+          "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
+            "refresh_evidence"
+          ]
+        },
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
+        "severity": "blocker",
+        "signal_id": "singleton_identity_authority_current"
       },
       {
         "action": "refresh_evidence",
@@ -481,44 +298,48 @@
         "message": "unresolved in-scope maturation signal requires model upgrade action",
         "metadata": {
           "current": false,
-          "description": "Protocol contract conformance result must be current for the model and checker.",
-          "evidence_id": "simulations/protocol_contract_conformance_results.json",
+          "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+          "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780174679.007632,
+              "max_source_mtime": 1780663141.4496834,
               "missing_sources": [],
-              "result": "simulations/protocol_contract_conformance_results.json",
+              "result": "simulations/flowpilot_singleton_identity_results.json",
               "result_missing": false,
-              "result_mtime": 1780174630.7907722,
+              "result_mtime": 1779906688.729564,
               "sources": [
-                "simulations\\flowpilot_protocol_contract_conformance_model.py",
-                "simulations\\run_protocol_contract_conformance_checks.py"
+                "docs\\flowpilot_singleton_identity_authority.md",
+                "simulations\\flowpilot_singleton_identity_model.py",
+                "simulations\\run_flowpilot_singleton_identity_checks.py",
+                "tests\\test_flowpilot_singleton_identity.py"
               ]
             },
             "json": {
-              "confidence": "",
+              "confidence": "full",
               "decision": "",
               "ok": true,
-              "result": "simulations/protocol_contract_conformance_results.json",
-              "result_type": ""
+              "result": "simulations/flowpilot_singleton_identity_results.json",
+              "result_type": "flowpilot_singleton_identity"
             }
           },
-          "model_id": "flowpilot_protocol_contract_conformance",
+          "model_id": "flowpilot_singleton_identity_authority",
           "required": true,
           "resolved": false,
-          "risk_id": "protocol_contract_result_stale",
-          "signal_id": "protocol_contract_conformance_fresh",
-          "signal_type": "stale_evidence",
-          "source_route": "existing_model_preflight",
+          "risk_id": "singleton_duplicate_authority_gap",
+          "signal_id": "singleton_identity_authority_current",
+          "signal_type": "missing_model_obligation",
+          "source_route": "singleton_identity_authority",
           "suggested_actions": [
+            "add_model_obligation",
+            "add_code_boundary_observation",
             "refresh_evidence"
           ]
         },
-        "model_id": "flowpilot_protocol_contract_conformance",
-        "risk_id": "protocol_contract_result_stale",
+        "model_id": "flowpilot_singleton_identity_authority",
+        "risk_id": "singleton_duplicate_authority_gap",
         "severity": "blocker",
-        "signal_id": "protocol_contract_conformance_fresh"
+        "signal_id": "singleton_identity_authority_current"
       },
       {
         "action": "refresh_evidence",
@@ -531,7 +352,7 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780174678.8675897,
+              "max_source_mtime": 1780667460.6449254,
               "missing_sources": [],
               "result": "simulations/flowpilot_startup_control_results.json",
               "result_missing": false,
@@ -576,7 +397,7 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780174678.8675897,
+              "max_source_mtime": 1780667460.6449254,
               "missing_sources": [],
               "result": "simulations/flowpilot_startup_control_results.json",
               "result_missing": false,
@@ -621,11 +442,11 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780214647.0760434,
+              "max_source_mtime": 1780218029.2678812,
               "missing_sources": [],
               "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
               "result_missing": false,
-              "result_mtime": 1779900565.5387912,
+              "result_mtime": 1780217030.7026274,
               "sources": [
                 "simulations\\flowpilot_dispatch_recipient_gate_model.py",
                 "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
@@ -666,11 +487,11 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780214647.0760434,
+              "max_source_mtime": 1780218029.2678812,
               "missing_sources": [],
               "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
               "result_missing": false,
-              "result_mtime": 1779900565.5387912,
+              "result_mtime": 1780217030.7026274,
               "sources": [
                 "simulations\\flowpilot_dispatch_recipient_gate_model.py",
                 "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
@@ -711,11 +532,11 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780214981.4257152,
+              "max_source_mtime": 1780694168.8769398,
               "missing_sources": [],
               "result": "simulations/flowpilot_model_hierarchy_results.json",
               "result_missing": false,
-              "result_mtime": 1780215009.9601846,
+              "result_mtime": 1780694265.7838938,
               "sources": [
                 "simulations\\flowpilot_model_hierarchy_model.py",
                 "simulations\\run_flowpilot_model_hierarchy_checks.py",
@@ -760,11 +581,11 @@
           "in_scope": true,
           "metadata": {
             "freshness": {
-              "max_source_mtime": 1780214981.4257152,
+              "max_source_mtime": 1780694168.8769398,
               "missing_sources": [],
               "result": "simulations/flowpilot_model_hierarchy_results.json",
               "result_missing": false,
-              "result_mtime": 1780215009.9601846,
+              "result_mtime": 1780694265.7838938,
               "sources": [
                 "simulations\\flowpilot_model_hierarchy_model.py",
                 "simulations\\run_flowpilot_model_hierarchy_checks.py",
@@ -800,25 +621,1029 @@
       }
     ],
     "full_closure_ok": false,
+    "maintenance_obligations": [
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "maturation signal is stale and cannot support a current model claim",
+            "metadata": {
+              "current": false,
+              "description": "Replacement route activation must dispose old active packets and reattach parent evidence.",
+              "evidence_id": "simulations/flowpilot_route_mutation_activation_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780214647.1861956,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_route_mutation_activation_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779900565.8423657,
+                  "sources": [
+                    "simulations\\flowpilot_route_mutation_activation_model.py",
+                    "simulations\\run_flowpilot_route_mutation_activation_checks.py",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\route-repair-replacement-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_route_mutation_activation_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_route_mutation_activation",
+              "required": true,
+              "resolved": false,
+              "risk_id": "old_active_packet_survives_replacement",
+              "signal_id": "route_replacement_disposes_old_packets",
+              "signal_type": "child_reattachment_missing",
+              "source_route": "route_repair_replacement_policy",
+              "suggested_actions": [
+                "reattach_parent_model",
+                "add_transition_case"
+              ]
+            },
+            "model_id": "flowpilot_route_mutation_activation",
+            "risk_id": "old_active_packet_survives_replacement",
+            "severity": "blocker",
+            "signal_id": "route_replacement_disposes_old_packets"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_route_mutation_activation"
+        ],
+        "obligation_id": "model-maturation:route-replacement-disposes-old-packets",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "old_active_packet_survives_replacement"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "reattach_parent_model",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Replacement route activation must dispose old active packets and reattach parent evidence.",
+              "evidence_id": "simulations/flowpilot_route_mutation_activation_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780214647.1861956,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_route_mutation_activation_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779900565.8423657,
+                  "sources": [
+                    "simulations\\flowpilot_route_mutation_activation_model.py",
+                    "simulations\\run_flowpilot_route_mutation_activation_checks.py",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\route-repair-replacement-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_route_mutation_activation_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_route_mutation_activation",
+              "required": true,
+              "resolved": false,
+              "risk_id": "old_active_packet_survives_replacement",
+              "signal_id": "route_replacement_disposes_old_packets",
+              "signal_type": "child_reattachment_missing",
+              "source_route": "route_repair_replacement_policy",
+              "suggested_actions": [
+                "reattach_parent_model",
+                "add_transition_case"
+              ]
+            },
+            "model_id": "flowpilot_route_mutation_activation",
+            "risk_id": "old_active_packet_survives_replacement",
+            "severity": "blocker",
+            "signal_id": "route_replacement_disposes_old_packets"
+          },
+          "recommended_action": "reattach_parent_model"
+        },
+        "model_ids": [
+          "flowpilot_route_mutation_activation"
+        ],
+        "obligation_id": "model-maturation:route-replacement-disposes-old-packets",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "old_active_packet_survives_replacement"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_transition_case",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Replacement route activation must dispose old active packets and reattach parent evidence.",
+              "evidence_id": "simulations/flowpilot_route_mutation_activation_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780214647.1861956,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_route_mutation_activation_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779900565.8423657,
+                  "sources": [
+                    "simulations\\flowpilot_route_mutation_activation_model.py",
+                    "simulations\\run_flowpilot_route_mutation_activation_checks.py",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\route-repair-replacement-policy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_route_mutation_activation_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_route_mutation_activation",
+              "required": true,
+              "resolved": false,
+              "risk_id": "old_active_packet_survives_replacement",
+              "signal_id": "route_replacement_disposes_old_packets",
+              "signal_type": "child_reattachment_missing",
+              "source_route": "route_repair_replacement_policy",
+              "suggested_actions": [
+                "reattach_parent_model",
+                "add_transition_case"
+              ]
+            },
+            "model_id": "flowpilot_route_mutation_activation",
+            "risk_id": "old_active_packet_survives_replacement",
+            "severity": "blocker",
+            "signal_id": "route_replacement_disposes_old_packets"
+          },
+          "recommended_action": "add_transition_case"
+        },
+        "model_ids": [
+          "flowpilot_route_mutation_activation"
+        ],
+        "obligation_id": "model-maturation:route-replacement-disposes-old-packets",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "old_active_packet_survives_replacement"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "maturation signal is stale and cannot support a current model claim",
+            "metadata": {
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780663141.4496834,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779906688.729564,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "full",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                }
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "required": true,
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_model_obligation",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780663141.4496834,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779906688.729564,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "full",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                }
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "required": true,
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "add_model_obligation"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_code_boundary_observation",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780663141.4496834,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779906688.729564,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "full",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                }
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "required": true,
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "add_code_boundary_observation"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Singleton-vs-plural authority gaps must be model-visible before broad confidence.",
+              "evidence_id": "simulations/flowpilot_singleton_identity_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780663141.4496834,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779906688.729564,
+                  "sources": [
+                    "docs\\flowpilot_singleton_identity_authority.md",
+                    "simulations\\flowpilot_singleton_identity_model.py",
+                    "simulations\\run_flowpilot_singleton_identity_checks.py",
+                    "tests\\test_flowpilot_singleton_identity.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "full",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_singleton_identity_results.json",
+                  "result_type": "flowpilot_singleton_identity"
+                }
+              },
+              "model_id": "flowpilot_singleton_identity_authority",
+              "required": true,
+              "resolved": false,
+              "risk_id": "singleton_duplicate_authority_gap",
+              "signal_id": "singleton_identity_authority_current",
+              "signal_type": "missing_model_obligation",
+              "source_route": "singleton_identity_authority",
+              "suggested_actions": [
+                "add_model_obligation",
+                "add_code_boundary_observation",
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_singleton_identity_authority",
+            "risk_id": "singleton_duplicate_authority_gap",
+            "severity": "blocker",
+            "signal_id": "singleton_identity_authority_current"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_singleton_identity_authority"
+        ],
+        "obligation_id": "model-maturation:singleton-identity-authority-current",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "singleton_duplicate_authority_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "maturation signal is stale and cannot support a current model claim",
+            "metadata": {
+              "current": false,
+              "description": "Startup-control evidence must be current after model or checker edits.",
+              "evidence_id": "simulations/flowpilot_startup_control_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780667460.6449254,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779900641.3928554,
+                  "sources": [
+                    "simulations\\flowpilot_startup_control_model.py",
+                    "simulations\\run_flowpilot_startup_control_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_startup_control",
+              "required": true,
+              "resolved": false,
+              "risk_id": "startup_control_result_stale",
+              "signal_id": "startup_control_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_startup_control",
+            "risk_id": "startup_control_result_stale",
+            "severity": "blocker",
+            "signal_id": "startup_control_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_startup_control"
+        ],
+        "obligation_id": "model-maturation:startup-control-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "startup_control_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Startup-control evidence must be current after model or checker edits.",
+              "evidence_id": "simulations/flowpilot_startup_control_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780667460.6449254,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1779900641.3928554,
+                  "sources": [
+                    "simulations\\flowpilot_startup_control_model.py",
+                    "simulations\\run_flowpilot_startup_control_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_startup_control_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_startup_control",
+              "required": true,
+              "resolved": false,
+              "risk_id": "startup_control_result_stale",
+              "signal_id": "startup_control_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_startup_control",
+            "risk_id": "startup_control_result_stale",
+            "severity": "blocker",
+            "signal_id": "startup_control_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_startup_control"
+        ],
+        "obligation_id": "model-maturation:startup-control-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "startup_control_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "maturation signal is stale and cannot support a current model claim",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_maturation_signal_stale",
+            "message": "maturation signal is stale and cannot support a current model claim",
+            "metadata": {
+              "current": false,
+              "description": "Dispatch-recipient gate evidence must be current after model or checker edits.",
+              "evidence_id": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780218029.2678812,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1780217030.7026274,
+                  "sources": [
+                    "simulations\\flowpilot_dispatch_recipient_gate_model.py",
+                    "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_dispatch_recipient_gate",
+              "required": true,
+              "resolved": false,
+              "risk_id": "dispatch_recipient_result_stale",
+              "signal_id": "dispatch_recipient_gate_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_dispatch_recipient_gate",
+            "risk_id": "dispatch_recipient_result_stale",
+            "severity": "blocker",
+            "signal_id": "dispatch_recipient_gate_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_dispatch_recipient_gate"
+        ],
+        "obligation_id": "model-maturation:dispatch-recipient-gate-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_maturation_signal_stale",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "dispatch_recipient_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "refresh_evidence",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": false,
+              "description": "Dispatch-recipient gate evidence must be current after model or checker edits.",
+              "evidence_id": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780218029.2678812,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1780217030.7026274,
+                  "sources": [
+                    "simulations\\flowpilot_dispatch_recipient_gate_model.py",
+                    "simulations\\run_flowpilot_dispatch_recipient_gate_checks.py"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": true,
+                  "result": "simulations/flowpilot_dispatch_recipient_gate_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "flowpilot_dispatch_recipient_gate",
+              "required": true,
+              "resolved": false,
+              "risk_id": "dispatch_recipient_result_stale",
+              "signal_id": "dispatch_recipient_gate_evidence_fresh",
+              "signal_type": "stale_evidence",
+              "source_route": "development_process_flow",
+              "suggested_actions": [
+                "refresh_evidence"
+              ]
+            },
+            "model_id": "flowpilot_dispatch_recipient_gate",
+            "risk_id": "dispatch_recipient_result_stale",
+            "severity": "blocker",
+            "signal_id": "dispatch_recipient_gate_evidence_fresh"
+          },
+          "recommended_action": "refresh_evidence"
+        },
+        "model_ids": [
+          "flowpilot_dispatch_recipient_gate"
+        ],
+        "obligation_id": "model-maturation:dispatch-recipient-gate-evidence-fresh",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "dispatch_recipient_result_stale"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "split_child_model",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": true,
+              "description": "Oversized parent models must expose child maturation and thin/full evidence status.",
+              "evidence_id": "simulations/flowpilot_model_hierarchy_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780694168.8769398,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_model_hierarchy_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1780694265.7838938,
+                  "sources": [
+                    "simulations\\flowpilot_model_hierarchy_model.py",
+                    "simulations\\run_flowpilot_model_hierarchy_checks.py",
+                    "simulations\\meta_thin_parent_results.json",
+                    "simulations\\capability_thin_parent_results.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowguard-model-hierarchy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": false,
+                  "result": "simulations/flowpilot_model_hierarchy_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "meta_capability_model_hierarchy",
+              "required": true,
+              "resolved": false,
+              "risk_id": "large_parent_ok_masks_child_gap",
+              "signal_id": "oversized_parent_child_maturity_visible",
+              "signal_type": "oversized_model",
+              "source_route": "model_mesh",
+              "suggested_actions": [
+                "split_child_model",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "meta_capability_model_hierarchy",
+            "risk_id": "large_parent_ok_masks_child_gap",
+            "severity": "blocker",
+            "signal_id": "oversized_parent_child_maturity_visible"
+          },
+          "recommended_action": "split_child_model"
+        },
+        "model_ids": [
+          "meta_capability_model_hierarchy"
+        ],
+        "obligation_id": "model-maturation:oversized-parent-child-maturity-visible",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "large_parent_ok_masks_child_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      },
+      {
+        "anchor_paths": [],
+        "anchor_symbols": [],
+        "artifact_ids": [],
+        "claim_effect": "",
+        "code_contract_ids": [],
+        "current": true,
+        "evidence_ids": [],
+        "message": "unresolved in-scope maturation signal requires model upgrade action",
+        "metadata": {
+          "maturation_finding": {
+            "action": "add_model_obligation",
+            "code": "model_upgrade_required",
+            "message": "unresolved in-scope maturation signal requires model upgrade action",
+            "metadata": {
+              "current": true,
+              "description": "Oversized parent models must expose child maturation and thin/full evidence status.",
+              "evidence_id": "simulations/flowpilot_model_hierarchy_results.json",
+              "in_scope": true,
+              "metadata": {
+                "freshness": {
+                  "max_source_mtime": 1780694168.8769398,
+                  "missing_sources": [],
+                  "result": "simulations/flowpilot_model_hierarchy_results.json",
+                  "result_missing": false,
+                  "result_mtime": 1780694265.7838938,
+                  "sources": [
+                    "simulations\\flowpilot_model_hierarchy_model.py",
+                    "simulations\\run_flowpilot_model_hierarchy_checks.py",
+                    "simulations\\meta_thin_parent_results.json",
+                    "simulations\\capability_thin_parent_results.json",
+                    "openspec\\changes\\adopt-flowguard-model-maturation\\specs\\flowguard-model-hierarchy\\spec.md"
+                  ]
+                },
+                "json": {
+                  "confidence": "",
+                  "decision": "",
+                  "ok": false,
+                  "result": "simulations/flowpilot_model_hierarchy_results.json",
+                  "result_type": ""
+                }
+              },
+              "model_id": "meta_capability_model_hierarchy",
+              "required": true,
+              "resolved": false,
+              "risk_id": "large_parent_ok_masks_child_gap",
+              "signal_id": "oversized_parent_child_maturity_visible",
+              "signal_type": "oversized_model",
+              "source_route": "model_mesh",
+              "suggested_actions": [
+                "split_child_model",
+                "add_model_obligation"
+              ]
+            },
+            "model_id": "meta_capability_model_hierarchy",
+            "risk_id": "large_parent_ok_masks_child_gap",
+            "severity": "blocker",
+            "signal_id": "oversized_parent_child_maturity_visible"
+          },
+          "recommended_action": "add_model_obligation"
+        },
+        "model_ids": [
+          "meta_capability_model_hierarchy"
+        ],
+        "obligation_id": "model-maturation:oversized-parent-child-maturity-visible",
+        "owner_route": "model_maturation_loop",
+        "proof_gap_codes": [],
+        "public_entrypoint_ids": [],
+        "reason_code": "model_upgrade_required",
+        "required_input_kinds": [],
+        "risk_ids": [
+          "large_parent_ok_masks_child_gap"
+        ],
+        "scope_reason": "",
+        "source_route": "model_maturation_loop",
+        "status": "open",
+        "strength": "required",
+        "suggested_commands": []
+      }
+    ],
     "model_id": "flowpilot_model_maturation_closure",
     "ok": true,
     "plan_id": "flowpilot-model-maturation-routine-closure",
     "recommended_actions": [
       "refresh_evidence",
-      "add_state_field",
-      "add_transition_case",
       "reattach_parent_model",
-      "add_code_boundary_observation",
+      "add_transition_case",
       "add_model_obligation",
+      "add_code_boundary_observation",
       "split_child_model",
       "downgrade_claim"
     ],
     "risk_id": "coarse_or_stale_flowpilot_model_confidence",
     "scoped_signal_ids": [
-      "ack_settlement_vs_output_completion",
       "route_replacement_disposes_old_packets",
-      "prompt_assets_are_contract_inputs",
-      "protocol_contract_conformance_fresh",
+      "singleton_identity_authority_current",
       "startup_control_evidence_fresh",
       "dispatch_recipient_gate_evidence_fresh",
       "oversized_parent_child_maturity_visible"

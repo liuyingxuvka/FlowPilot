@@ -9,7 +9,7 @@ from packet_control_plane_model_state import (
     ApprovedPacket,
     CheckedResult,
     DispatchBlocked,
-    HeartbeatCase,
+    ManualResumeCase,
     NodeCase,
     NodePacket,
     NodeResult,
@@ -28,7 +28,7 @@ from packet_control_plane_model_transitions_dispatch_results import (
 )
 from packet_control_plane_model_transitions_issue_resume import (
     ControllerAskPMOnResume,
-    HeartbeatResumeLoad,
+    ManualResumeLoad,
     PMIssuePacket,
     PMResumeDecision,
 )
@@ -42,12 +42,12 @@ from packet_control_plane_model_transitions_review_pm import (
     PMAdvance,
     PMRepairAfterInvalidOrigin,
     ReviewerResult,
-    ReviewerResultEnvelopeCheck,
+    RuntimeResultEnvelopeCheck,
 )
 
 __all__ = [
     "PMIssuePacket",
-    "HeartbeatResumeLoad",
+    "ManualResumeLoad",
     "ControllerAskPMOnResume",
     "PMResumeDecision",
     "PacketRuntimeWrite",
@@ -57,7 +57,7 @@ __all__ = [
     "RouterDirectDispatch",
     "WorkerOrControllerResult",
     "ControllerResultRelay",
-    "ReviewerResultEnvelopeCheck",
+    "RuntimeResultEnvelopeCheck",
     "ReviewerResult",
     "PMRepairAfterInvalidOrigin",
     "PMAdvance",

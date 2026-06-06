@@ -31,6 +31,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -103,18 +105,6 @@ def _commit_system_card_delivery_artifact(
         "delivery_context": delivery_context,
         "delivered_at": utc_now(),
     }
-    if card_id == "reviewer.startup_fact_check":
-        delivery.update(
-            {
-                "startup_mechanical_audit_path": pending.get("startup_mechanical_audit_path"),
-                "startup_mechanical_audit_hash": pending.get("startup_mechanical_audit_hash"),
-                "router_owned_check_proof_path": pending.get("router_owned_check_proof_path"),
-                "router_owned_check_proof_hash": pending.get("router_owned_check_proof_hash"),
-                "router_computable_checks_already_enforced": True,
-                "reviewer_should_not_reprove_router_computable_checks": True,
-                "reviewer_required_external_facts": pending.get("reviewer_required_external_facts") or [],
-            }
-        )
     envelope_path_raw = delivery.get("card_envelope_path")
     expected_return_path_raw = delivery.get("expected_return_path")
     expected_receipt_path_raw = delivery.get("expected_receipt_path")

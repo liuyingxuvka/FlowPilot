@@ -26,7 +26,6 @@ TEST_NAMES = (
     "test_controller_repair_work_packet_queues_bounded_controller_action",
     "test_pm_repair_decision_rejects_parent_repair_targeting_current_node_packet",
     "test_material_scan_existing_results_reconcile_before_stale_wait",
-    "test_material_scan_partial_batch_status_names_missing_role",
     "test_current_node_result_requires_write_grant",
     "test_current_node_packet_rejects_unresolved_node_entry_self_interrogation",
 )

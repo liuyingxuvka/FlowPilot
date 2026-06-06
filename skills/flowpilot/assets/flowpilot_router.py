@@ -39,17 +39,15 @@ _ROUTER_MODULE.__dict__.update(globals())
 
 
 CARD_RETURN_EVENT_BYPASS_EVENTS = {
-    "heartbeat_or_manual_resume_requested",
+    "manual_resume_requested",
     "controller_reports_role_liveness_fault",
     "controller_reports_role_no_output",
-    "host_records_heartbeat_binding",
+    "host_records_manual_resume_binding",
     "user_requests_run_stop",
     "user_requests_run_cancel",
 }
 
-STARTUP_REVIEW_BEGIN_JOIN_EVENTS = {
-    "reviewer_reports_startup_facts",
-}
+STARTUP_REVIEW_BEGIN_JOIN_EVENTS = set()
 
 PRE_REVIEW_STARTUP_CARD_IDS = {
     "pm.core",
@@ -60,16 +58,12 @@ PRE_REVIEW_STARTUP_CARD_IDS = {
 }
 
 STARTUP_ASYNC_CARD_IDS = {
-    "reviewer.startup_fact_check",
     "pm.core",
     "pm.output_contract_catalog",
     "pm.role_work_request",
     "pm.phase_map",
     "pm.startup_intake",
-    "pm.startup_activation",
 }
-
-REVIEWER_STARTUP_FACT_CARD_ID = "reviewer.startup_fact_check"
 
 
 CURRENT_SCOPE_REVIEWER_CARD_IDS = {

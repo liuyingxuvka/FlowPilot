@@ -107,13 +107,23 @@ def _row(row_id: str, ok: bool, evidence: list[str], *, scope: str = "routine") 
     }
 
 
-def _run_checks_in_root(work_root: Path) -> dict[str, Any]:
+def _run_checks_in_root(work_root: Path, *, scenario_names: set[str] | None = None) -> dict[str, Any]:
     work_root.mkdir(parents=True, exist_ok=True)
     flowguard = _flowguard_report()
     target_plan = _target_plan_report()
     hazards = _hazard_report()
     recursive_hazards = _recursive_route_hazard_report()
-    scenarios = rehearsal_scenarios.run_all_scenarios(work_root)
+    if scenario_names is None:
+        scenarios = rehearsal_scenarios.run_all_scenarios(work_root)
+    else:
+        scenario_map = dict(rehearsal_scenarios.SCENARIOS)
+        missing = sorted(scenario_names - set(scenario_map))
+        if missing:
+            raise ValueError(f"unknown fake project scenario(s): {missing}")
+        scenarios = [
+            rehearsal_scenarios.run_scenario(name, scenario_map[name], work_root)
+            for name in [name for name, _fn in rehearsal_scenarios.SCENARIOS if name in scenario_names]
+        ]
     scenario_by_name = {scenario["name"]: scenario for scenario in scenarios}
     recursive_bad_case_rows = [
         _row(f"fake_project_recursive_bad_case_{name}", name in recursive_hazards["covered"], ["simulations/flowpilot_recursive_route_execution_model.py"])
@@ -121,47 +131,32 @@ def _run_checks_in_root(work_root: Path) -> dict[str, Any]:
     ]
     rows = [
         _row("fake_project_flowguard_model", flowguard["ok"], ["simulations/flowpilot_fake_project_rehearsal_model.py"]),
-        _row("fake_project_blackbox_cli_normal", scenarios[0]["ok"], ["skills/flowpilot/assets/flowpilot_new.py"]),
-        _row("fake_project_blackbox_cli_error_flows", all(scenario["ok"] for scenario in scenarios[1:]), ["skills/flowpilot/assets/flowpilot_new.py"]),
-        _row(
-            "fake_project_blackbox_cli_planning_chain_guard",
-            scenario_by_name["planning_chain_does_not_terminal"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
-        _row(
-            "fake_project_blackbox_cli_route_mutation_recovery",
-            scenario_by_name["route_mutation_recovery"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
-        _row(
-            "fake_project_blackbox_cli_slow_reviewer_progress",
-            scenario_by_name["slow_reviewer_progress_preserved"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
-        _row(
-            "fake_project_blackbox_cli_accepted_packet_reassignment",
-            scenario_by_name["accepted_packet_reassignment_rejected"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
-        _row(
-            "fake_project_blackbox_cli_stop_terminal_fence",
-            scenario_by_name["stop_terminal_fence"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
-        _row(
-            "fake_project_blackbox_cli_host_liveness_bridge",
-            scenario_by_name["host_liveness_bridge_recovery"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
-        _row(
-            "fake_project_blackbox_cli_orphan_runner_summary",
-            scenario_by_name["orphan_runner_summary_recovery"]["ok"],
-            ["skills/flowpilot/assets/flowpilot_new.py"],
-        ),
         _row("fake_project_hazard_replay", hazards["ok"], ["simulations/flowpilot_fake_project_rehearsal_model.py"]),
         _row("fake_project_recursive_route_bad_case_replay", recursive_hazards["ok"], ["simulations/flowpilot_recursive_route_execution_model.py"]),
         *recursive_bad_case_rows,
     ]
+    scenario_rows = {
+        "normal_full_path": ("fake_project_blackbox_cli_normal", "skills/flowpilot/assets/flowpilot_new.py"),
+        "planning_chain_does_not_terminal": ("fake_project_blackbox_cli_planning_chain_guard", "skills/flowpilot/assets/flowpilot_new.py"),
+        "route_mutation_recovery": ("fake_project_blackbox_cli_route_mutation_recovery", "skills/flowpilot/assets/flowpilot_new.py"),
+        "slow_reviewer_progress_preserved": ("fake_project_blackbox_cli_slow_reviewer_progress", "skills/flowpilot/assets/flowpilot_new.py"),
+        "missing_current_result_fields_reissue": ("fake_project_blackbox_cli_missing_current_result_fields_reissue", "skills/flowpilot/assets/flowpilot_new.py"),
+        "accepted_packet_reassignment_rejected": ("fake_project_blackbox_cli_accepted_packet_reassignment", "skills/flowpilot/assets/flowpilot_new.py"),
+        "stop_terminal_fence": ("fake_project_blackbox_cli_stop_terminal_fence", "skills/flowpilot/assets/flowpilot_new.py"),
+        "host_liveness_bridge_recovery": ("fake_project_blackbox_cli_host_liveness_bridge", "skills/flowpilot/assets/flowpilot_new.py"),
+        "orphan_runner_summary_recovery": ("fake_project_blackbox_cli_orphan_runner_summary", "skills/flowpilot/assets/flowpilot_new.py"),
+    }
+    for scenario_name, (row_id, evidence_path) in scenario_rows.items():
+        if scenario_name in scenario_by_name:
+            rows.append(_row(row_id, scenario_by_name[scenario_name]["ok"], [evidence_path]))
+    if len(scenarios) > 1:
+        rows.append(
+            _row(
+                "fake_project_blackbox_cli_selected_flows",
+                all(scenario["ok"] for scenario in scenarios),
+                ["skills/flowpilot/assets/flowpilot_new.py"],
+            )
+        )
     return {
         "result_type": "flowpilot_fake_project_rehearsal_checks",
         "model_id": model.MODEL_ID,
@@ -192,11 +187,11 @@ def _run_checks_in_root(work_root: Path) -> dict[str, Any]:
     }
 
 
-def run_checks(work_root: Path | None = None) -> dict[str, Any]:
+def run_checks(work_root: Path | None = None, *, scenario_names: set[str] | None = None) -> dict[str, Any]:
     if work_root is None:
         with tempfile.TemporaryDirectory(prefix="flowpilot_fake_project_rehearsal_") as tmp:
-            return _run_checks_in_root(Path(tmp))
-    return _run_checks_in_root(work_root)
+            return _run_checks_in_root(Path(tmp), scenario_names=scenario_names)
+    return _run_checks_in_root(work_root, scenario_names=scenario_names)
 
 
 def main() -> int:
@@ -204,9 +199,10 @@ def main() -> int:
     parser.add_argument("--json-out", type=Path, default=RESULTS_PATH)
     parser.add_argument("--work-root", type=Path, default=DEFAULT_WORK_ROOT)
     parser.add_argument("--no-write-results", action="store_true")
+    parser.add_argument("--scenario", action="append", choices=[name for name, _fn in rehearsal_scenarios.SCENARIOS])
     args = parser.parse_args()
 
-    result = run_checks(args.work_root)
+    result = run_checks(args.work_root, scenario_names=set(args.scenario) if args.scenario else None)
     output = json.dumps(result, indent=2, sort_keys=True) + "\n"
     print(output, end="")
     if not args.no_write_results:

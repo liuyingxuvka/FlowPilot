@@ -1,13 +1,14 @@
 # FlowPilot Meta-Process Preflight Findings
 
-Date: 2026-05-04
+Date: 2026-06-05
 
 ## Current Finding Set
 
-The active FlowPilot continuation model is heartbeat-only continuation plus
-explicit manual resume. The unsupported external recovery layer is no longer part of
-the supported controller, PM, reviewer, heartbeat, installation, or lifecycle
-surface.
+The active FlowPilot continuation model is manual lifecycle resume plus
+foreground duty from the new `flowpilot_new.py` runtime. Heartbeat automation
+and fixed role-set restoration are not part of the current formal FlowPilot
+surface. The unsupported external recovery layer is no longer part of the
+supported controller, PM, reviewer, installation, or lifecycle surface.
 
 Current source and runtime checks must preserve these boundaries:
 
@@ -20,8 +21,14 @@ Current source and runtime checks must preserve these boundaries:
   files, controller handoff text containing body content, controller body
   access, body execution, wrong-role relabelling, hash mismatch acceptance, and
   stale body reuse are control-plane blockers;
-- heartbeat/manual resume must load current-run state, execution frontier,
-  packet ledger, and role memory before deciding what can proceed;
+- manual resume must be recorded through
+  `flowpilot_new.py resume --reason manual_resume`, then the Controller must
+  follow the returned lifecycle guard, foreground duty, packet/lease state, and
+  status projection before deciding what can proceed. Role assignment is
+  on-demand: only the currently requested packet responsibility may be opened,
+  reused, replaced, or leased through `resolve-role-assignment` and
+  `lease-agent`; fixed role-set prewarming and stale role reports are not
+  current authority;
 - router direct-dispatch validation is mandatory before PM-authored work
   packets reach a worker. Existing or fresh worker results must return to the
   PM for a recorded package-result disposition before any PM-built formal
@@ -44,7 +51,8 @@ skill. The current model boundary covers:
   unresolved sources, experiments, mechanisms, or validation claims;
 - packet control plane handoff among controller, PM, reviewer, FlowGuard operators, and
   workers;
-- route heartbeat/manual resume behavior;
+- manual lifecycle resume, foreground duty, and on-demand role assignment
+  behavior;
 - display-surface startup behavior for Cockpit or chat route signs;
 - reviewer factual checks before PM start-gate release;
 - child-skill fidelity gates and capability routing;

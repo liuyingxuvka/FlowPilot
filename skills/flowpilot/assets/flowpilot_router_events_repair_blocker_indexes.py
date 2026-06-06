@@ -30,9 +30,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -122,7 +127,9 @@ def _control_blocker_summary(router: ModuleType, record: dict[str, Any]) -> dict
 def _resume_reentry_gate_pending(router: ModuleType, run_state: dict[str, Any]) -> bool:
     _bind_router(router)
     flags = run_state.get('flags', {})
-    return bool(flags.get('resume_reentry_requested')) and (not bool(flags.get('pm_resume_recovery_decision_returned')))
+    return bool(flags.get('resume_reentry_requested')) and (
+        not bool(flags.get('resume_state_loaded')) or not bool(flags.get('resume_roles_restored'))
+    )
 
 def _sync_protocol_blocker_index(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> None:
     _bind_router(router)

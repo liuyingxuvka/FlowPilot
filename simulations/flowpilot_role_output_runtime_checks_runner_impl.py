@@ -34,11 +34,11 @@ RESULTS_PATH = ROOT / "flowpilot_role_output_runtime_results.json"
 
 REQUIRED_LABELS = (
     "select_valid_pm_resume_decision",
-    "select_valid_startup_activation_approval",
     "select_valid_gate_decision",
     "select_valid_reviewer_report",
     "select_valid_controller_boundary_confirmation",
     "select_valid_pm_package_result_disposition",
+    "select_forbidden_legacy_startup_activation_approval",
     "select_missing_registry_runtime_binding",
     "select_registry_contract_id_mismatch",
     "select_registry_allowed_role_mismatch",
@@ -60,6 +60,7 @@ REQUIRED_LABELS = (
     "runtime_validates_writes_receipt_and_envelope",
     "runtime_submits_role_output_directly_to_router",
     "router_accepts_runtime_checked_role_output",
+    "router_rejects_forbidden_legacy_output_type",
     "router_rejects_missing_registry_runtime_binding",
     "router_rejects_registry_contract_id_mismatch",
     "router_rejects_registry_allowed_role_mismatch",

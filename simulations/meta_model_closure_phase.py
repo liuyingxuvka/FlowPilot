@@ -242,7 +242,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
                     completion_visible_roadmap_emitted=False,
                     high_value_work_review="unknown",
                     standard_expansions=state.standard_expansions + 1,
-                    heartbeat_health_checked=False,
+                    manual_resume_binding_health_checked=False,
                     lifecycle_reconciliation_done=False,
                     terminal_lifecycle_frontier_written=False,
                     node_focused_interrogation_done=False,
@@ -571,7 +571,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="lifecycle_reconciliation_completed",
-                action="scan Codex heartbeat automations, local state, and execution frontier before route shutdown",
+                action="scan manual resume binding and manual-resume lifecycle records, local state, and execution frontier before route shutdown",
                 lifecycle_reconciliation_done=True,
                 active_node="reconcile_lifecycle",
             )
@@ -593,7 +593,7 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             yield _step(
                 state,
                 label="terminal_lifecycle_frontier_written",
-                action="write terminal heartbeat lifecycle back to execution frontier before stopping heartbeat",
+                action="write terminal foreground-patrol and manual-resume lifecycle back to execution frontier before stopping foreground duty",
                 terminal_lifecycle_frontier_written=True,
                 active_node="terminal_lifecycle_frontier_synced",
             )
@@ -639,9 +639,10 @@ def apply_closure_phase(self, state: State) -> Iterable[FunctionResult]:
             label="final_report_emitted",
             action="emit final report, emit terminal completion notice, and reconcile continuation lifecycle",
             status="complete",
-            heartbeat_active=False,
+            manual_resume_binding_active=False,
             final_report_emitted=True,
             terminal_completion_notice_recorded=True,
             active_node="complete",
         )
         return
+

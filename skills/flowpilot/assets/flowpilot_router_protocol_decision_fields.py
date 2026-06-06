@@ -2,10 +2,10 @@
 
 from __future__ import annotations
 
-STARTUP_ANSWER_ENUMS = {
-    "runtime_role_assistances": {"allow", "single-agent"},
-    "scheduled_continuation": {"allow", "manual"},
-    "display_surface": {"cockpit", "chat"},
+STARTUP_ANSWER_ENUMS = {}
+
+STARTUP_ANSWER_BOOLEANS = {
+    "background_collaboration_authorized",
 }
 
 GATE_DECISION_REQUIRED_FIELDS = (

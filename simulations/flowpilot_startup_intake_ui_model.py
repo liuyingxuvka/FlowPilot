@@ -4,10 +4,9 @@ Risk purpose:
 - Use FlowGuard (https://github.com/liuyingxuvka/FlowGuard) to review the
   native startup intake UI as the formal startup boundary.
 - Guard against Controller seeing user request body text, startup continuing
-  after UI cancel, the remaining background-collaboration toggle drifting from existing
-  startup enums, removed continuation/display options returning as user-visible
-  choices, and reviewer startup checks relying on chat history instead of UI
-  records.
+  after UI cancel or missing background-collaboration acknowledgement, removed
+  startup option enums returning as user-visible choices, and reviewer startup
+  checks relying on chat history instead of UI records.
 - Guard that language selection is no longer a top-level startup option and is
   available only from the settings gear together with the support-developer
   entry.
@@ -30,10 +29,14 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-STARTUP_ENUMS = {
-    "runtime_role_assistances": {"allow", "single-agent"},
-    "scheduled_continuation": {"allow", "manual"},
-    "display_surface": {"cockpit", "chat"},
+LEGACY_STARTUP_OPTION_KEYS = {
+    "runtime_role_assistances",
+    "runtime_role_assistance_authorized",
+    "runtime_role_assistances_answer",
+    "scheduled_continuation",
+    "heartbeat_requested",
+    "single_agent_role_continuity_authorized",
+    "single_agent_user_selected",
 }
 
 REQUIRED_LABELS = (
@@ -43,6 +46,7 @@ REQUIRED_LABELS = (
     "settings_button_visible_and_main_language_hidden",
     "settings_panel_opened_with_language_and_support",
     "ui_confirmed_with_all_artifacts",
+    "ui_blocked_without_background_ack",
     "ui_cancelled_before_run",
     "startup_answers_recorded_from_ui",
     "ui_artifact_encoding_contract_verified",
@@ -50,17 +54,12 @@ REQUIRED_LABELS = (
     "sealed_user_request_ref_recorded",
     "pm_intake_packet_created_from_sealed_body_ref",
     "reviewer_checks_ui_record_receipt_and_envelope",
-    "host_options_applied_from_background_choice_and_defaults",
+    "background_collaboration_requested_after_ack",
     "controller_core_loaded_after_sealed_intake",
     "startup_ui_path_complete",
 )
 
 MAX_SEQUENCE_LENGTH = 19
-
-FIXED_STARTUP_DEFAULTS = {
-    "scheduled_continuation": "manual",
-    "display_surface": "chat",
-}
 
 
 @dataclass(frozen=True)
@@ -75,10 +74,10 @@ class Action:
 
 @dataclass(frozen=True)
 class State:
-    status: str = "new"  # new | waiting_ui | cancelled | running | complete
+    status: str = "new"  # new | waiting_ui | blocked | cancelled | running | complete
     router_loaded: bool = False
     ui_opened: bool = False
-    ui_result: str = "none"  # none | confirmed | cancelled
+    ui_result: str = "none"  # none | confirmed | blocked | cancelled
     launch_mode: str = "none"  # none | interactive_native | headless | synthetic
     headless_result: bool = False
     formal_startup_allowed: bool = False
@@ -112,9 +111,8 @@ class State:
 
     startup_answers_recorded: bool = False
     startup_answer_values_valid: bool = False
-    runtime_role_assistances: str = "unknown"  # unknown | allow | single-agent
-    scheduled_continuation: str = "unknown"  # unknown | allow | manual
-    display_surface: str = "unknown"  # unknown | cockpit | chat
+    background_collaboration_authorized: bool | None = None
+    legacy_startup_option_key_seen: str = ""
     old_chat_answer_required: bool = False
 
     run_shell_created: bool = False
@@ -128,10 +126,10 @@ class State:
     reviewer_used_chat_history: bool = False
     reviewer_startup_passed: bool = False
 
-    roles_started: bool = False
-    heartbeat_created: bool = False
+    background_collaboration_requested: bool = False
+    host_background_collaboration_available: bool = True
     cockpit_opened: bool = False
-    chat_display_fallback_recorded: bool = False
+    chat_display_requirement_recorded: bool = False
     cockpit_launch_failed: bool = False
 
     controller_core_loaded: bool = False
@@ -146,8 +144,8 @@ class StartupIntakeStep:
     """Model one startup intake transition.
 
     Input x State -> Set(Output x State)
-    reads: UI result files, startup option values, body path/hash, reviewer receipt checks
-    writes: startup answers, run shell, user request ref, PM intake packet, host option effects
+    reads: UI result files, startup option values, body path/hash, runtime receipt checks
+    writes: startup answers, run shell, user request ref, PM intake packet, background collaboration request
     idempotency: repeated ticks do not re-confirm UI, duplicate run creation, or re-open cancelled startup.
     """
 
@@ -165,7 +163,7 @@ class StartupIntakeStep:
         "run_shell",
         "sealed_user_request_ref",
         "pm_intake_packet",
-        "reviewer_startup_fact_check",
+        "startup_mechanical_audit",
         "host_startup_options",
         "settings_language_and_support_surface",
     )
@@ -192,14 +190,14 @@ def build_workflow() -> Workflow:
 
 
 def is_terminal(state: State) -> bool:
-    return state.status in {"cancelled", "complete"}
+    return state.status in {"blocked", "cancelled", "complete"}
 
 
 def is_success(state: State) -> bool:
     return state.status == "complete"
 
 
-def _confirm_state(state: State, *, background: str) -> State:
+def _confirm_state(state: State) -> State:
     return replace(
         state,
         ui_result="confirmed",
@@ -217,9 +215,25 @@ def _confirm_state(state: State, *, background: str) -> State:
         envelope_json_no_bom=True,
         router_json_reader_bom_tolerant=True,
         pm_packet_body_bom_stripped=True,
-        runtime_role_assistances=background,
-        scheduled_continuation=FIXED_STARTUP_DEFAULTS["scheduled_continuation"],
-        display_surface=FIXED_STARTUP_DEFAULTS["display_surface"],
+        background_collaboration_authorized=True,
+    )
+
+
+def _blocked_state(state: State) -> State:
+    return replace(
+        state,
+        ui_result="blocked",
+        status="blocked",
+        launch_mode="interactive_native",
+        headless_result=False,
+        formal_startup_allowed=True,
+        receipt_written=True,
+        envelope_written=True,
+        result_json_no_bom=True,
+        receipt_json_no_bom=True,
+        envelope_json_no_bom=True,
+        router_json_reader_bom_tolerant=True,
+        background_collaboration_authorized=False,
     )
 
 
@@ -280,10 +294,11 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return (
             Transition(
                 "ui_confirmed_with_all_artifacts",
-                _confirm_state(
-                    state,
-                    background="allow",
-                ),
+                _confirm_state(state),
+            ),
+            Transition(
+                "ui_blocked_without_background_ack",
+                _blocked_state(state),
             ),
             Transition(
                 "ui_cancelled_before_run",
@@ -294,13 +309,6 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     launch_mode="interactive_native",
                     headless_result=False,
                     formal_startup_allowed=True,
-                ),
-            ),
-            Transition(
-                "ui_confirmed_with_all_artifacts",
-                _confirm_state(
-                    state,
-                    background="single-agent",
                 ),
             ),
         )
@@ -361,32 +369,27 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             ),
         )
     if state.reviewer_startup_passed and not (
-        state.roles_started
-        or state.heartbeat_created
+        state.background_collaboration_requested
         or state.cockpit_opened
-        or state.chat_display_fallback_recorded
+        or state.chat_display_requirement_recorded
     ):
         return (
             Transition(
-                "host_options_applied_from_background_choice_and_defaults",
+                "background_collaboration_requested_after_ack",
                 replace(
                     state,
-                    roles_started=state.runtime_role_assistances == "allow",
-                    heartbeat_created=state.scheduled_continuation == "allow",
-                    cockpit_opened=state.display_surface == "cockpit" and not state.cockpit_launch_failed,
-                    chat_display_fallback_recorded=state.display_surface == "chat"
-                    or state.cockpit_launch_failed,
+                    background_collaboration_requested=True,
+                    cockpit_opened=False,
+                    chat_display_requirement_recorded=True,
                 ),
             ),
         )
     if state.reviewer_startup_passed and not state.controller_core_loaded:
         options_applied = (
-            (state.runtime_role_assistances != "allow" or state.roles_started)
-            and (state.scheduled_continuation != "allow" or state.heartbeat_created)
-            and (
-                (state.display_surface == "cockpit" and state.cockpit_opened)
-                or (state.display_surface == "chat" and state.chat_display_fallback_recorded)
-            )
+            state.background_collaboration_authorized is True
+            and state.background_collaboration_requested
+            and state.host_background_collaboration_available
+            and state.chat_display_requirement_recorded
         )
         if options_applied:
             return (
@@ -412,18 +415,17 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         and state.pm_intake_packet_created
     ):
         return InvariantResult.fail("Controller loaded before confirmed UI intake and PM packet")
-    if state.ui_result in {"confirmed", "cancelled"} and state.status != "new":
+    if state.ui_result in {"confirmed", "blocked", "cancelled"} and state.status != "new":
         if state.launch_mode != "interactive_native" or state.headless_result or not state.formal_startup_allowed:
             return InvariantResult.fail("formal startup accepted non-interactive startup intake result")
-    if state.ui_result == "cancelled" and (
+    if state.ui_result in {"blocked", "cancelled"} and (
         state.run_shell_created
         or state.user_request_ref_recorded
-        or state.roles_started
-        or state.heartbeat_created
+        or state.background_collaboration_requested
         or state.cockpit_opened
         or state.controller_core_loaded
     ):
-        return InvariantResult.fail("UI cancel still allowed startup side effects")
+        return InvariantResult.fail("UI block/cancel still allowed startup side effects")
     if state.body_text_in_controller_visible_state or state.controller_read_body:
         return InvariantResult.fail("Controller-visible startup state leaked user request body")
     if state.ui_opened and not state.source_encoding_contract_verified:
@@ -434,9 +436,9 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         return InvariantResult.fail("startup UI launcher source may not parse on unsupported_historical Windows PowerShell")
     if state.settings_button_visible and state.language_visible_on_main:
         return InvariantResult.fail("language selector remained visible on the startup main surface")
-    if state.ui_result in {"confirmed", "cancelled"} and not state.settings_button_visible:
+    if state.ui_result in {"confirmed", "blocked", "cancelled"} and not state.settings_button_visible:
         return InvariantResult.fail("startup UI reached a user decision before the settings gear was available")
-    if state.ui_result in {"confirmed", "cancelled"} and not state.settings_panel_opened:
+    if state.ui_result in {"confirmed", "blocked", "cancelled"} and not state.settings_panel_opened:
         return InvariantResult.fail("startup UI reached a user decision before settings panel structure was verified")
     if state.settings_panel_opened and not state.language_visible_in_settings:
         return InvariantResult.fail("settings panel did not contain language selection")
@@ -468,24 +470,22 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
     if state.pm_intake_packet_created and state.body_has_leading_bom and not state.pm_packet_body_bom_stripped:
         return InvariantResult.fail("PM intake packet leaked leading UTF-8 BOM marker")
     if state.startup_answers_recorded:
-        if state.runtime_role_assistances not in STARTUP_ENUMS["runtime_role_assistances"]:
-            return InvariantResult.fail("runtime role toggle did not map to a startup answer enum")
-        if state.scheduled_continuation not in STARTUP_ENUMS["scheduled_continuation"]:
-            return InvariantResult.fail("scheduled continuation toggle did not map to a startup answer enum")
-        if state.display_surface not in STARTUP_ENUMS["display_surface"]:
-            return InvariantResult.fail("display surface toggle did not map to a startup answer enum")
-        if state.scheduled_continuation != FIXED_STARTUP_DEFAULTS["scheduled_continuation"]:
-            return InvariantResult.fail("scheduled continuation is no longer a visible startup UI option")
-        if state.display_surface != FIXED_STARTUP_DEFAULTS["display_surface"]:
-            return InvariantResult.fail("display surface is no longer a visible startup UI option")
-    if state.runtime_role_assistances == "single-agent" and state.roles_started:
-        return InvariantResult.fail("runtime role assistance started despite UI single-agent choice")
-    if state.scheduled_continuation == "manual" and state.heartbeat_created:
-        return InvariantResult.fail("heartbeat created despite UI manual continuation choice")
-    if state.display_surface == "chat" and state.cockpit_opened:
+        if state.background_collaboration_authorized is not True:
+            return InvariantResult.fail("startup answers accepted without background_collaboration_authorized=true")
+        if state.legacy_startup_option_key_seen in LEGACY_STARTUP_OPTION_KEYS:
+            return InvariantResult.fail("legacy startup option key was accepted")
+    if state.legacy_startup_option_key_seen in LEGACY_STARTUP_OPTION_KEYS and state.ui_result == "confirmed":
+        return InvariantResult.fail("legacy startup option key was accepted")
+    if state.controller_core_loaded and not state.background_collaboration_requested:
+        return InvariantResult.fail("Controller loaded before requesting mandatory background collaboration")
+    if state.background_collaboration_requested and state.background_collaboration_authorized is not True:
+        return InvariantResult.fail("background collaboration was requested without explicit UI acknowledgement")
+    if state.background_collaboration_requested and not state.host_background_collaboration_available:
+        return InvariantResult.fail("FlowPilot continued after host background collaboration was unavailable")
+    if state.cockpit_opened:
         return InvariantResult.fail("Cockpit opened despite UI chat display choice")
-    if state.display_surface == "chat" and state.controller_core_loaded and not state.chat_display_fallback_recorded:
-        return InvariantResult.fail("chat display choice reached Controller without chat fallback record")
+    if state.controller_core_loaded and not state.chat_display_requirement_recorded:
+        return InvariantResult.fail("chat display choice reached Controller without required chat display record")
     if state.reviewer_startup_passed and not (
         state.reviewer_checked_ui_receipt
         and state.reviewer_checked_ui_record
@@ -529,16 +529,13 @@ def hazard_states() -> dict[str, State]:
         support_entitlement_disclaimer_visible=True,
         support_claims_paid_entitlement=False,
     )
-    base = _confirm_state(
-        safe_waiting,
-        background="allow",
-    )
+    base = _confirm_state(safe_waiting)
     recorded = replace(base, startup_answers_recorded=True, startup_answer_values_valid=True)
     encoded = replace(base, artifact_encoding_contract_verified=True)
     recorded = replace(encoded, startup_answers_recorded=True, startup_answer_values_valid=True)
     return {
         "controller_before_ui_confirm": replace(initial_state(), controller_core_loaded=True),
-        "cancel_continues_to_run": replace(
+        "block_or_cancel_continues_to_run": replace(
             initial_state(),
             router_loaded=True,
             ui_opened=True,
@@ -582,7 +579,7 @@ def hazard_states() -> dict[str, State]:
         "ui_result_json_bom_breaks_router": replace(recorded, result_json_no_bom=False),
         "ui_receipt_json_bom_breaks_router": replace(recorded, receipt_json_no_bom=False),
         "ui_envelope_json_bom_breaks_router": replace(recorded, envelope_json_no_bom=False),
-        "unsupported_historical_bom_json_without_router_fallback": replace(recorded, router_json_reader_bom_tolerant=False),
+        "unsupported_historical_bom_json_without_reader_support": replace(recorded, router_json_reader_bom_tolerant=False),
         "headless_result_accepted": replace(
             recorded,
             launch_mode="headless",
@@ -596,22 +593,40 @@ def hazard_states() -> dict[str, State]:
             pm_packet_body_bom_stripped=False,
         ),
         "bom_repair_bypasses_body_hash": replace(recorded, body_hash_verified=False),
-        "invalid_toggle_value": replace(recorded, runtime_role_assistances="yes"),
-        "obsolete_scheduled_continuation_option_accepted": replace(recorded, scheduled_continuation="allow"),
-        "obsolete_display_surface_option_accepted": replace(recorded, display_surface="cockpit"),
-        "single_agent_starts_roles": replace(
+        "background_ack_missing": replace(recorded, background_collaboration_authorized=None),
+        "background_ack_false": replace(recorded, background_collaboration_authorized=False),
+        "legacy_runtime_role_assistance_key_accepted": replace(
             recorded,
-            runtime_role_assistances="single-agent",
-            roles_started=True,
+            legacy_startup_option_key_seen="runtime_role_assistances",
         ),
-        "manual_creates_heartbeat": replace(
+        "legacy_single_agent_key_accepted": replace(
             recorded,
-            scheduled_continuation="manual",
-            heartbeat_created=True,
+            legacy_startup_option_key_seen="single_agent_role_continuity_authorized",
+        ),
+        "legacy_heartbeat_key_accepted": replace(
+            recorded,
+            legacy_startup_option_key_seen="heartbeat_requested",
+        ),
+        "background_requested_without_ack": replace(
+            recorded,
+            background_collaboration_authorized=False,
+            background_collaboration_requested=True,
+        ),
+        "host_background_unavailable_continues": replace(
+            recorded,
+            pm_intake_packet_created=True,
+            pm_is_only_body_reader=True,
+            reviewer_checked_ui_record=True,
+            reviewer_checked_ui_receipt=True,
+            reviewer_checked_envelope_hash=True,
+            reviewer_startup_passed=True,
+            background_collaboration_requested=True,
+            host_background_collaboration_available=False,
+            chat_display_requirement_recorded=True,
+            controller_core_loaded=True,
         ),
         "chat_opens_cockpit": replace(
             recorded,
-            display_surface="chat",
             cockpit_opened=True,
         ),
         "reviewer_uses_chat": replace(
@@ -640,10 +655,7 @@ def approved_plan_state() -> State:
         support_claims_paid_entitlement=False,
     )
     return replace(
-        _confirm_state(
-            safe_waiting,
-            background="allow",
-        ),
+        _confirm_state(safe_waiting),
         startup_answers_recorded=True,
         startup_answer_values_valid=True,
         artifact_encoding_contract_verified=True,
@@ -655,10 +667,10 @@ def approved_plan_state() -> State:
         reviewer_checked_ui_receipt=True,
         reviewer_checked_envelope_hash=True,
         reviewer_startup_passed=True,
-        roles_started=True,
-        heartbeat_created=False,
+        background_collaboration_requested=True,
+        host_background_collaboration_available=True,
         cockpit_opened=False,
-        chat_display_fallback_recorded=True,
+        chat_display_requirement_recorded=True,
         controller_core_loaded=True,
         status="complete",
     )

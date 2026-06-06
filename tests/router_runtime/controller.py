@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from tests.router_runtime.common import *  # noqa: F403
 from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 
@@ -231,7 +233,7 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertEqual(daemon_status["control_projection"]["projection_kind"], "protocol_dead_end")
         self.assertTrue(daemon_status["control_projection"]["controller_stop_allowed"])
         self.assertFalse(daemon_status["control_projection"]["work_chain_liveness_claimed"])
-        self.assertTrue(daemon_status["control_projection"]["heartbeat_is_launcher_only"])
+        self.assertTrue(daemon_status["control_projection"]["daemon_patrol_is_liveness_only"])
 
     def test_foreground_receipt_defers_scheduler_fold_to_live_daemon(self) -> None:
         root = self.make_project()
@@ -291,7 +293,7 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_resolved_scope_wait_is_superseded_and_clears_pending_projection(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
+        self.complete_startup_runtime_entry(root)
         state = read_json(router.run_state_path(run_root))
         action = router.make_action(
             action_type="await_current_scope_reconciliation",
@@ -380,3 +382,4 @@ class ControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertNotEqual((state.get("pending_action") or {}).get("controller_action_id"), action_id)
         labels = [item["label"] for item in state["history"] if isinstance(item, dict)]
         self.assertIn("router_reconciled_pending_controller_action_receipt", labels)
+

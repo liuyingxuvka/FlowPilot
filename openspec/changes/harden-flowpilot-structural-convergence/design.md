@@ -50,7 +50,7 @@ parallel peer work and avoid broad refactors outside the owned runtime surfaces.
    Templates will ask for explicit dispositions: removed, rejected, retained as
    current-runtime recovery, retained as an owned maintenance layer, or blocked.
    This keeps legitimate maintenance layers possible while preventing silent
-   fallback accumulation.
+   recovery-branch accumulation.
 
 3. Model the new hazards in planning quality.
 

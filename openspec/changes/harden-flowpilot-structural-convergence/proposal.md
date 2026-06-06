@@ -1,7 +1,7 @@
 ## Why
 
 FlowPilot runs are long-lived and multi-turn, so temporary patches, legacy
-fallback branches, duplicate adapters, and unclear maintenance layers can
+recovery branches, duplicate adapters, and unclear maintenance layers can
 silently become permanent structural debt. The runtime already rejects many
 old-shape inputs, but each route also needs an explicit convergence check so
 completed work leaves one clear, maintainable current-contract path unless a

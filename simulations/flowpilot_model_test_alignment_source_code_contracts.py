@@ -1487,9 +1487,9 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_outputs=(),
         ),
         _contract(
-            "packet_review.reviewer_result_apply",
+            "packet_review.runtime_result_envelope_check_apply",
             path="skills/flowpilot/assets/packet_control_plane_model_transitions_review_pm.py",
-            symbol="ReviewerResultEnvelopeCheck.apply",
+            symbol="RuntimeResultEnvelopeCheck.apply",
             implements=("packet_control_plane.model_state_contract",),
             external_inputs=("input_obj", "state"),
             external_outputs=(),

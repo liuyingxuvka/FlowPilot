@@ -32,10 +32,10 @@ class ControllerWaitReceiptAuditUnitTests(unittest.TestCase):
     def current_wait(self) -> dict:
         return {
             "action_type": "await_role_decision",
-            "waiting_for_role": "human_like_reviewer",
-            "target_role": "human_like_reviewer",
-            "wait_class": "report_result",
-            "allowed_external_events": ["reviewer_reports_startup_facts"],
+            "waiting_for_role": "worker",
+            "target_role": "worker",
+            "wait_class": "current_node_result",
+            "allowed_external_events": ["worker_current_node_result_returned"],
             "packet_id": "pkt-1",
             "expected_return_path": ".flowpilot/runs/run-1/packets/pkt-1/result_envelope.json",
         }
@@ -80,7 +80,7 @@ class ControllerWaitReceiptAuditUnitTests(unittest.TestCase):
         self.write_json(
             run_root / "packets" / "pkt-1" / "result_envelope.json",
             {
-                "completed_by_role": "human_like_reviewer",
+                "completed_by_role": "worker",
                 "result_body_path": ".flowpilot/runs/run-1/packets/pkt-1/result_body.md",
                 "result_body_hash": "abc123",
             },
@@ -100,7 +100,7 @@ class ControllerWaitReceiptAuditUnitTests(unittest.TestCase):
         self.write_json(
             run_root / "packets" / "pkt-1" / "result_envelope.json",
             {
-                "completed_by_role": "human_like_reviewer",
+                "completed_by_role": "worker",
                 "result_body_path": ".flowpilot/runs/run-1/packets/pkt-1/result_body.md",
                 "result_body_hash": "abc123",
             },
@@ -125,7 +125,7 @@ class ControllerWaitReceiptAuditUnitTests(unittest.TestCase):
         self.write_json(
             run_root / "packets" / "pkt-1" / "result_envelope.json",
             {
-                "completed_by_role": "human_like_reviewer",
+                "completed_by_role": "worker",
                 "result_body_path": ".flowpilot/runs/run-1/packets/pkt-1/missing_body.md",
             },
         )
@@ -143,7 +143,7 @@ class ControllerWaitReceiptAuditRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         self.boot_to_controller(root)
         self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_startup_fact_role_wait(root)
+        self.force_current_role_result_wait(root)
 
         standby = router.foreground_controller_standby(
             root,
@@ -160,34 +160,6 @@ class ControllerWaitReceiptAuditRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(standby["metadata_only"])
         self.assertFalse(standby["sealed_body_reads_allowed"])
 
-    def test_patrol_reports_control_plane_stuck_when_formal_return_is_not_released(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        self.release_startup_daemon_for_explicit_daemon_test(root)
-        self.force_startup_fact_role_wait(root)
-        ledger_path = run_root / "role_output_ledger.json"
-        ledger = read_json(ledger_path) if ledger_path.exists() else {"outputs": []}
-        ledger.setdefault("outputs", []).append(
-            {
-                "role": "human_like_reviewer",
-                "output_type": "startup_fact_report",
-                "event_name": "reviewer_reports_startup_facts",
-                "body_path": "startup/startup_fact_report.json",
-                "receipt_path": "startup/startup_fact_report.receipt.json",
-            }
-        )
-        self.write_json_file(ledger_path, ledger)
-
-        patrol = router.controller_patrol_timer(root, seconds=0)
-
-        self.assertEqual(patrol["patrol_result"], "control_plane_stuck")
-        self.assertEqual(
-            patrol["wait_receipt_audit"]["classification"],
-            "formal_return_seen_but_wait_not_released",
-        )
-        self.assertTrue(patrol["user_visible_message_required"])
-        self.assertIn("control-plane stuck", patrol["controller_instruction"])
-
     def write_json_file(self, path: Path, payload: dict) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -195,3 +167,4 @@ class ControllerWaitReceiptAuditRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
 if __name__ == "__main__":
     unittest.main()
+

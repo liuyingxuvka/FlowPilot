@@ -65,8 +65,8 @@ class FlowPilotSingletonIdentityTests(unittest.TestCase):
             _write_json(
                 tmp_path / ".flowpilot" / "current.json",
                 {
-                    "current_run_id": "run-1",
-                    "current_run_root": ".flowpilot/runs/run-1",
+                    "run_id": "run-1",
+                    "run_root": ".flowpilot/runs/run-1",
                     "status": "running",
                 },
             )

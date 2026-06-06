@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -32,6 +34,39 @@ class FlowPilotDynamicReturnPathModelTests(unittest.TestCase):
         self.assertTrue(hazards["ok"], hazards)
         self.assertTrue(explorer["ok"], explorer)
         self.assertGreaterEqual(len(hazards["hazards"]), len(model.NEGATIVE_SCENARIOS))
+
+    def test_missing_current_run_is_scoped_projection_not_history_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            projection = model.project_live_run_projection(Path(tmp))
+
+        self.assertTrue(projection["ok"], projection)
+        self.assertTrue(projection["skipped"])
+        self.assertEqual(projection["classification"], "current_run_missing")
+        self.assertFalse(projection["current_run_can_continue"])
+        self.assertFalse(projection["safe_to_claim_live_run_confidence"])
+        self.assertTrue(projection["metadata_only"])
+
+    def test_legacy_current_pointer_aliases_are_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".flowpilot" / "runs" / "run-legacy").mkdir(parents=True)
+            (root / ".flowpilot" / "current.json").write_text(
+                json.dumps(
+                    {
+                        "active_run_id": "run-legacy",
+                        "active_run_root": ".flowpilot/runs/run-legacy",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            projection = model.project_live_run_projection(root)
+
+        self.assertFalse(projection["ok"], projection)
+        self.assertTrue(projection["skipped"])
+        self.assertEqual(projection["classification"], "current_pointer_current_contract_invalid")
+        self.assertFalse(projection["current_run_can_continue"])
+        self.assertIn("active_run_id", projection["current_findings"][0]["legacy_aliases_rejected"])
 
 
 if __name__ == "__main__":

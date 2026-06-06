@@ -2,7 +2,7 @@
 
 This model checks the planned skill-composition layer for FlowPilot. FlowPilot
 starts only at showcase-grade scope, exposes its self-interrogation style
-self-interrogation, creates heartbeat continuity, uses FlowGuard as process
+self-interrogation, creates manual resume binding continuity, uses FlowGuard as process
 designer before routing capabilities, and refuses completion while obvious
 high-value work remains.
 """
@@ -15,7 +15,7 @@ from typing import Iterable
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-REQUIRED_ROLE_BINDING_COUNT = 4
+MIN_CURRENT_BACKGROUND_AGENT_COUNT = 1
 TARGET_PARENT_NODES = 1
 MAX_STANDARD_EXPANSIONS = 1
 MAX_QUALITY_ROUTE_RAISES = 1
@@ -36,7 +36,7 @@ LAYER_DATA_STATE = 1 << 2
 LAYER_IMPLEMENTATION_STRATEGY = 1 << 3
 LAYER_UI_EXPERIENCE = 1 << 4
 LAYER_VALIDATION = 1 << 5
-LAYER_RECOVERY_HEARTBEAT = 1 << 6
+LAYER_RECOVERY_LIFECYCLE = 1 << 6
 LAYER_DELIVERY_SHOWCASE = 1 << 7
 REQUIRED_RISK_FAMILY_MASK = (
     LAYER_GOAL_ACCEPTANCE
@@ -45,7 +45,7 @@ REQUIRED_RISK_FAMILY_MASK = (
     | LAYER_IMPLEMENTATION_STRATEGY
     | LAYER_UI_EXPERIENCE
     | LAYER_VALIDATION
-    | LAYER_RECOVERY_HEARTBEAT
+    | LAYER_RECOVERY_LIFECYCLE
     | LAYER_DELIVERY_SHOWCASE
 )
 
@@ -69,9 +69,7 @@ class State:
     stale_top_level_bootstrap_reused: bool = False
     startup_intake_ui_completed: bool = False
     startup_intake_result_recorded: bool = False
-    startup_runtime_role_assistance_option_recorded: bool = False
-    startup_continuation_option_recorded: bool = False
-    startup_display_surface_option_recorded: bool = False
+    startup_background_collaboration_ack_recorded: bool = False
     startup_answer_values_valid: bool = False
     startup_answer_provenance: str = "none"  # none | explicit_user_reply | inferred | default | naked
     startup_display_entry_action_done: bool = False
@@ -168,19 +166,19 @@ class State:
     router_daemon_recovered_on_resume: bool = False
     terminal_router_daemon_stopped: bool = False
     pm_initial_capability_decision_recorded: bool = False
-    heartbeat_loaded_state: bool = False
-    heartbeat_loaded_frontier: bool = False
-    heartbeat_loaded_packet_ledger: bool = False
-    heartbeat_loaded_role_binding_memory: bool = False
-    heartbeat_host_rehydrate_requested: bool = False
-    heartbeat_restored_runtime_roles: bool = False
-    heartbeat_rehydrated_runtime_roles: bool = False
-    heartbeat_injected_current_run_memory_into_roles: bool = False
+    resume_loaded_state: bool = False
+    resume_loaded_frontier: bool = False
+    resume_loaded_packet_ledger: bool = False
+    resume_loaded_role_binding_memory: bool = False
+    resume_host_rehydrate_requested: bool = False
+    resume_restored_runtime_roles: bool = False
+    resume_rehydrated_runtime_roles: bool = False
+    resume_injected_current_run_memory_into_roles: bool = False
     role_binding_recovery_report_written: bool = False
     replacement_roles_seeded_from_memory: bool = False
-    heartbeat_pm_decision_requested: bool = False
-    heartbeat_pm_controller_reminder_checked: bool = False
-    heartbeat_reviewer_dispatch_policy_checked: bool = False
+    resume_pm_decision_requested: bool = False
+    resume_pm_controller_reminder_checked: bool = False
+    resume_reviewer_dispatch_policy_checked: bool = False
     pm_resume_decision_recorded: bool = False
     pm_completion_runway_recorded: bool = False
     pm_runway_hard_stops_recorded: bool = False
@@ -194,8 +192,8 @@ class State:
     continuation_probe_done: bool = False
     continuation_host_kind_recorded: bool = False
     continuation_evidence_written: bool = False
-    host_continuation_supported: bool = False
-    manual_resume_mode_recorded: bool = False
+    manual_resume_binding_supported: bool = False
+    manual_resume_boundary_recorded: bool = False
 
     capabilities_manifest_written: bool = False
     pm_child_skill_selection_manifest_written: bool = False
@@ -252,18 +250,17 @@ class State:
     dependency_plan_recorded: bool = False
     future_installs_deferred: bool = False
     flowguard_dependency_checked: bool = False
-    heartbeat_schedule_created: bool = False
-    route_heartbeat_interval_minutes: int = 0
-    stable_heartbeat_launcher_recorded: bool = False
-    heartbeat_health_checked: bool = False
-    runtime_role_assistance_decision_recorded: bool = False
+    manual_resume_binding_configured: bool = False
+    manual_resume_binding_interval_seconds: int = 0
+    stable_manual_resume_launcher_recorded: bool = False
+    manual_resume_binding_health_checked: bool = False
+    background_collaboration_start_decision_recorded: bool = False
     runtime_role_bindings_opened: bool = False
     runtime_role_bindings_current_task_ready: bool = False
     role_bindings_opened_after_startup_answers: bool = False
     role_bindings_opened_after_route_allocation: bool = False
     historical_agent_ids_compared: bool = False
     reused_historical_agent_ids: bool = False
-    single_agent_role_continuity_authorized: bool = False
     startup_preflight_review_report_written: bool = False
     startup_preflight_review_blocking_findings: bool = False
     startup_reviewer_fact_evidence_checked: bool = False
@@ -272,13 +269,13 @@ class State:
     startup_reviewer_checked_live_agent_freshness: bool = False
     startup_reviewer_checked_no_historical_agent_reuse: bool = False
     startup_reviewer_checked_capability_resolution: bool = False
-    startup_reviewer_checked_current_run_heartbeat_binding: bool = False
+    startup_pm_checked_manual_resume_binding: bool = False
     startup_pm_capability_resolution_recorded: bool = False
-    heartbeat_bound_to_current_run: bool = False
-    heartbeat_same_name_only_checked: bool = False
+    manual_resume_binding_bound_to_current_run: bool = False
+    manual_resume_binding_name_only_checked: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
-    startup_pm_independent_gate_audit_done: bool = False
+    pm_first_round_startup_entry_audit_done: bool = False
     pm_start_gate_opened: bool = False
     work_beyond_startup_allowed: bool = False
     terminal_lifecycle_frontier_written: bool = False
@@ -621,19 +618,19 @@ def _reset_execution_quality_gates() -> dict[str, object]:
     gates.update(_reset_human_inspection_gates())
     gates.update(
         {
-            "heartbeat_loaded_state": False,
-            "heartbeat_loaded_frontier": False,
-            "heartbeat_loaded_packet_ledger": False,
-            "heartbeat_loaded_role_binding_memory": False,
-            "heartbeat_host_rehydrate_requested": False,
-            "heartbeat_restored_runtime_roles": False,
-            "heartbeat_rehydrated_runtime_roles": False,
-            "heartbeat_injected_current_run_memory_into_roles": False,
+            "resume_loaded_state": False,
+            "resume_loaded_frontier": False,
+            "resume_loaded_packet_ledger": False,
+            "resume_loaded_role_binding_memory": False,
+            "resume_host_rehydrate_requested": False,
+            "resume_restored_runtime_roles": False,
+            "resume_rehydrated_runtime_roles": False,
+            "resume_injected_current_run_memory_into_roles": False,
             "role_binding_recovery_report_written": False,
             "replacement_roles_seeded_from_memory": False,
-            "heartbeat_pm_decision_requested": False,
-            "heartbeat_pm_controller_reminder_checked": False,
-            "heartbeat_reviewer_dispatch_policy_checked": False,
+            "resume_pm_decision_requested": False,
+            "resume_pm_controller_reminder_checked": False,
+            "resume_reviewer_dispatch_policy_checked": False,
             "pm_resume_decision_recorded": False,
             "pm_completion_runway_recorded": False,
             "pm_runway_hard_stops_recorded": False,
@@ -686,7 +683,7 @@ def _capability_structural_repair_changes(state: State) -> dict[str, object]:
         "plan_version": 0,
         "capability_user_flow_diagram_refreshed": False,
         "capability_user_flow_diagram_emitted": False,
-        "heartbeat_health_checked": False,
+        "manual_resume_binding_health_checked": False,
         "final_verification_done": False,
         "child_skill_route_design_discovery_started": False,
         "child_skill_initial_gate_manifest_extracted": False,
@@ -921,12 +918,6 @@ def _material_handoff_ready(state: State) -> bool:
 def _runtime_roles_ready(state: State) -> bool:
     return (
         state.role_binding_policy_written
-        and state.role_binding_count == REQUIRED_ROLE_BINDING_COUNT
-        and state.project_manager_ready
-        and state.reviewer_ready
-        and state.flowguard_operator_route_scope_ready
-        and state.flowguard_operator_product_scope_ready
-        and state.worker_ready
         and state.role_binding_ledger_written
         and state.role_identity_protocol_recorded
         and state.pm_flowguard_delegation_policy_recorded
@@ -935,27 +926,27 @@ def _runtime_roles_ready(state: State) -> bool:
         and state.controller_coordination_boundary_recorded
         and state.independent_approval_protocol_recorded
         and state.role_binding_memory_policy_written
-        and state.role_binding_memory_packets_written == REQUIRED_ROLE_BINDING_COUNT
+        and state.role_binding_memory_packets_written >= MIN_CURRENT_BACKGROUND_AGENT_COUNT
     )
 
 
-def _automated_continuation_configured(state: State) -> bool:
+def _manual_resume_binding_configured(state: State) -> bool:
     return (
         state.continuation_probe_done
         and state.continuation_host_kind_recorded
         and state.continuation_evidence_written
-        and state.host_continuation_supported
-        and not state.manual_resume_mode_recorded
-        and state.heartbeat_schedule_created
-        and state.route_heartbeat_interval_minutes == 1
-        and state.stable_heartbeat_launcher_recorded
-        and state.heartbeat_bound_to_current_run
-        and not state.heartbeat_same_name_only_checked
+        and state.manual_resume_binding_supported
+        and not state.manual_resume_boundary_recorded
+        and state.manual_resume_binding_configured
+        and state.manual_resume_binding_interval_seconds == 1
+        and state.stable_manual_resume_launcher_recorded
+        and state.manual_resume_binding_bound_to_current_run
+        and not state.manual_resume_binding_name_only_checked
     )
 
 
-def _automated_continuation_ready(state: State) -> bool:
-    return _automated_continuation_configured(state)
+def _manual_resume_binding_ready(state: State) -> bool:
+    return _manual_resume_binding_configured(state)
 
 
 def _manual_resume_ready(state: State) -> bool:
@@ -963,16 +954,16 @@ def _manual_resume_ready(state: State) -> bool:
         state.continuation_probe_done
         and state.continuation_host_kind_recorded
         and state.continuation_evidence_written
-        and not state.host_continuation_supported
-        and state.manual_resume_mode_recorded
-        and not state.heartbeat_schedule_created
-        and state.route_heartbeat_interval_minutes == 0
-        and not state.stable_heartbeat_launcher_recorded
+        and not state.manual_resume_binding_supported
+        and state.manual_resume_boundary_recorded
+        and not state.manual_resume_binding_configured
+        and state.manual_resume_binding_interval_seconds == 0
+        and not state.stable_manual_resume_launcher_recorded
     )
 
 
 def _continuation_ready(state: State) -> bool:
-    return _automated_continuation_ready(state) or _manual_resume_ready(state)
+    return _manual_resume_binding_ready(state) or _manual_resume_ready(state)
 
 
 def _run_isolation_ready(state: State) -> bool:
@@ -1000,18 +991,13 @@ def _run_isolation_ready(state: State) -> bool:
 
 def _runtime_role_binding_startup_resolved(state: State) -> bool:
     return (
-        state.runtime_role_assistance_decision_recorded
-        and (
-            (
-                state.runtime_role_bindings_opened
-                and state.runtime_role_bindings_current_task_ready
-                and state.role_bindings_opened_after_startup_answers
-                and state.role_bindings_opened_after_route_allocation
-                and state.historical_agent_ids_compared
-                and not state.reused_historical_agent_ids
-            )
-            or state.single_agent_role_continuity_authorized
-        )
+        state.background_collaboration_start_decision_recorded
+        and state.runtime_role_bindings_opened
+        and state.runtime_role_bindings_current_task_ready
+        and state.role_bindings_opened_after_startup_answers
+        and state.role_bindings_opened_after_route_allocation
+        and state.historical_agent_ids_compared
+        and not state.reused_historical_agent_ids
     )
 
 
@@ -1019,9 +1005,7 @@ def _startup_questions_complete(state: State) -> bool:
     return (
         state.startup_intake_ui_completed
         and state.startup_intake_result_recorded
-        and state.startup_runtime_role_assistance_option_recorded
-        and state.startup_continuation_option_recorded
-        and state.startup_display_surface_option_recorded
+        and state.startup_background_collaboration_ack_recorded
         and state.startup_answer_values_valid
         and state.startup_answer_provenance == "explicit_user_reply"
     )
@@ -1031,7 +1015,7 @@ def _continuation_lifecycle_valid(state: State) -> bool:
     return (
         _continuation_ready(state)
         or (
-            _automated_continuation_configured(state)
+            _manual_resume_binding_configured(state)
             and state.lifecycle_reconciliation_done
         )
     )
@@ -1045,30 +1029,25 @@ def _startup_pm_gate_ready(state: State) -> bool:
         and _run_isolation_ready(state)
         and state.startup_reviewer_checked_run_isolation
         and state.startup_reviewer_checked_prior_work_boundary
-        and (
-            state.single_agent_role_continuity_authorized
-            or (
-                state.startup_reviewer_checked_live_agent_freshness
-                and state.startup_reviewer_checked_no_historical_agent_reuse
-            )
-        )
+        and state.startup_reviewer_checked_live_agent_freshness
+        and state.startup_reviewer_checked_no_historical_agent_reuse
         and state.startup_reviewer_checked_capability_resolution
         and (
-            state.manual_resume_mode_recorded
+            state.manual_resume_boundary_recorded
             or (
-                state.startup_reviewer_checked_current_run_heartbeat_binding
-                and state.heartbeat_bound_to_current_run
-                and not state.heartbeat_same_name_only_checked
+                state.startup_pm_checked_manual_resume_binding
+                and state.manual_resume_binding_bound_to_current_run
+                and not state.manual_resume_binding_name_only_checked
             )
         )
-        and state.startup_pm_independent_gate_audit_done
+        and state.pm_first_round_startup_entry_audit_done
         and state.startup_pm_capability_resolution_recorded
         and state.pm_start_gate_opened
     )
 
 
 def _terminal_continuation_reconciled(state: State) -> bool:
-    if _automated_continuation_configured(state):
+    if _manual_resume_binding_configured(state):
         return (
             state.lifecycle_reconciliation_done
             and state.terminal_lifecycle_frontier_written
@@ -1311,15 +1290,15 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
 
 
 def _gates_ready(state: State) -> bool:
-    return _route_scaffold_ready(state) and state.heartbeat_health_checked
+    return _route_scaffold_ready(state) and state.manual_resume_binding_health_checked
 
 
 def _gates_lifecycle_valid(state: State) -> bool:
-    return _route_scaffold_lifecycle_valid(state) and state.heartbeat_health_checked
+    return _route_scaffold_lifecycle_valid(state) and state.manual_resume_binding_health_checked
 
 
 def _gates_lifecycle_valid(state: State) -> bool:
-    return _route_scaffold_lifecycle_valid(state) and state.heartbeat_health_checked
+    return _route_scaffold_lifecycle_valid(state) and state.manual_resume_binding_health_checked
 
 
 def _sidecar_role_clear(state: State) -> bool:
@@ -1645,8 +1624,7 @@ class CapabilityRouterStep:
         "flowpilot_enabled",
         "startup_intake_ui_completed",
         "startup_intake_result_recorded",
-        "startup_runtime_role_assistance_option_recorded",
-        "startup_continuation_option_recorded",
+        "startup_background_collaboration_ack_recorded",
         "run_directory_created",
         "current_pointer_written",
         "run_index_updated",
@@ -1729,19 +1707,19 @@ class CapabilityRouterStep:
         "role_binding_memory_packets_written",
         "controller_core_loaded",
         "pm_initial_capability_decision_recorded",
-        "heartbeat_loaded_state",
-        "heartbeat_loaded_frontier",
-        "heartbeat_loaded_packet_ledger",
-        "heartbeat_loaded_role_binding_memory",
-        "heartbeat_host_rehydrate_requested",
-        "heartbeat_restored_runtime_roles",
-        "heartbeat_rehydrated_runtime_roles",
-        "heartbeat_injected_current_run_memory_into_roles",
+        "resume_loaded_state",
+        "resume_loaded_frontier",
+        "resume_loaded_packet_ledger",
+        "resume_loaded_role_binding_memory",
+        "resume_host_rehydrate_requested",
+        "resume_restored_runtime_roles",
+        "resume_rehydrated_runtime_roles",
+        "resume_injected_current_run_memory_into_roles",
         "role_binding_recovery_report_written",
         "replacement_roles_seeded_from_memory",
-        "heartbeat_pm_decision_requested",
-        "heartbeat_pm_controller_reminder_checked",
-        "heartbeat_reviewer_dispatch_policy_checked",
+        "resume_pm_decision_requested",
+        "resume_pm_controller_reminder_checked",
+        "resume_reviewer_dispatch_policy_checked",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
         "pm_runway_hard_stops_recorded",
@@ -1753,8 +1731,8 @@ class CapabilityRouterStep:
         "continuation_probe_done",
         "continuation_host_kind_recorded",
         "continuation_evidence_written",
-        "host_continuation_supported",
-        "manual_resume_mode_recorded",
+        "manual_resume_binding_supported",
+        "manual_resume_boundary_recorded",
         "capabilities_manifest_written",
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
@@ -1807,18 +1785,17 @@ class CapabilityRouterStep:
         "dependency_plan_recorded",
         "future_installs_deferred",
         "flowguard_dependency_checked",
-        "heartbeat_schedule_created",
-        "route_heartbeat_interval_minutes",
-        "stable_heartbeat_launcher_recorded",
-        "heartbeat_health_checked",
-        "runtime_role_assistance_decision_recorded",
+        "manual_resume_binding_configured",
+        "manual_resume_binding_interval_seconds",
+        "stable_manual_resume_launcher_recorded",
+        "manual_resume_binding_health_checked",
+        "background_collaboration_start_decision_recorded",
         "runtime_role_bindings_opened",
         "runtime_role_bindings_current_task_ready",
         "role_bindings_opened_after_startup_answers",
         "role_bindings_opened_after_route_allocation",
         "historical_agent_ids_compared",
         "reused_historical_agent_ids",
-        "single_agent_role_continuity_authorized",
         "startup_preflight_review_report_written",
         "startup_preflight_review_blocking_findings",
         "startup_reviewer_fact_evidence_checked",
@@ -1828,7 +1805,7 @@ class CapabilityRouterStep:
         "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
-        "startup_pm_independent_gate_audit_done",
+        "pm_first_round_startup_entry_audit_done",
         "pm_start_gate_opened",
         "work_beyond_startup_allowed",
         "terminal_lifecycle_frontier_written",
@@ -2015,8 +1992,7 @@ class CapabilityRouterStep:
         "flowpilot_enabled",
         "startup_intake_ui_completed",
         "startup_intake_result_recorded",
-        "startup_runtime_role_assistance_option_recorded",
-        "startup_continuation_option_recorded",
+        "startup_background_collaboration_ack_recorded",
         "run_directory_created",
         "current_pointer_written",
         "run_index_updated",
@@ -2100,19 +2076,19 @@ class CapabilityRouterStep:
         "role_binding_memory_packets_written",
         "controller_core_loaded",
         "pm_initial_capability_decision_recorded",
-        "heartbeat_loaded_state",
-        "heartbeat_loaded_frontier",
-        "heartbeat_loaded_packet_ledger",
-        "heartbeat_loaded_role_binding_memory",
-        "heartbeat_host_rehydrate_requested",
-        "heartbeat_restored_runtime_roles",
-        "heartbeat_rehydrated_runtime_roles",
-        "heartbeat_injected_current_run_memory_into_roles",
+        "resume_loaded_state",
+        "resume_loaded_frontier",
+        "resume_loaded_packet_ledger",
+        "resume_loaded_role_binding_memory",
+        "resume_host_rehydrate_requested",
+        "resume_restored_runtime_roles",
+        "resume_rehydrated_runtime_roles",
+        "resume_injected_current_run_memory_into_roles",
         "role_binding_recovery_report_written",
         "replacement_roles_seeded_from_memory",
-        "heartbeat_pm_decision_requested",
-        "heartbeat_pm_controller_reminder_checked",
-        "heartbeat_reviewer_dispatch_policy_checked",
+        "resume_pm_decision_requested",
+        "resume_pm_controller_reminder_checked",
+        "resume_reviewer_dispatch_policy_checked",
         "pm_resume_decision_recorded",
         "pm_completion_runway_recorded",
         "pm_runway_hard_stops_recorded",
@@ -2124,8 +2100,8 @@ class CapabilityRouterStep:
         "continuation_probe_done",
         "continuation_host_kind_recorded",
         "continuation_evidence_written",
-        "host_continuation_supported",
-        "manual_resume_mode_recorded",
+        "manual_resume_binding_supported",
+        "manual_resume_boundary_recorded",
         "capabilities_manifest_written",
         "child_skill_route_design_discovery_started",
         "child_skill_initial_gate_manifest_extracted",
@@ -2178,18 +2154,17 @@ class CapabilityRouterStep:
         "dependency_plan_recorded",
         "future_installs_deferred",
         "flowguard_dependency_checked",
-        "heartbeat_schedule_created",
-        "route_heartbeat_interval_minutes",
-        "stable_heartbeat_launcher_recorded",
-        "heartbeat_health_checked",
-        "runtime_role_assistance_decision_recorded",
+        "manual_resume_binding_configured",
+        "manual_resume_binding_interval_seconds",
+        "stable_manual_resume_launcher_recorded",
+        "manual_resume_binding_health_checked",
+        "background_collaboration_start_decision_recorded",
         "runtime_role_bindings_opened",
         "runtime_role_bindings_current_task_ready",
         "role_bindings_opened_after_startup_answers",
         "role_bindings_opened_after_route_allocation",
         "historical_agent_ids_compared",
         "reused_historical_agent_ids",
-        "single_agent_role_continuity_authorized",
         "startup_preflight_review_report_written",
         "startup_preflight_review_blocking_findings",
         "startup_reviewer_fact_evidence_checked",
@@ -2199,7 +2174,7 @@ class CapabilityRouterStep:
         "startup_reviewer_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
-        "startup_pm_independent_gate_audit_done",
+        "pm_first_round_startup_entry_audit_done",
         "pm_start_gate_opened",
         "work_beyond_startup_allowed",
         "terminal_lifecycle_frontier_written",
@@ -2533,9 +2508,7 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
     if (
         not state.startup_intake_result_recorded
         and (
-            state.startup_runtime_role_assistance_option_recorded
-            or state.startup_continuation_option_recorded
-            or state.startup_display_surface_option_recorded
+            state.startup_background_collaboration_ack_recorded
             or state.startup_display_entry_action_done
         )
     ):
@@ -2548,15 +2521,11 @@ def mode_choice_before_showcase_and_self_interrogation(state: State, trace) -> I
         return InvariantResult.fail("showcase/self-interrogation ran before the startup intake gate")
     if state.flowpilot_enabled and not state.run_scoped_startup_bootstrap_created:
         return InvariantResult.fail("new capability startup did not create a run-scoped bootstrap")
-    if (
-        state.startup_runtime_role_assistance_option_recorded
-        and state.startup_continuation_option_recorded
-        and state.startup_display_surface_option_recorded
-    ) and not (
+    if state.startup_background_collaboration_ack_recorded and not (
         state.startup_answer_values_valid
         and state.startup_answer_provenance == "explicit_user_reply"
     ):
-        return InvariantResult.fail("startup answers were recorded without legal values and explicit_user_reply provenance")
+        return InvariantResult.fail("startup background collaboration authorization was recorded without legal values and explicit_user_reply provenance")
     if state.stale_top_level_bootstrap_reused:
         return InvariantResult.fail("stale top-level bootstrap was reused as current capability startup state")
     if state.old_control_state_reused_as_current:
@@ -2580,19 +2549,19 @@ def implementation_requires_flowguard_gates(state: State, trace) -> InvariantRes
         if not _gates_lifecycle_valid(state):
             return InvariantResult.fail("implementation started before capability route was ready")
         if not (
-            state.heartbeat_loaded_state
-            and state.heartbeat_loaded_frontier
-            and state.heartbeat_loaded_packet_ledger
-            and state.heartbeat_loaded_role_binding_memory
-            and state.heartbeat_host_rehydrate_requested
-            and state.heartbeat_restored_runtime_roles
-            and state.heartbeat_rehydrated_runtime_roles
-            and state.heartbeat_injected_current_run_memory_into_roles
+            state.resume_loaded_state
+            and state.resume_loaded_frontier
+            and state.resume_loaded_packet_ledger
+            and state.resume_loaded_role_binding_memory
+            and state.resume_host_rehydrate_requested
+            and state.resume_restored_runtime_roles
+            and state.resume_rehydrated_runtime_roles
+            and state.resume_injected_current_run_memory_into_roles
             and state.role_binding_recovery_report_written
             and state.replacement_roles_seeded_from_memory
-            and state.heartbeat_pm_decision_requested
-            and state.heartbeat_pm_controller_reminder_checked
-            and state.heartbeat_reviewer_dispatch_policy_checked
+            and state.resume_pm_decision_requested
+            and state.resume_pm_controller_reminder_checked
+            and state.resume_reviewer_dispatch_policy_checked
             and state.pm_resume_decision_recorded
             and state.pm_completion_runway_recorded
             and state.pm_runway_hard_stops_recorded
@@ -2734,23 +2703,18 @@ def dependency_plan_before_route_or_implementation(
         and _run_isolation_ready(state)
         and state.startup_reviewer_checked_run_isolation
         and state.startup_reviewer_checked_prior_work_boundary
-        and (
-            state.single_agent_role_continuity_authorized
-            or (
-                state.startup_reviewer_checked_live_agent_freshness
-                and state.startup_reviewer_checked_no_historical_agent_reuse
-            )
-        )
+        and state.startup_reviewer_checked_live_agent_freshness
+        and state.startup_reviewer_checked_no_historical_agent_reuse
         and state.startup_reviewer_checked_capability_resolution
         and (
-            state.manual_resume_mode_recorded
+            state.manual_resume_boundary_recorded
             or (
-                state.startup_reviewer_checked_current_run_heartbeat_binding
-                and state.heartbeat_bound_to_current_run
-                and not state.heartbeat_same_name_only_checked
+                state.startup_pm_checked_manual_resume_binding
+                and state.manual_resume_binding_bound_to_current_run
+                and not state.manual_resume_binding_name_only_checked
             )
         )
-        and state.startup_pm_independent_gate_audit_done
+        and state.pm_first_round_startup_entry_audit_done
         and state.startup_pm_capability_resolution_recorded
     ):
         return InvariantResult.fail(
@@ -2782,7 +2746,7 @@ def dependency_plan_before_route_or_implementation(
         )
     if state.work_beyond_startup_allowed and not _runtime_role_binding_startup_resolved(state):
         return InvariantResult.fail(
-            "PM allowed capability work before fresh current-task role bindings or explicit single-agent fallback were resolved"
+            "PM allowed capability work before fresh current-task role bindings were resolved or the run was blocked"
         )
     if state.work_beyond_startup_allowed and state.reused_historical_agent_ids:
         return InvariantResult.fail(
@@ -2792,11 +2756,11 @@ def dependency_plan_before_route_or_implementation(
         return InvariantResult.fail(
             "capability work was allowed before reviewer fact report and PM-owned start-gate opening"
         )
-    if state.heartbeat_schedule_created and (
-        not state.heartbeat_bound_to_current_run or state.heartbeat_same_name_only_checked
+    if state.manual_resume_binding_configured and (
+        not state.manual_resume_binding_bound_to_current_run or state.manual_resume_binding_name_only_checked
     ):
         return InvariantResult.fail(
-            "startup heartbeat evidence did not bind the automation to the current run instead of a same-name record"
+            "startup manual resume binding evidence did not bind the automation to the current run instead of a same-name record"
         )
     return InvariantResult.pass_()
 
@@ -3281,25 +3245,25 @@ def capability_route_updates_force_recheck_and_resync(
     return InvariantResult.pass_()
 
 
-def stable_heartbeat_prompt_not_capability_route_state(
+def stable_manual_resume_binding_not_capability_route_state(
     state: State, trace
 ) -> InvariantResult:
     del trace
     if (
         state.capability_route_version > 1
-        and state.host_continuation_supported
-        and not state.stable_heartbeat_launcher_recorded
+        and state.manual_resume_binding_supported
+        and not state.stable_manual_resume_launcher_recorded
     ):
         return InvariantResult.fail(
-            "capability route changed without a stable heartbeat launcher that reads persisted state"
+            "capability route changed without a stable manual resume binding launcher that reads persisted state"
         )
     if (
         state.capability_route_version > 1
-        and state.manual_resume_mode_recorded
-        and state.stable_heartbeat_launcher_recorded
+        and state.manual_resume_boundary_recorded
+        and state.stable_manual_resume_launcher_recorded
     ):
         return InvariantResult.fail(
-            "manual-resume capability route unexpectedly created a stable heartbeat launcher"
+            "manual-resume capability route unexpectedly created a stable manual resume binding launcher"
         )
     return InvariantResult.pass_()
 
@@ -3339,29 +3303,29 @@ def startup_continuation_gates_work_beyond_startup(state: State, trace) -> Invar
     )
     if startup_or_capability_work_started and not _continuation_ready(state):
         return InvariantResult.fail(
-            "startup review or capability work started before continuation was bound to heartbeat or manual resume"
+            "startup review or capability work started before continuation was bound to manual resume binding or manual resume"
         )
-    if startup_or_capability_work_started and state.host_continuation_supported and not _automated_continuation_configured(state):
+    if startup_or_capability_work_started and state.manual_resume_binding_supported and not _manual_resume_binding_configured(state):
         return InvariantResult.fail(
-            "startup review or capability work started before scheduled-continuation heartbeat was fully configured"
+            "startup review or capability work started before current manual resume binding was fully configured"
         )
-    if startup_or_capability_work_started and state.manual_resume_mode_recorded and state.heartbeat_schedule_created:
+    if startup_or_capability_work_started and state.manual_resume_boundary_recorded and state.manual_resume_binding_configured:
         return InvariantResult.fail(
-            "startup review or capability work started after manual-resume startup that still created heartbeat automation"
+            "startup review or capability work started after manual-resume startup that still created manual resume binding"
         )
     return InvariantResult.pass_()
 
 
-def heartbeat_continuation_is_lifecycle_state(state: State, trace) -> InvariantResult:
+def manual_resume_binding_continuation_is_lifecycle_state(state: State, trace) -> InvariantResult:
     del trace
     automation_bits = (
-        state.heartbeat_schedule_created
-        or state.route_heartbeat_interval_minutes != 0
-        or state.stable_heartbeat_launcher_recorded
+        state.manual_resume_binding_configured
+        or state.manual_resume_binding_interval_seconds != 0
+        or state.stable_manual_resume_launcher_recorded
     )
-    if state.manual_resume_mode_recorded and automation_bits:
+    if state.manual_resume_boundary_recorded and automation_bits:
         return InvariantResult.fail(
-            "manual-resume mode recorded but heartbeat automation state was still created"
+            "manual-resume mode recorded but manual resume binding state was still created"
         )
     formal_started = (
         state.capability_route_checked
@@ -3369,21 +3333,21 @@ def heartbeat_continuation_is_lifecycle_state(state: State, trace) -> InvariantR
         or state.ui_implemented
         or state.status == "complete"
     )
-    if formal_started and state.host_continuation_supported and (
-        state.heartbeat_schedule_created
-        or state.route_heartbeat_interval_minutes != 0
+    if formal_started and state.manual_resume_binding_supported and (
+        state.manual_resume_binding_configured
+        or state.manual_resume_binding_interval_seconds != 0
     ) and not _continuation_lifecycle_valid(state):
         return InvariantResult.fail(
-            "host continuation support produced a partial heartbeat setup"
+            "host continuation support produced a partial manual resume binding setup"
         )
-    if state.host_continuation_supported and state.heartbeat_schedule_created and (
-        state.route_heartbeat_interval_minutes != 1
-        or not state.stable_heartbeat_launcher_recorded
-        or not state.heartbeat_bound_to_current_run
-        or state.heartbeat_same_name_only_checked
+    if state.manual_resume_binding_supported and state.manual_resume_binding_configured and (
+        state.manual_resume_binding_interval_seconds != 1
+        or not state.stable_manual_resume_launcher_recorded
+        or not state.manual_resume_binding_bound_to_current_run
+        or state.manual_resume_binding_name_only_checked
     ):
         return InvariantResult.fail(
-            "automated continuation must use a stable one-minute heartbeat launcher bound to the current run"
+            "automated continuation must use a stable one-minute manual resume binding launcher bound to the current run"
         )
     return InvariantResult.pass_()
 
@@ -3570,7 +3534,7 @@ def final_completion_requires_right_verification(state: State, trace) -> Invaria
     if state.status != "complete":
         return InvariantResult.pass_()
     if not _gates_lifecycle_valid(state):
-        return InvariantResult.fail("completed before showcase, heartbeat, and FlowGuard capability gates")
+        return InvariantResult.fail("completed before showcase, manual resume binding, and FlowGuard capability gates")
     if not (
         state.defect_ledger_initialized
         and state.evidence_ledger_initialized
@@ -3931,7 +3895,6 @@ def actor_authority_gates_require_correct_role(
     if state.product_function_architecture_reviewer_challenged and not (
         state.product_function_architecture_flowguard_operator_product_scope_approved
         and state.product_architecture_reviewer_adversarial_probe_done
-        and state.reviewer_ready
     ):
         return InvariantResult.fail(
             "capability product-function architecture reviewer challenge ran before FlowGuard operator product-function approval, reviewer recovery, or reviewer adversarial probes"
@@ -4195,32 +4158,32 @@ def role_binding_memory_rehydration_required(state: State, trace) -> InvariantRe
     del trace
     if state.self_interrogation_pm_ratified and not (
         state.role_binding_memory_policy_written
-        and state.role_binding_memory_packets_written == REQUIRED_ROLE_BINDING_COUNT
+        and state.role_binding_memory_packets_written >= MIN_CURRENT_BACKGROUND_AGENT_COUNT
     ):
         return InvariantResult.fail(
-            "PM ratified capability startup before all runtime-required role memory packets existed"
+            "PM ratified capability startup before current background-collaboration memory policy existed"
         )
-    if state.heartbeat_pm_decision_requested and not state.terminal_router_daemon_stopped and not (
-        state.heartbeat_loaded_state
-        and state.heartbeat_loaded_frontier
-        and state.heartbeat_loaded_packet_ledger
+    if state.resume_pm_decision_requested and not state.terminal_router_daemon_stopped and not (
+        state.resume_loaded_state
+        and state.resume_loaded_frontier
+        and state.resume_loaded_packet_ledger
         and state.router_daemon_recovered_on_resume
         and state.router_daemon_started
         and state.controller_action_watch_active
-        and state.heartbeat_loaded_role_binding_memory
-        and state.heartbeat_host_rehydrate_requested
-        and state.heartbeat_restored_runtime_roles
-        and state.heartbeat_rehydrated_runtime_roles
-        and state.heartbeat_injected_current_run_memory_into_roles
+        and state.resume_loaded_role_binding_memory
+        and state.resume_host_rehydrate_requested
+        and state.resume_restored_runtime_roles
+        and state.resume_rehydrated_runtime_roles
+        and state.resume_injected_current_run_memory_into_roles
         and state.role_binding_recovery_report_written
         and state.replacement_roles_seeded_from_memory
     ):
         return InvariantResult.fail(
-            "heartbeat asked PM for capability work before current-run state, packet ledger, live role binding recovery, and role memory injection completed"
+            "resume asked PM for capability work before current-run state, packet ledger, live role binding recovery, and role memory injection completed"
         )
     if state.pm_resume_decision_recorded and not (
-        state.heartbeat_pm_controller_reminder_checked
-        and state.heartbeat_reviewer_dispatch_policy_checked
+        state.resume_pm_controller_reminder_checked
+        and state.resume_reviewer_dispatch_policy_checked
     ):
         return InvariantResult.fail(
             "PM capability resume decision was accepted before controller reminder and reviewer-dispatch policy were checked"
@@ -4265,7 +4228,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="controlled_stop_notice_required",
-        description="Controlled nonterminal capability stops emit a manual/heartbeat resume notice, and terminal completion emits a completion notice.",
+        description="Controlled nonterminal capability stops emit a manual-resume or foreground-duty notice, and terminal completion emits a completion notice.",
         predicate=controlled_stop_notice_required,
     ),
     Invariant(
@@ -4289,19 +4252,19 @@ INVARIANTS = (
         predicate=capability_route_updates_force_recheck_and_resync,
     ),
     Invariant(
-        name="stable_heartbeat_prompt_not_capability_route_state",
-        description="Heartbeat automation stays a stable launcher while persisted capability route/frontier state carries next-gate changes.",
-        predicate=stable_heartbeat_prompt_not_capability_route_state,
+        name="stable_manual_resume_binding_not_capability_route_state",
+        description="Manual resume binding stays a stable launcher while persisted capability route/frontier state carries next-gate changes.",
+        predicate=stable_manual_resume_binding_not_capability_route_state,
     ),
     Invariant(
         name="startup_continuation_gates_work_beyond_startup",
-        description="Startup loads Controller core before Controller-ledger obligations, then establishes heartbeat or manual-resume continuation before startup review and capability work.",
+        description="Startup loads Controller core before Controller-ledger obligations, then establishes manual resume binding or manual-resume continuation before startup review and capability work.",
         predicate=startup_continuation_gates_work_beyond_startup,
     ),
     Invariant(
-        name="heartbeat_continuation_is_lifecycle_state",
-        description="Automated continuation uses only a stable heartbeat launcher; manual-resume routes must not create heartbeat automation.",
-        predicate=heartbeat_continuation_is_lifecycle_state,
+        name="manual_resume_binding_continuation_is_lifecycle_state",
+        description="Automated continuation uses only a stable manual resume binding launcher; manual-resume routes must not create manual resume binding.",
+        predicate=manual_resume_binding_continuation_is_lifecycle_state,
     ),
     Invariant(
         name="backend_route_does_not_run_ui_gates",
@@ -4345,7 +4308,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="role_binding_memory_rehydration_required",
-        description="Heartbeat recovery must load compact role memory, rehydrate or seed replacements, refresh memory after work, and archive it before role binding closure.",
+        description="Manual-resume and foreground-patrol recovery must load compact role memory, rehydrate or seed replacements, refresh memory after work, and archive it before role binding closure.",
         predicate=role_binding_memory_rehydration_required,
     ),
 )
@@ -4476,3 +4439,5 @@ __all__ = [
     "next_states",
     "terminal_predicate",
 ]
+
+

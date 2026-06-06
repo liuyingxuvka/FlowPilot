@@ -27,7 +27,7 @@ REQUIRED_LABELS = (
     "gate_outcome_contracts_cover_non_pass_paths",
     "node_completion_idempotency_scoped_to_active_node",
     "install_policy_accepts_first_class_cockpit_source",
-    "standard_runtime_roles_ready_or_blocked_before_route_work",
+    "runtime_requested_roles_ready_or_blocked_before_route_work",
     "active_task_catalog_uses_focus_pointer_and_explicit_active_set",
     "minimal_repair_strategy_satisfies_cross_plane_invariants",
 )
@@ -41,7 +41,7 @@ HAZARD_EXPECTED_FAILURES = {
     "terminal_closure_missing_run_lifecycle": "terminal closure is missing run_lifecycle.json",
     "terminal_authority_mismatch": "terminal closure is missing router/frontier/lifecycle terminal agreement",
     "terminal_control_blocker_not_cleared": "terminal closure is missing cleared active control blocker",
-    "terminal_heartbeat_still_active": "terminal closure is missing inactive heartbeat",
+    "terminal_manual_resume_binding_still_active": "terminal closure is missing inactive manual resume binding",
     "route_state_snapshot_status_mismatch": "route_state_snapshot is missing completed-node status from execution_frontier",
     "route_state_snapshot_completed_checklists_pending": "route_state_snapshot is missing completed-node checklist projection",
     "selected_state_conflated_with_completed_state": "route_state_snapshot is missing selected/current state separated from completion",
@@ -73,7 +73,7 @@ def _state_id(state: model.State) -> str:
         f"{state.run_lifecycle_record_written},"
         f"{state.router_frontier_lifecycle_terminal_consistent},"
         f"{state.terminal_control_blocker_cleared},"
-        f"{state.heartbeat_inactive_after_terminal}|"
+        f"{state.manual_resume_binding_inactive_after_terminal}|"
         f"route={state.completed_nodes_observed},{state.route_snapshot_visible},"
         f"{state.route_snapshot_status_derived_from_frontier},"
         f"{state.route_snapshot_checklists_complete_for_completed_nodes},"
@@ -310,3 +310,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

@@ -43,7 +43,7 @@ HAZARD_EXPECTED_FAILURES = {
     "ack_not_submitted_to_router": "ack/report envelope did not match current run, role, agent, receipt refs, and relay boundary",
     "advanced_during_missing_receipt_wait": "required system card coverage passed without valid read receipt and ack/report envelope",
     "advanced_during_missing_return_wait": "required system card coverage passed without valid read receipt and ack/report envelope",
-    "pending_return_without_recovery": "pending return wait had no heartbeat/manual resume recovery action",
+    "pending_return_without_recovery": "pending return wait had no manual-resume recovery action",
     "gate_boundary_advanced_before_scope_ack": "Router crossed a route gate before current-scope system-card ACK clearance",
     "formal_work_packet_relayed_before_target_ack": "formal work packet was relayed before target-role system-card ACK clearance",
     "missing_ack_duplicate_system_card_reissued": "missing system-card ACK triggered duplicate card delivery instead of original-card reminder",
@@ -357,3 +357,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

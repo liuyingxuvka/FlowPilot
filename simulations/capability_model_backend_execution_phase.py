@@ -150,7 +150,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     child_skill_iteration_loop_closed=False,
                     child_skill_completion_verified=False,
                     final_verification_done=False,
-                    heartbeat_health_checked=False,
+                    manual_resume_binding_health_checked=False,
                     quality_reworks=state.quality_reworks + 1,
                     **_reset_execution_quality_gates(),
                 )
@@ -570,7 +570,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
                     final_feature_matrix_review_done=False,
                     final_acceptance_matrix_review_done=False,
                     final_quality_candidate_review_done=False,
-                    heartbeat_health_checked=False,
+                    manual_resume_binding_health_checked=False,
                     lifecycle_reconciliation_done=False,
                     terminal_lifecycle_frontier_written=False,
                     standard_expansions=state.standard_expansions + 1,
@@ -609,7 +609,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
             yield _step(
                 state,
                 label="lifecycle_reconciliation_completed",
-                action="scan Codex heartbeat automations, local state, and execution frontier before backend route close",
+                action="scan manual resume binding and manual-resume lifecycle records, local state, and execution frontier before backend route close",
                 lifecycle_reconciliation_done=True,
             )
             return
@@ -629,7 +629,7 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
             yield _step(
                 state,
                 label="terminal_lifecycle_frontier_written",
-                action="write terminal heartbeat lifecycle back to execution frontier before route close",
+                action="write terminal foreground-patrol and manual-resume lifecycle back to execution frontier before route close",
                 terminal_lifecycle_frontier_written=True,
             )
             return
@@ -673,3 +673,4 @@ def apply_backend_execution_phase(self, state: State) -> Iterable[FunctionResult
             terminal_completion_notice_recorded=True,
         )
         return
+

@@ -36,9 +36,14 @@ from flowpilot_router_controller_scheduler_receipts_packet_folds import (
 )
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -106,12 +111,16 @@ def _apply_stateful_receipt_postcondition(router: ModuleType, project_root: Path
         result['action_type'] = action_type
         return result
     if action_type == 'recover_role_bindings':
-        if 'recovered_role_bindings' in receipt_payload or 'role_bindings' in receipt_payload:
+        if 'role_bindings' in receipt_payload:
+            raise RouterError('recover_role_bindings requires payload.recovered_role_bindings; old role_bindings aliases are unsupported')
+        if 'recovered_role_bindings' in receipt_payload:
             router._write_role_recovery_report(project_root, run_root, run_state, receipt_payload)
             return {'applied': True, 'postcondition': 'role_recovery_roles_restored', 'source': 'controller_receipt_role_recovery_report_write'}
         return router._reclaim_role_recovery_postcondition_from_report(project_root, run_root, run_state, source='controller_receipt_role_recovery_report_reclaim')
     if action_type == 'rehydrate_role_bindings':
-        has_rehydration_payload = 'rehydrated_role_bindings' in receipt_payload or 'role_bindings' in receipt_payload
+        if 'role_bindings' in receipt_payload:
+            raise RouterError('rehydrate_role_bindings requires payload.rehydrated_role_bindings; old role_bindings aliases are unsupported')
+        has_rehydration_payload = 'rehydrated_role_bindings' in receipt_payload
         has_report_reference = any(
             isinstance(receipt_payload.get(key), str) and str(receipt_payload.get(key)).strip()
             for key in ('role_binding_recovery_report_path', 'report_path', 'rehydration_report_path')

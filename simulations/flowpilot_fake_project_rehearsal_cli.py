@@ -6,6 +6,8 @@ import json
 import shutil
 import subprocess
 import sys
+import tempfile
+import time
 from pathlib import Path
 from typing import Any
 
@@ -17,6 +19,9 @@ ASSETS = REPO_ROOT / "skills" / "flowpilot" / "assets"
 FAKE_STARTUP_TEXT = "Build a fake calculator CLI with docs, tests, FlowGuard evidence, review, validation, and closure."
 MIN_ACCEPTED_ROUTE_NODES = 3
 ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
+CLI_TIMEOUT_SECONDS = 45
+FULL_PACKET_CHAIN_BUDGET = 180
+PLANNING_PACKET_CHAIN_BUDGET = 120
 PLANNING_CHAIN = (
     ("task", "pm"),
     ("flowguard_check", "flowguard_operator"),
@@ -86,9 +91,61 @@ def parse_json(stdout: str) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
+def _run_command_with_output_files(command: list[str]) -> subprocess.CompletedProcess[str]:
+    with tempfile.TemporaryDirectory(prefix="flowpilot_cli_capture_") as tmp:
+        stdout_path = Path(tmp) / "stdout.txt"
+        stderr_path = Path(tmp) / "stderr.txt"
+        with stdout_path.open("w+", encoding="utf-8") as stdout_handle, stderr_path.open("w+", encoding="utf-8") as stderr_handle:
+            process = subprocess.Popen(
+                command,
+                cwd=REPO_ROOT,
+                text=True,
+                stdout=stdout_handle,
+                stderr=stderr_handle,
+            )
+            deadline = time.monotonic() + CLI_TIMEOUT_SECONDS
+            while process.poll() is None:
+                if time.monotonic() >= deadline:
+                    process.kill()
+                    try:
+                        process.wait(timeout=5)
+                    except subprocess.TimeoutExpired:
+                        pass
+                    raise subprocess.TimeoutExpired(command, CLI_TIMEOUT_SECONDS)
+                time.sleep(0.05)
+            stdout_handle.flush()
+            stderr_handle.flush()
+            stdout_handle.seek(0)
+            stderr_handle.seek(0)
+            stdout = stdout_handle.read()
+            stderr = stderr_handle.read()
+        return subprocess.CompletedProcess(
+            args=command,
+            returncode=int(process.returncode),
+            stdout=stdout,
+            stderr=stderr,
+        )
+
+
 def run_cli(root: Path, command_log: list[dict[str, Any]], *args: str, expect_ok: bool = True) -> dict[str, Any]:
     command = [sys.executable, "-B", str(ENTRYPOINT), "--root", str(root), "--json", *args]
-    completed = subprocess.run(command, cwd=REPO_ROOT, text=True, capture_output=True, check=False)
+    try:
+        completed = _run_command_with_output_files(command)
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+        command_log.append(
+            {
+                "args": redact_args(args),
+                "returncode": "timeout",
+                "payload": None,
+                "stderr_excerpt": stderr.strip()[:300],
+            }
+        )
+        raise RehearsalFailure(
+            f"CLI command timed out after {CLI_TIMEOUT_SECONDS}s: {args[0]} "
+            f"stdout={stdout.strip()[:500]} stderr={stderr.strip()[:300]}"
+        ) from exc
     payload = parse_json(completed.stdout)
     command_log.append(
         {
@@ -99,7 +156,10 @@ def run_cli(root: Path, command_log: list[dict[str, Any]], *args: str, expect_ok
         }
     )
     if expect_ok:
-        ensure(completed.returncode == 0, f"CLI command failed: {args[0]} {completed.stderr.strip()}")
+        ensure(
+            completed.returncode == 0,
+            f"CLI command failed: {args[0]} stdout={completed.stdout.strip()[:500]} stderr={completed.stderr.strip()[:300]}",
+        )
         ensure(payload is not None, f"CLI command did not return JSON: {args[0]}")
         ensure(payload.get("ok") is True, f"CLI command returned ok=false: {args[0]} {payload}")
     return payload or {"ok": False, "error": completed.stderr.strip(), "returncode": completed.returncode}
@@ -107,7 +167,23 @@ def run_cli(root: Path, command_log: list[dict[str, Any]], *args: str, expect_ok
 
 def run_raw_cli(root: Path, command_log: list[dict[str, Any]], *args: str) -> subprocess.CompletedProcess[str]:
     command = [sys.executable, "-B", str(ENTRYPOINT), "--root", str(root), *args]
-    completed = subprocess.run(command, cwd=REPO_ROOT, text=True, capture_output=True, check=False)
+    try:
+        completed = _run_command_with_output_files(command)
+    except subprocess.TimeoutExpired as exc:
+        stdout = exc.stdout if isinstance(exc.stdout, str) else ""
+        stderr = exc.stderr if isinstance(exc.stderr, str) else ""
+        command_log.append(
+            {
+                "args": redact_args(args),
+                "returncode": "timeout",
+                "stdout_excerpt": stdout.strip()[:300],
+                "stderr_excerpt": stderr.strip()[:300],
+            }
+        )
+        raise RehearsalFailure(
+            f"raw CLI command timed out after {CLI_TIMEOUT_SECONDS}s: {args[0]} "
+            f"stdout={stdout.strip()[:500]} stderr={stderr.strip()[:300]}"
+        ) from exc
     command_log.append(
         {
             "args": redact_args(args),
@@ -183,12 +259,55 @@ def resolve_and_lease_packet(
     return run_cli(root, command_log, *lease_args)
 
 
+def open_current_packet_inputs(
+    root: Path,
+    command_log: list[dict[str, Any]],
+    *,
+    lease_id: str,
+    packet: dict[str, Any],
+) -> None:
+    packet_id = str(packet.get("packet_id") or "")
+    ensure(packet_id, f"cannot open packet inputs without packet_id: {packet}")
+    opened_packet = run_cli(root, command_log, "open-packet", "--lease-id", lease_id, "--packet-id", packet_id)
+    sealed_body = str(opened_packet.get("sealed_packet_body") or "")
+    authorized_reads: list[dict[str, Any]] = []
+    if sealed_body:
+        try:
+            parsed_body = json.loads(sealed_body)
+        except json.JSONDecodeError as exc:
+            raise RehearsalFailure(f"opened packet body is not JSON for {packet_id}") from exc
+        reads = parsed_body.get("authorized_result_reads")
+        if isinstance(reads, list):
+            authorized_reads = [item for item in reads if isinstance(item, dict)]
+    for authorized_read in authorized_reads:
+        target_result_id = str(authorized_read.get("result_id") or "")
+        ensure(target_result_id, f"authorized result read is missing result_id: {authorized_read}")
+        run_cli(
+            root,
+            command_log,
+            "open-result",
+            "--lease-id",
+            lease_id,
+            "--packet-id",
+            packet_id,
+            "--result-id",
+            target_result_id,
+        )
+
+
 def reset_scenario_root(work_root: Path, name: str) -> Path:
     root = (work_root / name).resolve()
     work_root_resolved = work_root.resolve()
     ensure(str(root).startswith(str(work_root_resolved)), f"refusing to reset path outside work root: {root}")
     if root.exists():
-        shutil.rmtree(root)
+        for attempt in range(5):
+            try:
+                shutil.rmtree(root)
+                break
+            except OSError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.2)
     root.mkdir(parents=True, exist_ok=True)
     return root
 
@@ -263,6 +382,7 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
     return json.dumps(
         {
             "decision": "pass",
+            "pm_visible_summary": [f"PM accepted a current node plan for {node_id or 'the active node'}."],
             "route_node_id": node_id,
             "proof_obligations": ["implementation evidence", "FlowGuard evidence", "review", "validation"],
             "repair_policy": "same_node_repair_default",
@@ -286,6 +406,105 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
     )
 
 
+def _high_standard_contract_body() -> str:
+    return json.dumps(
+        {
+            "decision": "pass",
+            "pm_visible_summary": ["PM recorded current high-standard requirements for the fake project."],
+            "requirements": [
+                {
+                    "requirement_id": "hsr-001",
+                    "classification": "hard_current",
+                    "summary": "Complete the fake project to a high standard.",
+                    "closure_blocking": True,
+                }
+            ],
+        },
+        sort_keys=True,
+    )
+
+
+def _discovery_body() -> str:
+    return json.dumps(
+        {
+            "decision": "pass",
+            "pm_visible_summary": ["PM confirmed current startup material and local skill inventory."],
+            "material_sources": ["startup"],
+            "material_sufficiency": "sufficient_for_route_planning",
+            "local_skill_inventory": ["flowguard-development-process-flow"],
+            "candidate_only_skill_policy": True,
+        },
+        sort_keys=True,
+    )
+
+
+def _skill_standard_body() -> str:
+    return json.dumps(
+        {
+            "decision": "pass",
+            "pm_visible_summary": ["PM set current skill obligations for the fake project route."],
+            "obligations": [
+                {
+                    "obligation_id": "skill-std-001",
+                    "skill": "flowguard-development-process-flow",
+                    "classification": "required",
+                    "role_use": "flowguard_operator",
+                    "use_context": "node_validation",
+                    "evidence_required": "current-run FlowGuard work order",
+                    "closure_blocking": True,
+                }
+            ],
+        },
+        sort_keys=True,
+    )
+
+
+def _generic_current_result_body(packet: dict[str, Any]) -> str:
+    packet_id = str(packet.get("packet_id") or "")
+    packet_kind = str(packet.get("packet_kind") or "task")
+    route_scope = str(packet.get("route_scope") or "")
+    summary_subject = f"{packet_kind} result for {packet_id}"
+    if route_scope:
+        summary_subject += f" in {route_scope}"
+    return json.dumps(
+        {
+            "decision": "pass",
+            "pm_visible_summary": [f"Fake AI submitted current-contract {summary_subject}."],
+        },
+        sort_keys=True,
+    )
+
+
+def current_contract_body_for_packet(
+    packet: dict[str, Any],
+    *,
+    pm_disposition_decision: str = "accept",
+) -> str:
+    packet_kind = str(packet.get("packet_kind") or "")
+    route_scope = str(packet.get("route_scope") or "")
+    packet_id = str(packet.get("packet_id") or "")
+    if packet_kind == "task" and route_scope == "high_standard_contract":
+        return _high_standard_contract_body()
+    if packet_kind == "task" and route_scope == "discovery":
+        return _discovery_body()
+    if packet_kind == "task" and route_scope == "skill_standard":
+        return _skill_standard_body()
+    if packet_kind == "task" and route_scope == "planning":
+        return _route_plan_body()
+    if packet_kind == "task" and route_scope == "node_acceptance_plan":
+        return _node_acceptance_plan_body(packet)
+    if packet_kind == "pm_disposition":
+        return json.dumps(
+            {
+                "decision": pm_disposition_decision,
+                "reason": f"fake PM disposition {pm_disposition_decision}",
+                "pm_visible_summary": [f"PM recorded {pm_disposition_decision} disposition for {packet_id}."],
+            },
+            sort_keys=True,
+        )
+    return _generic_current_result_body(packet)
+
+
 def complete_full_packet_chain(
     root: Path,
     command_log: list[dict[str, Any]],
@@ -295,7 +514,7 @@ def complete_full_packet_chain(
 ) -> dict[str, Any]:
     completed_packets: list[dict[str, str]] = []
     pm_disposition_count = 0
-    for step_index in range(80):
+    for step_index in range(FULL_PACKET_CHAIN_BUDGET):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action at step {step_index}")
         if action.get("action_type") == "terminal_complete":
@@ -330,16 +549,12 @@ def complete_full_packet_chain(
 
         ack_payload = run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
         ensure(ack_payload["next_action"]["action_type"] == "wait_for_result", f"expected wait_for_result: {ack_payload}")
-        if packet_kind == "task" and packet.get("route_scope") == "planning":
-            body = _route_plan_body()
-        elif packet_kind == "task" and packet.get("route_scope") == "node_acceptance_plan":
-            body = _node_acceptance_plan_body(packet)
-        elif packet_kind == "pm_disposition":
+        open_current_packet_inputs(root, command_log, lease_id=lease_id, packet=packet)
+        decision = "accept"
+        if packet_kind == "pm_disposition":
             pm_disposition_count += 1
             decision = first_pm_disposition_decision if pm_disposition_count == 1 else "accept"
-            body = json.dumps({"decision": decision, "reason": f"fake PM disposition {decision}"})
-        else:
-            body = json.dumps({"decision": "pass", "summary": f"fake {packet_kind} result for {packet_id}"})
+        body = current_contract_body_for_packet(packet, pm_disposition_decision=decision)
 
         current_payload = run_cli(
             root,
@@ -354,7 +569,10 @@ def complete_full_packet_chain(
         )
         completed_packets.append({"packet_id": packet_id, "packet_kind": packet_kind, "lease_id": lease_id})
     else:
-        raise RehearsalFailure("packet chain exceeded recursive route budget")
+        raise RehearsalFailure(
+            f"packet chain exceeded recursive route budget={FULL_PACKET_CHAIN_BUDGET}; "
+            f"last_next_action={current_payload.get('next_action')}"
+        )
 
     final_action = current_payload.get("next_action", {})
     ensure(final_action.get("action_type") == "terminal_complete", f"final action was not terminal_complete: {final_action}")
@@ -402,7 +620,7 @@ def complete_planning_chain_only(
     command_log: list[dict[str, Any]],
     current_payload: dict[str, Any],
 ) -> dict[str, Any]:
-    for step_index in range(40):
+    for step_index in range(PLANNING_PACKET_CHAIN_BUDGET):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), "missing planning next action")
         ensure(action.get("action_type") == "resolve_role_assignment", f"expected planning role assignment action: {action}")
@@ -423,46 +641,8 @@ def complete_planning_chain_only(
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
-        if packet_kind == "task" and route_scope == "high_standard_contract":
-            body = json.dumps(
-                {
-                    "decision": "pass",
-                    "requirements": [
-                        {
-                            "requirement_id": "hsr-001",
-                            "classification": "hard_current",
-                            "summary": "Complete the fake project to a high standard.",
-                        }
-                    ]
-                }
-            )
-        elif packet_kind == "task" and route_scope == "discovery":
-            body = json.dumps(
-                {
-                    "decision": "pass",
-                    "material_sources": ["startup"],
-                    "local_skill_inventory": ["flowguard-development-process-flow"],
-                }
-            )
-        elif packet_kind == "task" and route_scope == "skill_standard":
-            body = json.dumps(
-                {
-                    "decision": "pass",
-                    "obligations": [
-                        {
-                            "obligation_id": "skill-std-001",
-                            "skill": "flowguard-development-process-flow",
-                            "classification": "required",
-                        }
-                    ]
-                }
-            )
-        elif packet_kind == "task" and route_scope == "planning":
-            body = _route_plan_body()
-        elif packet_kind == "task" and route_scope == "node_acceptance_plan":
-            body = _node_acceptance_plan_body(packet)
-        else:
-            body = json.dumps({"decision": "pass", "summary": f"fake planning {packet_kind}"})
+        open_current_packet_inputs(root, command_log, lease_id=lease_id, packet=packet)
+        body = current_contract_body_for_packet(packet)
         current_payload = run_cli(
             root,
             command_log,
@@ -477,7 +657,10 @@ def complete_planning_chain_only(
         if packet_kind == "review" and route_scope == "planning":
             break
     else:
-        raise RehearsalFailure("planning chain exceeded high-standard gate budget")
+        raise RehearsalFailure(
+            f"planning chain exceeded high-standard gate budget={PLANNING_PACKET_CHAIN_BUDGET}; "
+            f"last_next_action={current_payload.get('next_action')}"
+        )
     projection = status_projection(root, command_log)
     assert_public_projection_is_sealed(projection)
     next_action = projection.get("next_action", {})

@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -113,68 +115,6 @@ def _display_surface_receipt_payload_contract() -> dict[str, Any]:
             "if Cockpit was requested but unavailable, include display_surface_receipt.actual_surface=display_blocked."
         ),
         reviewer_check="Reviewer checks requested Cockpit versus actual Cockpit availability when Cockpit was requested.",
-    )
-def _role_slots_payload_contract() -> dict[str, Any]:
-    return _payload_contract(
-        name="role_slots_startup_receipt",
-        required_object="payload",
-        required_fields=[
-            "runtime_role_assistance_capability_status",
-            "role_bindings[].role_key",
-            "role_bindings[].agent_id",
-            "role_bindings[].model_policy",
-            "role_bindings[].reasoning_effort_policy",
-            "role_bindings[].binding_open_result",
-            "role_bindings[].opened_for_run_id",
-            "role_bindings[].opened_after_startup_answers",
-        ],
-        optional_fields=["role_bindings[].host_role_binding_receipt"],
-        allowed_values={
-            "runtime_role_assistance_capability_status": ["available"],
-            "role_bindings[].model_policy": [ROLE_BINDING_MODEL_POLICY],
-            "role_bindings[].reasoning_effort_policy": [ROLE_BINDING_REASONING_EFFORT_POLICY],
-            "role_bindings[].binding_open_result": [ROLE_BINDING_OPEN_RESULT],
-            "role_bindings[].host_role_binding_receipt.source_kind": ["host_receipt"],
-        },
-        conditional_required_fields={
-            "when role_bindings[].host_role_binding_receipt is supplied": [
-                "role_bindings[].host_role_binding_receipt.source_kind",
-                "role_bindings[].host_role_binding_receipt.opened_for_run_id",
-                "role_bindings[].host_role_binding_receipt.role_key",
-                "role_bindings[].host_role_binding_receipt.agent_id",
-            ],
-        },
-        structural_requirements=[
-            "Provide exactly one non-duplicate role-binding record for each role key requested by the startup action.",
-            "Each live role binding must use a host-supported, addressable, isolated role surface and must be explicitly requested with the strongest available host model and highest available reasoning effort; do not rely on foreground/controller model inheritance.",
-        ],
-        description="Record fresh live host role bindings when host-supported isolated role surfaces were allowed, using the strongest available role intelligence policy.",
-        reviewer_check="Reviewer checks live role-binding freshness unless each slot carries a host receipt.",
-    )
-def _heartbeat_payload_contract(run_id: str, automation_id_hint: str) -> dict[str, Any]:
-    return _payload_contract(
-        name="heartbeat_host_automation_receipt",
-        required_object="payload",
-        required_fields=[
-            "route_heartbeat_interval_minutes",
-            "host_automation_id",
-            "host_automation_verified",
-            "host_automation_proof.source_kind",
-            "host_automation_proof.run_id",
-            "host_automation_proof.host_automation_id",
-            "host_automation_proof.route_heartbeat_interval_minutes",
-            "host_automation_proof.heartbeat_bound_to_current_run",
-        ],
-        allowed_values={
-            "route_heartbeat_interval_minutes": [1],
-            "host_automation_verified": [True],
-            "host_automation_proof.source_kind": ["host_receipt"],
-            "host_automation_proof.run_id": [run_id],
-            "host_automation_proof.route_heartbeat_interval_minutes": [1],
-            "host_automation_proof.heartbeat_bound_to_current_run": [True],
-        },
-        description="Bind the one-minute host heartbeat automation to this exact current run before startup fact review.",
-        reviewer_check="Reviewer checks heartbeat host binding when scheduled continuation was requested.",
     )
 def _resume_role_rehydration_payload_contract(
     run_state: dict[str, Any],
@@ -261,8 +201,6 @@ __all__ = (
     "_payload_contract",
     "_terminal_summary_payload_contract",
     "_display_surface_receipt_payload_contract",
-    "_role_slots_payload_contract",
-    "_heartbeat_payload_contract",
     "_resume_role_rehydration_payload_contract",
 )
 _LOCAL_NAMES = set(globals())

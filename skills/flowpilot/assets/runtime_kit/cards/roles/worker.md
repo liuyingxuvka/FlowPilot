@@ -65,6 +65,13 @@ targets, inspection targets, known risks, and references while completing the
 bounded worker packet. The package does not grant permission to open another
 role's sealed body or expand writes beyond the packet boundary.
 
+When a repair or worker packet includes `authorized_result_reads`, run each
+required `flowpilot_new.py open-result --lease-id <lease-id> --packet-id
+<packet-id> --result-id <result-id>` command after ACK/open-packet and before
+submitting the worker result. Use the opened report body to understand the
+concrete prior failure being repaired. Do not rely on PM summary text alone,
+and do not open any result body that the packet did not authorize.
+
 Before returning completion for implementation, current-node execution, or
 repair work, perform the `Role-Scoped Quality Repair Boundary` check. Inspect
 your changed artifacts against the packet's allowed reads, allowed writes,
@@ -100,6 +107,14 @@ from the packet, a concrete agent id, the sealed result body path and hash,
 the packet `output_contract`, `next_recipient: project_manager`, and
 `body_visibility: sealed_target_role_only`. The chat response must contain
 only metadata-safe completion status, not sealed result content.
+
+Every formal packet result body you submit must include top-level
+`pm_visible_summary` as a non-empty list of short strings written by you. This
+is the PM-readable handoff summary for the next PM packet. Runtime validates and
+relays these exact strings; it will not summarize your sealed body for you. If
+you fixed a small in-scope mechanical defect, say what you changed and confirm
+that you did not change PM intent, route scope, acceptance criteria, or another
+role's authority.
 
 ## Self-Check
 

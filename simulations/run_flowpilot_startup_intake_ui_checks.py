@@ -16,7 +16,7 @@ RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_startup_intake_ui_re
 
 HAZARD_EXPECTED_FAILURES = {
     "controller_before_ui_confirm": "Controller loaded before confirmed UI intake and PM packet",
-    "cancel_continues_to_run": "UI cancel still allowed startup side effects",
+    "block_or_cancel_continues_to_run": "UI block/cancel still allowed startup side effects",
     "controller_body_leak": "Controller-visible startup state leaked user request body",
     "ui_opened_before_source_encoding_check": "startup UI opened before launcher source encoding contract was verified",
     "utf8_no_bom_script_source_unsupported_historical_powershell_parse_break": "startup UI launcher source may not parse on unsupported_historical Windows PowerShell",
@@ -24,7 +24,7 @@ HAZARD_EXPECTED_FAILURES = {
     "ui_result_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
     "ui_receipt_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
     "ui_envelope_json_bom_breaks_router": "startup UI JSON artifacts must be UTF-8 without BOM",
-    "unsupported_historical_bom_json_without_router_fallback": "Router startup intake JSON reader is not BOM-compatible",
+    "unsupported_historical_bom_json_without_reader_support": "Router startup intake JSON reader is not BOM-compatible",
     "headless_result_accepted": "formal startup accepted non-interactive startup intake result",
     "language_visible_on_main_surface": "language selector remained visible on the startup main surface",
     "settings_panel_missing_language": "settings panel did not contain language selection",
@@ -32,11 +32,13 @@ HAZARD_EXPECTED_FAILURES = {
     "support_copy_claims_paid_entitlement": "support developer copy implied a paid entitlement",
     "body_bom_leaks_to_pm_packet": "PM intake packet leaked leading UTF-8 BOM marker",
     "bom_repair_bypasses_body_hash": "startup answers accepted without complete UI receipt/envelope/body hash evidence",
-    "invalid_toggle_value": "runtime role toggle did not map to a startup answer enum",
-    "obsolete_scheduled_continuation_option_accepted": "scheduled continuation is no longer a visible startup UI option",
-    "obsolete_display_surface_option_accepted": "display surface is no longer a visible startup UI option",
-    "single_agent_starts_roles": "runtime role assistance started despite UI single-agent choice",
-    "manual_creates_heartbeat": "heartbeat created despite UI manual continuation choice",
+    "background_ack_missing": "startup answers accepted without background_collaboration_authorized=true",
+    "background_ack_false": "startup answers accepted without background_collaboration_authorized=true",
+    "legacy_runtime_role_assistance_key_accepted": "legacy startup option key was accepted",
+    "legacy_single_agent_key_accepted": "legacy startup option key was accepted",
+    "legacy_heartbeat_key_accepted": "legacy startup option key was accepted",
+    "background_requested_without_ack": "startup answers accepted without background_collaboration_authorized=true",
+    "host_background_unavailable_continues": "FlowPilot continued after host background collaboration was unavailable",
     "chat_opens_cockpit": "Cockpit opened despite UI chat display choice",
     "reviewer_uses_chat": "reviewer startup pass relied on chat instead of UI record/receipt/envelope",
     "ui_confirm_requires_old_chat": "UI-confirmed startup still required old chat answers",
@@ -59,13 +61,14 @@ def _state_id(state: model.State) -> str:
         f"router_sig={state.router_json_reader_bom_tolerant},verified={state.artifact_encoding_contract_verified},"
         f"body_bom={state.body_has_leading_bom},pm_strip={state.pm_packet_body_bom_stripped}|"
         f"answers={state.startup_answers_recorded},{state.startup_answer_values_valid},"
-        f"{state.runtime_role_assistances},{state.scheduled_continuation},{state.display_surface}|"
+        f"background_ack={state.background_collaboration_authorized},legacy={state.legacy_startup_option_key_seen}|"
         f"run={state.run_shell_created}|request_ref={state.user_request_ref_recorded}|"
         f"pm_packet={state.pm_intake_packet_created},{state.pm_is_only_body_reader}|"
         f"reviewer={state.reviewer_checked_ui_record},{state.reviewer_checked_ui_receipt},{state.reviewer_checked_envelope_hash},"
         f"chat={state.reviewer_used_chat_history},pass={state.reviewer_startup_passed}|"
-        f"host={state.roles_started},{state.heartbeat_created},{state.cockpit_opened},"
-        f"fallback={state.chat_display_fallback_recorded}|"
+        f"host=background_requested={state.background_collaboration_requested},"
+        f"background_available={state.host_background_collaboration_available},{state.cockpit_opened},"
+        f"chat_display_required={state.chat_display_requirement_recorded}|"
         f"controller={state.controller_core_loaded},read_body={state.controller_read_body},"
         f"leak={state.body_text_in_controller_visible_state}|old_chat={state.old_chat_answer_required}"
     )
@@ -114,8 +117,7 @@ def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
         if state.ui_result == "cancelled"
         and (
             state.run_shell_created
-            or state.roles_started
-            or state.heartbeat_created
+            or state.background_collaboration_requested
             or state.cockpit_opened
             or state.controller_core_loaded
         )

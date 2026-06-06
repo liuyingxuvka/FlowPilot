@@ -25,8 +25,8 @@ class FlowPilotDefectLedgerTests(unittest.TestCase):
         _write_json(
             root / ".flowpilot" / "current.json",
             {
-                "current_run_id": "run-test",
-                "current_run_root": ".flowpilot/runs/run-test",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
             },
         )
         _write_json(
@@ -197,6 +197,19 @@ class FlowPilotDefectLedgerTests(unittest.TestCase):
             snapshot["evidence_summary"]["fixture_only_evidence_to_disclose"],
             ["evidence-fixture-realtime"],
         )
+
+    def test_legacy_current_pointer_fields_are_rejected_without_placeholder_run(self) -> None:
+        root = self.make_project()
+        _write_json(
+            root / ".flowpilot" / "current.json",
+            {
+                "current_run_id": "run-test",
+                "current_run_root": ".flowpilot/runs/run-test",
+            },
+        )
+
+        self.assertEqual(flowpilot_defects.main(["--root", str(root), "init"]), 1)
+        self.assertFalse((root / ".flowpilot" / "runs" / "__missing_current_pointer__").exists())
 
 
 if __name__ == "__main__":

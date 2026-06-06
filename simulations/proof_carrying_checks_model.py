@@ -25,7 +25,7 @@ from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 TRUSTED_SOURCES = {"router_computed", "packet_runtime_hash", "host_receipt"}
 REVIEWER_FACT_KINDS = {
-    "live_heartbeat",
+    "live_daemon_liveness",
     "live_agent_freshness",
     "user_intent_without_receipt",
     "source_quality",
@@ -179,7 +179,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                     state,
                     step=1,
                     status="classifying",
-                    fact_kind="live_heartbeat",
+                    fact_kind="live_daemon_liveness",
                     proof_source="self_attested_ai",
                     ai_claim_used_as_proof=True,
                 ),
@@ -306,7 +306,7 @@ def _complete_reviewer_base(**changes: object) -> State:
     base = State(
         step=4,
         status="complete",
-        fact_kind="live_heartbeat",
+        fact_kind="live_daemon_liveness",
         proof_source="self_attested_ai",
         ai_claim_used_as_proof=True,
         reviewer_required=True,
@@ -320,7 +320,7 @@ def _complete_reviewer_base(**changes: object) -> State:
 def hazard_states() -> dict[str, State]:
     return {
         "router_only_from_self_attested_claim": _complete_router_proof_base(
-            fact_kind="live_heartbeat",
+            fact_kind="live_daemon_liveness",
             proof_source="self_attested_ai",
             ai_claim_used_as_proof=True,
             router_recomputed_or_verified=False,

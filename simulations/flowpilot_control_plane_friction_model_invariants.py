@@ -82,13 +82,13 @@ def missing_receipt_uses_same_role_reissue(state: State, trace) -> InvariantResu
 def stopped_run_reconciles_authorities(state: State, trace) -> InvariantResult:
     del trace
     if state.current_status_stopped and (
-        state.continuation_heartbeat_active
+        state.manual_resume_binding_active
         or state.runtime_role_live_agents_active
         or state.packet_loop_active
         or not state.frontier_terminal
     ):
         return InvariantResult.fail(
-            "stopped run left heartbeat, runtime roles, packet loop, or frontier authority active"
+            "stopped run left manual resume binding, runtime roles, packet loop, or frontier authority active"
         )
     return InvariantResult.pass_()
 
@@ -782,8 +782,8 @@ def duplicate_pm_repair_decisions_are_idempotent(state: State, trace) -> Invaria
 
 def terminal_continuation_cleanup_is_proven(state: State, trace) -> InvariantResult:
     del trace
-    if state.terminal_continuation_cleanup_recorded and not state.terminal_host_automation_cleanup_proven:
-        return InvariantResult.fail("terminal continuation cleanup lacked host automation proof")
+    if state.terminal_continuation_cleanup_recorded and not state.terminal_lifecycle_cleanup_proven:
+        return InvariantResult.fail("terminal continuation cleanup lacked foreground-patrol or manual-resume lifecycle proof")
     return InvariantResult.pass_()
 
 def role_output_hashes_are_replayable(state: State, trace) -> InvariantResult:
@@ -1267,7 +1267,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="stopped_run_reconciles_authorities",
-        description="A user-stopped run turns off heartbeat, runtime roles, packet loop, and frontier authorities.",
+        description="A user-stopped run turns off manual resume binding, runtime roles, packet loop, and frontier authorities.",
         predicate=stopped_run_reconciles_authorities,
     ),
     Invariant(
@@ -1492,7 +1492,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="terminal_continuation_cleanup_is_proven",
-        description="Terminal continuation cleanup has durable host automation proof.",
+        description="Terminal continuation cleanup has durable foreground-patrol or manual-resume lifecycle proof.",
         predicate=terminal_continuation_cleanup_is_proven,
     ),
     Invariant(
@@ -1660,3 +1660,5 @@ __all__ = [
     "INVARIANTS",
     "invariant_failures",
 ]
+
+

@@ -387,7 +387,8 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         root = self.make_project()
         run_root = self.write_minimal_run(root, "run-dispatch-gate-user-intake-contract")
         state = read_json(router.run_state_path(run_root))
-        state["flags"]["startup_activation_approved"] = True
+        state["flags"]["startup_mechanical_audit_written"] = True
+        state["flags"]["startup_display_status_written"] = True
         state["ledger_check_requested"] = True
         router.write_json(router.run_state_path(run_root), state)
         packet_ledger = router._create_empty_packet_ledger(root, state["run_id"], run_root)
@@ -418,7 +419,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.deliver_current_node_cards(root)
 
         packet_paths: dict[str, str] = {}
-        for packet_id, role in (("node-batch-worker-1", "worker"), ("node-batch-worker-2", "worker")):
+        for packet_id, role in (("node-batch-worker-1", "worker"), ("node-batch-flowguard-1", "flowguard_operator")):
             packet = packet_runtime.create_packet(
                 root,
                 packet_id=packet_id,
@@ -448,7 +449,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_current_node_packet")
-        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-1", "node-batch-worker-2"])
+        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-flowguard-1", "node-batch-worker-1"])
         router.apply_action(root, "relay_current_node_packet")
 
         results: dict[str, str] = {}
@@ -457,7 +458,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
             packet_id="node-batch-worker-1",
             result_body_text="worker a result",
         )
-        self.assertEqual(agent_a, f"agent-{run_root.name}-worker")
+        self.assertEqual(agent_a, self.active_agent_id_for_role(root, "worker"))
         results["node-batch-worker-1"] = result_a_path
         router.record_external_event(
             root,
@@ -467,23 +468,23 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "await_role_decision")
         self.assertEqual(action["allowed_external_events"], ["worker_current_node_result_returned"])
-        self.assertIn("worker", action["to_role"])
+        self.assertIn("flowguard_operator", action["to_role"])
 
         agent_b, result_b_path = self.submit_current_node_result_via_active_holder(
             root,
-            packet_id="node-batch-worker-2",
-            result_body_text="worker b result",
+            packet_id="node-batch-flowguard-1",
+            result_body_text="flowguard operator result",
         )
-        self.assertEqual(agent_b, f"agent-{run_root.name}-worker")
-        results["node-batch-worker-2"] = result_b_path
+        self.assertEqual(agent_b, self.active_agent_id_for_role(root, "flowguard_operator"))
+        results["node-batch-flowguard-1"] = result_b_path
         router.record_external_event(
             root,
             "worker_current_node_result_returned",
-            {"packet_id": "node-batch-worker-2", "result_envelope_path": results["node-batch-worker-2"]},
+            {"packet_id": "node-batch-flowguard-1", "result_envelope_path": results["node-batch-flowguard-1"]},
         )
         action = self.next_after_display_sync(root)
         self.assertEqual(action["action_type"], "relay_current_node_result_to_pm")
-        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-worker-1", "node-batch-worker-2"])
+        self.assertEqual(sorted(action["packet_ids"]), ["node-batch-flowguard-1", "node-batch-worker-1"])
         router.apply_action(root, "relay_current_node_result_to_pm")
 
         for result_path in results.values():
@@ -508,7 +509,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 {
                     "reviewed_by_role": "human_like_reviewer",
                     "passed": True,
-                    "agent_role_map": {agent_a: "worker", agent_b: "worker"},
+                    "agent_role_map": {agent_a: "worker", agent_b: "flowguard_operator"},
                 },
             ),
         )
@@ -518,7 +519,7 @@ class DispatchGateRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertTrue(runtime_audit["passed"])
         self.assertEqual(runtime_audit["batch_id"], "node-parallel-batch-001")
         self.assertEqual(runtime_audit["packet_count"], 2)
-        self.assertEqual(sorted(runtime_audit["reviewed_packet_ids"]), ["node-batch-worker-1", "node-batch-worker-2"])
+        self.assertEqual(sorted(runtime_audit["reviewed_packet_ids"]), ["node-batch-flowguard-1", "node-batch-worker-1"])
     def test_current_node_pre_review_reconciliation_blocks_reviewer_card(self) -> None:
         root = self.make_project()
         self.prepare_current_node_result_for_review(

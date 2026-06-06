@@ -142,11 +142,12 @@ for review.
    parent-level delivered result and replay the child rollup, then record the
    PM segment decision. Repair reruns the same parent replay.
 26. Record the current manual-resume binding after Controller core is loaded.
-   FlowPilot does not create heartbeat or scheduled-continuation automation.
+   FlowPilot does not create scheduled-continuation automation.
    The run keeps a foreground patrol plus a stable manual-resume launcher; each
    resume tick reloads current ledgers and rehydrates the current role bindings
    before normal work continues. If background or parallel agents cannot be
-   opened, FlowPilot blocks instead of switching to a single-agent route.
+   opened, FlowPilot blocks instead of switching to an unsupported
+   non-background route.
 27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
    syncing the visible Codex plan or advancing work. Each manual-resume/manual
    resume first reloads the packet ledger, asks PM for the current
@@ -365,7 +366,7 @@ for review.
 - `packet_ledger.template.json`: active packet location, PM/reviewer/worker
   evidence paths, and controller-only resume boundary used by manual_resume and
   manual resume.
-- `manual_resumes/hb.template.json`: manual-resume evidence shell,
+- `continuation_evidence.template.json`: manual-resume evidence shell,
   including continuation readiness, host kind, exact host evidence source,
   packet recovery state, controller-only resume contract, controlled-stop
   notice fields, and the latest route-sign display gate state.

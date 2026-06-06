@@ -25,14 +25,15 @@ workflow-critical external action.
 - **THEN** Router SHALL NOT escalate the display-only condition to PM repair and
   SHALL allow route progress to continue
 
-### Requirement: External continuation actions use lightweight hard confirmation
+### Requirement: External liveness actions use lightweight hard confirmation
 The Router SHALL require lightweight hard confirmation for external actions
-whose failure can stop autonomous continuation.
+whose failure can stop current foreground patrol or background role liveness.
 
-#### Scenario: Heartbeat binding must be confirmed
-- **WHEN** a Controller or host action creates a continuation heartbeat binding
+#### Scenario: Liveness evidence must be confirmed
+- **WHEN** a Controller or host action records current continuation or
+  background-role liveness evidence
 - **THEN** Router SHALL require the existing action receipt or marker before
-  treating the keepalive action as complete
+  treating the liveness action as complete
 
 ### Requirement: Role decisions keep file-backed evidence
 The Router SHALL continue to require role-output decisions to carry a

@@ -88,11 +88,18 @@ PM repair/stop exit.
 PM may not use any entrypoint to peek at a worker/FlowGuard operator/reviewer packet that
 is addressed to another role.
 
+When a PM packet includes `recent_role_report_summary`, treat it as a fast
+navigation aid written by the source role, not as the report body. When the
+same packet includes `authorized_result_reads`, run each required
+`flowpilot_new.py open-result --lease-id <lease-id> --packet-id <packet-id>
+--result-id <result-id>` command after ACK/open-packet and before submitting
+the PM decision. Base repair choices on the opened result/report body and the
+packet contract; do not decide from the summary alone.
+
 If PM cannot proceed after a verified open, PM must not send an ordinary
-blocker back to PM. Use the existing formal exits instead: startup repair
-through `pm_startup_repair_request`, startup stop through
-`pm_startup_protocol_dead_end`, or Router control-blocker recovery through
-`pm_control_blocker_repair_decision`.
+blocker back to PM. Use the current packet output contract, or Router
+control-blocker recovery through `pm_control_blocker_repair_decision` when
+Router delivered a current control blocker.
 
 When Controller has relayed material-scan, research, or current-node worker
 results to PM and Router waits for a package result disposition, PM must use
@@ -101,6 +108,15 @@ the registry-backed `pm_package_result_disposition` role-output type through
 in the referenced body file; the Router event receives only the runtime
 envelope and receipt metadata. Do not hand-write `decision` or other body
 fields into the event envelope.
+Read the Runtime/Router mechanical result first. If Runtime reports a missing
+field, stale result, wrong current run, wrong packet/result id, wrong agent id,
+hash/path failure, unsupported command, or failed ledger absorption, choose a
+current-runtime repair action: reissue the same packet, request a corrected
+same-node result, repair the current control blocker, stop for the user, or
+declare protocol dead-end when no legal current path remains. Do not ask
+Reviewer to reinterpret mechanical failures. Reviewer receives only mechanically
+accepted quality-review packages and then judges result quality, requirement
+satisfaction, evidence credibility, and repair need.
 Record exactly one ordinary PM package disposition per batch/generation. When
 requested worker packets need different treatment, keep those decisions inside
 that one body as `packet_outcomes[]` rows keyed by packet id and outcome. An
@@ -174,9 +190,7 @@ stays stopped until PM or the user records an explicit recovery decision.
 For any `pm_repair_decision_required` router `control_blocker`, use the
 `pm_records_control_blocker_repair_decision` event and contract
 `flowpilot.output_contract.pm_control_blocker_repair_decision.v1`. Do not use
-ordinary phase events such as `pm_requests_startup_repair` to resolve the
-router control blocker unless a later router action explicitly routes that
-separate phase event after the blocker is resolved.
+ordinary phase events to resolve the router control blocker.
 That decision must open a repair transaction. A single rerun event is only the
 success outcome, not the repair itself. It must name `recovery_option`,
 `return_gate`, and an executable `repair_transaction.plan_kind`; PM may move
@@ -203,6 +217,15 @@ prior path context and cite it in `prior_path_context_review`. Completed,
 superseded, stale, blocked, and experiment-derived history must shape future
 route decisions. Controller route memory is an index of facts and source paths;
 it is not approval evidence.
+
+When a PM packet body includes `recent_role_report_summary`, read it before
+choosing route, node, repair, or closure decisions. These entries are
+role-authored summaries from Worker, FlowGuard operator, and Reviewer results;
+they are the PM-readable continuity channel for what those roles found, fixed,
+or still require. Treat them as decision context, not sealed evidence. Do not
+ask Controller or runtime to synthesize missing summaries from sealed bodies.
+If a required role result lacks this summary, the runtime should block that
+role result as a contract failure instead of PM guessing what happened.
 
 You do not implement, personally close reviewer/FlowGuard operator gates, or use worker
 output before reviewer review.
@@ -472,14 +495,10 @@ Every PM decision body must include:
 
 If material is insufficient, issue a bounded research or material-scan packet.
 If a review blocks, decide repair, reissue, mutation, correct-role exception,
-or user stop. During startup activation, a blocking reviewer fact report must
-produce either a file-backed `pm_requests_startup_repair` decision with an
-exact target role/system and repair action, or a file-backed
-`pm_declares_startup_protocol_dead_end` decision when no legal repair path
-exists. For uncertain route, repair, product, or validation decisions, request
-FlowGuard operator modeling through a bounded request/report packet and then make the PM
-decision from the report's confidence boundary. Completion requires a current-
-route ledger and segmented backward replay.
+or user stop. For uncertain route, repair, product, or validation decisions,
+request FlowGuard operator modeling through a bounded request/report packet and
+then make the PM decision from the report's confidence boundary. Completion
+requires a current-route ledger and segmented backward replay.
 
 You may proactively request FlowGuard modeling for a reference object, source
 system, migration target, or behavior-equivalence question before deciding the

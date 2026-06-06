@@ -36,6 +36,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -54,11 +56,6 @@ def _bound_router() -> ModuleType:
 
 
 OWNER_MODULE = 'flowpilot_router_startup_closure'
-
-def _host_heartbeat_binding_ready(router: ModuleType, run_root: Path, run_state: dict[str, Any]) -> bool:
-    _bind_router(router)
-    binding = read_json_if_exists(router._continuation_binding_path(run_root))
-    return binding.get('run_id') == run_state.get('run_id') and binding.get('mode') == 'scheduled_heartbeat' and (binding.get('scheduled_continuation_requested') is True) and (binding.get('heartbeat_active') is True) and (binding.get('route_heartbeat_interval_minutes') == 1) and bool(binding.get('host_automation_id')) and (binding.get('host_automation_verified') is True) and router._continuation_has_host_bound_automation_receipt(binding, str(run_state.get('run_id') or ''))
 
 def _defect_ledger_reconciliation_status(router: ModuleType, project_root: Path, run_root: Path) -> dict[str, Any]:
     _bind_router(router)

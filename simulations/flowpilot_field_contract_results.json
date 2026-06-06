@@ -1,0 +1,793 @@
+{
+  "current_field_contracts": [
+    {
+      "field": "startup_answers.background_collaboration_authorized",
+      "layer": "leaf",
+      "logical_field": "background_collaboration_authorized",
+      "owner": "native_startup_intake_ui",
+      "required_value": true,
+      "status": "current",
+      "unlocks": "user_intake_packet_creation",
+      "validator": "_validate_startup_answers"
+    },
+    {
+      "field": "startup_answers.provenance",
+      "layer": "leaf",
+      "logical_field": "startup_answers_provenance",
+      "owner": "native_startup_intake_ui",
+      "required_value": "explicit_user_reply",
+      "status": "current",
+      "unlocks": "startup_answers_recorded",
+      "validator": "_validate_startup_answers"
+    },
+    {
+      "field": "user_intake.metadata.controller_bootstrap_scope.background_collaboration_authorized",
+      "layer": "leaf",
+      "logical_field": "startup_input_sealed_background_collaboration_authorized",
+      "owner": "packet_runtime",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "pm_can_open_user_intake_packet",
+      "validator": "_current_startup_options"
+    },
+    {
+      "field": "run.run_id",
+      "layer": "top_level",
+      "logical_field": "run_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_run_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_run_scope",
+      "validator": "new_run_state"
+    },
+    {
+      "field": "run.run_root",
+      "layer": "top_level",
+      "logical_field": "run_root",
+      "owner": "flowpilot_router",
+      "required_value": "current_run_root",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_run_scope",
+      "validator": "new_run_state"
+    },
+    {
+      "field": "route_frontier.active_node_id",
+      "layer": "top_level",
+      "logical_field": "active_node_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_active_node_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_node_packet_scope",
+      "validator": "_validate_current_node_packet_event"
+    },
+    {
+      "field": "route_frontier.route_version",
+      "layer": "top_level",
+      "logical_field": "route_version",
+      "owner": "flowpilot_router",
+      "required_value": "current_route_version",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_node_packet_scope",
+      "validator": "_validate_current_node_packet_event"
+    },
+    {
+      "field": "current_packet.packet_id",
+      "layer": "top_level",
+      "logical_field": "current_packet_id",
+      "owner": "flowpilot_router",
+      "required_value": "active_current_packet",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_packet_assignment",
+      "validator": "_validate_current_node_packet_envelope"
+    },
+    {
+      "field": "startup_mechanical_audit.mechanical_checks.startup_answers_use_current_fields_only",
+      "layer": "leaf",
+      "logical_field": "startup_mechanical_audit_current_fields_only",
+      "owner": "flowpilot_router",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "pm_first_round_work",
+      "validator": "_write_startup_mechanical_audit"
+    },
+    {
+      "field": "startup_mechanical_audit.mechanical_checks.background_collaboration_authorized",
+      "layer": "leaf",
+      "logical_field": "startup_mechanical_audit_background_collaboration_authorized",
+      "owner": "flowpilot_router",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "pm_first_round_work",
+      "validator": "_write_startup_mechanical_audit"
+    },
+    {
+      "field": "current_role_agent_binding.role_key",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.role_key",
+      "owner": "host_background_collaboration",
+      "required_value": "current_packet_runtime_role",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.agent_id",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.agent_id",
+      "owner": "host_background_collaboration",
+      "required_value": "current_role_agent_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.model_policy",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.model_policy",
+      "owner": "host_background_collaboration",
+      "required_value": "strongest_available",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.reasoning_effort_policy",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.reasoning_effort_policy",
+      "owner": "host_background_collaboration",
+      "required_value": "highest_available",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.binding_open_result",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.binding_open_result",
+      "owner": "host_background_collaboration",
+      "required_value": "opened_for_current_packet",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.opened_for_run_id",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.opened_for_run_id",
+      "owner": "host_background_collaboration",
+      "required_value": "current_run_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.host_liveness_status",
+      "layer": "middle",
+      "logical_field": "host_liveness_status",
+      "owner": "host_background_collaboration",
+      "required_value": "active",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "current_role_agent_binding.liveness_decision",
+      "layer": "middle",
+      "logical_field": "current_role_agent_binding.liveness_decision",
+      "owner": "host_background_collaboration",
+      "required_value": "confirmed_existing_agent",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_on_demand_role_binding",
+      "validator": "_normalize_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_ledger.role_binding_mode",
+      "layer": "middle",
+      "logical_field": "role_binding_ledger.role_binding_mode",
+      "owner": "flowpilot_router",
+      "required_value": "current_on_demand_role_binding",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_binding_memory_and_role_io_protocol",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_ledger.role_slots[].role_key",
+      "layer": "middle",
+      "logical_field": "role_binding_ledger.role_slots[].role_key",
+      "owner": "flowpilot_router",
+      "required_value": "current_packet_runtime_role",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "background_or_parallel_work",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_ledger.role_slots[].agent_id",
+      "layer": "middle",
+      "logical_field": "role_binding_ledger.role_slots[].agent_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_role_agent_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "background_or_parallel_work",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_ledger.role_slots[].host_liveness_status",
+      "layer": "middle",
+      "logical_field": "host_liveness_status",
+      "owner": "flowpilot_router",
+      "required_value": "active",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "background_or_parallel_work",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_ledger.role_slots[].liveness_decision",
+      "layer": "middle",
+      "logical_field": "role_binding_ledger.role_slots[].liveness_decision",
+      "owner": "flowpilot_router",
+      "required_value": "confirmed_existing_agent",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "background_or_parallel_work",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_memory.current_role_agent_binding.host_liveness_status",
+      "layer": "middle",
+      "logical_field": "host_liveness_status",
+      "owner": "flowpilot_router",
+      "required_value": "active",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "resume_and_recovery_context",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "role_binding_memory.identity_policy.current_authority_source",
+      "layer": "middle",
+      "logical_field": "role_binding_memory.identity_policy.current_authority_source",
+      "owner": "flowpilot_router",
+      "required_value": "role_binding_ledger",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "resume_and_recovery_context",
+      "validator": "_write_current_role_agent_binding"
+    },
+    {
+      "field": "packet_result.packet_id",
+      "layer": "middle",
+      "logical_field": "packet_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_packet_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_result_mechanical_check",
+      "validator": "_validate_current_node_result_event"
+    },
+    {
+      "field": "packet_result.result_id",
+      "layer": "middle",
+      "logical_field": "result_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_result_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_result_mechanical_check",
+      "validator": "_validate_current_node_result_event"
+    },
+    {
+      "field": "packet_envelope.body_path",
+      "layer": "leaf",
+      "logical_field": "path",
+      "owner": "flowpilot_router",
+      "required_value": "current_project_path",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "runtime_receipt_check",
+      "validator": "validate_envelope_runtime_receipt"
+    },
+    {
+      "field": "packet_envelope.body_hash",
+      "layer": "leaf",
+      "logical_field": "hash",
+      "owner": "flowpilot_router",
+      "required_value": "sha256_matches_body",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "runtime_receipt_check",
+      "validator": "validate_envelope_runtime_receipt"
+    },
+    {
+      "field": "role_output_runtime.runtime_receipt_ref.path",
+      "layer": "leaf",
+      "logical_field": "receipt_path",
+      "owner": "flowpilot_router",
+      "required_value": "current_receipt_path",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "runtime_receipt_check",
+      "validator": "validate_envelope_runtime_receipt"
+    },
+    {
+      "field": "role_output_runtime.runtime_receipt_ref.hash",
+      "layer": "leaf",
+      "logical_field": "receipt_hash",
+      "owner": "flowpilot_router",
+      "required_value": "receipt_hash_matches",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "runtime_receipt_check",
+      "validator": "validate_envelope_runtime_receipt"
+    },
+    {
+      "field": "output_contract.missing_required_fields",
+      "layer": "leaf",
+      "logical_field": "missing_fields",
+      "owner": "flowpilot_router",
+      "required_value": "explicit_missing_field_list",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_ai_reissue_with_missing_fields",
+      "validator": "contract_self_check_metadata"
+    },
+    {
+      "field": "control_blocker.target_role_repair_instruction",
+      "layer": "leaf",
+      "logical_field": "repair_instruction",
+      "owner": "flowpilot_router",
+      "required_value": "current_role_repair_instruction",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_ai_reissue_with_repair_instruction",
+      "validator": "_write_control_blocker_repair_packet"
+    },
+    {
+      "field": "pm_package_disposition.decision",
+      "layer": "leaf",
+      "logical_field": "pm_disposition",
+      "owner": "project_manager",
+      "required_value": "absorb_repair_block_or_stop",
+      "status": "pm_decision_owned",
+      "unlocks": "runtime_frontier_update",
+      "validator": "_write_pm_package_result_disposition"
+    },
+    {
+      "field": "reviewer_quality_review.decision",
+      "layer": "leaf",
+      "logical_field": "reviewer_quality_decision",
+      "owner": "human_like_reviewer",
+      "required_value": "quality_pass_or_block",
+      "status": "reviewer_quality_owned",
+      "unlocks": "pm_quality_disposition",
+      "validator": "_record_review_from_packet_result"
+    },
+    {
+      "field": "reviewer_quality_review.evidence",
+      "layer": "leaf",
+      "logical_field": "reviewer_quality_evidence",
+      "owner": "human_like_reviewer",
+      "required_value": "credible_current_evidence",
+      "status": "reviewer_quality_owned",
+      "unlocks": "pm_quality_disposition",
+      "validator": "_record_review_from_packet_result"
+    },
+    {
+      "field": "flowguard_process_review.target_result_id",
+      "layer": "leaf",
+      "logical_field": "flowguard_target_result_id",
+      "owner": "flowguard_operator",
+      "required_value": "current_result_id",
+      "status": "flowguard_process_owned",
+      "unlocks": "pm_process_disposition",
+      "validator": "_record_flowguard_from_packet_result"
+    },
+    {
+      "field": "flowguard_process_review.evidence_path",
+      "layer": "leaf",
+      "logical_field": "flowguard_process_evidence_path",
+      "owner": "flowguard_operator",
+      "required_value": "current_model_or_process_evidence",
+      "status": "flowguard_process_owned",
+      "unlocks": "pm_process_disposition",
+      "validator": "_record_flowguard_from_packet_result"
+    },
+    {
+      "field": "system_card_delivery.target_agent_id",
+      "layer": "middle",
+      "logical_field": "system_card_delivery.target_agent_id",
+      "owner": "flowpilot_router",
+      "required_value": "controller_runtime_helper_or_current_role_binding_agent",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "direct_router_card_ack",
+      "validator": "_system_card_target_agent_id"
+    }
+  ],
+  "edge_count": 29,
+  "field_layers": {
+    "leaf": "Concrete evidence, hash, path, receipt, review, and repair fields.",
+    "middle": "Package, role, lease, and result identity fields that decide whether work is current.",
+    "top_level": "Run, route, and current packet pointers that decide whether the flow may advance."
+  },
+  "field_statuses": {
+    "current": "Current user or package field that remains valid only inside the current runtime contract.",
+    "flowguard_process_owned": "FlowGuard operator owns process, model, state, route, stale-evidence, and loop risk.",
+    "forbidden_legacy": "Unsupported old field/event/card/output path that cannot advance current runtime.",
+    "mechanical_runtime_owned": "Runtime/Router owns existence, identity, path, hash, and ledger validity.",
+    "pm_decision_owned": "PM owns disposition after Runtime mechanics and role quality/process evidence are available.",
+    "retired": "Removed from current manifests/cards/output contracts; may exist only in history.",
+    "reviewer_quality_owned": "Reviewer owns semantic quality, requirement satisfaction, and evidence credibility."
+  },
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=16 initial_states=1 traces=1088",
+    "violation_count": 0
+  },
+  "forbidden_legacy_field_contracts": [
+    {
+      "disposition": "reject_as_old_startup_fact_gate",
+      "field": "startup_fact_report.external_fact_review.reviewer_checked_requirement_ids",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_old_startup_fact_gate",
+      "field": "startup_fact_report.external_fact_review.direct_evidence_paths_checked",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "negative_test_only",
+      "field": "reviewer_reports_startup_facts",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "negative_test_only",
+      "field": "pm_approves_startup_activation",
+      "status": "forbidden_legacy"
+    }
+  ],
+  "hazard_checks": {
+    "hazards": {
+      "fixed_role_count_gate_required_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: fixed_role_count_gate_required",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: fixed_role_count_gate_required"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": true,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "fixed_role_count_gate_required",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "legacy_boot_action_accepted_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: legacy_boot_action_accepted",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: legacy_boot_action_accepted"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": true,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "legacy_boot_action_accepted",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "missing_background_ack_advances_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: missing_background_ack_advances",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: missing_background_ack_advances"
+        ],
+        "state": {
+          "background_ack_missing": true,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "missing_background_ack_advances",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "provenance_promoted_to_scope_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: provenance_promoted_to_scope",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: provenance_promoted_to_scope"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": true,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "provenance_promoted_to_scope",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "startup_fixed_role_binding_gate_required_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: startup_fixed_role_binding_gate_required",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: startup_fixed_role_binding_gate_required"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "startup_fixed_role_binding_gate_required",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": true,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "success_overblocked": {
+        "detected": true,
+        "expected_failure": "current field contract was blocked",
+        "failures": [
+          "current field contract was blocked"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "success",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "blocked",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "unsupported_field_translated_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: unsupported_field_translated",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: unsupported_field_translated"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "unsupported_field_translated",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": true,
+          "unsupported_historical_field_translated": true
+        }
+      },
+      "unsupported_startup_field_accepted_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: unsupported_startup_field_accepted",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: unsupported_startup_field_accepted"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "unsupported_startup_field_accepted",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": true,
+          "unsupported_historical_field_seen": true,
+          "unsupported_historical_field_translated": false
+        }
+      }
+    },
+    "ok": true
+  },
+  "invariant_failures": [],
+  "labels": [
+    "accept_field_contract",
+    "bind_current_background_agent_fields_after_route_allocation",
+    "bind_flowguard_process_fields",
+    "bind_packet_role_result_current_fields",
+    "bind_pm_decision_fields",
+    "bind_reviewer_quality_fields",
+    "bind_runtime_leaf_mechanical_fields",
+    "bind_top_level_runtime_fields",
+    "block_fixed_role_count_gate",
+    "block_legacy_boot_action_accepted",
+    "block_missing_background_ack_field",
+    "block_provenance_promoted_to_controller_scope",
+    "block_startup_fixed_role_binding_gate",
+    "block_unsupported_historical_field_accepted",
+    "block_unsupported_historical_field_translated",
+    "catalog_current_field_contracts",
+    "catalog_field_status_lifecycle",
+    "catalog_retired_and_forbidden_legacy_fields",
+    "filter_packet_startup_scope_fields",
+    "select_fixed_role_count_gate_required",
+    "select_legacy_boot_action_accepted",
+    "select_missing_background_ack_advances",
+    "select_provenance_promoted_to_scope",
+    "select_startup_fixed_role_binding_gate_required",
+    "select_success",
+    "select_unsupported_field_translated",
+    "select_unsupported_startup_field_accepted",
+    "validate_startup_answer_fields",
+    "write_startup_mechanical_field_audit"
+  ],
+  "missing_labels": [],
+  "model_id": "flowpilot_field_contracts",
+  "ok": true,
+  "progress": {
+    "cannot_reach_terminal_count": 0,
+    "cannot_reach_terminal_samples": [],
+    "ok": true,
+    "stuck_state_count": 0,
+    "stuck_state_samples": []
+  },
+  "retired_field_contracts": [
+    {
+      "disposition": "removed_from_current_runtime_manifest",
+      "field": "cards/reviewer/startup_fact_check.md",
+      "status": "retired"
+    },
+    {
+      "disposition": "removed_from_current_runtime_manifest",
+      "field": "cards/phases/pm_startup_activation.md",
+      "status": "retired"
+    }
+  ],
+  "scenario_matrix": {
+    "fixed_role_count_gate_required": "block_fixed_role_count_gate",
+    "legacy_boot_action_accepted": "block_legacy_boot_action_accepted",
+    "missing_background_ack_advances": "block_missing_background_ack_field",
+    "provenance_promoted_to_scope": "block_provenance_promoted_to_controller_scope",
+    "startup_fixed_role_binding_gate_required": "block_startup_fixed_role_binding_gate",
+    "success": "catalog_current_field_contracts",
+    "unsupported_field_translated": "block_unsupported_historical_field_translated",
+    "unsupported_startup_field_accepted": "block_unsupported_historical_field_accepted"
+  },
+  "state_count": 30,
+  "unsupported_historical_field_samples": [
+    "boot_action.bind_background_role_agents",
+    "boot_action.create_heartbeat_automation",
+    "boot_action.open_current_background_collaboration",
+    "boot_action.start_role_slots",
+    "payload.current_background_role_bindings",
+    "startup_answers.heartbeat_requested",
+    "startup_answers.runtime_role_assistance_authorized",
+    "startup_answers.runtime_role_assistances",
+    "startup_answers.scheduled_continuation",
+    "startup_answers.single_agent_role_continuity_authorized"
+  ]
+}

@@ -10,7 +10,12 @@ from flowpilot_router_controller_wait_audit import controller_wait_receipt_audit
 from flowpilot_router_controller_scheduler_standby_policy import *
 
 
+_BOUND_ROUTER: ModuleType | None = None
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
     for name, value in vars(router).items():
@@ -99,7 +104,7 @@ def _continuous_standby_task_payload(
         },
         "codex_plan_sync": {
             "required": True,
-            "plan_item": f"FlowPilot continuous standby: this is the final fallback row when all ordinary Controller rows are complete but FlowPilot is still running. Keep this row in progress as a continuous monitoring duty and foreground anti-exit patrol duty. Run the patrol timer command, wait for its output, and before each continued wait check Controller-visible formal return metadata. Do not read sealed bodies, judge work quality, or treat controller_aside notes as completion proof. If formal return metadata exists but Router has not released the wait or exposed a next step, report the control-plane stuck status. If the command returns continue_patrol, rerun the same command and wait for the next output. Keep quiet patrol internal by default; only update the user when a real user action, blocker, recovery, terminal result, required display, control-plane stuck status, or user-relevant waiting target change occurs. Keep the foreground Controller attached, sync the visible Codex plan from the Controller action ledger and receipts, and when Router exposes new Controller work, update the table and return to top-to-bottom row processing. {break_glass['text']}",
+            "plan_item": f"FlowPilot continuous standby: this is the final standby row when all ordinary Controller rows are complete but FlowPilot is still running. Keep this row in progress as a continuous monitoring duty and foreground anti-exit patrol duty. Run the patrol timer command, wait for its output, and before each continued wait check Controller-visible formal return metadata. Do not read sealed bodies, judge work quality, or treat controller_aside notes as completion proof. If formal return metadata exists but Router has not released the wait or exposed a next step, report the control-plane stuck status. If the command returns continue_patrol, rerun the same command and wait for the next output. Keep quiet patrol internal by default; only update the user when a real user action, blocker, recovery, terminal result, required display, control-plane stuck status, or user-relevant waiting target change occurs. Keep the foreground Controller attached, sync the visible Codex plan from the Controller action ledger and receipts, and when Router exposes new Controller work, update the table and return to top-to-bottom row processing. {break_glass['text']}",
             "plan_status": "in_progress",
             "sync_after_each_controller_row": True,
             "check_for_missed_rows_and_receipts_before_sleep": True,

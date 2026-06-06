@@ -40,7 +40,7 @@ REQUIRED_CANARY_IDS = {
     "control.lock.fresh_write_waits_then_recovers",
     "control.persistence.corrupt_scheduler_blocks_daemon",
     "control.daemon.dead_owner_resume_restart",
-    "control.heartbeat.duplicate_resume_idempotent",
+    "control.resume.duplicate_manual_resume_idempotent",
     "control.peer.peer_stop_isolated",
     "control.background.progress_only_not_proof",
     "control.terminal.stop_fence_survives_scheduler_lock",
@@ -92,7 +92,7 @@ CANARY_ROWS: tuple[dict[str, Any], ...] = (
         "failure_injection": "router_daemon_lock_points_to_missing_pid_and_stale_last_tick",
         "expected_outcome": "resume_checks_liveness_and_restarts_daemon_before_normal_work",
         "protected_state_invariant": "dead_daemon_lock_cannot_be_treated_as_current_execution_authority",
-        "recovery_route": "heartbeat_resume_liveness_check_restart_router_daemon",
+        "recovery_route": "manual_resume_liveness_check_restart_router_daemon",
         "standard_final_state": "resume_reentry_written_with_router_daemon_restarted_if_dead",
         "evidence_id": "control.daemon.dead_owner_resume_restart",
         "evidence_test": (
@@ -106,17 +106,17 @@ CANARY_ROWS: tuple[dict[str, Any], ...] = (
         "unmodeled_failure_boundary": "does_not_prove_recovery_from_os_process_table_corruption",
     },
     {
-        "canary_id": "control.heartbeat.duplicate_resume_idempotent",
-        "surface": "heartbeat_resume",
+        "canary_id": "control.resume.duplicate_manual_resume_idempotent",
+        "surface": "manual_resume",
         "failure_injection": "same_resume_wake_is_recorded_twice_before_resume_state_loads",
         "expected_outcome": "router_keeps_one_resume_boundary_and_replays_current_state_once",
         "protected_state_invariant": "duplicate_wake_does_not_skip_resume_liveness_or_spawn_parallel_resume_work",
         "recovery_route": "idempotent_resume_reentry_with_current_run_authority_check",
         "standard_final_state": "resume_state_loaded_with_single_reentry_evidence_and_role_rehydration_next",
-        "evidence_id": "control.heartbeat.duplicate_resume_idempotent",
+        "evidence_id": "control.resume.duplicate_manual_resume_idempotent",
         "evidence_test": (
             "FlowPilotControlPlaneFailureCanaryReplayTests."
-            "test_canary_duplicate_heartbeat_resume_is_idempotent"
+            "test_canary_duplicate_manual_resume_is_idempotent"
         ),
         "evidence_status": "passed",
         "evidence_current": True,

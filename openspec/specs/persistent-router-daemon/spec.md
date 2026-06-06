@@ -77,9 +77,11 @@ writing the same run state.
 - **WHEN** a second Router daemon starts for a run with a live non-stale daemon lock
 - **THEN** the second daemon MUST refuse to become the writer and report the existing daemon status
 
-#### Scenario: Delayed daemon heartbeat requires liveness check
-- **WHEN** foreground monitoring observes a daemon heartbeat older than thirty seconds
-- **THEN** FlowPilot MUST report `heartbeat_status=check_liveness` rather than replacing the lock from heartbeat age alone
+#### Scenario: Delayed daemon status tick requires liveness check
+- **WHEN** foreground monitoring observes a daemon status tick older than
+  thirty seconds
+- **THEN** FlowPilot MUST report `daemon_patrol_status=check_liveness` rather
+  than replacing the lock from status age alone
 
 #### Scenario: Stale daemon lock after liveness check
 - **WHEN** Controller liveness checking confirms that the current-run daemon process is not alive and the daemon lock is stale according to the configured stale-lock threshold
@@ -131,18 +133,18 @@ live or uncertain active writer.
 
 ### Requirement: Terminal daemon ticks do not schedule active work
 The Router daemon SHALL treat terminal lifecycle state as a hard fence for
-nonterminal startup, heartbeat, role, and route actions.
+nonterminal startup, foreground patrol, role, and route actions.
 
 #### Scenario: Daemon tick sees terminal lifecycle
 - **WHEN** a Router daemon tick loads a run whose lifecycle status is terminal
 - **THEN** the daemon MUST write terminal daemon status and return terminal
-  without scheduling startup rows, heartbeat automations, role starts, or route
-  work.
+  without scheduling startup rows, continuation automations, role starts, or
+  route work.
 
 #### Scenario: Terminal lifecycle appears during a tick
 - **WHEN** terminal lifecycle is written while a daemon tick is processing
-- **THEN** any nested startup or heartbeat scheduler reached by that tick MUST
-  re-check the terminal fence before creating nonterminal side effects.
+- **THEN** any nested startup or continuation scheduler reached by that tick
+  MUST re-check the terminal fence before creating nonterminal side effects.
 
 ### Requirement: Daemon replay covers repair finalization interleavings
 The Router daemon SHALL be covered by regression evidence for PM repair

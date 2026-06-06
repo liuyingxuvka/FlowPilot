@@ -12,7 +12,7 @@ Risk intent brief:
 - Hard invariants: accepted startup paths must apply `load_router` exactly once
   before returning `open_startup_intake_ui`; accepted bootloader paths must stop
   before `record_user_request`; accepted intake paths must stop before
-  `start_role_slots`; enabled folds must have binding and CLI smoke evidence;
+  `start_background_collaboration`; enabled folds must have binding and CLI smoke evidence;
   generic card, relay, ledger, final replay, host, startup fact-card, and
   role-output folds remain rejected until they get their own conformance replay;
   the only card-delivery fold allowed here is the guarded same-role system-card
@@ -41,7 +41,7 @@ CARD_BUNDLE_FOLD = "card_bundle_fold"
 PACKET_RELAY_FOLD = "packet_relay_fold"
 USER_REQUEST_RECORDING_FOLD = "user_request_recording_fold"
 HOST_CONTINUATION_FOLD = "host_continuation_fold"
-ROLE_SLOT_START_FOLD = "role_slot_start_fold"
+BACKGROUND_COLLABORATION_START_FOLD = "background_collaboration_start_fold"
 LEDGER_FINALIZATION_FOLD = "ledger_finalization_fold"
 FINAL_REPLAY_FOLD = "final_replay_fold"
 STARTUP_FACT_CARD_FOLD = "startup_fact_card_fold"
@@ -52,7 +52,7 @@ NEGATIVE_SCENARIOS = (
     PACKET_RELAY_FOLD,
     USER_REQUEST_RECORDING_FOLD,
     HOST_CONTINUATION_FOLD,
-    ROLE_SLOT_START_FOLD,
+    BACKGROUND_COLLABORATION_START_FOLD,
     LEDGER_FINALIZATION_FOLD,
     FINAL_REPLAY_FOLD,
     STARTUP_FACT_CARD_FOLD,
@@ -85,7 +85,7 @@ EXPECTED_REJECTIONS = {
     PACKET_RELAY_FOLD: "packet_relay_requires_dedicated_replay",
     USER_REQUEST_RECORDING_FOLD: "user_boundary_requires_explicit_wait",
     HOST_CONTINUATION_FOLD: "host_boundary_requires_dedicated_replay",
-    ROLE_SLOT_START_FOLD: "role_boundary_requires_dedicated_replay",
+    BACKGROUND_COLLABORATION_START_FOLD: "role_boundary_requires_dedicated_replay",
     LEDGER_FINALIZATION_FOLD: "ledger_boundary_requires_dedicated_replay",
     FINAL_REPLAY_FOLD: "final_replay_boundary_requires_dedicated_replay",
     STARTUP_FACT_CARD_FOLD: "startup_fact_card_crosses_reviewer_delivery_boundary",
@@ -119,7 +119,7 @@ class State:
     user_request_available: bool = False
     user_request_recorded: bool = False
     user_intake_written: bool = False
-    role_slots_started: bool = False
+    background_collaboration_started: bool = False
     user_boundary_crossed: bool = False
     host_boundary_crossed: bool = False
     role_boundary_crossed: bool = False
@@ -314,7 +314,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
 
     if state.scenario == POST_USER_REQUEST_INTAKE_UNFOLDED:
         yield Transition(
-            "intake_unfolded_write_user_intake_then_wait_for_role_slots",
+            "intake_unfolded_write_user_intake_then_wait_for_background_collaboration",
             replace(
                 state,
                 user_intake_written=True,
@@ -335,7 +335,7 @@ def next_safe_states(state: State) -> Iterable[Transition]:
             yield Transition("intake_safe_fold_requires_install_smoke", replace(state, install_smoke_verified=True))
             return
         yield Transition(
-            "intake_safe_fold_writes_user_intake_then_waits_for_role_slots",
+            "intake_safe_fold_writes_user_intake_then_waits_for_background_collaboration",
             replace(
                 state,
                 user_intake_written=True,
@@ -454,8 +454,8 @@ def accepted_intake_matches_unfolded_baseline(state: State, _trace) -> Invariant
             return InvariantResult.fail("accepted intake path performed record_user_request instead of starting post-user-request")
         if not state.user_intake_written:
             return InvariantResult.fail("accepted intake path did not write user intake")
-        if state.role_slots_started:
-            return InvariantResult.fail("accepted intake path crossed start_role_slots wait boundary")
+        if state.background_collaboration_started:
+            return InvariantResult.fail("accepted intake path crossed start_background_collaboration wait boundary")
     return InvariantResult.pass_()
 
 
@@ -541,7 +541,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="accepted_intake_matches_unfolded_baseline",
-        description="Accepted post-user-request intake paths write user intake, then wait before start_role_slots.",
+        description="Accepted post-user-request intake paths write user intake, then wait before start_background_collaboration.",
         predicate=accepted_intake_matches_unfolded_baseline,
     ),
     Invariant(
@@ -597,11 +597,11 @@ REQUIRED_LABELS = (
     "bootloader_safe_fold_verifies_runtime_smoke",
     "bootloader_safe_fold_requires_install_smoke",
     "bootloader_safe_fold_initializes_mailbox_then_waits_for_user_request",
-    "intake_unfolded_write_user_intake_then_wait_for_role_slots",
+    "intake_unfolded_write_user_intake_then_wait_for_background_collaboration",
     "intake_safe_fold_verifies_cli_binding",
     "intake_safe_fold_verifies_runtime_smoke",
     "intake_safe_fold_requires_install_smoke",
-    "intake_safe_fold_writes_user_intake_then_waits_for_role_slots",
+    "intake_safe_fold_writes_user_intake_then_waits_for_background_collaboration",
     "same_role_card_bundle_verifies_dedicated_replay_model",
     "same_role_card_bundle_verifies_cli_binding",
     "same_role_card_bundle_verifies_runtime_smoke",
@@ -611,7 +611,7 @@ REQUIRED_LABELS = (
     "packet_relay_fold_rejected_pending_dedicated_replay",
     "user_request_recording_fold_rejected_pending_dedicated_replay",
     "host_continuation_fold_rejected_pending_dedicated_replay",
-    "role_slot_start_fold_rejected_pending_dedicated_replay",
+    "background_collaboration_start_fold_rejected_pending_dedicated_replay",
     "ledger_finalization_fold_rejected_pending_dedicated_replay",
     "final_replay_fold_rejected_pending_dedicated_replay",
     "startup_fact_card_fold_rejected_pending_dedicated_replay",
@@ -630,3 +630,4 @@ def invariant_failures(state: State) -> list[str]:
 
 def build_workflow() -> Workflow:
     return Workflow((CommandRefinementStep(),), name="flowpilot_command_refinement")
+

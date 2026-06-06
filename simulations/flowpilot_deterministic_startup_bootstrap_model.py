@@ -26,8 +26,9 @@ Risk intent brief:
 - Adversarial branches: scheduler activation before seed proof, seed success
   without all artifacts, deterministic setup rows left in the scheduler, seed
   failure converted to PM repair, already reconciled row turned into blocker,
-  role/heartbeat/core work bypassing scheduler, Controller reading sealed user
-  body, stale install after repo fix, and overwriting peer changes.
+  background-agent lease, manual-resume binding, Controller-core work, or
+  legacy role-slot/heartbeat work bypassing scheduler, Controller reading
+  sealed user body, stale install after repo fix, and overwriting peer changes.
 - Hard invariants: the seed must prove every deterministic artifact before the
   scheduler starts; deterministic setup must not be scheduled as Controller
   work; only non-deterministic startup obligations enter the scheduler; already
@@ -59,8 +60,8 @@ DETERMINISTIC_SETUP_LEFT_AS_CONTROLLER_ROW = "deterministic_setup_left_as_contro
 SEED_FAILURE_AS_PM_BLOCKER = "seed_failure_as_pm_blocker"
 RECONCILED_ROW_FALSE_PM_BLOCKER = "reconciled_row_false_pm_blocker"
 UNSUPPORTED_STARTUP_RECEIPT_ESCALATED_TO_PM = "unsupported_startup_receipt_escalated_to_pm"
-ROLE_SLOTS_BYPASS_SCHEDULER = "role_slots_bypass_scheduler"
-HEARTBEAT_BYPASS_SCHEDULER = "heartbeat_bypass_scheduler"
+LEGACY_ROLE_SLOTS_BYPASS_SCHEDULER = "legacy_role_slots_bypass_scheduler"
+LEGACY_HEARTBEAT_BYPASS_SCHEDULER = "legacy_heartbeat_bypass_scheduler"
 CONTROLLER_CORE_BEFORE_SEED_AND_SCHEDULER = "controller_core_before_seed_and_scheduler"
 CONTROLLER_READS_SEALED_USER_BODY = "controller_reads_sealed_user_body"
 INTAKE_WRITTEN_WITHOUT_USER_REQUEST_REF = "intake_written_without_user_request_ref"
@@ -83,8 +84,8 @@ NEGATIVE_SCENARIOS = (
     SEED_FAILURE_AS_PM_BLOCKER,
     RECONCILED_ROW_FALSE_PM_BLOCKER,
     UNSUPPORTED_STARTUP_RECEIPT_ESCALATED_TO_PM,
-    ROLE_SLOTS_BYPASS_SCHEDULER,
-    HEARTBEAT_BYPASS_SCHEDULER,
+    LEGACY_ROLE_SLOTS_BYPASS_SCHEDULER,
+    LEGACY_HEARTBEAT_BYPASS_SCHEDULER,
     CONTROLLER_CORE_BEFORE_SEED_AND_SCHEDULER,
     CONTROLLER_READS_SEALED_USER_BODY,
     INTAKE_WRITTEN_WITHOUT_USER_REQUEST_REF,
@@ -128,12 +129,12 @@ class State:
 
     scheduler_started: bool = False
     deterministic_setup_controller_rows: bool = False
-    role_slots_scheduled: bool = False
-    heartbeat_requested: bool = False
-    heartbeat_scheduled: bool = False
+    background_agent_lease_scheduled: bool = False
+    manual_resume_binding_requested: bool = False
+    manual_resume_binding_scheduled: bool = False
     controller_core_scheduled: bool = False
-    role_slots_bypassed_scheduler: bool = False
-    heartbeat_bypassed_scheduler: bool = False
+    legacy_role_slots_bypassed_scheduler: bool = False
+    legacy_heartbeat_bypassed_scheduler: bool = False
     controller_core_loaded: bool = False
 
     row_reconciled: bool = False
@@ -196,9 +197,9 @@ def _accepted(scenario: str, **changes: object) -> State:
         "bootstrap_evidence_written": True,
         "seed_success": True,
         "scheduler_started": True,
-        "role_slots_scheduled": True,
-        "heartbeat_requested": True,
-        "heartbeat_scheduled": True,
+        "background_agent_lease_scheduled": True,
+        "manual_resume_binding_requested": True,
+        "manual_resume_binding_scheduled": True,
         "controller_core_scheduled": True,
         "intake_body_visibility": "sealed_ref",
     }
@@ -228,9 +229,9 @@ def scenario_state(scenario: str) -> State:
     if scenario == OBLIGATIONS_SCHEDULE_AFTER_SEED:
         return _accepted(
             scenario,
-            role_slots_scheduled=True,
-            heartbeat_requested=True,
-            heartbeat_scheduled=True,
+            background_agent_lease_scheduled=True,
+            manual_resume_binding_requested=True,
+            manual_resume_binding_scheduled=True,
             controller_core_scheduled=True,
             controller_core_loaded=False,
         )
@@ -283,16 +284,16 @@ def scenario_state(scenario: str) -> State:
             unsupported_startup_receipt_action=True,
             control_blocker_written=True,
         )
-    if scenario == ROLE_SLOTS_BYPASS_SCHEDULER:
-        return _rejected(scenario, seed_started=True, seed_success=True, scheduler_started=True, role_slots_bypassed_scheduler=True)
-    if scenario == HEARTBEAT_BYPASS_SCHEDULER:
+    if scenario == LEGACY_ROLE_SLOTS_BYPASS_SCHEDULER:
+        return _rejected(scenario, seed_started=True, seed_success=True, scheduler_started=True, legacy_role_slots_bypassed_scheduler=True)
+    if scenario == LEGACY_HEARTBEAT_BYPASS_SCHEDULER:
         return _rejected(
             scenario,
             seed_started=True,
             seed_success=True,
             scheduler_started=True,
-            heartbeat_requested=True,
-            heartbeat_bypassed_scheduler=True,
+            manual_resume_binding_requested=True,
+            legacy_heartbeat_bypassed_scheduler=True,
         )
     if scenario == CONTROLLER_CORE_BEFORE_SEED_AND_SCHEDULER:
         return _rejected(scenario, controller_core_loaded=True, seed_success=False, scheduler_started=False)
@@ -328,10 +329,10 @@ def bootstrap_failures(state: State) -> list[str]:
         failures.append("already reconciled scheduled row produced a control blocker")
     if state.unsupported_startup_receipt_action and state.row_reconciled and state.control_blocker_written:
         failures.append("unsupported startup receipt was escalated to PM after row reconciliation")
-    if state.role_slots_bypassed_scheduler:
-        failures.append("startup role slots bypassed the unified Router scheduler")
-    if state.heartbeat_requested and state.heartbeat_bypassed_scheduler:
-        failures.append("startup heartbeat binding bypassed the unified Router scheduler")
+    if state.legacy_role_slots_bypassed_scheduler:
+        failures.append("legacy startup role-slot actions bypassed the unified Router scheduler")
+    if state.manual_resume_binding_requested and state.legacy_heartbeat_bypassed_scheduler:
+        failures.append("legacy startup heartbeat binding bypassed the unified Router scheduler")
     if state.controller_core_loaded and not (state.seed_success and state.scheduler_started and state.controller_core_scheduled):
         failures.append("Controller core loaded before deterministic seed and scheduler handoff")
     if state.controller_reads_sealed_user_body or state.intake_body_visibility == "plain_controller":

@@ -36,6 +36,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -383,7 +385,7 @@ def _reclaim_router_owned_postcondition_from_artifact(
             "sha256": context["audit_hash"],
             "proof_path": project_relative(project_root, context["proof_path"]),
             "proof_sha256": context["proof_hash"],
-            "written_before_reviewer_card": not run_state["flags"].get("reviewer_startup_fact_check_card_delivered"),
+            "written_before_first_pm_work": not run_state["flags"].get("user_intake_delivered_to_pm"),
             "reclaimed_from_durable_artifact": True,
         }
         entry = _record_router_ownership_entry(

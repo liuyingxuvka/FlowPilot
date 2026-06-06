@@ -572,7 +572,7 @@
       "destructive_live_state_mutation": false,
       "entrypoints": [
         "packet_runtime",
-        "controller_relay_envelope",
+        "deliver_envelope_metadata",
         "controller_receipt",
         "packet_ledger"
       ],

@@ -27,13 +27,6 @@ CARD_PHASE_BY_ID = {
 
 
 CARD_REQUIRED_SOURCE_PATHS = {
-    "reviewer.startup_fact_check": {
-        "startup_answers": "startup_answers.json",
-        "startup_mechanical_audit": "startup/startup_mechanical_audit.json",
-        "startup_mechanical_audit_proof": "startup/startup_mechanical_audit.json.proof.json",
-        "display_surface": "display/display_surface.json",
-        "continuation_binding": "continuation/continuation_binding.json",
-    },
     "pm.product_architecture": {
         "pm_material_understanding": "pm_material_understanding.json",
         "pm_material_understanding_payload": "material/pm_material_understanding_payload.json",

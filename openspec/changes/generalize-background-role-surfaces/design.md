@@ -22,7 +22,10 @@ The intended product direction is not Codex-only. A host may provide a separate 
 ## Decisions
 
 - Treat "background collaboration" as the user-facing concept and "host-supported isolated addressable role surface" as the AI-facing implementation contract.
-- Leave the existing startup answer enum (`allow` or `single-agent`) unchanged because the user's decision is authorization, not implementation selection.
+- Use the current boolean startup acknowledgement
+  `background_collaboration_authorized=true`. A disabled acknowledgement stops
+  startup; it is not an implementation mode and is not translated into a
+  single-agent route.
 - Record implementation specificity in role-binding evidence (`agent_id` and host-surface evidence), not in the startup UI answer.
 
 ## Risks / Trade-offs

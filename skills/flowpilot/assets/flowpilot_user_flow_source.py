@@ -96,8 +96,8 @@ def _load_route_source(
     )
     if snapshot_route.get("nodes") and committed_route_exists:
         return snapshot_route, snapshot_path, "route_state_snapshot"
-    fallback_route_id = active_route or snapshot_route_id or "route-001"
-    return {}, routes_root / fallback_route_id / "flow.json", "none"
+    missing_route_id = active_route or snapshot_route_id or "route-001"
+    return {}, routes_root / missing_route_id / "flow.json", "none"
 
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:

@@ -49,8 +49,8 @@ def terminal_closure_has_single_authority(state: State, _trace: object) -> Invar
         missing.append("router/frontier/lifecycle terminal agreement")
     if not state.terminal_control_blocker_cleared:
         missing.append("cleared active control blocker")
-    if not state.heartbeat_inactive_after_terminal:
-        missing.append("inactive heartbeat")
+    if not state.manual_resume_binding_inactive_after_terminal:
+        missing.append("inactive manual resume binding")
     if missing:
         return _fail("terminal closure is missing " + ", ".join(missing))
     return _ok()
@@ -150,7 +150,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="terminal_closure_has_single_authority",
-        description="Terminal closure reconciles lifecycle, router, frontier, blocker, and heartbeat authorities.",
+        description="Terminal closure reconciles lifecycle, router, frontier, blocker, and manual resume binding authorities.",
         predicate=terminal_closure_has_single_authority,
     ),
     Invariant(
@@ -185,7 +185,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="runtime_requested_roles_have_liveness_gate",
-        description="Standard role-binding runs prove readiness or stop at an early blocker.",
+        description="Runtime-requested role-binding runs prove readiness or stop at an early blocker.",
         predicate=runtime_requested_roles_have_liveness_gate,
     ),
     Invariant(
@@ -220,3 +220,4 @@ __all__ = [
     "runtime_requested_roles_have_liveness_gate",
     "terminal_closure_has_single_authority",
 ]
+

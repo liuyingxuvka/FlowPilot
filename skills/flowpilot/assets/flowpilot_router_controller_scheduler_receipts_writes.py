@@ -30,9 +30,14 @@ from flowpilot_prompt_store import PromptStoreError, card_manifest_entry, load_c
 from flowpilot_router_errors import RouterError, RouterLedgerCorruptionError, RouterLedgerWriteInProgress
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -205,7 +210,7 @@ def _controller_receipt_scheduler_fold_allowed(router: ModuleType, run_root: Pat
         return (True, 'daemon_liveness_unknown')
     return (True, 'daemon_not_live')
 
-def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, scheduler_fold_owner: str='fallback') -> dict[str, Any]:
+def _reconcile_controller_receipts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], *, scheduler_fold_owner: str) -> dict[str, Any]:
     _bind_router(router)
     receipt_dir = _controller_receipts_dir(run_root)
     reconciled = 0

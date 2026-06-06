@@ -17,9 +17,7 @@ import packet_runtime  # noqa: E402
 
 
 STARTUP_ANSWERS = {
-    "runtime_role_assistances": "allow",
-    "scheduled_continuation": "manual",
-    "display_surface": "chat",
+    "background_collaboration_authorized": True,
     "provenance": "explicit_user_reply",
 }
 
@@ -92,9 +90,9 @@ class FlowPilotRouterStartupRuntimeTests(unittest.TestCase):
         self.assertEqual(result_payload["launch_mode"], "headless")
         self.assertTrue(result_payload["headless"])
         self.assertFalse(result_payload["formal_startup_allowed"])
-        self.assertEqual(result_payload["startup_answers"]["runtime_role_assistances"], "allow")
-        self.assertEqual(result_payload["startup_answers"]["scheduled_continuation"], "manual")
-        self.assertEqual(result_payload["startup_answers"]["display_surface"], "chat")
+        self.assertIs(result_payload["startup_answers"]["background_collaboration_authorized"], True)
+        self.assertNotIn("scheduled_continuation", result_payload["startup_answers"])
+        self.assertNotIn("display_surface", result_payload["startup_answers"])
 
     def test_startup_intake_ui_runs_from_installed_skill_without_repo_assets(self) -> None:
         if sys.platform != "win32" or shutil.which("powershell") is None:

@@ -254,14 +254,14 @@ class FlowPilotControlGateTests(unittest.TestCase):
 
     def test_meta_resume_requires_rehydration_report_before_pm(self) -> None:
         state = meta_model.State(
-            heartbeat_loaded_state=True,
-            heartbeat_loaded_frontier=True,
-            heartbeat_loaded_role_binding_memory=True,
-            heartbeat_restored_runtime_roles=True,
-            heartbeat_rehydrated_runtime_roles=True,
+            resume_loaded_state=True,
+            resume_loaded_frontier=True,
+            resume_loaded_role_binding_memory=True,
+            resume_restored_runtime_roles=True,
+            resume_rehydrated_runtime_roles=True,
             role_binding_recovery_report_written=False,
             replacement_roles_seeded_from_memory=True,
-            heartbeat_pm_decision_requested=True,
+            resume_pm_decision_requested=True,
         )
 
         result = meta_model.role_binding_memory_rehydration_required(state, trace=())
@@ -517,8 +517,7 @@ class FlowPilotControlGateTests(unittest.TestCase):
             continuation_probe_done=True,
             continuation_host_kind_recorded=False,
             continuation_evidence_written=True,
-            host_continuation_supported=False,
-            manual_resume_mode_recorded=True,
+            manual_resume_boundary_recorded=True,
         )
 
         self.assertFalse(capability_model._manual_resume_ready(state))

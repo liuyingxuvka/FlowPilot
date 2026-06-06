@@ -369,9 +369,9 @@ MODEL_STRUCTURE_MODULES = (
     ModuleStructureEvidence(
         "packet_control_plane_transitions_issue_resume",
         path="skills/flowpilot/assets/packet_control_plane_model_transitions_issue_resume.py",
-        owns_functions=("PMIssuePacket", "HeartbeatResumeLoad", "ControllerAskPMOnResume", "PMResumeDecision"),
+        owns_functions=("PMIssuePacket", "ManualResumeLoad", "ControllerAskPMOnResume", "PMResumeDecision"),
         dependencies=("packet_control_plane_state",),
-        behavior_contracts=("packet issue and heartbeat resume transition labels",),
+        behavior_contracts=("packet issue and manual resume transition labels",),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
     ),
     ModuleStructureEvidence(
@@ -393,9 +393,9 @@ MODEL_STRUCTURE_MODULES = (
     ModuleStructureEvidence(
         "packet_control_plane_transitions_review_pm",
         path="skills/flowpilot/assets/packet_control_plane_model_transitions_review_pm.py",
-        owns_functions=("ReviewerResultEnvelopeCheck", "ReviewerResult", "PMRepairAfterInvalidOrigin", "PMAdvance"),
+        owns_functions=("RuntimeResultEnvelopeCheck", "ReviewerResult", "PMRepairAfterInvalidOrigin", "PMAdvance"),
         dependencies=("packet_control_plane_state", "packet_control_plane_invariants"),
-        behavior_contracts=("reviewer and PM outcome transition labels",),
+        behavior_contracts=("runtime mechanical check, reviewer quality check, and PM outcome transition labels",),
         behavior_parity_tier=EVIDENCE_CONFORMANCE_GREEN,
     ),
     ModuleStructureEvidence(

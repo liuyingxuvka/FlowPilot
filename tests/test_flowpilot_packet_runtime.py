@@ -239,6 +239,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             run_id="run-test",
             router_owned_startup_material=True,
             body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
+            startup_options={"background_collaboration_authorized": True},
         )
         ledger_record = packet_runtime_ledger.packet_ledger_record_for_envelope(root, envelope)
         self.assertIsNotNone(ledger_record)
@@ -261,6 +262,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
                 "startup-intake-002",
                 "--node-id",
                 "startup-node",
+                "--background-collaboration-authorized",
                 "--body-text",
                 "hello",
             ]
@@ -841,9 +843,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             node_id="startup",
             body_text="user task prompt",
             startup_options={
-                "runtime_role_assistance_authorized": True,
-                "heartbeat_requested": True,
-                "display_surface": "chat-mermaid",
+                "background_collaboration_authorized": True,
             },
         )
         envelope = packet_runtime.deliver_envelope_metadata(
@@ -868,6 +868,26 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             opened_envelope["packet_open_work_authority"]["required_exit"],
             "expected_pm_packet_output_or_existing_pm_recovery_decision",
         )
+        self.assertTrue(opened_envelope["metadata"]["controller_bootstrap_scope"]["background_collaboration_authorized"])
+        self.assertNotIn("runtime_role_assistance_authorized", opened_envelope["metadata"]["controller_bootstrap_scope"])
+        self.assertNotIn("heartbeat_requested", opened_envelope["metadata"]["controller_bootstrap_scope"])
+
+    def test_user_intake_rejects_unsupported_startup_option_fields(self) -> None:
+        root = self.make_project()
+        with self.assertRaisesRegex(packet_runtime.PacketRuntimeError, "unsupported startup option field"):
+            packet_runtime.create_user_intake_packet(
+                root,
+                packet_id="user-intake-legacy",
+                node_id="startup",
+                body_text="user task prompt",
+                startup_options={
+                    "runtime_role_assistance_authorized": True,
+                    "heartbeat_requested": True,
+                    "scheduled_continuation": "manual",
+                    "display_surface": "chat",
+                    "background_collaboration_authorized": True,
+                },
+            )
 
     def test_user_intake_router_startup_release_uses_current_assignment_authority(self) -> None:
         root = self.make_project()
@@ -878,6 +898,7 @@ class FlowPilotPacketRuntimeTests(unittest.TestCase):
             body_text="user task prompt",
             body_visibility=packet_runtime.SEALED_BODY_VISIBILITY,
             router_owned_startup_material=True,
+            startup_options={"background_collaboration_authorized": True},
         )
         released = packet_runtime.router_release_startup_user_intake(
             root,

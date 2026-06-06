@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -10,6 +11,10 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "simulations"))
 
 import run_flowpilot_full_model_coverage_inventory as inventory  # noqa: E402
+import flowpilot_control_plane_friction_model_audit as control_friction_audit  # noqa: E402
+import flowpilot_cross_plane_friction_model_audit as cross_friction_audit  # noqa: E402
+import flowpilot_daemon_reconciliation_checks_projection as daemon_projection  # noqa: E402
+import flowpilot_process_liveness_checks_projection as process_projection  # noqa: E402
 from scripts import run_flowguard_coverage_sweep as sweep  # noqa: E402
 
 
@@ -42,6 +47,7 @@ BASELINE_SKIPPED_OR_SCOPED_EVIDENCE_RUNNERS = {
     "flowpilot_control_plane_friction",
     "flowpilot_controller_patrol",
     "flowpilot_cross_plane_friction",
+    "flowpilot_daemon_reconciliation",
     "flowpilot_decision_liveness",
     "flowpilot_deterministic_startup_bootstrap",
     "flowpilot_gate_policy_audit",
@@ -288,6 +294,74 @@ class FlowPilotFullModelTestGapClosureTests(unittest.TestCase):
 
         self.assertTrue(sweep._supports_argument(path, text, "--json"))
         self.assertTrue(sweep._supports_argument(path, text, "--no-write-results"))
+
+    def test_process_liveness_no_current_run_is_scoped_projection_not_runner_failure(self) -> None:
+        old_root = process_projection.PROJECT_ROOT
+        with tempfile.TemporaryDirectory() as tmp:
+            process_projection.PROJECT_ROOT = Path(tmp)
+            try:
+                projection = process_projection._current_run_projection()
+            finally:
+                process_projection.PROJECT_ROOT = old_root
+
+        self.assertTrue(projection["ok"])
+        self.assertEqual(projection["status"], "missing_current_pointer")
+        self.assertFalse(projection["current_run_can_continue"])
+        self.assertFalse(projection["safe_to_claim_live_run_confidence"])
+        self.assertTrue(projection["metadata_only"])
+
+    def test_friction_live_audits_missing_current_run_are_scoped_not_history_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            control_report = control_friction_audit.audit_live_run(root)
+            cross_report = cross_friction_audit.audit_live_run(root)
+
+        for report in (control_report, cross_report):
+            with self.subTest(report=report):
+                self.assertTrue(report["ok"])
+                self.assertTrue(report["skipped"])
+                self.assertEqual(report["findings"], [])
+                projection = report["current_run_projection"]
+                self.assertFalse(projection["current_run_can_continue"])
+                self.assertFalse(projection["safe_to_claim_live_run_confidence"])
+                self.assertTrue(projection["metadata_only"])
+
+    def test_cross_plane_live_audit_rejects_legacy_current_pointer_aliases(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / ".flowpilot" / "runs" / "run-legacy").mkdir(parents=True)
+            (root / ".flowpilot" / "current.json").write_text(
+                json.dumps(
+                    {
+                        "active_run_id": "run-legacy",
+                        "active_run_root": ".flowpilot/runs/run-legacy",
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            report = cross_friction_audit.audit_live_run(root)
+
+        self.assertFalse(report["ok"])
+        self.assertTrue(report["skipped"])
+        self.assertEqual(
+            report["findings"][0]["code"],
+            "current_pointer_current_contract_invalid",
+        )
+        self.assertIn("active_run_id", report["findings"][0]["evidence"]["legacy_aliases_rejected"])
+
+    def test_daemon_reconciliation_no_current_run_is_scoped_projection_not_runner_failure(self) -> None:
+        old_root = daemon_projection.PROJECT_ROOT
+        with tempfile.TemporaryDirectory() as tmp:
+            daemon_projection.PROJECT_ROOT = Path(tmp)
+            try:
+                projection = daemon_projection._live_run_projection()
+            finally:
+                daemon_projection.PROJECT_ROOT = old_root
+
+        self.assertTrue(projection["ok"])
+        self.assertTrue(projection["skipped"])
+        self.assertIn("current.json", projection["skip_reason"])
 
 
 if __name__ == "__main__":

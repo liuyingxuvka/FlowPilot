@@ -8,7 +8,7 @@ class RouteMutationDraftActivationRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_pm_route_draft_preserves_role_authored_repair_policy_fields(self) -> None:
             root = self.make_project()
             run_root = self.boot_to_controller(root)
-            self.complete_startup_activation(root)
+            self.complete_startup_runtime_entry(root)
             self.complete_material_flow(root)
             self.complete_root_contract_before_child_skill_gates(root)
             self.complete_child_skill_gates(root)
@@ -92,3 +92,4 @@ class RouteMutationDraftActivationRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
             with self.assertRaisesRegex(router.RouterError, "active route node is missing"):
                 router.record_external_event(root, "pm_activates_reviewed_route", {"active_node_id": "missing-node"})
+

@@ -71,11 +71,6 @@ SCOPED_EVENT_IDENTITY_POLICIES: dict[str, dict[str, Any]] = {
         "dedupe_fields": ("gate_id", "route_version", "decided_by_role"),
         "retry_group_fields": ("event", "gate_id", "route_version"),
     },
-    "pm_requests_startup_repair": {
-        "family": "startup_cycle",
-        "dedupe_fields": ("startup_review_cycle", "startup_fact_report_hash"),
-        "retry_group_fields": ("event", "startup_fact_report_hash"),
-    },
     "pm_writes_route_draft": {
         "family": "route_draft",
         "dedupe_fields": ("draft_version", "route_hash"),

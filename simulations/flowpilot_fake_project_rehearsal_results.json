@@ -26,6 +26,8 @@
       "lifecycle_repeated_wait_not_recovered",
       "lifecycle_resume_from_chat",
       "missing_ack_result_accepted",
+      "missing_current_result_fields_accepted",
+      "missing_current_result_reissue_missing_instruction",
       "passive_wait_completed",
       "planning_chain_terminal",
       "pm_only_terminal",
@@ -69,6 +71,12 @@
       ],
       "missing_ack_result_accepted": [
         "Missing-ACK result was accepted as authoritative"
+      ],
+      "missing_current_result_fields_accepted": [
+        "Missing current result fields were accepted instead of reissued with required fields"
+      ],
+      "missing_current_result_reissue_missing_instruction": [
+        "Missing-current-result-field reissue omitted required field names or repair instruction"
       ],
       "passive_wait_completed": [
         "Rehearsal report written before normal and error scenarios completed",
@@ -184,10 +192,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-normal",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -298,6 +306,20 @@
               "responsibility": "",
               "subject_id": "packet-0001"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -428,6 +450,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -544,6 +596,36 @@
               "responsibility": "",
               "subject_id": "packet-0003"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -672,6 +754,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0004",
@@ -786,6 +882,36 @@
               "responsibility": "",
               "subject_id": "packet-0005"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -914,6 +1040,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0006",
@@ -1028,6 +1184,20 @@
               "responsibility": "",
               "subject_id": "packet-0007"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0007",
+            "--packet-id",
+            "packet-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -1156,6 +1326,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -1270,6 +1470,36 @@
               "responsibility": "",
               "subject_id": "packet-0009"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -1398,6 +1628,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0010",
+            "--packet-id",
+            "packet-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0010",
@@ -1512,6 +1756,36 @@
               "responsibility": "",
               "subject_id": "packet-0011"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -1640,6 +1914,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0012",
@@ -1754,6 +2058,20 @@
               "responsibility": "",
               "subject_id": "packet-0013"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0013",
+            "--packet-id",
+            "packet-0013"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -1882,6 +2200,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0014",
+            "--packet-id",
+            "packet-0014"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0014",
+            "--packet-id",
+            "packet-0014",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0014",
@@ -2003,6 +2351,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0015",
+            "--packet-id",
+            "packet-0015"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0015",
+            "--packet-id",
+            "packet-0015",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0015",
@@ -2117,6 +2495,36 @@
               "responsibility": "",
               "subject_id": "packet-0016"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0016",
+            "--packet-id",
+            "packet-0016"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0016",
+            "--packet-id",
+            "packet-0016",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -2247,6 +2655,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0017",
+            "--packet-id",
+            "packet-0017"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0017",
@@ -2361,6 +2783,36 @@
               "responsibility": "",
               "subject_id": "packet-0018"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0018",
+            "--packet-id",
+            "packet-0018"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0018",
+            "--packet-id",
+            "packet-0018",
+            "--result-id",
+            "result-0017"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -2489,6 +2941,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0019",
+            "--packet-id",
+            "packet-0019"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0019",
+            "--packet-id",
+            "packet-0019",
+            "--result-id",
+            "result-0017"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0019",
@@ -2603,6 +3085,20 @@
               "responsibility": "",
               "subject_id": "packet-0020"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0020",
+            "--packet-id",
+            "packet-0020"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -2731,6 +3227,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0021",
+            "--packet-id",
+            "packet-0021"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0021",
@@ -2845,6 +3355,36 @@
               "responsibility": "",
               "subject_id": "packet-0022"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0022",
+            "--packet-id",
+            "packet-0022"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0022",
+            "--packet-id",
+            "packet-0022",
+            "--result-id",
+            "result-0021"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -2973,6 +3513,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0023",
+            "--packet-id",
+            "packet-0023"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0023",
+            "--packet-id",
+            "packet-0023",
+            "--result-id",
+            "result-0021"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0023",
@@ -3087,6 +3657,36 @@
               "responsibility": "",
               "subject_id": "packet-0024"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0024",
+            "--packet-id",
+            "packet-0024"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0024",
+            "--packet-id",
+            "packet-0024",
+            "--result-id",
+            "result-0021"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -3215,6 +3815,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0025",
+            "--packet-id",
+            "packet-0025"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0025",
@@ -3329,6 +3943,36 @@
               "responsibility": "",
               "subject_id": "packet-0026"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0026",
+            "--packet-id",
+            "packet-0026"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0026",
+            "--packet-id",
+            "packet-0026",
+            "--result-id",
+            "result-0025"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -3457,6 +4101,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0027",
+            "--packet-id",
+            "packet-0027"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0027",
+            "--packet-id",
+            "packet-0027",
+            "--result-id",
+            "result-0025"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0027",
@@ -3571,6 +4245,20 @@
               "responsibility": "",
               "subject_id": "packet-0028"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0028",
+            "--packet-id",
+            "packet-0028"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -3699,6 +4387,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0029",
+            "--packet-id",
+            "packet-0029"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0029",
@@ -3813,6 +4515,36 @@
               "responsibility": "",
               "subject_id": "packet-0030"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0030",
+            "--packet-id",
+            "packet-0030"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0030",
+            "--packet-id",
+            "packet-0030",
+            "--result-id",
+            "result-0029"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -3941,6 +4673,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0031",
+            "--packet-id",
+            "packet-0031"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0031",
+            "--packet-id",
+            "packet-0031",
+            "--result-id",
+            "result-0029"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0031",
@@ -4055,6 +4817,36 @@
               "responsibility": "",
               "subject_id": "packet-0032"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0032",
+            "--packet-id",
+            "packet-0032"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0032",
+            "--packet-id",
+            "packet-0032",
+            "--result-id",
+            "result-0029"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -4183,6 +4975,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0033",
+            "--packet-id",
+            "packet-0033"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0033",
@@ -4297,6 +5103,36 @@
               "responsibility": "",
               "subject_id": "packet-0034"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034",
+            "--result-id",
+            "result-0033"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -4425,6 +5261,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035",
+            "--result-id",
+            "result-0033"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0035",
@@ -4539,6 +5405,20 @@
               "responsibility": "",
               "subject_id": "packet-0036"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -4834,10 +5714,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-wrong-role",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -4972,6 +5852,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0001",
@@ -5088,6 +5982,36 @@
               "responsibility": "",
               "subject_id": "packet-0002"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -5218,6 +6142,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0003",
@@ -5332,6 +6286,20 @@
               "responsibility": "",
               "subject_id": "packet-0004"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -5460,6 +6428,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0005",
@@ -5574,6 +6572,36 @@
               "responsibility": "",
               "subject_id": "packet-0006"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -5702,6 +6730,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0007",
+            "--packet-id",
+            "packet-0007"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0007",
@@ -5816,6 +6858,36 @@
               "responsibility": "",
               "subject_id": "packet-0008"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -5944,6 +7016,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0009",
@@ -6058,6 +7160,20 @@
               "responsibility": "",
               "subject_id": "packet-0010"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0010",
+            "--packet-id",
+            "packet-0010"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -6186,6 +7302,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0011",
@@ -6300,6 +7446,36 @@
               "responsibility": "",
               "subject_id": "packet-0012"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -6428,6 +7604,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0013",
+            "--packet-id",
+            "packet-0013"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0013",
@@ -6542,6 +7732,36 @@
               "responsibility": "",
               "subject_id": "packet-0014"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0014",
+            "--packet-id",
+            "packet-0014"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0014",
+            "--packet-id",
+            "packet-0014",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -6670,6 +7890,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0015",
+            "--packet-id",
+            "packet-0015"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0015",
+            "--packet-id",
+            "packet-0015",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0015",
@@ -6784,6 +8034,36 @@
               "responsibility": "",
               "subject_id": "packet-0016"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0016",
+            "--packet-id",
+            "packet-0016"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0016",
+            "--packet-id",
+            "packet-0016",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -6914,6 +8194,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0017",
+            "--packet-id",
+            "packet-0017"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0017",
@@ -7028,6 +8322,36 @@
               "responsibility": "",
               "subject_id": "packet-0018"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0018",
+            "--packet-id",
+            "packet-0018"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0018",
+            "--packet-id",
+            "packet-0018",
+            "--result-id",
+            "result-0017"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -7156,6 +8480,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0019",
+            "--packet-id",
+            "packet-0019"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0019",
+            "--packet-id",
+            "packet-0019",
+            "--result-id",
+            "result-0017"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0019",
@@ -7270,6 +8624,20 @@
               "responsibility": "",
               "subject_id": "packet-0020"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0020",
+            "--packet-id",
+            "packet-0020"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -7398,6 +8766,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0021",
+            "--packet-id",
+            "packet-0021"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0021",
@@ -7512,6 +8894,36 @@
               "responsibility": "",
               "subject_id": "packet-0022"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0022",
+            "--packet-id",
+            "packet-0022"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0022",
+            "--packet-id",
+            "packet-0022",
+            "--result-id",
+            "result-0021"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -7640,6 +9052,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0023",
+            "--packet-id",
+            "packet-0023"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0023",
+            "--packet-id",
+            "packet-0023",
+            "--result-id",
+            "result-0021"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0023",
@@ -7754,6 +9196,36 @@
               "responsibility": "",
               "subject_id": "packet-0024"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0024",
+            "--packet-id",
+            "packet-0024"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0024",
+            "--packet-id",
+            "packet-0024",
+            "--result-id",
+            "result-0021"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -7882,6 +9354,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0025",
+            "--packet-id",
+            "packet-0025"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0025",
@@ -7996,6 +9482,36 @@
               "responsibility": "",
               "subject_id": "packet-0026"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0026",
+            "--packet-id",
+            "packet-0026"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0026",
+            "--packet-id",
+            "packet-0026",
+            "--result-id",
+            "result-0025"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -8124,6 +9640,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0027",
+            "--packet-id",
+            "packet-0027"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0027",
+            "--packet-id",
+            "packet-0027",
+            "--result-id",
+            "result-0025"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0027",
@@ -8238,6 +9784,20 @@
               "responsibility": "",
               "subject_id": "packet-0028"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0028",
+            "--packet-id",
+            "packet-0028"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -8366,6 +9926,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0029",
+            "--packet-id",
+            "packet-0029"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0029",
@@ -8480,6 +10054,36 @@
               "responsibility": "",
               "subject_id": "packet-0030"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0030",
+            "--packet-id",
+            "packet-0030"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0030",
+            "--packet-id",
+            "packet-0030",
+            "--result-id",
+            "result-0029"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -8608,6 +10212,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0031",
+            "--packet-id",
+            "packet-0031"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0031",
+            "--packet-id",
+            "packet-0031",
+            "--result-id",
+            "result-0029"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0031",
@@ -8722,6 +10356,36 @@
               "responsibility": "",
               "subject_id": "packet-0032"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0032",
+            "--packet-id",
+            "packet-0032"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0032",
+            "--packet-id",
+            "packet-0032",
+            "--result-id",
+            "result-0029"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -8850,6 +10514,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0033",
+            "--packet-id",
+            "packet-0033"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0033",
@@ -8964,6 +10642,36 @@
               "responsibility": "",
               "subject_id": "packet-0034"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034",
+            "--result-id",
+            "result-0033"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -9092,6 +10800,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035",
+            "--result-id",
+            "result-0033"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0035",
@@ -9213,6 +10951,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0036",
@@ -9307,10 +11059,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-planning-only",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -9421,6 +11173,20 @@
               "responsibility": "",
               "subject_id": "packet-0001"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -9551,6 +11317,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -9667,6 +11463,36 @@
               "responsibility": "",
               "subject_id": "packet-0003"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -9795,6 +11621,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0004",
@@ -9909,6 +11749,36 @@
               "responsibility": "",
               "subject_id": "packet-0005"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -10037,6 +11907,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0006",
@@ -10151,6 +12051,20 @@
               "responsibility": "",
               "subject_id": "packet-0007"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0007",
+            "--packet-id",
+            "packet-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -10279,6 +12193,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -10393,6 +12337,36 @@
               "responsibility": "",
               "subject_id": "packet-0009"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -10521,6 +12495,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0010",
+            "--packet-id",
+            "packet-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0010",
@@ -10635,6 +12623,36 @@
               "responsibility": "",
               "subject_id": "packet-0011"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -10763,6 +12781,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0012",
@@ -10842,10 +12890,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-route-mutation",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -10956,6 +13004,20 @@
               "responsibility": "",
               "subject_id": "packet-0001"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -11086,6 +13148,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -11202,6 +13294,36 @@
               "responsibility": "",
               "subject_id": "packet-0003"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -11330,6 +13452,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0004",
+            "--packet-id",
+            "packet-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0004",
@@ -11444,6 +13580,36 @@
               "responsibility": "",
               "subject_id": "packet-0005"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0005",
+            "--packet-id",
+            "packet-0005",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -11572,6 +13738,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0006",
+            "--packet-id",
+            "packet-0006",
+            "--result-id",
+            "result-0004"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0006",
@@ -11686,6 +13882,20 @@
               "responsibility": "",
               "subject_id": "packet-0007"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0007",
+            "--packet-id",
+            "packet-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -11814,6 +14024,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0008",
+            "--packet-id",
+            "packet-0008",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -11928,6 +14168,36 @@
               "responsibility": "",
               "subject_id": "packet-0009"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0009",
+            "--packet-id",
+            "packet-0009",
+            "--result-id",
+            "result-0007"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -12056,6 +14326,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0010",
+            "--packet-id",
+            "packet-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0010",
@@ -12170,6 +14454,36 @@
               "responsibility": "",
               "subject_id": "packet-0011"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0011",
+            "--packet-id",
+            "packet-0011",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -12298,6 +14612,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0012",
+            "--packet-id",
+            "packet-0012",
+            "--result-id",
+            "result-0010"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0012",
@@ -12412,6 +14756,20 @@
               "responsibility": "",
               "subject_id": "packet-0013"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0013",
+            "--packet-id",
+            "packet-0013"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -12540,6 +14898,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0014",
+            "--packet-id",
+            "packet-0014"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0014",
+            "--packet-id",
+            "packet-0014",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0014",
@@ -12661,6 +15049,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0015",
+            "--packet-id",
+            "packet-0015"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0015",
+            "--packet-id",
+            "packet-0015",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0015",
@@ -12775,6 +15193,36 @@
               "responsibility": "",
               "subject_id": "packet-0016"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0016",
+            "--packet-id",
+            "packet-0016"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0016",
+            "--packet-id",
+            "packet-0016",
+            "--result-id",
+            "result-0013"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -12905,6 +15353,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0017",
+            "--packet-id",
+            "packet-0017"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0017",
@@ -13019,6 +15481,36 @@
               "responsibility": "",
               "subject_id": "packet-0018"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0018",
+            "--packet-id",
+            "packet-0018"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0018",
+            "--packet-id",
+            "packet-0018",
+            "--result-id",
+            "result-0017"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -13147,6 +15639,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0019",
+            "--packet-id",
+            "packet-0019"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0019",
+            "--packet-id",
+            "packet-0019",
+            "--result-id",
+            "result-0017"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0019",
@@ -13261,6 +15783,20 @@
               "responsibility": "",
               "subject_id": "packet-0020"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0020",
+            "--packet-id",
+            "packet-0020"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -13389,6 +15925,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0021",
+            "--packet-id",
+            "packet-0021"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0021",
+            "--packet-id",
+            "packet-0021",
+            "--result-id",
+            "result-0020"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0021",
@@ -13503,6 +16069,36 @@
               "responsibility": "",
               "subject_id": "packet-0022"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0022",
+            "--packet-id",
+            "packet-0022"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0022",
+            "--packet-id",
+            "packet-0022",
+            "--result-id",
+            "result-0020"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -13631,6 +16227,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0023",
+            "--packet-id",
+            "packet-0023"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0023",
@@ -13745,6 +16355,36 @@
               "responsibility": "",
               "subject_id": "packet-0024"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0024",
+            "--packet-id",
+            "packet-0024"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0024",
+            "--packet-id",
+            "packet-0024",
+            "--result-id",
+            "result-0023"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -13873,6 +16513,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0025",
+            "--packet-id",
+            "packet-0025"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0025",
+            "--packet-id",
+            "packet-0025",
+            "--result-id",
+            "result-0023"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0025",
@@ -13987,6 +16657,36 @@
               "responsibility": "",
               "subject_id": "packet-0026"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0026",
+            "--packet-id",
+            "packet-0026"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0026",
+            "--packet-id",
+            "packet-0026",
+            "--result-id",
+            "result-0023"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -14115,6 +16815,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0027",
+            "--packet-id",
+            "packet-0027"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0027",
@@ -14229,6 +16943,36 @@
               "responsibility": "",
               "subject_id": "packet-0028"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0028",
+            "--packet-id",
+            "packet-0028"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0028",
+            "--packet-id",
+            "packet-0028",
+            "--result-id",
+            "result-0027"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -14357,6 +17101,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0029",
+            "--packet-id",
+            "packet-0029"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0029",
+            "--packet-id",
+            "packet-0029",
+            "--result-id",
+            "result-0027"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0029",
@@ -14471,6 +17245,20 @@
               "responsibility": "",
               "subject_id": "packet-0030"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0030",
+            "--packet-id",
+            "packet-0030"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -14599,6 +17387,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0031",
+            "--packet-id",
+            "packet-0031"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0031",
@@ -14713,6 +17515,36 @@
               "responsibility": "",
               "subject_id": "packet-0032"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0032",
+            "--packet-id",
+            "packet-0032"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0032",
+            "--packet-id",
+            "packet-0032",
+            "--result-id",
+            "result-0031"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -14841,6 +17673,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0033",
+            "--packet-id",
+            "packet-0033"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0033",
+            "--packet-id",
+            "packet-0033",
+            "--result-id",
+            "result-0031"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0033",
@@ -14955,6 +17817,36 @@
               "responsibility": "",
               "subject_id": "packet-0034"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0034",
+            "--packet-id",
+            "packet-0034",
+            "--result-id",
+            "result-0031"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -15083,6 +17975,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0035",
+            "--packet-id",
+            "packet-0035"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0035",
@@ -15197,6 +18103,36 @@
               "responsibility": "",
               "subject_id": "packet-0036"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0036",
+            "--packet-id",
+            "packet-0036",
+            "--result-id",
+            "result-0035"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -15325,6 +18261,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0037",
+            "--packet-id",
+            "packet-0037"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0037",
+            "--packet-id",
+            "packet-0037",
+            "--result-id",
+            "result-0035"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0037",
@@ -15439,6 +18405,20 @@
               "responsibility": "",
               "subject_id": "packet-0038"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0038",
+            "--packet-id",
+            "packet-0038"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -15567,6 +18547,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0039",
+            "--packet-id",
+            "packet-0039"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0039",
@@ -15681,6 +18675,36 @@
               "responsibility": "",
               "subject_id": "packet-0040"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0040",
+            "--packet-id",
+            "packet-0040"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0040",
+            "--packet-id",
+            "packet-0040",
+            "--result-id",
+            "result-0039"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -15809,6 +18833,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0041",
+            "--packet-id",
+            "packet-0041"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0041",
+            "--packet-id",
+            "packet-0041",
+            "--result-id",
+            "result-0039"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0041",
@@ -15923,6 +18977,36 @@
               "responsibility": "",
               "subject_id": "packet-0042"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0042",
+            "--packet-id",
+            "packet-0042"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0042",
+            "--packet-id",
+            "packet-0042",
+            "--result-id",
+            "result-0039"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -16051,6 +19135,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0043",
+            "--packet-id",
+            "packet-0043"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0043",
@@ -16165,6 +19263,36 @@
               "responsibility": "",
               "subject_id": "packet-0044"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0044",
+            "--packet-id",
+            "packet-0044"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0044",
+            "--packet-id",
+            "packet-0044",
+            "--result-id",
+            "result-0043"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -16293,6 +19421,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0045",
+            "--packet-id",
+            "packet-0045"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0045",
+            "--packet-id",
+            "packet-0045",
+            "--result-id",
+            "result-0043"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0045",
@@ -16414,6 +19572,20 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0046",
+            "--packet-id",
+            "packet-0046"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0046",
@@ -16496,10 +19668,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-missing-ack",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -16634,10 +19806,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-ack-only",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -16788,10 +19960,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-lifecycle-guard",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -17006,10 +20178,494 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
+            "--run-id",
+            "run-fake-missing-fields",
+            "--startup-text",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "mode": "rehearsal",
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "resolve-role-assignment",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "pm",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0001",
+            "--responsibility",
+            "pm",
+            "--assignment-id",
+            "role_assignment-0001",
+            "--host-kind",
+            "fake",
+            "--agent-id",
+            "fake-pm-current-contract"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0001",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0001"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true,
+            "result_id": "result-0001"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "resolve-role-assignment",
+            "--packet-id",
+            "packet-0002",
+            "--responsibility",
+            "flowguard_operator",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0002",
+            "--responsibility",
+            "flowguard_operator",
+            "--assignment-id",
+            "role_assignment-0002",
+            "--host-kind",
+            "fake",
+            "--agent-id",
+            "fake-flowguard-missing-fields"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0002",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0002"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0003"
+            },
+            "ok": true,
+            "result_id": "result-0002"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "resolve-role-assignment",
+            "--packet-id",
+            "packet-0003",
+            "--responsibility",
+            "flowguard_operator",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "flowguard_operator",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "lease-agent",
+            "--packet-id",
+            "packet-0003",
+            "--responsibility",
+            "flowguard_operator",
+            "--assignment-id",
+            "role_assignment-0003",
+            "--host-kind",
+            "fake"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "lease_id": "lease-0003",
+            "next_action": {
+              "action_type": "wait_for_ack",
+              "responsibility": "",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "ack",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "wait_patrol",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "wait_for_result",
+              "responsibility": "",
+              "subject_id": "packet-0003"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "submit-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--body",
+            "<sealed>"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0004"
+            },
+            "ok": true,
+            "result_id": "result-0003"
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "status"
+          ],
+          "payload": {
+            "foreground_duty": {
+              "action": "process_next_action",
+              "final_return_allowed": false
+            },
+            "next_action": {
+              "action_type": "resolve_role_assignment",
+              "responsibility": "reviewer",
+              "subject_id": "packet-0004"
+            },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        }
+      ],
+      "name": "missing_current_result_fields_reissue",
+      "observations": {
+        "blocked_packet_id": "packet-0002",
+        "next_responsibility_after_fix": "reviewer",
+        "repair_packet_id": "packet-0003",
+        "required_fields": [
+          "decision",
+          "pm_visible_summary"
+        ]
+      },
+      "ok": true,
+      "root": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowpilot_fake_project_rehearsal\\missing_current_result_fields_reissue"
+    },
+    {
+      "commands": [
+        {
+          "args": [
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-slow-reviewer",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -17120,6 +20776,20 @@
               "responsibility": "",
               "subject_id": "packet-0001"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -17250,6 +20920,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -17373,6 +21073,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "progress",
             "--lease-id",
             "lease-0003",
@@ -17451,10 +21181,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-accepted-reassign",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -17584,6 +21314,20 @@
               "responsibility": "",
               "subject_id": "packet-0001"
             },
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0001",
+            "--packet-id",
+            "packet-0001"
+          ],
+          "payload": {
             "ok": true
           },
           "returncode": 0,
@@ -17733,6 +21477,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0002",
+            "--packet-id",
+            "packet-0002",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -17875,6 +21649,36 @@
         },
         {
           "args": [
+            "open-packet",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
+            "open-result",
+            "--lease-id",
+            "lease-0003",
+            "--packet-id",
+            "packet-0003",
+            "--result-id",
+            "result-0001"
+          ],
+          "payload": {
+            "ok": true
+          },
+          "returncode": 0,
+          "stderr_excerpt": ""
+        },
+        {
+          "args": [
             "submit-result",
             "--lease-id",
             "lease-0003",
@@ -17968,10 +21772,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-stop-terminal",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -18113,10 +21917,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-host-liveness",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -18278,10 +22082,10 @@
       "commands": [
         {
           "args": [
-            "start",
+            "internal-rehearsal-start",
             "--run-id",
             "run-fake-orphan-summary",
-            "--headless-startup-text",
+            "--startup-text",
             "<sealed>"
           ],
           "payload": {
@@ -18434,7 +22238,7 @@
           ],
           "returncode": 0,
           "stderr_excerpt": "",
-          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,run-until-wait,status,patrol,final-preflight,resume,resolve-role-assignment,lease-agent,ack,role-handoff,open-packet,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n              "
+          "stdout_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-until-wait,status,patrol,final-preflight,resume,resolve-stopped-blocker,resolve-role-assignment,lease-agent,ack,role-handoff,open-packet,open-result,progress,host-liveness,stop,cancel,submit-result,repair-accepted"
         },
         {
           "args": [
@@ -18442,7 +22246,7 @@
             "complete-flowguard"
           ],
           "returncode": 2,
-          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-fake-e2e,run-until-wait,status,patrol,final-preflight,resume,resolve-role-assignment,lease-agent,ack,role-handoff,open-packet,progress,host-liveness,stop,cancel,submit-result,repair-accepted-packet}\n              ",
+          "stderr_excerpt": "usage: flowpilot_new.py [-h] [--root ROOT] [--json]\n                        {start,run-until-wait,status,patrol,final-preflight,resume,resolve-stopped-blocker,resolve-role-assignment,lease-agent,ack,role-handoff,open-packet,open-result,progress,host-liveness,stop,cancel,submit-result,repair-accepted",
           "stdout_excerpt": ""
         }
       ],
@@ -18477,6 +22281,8 @@
       "recover_from_wrong_role_with_valid_packets",
       "observe_route_mutation_recovery",
       "observe_missing_ack_result_block",
+      "observe_missing_current_result_fields_reissue",
+      "repair_missing_current_result_fields_via_current_contract",
       "observe_ack_only_wait_not_terminal",
       "observe_foreground_wait_patrol_duty",
       "observe_lifecycle_resume_rehydration",
@@ -18509,6 +22315,10 @@
       "lifecycle_resume_rehydrated": true,
       "missing_ack_result_accepted": false,
       "missing_ack_result_blocked": true,
+      "missing_current_result_fields_accepted": false,
+      "missing_current_result_fields_reissued": true,
+      "missing_current_result_fields_repair_completed": true,
+      "missing_current_result_reissue_missing_instruction": false,
       "nonterminal_guard_stop_blocked": true,
       "passive_wait_completed": false,
       "planning_chain_terminal": false,
@@ -18556,87 +22366,6 @@
         ],
         "freshness": "current",
         "id": "fake_project_flowguard_model",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_normal",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_error_flows",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_planning_chain_guard",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_route_mutation_recovery",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_slow_reviewer_progress",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_accepted_packet_reassignment",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_stop_terminal_fence",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_host_liveness_bridge",
-        "scope": "routine",
-        "status": "passed"
-      },
-      {
-        "evidence": [
-          "skills/flowpilot/assets/flowpilot_new.py"
-        ],
-        "freshness": "current",
-        "id": "fake_project_blackbox_cli_orphan_runner_summary",
         "scope": "routine",
         "status": "passed"
       },
@@ -18700,6 +22429,96 @@
         ],
         "freshness": "current",
         "id": "fake_project_recursive_bad_case_mutation_without_frontier_rewrite",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_normal",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_planning_chain_guard",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_route_mutation_recovery",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_slow_reviewer_progress",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_missing_current_result_fields_reissue",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_accepted_packet_reassignment",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_stop_terminal_fence",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_host_liveness_bridge",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_orphan_runner_summary",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_new.py"
+        ],
+        "freshness": "current",
+        "id": "fake_project_blackbox_cli_selected_flows",
         "scope": "routine",
         "status": "passed"
       }

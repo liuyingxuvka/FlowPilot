@@ -22,7 +22,7 @@ SideEffectEventHandler = Callable[
 ]
 
 
-def _handle_heartbeat_or_manual_resume_requested(
+def _handle_manual_resume_requested(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
@@ -31,20 +31,11 @@ def _handle_heartbeat_or_manual_resume_requested(
     meta: dict[str, Any],
     payload: dict[str, Any] | None,
 ) -> dict[str, Any]:
-    tick = router._append_heartbeat_tick(project_root, run_root, run_state, payload or {})
+    payload = {"source": "manual_resume", **(payload or {})}
+    tick = router._append_manual_resume_tick(project_root, run_root, run_state, payload)
     router._reset_resume_cycle_for_wakeup(run_state)
-    trigger_source = "manual_resume" if str((payload or {}).get("source") or "").startswith("manual") else "heartbeat_resume"
-    router._open_role_recovery_transaction(
-        project_root,
-        run_root,
-        run_state,
-        trigger_source=trigger_source,
-        recovery_scope="all_runtime_roles_sweep",
-        target_role_keys=list(router.RUNTIME_ROLE_KEYS),
-        fault_payload=payload or {},
-    )
     run_state["flags"]["resume_reentry_requested"] = True
-    run_state["flags"]["role_recovery_requested"] = True
+    run_state["flags"]["role_recovery_requested"] = False
     run_state["pending_action"] = None
     record = {
         "event": event,
@@ -53,11 +44,11 @@ def _handle_heartbeat_or_manual_resume_requested(
         "recorded_at": router.utc_now(),
     }
     run_state["events"].append(record)
-    router.append_history(run_state, event, {"heartbeat_tick": tick})
+    router.append_history(run_state, event, {"manual_resume_tick": tick})
     router._refresh_route_memory(project_root, run_root, run_state, trigger=f"after_external_event:{event}")
     router._sync_derived_run_views(project_root, run_root, run_state, reason=f"after_external_event:{event}")
     router.save_run_state(run_root, run_state)
-    return {"ok": True, "event": event, "heartbeat_tick": tick, "resume_requested": True}
+    return {"ok": True, "event": event, "manual_resume_tick": tick, "resume_requested": True}
 
 
 def _apply_lifecycle_request(
@@ -83,7 +74,7 @@ def _apply_route_activation(
     router._write_route_activation(project_root, run_root, run_state, payload)
 
 
-def _apply_host_heartbeat_binding(
+def _apply_host_manual_resume_binding(
     router: ModuleType,
     project_root: Path,
     run_root: Path,
@@ -92,18 +83,18 @@ def _apply_host_heartbeat_binding(
     payload: dict[str, Any],
 ) -> None:
     del event
-    router._write_host_heartbeat_binding(project_root, run_root, run_state, payload)
+    router._write_manual_resume_binding(project_root, run_root, run_state, payload)
 
 
 PRECHECK_EVENT_HANDLERS: dict[str, PrecheckEventHandler] = {
-    "heartbeat_or_manual_resume_requested": _handle_heartbeat_or_manual_resume_requested,
+    "manual_resume_requested": _handle_manual_resume_requested,
 }
 
 SIDE_EFFECT_EVENT_HANDLERS: dict[str, SideEffectEventHandler] = {
     "user_requests_run_stop": _apply_lifecycle_request,
     "user_requests_run_cancel": _apply_lifecycle_request,
     "pm_activates_reviewed_route": _apply_route_activation,
-    "host_records_heartbeat_binding": _apply_host_heartbeat_binding,
+    "host_records_manual_resume_binding": _apply_host_manual_resume_binding,
 }
 
 
@@ -198,15 +189,6 @@ def finalize_external_event_record(
     run_state["events"].append(record)
     router._mark_scoped_event_recorded(run_state, scoped_identity)
     startup_release: dict[str, Any] | None = None
-    if event == "pm_approves_startup_activation":
-        startup_release = {
-            "released": False,
-            "reason": "controller_deliver_mail_required",
-            "requires_action": "deliver_mail",
-            "mail_id": "user_intake",
-            "to_role": "project_manager",
-            "source": "pm_startup_activation",
-        }
     wait_closure = router._close_waiting_controller_actions_for_external_event(
         project_root,
         run_root,

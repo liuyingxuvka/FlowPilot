@@ -29,14 +29,14 @@ display confirmation, host spawn, or host automation requirements.
 
 ### Requirement: Startup parallel obligations join before Reviewer startup review
 
-FlowPilot SHALL allow startup banner, heartbeat binding, and startup
-display/status obligations to run in parallel with unrelated startup work, but
-SHALL reconcile them before Reviewer live startup fact review.
+FlowPilot SHALL allow startup banner, current background collaboration, and
+startup display/status obligations to run in parallel with unrelated startup
+work, but SHALL reconcile them before Reviewer live startup fact review.
 
 #### Scenario: Parallel startup obligation remains open while unrelated work is queued
 
-- **WHEN** a startup banner, heartbeat binding, or startup display/status row
-  is already scheduled but not yet reconciled
+- **WHEN** a startup banner, current background collaboration, or startup
+  display/status row is already scheduled but not yet reconciled
 - **AND** Router can enqueue an unrelated startup action
 - **THEN** Router MAY enqueue the unrelated action
 - **AND** it MUST NOT mark the open obligation complete without its required
@@ -50,24 +50,24 @@ SHALL reconcile them before Reviewer live startup fact review.
 - **THEN** Router MUST return startup current-scope reconciliation instead
 - **AND** startup facts MUST remain unreported.
 
-### Requirement: Startup role-slot open is a local dependency
+### Requirement: Startup role binding is a local dependency
 
-FlowPilot SHALL treat startup role-slot open as a local dependency rather than
-as a global queue barrier.
+FlowPilot SHALL treat current startup role binding as a local dependency rather
+than as a global queue barrier.
 
-#### Scenario: Role open does not block unrelated startup work
+#### Scenario: Role binding does not block unrelated startup work
 
-- **WHEN** startup role-slot open is scheduled but not reconciled
+- **WHEN** current startup role binding is scheduled but not reconciled
 - **AND** the next startup work does not require role ids, role liveness, role
   memory injection, or role card delivery
 - **THEN** Router MAY enqueue that unrelated work.
 
-#### Scenario: Role-dependent work waits for role slots
+#### Scenario: Role-dependent work waits for role binding
 
-- **WHEN** startup role-slot open is not reconciled
+- **WHEN** current startup role binding is not reconciled
 - **AND** Router would otherwise deliver role-dependent cards, role memory, role
   freshness review, or role-addressed startup work
-- **THEN** Router MUST wait on the role-slot dependency instead of delivering
+- **THEN** Router MUST wait on the role-binding dependency instead of delivering
   that role-dependent work.
 
 ### Requirement: Startup receipts update bootstrap and scheduler state atomically

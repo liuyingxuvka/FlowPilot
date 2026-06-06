@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -57,7 +59,8 @@ OWNER_MODULE = 'flowpilot_router_startup_bootloader'
 def _finish_bootloader_action(router: ModuleType, project_root: Path, state: dict[str, Any], scheduled_action: dict[str, Any], *, flag: str, label: str, action_type: str, result_extra: dict[str, Any]) -> None:
     _bind_router(router)
     router._set_boot_flag(project_root, state, flag, label, {'action_type': action_type})
-    completion = router._complete_startup_daemon_bootloader_row(project_root, state, scheduled_action, applied_action_type=action_type)
+    startup_daemon_receipt_payload = result_extra.pop('_startup_daemon_receipt_payload', None)
+    completion = router._complete_startup_daemon_bootloader_row(project_root, state, scheduled_action, applied_action_type=action_type, receipt_payload=startup_daemon_receipt_payload if isinstance(startup_daemon_receipt_payload, dict) else None)
     if completion is not None:
         result_extra['startup_daemon_row_completion'] = {'controller_action_id': completion.get('controller_action_id'), 'router_scheduler_row_id': completion.get('router_scheduler_row_id')}
     if router._startup_daemon_controls_bootstrap(state):
@@ -70,15 +73,15 @@ def _finish_bootloader_action(router: ModuleType, project_root: Path, state: dic
 def apply_bootloader_action(router: ModuleType, project_root: Path, action_type: str, payload: dict[str, Any] | None=None) -> dict[str, Any]:
     _bind_router(router)
     state = router.load_bootstrap_state(project_root, create_if_missing=False)
-    pending = router._ensure_pending(state, action_type)
-    payload = payload or {}
-    result_extra: dict[str, Any] = {}
     if action_type == 'load_router':
         router._set_boot_flag(project_root, state, 'router_loaded', 'bootloader_router_loaded')
         return {'ok': True, 'applied': action_type}
     action_meta = next((item for item in BOOT_ACTIONS if item['action_type'] == action_type), None)
     if action_meta is None:
         raise RouterError(f'unknown bootloader action: {action_type}')
+    pending = router._ensure_pending(state, action_type)
+    payload = payload or {}
+    result_extra: dict[str, Any] = {}
     flag = str(action_meta['flag'])
     if action_type == 'open_startup_intake_ui':
         result_extra.update(router._apply_startup_intake_result_to_bootstrap(project_root, state, payload))
@@ -161,44 +164,6 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
             result.update(result_extra)
             return result
         raise RouterError('write_user_intake requires native startup intake user_request_ref; direct user_request payloads are unsupported')
-    elif action_type == 'start_role_slots':
-        run_root = project_root / str(state['run_root'])
-        role_slots = router._normalize_role_agent_records(state, payload)
-        background_mode = (state.get('startup_answers') or {}).get('runtime_role_assistances')
-        write_json(run_root / 'role_binding_ledger.json', {'schema_version': 'flowpilot.role_binding_ledger.v1', 'run_id': state['run_id'], 'runtime_role_assistance_mode': background_mode, 'role_slots': role_slots, 'created_at': utc_now()})
-        role_binding_memory_root = run_root / 'role_binding_memory'
-        role_binding_memory_root.mkdir(parents=True, exist_ok=True)
-        for role in RUNTIME_ROLE_KEYS:
-            write_json(role_binding_memory_root / f'{role}.json', router._create_empty_role_memory(str(state['run_id']), role))
-        _append_role_io_protocol_injections(project_root, run_root, str(state['run_id']), role_slots, default_lifecycle_phase='fresh_spawn', resume_tick_id='manual-resume', source_action='start_role_slots')
-        write_json(run_root / 'role_core_prompt_delivery.json', router._role_core_prompt_delivery_payload(project_root, run_root, str(state['run_id']), source_action='start_role_slots'))
-        state.setdefault('flags', {})['role_core_prompts_injected'] = True
-        append_history(state, 'role_core_prompts_delivered_during_start_role_slots', {'action_type': 'start_role_slots', 'postcondition': 'role_core_prompts_injected', 'delivery_mode': 'same_action_with_role_start'})
-        result_extra['coalesced_postconditions'] = ['roles_started', 'role_core_prompts_injected']
-        _ensure_startup_run_state(project_root, state)
-    elif action_type == 'create_heartbeat_automation':
-        run_state, run_root = _ensure_startup_run_state(project_root, state)
-        terminal_mode = router._terminal_lifecycle_mode(run_state)
-        if terminal_mode:
-            run_state['daemon_mode_enabled'] = False
-            append_history(
-                run_state,
-                'startup_heartbeat_automation_skipped_for_terminal_lifecycle',
-                {'terminal_lifecycle_status': terminal_mode, 'source_action': action_type},
-            )
-            router.save_run_state(run_root, run_state)
-            result_extra['heartbeat_binding_skipped'] = True
-            result_extra['terminal_lifecycle_status'] = terminal_mode
-            result = {'ok': True, 'applied': action_type, 'postcondition': flag}
-            result.update(result_extra)
-            return result
-        _write_host_heartbeat_binding(project_root, run_root, run_state, payload or {})
-        run_state['flags']['continuation_binding_recorded'] = True
-        run_state['events'].append({'event': 'host_records_heartbeat_binding', 'summary': EXTERNAL_EVENTS['host_records_heartbeat_binding']['summary'], 'payload': payload or {}, 'recorded_at': utc_now(), 'source_action': action_type, 'startup_phase': 'bootloader'})
-        router.save_run_state(run_root, run_state)
-    elif action_type == 'inject_role_core_prompts':
-        run_root = project_root / str(state['run_root'])
-        write_json(run_root / 'role_core_prompt_delivery.json', router._role_core_prompt_delivery_payload(project_root, run_root, str(state['run_id']), source_action='inject_role_core_prompts'))
     elif action_type == 'start_router_daemon':
         if not state.get('run_root'):
             raise RouterError('cannot start Router daemon before run shell exists')

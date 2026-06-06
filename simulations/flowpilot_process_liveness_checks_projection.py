@@ -33,27 +33,31 @@ def _current_run_projection() -> dict[str, object]:
     current_path = PROJECT_ROOT / ".flowpilot" / "current.json"
     if not current_path.exists():
         return {
-            "ok": False,
+            "ok": True,
             "status": "missing_current_pointer",
+            "current_run_can_continue": False,
+            "permission": "no_current_run",
+            "safe_to_claim_live_run_confidence": False,
+            "metadata_only": True,
             "findings": [
                 {
                     "id": "missing_current_pointer",
                     "severity": "blocking",
-                    "summary": ".flowpilot/current.json is missing",
+                    "summary": ".flowpilot/current.json is missing; no active run can be continued or claimed",
                 }
             ],
         }
 
     current = _maybe_json(current_path)
     evidence_paths.append(str(current_path.relative_to(PROJECT_ROOT)))
-    run_root_text = current.get("current_run_root")
+    run_root_text = current.get("run_root")
     status = str(current.get("status") or "unknown")
     if not isinstance(run_root_text, str) or not run_root_text:
         findings.append(
             {
-                "id": "current_run_root_missing",
+                "id": "run_root_missing",
                 "severity": "blocking",
-                "summary": ".flowpilot/current.json has no current_run_root",
+                "summary": ".flowpilot/current.json has no run_root",
             }
         )
         return {
@@ -67,7 +71,7 @@ def _current_run_projection() -> dict[str, object]:
     if not run_root.exists():
         findings.append(
             {
-                "id": "current_run_root_missing_on_disk",
+                "id": "run_root_missing_on_disk",
                 "severity": "blocking",
                 "summary": f"current run root does not exist: {run_root_text}",
             }

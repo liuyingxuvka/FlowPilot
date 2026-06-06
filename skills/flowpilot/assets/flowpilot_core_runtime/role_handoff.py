@@ -86,6 +86,19 @@ def render_current_packet_handoff(
         f"python {_quote(script_path)} --root {_quote(root)} --json "
         f"submit-result --lease-id {lease_id} --packet-id {packet_id} --body <sealed_result_summary>"
     )
+    authorized_result_reads = [
+        dict(row)
+        for row in envelope.get("authorized_result_reads", [])
+        if isinstance(row, Mapping)
+    ]
+    open_result_commands = [
+        (
+            f"python {_quote(script_path)} --root {_quote(root)} --json "
+            f"open-result --lease-id {lease_id} --packet-id {packet_id} --result-id {row.get('result_id')}"
+        )
+        for row in authorized_result_reads
+        if row.get("result_id")
+    ]
     label = _role_label(responsibility)
     host_kind = str(lease.get("host_kind") or "")
     agent_id = str(lease.get("agent_id") or "")
@@ -123,6 +136,16 @@ def render_current_packet_handoff(
             "Then open only this assigned packet through the runtime command:",
             f"`{open_command}`",
             "",
+            *(
+                [
+                    "This packet also has authorized result/report bodies. Open each required result through:",
+                    *[f"`{command}`" for command in open_result_commands],
+                    "These result bodies are for this role surface only; Controller must not run these commands.",
+                    "",
+                ]
+                if open_result_commands
+                else []
+            ),
             "The open command is for the addressed role surface only. Controller must not run it.",
             "Use the returned sealed packet body only inside this role and do not expose sealed packet body text in chat.",
             "Do not access sibling packets, old-run packets, or sealed bodies addressed to another role.",
@@ -150,9 +173,11 @@ def render_current_packet_handoff(
         "role_memory_seed_id": role_memory_seed_id,
         "role_memory_body_included": False,
         "role_must_not_expose_sealed_body_in_chat": True,
+        "authorized_result_reads": authorized_result_reads,
         "commands": {
             "ack": ack_command,
             "open_packet": open_command,
+            "open_results": open_result_commands,
             "submit_result": submit_command,
         },
         "text": text,

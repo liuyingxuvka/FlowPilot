@@ -9,7 +9,7 @@ from packet_control_plane_model_state import (
     ApprovedPacket,
     CheckedResult,
     DispatchBlocked,
-    HeartbeatCase,
+    ManualResumeCase,
     NodeCase,
     NodePacket,
     NodeResult,

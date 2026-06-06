@@ -32,7 +32,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.terminal",
         patterns=(
             "test_nonterminal_node_completion_does_not_show_completed_node_as_in_progress",
-            "test_terminal_pending_heartbeat_action_is_noop",
+            "test_terminal_pending_legacy_heartbeat_action_is_rejected",
             "test_user_stop_writes_immediate_daemon_terminal_fence_and_clears_current_work",
             "test_user_stop_writes_terminal_fence_before_best_effort_scheduler_cleanup",
             "test_user_stop_or_cancel_makes_run_terminal_and_blocks_next_work",
@@ -63,9 +63,9 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "router_resume_reentry",
         "tests.router_runtime.resume",
         patterns=(
-            "test_heartbeat_alive_status_still_enters_router_resume_path",
+            "test_manual_resume_alive_status_enters_router_resume_path",
             "test_load_resume_state_controller_receipt_replays_router_state_handler",
-            "test_resume_reentry_attaches_to_live_owner_after_delayed_heartbeat",
+            "test_resume_reentry_attaches_to_live_owner_after_delayed_patrol",
             "test_resume_reentry_attaches_to_live_router_daemon_and_ledger",
             "test_resume_reentry_loads_state_before_resume_cards",
             "test_resume_reentry_marks_dead_daemon_for_restart_after_liveness_check",
@@ -152,7 +152,7 @@ ROUTER_TERMINAL_CORE_COMMANDS = (
         "tests.router_runtime.control_blockers",
         patterns=(
             "test_material_operation_replay_uses_current_generation_action",
-            "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision",
+            "test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision",
             "test_operation_replay_repair_transaction_queues_replay_action",
             "test_repair_transaction_protocol_blocker_registers_followup_blocker",
             "test_repair_transaction_recheck_blocker_registers_followup_blocker",
@@ -261,7 +261,7 @@ ROUTER_QUALITY_GATE_COMMANDS = (
             "test_next_effective_node_returns_parent_before_sibling_module_after_last_child",
             "test_node_completion_idempotency_is_scoped_to_active_node",
             "test_role_output_envelope_hash_survives_same_path_envelope_rewrite",
-            "test_single_agent_answer_records_authorized_role_continuity_without_live_agents",
+            "test_single_agent_startup_answer_is_rejected_as_legacy_option",
         ),
         description="Quality-gate node completion and role-output contract slice.",
     ),
@@ -292,6 +292,8 @@ ROUTER_MATERIAL_MODELING_COMMANDS = (
             "test_material_repair_active_batch_blocks_stale_result_relay_flag",
             "test_material_repair_active_batch_overrides_stale_global_progress_flags",
             "test_material_scan_path_only_done_receipt_schedules_controller_relay_repair",
+            "test_material_scan_path_only_done_receipt_keeps_current_assignment_relay_pending",
+            "test_material_scan_path_only_receipt_folds_after_current_assignment_relay_action",
             "test_material_scan_relay_receipt_folds_existing_packet_evidence",
             "test_material_scan_relay_repair_receipt_folds_after_runtime_relay",
             "test_material_scan_result_receipt_folds_batch_lifecycle",
@@ -320,3 +322,4 @@ ROUTER_TERMINAL_COMMANDS = (
     *ROUTER_MATERIAL_MODELING_COMMANDS,
     *ROUTER_TERMINAL_CORE_COMMANDS,
 )
+

@@ -18,28 +18,6 @@ from tests.synthetic_agent_trace_replay import SyntheticTracePackage, start_work
 
 
 class FlowPilotHardGateRedTeamReplayTests(FlowPilotRouterRuntimeTestBase):
-    def test_hard_gate_unauthorized_event_envelope_preserves_pending_state(self) -> None:
-        root = self.make_project()
-        run_root = self.boot_to_controller(root)
-        envelope, envelope_path, envelope_hash = self.startup_fact_runtime_envelope(root)
-        self.assertEqual(envelope["event_name"], "reviewer_reports_startup_facts")
-        flag = router.EXTERNAL_EVENTS["reviewer_reports_startup_facts"]["flag"]
-        before = read_json(router.run_state_path(run_root))
-
-        with self.assertRaisesRegex(router.RouterError, "not currently allowed"):
-            router.record_external_event(
-                root,
-                "reviewer_reports_startup_facts",
-                {"event_envelope_ref": {"path": envelope_path, "hash": envelope_hash}},
-            )
-
-        after = read_json(router.run_state_path(run_root))
-        self.assertEqual(after.get("pending_action"), before.get("pending_action"))
-        self.assertFalse(after["flags"][flag])
-        self.assertNotEqual(after["status"], "closed")
-        self.assertFalse(
-            any(event.get("event") == "reviewer_reports_startup_facts" for event in after.get("events", []))
-        )
 
     def test_hard_gate_role_output_authority_mismatch_writes_no_output(self) -> None:
         root = self.make_project()

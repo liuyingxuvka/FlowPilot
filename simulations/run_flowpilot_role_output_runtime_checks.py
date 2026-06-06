@@ -1,4 +1,4 @@
-"""Unsupported_historical facade for `run_flowpilot_role_output_runtime_checks.py`."""
+"""Thin current-contract entrypoint for the FlowPilot role-output runtime checks."""
 
 from __future__ import annotations
 

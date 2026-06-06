@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -116,8 +118,8 @@ def _validate_startup_intake_result_payload(router: ModuleType, project_root: Pa
     if leaked:
         raise RouterError(f"startup intake result contains forbidden body text fields: {', '.join(leaked)}")
     status = result.get('status')
-    if status not in {'confirmed', 'cancelled'}:
-        raise RouterError('startup intake result status must be confirmed or cancelled')
+    if status not in {'confirmed', 'cancelled', 'blocked'}:
+        raise RouterError('startup intake result status must be confirmed, cancelled, or blocked')
     router._require_interactive_startup_intake_artifact(result, 'startup intake result')
     result_rel = project_relative(project_root, result_path)
     receipt_path: Path | None = None
@@ -135,6 +137,13 @@ def _validate_startup_intake_result_payload(router: ModuleType, project_root: Pa
         raise RouterError('startup intake result requires receipt_path from the native interactive startup intake UI')
     if status == 'cancelled':
         return {'schema_version': STARTUP_INTAKE_RECORD_SCHEMA, 'status': 'cancelled', 'launch_mode': STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE, 'headless': False, 'formal_startup_allowed': True, 'result_path': result_rel, 'receipt_path': project_relative(project_root, receipt_path), 'controller_visibility': result.get('controller_visibility') or 'cancel_status_only', 'body_text_included': False, 'recorded_at': result.get('recorded_at') or utc_now()}
+    if status == 'blocked':
+        startup_answers = router._validate_startup_answers({'startup_answers': result.get('startup_answers')})
+        if receipt.get('startup_answers') != startup_answers:
+            raise RouterError('startup intake blocked startup_answers mismatch across result and receipt')
+        if startup_answers.get('background_collaboration_authorized') is not False:
+            raise RouterError('startup intake blocked result requires background_collaboration_authorized=false')
+        return {'schema_version': STARTUP_INTAKE_RECORD_SCHEMA, 'status': 'blocked', 'block_reason': result.get('block_reason') or 'background_collaboration_required', 'launch_mode': STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE, 'headless': False, 'formal_startup_allowed': True, 'result_path': result_rel, 'receipt_path': project_relative(project_root, receipt_path), 'startup_answers': startup_answers, 'controller_visibility': result.get('controller_visibility') or 'block_status_only', 'body_text_included': False, 'recorded_at': result.get('recorded_at') or utc_now()}
     if result.get('body_text_included') is not False or result.get('controller_may_read_body') is not False:
         raise RouterError('startup intake confirmed result must be envelope-only for Controller')
     envelope_path = router._resolve_existing_project_file(project_root, result.get('envelope_path'), 'envelope')
@@ -165,6 +174,8 @@ def _validate_startup_intake_result_payload(router: ModuleType, project_root: Pa
     if not router._same_project_file(project_root, receipt.get('body_path'), body_path):
         raise RouterError('startup intake receipt body_path does not match result')
     startup_answers = router._validate_startup_answers({'startup_answers': result.get('startup_answers')})
+    if startup_answers.get('background_collaboration_authorized') is not True:
+        raise RouterError('confirmed FlowPilot startup requires background_collaboration_authorized=true')
     if envelope.get('startup_answers') != startup_answers or receipt.get('startup_answers') != startup_answers:
         raise RouterError('startup intake startup_answers mismatch across result, receipt, and envelope')
     return {'schema_version': STARTUP_INTAKE_RECORD_SCHEMA, 'status': 'confirmed', 'source': envelope.get('source') or 'native_wpf_startup_intake', 'launch_mode': STARTUP_INTAKE_INTERACTIVE_LAUNCH_MODE, 'headless': False, 'formal_startup_allowed': True, 'language': result.get('language') or envelope.get('language') or receipt.get('language'), 'result_path': result_rel, 'receipt_path': project_relative(project_root, receipt_path), 'envelope_path': project_relative(project_root, envelope_path), 'body_path': project_relative(project_root, body_path), 'body_hash': actual_hash, 'startup_answers': startup_answers, 'controller_visibility': 'envelope_only', 'controller_may_read_body': False, 'body_text_included': False, 'reviewer_live_review_source': 'startup_intake_record', 'reviewer_must_not_use_chat_history': True, 'recorded_at': result.get('recorded_at') or utc_now()}
@@ -180,6 +191,15 @@ def _apply_startup_intake_result_to_bootstrap(router: ModuleType, project_root: 
         state['startup_state'] = 'startup_cancelled'
         state['pending_action'] = None
         return result_extra
+    if startup_intake['status'] == 'blocked':
+        state['status'] = 'startup_blocked'
+        state['startup_state'] = 'startup_blocked'
+        state['startup_block_reason'] = startup_intake.get('block_reason') or 'background_collaboration_required'
+        state['startup_answers'] = startup_intake['startup_answers']
+        state['pending_action'] = None
+        state['flags']['startup_intake_result_recorded'] = True
+        state['flags']['startup_answers_recorded'] = True
+        return result_extra
     state['startup_answers'] = startup_intake['startup_answers']
     state['startup_state'] = 'answers_complete'
     state['flags']['startup_intake_result_recorded'] = True
@@ -189,7 +209,7 @@ def _apply_startup_intake_result_to_bootstrap(router: ModuleType, project_root: 
     result_extra['deterministic_bootstrap_seed'] = {'evidence_path': state.get('deterministic_bootstrap_seed_evidence_path'), 'artifact_keys': sorted((seed_proof.get('artifacts') or {}).keys())}
     return result_extra
 
-def _validate_startup_answers(router: ModuleType, payload: dict[str, Any]) -> dict[str, str]:
+def _validate_startup_answers(router: ModuleType, payload: dict[str, Any]) -> dict[str, Any]:
     _bind_router(router)
     extra_payload = sorted(set(payload) - {'startup_answers'})
     if extra_payload:
@@ -200,16 +220,21 @@ def _validate_startup_answers(router: ModuleType, payload: dict[str, Any]) -> di
     provenance = answers.get('provenance')
     if provenance != STARTUP_ANSWER_PROVENANCE:
         raise RouterError('startup answers require provenance=explicit_user_reply from the native startup intake UI')
-    allowed_keys = set(STARTUP_ANSWER_ENUMS) | {'provenance'}
+    allowed_keys = set(STARTUP_ANSWER_ENUMS) | set(STARTUP_ANSWER_BOOLEANS) | {'provenance'}
     extra = sorted(set(answers) - allowed_keys)
     if extra:
         raise RouterError(f"startup answers contain unsupported fields: {', '.join(extra)}")
-    validated: dict[str, str] = {}
+    validated: dict[str, Any] = {}
     for answer_id, allowed_values in STARTUP_ANSWER_ENUMS.items():
         value = answers.get(answer_id)
         if not isinstance(value, str) or value not in allowed_values:
             allowed = ', '.join(sorted(allowed_values))
             raise RouterError(f'startup answer {answer_id} must be one of: {allowed}')
+        validated[answer_id] = value
+    for answer_id in STARTUP_ANSWER_BOOLEANS:
+        value = answers.get(answer_id)
+        if not isinstance(value, bool):
+            raise RouterError(f'startup answer {answer_id} must be boolean')
         validated[answer_id] = value
     validated['provenance'] = provenance
     return validated

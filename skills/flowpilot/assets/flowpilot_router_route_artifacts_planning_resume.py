@@ -36,6 +36,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -69,7 +71,7 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
     rehydration_report = read_json(rehydration_path)
     if rehydration_report.get("required_role_bindings_ready") is not True:
         raise RouterError("PM resume decision requires runtime-required role bindings ready")
-    if rehydration_report.get("pm_memory_rehydrated") is not True and rehydration_report.get("runtime_role_assistance_mode") != "single-agent":
+    if rehydration_report.get("pm_memory_rehydrated") is not True:
         raise RouterError("PM resume decision requires project_manager memory rehydration")
     decision = str(payload.get("decision") or "continue_current_packet_loop")
     if decision not in PM_RESUME_DECISION_ALLOWED_VALUES:

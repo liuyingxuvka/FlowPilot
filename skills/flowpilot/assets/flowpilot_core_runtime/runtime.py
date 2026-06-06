@@ -41,6 +41,16 @@ PACKET_KINDS = {
     "pm_repair_decision",
     "pm_disposition",
 }
+PM_VISIBLE_SUMMARY_REQUIRED_PACKET_KINDS = {
+    "task",
+    "flowguard_check",
+    "review",
+}
+PM_VISIBLE_SUMMARY_EXEMPT_RESPONSIBILITIES = {
+    "pm",
+    "planner",
+}
+PM_VISIBLE_SUMMARY_MAX_ENTRIES = 8
 REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION = (
     "Scripts, checkers, and evidence generators must be replayable; do not make execution depend on a "
     "specific FlowPilot packet id, current active packet, or one-time phase."
@@ -113,6 +123,7 @@ EVENT_FAMILY_BY_TYPE = {
     "task_packet_issued": "packet",
     "packet_assigned": "packet",
     "sealed_packet_body_opened": "packet",
+    "sealed_result_body_opened": "packet",
     "lease_ack": "lease",
     "lease_progress": "lease",
     "accepted_packet_assignment_repaired": "packet",
@@ -207,6 +218,8 @@ _STALE_RESULT_BLOCKERS = {
     "wrong_lease_for_packet",
     "duplicate_after_packet_accepted",
 }
+BACKGROUND_COLLABORATION_ACK_FIELD = "background_collaboration_authorized"
+BACKGROUND_COLLABORATION_REQUIRED_MESSAGE = "background_collaboration_authorized=true required"
 
 ROUTER_INTERNAL_ACTION_TYPES = {
     "freeze_contract",
@@ -502,6 +515,32 @@ def _assert_not_terminal_lifecycle(ledger: Mapping[str, Any]) -> None:
     status = terminal_lifecycle_status(ledger)
     if status:
         raise BlackBoxRuntimeError(f"run is terminal ({status}); new work is not allowed")
+
+
+def background_collaboration_authorized(ledger: Mapping[str, Any]) -> bool:
+    intake = ledger.get("startup_intake") if isinstance(ledger.get("startup_intake"), Mapping) else {}
+    answers = intake.get("startup_answers") if isinstance(intake.get("startup_answers"), Mapping) else {}
+    return answers.get(BACKGROUND_COLLABORATION_ACK_FIELD) is True
+
+
+def background_collaboration_blocker(ledger: Mapping[str, Any]) -> str:
+    if background_collaboration_authorized(ledger):
+        return ""
+    intake = ledger.get("startup_intake") if isinstance(ledger.get("startup_intake"), Mapping) else None
+    if intake is None:
+        return "background_collaboration_startup_intake_missing"
+    if str(intake.get("status") or "") == "blocked":
+        return "background_collaboration_required"
+    answers = intake.get("startup_answers") if isinstance(intake.get("startup_answers"), Mapping) else None
+    if answers is None or BACKGROUND_COLLABORATION_ACK_FIELD not in answers:
+        return "background_collaboration_authorized_missing"
+    return "background_collaboration_authorized_disabled"
+
+
+def _require_background_collaboration_authorized(ledger: Mapping[str, Any]) -> None:
+    blocker = background_collaboration_blocker(ledger)
+    if blocker:
+        raise BlackBoxRuntimeError(f"{BACKGROUND_COLLABORATION_REQUIRED_MESSAGE}: {blocker}")
 
 
 def record_terminal_lifecycle(
@@ -1376,6 +1415,17 @@ def ensure_node_prework_flowguard_packet(ledger: dict[str, Any], node_id: str) -
         route_scope=NODE_PREWORK_FLOWGUARD_SCOPE,
         acceptance_criteria=list(node.get("acceptance_criteria") or []),
         node_context_package_id=str(node_context.get("node_context_package_id") or ""),
+        authorized_result_reads=[
+            _authorized_read_for_result(
+                ledger,
+                target_result_id,
+                allowed_roles=["flowguard_operator"],
+                purpose="node_acceptance_plan_result_for_prework_flowguard",
+                required_before_submit=True,
+            )
+        ]
+        if target_result_id
+        else None,
     )
     ledger["packets"][issued_id]["prework_repair_generation"] = int(node.get("repair_generation", 0))
     node["prework_flowguard_packet_id"] = issued_id
@@ -2243,10 +2293,14 @@ def _parse_packet_outcome(packet: Mapping[str, Any], result: Mapping[str, Any]) 
             else:
                 blocking = False
         blocker_class = str(payload.get("blocker_class") or payload.get("failure_class") or blocker_class)
+        structured_repairs = _structured_required_repairs_from_payload(payload)
+        pm_visible_summary = _pm_visible_summary_from_payload(payload)
         recommendation = str(
-            payload.get("recommended_resolution")
+            ("; ".join(structured_repairs) if structured_repairs else "")
+            or payload.get("recommended_resolution")
             or payload.get("recommendation")
             or payload.get("pm_recommendation")
+            or ("; ".join(pm_visible_summary) if blocking and pm_visible_summary else "")
             or ""
         )
         refs = payload.get("evidence_refs") or payload.get("direct_evidence_paths_checked") or payload.get("evidence_ids") or []
@@ -2810,6 +2864,13 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
         else {}
     )
     repeat_context = _blocker_repeat_context(ledger, blocker)
+    authorized_result_reads = _blocker_authorized_result_reads(
+        ledger,
+        blocker,
+        allowed_roles=["pm"],
+        purpose="blocking_report_for_pm_repair_decision",
+        required_before_submit=True,
+    )
     packet_id = issue_task_packet(
         ledger,
         "pm",
@@ -2857,6 +2918,8 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "instruction": (
                     "Return exactly one structured JSON object with a top-level allowed decision, for example "
                     "{\"decision\":\"repair_current_scope\",\"reason\":\"current node needs replacement repair\"}. "
+                    "Before deciding, open every required authorized_result_reads entry and use the opened report "
+                    "body as the source of the concrete failure. "
                     "Use repair_parent_scope only when the explicit parent scope should be replaced. Use redesign_route "
                     "only with a strict route_plan object. Use waive_with_authority only with authority_ref. "
                     "Do not wrap the decision inside repair_decision, pm_repair_decision, prose, or any legacy shape. "
@@ -2873,6 +2936,7 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
         target_result_id=str(blocker.get("outcome_id") or ""),
         route_node_id=str(blocker.get("route_node_id") or ""),
         route_scope="pm_repair_decision",
+        authorized_result_reads=authorized_result_reads,
     )
     blocker["pm_repair_packet_id"] = packet_id
     return packet_id
@@ -3228,6 +3292,13 @@ def _issue_current_scope_repair_packet(
         route_scope=str(target_envelope.get("route_scope") or ""),
         acceptance_criteria=list(target_envelope.get("acceptance_criteria") or []),
         node_context_package_id=str(target_envelope.get("node_context_package_id") or ""),
+        authorized_result_reads=_blocker_authorized_result_reads(
+            ledger,
+            blocker,
+            allowed_roles=[repair_role],
+            purpose="blocking_report_for_repair_work",
+            required_before_submit=True,
+        ),
     )
     ledger["packets"][packet_id]["repair_blocker_id"] = str(blocker["blocker_id"])
     _record_repair_transaction(
@@ -3263,6 +3334,20 @@ def _replace_scope_and_open_repair_packet(
     if not fresh_packet_id:
         raise BlackBoxRuntimeError("repair scope replacement did not create a fresh executable packet")
     ledger["packets"][fresh_packet_id]["repair_blocker_id"] = str(blocker["blocker_id"])
+    fresh_envelope = ledger["packets"][fresh_packet_id].get("envelope", {})
+    fresh_role = str(fresh_envelope.get("responsibility") or "") if isinstance(fresh_envelope, Mapping) else ""
+    if fresh_role:
+        _attach_authorized_result_reads_to_packet(
+            ledger,
+            fresh_packet_id,
+            _blocker_authorized_result_reads(
+                ledger,
+                blocker,
+                allowed_roles=[fresh_role],
+                purpose="blocking_report_for_repair_work",
+                required_before_submit=True,
+            ),
+        )
     _record_repair_transaction(
         ledger,
         blocker,
@@ -3844,12 +3929,46 @@ def resolve_role_assignment(
         envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
         if str(envelope.get("responsibility") or "") != responsibility:
             raise BlackBoxRuntimeError("assignment responsibility does not match packet")
+    assignments = _role_assignment_table(ledger)
+    background_blocker = background_collaboration_blocker(ledger)
+    if background_blocker:
+        assignment_id = _next_id(ledger, "role_assignment")
+        assignment = {
+            "schema_version": "black_box_flowpilot.role_assignment.v1",
+            "assignment_id": assignment_id,
+            "packet_id": packet_id,
+            "responsibility": responsibility,
+            "host_kind": host_kind,
+            "disposition": "blocked",
+            "status": "blocked",
+            "effective_agent_id": "",
+            "prior_agent_id": "",
+            "replacement_reason": "",
+            "role_surface_required": False,
+            "role_memory_seed_required": False,
+            "hydration_reason": "",
+            "blocker_reason": f"{BACKGROUND_COLLABORATION_REQUIRED_MESSAGE}: {background_blocker}",
+            "background_collaboration_required": True,
+            "created_at": now_iso(),
+            "sealed_bodies_visible": False,
+        }
+        assignments[assignment_id] = assignment
+        _event(
+            ledger,
+            "role_assignment_blocked",
+            assignment_id=assignment_id,
+            role=responsibility,
+            packet_id=packet_id,
+            disposition="blocked",
+            effective_agent_id="",
+            blocker_reason=assignment["blocker_reason"],
+        )
+        return _copy_jsonable(assignment)
     roles = _role_continuity_table(ledger)
     slot = roles.get(responsibility) if isinstance(roles.get(responsibility), Mapping) else None
     hydration_reason = ""
     if slot is None:
         slot, hydration_reason = _hydrate_role_slot_from_current_run_history(ledger, responsibility)
-    assignments = _role_assignment_table(ledger)
     for existing in reversed(list(assignments.values())):
         if not isinstance(existing, Mapping):
             continue
@@ -4080,6 +4199,7 @@ def _build_role_memory_seed(
         "packet_summaries": packet_rows,
         "active_blockers": blocker_rows,
         "pm_repair_decisions": pm_decisions,
+        "recent_role_report_summary": _recent_role_report_summary(ledger) if role == "pm" else [],
         "created_at": now_iso(),
     }
 
@@ -4226,6 +4346,7 @@ def lease_agent(
     _assert_not_terminal_lifecycle(ledger)
     if responsibility not in RESPONSIBILITIES:
         raise BlackBoxRuntimeError(f"unknown responsibility: {responsibility}")
+    _require_background_collaboration_authorized(ledger)
     assignments = _role_assignment_table(ledger)
     assignment: dict[str, Any]
     if assignment_id:
@@ -4400,6 +4521,342 @@ def _default_packet_acceptance_criteria(acceptance_criteria: list[str] | None) -
     return criteria
 
 
+def _role_result_requires_pm_visible_summary(*, responsibility: str, packet_kind: str) -> bool:
+    return (
+        packet_kind in PM_VISIBLE_SUMMARY_REQUIRED_PACKET_KINDS
+        and responsibility not in PM_VISIBLE_SUMMARY_EXEMPT_RESPONSIBILITIES
+    )
+
+
+def _packet_requires_pm_visible_summary(packet: Mapping[str, Any]) -> bool:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    return _role_result_requires_pm_visible_summary(
+        responsibility=str(envelope.get("responsibility") or ""),
+        packet_kind=str(envelope.get("packet_kind", "task")),
+    )
+
+
+def _pm_visible_summary_from_payload(payload: Mapping[str, Any]) -> list[str]:
+    raw = payload.get("pm_visible_summary")
+    if not isinstance(raw, list):
+        return []
+    summaries: list[str] = []
+    for item in raw:
+        if not isinstance(item, str):
+            return []
+        text = item.strip()
+        if not text:
+            return []
+        summaries.append(text)
+    return summaries
+
+
+def _pm_visible_summary_from_body(body: str) -> list[str]:
+    payload = _strict_json_object_from_body(body)
+    if not payload:
+        return []
+    return _pm_visible_summary_from_payload(payload)
+
+
+def _structured_required_repairs_from_payload(payload: Mapping[str, Any]) -> list[str]:
+    repairs: list[str] = []
+    raw_findings = payload.get("blocking_findings")
+    if isinstance(raw_findings, list):
+        for finding in raw_findings:
+            if not isinstance(finding, Mapping):
+                continue
+            repair = finding.get("required_repair")
+            if isinstance(repair, str) and repair.strip():
+                repairs.append(repair.strip())
+    direct = payload.get("required_repair")
+    if isinstance(direct, str) and direct.strip():
+        repairs.append(direct.strip())
+    deduped: list[str] = []
+    seen: set[str] = set()
+    for repair in repairs:
+        if repair in seen:
+            continue
+        seen.add(repair)
+        deduped.append(repair)
+    return deduped
+
+
+def _recent_role_report_summary(ledger: Mapping[str, Any], *, limit: int = PM_VISIBLE_SUMMARY_MAX_ENTRIES) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for result in reversed(list(ledger.get("results", {}).values())):
+        if not isinstance(result, Mapping):
+            continue
+        packet_id = str(result.get("packet_id") or "")
+        packet = ledger.get("packets", {}).get(packet_id)
+        if not isinstance(packet, Mapping) or not _packet_requires_pm_visible_summary(packet):
+            continue
+        summary = _pm_visible_summary_from_body(str(result.get("body", "")))
+        if not summary:
+            continue
+        status = str(result.get("status") or "")
+        semantic_decision = str(result.get("semantic_decision") or "")
+        if not (
+            result.get("accepted") is True
+            or status in {"semantic_blocked", "flowguard_blocked"}
+            or semantic_decision in {"block", "fail"}
+        ):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        rows.append(
+            {
+                "role": str(envelope.get("responsibility") or ""),
+                "packet_id": packet_id,
+                "result_id": str(result.get("result_id") or ""),
+                "packet_kind": str(envelope.get("packet_kind", "task")),
+                "summary": summary,
+                "summary_is_navigation_only": True,
+                "formal_judgement_requires_authorized_body_read": True,
+            }
+        )
+        if len(rows) >= limit:
+            break
+    return rows
+
+
+def _pm_packet_body_with_recent_role_reports(ledger: Mapping[str, Any], responsibility: str, body: str) -> str:
+    if responsibility != "pm":
+        return body
+    payload = _strict_json_object_from_body(body)
+    if payload is None:
+        return body
+    if "recent_role_report_summary" not in payload:
+        payload["recent_role_report_summary"] = _recent_role_report_summary(ledger)
+    payload.setdefault(
+        "recent_role_report_summary_policy",
+        {
+            "role_authored_summary_only": True,
+            "summary_is_navigation_only": True,
+            "required_body_reads_still_apply": True,
+            "runtime_may_synthesize_missing_summary": False,
+        },
+    )
+    return json.dumps(payload, indent=2, sort_keys=True)
+
+
+def _normalize_authorized_result_read_ref(
+    ledger: Mapping[str, Any],
+    raw: Mapping[str, Any],
+) -> dict[str, Any]:
+    result_id = str(raw.get("result_id") or "")
+    if not result_id:
+        raise BlackBoxRuntimeError("authorized_result_reads[] requires result_id")
+    result = _require(ledger.get("results", {}), result_id, "authorized result")
+    result_envelope = result.get("envelope", {}) if isinstance(result.get("envelope"), Mapping) else {}
+    body_hash = str(result_envelope.get("body_hash") or "")
+    body = str(result.get("body", ""))
+    if not body_hash or hash_text(body) != body_hash:
+        raise BlackBoxRuntimeError(f"authorized result body hash mismatch: {result_id}")
+    source_packet_id = str(result.get("packet_id") or raw.get("source_packet_id") or "")
+    source_packet = ledger.get("packets", {}).get(source_packet_id) if source_packet_id else None
+    source_envelope = (
+        source_packet.get("envelope", {})
+        if isinstance(source_packet, Mapping) and isinstance(source_packet.get("envelope"), Mapping)
+        else {}
+    )
+    allowed_roles_raw = raw.get("allowed_roles")
+    if not isinstance(allowed_roles_raw, list) or not allowed_roles_raw:
+        raise BlackBoxRuntimeError(f"authorized_result_reads[] requires explicit allowed_roles for {result_id}")
+    allowed_roles = sorted({str(role) for role in allowed_roles_raw if str(role) in RESPONSIBILITIES})
+    if len(allowed_roles) != len({str(role) for role in allowed_roles_raw}):
+        raise BlackBoxRuntimeError(f"authorized_result_reads[] has unknown allowed role for {result_id}")
+    return {
+        "result_id": result_id,
+        "source_packet_id": source_packet_id,
+        "source_packet_kind": str(source_envelope.get("packet_kind", "task")),
+        "source_role": str(source_envelope.get("responsibility") or raw.get("source_role") or ""),
+        "purpose": str(raw.get("purpose") or "authorized_result_read"),
+        "allowed_roles": allowed_roles,
+        "required_before_submit": bool(raw.get("required_before_submit") is True),
+        "body_hash": body_hash,
+        "body_visibility": "sealed",
+        "runtime_verifies_body_hash": True,
+    }
+
+
+def _normalize_authorized_result_reads(
+    ledger: Mapping[str, Any],
+    reads: list[Mapping[str, Any]] | None,
+) -> list[dict[str, Any]]:
+    normalized: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, tuple[str, ...]]] = set()
+    for raw in reads or []:
+        if not isinstance(raw, Mapping):
+            raise BlackBoxRuntimeError("authorized_result_reads[] entries must be objects")
+        row = _normalize_authorized_result_read_ref(ledger, raw)
+        key = (row["result_id"], row["purpose"], tuple(row["allowed_roles"]))
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized.append(row)
+    return normalized
+
+
+def _packet_body_with_authorized_result_reads(body: str, reads: list[dict[str, Any]]) -> str:
+    payload = _strict_json_object_from_body(body)
+    if reads:
+        if payload is None:
+            raise BlackBoxRuntimeError("authorized_result_reads requires a strict JSON packet body")
+        payload["authorized_result_reads"] = json.loads(json.dumps(reads, sort_keys=True))
+        return json.dumps(payload, indent=2, sort_keys=True)
+    if payload is not None and "authorized_result_reads" in payload:
+        raise BlackBoxRuntimeError("authorized_result_reads must be issued by the runtime envelope")
+    return body
+
+
+def _merge_authorized_result_reads(
+    existing: list[Mapping[str, Any]],
+    additions: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    merged: dict[tuple[str, str, tuple[str, ...]], dict[str, Any]] = {}
+    for row in list(existing) + list(additions):
+        if not isinstance(row, Mapping):
+            continue
+        allowed = tuple(sorted(str(role) for role in row.get("allowed_roles", []) if str(role)))
+        key = (str(row.get("result_id") or ""), str(row.get("purpose") or ""), allowed)
+        if not key[0] or not allowed:
+            continue
+        merged[key] = json.loads(json.dumps(dict(row), sort_keys=True))
+    return list(merged.values())
+
+
+def _attach_authorized_result_reads_to_packet(
+    ledger: dict[str, Any],
+    packet_id: str,
+    reads: list[Mapping[str, Any]],
+) -> None:
+    if not reads:
+        return
+    packet = _require(ledger["packets"], packet_id, "packet")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    if not isinstance(envelope, dict):
+        raise BlackBoxRuntimeError("packet envelope is missing")
+    existing = envelope.get("authorized_result_reads", [])
+    if not isinstance(existing, list):
+        raise BlackBoxRuntimeError("packet authorized_result_reads must be a list")
+    normalized = _normalize_authorized_result_reads(ledger, list(reads))
+    merged = _merge_authorized_result_reads(existing, normalized)
+    body = _packet_body_with_authorized_result_reads(str(packet.get("body", "")), merged)
+    body_hash = hash_text(body)
+    packet["body"] = body
+    envelope["authorized_result_reads"] = merged
+    envelope["body_hash"] = body_hash
+
+
+def _authorized_read_for_result(
+    ledger: Mapping[str, Any],
+    result_id: str,
+    *,
+    allowed_roles: list[str],
+    purpose: str,
+    required_before_submit: bool = True,
+) -> dict[str, Any]:
+    return _normalize_authorized_result_read_ref(
+        ledger,
+        {
+            "result_id": result_id,
+            "allowed_roles": allowed_roles,
+            "purpose": purpose,
+            "required_before_submit": required_before_submit,
+        },
+    )
+
+
+def _blocker_authorized_result_reads(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+    *,
+    allowed_roles: list[str],
+    purpose: str,
+    required_before_submit: bool = True,
+) -> list[dict[str, Any]]:
+    result_id = str(blocker.get("result_id") or "")
+    if not result_id:
+        return []
+    if not isinstance(ledger.get("results", {}).get(result_id), Mapping):
+        return []
+    return [
+        _authorized_read_for_result(
+            ledger,
+            result_id,
+            allowed_roles=allowed_roles,
+            purpose=purpose,
+            required_before_submit=required_before_submit,
+        )
+    ]
+
+
+def _packet_authorized_result_reads(packet: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    raw = envelope.get("authorized_result_reads", [])
+    if not raw:
+        return []
+    if not isinstance(raw, list):
+        return []
+    return [row for row in raw if isinstance(row, Mapping)]
+
+
+def _has_result_body_open_receipt(
+    packet: Mapping[str, Any],
+    *,
+    lease_id: str,
+    responsibility: str,
+    result_id: str,
+    body_hash: str,
+) -> bool:
+    receipts = packet.get("authorized_result_read_receipts", [])
+    if not isinstance(receipts, list):
+        return False
+    for receipt in receipts:
+        if not isinstance(receipt, Mapping):
+            continue
+        if (
+            receipt.get("lease_id") == lease_id
+            and receipt.get("responsibility") == responsibility
+            and receipt.get("result_id") == result_id
+            and receipt.get("body_hash") == body_hash
+        ):
+            return True
+    return False
+
+
+def _required_authorized_result_read_blockers(
+    ledger: Mapping[str, Any],
+    *,
+    lease: Mapping[str, Any],
+    packet: Mapping[str, Any],
+) -> list[str]:
+    blockers: list[str] = []
+    responsibility = str(lease.get("responsibility") or "")
+    for row in _packet_authorized_result_reads(packet):
+        if row.get("required_before_submit") is not True:
+            continue
+        result_id = str(row.get("result_id") or "")
+        body_hash = str(row.get("body_hash") or "")
+        allowed_roles = row.get("allowed_roles")
+        if not isinstance(allowed_roles, list) or responsibility not in {str(role) for role in allowed_roles}:
+            blockers.append(f"required_result_body_not_authorized:{result_id}")
+            continue
+        result = ledger.get("results", {}).get(result_id)
+        result_envelope = result.get("envelope", {}) if isinstance(result, Mapping) and isinstance(result.get("envelope"), Mapping) else {}
+        if not isinstance(result, Mapping) or hash_text(str(result.get("body", ""))) != body_hash or result_envelope.get("body_hash") != body_hash:
+            blockers.append(f"required_result_body_hash_mismatch:{result_id}")
+            continue
+        if not _has_result_body_open_receipt(
+            packet,
+            lease_id=str(lease.get("lease_id") or ""),
+            responsibility=responsibility,
+            result_id=result_id,
+            body_hash=body_hash,
+        ):
+            blockers.append(f"required_result_body_not_opened:{result_id}")
+    return blockers
+
+
 def issue_task_packet(
     ledger: dict[str, Any],
     responsibility: str,
@@ -4417,6 +4874,7 @@ def issue_task_packet(
     route_scope: str = "",
     acceptance_criteria: list[str] | None = None,
     node_context_package_id: str = "",
+    authorized_result_reads: list[Mapping[str, Any]] | None = None,
 ) -> str:
     _assert_not_terminal_lifecycle(ledger)
     if ledger.get("active_route_version") is None:
@@ -4426,6 +4884,9 @@ def issue_task_packet(
     if packet_kind not in PACKET_KINDS:
         raise BlackBoxRuntimeError(f"unknown packet kind: {packet_kind}")
     packet_id = preassigned_packet_id or _next_id(ledger, "packet")
+    normalized_result_reads = _normalize_authorized_result_reads(ledger, authorized_result_reads)
+    body = _pm_packet_body_with_recent_role_reports(ledger, responsibility, body)
+    body = _packet_body_with_authorized_result_reads(body, normalized_result_reads)
     body_hash = hash_text(body)
     envelope = {
         "packet_id": packet_id,
@@ -4447,6 +4908,8 @@ def issue_task_packet(
         "body_visibility": "sealed",
         "source_generation": ledger["source_generation"],
     }
+    if normalized_result_reads:
+        envelope["authorized_result_reads"] = normalized_result_reads
     envelope["output_contract"] = control_surface.build_packet_output_contract(
         packet_id=packet_id,
         responsibility=responsibility,
@@ -4454,6 +4917,12 @@ def issue_task_packet(
         route_version=int(ledger["active_route_version"]),
         source_generation=int(ledger["source_generation"]),
     )
+    if _role_result_requires_pm_visible_summary(responsibility=responsibility, packet_kind=packet_kind):
+        output_contract = dict(envelope["output_contract"])
+        output_contract["pm_visible_summary_required"] = True
+        output_contract["pm_visible_summary_shape"] = "non_empty_string_list"
+        output_contract["runner_may_synthesize_pm_visible_summary"] = False
+        envelope["output_contract"] = output_contract
     ledger["packets"][packet_id] = {
         "packet_id": packet_id,
         "status": "open",
@@ -4510,6 +4979,75 @@ def ack_lease(ledger: dict[str, Any], lease_id: str, packet_id: str) -> None:
     lease["ack_received_at"] = now_iso()
     packet["status"] = "acknowledged"
     _event(ledger, "lease_ack", lease_id=lease_id, packet_id=packet_id)
+
+
+def open_result_body_for_role(
+    ledger: dict[str, Any],
+    packet_id: str,
+    lease_id: str,
+    result_id: str,
+) -> dict[str, Any]:
+    _assert_not_terminal_lifecycle(ledger)
+    packet = _require(ledger["packets"], packet_id, "packet")
+    lease = _require(ledger["leases"], lease_id, "lease")
+    result = _require(ledger["results"], result_id, "result")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    if packet.get("assigned_lease_id") != lease_id:
+        raise BlackBoxRuntimeError("lease cannot open this sealed result body")
+    if lease.get("status") != "active":
+        raise BlackBoxRuntimeError("inactive lease cannot open sealed result body")
+    if lease.get("packet_id") != packet_id:
+        raise BlackBoxRuntimeError("lease packet mismatch")
+    if lease.get("responsibility") != envelope.get("responsibility"):
+        raise BlackBoxRuntimeError("lease responsibility does not match packet")
+    if not lease.get("ack_received"):
+        raise BlackBoxRuntimeError("lease must ACK before opening sealed result body")
+    if packet.get("accepted_result_id") or packet.get("status") in {"accepted", "quarantined_after_route_mutation"}:
+        raise BlackBoxRuntimeError("accepted or stale packet cannot open result body")
+    authorized = None
+    responsibility = str(lease.get("responsibility") or "")
+    for row in _packet_authorized_result_reads(packet):
+        if str(row.get("result_id") or "") != result_id:
+            continue
+        allowed_roles = row.get("allowed_roles")
+        if isinstance(allowed_roles, list) and responsibility in {str(role) for role in allowed_roles}:
+            authorized = row
+            break
+    if authorized is None:
+        raise BlackBoxRuntimeError("result body is not authorized for this role packet")
+    result_envelope = result.get("envelope", {}) if isinstance(result.get("envelope"), Mapping) else {}
+    body = str(result.get("body", ""))
+    body_hash = str(result_envelope.get("body_hash") or "")
+    expected_hash = str(authorized.get("body_hash") or "")
+    if not body_hash or body_hash != expected_hash or hash_text(body) != expected_hash:
+        raise BlackBoxRuntimeError("authorized result body hash mismatch")
+    receipt_id = _next_id(ledger, "result_read")
+    receipt = {
+        "schema_version": "black_box_flowpilot.result_body_open_receipt.v1",
+        "receipt_id": receipt_id,
+        "packet_id": packet_id,
+        "lease_id": lease_id,
+        "responsibility": responsibility,
+        "result_id": result_id,
+        "source_packet_id": str(result.get("packet_id") or ""),
+        "purpose": str(authorized.get("purpose") or "authorized_result_read"),
+        "body_hash": body_hash,
+        "opened_at": now_iso(),
+        "current_run_only": True,
+    }
+    packet.setdefault("authorized_result_read_receipts", []).append(receipt)
+    result.setdefault("body_open_receipts", []).append(receipt)
+    _event(
+        ledger,
+        "sealed_result_body_opened",
+        packet_id=packet_id,
+        lease_id=lease_id,
+        responsibility=responsibility,
+        result_id=result_id,
+        body_hash=body_hash,
+        receipt_id=receipt_id,
+    )
+    return {"body": body, "receipt": receipt}
 
 
 def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, status: str) -> None:
@@ -4701,6 +5239,17 @@ def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result:
     return ""
 
 
+def _pm_visible_summary_contract_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> str:
+    if not _packet_requires_pm_visible_summary(packet):
+        return ""
+    payload = _strict_json_object_from_body(str(result.get("body", "")))
+    if not payload:
+        return "packet result requires a current strict JSON object"
+    if not _pm_visible_summary_from_payload(payload):
+        return "formal role result requires role-authored pm_visible_summary as a non-empty list of non-empty strings"
+    return ""
+
+
 def _current_result_submission_contract_violation(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
@@ -4713,6 +5262,9 @@ def _current_result_submission_contract_violation(
     outcome_violation = _strict_packet_outcome_contract_violation(packet, result)
     if outcome_violation:
         return outcome_violation
+    summary_violation = _pm_visible_summary_contract_violation(packet, result)
+    if summary_violation:
+        return summary_violation
     if packet_kind == "task" and route_scope == "planning":
         try:
             route_plan = _parse_strict_route_plan(body)
@@ -4785,9 +5337,13 @@ def _block_result_and_reissue_current_packet_family(
                 "route_node_id": str(envelope.get("route_node_id") or ""),
                 "acceptance_criteria": list(envelope.get("acceptance_criteria") or []),
                 "contract": _copy_jsonable(envelope.get("output_contract") or {}),
+                "required_result_body_fields": ["decision", "pm_visible_summary"]
+                if _packet_requires_pm_visible_summary(packet)
+                else ["decision"],
                 "instruction": (
                     "Submit a fresh current-contract result for the same packet family. "
-                    "Do not reuse obsolete field names, wrapper shapes, fallback evidence, or prior blocked text as passing evidence."
+                    "Do not reuse obsolete field names, wrapper shapes, fallback evidence, or prior blocked text as passing evidence. "
+                    "When pm_visible_summary is required, the producing role must write it directly; runtime cannot synthesize it."
                 ),
             },
             indent=2,
@@ -5470,6 +6026,15 @@ def _ensure_flowguard_packet_for_task_result(
         route_scope=str(packet["envelope"].get("route_scope") or ""),
         acceptance_criteria=list(packet["envelope"].get("acceptance_criteria") or []),
         node_context_package_id=str(node_context.get("node_context_package_id") or ""),
+        authorized_result_reads=[
+            _authorized_read_for_result(
+                ledger,
+                str(result["result_id"]),
+                allowed_roles=["flowguard_operator"],
+                purpose="subject_result_for_flowguard_check",
+                required_before_submit=True,
+            )
+        ],
     )
     if repair_blocker_id:
         ledger["packets"][packet_id]["repair_blocker_id"] = repair_blocker_id
@@ -5597,6 +6162,17 @@ def _ensure_review_packet_for_task_result(
         route_scope=str(subject_packet["envelope"].get("route_scope") or ""),
         acceptance_criteria=list(subject_packet["envelope"].get("acceptance_criteria") or []),
         node_context_package_id=str(node_context.get("node_context_package_id") or ""),
+        authorized_result_reads=[
+            _authorized_read_for_result(
+                ledger,
+                target_result_id,
+                allowed_roles=["reviewer"],
+                purpose="subject_result_for_review",
+                required_before_submit=True,
+            )
+        ]
+        if target_result_id
+        else None,
     )
     if repair_blocker_id:
         ledger["packets"][packet_id]["repair_blocker_id"] = repair_blocker_id
@@ -5657,6 +6233,9 @@ def _result_mechanical_blockers(
     packet_body_hash: str | None,
 ) -> list[str]:
     blockers: list[str] = []
+    background_blocker = background_collaboration_blocker(ledger)
+    if background_blocker:
+        blockers.append(background_blocker)
     if lease["status"] != "active":
         blockers.append("closed_or_inactive_lease")
     if not lease.get("ack_received"):
@@ -5673,6 +6252,7 @@ def _result_mechanical_blockers(
         blockers.append("stale_evidence")
     if packet_body_hash is not None and packet_body_hash != packet["envelope"]["body_hash"]:
         blockers.append("body_hash_mismatch")
+    blockers.extend(_required_authorized_result_read_blockers(ledger, lease=lease, packet=packet))
     if packet.get("accepted_result_id"):
         blockers.append("duplicate_after_packet_accepted")
     same_lease_results = [

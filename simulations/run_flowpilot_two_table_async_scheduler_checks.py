@@ -26,9 +26,9 @@ REQUIRED_LABELS = tuple(
 HAZARD_EXPECTED_FAILURES = {
     model.CONTROLLER_OWNS_ROUTER_DEPENDENCIES: "Controller table owns Router dependency metadata",
     model.DAEMON_DUPLICATES_CONTROLLER_ROW_ON_RETRY: "daemon retry duplicated Controller row without deterministic idempotency",
-    model.REVIEWER_STARTS_BEFORE_STARTUP_SCOPE_CLEAN: "Reviewer startup fact review started before startup current-scope reconciliation was clean",
+    model.PM_INTAKE_STARTS_BEFORE_STARTUP_SCOPE_CLEAN: "PM startup intake started before startup current-scope reconciliation was clean",
     model.DAEMON_ENQUEUES_PAST_BARRIER: "Router daemon enqueued work after a barrier",
-    model.PM_ACTIVATION_REQUIRES_SECOND_GLOBAL_JOIN: "PM startup activation required redundant all-startup ACK join",
+    model.PM_STARTUP_INTAKE_REQUIRES_SECOND_GLOBAL_JOIN: "PM startup intake ACK required redundant all-startup ACK join",
     model.STATEFUL_RECEIPT_CLEARED_WITHOUT_POSTCONDITION: "Router reconciled stateful receipt without Router-visible postcondition evidence",
     model.LIVE_WAIT_WITH_EMPTY_CONTROLLER_PLAN: "live daemon wait exposed an empty Controller plan instead of a continuous standby row",
     model.PASSIVE_WAIT_WRITTEN_AS_CONTROLLER_WORK: "passive wait status was written as ordinary Controller work",
@@ -43,7 +43,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.NO_OUTPUT_REISSUE_WITHOUT_SUPERSEDE: "no-output replacement was not durable before continuation",
     model.UNAVAILABLE_WAIT_REISSUED_INSTEAD_OF_RECOVERY: "unavailable role did not enter role recovery",
     model.STARTUP_UI_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
-    model.STARTUP_ROLES_OR_HEARTBEAT_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
+    model.STARTUP_BACKGROUND_AGENT_OR_RESUME_BEFORE_DAEMON: "startup external actions ran before Router daemon became the startup driver",
     model.DAEMON_WAITS_FOR_CONTROLLER_CORE_DURING_STARTUP: "Router daemon waited for Controller core instead of driving startup work",
     model.ROUTER_SCHEDULER_LEDGER_PARTIAL_WRITE: "Router scheduler ledger was not valid JSON after daemon table write",
     model.CONTROLLER_ACTION_LEDGER_PARTIAL_WRITE: "Controller action ledger was not valid JSON after Controller table write",
@@ -53,16 +53,16 @@ HAZARD_EXPECTED_FAILURES = {
         "daemon consumed startup Controller receipt without syncing bootstrap flag, pending action, and Router row"
     ),
     model.STARTUP_BANNER_DISPLAY_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
-    model.STARTUP_HEARTBEAT_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
-    model.STARTUP_ROLE_SPAWN_GLOBAL_BARRIER: "startup role-slot dependency blocked unrelated startup queueing",
+    model.STARTUP_MANUAL_RESUME_BINDING_GLOBAL_BARRIER: "startup parallel obligation blocked unrelated startup queueing",
+    model.STARTUP_BACKGROUND_AGENT_LEASE_GLOBAL_BARRIER: "startup background-agent lease dependency blocked unrelated startup queueing",
     model.STARTUP_OBLIGATION_BEFORE_CONTROLLER_CORE: (
         "Controller-ledger startup obligation was exposed before Controller core loaded"
     ),
-    model.ROLE_DEPENDENT_WORK_BEFORE_ROLE_SLOTS_READY: (
-        "role-dependent startup work was queued before role slots were ready"
+    model.AGENT_DEPENDENT_WORK_BEFORE_BACKGROUND_AGENT_LEASE_READY: (
+        "agent-dependent startup work was queued before background-agent lease was ready"
     ),
-    model.REVIEWER_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN: (
-        "Reviewer startup fact review started before startup parallel obligations were reconciled"
+    model.PM_INTAKE_STARTS_BEFORE_PARALLEL_STARTUP_OBLIGATIONS_CLEAN: (
+        "PM startup intake started before startup parallel obligations were reconciled"
     ),
     model.TRUE_BARRIER_DEMOTED_TO_PARALLEL: "Router daemon continued queueing after a true barrier",
     model.DUPLICATE_STARTUP_PARALLEL_OBLIGATION_ROW: (
@@ -100,8 +100,8 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_table_prompt_top_down_order},{state.controller_table_prompt_receipt_duty},"
         f"{state.controller_table_prompt_foreground_while_running},{state.controller_table_prompt_authority_limits}|"
         f"startup_driver={state.minimal_run_shell_created},{state.daemon_first_driver_before_external_startup_actions},"
-        f"ui_before_daemon={state.startup_ui_opened_before_daemon},roles_before_daemon={state.startup_roles_started_before_daemon},"
-        f"heartbeat_before_daemon={state.startup_heartbeat_bound_before_daemon},"
+        f"ui_before_daemon={state.startup_ui_opened_before_daemon},background_agents_before_daemon={state.startup_background_agents_started_before_daemon},"
+        f"manual_resume_before_daemon={state.startup_manual_resume_binding_before_daemon},"
         f"daemon_drives_pre_core={state.daemon_drives_startup_before_controller_core},"
         f"daemon_waits_pre_core={state.daemon_waits_for_controller_core_without_startup_drive},"
         f"controller_core={state.controller_core_loaded},"
@@ -118,11 +118,11 @@ def _state_id(state: model.State) -> str:
         f"reconciled:{state.startup_parallel_obligation_reconciled},"
         f"clean:{state.startup_parallel_obligations_clean},"
         f"blocked_unrelated:{state.startup_parallel_obligation_blocked_unrelated_queue},"
-        f"heartbeat_open:{state.startup_heartbeat_obligation_open}|"
-        f"role_slots=open:{state.startup_role_slots_open},ready:{state.startup_role_slots_ready},"
-        f"blocked_unrelated:{state.startup_role_slots_blocked_unrelated_queue},"
-        f"role_independent:{state.role_independent_work_enqueued},"
-        f"role_dependent:{state.role_dependent_work_enqueued}|"
+        f"manual_resume_binding_open:{state.startup_manual_resume_binding_open}|"
+        f"background_agent_lease=open:{state.startup_background_agent_lease_open},ready:{state.startup_background_agent_lease_ready},"
+        f"blocked_unrelated:{state.startup_background_agent_lease_blocked_unrelated_queue},"
+        f"agent_independent:{state.agent_independent_work_enqueued},"
+        f"agent_dependent:{state.agent_dependent_work_enqueued}|"
         f"unrelated_startup=available:{state.unrelated_startup_work_available},"
         f"enqueued:{state.unrelated_startup_work_enqueued}|"
         f"true_barrier={state.current_action_true_barrier},"
@@ -142,13 +142,13 @@ def _state_id(state: model.State) -> str:
         f"reconciled={state.router_marked_row_reconciled}|startup={state.startup_local_rows_clean},"
         f"{state.startup_prep_cards_sent},{state.startup_prep_acks_clean},"
         f"{state.startup_scope_reconciliation_checked},{state.startup_scope_reconciliation_clean},"
-        f"review={state.reviewer_startup_fact_review_started}|pm={state.reviewer_fact_report_recorded},"
-        f"{state.pm_startup_activation_card_sent},{state.pm_startup_activation_ack_clean},"
+        f"review={state.pm_startup_intake_started}|pm={state.user_intake_mail_delivered},"
+        f"{state.pm_startup_intake_card_sent},{state.pm_startup_intake_ack_clean},"
         f"single_ack={state.single_card_ack_return_resolved},"
         f"{state.single_card_controller_wait_row_reconciled},{state.single_card_scheduler_row_reconciled},"
         f"{state.single_card_wait_still_waiting_after_return_resolution},"
         f"{state.single_card_scheduler_still_waiting_after_return_resolution},"
-        f"decision={state.pm_activation_decision_accepted},second_join={state.pm_activation_second_global_join_required},"
+        f"decision={state.pm_startup_intake_ack_recorded},second_join={state.pm_startup_intake_second_global_join_required},"
         f"route={state.route_work_started}|running={state.flowpilot_still_running},{state.running_wait_state_kind}|"
         f"passive_wait={state.passive_wait_status_present},"
         f"ordinary_row={state.passive_wait_written_as_ordinary_controller_row},"
@@ -336,3 +336,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
+

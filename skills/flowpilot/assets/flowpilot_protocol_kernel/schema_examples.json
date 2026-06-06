@@ -17,7 +17,7 @@
     "status": "active",
     "bound_packet_id": "task-001",
     "created_at": "2026-05-29T00:00:00Z",
-    "last_heartbeat_at": "2026-05-29T00:02:00Z",
+    "current_liveness_verified_at": "2026-05-29T00:02:00Z",
     "closed_reason": null
   },
   "task_packet_envelope": {

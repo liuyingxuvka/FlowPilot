@@ -96,6 +96,9 @@ Allowed actions:
   formal return metadata exists but the runtime has not released the wait or
   exposed a next duty, report the control-plane stuck status instead of
   continuing to wait silently;
+- when daemon work-board rows are involved, reread daemon status, the
+  Controller action ledger, and receipts before deciding whether a row is
+  complete. If a daemon table or row is not valid JSON, wait for the next daemon tick and do not record corruption from a partial read;
 - if normal FlowPilot control flow itself appears broken, stuck, looping, or
   unable to produce a legal next action, and ordinary PM/control-blocker/packet
   repair is unavailable or contradictory, read

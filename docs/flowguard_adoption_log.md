@@ -20086,6 +20086,41 @@ to identify unsupported historical-layer branches that should be deleted.
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
+
+## flowpilot-current-startup-trunk-cleanup - contract lock
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: remove legacy FlowPilot startup gates while preserving the current packet/lease/result trunk and required blocker/repair/stop paths.
+- Status: in progress
+- Skill decision: OpenSpec apply with FlowGuard existing-model preflight, DevelopmentProcessFlow, and FieldLifecycleMesh grounding.
+- Started: 2026-06-06T00:00:00+00:00
+- FlowGuard package version: 0.40.11
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/startup_pm_review_model.py`
+- `simulations/prompt_isolation_model.py`
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/flowpilot_field_mesh_model.py`
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+
+### Current Contract
+- Startup has only Runtime/Router mechanical entry before PM work: run record, startup input seal, display status, and current-run audit.
+- Startup has no Reviewer startup fact gate and no PM startup activation gate.
+- Background and parallel role work remain required current FlowPilot capability; host/UI inability to open required roles becomes a structured block or stop, not a single-agent fallback.
+- Runtime/Router owns mechanical checks for fields, hashes, paths, current run/node/packet/result ids, role-agent bindings, output contract shape, and ledger absorption.
+- Reviewer owns semantic quality only after Runtime accepts mechanical validity.
+- FlowGuard operator owns process/model/state reachability, loop, stale-evidence, and route-change risk.
+- PM owns disposition after reading Runtime mechanical evidence and Reviewer/FlowGuard/Worker results: absorb, repair, block, stop, or advance.
+
+### Pending Evidence
+- Focused router/runtime tests.
+- Fake-project rehearsal checks.
+- Field contract and FieldLifecycleMesh checks.
+- Information-flow and project-control information-flow checks.
+- Meta and capability checks.
+- Install, topology, and local sync checks.
+
 ## startup-intake-single-background-agent-option - FlowPilot startup UI simplification
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -21033,6 +21068,118 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+
+
+## flowpilot-strict-maintenance-audit-20260605 - Strict FlowGuard maintenance audit and small repairs
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user requested latest strict FlowGuard maintenance with no fallback/compatibility paths, test/model additions, HFF split assessment, and direct repair of small issues.
+- Status: scoped_maintenance_validated_final_confidence_blocked_on_live_run
+- FlowGuard: package 0.40.9, schema 1.0
+
+### Findings
+- No active `.flowpilot/current.json` exists in this checkout; live-run checks are scoped no-current projections and cannot support final live confidence.
+- Missing current pointer is now handled as no live-run evidence for process liveness, control-plane friction, cross-plane friction, and daemon reconciliation rather than runner failure or newest-run fallback.
+- Cross-plane live audit rejects `active_run_id` / `active_run_root` legacy aliases instead of translating them.
+- Prompt-boundary evidence now covers daemon pre/post split, `controller-receipt` rows, startup intake return to daemon work board, and ACK-does-not-complete packet/work-card behavior.
+- Information-flow alignment is green with current PM opened-result-body, required recheck, controller-repair, break-glass, resume, role recovery, closure, and route-mutation evidence.
+- Four HFF/StructureMesh split items remain: `simulations/run_flowpilot_core_runtime_checks.py`, `simulations/run_flowpilot_information_flow_alignment_checks.py`, `skills/flowpilot/assets/flowpilot_new.py`, and `scripts/flowguard_project_topology.py`.
+- Final confidence is intentionally blocked by `live_run_audit_skipped`; no fake current run or live-confidence bypass was created.
+
+### Commands
+- OK: `python -m flowguard project-audit --root .` -> installed and project record both 0.40.9.
+- OK: `python simulations/run_flowpilot_process_liveness_checks.py --json --no-write-results`.
+- OK: `python simulations/run_flowpilot_control_plane_friction_checks.py --json-out simulations/flowpilot_control_plane_friction_results.json`.
+- OK: `python simulations/run_flowpilot_cross_plane_friction_checks.py --json-out simulations/flowpilot_cross_plane_friction_results.json`.
+- OK: `python simulations/run_flowpilot_prompt_boundary_checks.py --json-out simulations/flowpilot_prompt_boundary_results.json`.
+- OK: `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> full coverage remains false only for four deferred structure splits.
+- OK: `python scripts/run_flowguard_coverage_sweep.py --timeout-seconds 60 --json-out simulations/flowpilot_full_model_coverage_sweep_results.json` -> 140 runners parsed; only `flowpilot_final_confidence_gate` is not ok.
+- OK: `python simulations/run_flowpilot_full_model_coverage_inventory.py`.
+- Expected blocker: `python simulations/run_flowpilot_final_confidence_gate_checks.py --json-out simulations/flowpilot_final_confidence_gate_results.json` -> blocked by `live_run_audit_skipped`.
+- OK: `python -m pytest tests/test_flowpilot_information_flow_alignment.py -q` -> 15 passed.
+- OK: `python -m unittest tests.test_flowpilot_full_model_test_gap_closure` -> 14 tests passed.
+- OK: `python -m unittest tests.test_flowpilot_core_runtime` -> 56 tests passed.
+- OK: `python scripts/flowguard_project_topology.py build` -> 140 models, 930 code surfaces, 350 test commands, 2420 known-bad signals.
+- OK: `python scripts/flowguard_project_topology.py check` -> findings empty, source_count 955.
+
+### Skipped Steps
+- No compatibility parser, old-router fallback, newest-run fallback, active-run alias support, fake current pointer, or live-confidence bypass was added.
+- No HFF/StructureMesh split was attempted for `flowpilot_new.py` or `flowguard_project_topology.py` because both are public/runtime entrypoint splits requiring user confirmation.
+- No Git commit, push, tag, release, deploy, install sync, or publication was performed.
+
+### Next Actions
+- Decide whether to authorize HFF/StructureMesh splits for `simulations/run_flowpilot_core_runtime_checks.py`, `simulations/run_flowpilot_information_flow_alignment_checks.py`, `skills/flowpilot/assets/flowpilot_new.py`, and `scripts/flowguard_project_topology.py`.
+- Run final confidence again only after a real `.flowpilot/current.json`/current run exists and live-run audit can inspect it.
+
+
+## flowpilot-project-control-information-flow-20260605 - FlowPilot information-flow model gates
+
+- Project: FlowPilot
+- Trigger reason: user observed repeated AI repair loops where blocker, reviewer, PM, and worker information was not carried forward completely enough to produce new progress.
+- Status: modeled_validated_topology_refreshed
+- Skill decision: predictive KB preflight + FlowGuard existing-model preflight + model-first function flow + DevelopmentProcessFlow
+- FlowGuard schema: 1.0
+- FlowGuard package version: 0.40.9
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/run_flowpilot_blocker_repair_information_flow_checks.py`
+- `simulations/flowpilot_blocker_repair_information_flow_results.json`
+- `simulations/flowpilot_project_control_information_flow_model.py`
+- `simulations/run_flowpilot_project_control_information_flow_checks.py`
+- `simulations/flowpilot_project_control_information_flow_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - OK, schema 1.0
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - OK, package 0.40.9
+- `python -m flowguard project-audit --root .` - OK, manifest package 0.40.9
+- `python -m py_compile` for the four new model/runner files - OK
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json` - OK, 4 accepted paths, 15 rejected hazards, 114 traces, 0 violations
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json` - OK, 7 accepted paths, 15 rejected hazards, 132 traces, 0 violations
+- `python scripts/flowguard_project_topology.py build` - OK, 139 models, 925 code surfaces, 350 test commands, 2409 known-bad signals
+- `python scripts/flowguard_project_topology.py check` - OK, findings empty, source_count 952
+
+### Findings
+- Focused child model now requires current blocker payload, PM current-blocker decision/body-open, reviewer required-repair/advice propagation, fresh PM repair package, worker semantic delta, success evidence, reviewer recheck binding, and same-blocker loop escape.
+- Parent model now covers interruption/manual resume, reopened continuation runs, Controller break-glass repair, route mutation, role recovery, follow-up blockers, terminal stop, and closure under one information-sufficiency rule.
+- Historical state remains history; old evidence cannot become current authority for progress.
+- Break-glass is accepted only after normal repair is blocked and only with bounded control-plane repair, PM authorization, validation evidence, and reintegration through PM/reviewer validation.
+- Route mutation requires blocker context, new route version, stale-evidence invalidation, replacement acceptance plan, and replay scope.
+- Closure with unresolved information gaps is rejected; terminal stop must preserve unresolved work visibility.
+
+### Counterexamples
+- `current_blocker_payload_missing_details`
+- `reviewer_required_repair_dropped`
+- `same_blocker_repeat_loop_allowed`
+- `resume_from_chat_history_loses_blocker`
+- `resume_loads_old_run_as_current`
+- `reopen_reuses_old_agent_ids_as_current`
+- `break_glass_unbounded_or_target_project_repair`
+- `break_glass_bypasses_pm_reviewer_reintegration`
+- `route_mutation_omits_blocker_or_acceptance_plan`
+- `route_mutation_does_not_invalidate_stale_evidence`
+- `role_recovery_without_current_packet_context`
+- `final_closure_with_unresolved_information_gap`
+- `historical_evidence_promoted_to_current`
+
+### Friction Points
+- The first parent model run accepted `historical_evidence_promoted_to_current` because the negative state lacked a surface classification. The model was corrected so historical evidence promotion fails globally, then the runner passed.
+- Topology reflects the dirty working tree, including peer-agent untracked PM-visible-summary model files.
+
+### Skipped Steps
+- No production runtime, prompt-card, install sync, GitHub push, tag, release, deploy, or public publication was performed.
+- This pass adds executable model gates and topology visibility; it does not claim concrete runtime/card/test conformance for every packet builder.
+
+### Risk Evidence Summary
+- Evidence supports two new FlowGuard model gates for information sufficiency and topology freshness. Future runtime/card repair work should use these gates before claiming repeated no-progress work is solved.
+
+### Next Actions
+- Use the parent model as the broad information-flow gate before claiming future FlowPilot repair/runtime changes solve repeated no-progress work.
+- Use the child model when modifying PM repair package, worker packet, reviewer recheck, or blocker propagation code.
 
 
 ## flowpilot-stopped-blocker-recheck-reattachment - stopped blocker recovery
@@ -23641,3 +23788,279 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowpilot-information-flow-software-alignment-20260605 - FlowPilot information-flow software alignment closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user challenged whether the new information-flow model had actually checked all required FlowPilot software information paths and whether any gaps required repair.
+- Status: modeled_aligned_repaired_validated
+- Skill decision: predictive KB preflight + FlowGuard existing-model preflight + model-first function flow + DevelopmentProcessFlow + Model-Test Alignment
+- FlowGuard schema: 1.0
+- FlowGuard package version: 0.40.9
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/run_flowpilot_blocker_repair_information_flow_checks.py`
+- `simulations/flowpilot_blocker_repair_information_flow_results.json`
+- `simulations/flowpilot_project_control_information_flow_model.py`
+- `simulations/run_flowpilot_project_control_information_flow_checks.py`
+- `simulations/flowpilot_project_control_information_flow_results.json`
+- `simulations/run_flowpilot_information_flow_alignment_checks.py`
+- `simulations/flowpilot_information_flow_alignment_results.json`
+
+### Commands
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` - OK, 10 obligations, 43 binding rows, 21 code contracts, 27 test evidence rows, 13 marker checks, 0 findings.
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json` - OK, 4 accepted paths, 15 rejected hazards, 114 traces, 0 violations.
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json` - OK, 7 accepted paths, 15 rejected hazards, 132 traces, 0 violations.
+- `python -m pytest tests/test_flowpilot_information_flow_alignment.py -q` - OK, 15 passed.
+- `python -m unittest -v tests.router_runtime.resume.ResumeRuntimeTests.test_resume_reentry_loads_state_before_resume_cards tests.router_runtime.resume.ResumeRuntimeTests.test_resume_ambiguous_state_blocks_continue_without_recovery_evidence tests.router_runtime.resume.ResumeRuntimeTests.test_role_recovery_reissues_missing_obligations_in_original_order tests.router_runtime.resume.ResumeRuntimeTests.test_stale_role_recovery_report_is_not_reclaimed_for_new_transaction` - OK, 4 passed.
+- `python -m py_compile simulations/run_flowpilot_information_flow_alignment_checks.py tests/test_flowpilot_information_flow_alignment.py tests/router_runtime/resume.py` - OK.
+
+### Findings
+- The model-only evidence was not enough to answer the user's question; a separate information-flow alignment runner now binds model obligations to runtime owners, prompt/card markers, and concrete test evidence.
+- The alignment runner covers blocker-to-PM payloads, PM repair package contents, worker repair deltas, reviewer recheck/follow-up blockers, resume current authority, reopen historical/current separation, break-glass bounded reintegration, route mutation replay scope, role recovery current-packet binding, and unresolved-gap closure stops.
+- A software-evidence gap was closed with `test_pm_result_disposition_requires_opened_result_body`, which directly verifies that PM result disposition requires the PM to open the current result body and verify the hash before deciding.
+- Resume role recovery tests no longer rely on a hard-coded six-role count; they now assert coverage of `router.RUNTIME_ROLE_KEYS` and distinguish replacement versus heartbeat rehydration receipt phases.
+- Prompt manifest hashes were refreshed after peer prompt edits so PromptStore can still load the packet identity, output contract, and heartbeat resume prompts during information-flow replay.
+
+### Counterexamples
+- `information_flow_unbound_code_contract`
+- `pm_result_disposition_without_opened_body`
+- `resume_role_recovery_hardcoded_role_count`
+- `same_work_repeated_with_no_new_info`
+- `historical_evidence_promoted_to_current`
+
+### Friction Points
+- The alignment runner initially exposed missing bindings rather than runtime behavior failures; those gaps were converted into direct tests and evidence rows.
+- A stricter resume receipt phase assertion had to be corrected because valid recovery may include both `missing_agent_replacement` and `heartbeat_rehydration` receipts in the same resume tick.
+
+### Skipped Steps
+- No compatibility parser, old-router fallback, newest-run fallback, fake current pointer, Git push, tag, release, deploy, install sync, or public publication was performed.
+- This pass does not claim full release/install synchronization or semantic proof for every private helper branch; it claims current information-flow model/code/test alignment for the declared obligations.
+
+### Risk Evidence Summary
+- Evidence supports the user's requested information-flow sufficiency check at the model, code-contract, source-marker, and focused-test layers. Current declared gaps are closed for the modeled obligations; release-level confidence still needs the separate release/install/live-run gates.
+
+### Next Actions
+- Use `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` before claiming future FlowPilot repair, resume, break-glass, route mutation, role recovery, or closure changes have enough information to avoid repeated no-progress work.
+
+## flowpilot-current-lifecycle-resume-on-demand-role-assignment-20260605 - Current lifecycle resume and on-demand role assignment refresh
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user corrected that new FlowPilot has no heartbeat and all roles are acquired on demand, then asked to inspect whether old workflow residue remained and refresh the model/software evidence.
+- Status: legacy_current_authority_residue_repaired_and_validated
+- Skill decision: predictive KB preflight + FlowGuard existing-model preflight + DevelopmentProcessFlow + Model-Test Alignment
+- FlowGuard schema: 1.0
+- FlowGuard package version: 0.40.9
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_prompt_boundary_model.py`
+- `simulations/run_flowpilot_prompt_boundary_checks.py`
+- `simulations/flowpilot_prompt_boundary_results.json`
+- `simulations/flowpilot_project_control_information_flow_model.py`
+- `simulations/run_flowpilot_project_control_information_flow_checks.py`
+- `simulations/flowpilot_project_control_information_flow_results.json`
+- `simulations/flowpilot_information_flow_alignment_obligations.py`
+- `simulations/flowpilot_information_flow_alignment_contracts.py`
+- `simulations/flowpilot_information_flow_alignment_evidence.py`
+- `simulations/flowpilot_information_flow_alignment_markers.py`
+- `simulations/run_flowpilot_information_flow_alignment_checks.py`
+- `simulations/flowpilot_information_flow_alignment_results.json`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - OK, schema 1.0.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` - OK, package 0.40.9.
+- `python -m flowguard project-audit --root .` - OK, installed package and project record match 0.40.9 / schema 1.0.
+- `python -m pytest tests/test_flowpilot_prompt_store.py tests/test_flowpilot_information_flow_alignment.py tests/test_flowpilot_new_entrypoint.py -q` - OK, 37 passed and 88 subtests passed.
+- `python simulations/run_flowpilot_prompt_boundary_checks.py --json-out simulations/flowpilot_prompt_boundary_results.json` - OK.
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json` - OK.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` - OK.
+- `python -m py_compile` on touched lifecycle, project-control, information-flow, prompt-store, and new-entrypoint model/test files - OK.
+- `python scripts/flowguard_project_topology.py build` - OK, 140 models, 930 code surfaces, 350 test commands, 2420 known-bad signals.
+- `python scripts/flowguard_project_topology.py check` - OK, findings empty, source_count 955.
+- `python simulations/run_meta_checks.py` - OK in `tmp/flowguard_background/run_meta_checks.*`, exit 0, completed, proof reuse not detected.
+- `python simulations/run_capability_checks.py` - OK in `tmp/flowguard_background/run_capability_checks.*`, exit 0, completed, proof reuse not detected.
+
+### Findings
+- Current `flowpilot_new.py`, new run/role command modules, and core runtime already had no heartbeat path; the problem was stale current-authority evidence in prompt/card text, handoff/preflight guidance, prompt manifest identity, and current models/tests.
+- Startup prompt authority is now `startup.lifecycle_resume`; manual resume uses `flowpilot_new.py resume --reason manual_resume`, current lifecycle guard, foreground duty, packet/lease/status state, and no fixed role restoration or role prewarm.
+- Information-flow alignment now binds resume and role dispatch to `flowpilot_new` resume, `resolve-role-assignment`, `lease-agent`, and core runtime assignment/lease owners instead of old Router load-resume/load-role-recovery contracts.
+- Prompt-boundary and project-control models now accept lifecycle resume and current-packet role assignment scenarios, and reject legacy heartbeat loops or role assignment without current packet/task context.
+- Remaining heartbeat references must be historical, negative, or legacy Router-only. They are not current workflow authority and cannot count as completion evidence.
+
+### Counterexamples
+- `startup.heartbeat_resume_treated_as_current_prompt`
+- `valid_heartbeat_resume_treated_as_current_scenario`
+- `legacy_router_resume_contract_counted_as_current_evidence`
+- `role_recovery_without_current_packet_context`
+- `fixed_role_set_restored_or_prewarmed_on_manual_resume`
+- `lifecycle_resume_continues_router_loop`
+
+### Friction Points
+- A previous information-flow alignment pass was green while still naming old heartbeat and role recovery surfaces, so this pass treated current-authority terminology and runtime ownership as part of the evidence contract rather than cosmetic wording.
+- Prompt manifest hashes needed refresh after prompt changes so strict PromptStore loading would reject stale prompt identities.
+- Legacy Router heartbeat action names remain in old-router files; this pass did not broadly rename them because the current repair is scoped to current runtime authority and the working tree contains peer-agent changes.
+
+### Skipped Steps
+- No compatibility parser, old-router fallback, newest-run fallback, fixed-role restoration, role prewarm, fake current pointer, Git commit, GitHub push, tag, release, deploy, install sync, or public publication was performed.
+- No claim is made that every legacy Router helper name was renamed; the claim is limited to current FlowPilot runtime kit, current information-flow models, current tests, and current handoff/preflight guidance.
+
+### Risk Evidence Summary
+- Evidence supports the current-contract claim that manual resume is lifecycle/foreground-duty based and role use is on-demand/current-packet scoped. Remaining heartbeat strings must stay historical, negative, or legacy-only and cannot be counted as current completion evidence.
+
+### Next Actions
+- Run the current information-flow alignment checker and prompt-boundary checker before future claims that resume, reopen, blocker repair, break-glass, route mutation, role assignment, or closure paths are complete.
+- If the legacy Router is later retired or migrated, use a separate StructureMesh/DevelopmentProcessFlow pass to rename or remove old heartbeat action names without mixing that change into current-runtime evidence repair.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-05T13:23:56+00:00
+- Ended: 2026-06-05T13:23:56+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.10
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-06T10:11:10+00:00
+- Ended: 2026-06-06T10:11:10+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.11
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+## flowpilot-current-startup-trunk-cleanup - final validation and sync
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: keep the 53-work-package current FlowPilot trunk, remove legacy startup gates/events/cards/output contracts, and preserve current blocker/repair/stop paths.
+- Status: completed
+- Skill decision: predictive_kb_preflight + openspec_apply_change + flowguard_existing_model_preflight + development_process_flow + field_lifecycle_mesh
+- Started: 2026-06-06T00:00:00+00:00
+- Ended: 2026-06-06T20:56:28+02:00
+- FlowGuard package: 0.40.11
+- FlowGuard schema: 1.0
+
+### Model Files
+- `simulations/startup_pm_review_model.py`
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/flowpilot_field_mesh_model.py`
+- `simulations/flowpilot_fake_project_rehearsal_model.py`
+- `simulations/flowpilot_role_output_runtime_model.py`
+- `simulations/prompt_isolation_model.py`
+- `skills/flowpilot/assets/packet_control_plane_model.py`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.40.11`
+- `python -m flowguard project-audit --root .` -> OK
+- `openspec validate enforce-mandatory-background-collaboration --strict` -> OK
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations/flowpilot_fake_project_rehearsal_results.json` -> OK; background log root `tmp/flowguard_background`, exit `0`, status `passed`, proof reused `false`
+- `python simulations/run_flowpilot_field_contract_checks.py --json-out simulations/flowpilot_field_contract_results.json` -> OK
+- `python simulations/run_flowpilot_field_mesh_checks.py --json-out simulations/flowpilot_field_mesh_results.json` -> OK
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` -> OK
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json` -> OK
+- `python simulations/run_meta_checks.py` -> OK; background log root `tmp/flowguard_background`, exit `0`, status `complete`
+- `python simulations/run_capability_checks.py` -> OK; background log root `tmp/flowguard_background`, exit `0`, status `complete`
+- `python scripts/check_install.py` -> OK after topology rebuild
+- `python scripts/flowguard_project_topology.py build` -> OK
+- `python scripts/flowguard_project_topology.py check` -> OK
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> OK
+- `python scripts/install_flowpilot.py --check --json` -> OK
+- `python scripts/audit_local_install_sync.py --json` -> OK
+
+### Findings
+- Current startup is Runtime/Router mechanical entry followed by PM first-round material work; Reviewer startup fact and PM startup activation are not current gates.
+- Runtime/Router owns mechanical validation for fields, hashes, paths, run/node/packet/result ids, role bindings, output contract shape, and ledger absorption.
+- Reviewer owns semantic quality only; FlowGuard operator owns process/model/state reachability; PM owns absorb, repair, block, stop, and advance disposition.
+- Current runtime kit manifest, install checks, prompt coverage, and role output support do not include the removed startup cards or output contracts.
+- Legacy startup event/output names remain only as rejected negative-test inputs or historical text, not as positive current-runtime paths.
+- No clearly wrong peer-agent work was found during the final scan; peer-agent changes were preserved and not reverted.
+
+### Counterexamples
+- `legacy_reviewer_startup_fact_gate_as_positive_path`
+- `legacy_pm_startup_activation_as_positive_path`
+- `legacy_startup_output_contract_supported`
+- `reviewer_mechanical_hash_path_field_audit`
+- `single_agent_fallback_for_background_unavailable`
+- `stale_result_promoted_after_updated_information`
+- `wrong_role_agent_id_accepted`
+- `background_agent_unavailable_silently_continues`
+
+### Friction Points
+- The fake project rehearsal initially hit a Windows non-empty-directory cleanup race in `route_mutation_recovery`; the scenario reset now retries the cleanup before rerunning, and the full rehearsal passed afterward.
+- A final local install audit first reported stale installed FlowPilot skill content; repo-owned install sync refreshed it and the follow-up audit passed.
+- The repository had many parallel peer-agent edits. This pass avoided broad rollback and limited intervention to current-contract cleanup, validation, and sync evidence.
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, or OpenSpec archive was performed.
+- Historical/template files that are not part of the current manifest or positive runtime support were not globally rewritten.
+
+### Risk Evidence Summary
+- Evidence supports the current-contract claim that the active FlowPilot trunk no longer uses the legacy startup fact gate, PM startup activation gate, old startup cards, or old startup output contracts, while the current packet/lease/result/PM disposition/Reviewer quality/Runtime frontier block and repair paths remain covered by fake-project and focused runtime/model checks.
+
+### Next Actions
+- Archive the OpenSpec change only after the user explicitly asks to finalize it.
+- Keep future startup or role changes on the current Runtime mechanical + PM disposition + Reviewer quality boundary, with legacy symbols accepted only in negative tests or historical documentation.

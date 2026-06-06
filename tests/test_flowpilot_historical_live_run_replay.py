@@ -40,7 +40,7 @@ def _package_background_proof_is_current(root: Path, proof_root: Path, name: str
     meta_path = test_tier_background.artifact_paths(proof_root, name)["meta"]
     meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
     reasons = list(evidence.get("reasons") or [])
-    current_run_id = current.get("run_id") or current.get("current_run_id")
+    current_run_id = current.get("run_id")
     if meta.get("run_id") != current_run_id:
         reasons.append("proof_run_id_not_current")
     return {
@@ -55,7 +55,7 @@ def _package_background_proof_is_current(root: Path, proof_root: Path, name: str
 def _historical_snapshot_claim_is_authoritative(root: Path, snapshot: dict[str, Any]) -> dict[str, Any]:
     current = read_json(root / ".flowpilot" / "current.json")
     reasons: list[str] = []
-    if snapshot.get("run_id") != (current.get("run_id") or current.get("current_run_id")):
+    if snapshot.get("run_id") != current.get("run_id"):
         reasons.append("snapshot_run_id_not_current")
     if snapshot.get("display_status") == "complete" and snapshot.get("router_pending_action"):
         reasons.append("display_projection_conflicts_with_router_pending_action")
@@ -246,8 +246,8 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
     def test_host_role_lifecycle_resume_requires_full_rehydrate_evidence(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
-        self.complete_startup_activation(root)
-        router.record_external_event(root, "heartbeat_or_manual_resume_requested")
+        self.complete_startup_runtime_entry(root)
+        router.record_external_event(root, "manual_resume_requested")
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "load_resume_state")
@@ -403,3 +403,4 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
 
 if __name__ == "__main__":
     unittest.main()
+

@@ -79,8 +79,9 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
             "lifecycle_terminal",
         ],
         "fake_ai_artifacts": [
-            "startup_fact_report",
-            "pm_startup_activation_decision",
+            "startup_intake_record",
+            "startup_mechanical_audit",
+            "startup_display_surface_status",
             "material_scan_packets",
             "product_behavior_model",
             "current_node_packet_body",
@@ -150,8 +151,8 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
             "cli_run_until_wait",
         ],
         "fake_ai_artifacts": [
-            "reviewer_startup_fact_report_envelope",
-            "pm_startup_activation_decision_envelope",
+            "startup_mechanical_audit_receipt",
+            "pm_startup_intake_card_ack",
         ],
         "router_entrypoints": [
             "router_cli.start",
@@ -164,7 +165,8 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
             "card_runtime.submit_card_ack",
         ],
         "required_ack_or_receipt_gates": [
-            "startup_fact_card_ack",
+            "startup_mechanical_audit_proof",
+            "pm_startup_intake_card_ack",
             "role_output_envelope_hashes",
             "router_cli_json_results",
         ],
@@ -176,7 +178,7 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
             "non_json_cli_result",
             "invented_external_event",
         ],
-        "expected_standard_state": "legal_wait_after_cli_recorded_startup_activation_event",
+        "expected_standard_state": "legal_wait_after_cli_recorded_pm_startup_intake_ack",
         "evidence_id": "real_router.cli.public_boundary_smoke",
         "evidence_test": (
             "FlowPilotRealRouterDryRunRehearsalTests."

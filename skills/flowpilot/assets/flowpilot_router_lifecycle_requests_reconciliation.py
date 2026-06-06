@@ -19,6 +19,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -114,37 +116,18 @@ def _reconcile_terminal_lifecycle_authorities(
     if continuation_path.exists():
         continuation = read_json(continuation_path)
         source_paths["continuation_binding"] = project_relative(project_root, continuation_path)
-        previous_heartbeat_active = bool(continuation.get("heartbeat_active"))
-        automation_id = str(continuation.get("host_automation_id") or "")
-        automation_path = Path.home() / ".codex" / "automations" / automation_id / "automation.toml" if automation_id else None
-        automation_exists = bool(automation_path and automation_path.exists())
-        automation_status = _host_automation_toml_status(automation_path) if automation_path and automation_exists else None
-        if automation_id and not automation_exists:
-            cleanup_status = "missing_verified"
-        elif automation_status in {"PAUSED", "DISABLED", "DELETED"}:
-            cleanup_status = "inactive_verified"
-        elif automation_id and previous_heartbeat_active:
-            cleanup_status = "external_cleanup_may_be_required"
-        else:
-            cleanup_status = "inactive_verified"
-        continuation["heartbeat_active"] = False
+        previous_manual_resume_binding_active = bool(continuation.get("manual_resume_binding_active"))
+        continuation["manual_resume_binding_active"] = False
         continuation["lifecycle_status"] = mode
         continuation["terminal_event"] = event
         continuation["terminal_reconciled_at"] = reconciled_at
-        continuation["host_automation_cleanup_status"] = cleanup_status
-        continuation["host_automation_status"] = automation_status
-        continuation["host_automation_toml_exists"] = automation_exists if automation_id else None
-        continuation["host_automation_checked_path"] = str(automation_path) if automation_path else None
         write_json(continuation_path, continuation)
         receipts.append(
             {
                 "authority": "continuation_binding",
                 "path": project_relative(project_root, continuation_path),
-                "previous_heartbeat_active": previous_heartbeat_active,
-                "heartbeat_active": False,
-                "host_automation_cleanup_status": continuation["host_automation_cleanup_status"],
-                "host_automation_status": continuation.get("host_automation_status"),
-                "host_automation_toml_exists": continuation["host_automation_toml_exists"],
+                "previous_manual_resume_binding_active": previous_manual_resume_binding_active,
+                "manual_resume_binding_active": False,
             }
         )
 

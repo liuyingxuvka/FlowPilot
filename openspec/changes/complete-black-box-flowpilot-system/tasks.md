@@ -10,7 +10,7 @@
 
 - [x] 2.1 Add a complete-system FlowGuard development-process model covering model, code, UI, host, fake-agent, historical replay, live-run, install, and git gates.
 - [x] 2.2 Add a complete-system FlowGuard code-structure model mapping FunctionBlocks to runtime modules and validation boundaries.
-- [x] 2.3 Add a complete-system UI-flow model for startup intake, Cockpit/status, chat fallback, pause/resume/stop, and sealed-body isolation.
+- [x] 2.3 Add a complete-system UI-flow model for startup intake, Cockpit/status, required chat display, pause/resume/stop, and sealed-body isolation.
 - [x] 2.4 Add a complete-system TestMesh model separating routine, release, background, historical replay, and live-host evidence.
 - [x] 2.5 Add model-test alignment evidence mapping complete-system requirements to focused tests.
 - [x] 2.6 Add no-write/routine runners and result artifacts for all complete-system FlowGuard models.

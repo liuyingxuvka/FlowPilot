@@ -1,0 +1,188 @@
+{
+  "flowguard": {
+    "dead_branch_count": 0,
+    "exception_branch_count": 0,
+    "ok": true,
+    "reachability_failure_count": 0,
+    "reachability_failures": [],
+    "summary": "sequences=8 initial_states=1 traces=108",
+    "violation_count": 0
+  },
+  "hazard_detection": {
+    "expected": [
+      "accepted_without_summary",
+      "blocked_without_reissue",
+      "generic_repair_overrode_concrete_repair",
+      "pm_packet_missing_summary_context",
+      "runner_synthesized_summary"
+    ],
+    "hazards": {
+      "accepted_without_summary": [
+        "role result accepted without required PM-visible summary",
+        "missing summary path completed without contract block and reissue"
+      ],
+      "blocked_without_reissue": [
+        "missing summary path completed without contract block and reissue",
+        "missing summary contract block did not reissue current packet family"
+      ],
+      "generic_repair_overrode_concrete_repair": [
+        "semantic blocker did not preserve concrete required repair",
+        "PM repair packet fell back to generic reviewer failure despite concrete repair"
+      ],
+      "pm_packet_missing_summary_context": [
+        "PM packet missed recent role-authored report summary"
+      ],
+      "runner_synthesized_summary": [
+        "runner synthesized PM-visible summary instead of relaying role-authored text",
+        "PM packet received summary context from a result that had no role-authored summary",
+        "missing summary path completed without contract block and reissue",
+        "PM summary context exists without role-authored summary"
+      ]
+    },
+    "ok": true
+  },
+  "model_id": "flowpilot_pm_visible_summary",
+  "model_test_alignment": {
+    "evidence": [
+      "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+      "tests/test_flowpilot_core_runtime.py",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+      "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md"
+    ],
+    "missing": [],
+    "obligations": {
+      "missing_summary_negative_test": true,
+      "pm_card_consumes_recent_summary": true,
+      "pm_summary_propagation_test": true,
+      "required_repair_to_pm_test": true,
+      "role_cards_require_summary": true,
+      "runtime_carries_recent_summary": true,
+      "runtime_prefers_required_repair": true,
+      "runtime_rejects_missing_summary": true,
+      "runtime_requires_pm_visible_summary": true
+    },
+    "ok": true
+  },
+  "ok": true,
+  "result_type": "flowpilot_pm_visible_summary_checks",
+  "target_plan": {
+    "failures": [],
+    "labels": [
+      "submit_role_result_without_summary",
+      "block_missing_summary_and_reissue_packet",
+      "complete_missing_summary_reissue",
+      "submit_passing_role_result_with_summary",
+      "accept_role_result_summary",
+      "issue_pm_packet_with_recent_summary",
+      "complete_passing_summary_handoff",
+      "submit_blocking_reviewer_result_with_required_repair",
+      "record_concrete_required_repair_blocker",
+      "issue_pm_repair_packet_with_summary_and_concrete_repair",
+      "complete_concrete_repair_handoff"
+    ],
+    "ok": true,
+    "paths": {
+      "blocking_summary": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "path": "blocking_summary",
+          "pm_packet_issued": true,
+          "pm_recommended_resolution": "replace stale lifecycle path with current lifecycle path",
+          "pm_summary_context_present": true,
+          "reissue_issued": false,
+          "required_repair_present": true,
+          "result_contract_blocked": false,
+          "role_result_accepted": false,
+          "semantic_blocking": true,
+          "status": "complete",
+          "summary_present": true
+        }
+      },
+      "missing_summary": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "path": "missing_summary",
+          "pm_packet_issued": false,
+          "pm_recommended_resolution": "",
+          "pm_summary_context_present": false,
+          "reissue_issued": true,
+          "required_repair_present": false,
+          "result_contract_blocked": true,
+          "role_result_accepted": false,
+          "semantic_blocking": false,
+          "status": "complete",
+          "summary_present": false
+        }
+      },
+      "passing_summary": {
+        "failures": [],
+        "ok": true,
+        "state": {
+          "path": "passing_summary",
+          "pm_packet_issued": true,
+          "pm_recommended_resolution": "",
+          "pm_summary_context_present": true,
+          "reissue_issued": false,
+          "required_repair_present": false,
+          "result_contract_blocked": false,
+          "role_result_accepted": true,
+          "semantic_blocking": false,
+          "status": "complete",
+          "summary_present": true
+        }
+      }
+    }
+  },
+  "test_mesh": {
+    "routine_gate": {
+      "ok": true
+    },
+    "rows": [
+      {
+        "evidence": [
+          "simulations/flowpilot_pm_visible_summary_model.py"
+        ],
+        "freshness": "current",
+        "id": "pm_visible_summary_flowguard_model",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "openspec/changes/enforce-pm-visible-role-summaries/tasks.md"
+        ],
+        "freshness": "current",
+        "id": "pm_visible_summary_target_plan",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "simulations/flowpilot_pm_visible_summary_model.py"
+        ],
+        "freshness": "current",
+        "id": "pm_visible_summary_hazard_replay",
+        "scope": "routine",
+        "status": "passed"
+      },
+      {
+        "evidence": [
+          "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+          "tests/test_flowpilot_core_runtime.py",
+          "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
+          "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+          "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+          "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md"
+        ],
+        "freshness": "current",
+        "id": "pm_visible_summary_model_test_alignment",
+        "scope": "routine",
+        "status": "passed"
+      }
+    ]
+  }
+}

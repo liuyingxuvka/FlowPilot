@@ -35,6 +35,8 @@ _BOUND_ROUTER: ModuleType | None = None
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     current = globals()
     local_names = current.get("_LOCAL_NAMES", set())
@@ -54,7 +56,7 @@ def _bound_router() -> ModuleType:
 
 OWNER_MODULE = 'flowpilot_router_startup_bootloader'
 
-def _complete_startup_daemon_bootloader_row(router: ModuleType, project_root: Path, bootstrap_state: dict[str, Any], scheduled_action: dict[str, Any], *, applied_action_type: str) -> dict[str, Any] | None:
+def _complete_startup_daemon_bootloader_row(router: ModuleType, project_root: Path, bootstrap_state: dict[str, Any], scheduled_action: dict[str, Any], *, applied_action_type: str, receipt_payload: dict[str, Any] | None=None) -> dict[str, Any] | None:
     _bind_router(router)
     if not router._daemon_scheduled_bootloader_action(scheduled_action):
         return None
@@ -73,7 +75,9 @@ def _complete_startup_daemon_bootloader_row(router: ModuleType, project_root: Pa
     if entry.get('router_reconciliation_status') == 'reconciled' and existing_reconciliation.get('source') == 'startup_bootloader_controller_receipt':
         scheduler_backfill = router._backfill_scheduler_row_from_reconciled_controller_action(project_root, run_root, run_state, entry, source='startup_bootloader_already_reconciled_scheduler_backfill')
         return {'controller_action_id': action_id, 'router_scheduler_row_id': row_id, 'already_reconciled': True, 'router_reconciliation': existing_reconciliation, 'scheduler_backfill': scheduler_backfill}
-    receipt = router._write_controller_receipt(project_root, run_root, run_state, action_id=action_id, status='done', payload={'source': 'startup_daemon_bootloader_apply', 'applied_action_type': applied_action_type, 'bootstrap_postcondition': scheduled_action.get('postcondition'), 'bootstrap_flag_satisfied': bool((bootstrap_state.get('flags') if isinstance(bootstrap_state.get('flags'), dict) else {}).get(str(scheduled_action.get('postcondition') or '')))})
+    payload = dict(receipt_payload or {})
+    payload.update({'source': 'startup_daemon_bootloader_apply', 'applied_action_type': applied_action_type, 'bootstrap_postcondition': scheduled_action.get('postcondition'), 'bootstrap_flag_satisfied': bool((bootstrap_state.get('flags') if isinstance(bootstrap_state.get('flags'), dict) else {}).get(str(scheduled_action.get('postcondition') or '')))})
+    receipt = router._write_controller_receipt(project_root, run_root, run_state, action_id=action_id, status='done', payload=payload)
     scheduled_reconciliation = router._reconcile_scheduled_controller_action_receipts(project_root, run_root, run_state)
     entry = read_json_if_exists(action_path)
     reconciliation = entry.get('router_reconciliation') if isinstance(entry.get('router_reconciliation'), dict) else {}

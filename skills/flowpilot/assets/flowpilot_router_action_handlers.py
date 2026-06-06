@@ -49,6 +49,7 @@ ACTION_HANDLERS: dict[str, ActionHandler] = {
     "confirm_controller_core_boundary": _apply_confirm_controller_core_boundary,
     CONTROLLER_DELIVERABLE_REPAIR_ACTION_TYPE: _apply_controller_deliverable_repair,
     "write_startup_mechanical_audit": _apply_write_startup_mechanical_audit,
+    "open_current_role_agent": _apply_open_current_role_agent,
     "inject_role_io_protocol": _apply_inject_role_io_protocol,
     "deliver_mail": _apply_deliver_mail,
     "controller_repair_work_packet": _apply_controller_repair_work_packet,
@@ -78,7 +79,6 @@ ACTION_HANDLERS: dict[str, ActionHandler] = {
     "recover_role_bindings": _apply_recover_role_bindings,
     "load_resume_state": _apply_load_resume_state,
     "rehydrate_role_bindings": _apply_rehydrate_role_bindings,
-    "create_heartbeat_automation": _apply_create_heartbeat_automation,
     "write_display_surface_status": _apply_write_display_surface_status,
     "handle_control_blocker": _apply_handle_control_blocker,
 }

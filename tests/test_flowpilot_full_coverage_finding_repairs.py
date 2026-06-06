@@ -234,9 +234,9 @@ class FlowPilotFullCoverageFindingRepairTests(unittest.TestCase):
             )
         )
 
-    def test_control_plane_audit_synthesizes_explicit_authority_from_index_for_old_snapshot(self) -> None:
+    def test_control_plane_audit_synthesizes_explicit_authority_from_index_for_current_snapshot(self) -> None:
         snapshot = control_audit._active_set_authority_snapshot_from_index(
-            current={"current_run_id": "run-a", "status": "stopped_by_user"},
+            current={"run_id": "run-a", "run_root": ".flowpilot/runs/run-a", "status": "stopped_by_user"},
             index={
                 "runs": [
                     {"run_id": "run-b", "run_root": ".flowpilot/runs/run-b", "status": "running"},

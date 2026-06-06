@@ -2,13 +2,13 @@
 
 - [x] 1.1 Verify FlowGuard importability, current worktree status, and current OpenSpec state.
 - [x] 1.2 Record the FlowGuard route: existing-model preflight, architecture reduction, model-test alignment, and development-process validation.
-- [x] 1.3 Classify old terms into rejected-test evidence, stale active specs, stale result artifacts, no-op hooks, current fallback mechanisms, or historical docs.
+- [x] 1.3 Classify old terms into rejected-test evidence, stale active specs, stale result artifacts, no-op hooks, current recovery mechanisms, or historical docs.
 
 ## 2. OpenSpec And Prompt Cleanup
 
 - [x] 2.1 Update active OpenSpec specs so retired inputs are rejected or audit-only, not accepted aliases.
 - [x] 2.2 Add the validation-artifact canonicalization contract.
-- [x] 2.3 Compress long runtime cards while preserving required role, runtime, FlowGuard, fallback, and sealed-body obligations.
+- [x] 2.3 Compress long runtime cards while preserving required role, runtime, FlowGuard, recovery, and sealed-body obligations.
 - [x] 2.4 Validate prompt/card coverage and current-only prompt boundaries.
 
 ## 3. Code And Evidence Cleanup

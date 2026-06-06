@@ -64,7 +64,7 @@ def bootstrap_state_path(project_root: Path, state: dict[str, Any] | None = None
     raw = current.get("startup_bootstrap_path")
     if raw:
         return project_root / str(raw)
-    raw_root = current.get("current_run_root") or current.get("active_run_root") or current.get("run_root")
+    raw_root = current.get("run_root")
     if raw_root:
         candidate = run_bootstrap_state_path(project_root / str(raw_root))
         if candidate.exists():

@@ -46,6 +46,8 @@ _OWNER_CHILD_MODULES = (
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     for child_module in _OWNER_CHILD_MODULES:
         child_module._bind_router(router)
@@ -68,8 +70,6 @@ from flowpilot_router_payload_contracts_startup import (
     _payload_contract,
     _terminal_summary_payload_contract,
     _display_surface_receipt_payload_contract,
-    _role_slots_payload_contract,
-    _heartbeat_payload_contract,
     _resume_role_rehydration_payload_contract,
 )
 

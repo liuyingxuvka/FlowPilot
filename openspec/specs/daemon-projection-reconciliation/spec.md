@@ -66,9 +66,9 @@ run stop.
 - **THEN** `.flowpilot/current.json`, `.flowpilot/index.json`, the run router
   state, the daemon status, and the daemon lock projection MUST agree that the
   run is terminal or stopped
-- **AND** visible next-step text MUST NOT describe creating heartbeat
-  automation, starting roles, startup intake, or route work as the active next
-  task.
+- **AND** visible next-step text MUST NOT describe creating unsupported
+  continuation automation, starting roles, startup intake, or route work as the
+  active next task.
 
 #### Scenario: Historical ledger rows remain
 - **WHEN** historical Controller ledger rows or retry rows remain after terminal

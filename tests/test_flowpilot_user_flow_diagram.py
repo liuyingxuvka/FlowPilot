@@ -25,8 +25,8 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         _write_json(
             root / ".flowpilot" / "current.json",
             {
-                "current_run_id": "run-test",
-                "current_run_root": ".flowpilot/runs/run-test",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
             },
         )
         _write_json(run_root / "state.json", {"active_route_id": "route-001"})
@@ -77,8 +77,8 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         _write_json(
             root / ".flowpilot" / "current.json",
             {
-                "current_run_id": "run-test",
-                "current_run_root": ".flowpilot/runs/run-test",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
             },
         )
         _write_json(run_root / "state.json", {"status": "controller_ready"})
@@ -174,7 +174,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
     def test_hidden_active_leaf_highlights_visible_parent_without_label_detail(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-hidden-active-"))
         run_root = root / ".flowpilot" / "runs" / "run-test"
-        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(root / ".flowpilot" / "current.json", {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"})
         _write_json(run_root / "state.json", {"active_route_id": "route-001"})
         _write_json(
             run_root / "routes" / "route-001" / "flow.json",
@@ -298,8 +298,8 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         current_path.write_text(
             json.dumps(
                 {
-                    "current_run_id": "run-test",
-                    "current_run_root": ".flowpilot/runs/run-test",
+                    "run_id": "run-test",
+                    "run_root": ".flowpilot/runs/run-test",
                 },
                 indent=2,
             ),
@@ -344,7 +344,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             }
             for index in range(1, 6)
         ]
-        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(root / ".flowpilot" / "current.json", {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"})
         _write_json(run_root / "state.json", {"active_route_id": "route-001"})
         _write_json(run_root / "routes" / "route-001" / "flow.draft.json", {"route_id": "route-001", "route_version": 7, "nodes": nodes})
         _write_json(
@@ -384,7 +384,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertEqual(diagnostic_payload["route_checklist_item_count"], 10)
         self.assertEqual(diagnostic_payload["route_sign_layout"], "route_nodes")
 
-    def test_route_state_snapshot_fallback_renders_real_route_nodes(self) -> None:
+    def test_route_state_snapshot_source_renders_real_route_nodes(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-snapshot-"))
         run_root = root / ".flowpilot" / "runs" / "run-test"
         nodes = [
@@ -396,7 +396,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
             }
             for index in range(1, 6)
         ]
-        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(root / ".flowpilot" / "current.json", {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"})
         _write_json(run_root / "state.json", {})
         _write_json(run_root / "execution_frontier.json", {"frontier_version": 4})
         _write_json(run_root / "routes" / "route-001" / "flow.json", {"route_id": "route-001", "route_version": 8, "nodes": []})
@@ -428,7 +428,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
     def test_deep_route_tree_renders_shallow_graph_with_active_path(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-deep-tree-"))
         run_root = root / ".flowpilot" / "runs" / "run-test"
-        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(root / ".flowpilot" / "current.json", {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"})
         _write_json(run_root / "state.json", {"active_route_id": "route-001"})
         _write_json(
             run_root / "routes" / "route-001" / "flow.json",
@@ -502,7 +502,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
     def test_large_canonical_route_renders_real_nodes_not_protocol_stage_graph(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-large-route-"))
         run_root = root / ".flowpilot" / "runs" / "run-test"
-        _write_json(root / ".flowpilot" / "current.json", {"current_run_id": "run-test", "current_run_root": ".flowpilot/runs/run-test"})
+        _write_json(root / ".flowpilot" / "current.json", {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"})
         _write_json(run_root / "state.json", {"active_route_id": "route-001"})
         nodes = [
             {
@@ -580,7 +580,7 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
 
     def test_missing_active_run_blocks_instead_of_falling_back_to_unsupported_state(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-missing-run-"))
-        _write_json(root / ".flowpilot" / "current.json", {"active_run_id": "missing-run"})
+        _write_json(root / ".flowpilot" / "current.json", {"run_id": "missing-run", "run_root": ".flowpilot/runs/missing-run"})
         self.write_unsupported_layout(root)
 
         payload = route_sign.generate(
@@ -603,13 +603,13 @@ class FlowPilotUserFlowDiagramTests(unittest.TestCase):
         self.assertIsNone(payload["active_route"])
         self.assertNotIn("unsupported-node", payload["mermaid"])
 
-    def test_invalid_active_run_root_blocks_instead_of_falling_back_to_unsupported_state(self) -> None:
+    def test_invalid_current_run_root_blocks_without_unsupported_state(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-route-sign-invalid-run-"))
         _write_json(
             root / ".flowpilot" / "current.json",
             {
-                "active_run_id": "bad-run",
-                "active_run_root": ".flowpilot/current.json",
+                "run_id": "bad-run",
+                "run_root": ".flowpilot/current.json",
             },
         )
         self.write_unsupported_layout(root)

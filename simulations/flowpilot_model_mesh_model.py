@@ -489,7 +489,7 @@ def _resolve_run_root(project_root: Path, run_id: str | None) -> Tuple[Path | No
     reasons: List[str] = []
     current = _read_json(project_root / ".flowpilot" / "current.json")
     if run_id is None and isinstance(current, Mapping):
-        run_id = str(current.get("current_run_id") or current.get("run_id") or "")
+        run_id = str(current.get("run_id") or "")
     if not run_id:
         reasons.append("no_current_run_id")
         return None, None, reasons
@@ -1013,7 +1013,7 @@ def project_live_run(project_root: str | Path = ".", run_id: str | None = None) 
         trusted_packet_ids=trusted_packet_ids,
     )
     terminal_run = (
-        _dict_get(current_state, ["current_run_id"]) == resolved_run_id
+        _dict_get(current_state, ["run_id"]) == resolved_run_id
         and _dict_get(current_state, ["status"]) in {"stopped_by_user", "cancelled", "terminal", "completed"}
     ) or _dict_get(router_state, ["status"]) in {"stopped_by_user", "cancelled", "terminal", "completed"}
     authorities_agree = _authorities_agree(frontier, packet_ledger, status_summary)
