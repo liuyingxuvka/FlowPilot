@@ -123,11 +123,9 @@ function Get-FileSha256([string]$Path) {
     }
 }
 
-function New-StartupAnswerMap([bool]$AgentsEnabled) {
+function New-StartupAnswerMap([bool]$BackgroundCollaborationAuthorized) {
     return @{
-        runtime_role_assistances = $(if ($AgentsEnabled) { "allow" } else { "single-agent" })
-        scheduled_continuation = "manual"
-        display_surface = "chat"
+        background_collaboration_authorized = $BackgroundCollaborationAuthorized
         provenance = "explicit_user_reply"
     }
 }
@@ -135,7 +133,7 @@ function New-StartupAnswerMap([bool]$AgentsEnabled) {
 function Write-StartupIntakeResult(
     [string]$Status,
     [string]$BodyText,
-    [bool]$AgentsEnabled,
+    [bool]$BackgroundCollaborationAuthorized,
     [string]$Language,
     [string]$LaunchMode = "interactive_native",
     [bool]$Headless = $false,
@@ -145,7 +143,7 @@ function Write-StartupIntakeResult(
     New-Item -ItemType Directory -Force -Path $outDir | Out-Null
 
     $recordedAt = Get-UtcNow
-    $answers = New-StartupAnswerMap $AgentsEnabled
+    $answers = New-StartupAnswerMap $BackgroundCollaborationAuthorized
     $source = if ($Headless) { "headless_startup_intake" } else { "native_wpf_startup_intake" }
     $receiptPath = Join-Path $outDir "startup_intake_receipt.json"
     $resultPath = Join-Path $outDir "startup_intake_result.json"
@@ -175,6 +173,41 @@ function Write-StartupIntakeResult(
             formal_startup_allowed = $FormalStartupAllowed
             receipt_path = Get-ProjectRelativePath $receiptPath
             controller_visibility = "cancel_status_only"
+            body_text_included = $false
+            recorded_at = $recordedAt
+        }
+        Write-JsonFile $resultPath $result
+        return $resultPath
+    }
+
+    if ($Status -eq "blocked") {
+        $receipt = @{
+            schema_version = "flowpilot.startup_intake_receipt.v1"
+            status = "blocked"
+            source = $source
+            ui_surface = "native_wpf_startup_intake"
+            launch_mode = $LaunchMode
+            headless = $Headless
+            formal_startup_allowed = $FormalStartupAllowed
+            language = $Language
+            startup_answers = $answers
+            confirmed_by_user = $false
+            cancelled_by_user = $false
+            block_reason = "background_collaboration_required"
+            recorded_at = $recordedAt
+        }
+        Write-JsonFile $receiptPath $receipt
+        $result = @{
+            schema_version = "flowpilot.startup_intake_result.v1"
+            status = "blocked"
+            source = $source
+            launch_mode = $LaunchMode
+            headless = $Headless
+            formal_startup_allowed = $FormalStartupAllowed
+            startup_answers = $answers
+            receipt_path = Get-ProjectRelativePath $receiptPath
+            controller_visibility = "block_status_only"
+            block_reason = "background_collaboration_required"
             body_text_included = $false
             recorded_at = $recordedAt
         }
@@ -636,10 +669,10 @@ $Xaml = @"
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,18,0" />
+                <TextBlock x:Name="BackgroundTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
+                <TextBlock x:Name="BackgroundBody" Text="Authorize FlowPilot to use on-demand background collaboration for current structured work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,18,0" />
               </StackPanel>
-              <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
+              <ToggleButton x:Name="BackgroundToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
             </Grid>
 
             <StackPanel>
@@ -711,8 +744,8 @@ $Names = @(
     "SettingsButton", "SettingsPopup", "EnglishLanguage", "ChineseLanguage",
     "SettingsTitle", "LanguageLabel", "SupportTitle", "SupportBody",
     "SupportLinkButton", "SupportNote", "TitleText", "RequestLabel",
-    "WorkRequest", "PlaceholderText", "AgentsTitle", "AgentsBody",
-    "AgentsToggle", "ConfirmButton", "StatusText"
+    "BackgroundTitle", "BackgroundBody", "BackgroundToggle",
+    "WorkRequest", "PlaceholderText", "ConfirmButton", "StatusText"
 )
 
 $Ui = @{}
@@ -731,11 +764,12 @@ $Copy = @{
         SupportBody = "Buy the developer a coffee via PayPal."
         SupportNote = "Support is voluntary and does not purchase technical support, warranty, priority service, commercial rights, or feature requests."
         RequestLabel = "Work request"
+        BackgroundTitle = "Background collaboration"
+        BackgroundBody = "Required: FlowPilot uses on-demand background collaboration for current structured work."
         Placeholder = "Write the instructions you want the AI to follow."
-        AgentsTitle = "Background collaboration"
-        AgentsBody = "Allow FlowPilot to use this environment's supported background workers for isolated role work."
         Confirm = "Confirm"
         Confirmed = "Startup intake recorded."
+        Blocked = "FlowPilot requires background collaboration and cannot continue while it is disabled."
     }
     zh = @{
         Window = "FlowPilot"
@@ -747,11 +781,12 @@ $Copy = @{
         SupportBody = "通过 PayPal 请开发者喝杯咖啡。"
         SupportNote = "支持是自愿的，不购买技术支持、保修、优先服务、商业权利或功能请求承诺。"
         RequestLabel = "工作要求"
+        BackgroundTitle = "后台协作"
+        BackgroundBody = "必需：FlowPilot 会为当前结构化工作按需使用后台协作。"
         Placeholder = "请写下给 AI 的工作目标和具体命令。"
-        AgentsTitle = "后台协作"
-        AgentsBody = "允许 FlowPilot 使用当前环境支持的后台工作者处理隔离的角色任务。"
         Confirm = "确认"
         Confirmed = "启动注入已记录。"
+        Blocked = "FlowPilot 必须使用后台协作；关闭后无法继续。"
     }
 }
 
@@ -780,9 +815,9 @@ function Apply-Language {
     $Ui.SupportBody.Text = $T.SupportBody
     $Ui.SupportNote.Text = $T.SupportNote
     $Ui.RequestLabel.Text = $T.RequestLabel
+    $Ui.BackgroundTitle.Text = $T.BackgroundTitle
+    $Ui.BackgroundBody.Text = $T.BackgroundBody
     $Ui.PlaceholderText.Text = $T.Placeholder
-    $Ui.AgentsTitle.Text = $T.AgentsTitle
-    $Ui.AgentsBody.Text = $T.AgentsBody
     $Ui.ConfirmButton.Content = $T.Confirm
     $Ui.StatusText.Text = ""
 }
@@ -805,14 +840,17 @@ $Ui.WorkRequest.Add_TextChanged({ Update-Placeholder })
 $Ui.ConfirmButton.Add_Click({
     $Lang = Get-Language
     try {
+        $backgroundEnabled = [bool]$Ui.BackgroundToggle.IsChecked
+        $status = if ($backgroundEnabled) { "confirmed" } else { "blocked" }
+        $bodyText = if ($backgroundEnabled) { $Ui.WorkRequest.Text } else { "" }
         $resultPath = Write-StartupIntakeResult `
-            "confirmed" `
-            $Ui.WorkRequest.Text `
-            ([bool]$Ui.AgentsToggle.IsChecked) `
+            $status `
+            $bodyText `
+            $backgroundEnabled `
             $Lang
         $script:StartupIntakeCompleted = $true
         $script:ExitCode = 0
-        $Ui.StatusText.Text = $Copy[$Lang].Confirmed
+        $Ui.StatusText.Text = if ($backgroundEnabled) { $Copy[$Lang].Confirmed } else { $Copy[$Lang].Blocked }
         $Window.Tag = $resultPath
         $Window.Close()
     } catch {
@@ -826,7 +864,7 @@ $Window.Add_Closing({
             Write-StartupIntakeResult `
                 "cancelled" `
                 "" `
-                ([bool]$Ui.AgentsToggle.IsChecked) `
+                ([bool]$Ui.BackgroundToggle.IsChecked) `
                 (Get-Language) | Out-Null
             $script:ExitCode = 0
         } catch {

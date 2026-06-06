@@ -112,7 +112,7 @@ ROLE_CARD_POST_ACK_TERMS = (
 )
 WORK_CARD_POST_ACK_TERMS = (
     "after work-card ack",
-    "continue the work assigned by this card",
+    "immediately continue the assigned work",
     "formal output or blocker",
     "runtime path",
 )

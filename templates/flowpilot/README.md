@@ -26,11 +26,11 @@ for review.
    user-visible option: whether FlowPilot may use background collaboration for this
    task. Stop immediately after asking and wait for a later user reply. Do not
    emit the banner, create route state, load child skills, open requested helper
-   responsibilities, probe heartbeat, run image generation, or start
+   responsibilities, probe manual_resume, run image generation, or start
    implementation in the question-asking response.
 6. Record the later background-collaboration answer explicitly. Do not infer
    runtime-role authorization from invocation text, `.flowpilot/` state, host
-   limits, or previous routes. Record scheduled continuation as the fixed
+   limits, or previous routes. Record manual resume continuation as the fixed
    `manual` default and display surface as the fixed `chat` default.
 7. Emit `startup_banner.template.md` in chat only after the complete explicit
    answer set has been recorded.
@@ -41,9 +41,9 @@ for review.
    freshly opened after the startup answers and current route allocation through
    host-supported, addressable, isolated role surfaces where the host and current
    tool policy permit them. Prior-route
-   `agent_id` values are audit history only. If authorization is missing or
-   startup fails, pause and ask. Continue with memory-seeded single-agent
-   runtime-role continuity only after an explicit user fallback decision.
+   `agent_id` values are audit history only. If authorization is missing,
+   startup fails, or required same-task continuation cannot be recovered, pause
+   and ask or block the run.
 10. PM issues a material-intake packet envelope/body pair; after router
    direct-dispatch, an authorized non-controller worker reads the body and
    writes the material scan result back to PM. PM records a package-result
@@ -141,17 +141,14 @@ for review.
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the
    PM segment decision. Repair reruns the same parent replay.
-26. Probe host continuation capability only after the scheduled-continuation
-   startup answer is recorded. If real wakeups are authorized and supported,
-   create a stable one-minute route heartbeat (`FREQ=MINUTELY;INTERVAL=1`). If
-   the user selected manual resume, record `manual-resume` and do not create
-   heartbeat automation. If automated continuation was authorized but setup is
-   unsupported or fails, stop for a new user decision instead of silently
-   switching to manual resume. Continuation evidence records host kind
-   (`codex_heartbeat_automation`, `windows_scheduled_task`, `manual_resume`, or
-   `blocked_unsupported`) and the exact host evidence source.
+26. Record the current manual-resume binding after Controller core is loaded.
+   FlowPilot does not create heartbeat or scheduled-continuation automation.
+   The run keeps a foreground patrol plus a stable manual-resume launcher; each
+   resume tick reloads current ledgers and rehydrates the current role bindings
+   before normal work continues. If background or parallel agents cannot be
+   opened, FlowPilot blocks instead of switching to a single-agent route.
 27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
-   syncing the visible Codex plan or advancing work. Each heartbeat/manual
+   syncing the visible Codex plan or advancing work. Each manual-resume/manual
    resume first reloads the packet ledger, asks PM for the current
    `PM_DECISION` or recovery packet, requires `controller_reminder`, and sends
    any PM-authored worker packet envelope only after router direct-dispatch
@@ -159,14 +156,15 @@ for review.
    The controller replaces the current visible plan projection from the PM
    runway but does not read or execute Workerodies itself. If the host exposes a native
    plan/task-list tool such as Codex `update_plan`, call it with that runway
-   before packet dispatch; if not, record the fallback projection method and
-   show the runway in chat.
+   before packet dispatch; if not, record that native plan projection is
+   unavailable and show the runway in chat without treating display as
+   completion evidence.
 28. Before any child-skill execution, image generation, implementation, or
    bounded route chunk, set `startup_activation` in state/frontier from the
    current route, role bindings, role memory, runtime-collaboration startup decision,
    continuation, and visible-plan evidence. The human-like reviewer then
    personally checks the real route, state, frontier, role bindings, role memory,
-   heartbeat or manual-resume evidence, automation records, and cleanup
+   manual-resume evidence, automation records, and cleanup
    evidence, then writes
    `.flowpilot/runs/<run-id>/startup_review/latest.json`.
 
@@ -179,10 +177,11 @@ for review.
    Work beyond startup is blocked until the PM-owned gate is open and the
    PM records `work_beyond_startup_allowed: true`. A route-local file without
    matching canonical state/frontier/role-binding/continuation evidence, a startup
-   record with neither live agents nor explicit fallback authorization, or
+   record without current live-agent binding evidence or explicit blocked-role
+   repair state, or
    missing requested old-route cleanup is blocked and must be repaired before
    continuing.
-   Before PM runway work on heartbeat or manual resume, restore all runtime role
+   Before PM runway work on manual resume, restore all runtime role
    identities and work memories from `role_binding_ledger.json` and `role_binding_memory/`,
    then write a role binding recovery report. Do not lazily rehydrate roles only
    when first needed.
@@ -202,7 +201,7 @@ for review.
 29. Run `terminal_closure_suite.json` so state/frontier/ledger/checkpoints,
    lifecycle evidence, role memory, and final report readiness are refreshed
    before the terminal completion notice.
-30. Update heartbeats, role memory packets, node reports, checkpoints, and the
+30. Update manual_resumes, role memory packets, node reports, checkpoints, and the
    append-only activity stream after verified progress. Cockpit and chat
    progress read from activity events plus current route/frontier state.
 31. At each node or meaningful review boundary, append any FlowPilot skill
@@ -216,8 +215,8 @@ for review.
    when it says no obvious skill improvement was observed, but its contents do
    not require root-repo fixes before completing the current project.
 33. On any controlled nonterminal stop, write the controlled-stop notice into
-   state/frontier or heartbeat evidence and show the user whether to wait for
-   heartbeat or type `continue FlowPilot`. On terminal completion, write the
+   state/frontier or manual_resume evidence and show the user whether to wait for
+   manual_resume or type `continue FlowPilot`. On terminal completion, write the
    completion notice instead of a resume prompt.
 
 ## Files
@@ -227,14 +226,14 @@ for review.
 - `execution_frontier.template.json`: current route version, active node, next
   jump, current mainline, host continuation decision, PM completion runway,
   PM-owned child-skill gate manifest, checks before advance,
-  native/fallback visible plan sync method, visible plan projection depth, the
+  native/manual visible plan sync method, visible plan projection depth, the
   realtime FlowPilot Route Sign chat/UI display gate, and startup PM gate and
   resume notice metadata.
 - `role_binding_ledger.template.json`: persistent role-binding runtime responsibilities, ids, status,
   authority boundaries, memory paths, recovery rules, and terminal archive
   state.
 - `role_binding_memory/role_memory.template.json`: compact per-role recovery memory
-  packet used to resume or replace unavailable requested helper responsibilities after heartbeat or
+  packet used to resume or replace unavailable requested helper responsibilities after manual_resume or
   manual resume.
 - `role_binding_memory/role_binding_recovery_report.template.json`: resume-time recovery report
   proving every currently required requested responsibility was restored,
@@ -307,7 +306,7 @@ for review.
   `flowguard_evidence`, `user_flow_diagram`, `superseded`, `quarantined`, or
   `discarded_with_reason`.
 - `activity_stream.template.json`: append-only progress stream for PM,
-  reviewer, FlowGuard operator, worker, route, checkpoint, heartbeat/manual-resume, and
+  reviewer, FlowGuard operator, worker, route, checkpoint, manual-resume, and
   terminal events consumed by Cockpit/chat progress.
 - `pm_suggestion_ledger_entry.template.json`: JSONL entry shape for reviewer,
   worker, and FlowGuard operator suggestions that require PM disposition. The
@@ -330,7 +329,7 @@ for review.
   find self-interrogation records mechanically before root freeze, node packet
   dispatch, final ledger, and terminal closure.
 - `pause_snapshot.template.json`: controlled-pause snapshot with current
-  route/node, blockers, pending rechecks, evidence caveats, heartbeat/agent
+  route/node, blockers, pending rechecks, evidence caveats, manual_resume/agent
   lifecycle, and cleanup boundary for fresh restarts.
 - `parent_backward_replay.template.json`: local parent/composite replay
   evidence required for every effective route node with children before that
@@ -364,14 +363,14 @@ for review.
 - `parent_backward_replay.template.json`: local parent/composite replay report
   copied into every structurally required parent node before closure.
 - `packet_ledger.template.json`: active packet location, PM/reviewer/worker
-  evidence paths, and controller-only resume boundary used by heartbeat and
+  evidence paths, and controller-only resume boundary used by manual_resume and
   manual resume.
-- `heartbeats/hb.template.json`: heartbeat/manual-resume evidence shell,
+- `manual_resumes/hb.template.json`: manual-resume evidence shell,
   including continuation readiness, host kind, exact host evidence source,
   packet recovery state, controller-only resume contract, controlled-stop
   notice fields, and the latest route-sign display gate state.
 - `diagrams/user-flow-diagram.template.mmd`: simplified English Mermaid
-  FlowPilot Route Sign source for both chat fallback and UI display.
+  FlowPilot Route Sign source for both required chat display and UI display.
 - `diagrams/user-flow-diagram.template.md`: Markdown preview wrapper for the
   same route sign, including the closed-Cockpit chat display requirement for
   startup, major route-node entry, PM current-node work brief, repair returns,
@@ -381,3 +380,5 @@ for review.
 - `experiments/experiment-001/experiment.template.json`: bounded experiment
   shell.
 - `task-models/README.md`: where task-local FlowGuard models live.
+
+

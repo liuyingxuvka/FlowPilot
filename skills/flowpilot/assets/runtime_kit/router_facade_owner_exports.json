@@ -600,8 +600,8 @@
             "target": "_reset_resume_cycle_for_wakeup"
           },
           {
-            "public": "_write_host_heartbeat_binding",
-            "target": "_write_host_heartbeat_binding"
+            "public": "_write_manual_resume_binding",
+            "target": "_write_manual_resume_binding"
           }
         ],
         "inject_router": false,
@@ -1654,10 +1654,6 @@
             "target": "_display_surface_receipt_payload_contract"
           },
           {
-            "public": "_heartbeat_payload_contract",
-            "target": "_heartbeat_payload_contract"
-          },
-          {
             "public": "_payload_contract",
             "target": "_payload_contract"
           },
@@ -1705,8 +1701,8 @@
         "bind_router": false,
         "exports": [
           {
-            "public": "_append_heartbeat_tick",
-            "target": "append_heartbeat_tick"
+            "public": "_append_manual_resume_tick",
+            "target": "append_manual_resume_tick"
           }
         ],
         "inject_router": true,
@@ -2441,10 +2437,6 @@
             "target": "_role_memory_event_role"
           },
           {
-            "public": "_scheduled_continuation_requested",
-            "target": "_scheduled_continuation_requested"
-          },
-          {
             "public": "_set_pre_route_frontier_phase",
             "target": "_set_pre_route_frontier_phase"
           },
@@ -2573,6 +2565,10 @@
             "target": "_bootstrap_startup_cancelled"
           },
           {
+            "public": "_bootstrap_startup_blocked",
+            "target": "_bootstrap_startup_blocked"
+          },
+          {
             "public": "_complete_startup_daemon_bootloader_row",
             "target": "_complete_startup_daemon_bootloader_row"
           },
@@ -2589,6 +2585,10 @@
             "target": "_finish_bootloader_action"
           },
           {
+            "public": "_apply_background_role_agent_bindings",
+            "target": "_apply_background_role_agent_bindings"
+          },
+          {
             "public": "_fold_stable_startup_role_flags_from_bootstrap",
             "target": "_fold_stable_startup_role_flags_from_bootstrap"
           },
@@ -2599,10 +2599,6 @@
           {
             "public": "_set_boot_flag",
             "target": "_set_boot_flag"
-          },
-          {
-            "public": "_startup_bootloader_action_depends_on_role_slots",
-            "target": "_startup_bootloader_action_depends_on_role_slots"
           },
           {
             "public": "_startup_bootloader_entry_is_nonblocking",
@@ -2670,10 +2666,6 @@
           {
             "public": "_defect_ledger_reconciliation_status",
             "target": "_defect_ledger_reconciliation_status"
-          },
-          {
-            "public": "_host_heartbeat_binding_ready",
-            "target": "_host_heartbeat_binding_ready"
           },
           {
             "public": "_invalidate_route_completion_if_dirty_before_closure",
@@ -2785,10 +2777,6 @@
       {
         "bind_router": true,
         "exports": [
-          {
-            "public": "_continuation_has_host_bound_automation_receipt",
-            "target": "_continuation_has_host_bound_automation_receipt"
-          },
           {
             "public": "_controller_boundary_confirmation_body",
             "target": "_controller_boundary_confirmation_body"
@@ -3042,10 +3030,6 @@
           {
             "public": "_next_role_recovery_action",
             "target": "_next_role_recovery_action"
-          },
-          {
-            "public": "_next_startup_heartbeat_binding_action",
-            "target": "_next_startup_heartbeat_binding_action"
           },
           {
             "public": "_normalize_resume_role_agent_records",
@@ -3633,8 +3617,8 @@
             "target": "_material_scan_index_path"
           },
           {
-            "public": "_merge_agent_role_maps",
-            "target": "_merge_agent_role_maps"
+            "public": "_verified_agent_role_map_from_binding_ledger",
+            "target": "_verified_agent_role_map_from_binding_ledger"
           },
           {
             "public": "_metadata_binding_ids",

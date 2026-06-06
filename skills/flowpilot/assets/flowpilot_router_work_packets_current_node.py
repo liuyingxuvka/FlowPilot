@@ -38,7 +38,7 @@ from flowpilot_router_work_packets_current_node_relay import (
     _result_runtime_relay_operations,
     _relay_result_records,
     _agent_role_map_from_role_binding_ledger,
-    _merge_agent_role_maps,
+    _verified_agent_role_map_from_binding_ledger,
     _validate_packet_bodies_opened_by_targets,
     _validate_results_exist_for_packets,
     _validate_packet_group_for_reviewer,
@@ -66,6 +66,8 @@ _CHILD_MODULES = (
 
 def _bind_router(router: ModuleType) -> None:
     global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
     _BOUND_ROUTER = router
     for module in _CHILD_MODULES:
         module._bind_router(router)
@@ -114,7 +116,7 @@ __all__ = (
     '_result_runtime_relay_operations',
     '_relay_result_records',
     '_agent_role_map_from_role_binding_ledger',
-    '_merge_agent_role_maps',
+    '_verified_agent_role_map_from_binding_ledger',
     '_validate_packet_bodies_opened_by_targets',
     '_validate_results_exist_for_packets',
     '_validate_packet_group_for_reviewer',

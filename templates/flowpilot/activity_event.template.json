@@ -5,7 +5,7 @@
   "sequence": 0,
   "recorded_at": "<iso-8601-timestamp>",
   "recorded_by_role": "<role>",
-  "event_type": "<run_created|startup_question_asked|startup_answer_recorded|startup_review_written|pm_gate_decision|role_binding_memory_rehydrated|continuation_evidence_written|route_created|route_mutated|frontier_updated|node_started|gate_started|review_release_order_written|gate_approved|gate_blocked|defect_event|evidence_event|generated_resource_event|checkpoint_written|heartbeat_recorded|pause_recorded|completion_recorded>",
+  "event_type": "<run_created|startup_question_asked|startup_answer_recorded|startup_review_written|pm_gate_decision|role_binding_memory_rehydrated|continuation_evidence_written|route_created|route_mutated|frontier_updated|node_started|gate_started|review_release_order_written|gate_approved|gate_blocked|defect_event|evidence_event|generated_resource_event|checkpoint_written|manual_resume_recorded|pause_recorded|completion_recorded>",
   "route_id": "<route-id-or-null>",
   "route_version": 0,
   "node_id": "<node-id-or-null>",
@@ -21,3 +21,4 @@
     "required_next_action": "<action-or-null>"
   }
 }
+

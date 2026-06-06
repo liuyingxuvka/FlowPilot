@@ -30,7 +30,8 @@ user-level:
 - `routes/*/nodes/*/node.json`
 - `routes/*/nodes/*/node_acceptance_plan.json`
 - `routes/*/nodes/*/parent_backward_replay.json`
-- `heartbeats/*.json`
+- `manual_resume/latest.json`
+- `foreground_patrol/latest.json`
 - `lifecycle/latest.json`
 - `lifecycle/events.jsonl`
 - `startup_review/latest.json`
@@ -66,7 +67,7 @@ Markdown files are English summaries for review.
 - terminal closure suite path;
 - final route-wide gate ledger path;
 - status;
-- last heartbeat;
+- latest manual-resume tick and foreground patrol receipt;
 - last checkpoint;
 - next node;
 - next action;
@@ -183,17 +184,18 @@ chunks until this block and the matching frontier block show:
   not used as the current run state;
 - continuing prior work has a current-run prior-work import packet;
 - `role_binding_ledger_current: true`;
-- `role_memory_packets_current` is at least 6;
-- role-binding startup records either current-run live bindings for
-  runtime-required roles after a user decision or explicit user authorization
-  for fallback role continuity;
-- `continuation_ready: true`, either as automated heartbeat evidence or
-  explicit `manual-resume` no-automation evidence;
+- `role_memory_packets_current` is at least the current runtime role count;
+- role-binding startup records current-run live background or parallel-agent
+  bindings for every runtime-required role after the startup authorization
+  decision;
+- `continuation_ready: true` with current-run manual-resume binding and
+  foreground patrol evidence. Automated heartbeat continuation is not a
+  supported current path;
 - `startup_preflight_review` records the human-like reviewer's factual startup
   audit, including user authorization versus actual state, route/state/frontier
-  consistency, old-route or old-asset cleanup when requested, real Codex
-  heartbeat automation or manual-resume evidence, role-binding
-  evidence, and shadow or residual route state;
+  consistency, old-route or old-asset cleanup when requested, manual-resume
+  binding evidence, current background role-binding evidence, and shadow or
+  residual route state;
 - `pm_start_gate` records the project manager's decision from the current
   reviewer report. The reviewer cannot open this gate. If the report has
   blockers, PM sends remediation back to workers and requires a recheck;
@@ -212,10 +214,9 @@ chunks until this block and the matching frontier block show:
 - `provenance`: exactly `explicit_user_reply`; values such as
   `agent_inferred`, `default`, `prior_route`, `naked`, or
   `single_message_invocation` are invalid;
-- `answers.runtime_role_assistances.answer`: `allow` for host-supported role
-  mechanisms or `single-agent` for explicit fallback role continuity;
-- `answers.scheduled_continuation.answer`: fixed `manual`; this is no longer a
-  user-visible startup option;
+- `answers.background_collaboration_authorized`: must be `true` for a confirmed
+  startup. If it is false, FlowPilot records `startup_blocked` and stops instead
+  of using unsupported single-agent continuity;
 - `answers.display_surface.answer`: fixed `chat`; this is no longer a
   user-visible startup option;
 - `answer_evidence_path`, `answered_at`, and
@@ -223,8 +224,8 @@ chunks until this block and the matching frontier block show:
 
 If any answer is absent, ambiguous, or `pause`, startup remains
 `startup_pending_user_answers` and no banner, route work, child skill,
-imagegen, implementation, fallback execution, role-binding startup, heartbeat probe,
-heartbeat job, or manual-resume claim may proceed. If the questions were asked
+imagegen, implementation, unsupported-path execution, role-binding startup, or
+manual-resume claim may proceed. If the questions were asked
 but the assistant did not stop and wait for the user's reply, the answer
 evidence is invalid and the PM must not open startup.
 
@@ -240,17 +241,11 @@ runtime startup-check script writes it. It must include:
   `requires_worker_remediation`;
 - `blocking_findings`;
 - scope flags for user authorization, route consistency, cleanup boundary,
-  continuation evidence, real Codex heartbeat automation or manual-resume
-  evidence, role-binding decisions, user background-collaboration decision versus
-  actual role-binding state, current binding coverage or explicit fallback
-  authorization, and shadow/residual state;
-- required facts for route heartbeat interval 1 minute and route heartbeat
-  RRULE `FREQ=MINUTELY;INTERVAL=1` when automated continuation is selected;
-- if `answers.runtime_role_assistances.answer` is `allow`, runtime-required role
-  bindings must be active or resumed after the user decision;
-- if `answers.runtime_role_assistances.answer` is `single-agent`, explicit
-  single-agent role-continuity authorization must exist and the route must not
-  claim live role bindings.
+  manual-resume binding evidence, role-binding decisions, user
+  background-collaboration decision versus actual role-binding state, current
+  binding coverage, and shadow/residual state;
+- current runtime role bindings must be active, rehydrated, or explicitly
+  blocked before work proceeds.
 
 `startup_activation.pm_start_gate` is written by the project manager after
 reading the reviewer report. It must include:
@@ -275,14 +270,13 @@ quarantined or superseded before work continues.
 `startup_activation.role_binding_startup` records this decision:
 
 - `required_by_default: true`;
-- `decision`: `live_agents_started`, `live_agents_resumed`,
-  `single_agent_role_continuity_authorized`, or `blocked`;
+- `decision`: `background_agents_bound`, `manual_resume_rehydrated`, or
+  `blocked`;
 - `user_decision_recorded: true` before the PM can open startup;
 - `user_authorized_live_start: true`, `live_start_attempted: true`, and
   current-run live binding evidence for the runtime-required roles;
-- `single_agent_role_continuity_authorized: true` for the fallback path;
-- `blocker` and `evidence_path` for the prompt, failed attempt, or fallback
-  decision evidence.
+- `blocker` and `evidence_path` for the prompt or failed current binding
+  attempt.
 
 ## Role-Binding Ledger
 
@@ -316,19 +310,21 @@ requires that role binding. If a required live binding is unavailable,
 FlowPilot records the block and asks for a user decision before falling back to
 replacement from the latest role memory packet. Raw transcripts are optional
 evidence only; a compact structured memory packet is required before a
-replacement role can approve gates. Heartbeat recovery loads the ledger and
-memory packets, records which runtime-required roles were resumed, replaced, or
-blocked, and only then asks the project manager for a completion-oriented
-runway from the current route position to project completion.
+replacement role can approve gates. Manual-resume recovery loads the ledger and
+memory packets, records which runtime-required roles were resumed through
+current background or parallel-agent bindings, replaced through a current
+binding transaction, or blocked, and only then asks the project manager for a
+completion-oriented runway from the current route position to project
+completion.
 
 Valid current role statuses may represent live or memory-seeded continuity,
 including `active`, `idle`, `ready`, `running`, `restored`, `recovered`,
-`replaced_from_memory`, `memory_recovered`, `memory_seeded`, or
-`live_unavailable_memory_seeded`. `archived`, `paused`, `blocked`, and other
+`replaced_from_memory`, `memory_recovered`, or `memory_seeded`. `archived`,
+`paused`, `blocked`, `live_unavailable_memory_seeded`, and other
 terminal statuses cannot satisfy startup activation. FlowPilot must distinguish
 between "the role is recovered and authorized" and "a live role binding is
-currently addressable"; when the latter is unavailable, the fallback is valid only
-after explicit user authorization for single-agent role continuity.
+currently addressable"; when the latter is unavailable, FlowPilot records a
+current-runtime blocker instead of using single-agent continuity.
 
 ## Material Intake Packet
 
@@ -517,14 +513,15 @@ The frontier records:
 - active node;
 - current subnode or current gate when the active node is unfinished;
 - current mainline node list;
-- next node and fallback node;
+- next node and any explicit repair or restart candidate node;
 - current chunk and next chunk;
 - user flow diagram metadata: enabled display mode, render policy, highlighted
   current stage, source route/frontier paths, generated Mermaid path, rendered
   route/frontier versions, and staleness after route mutation;
 - debug FlowGuard Mermaid metadata, which defaults to disabled and on-request
   only;
-- host continuation decision: automated, manual-resume, blocked, or unknown;
+- host continuation decision: manual-resume, foreground-patrol, blocked, or
+  unknown;
 - latest PM completion runway, including current gate, downstream steps,
   hard-stop conditions, checkpoint cadence, plan replacement status, and any
   PM stop signal;
@@ -567,13 +564,11 @@ The frontier records:
   role lists, and latest project-manager decision, including the PM repair
   strategy interrogation evidence path when a review failure mutates the route;
 - route mutation status;
-- stable heartbeat launcher metadata when automated continuation is supported;
-- heartbeat lifecycle metadata when automated continuation is supported, or
-  manual-resume no-automation evidence when unsupported;
+- current manual-resume launcher metadata and foreground patrol lifecycle
+  evidence;
 - controlled-stop and completion notice metadata: whether the current route is
   complete, whether a resume notice must be shown on controlled nonterminal
-  stop, whether heartbeat wakeup can be waited for, and the exact manual resume
-  prompt;
+  stop, and the exact manual resume prompt;
 - startup activation guard metadata matching `state.json`;
 - update timestamp.
 
@@ -582,13 +577,13 @@ FlowGuard checks, rewrites the execution frontier, and syncs the visible Codex
 plan from the latest PM completion runway. When the host has a native visible
 plan/task-list tool, such as Codex `update_plan`, the sync must call that tool
 and record the method, timestamp, route version, PM runway id, item count, and
-completion-tail coverage. It does not rewrite the heartbeat automation prompt
-unless the host continuation itself needs repair.
+completion-tail coverage. It updates manual-resume or foreground patrol
+metadata only through the current lifecycle command path.
 
 `next_node` is not executable while `unfinished_current_node` is true or
 `current_node_completion.advance_allowed` is false. In that state, the next
-continuation turn, whether automated heartbeat or manual resume, resumes
-`active_node`, obtains a PM completion runway, replaces the visible plan
+continuation turn resumes `active_node`, obtains a PM completion runway,
+replaces the visible plan
 projection from that runway, selects the persisted `current_subnode`,
 `next_gate`, and packet recovery state, and continues the packet loop when it
 is executable. A continuation record that only says "continue to next gate"
@@ -659,8 +654,8 @@ cosigned, relabelled, or accepted as "good enough." A packet cannot close while
 `role_origin_audit.required_for_every_packet` is true and the audit is absent,
 mismatched, hash-invalid, or stale.
 
-Heartbeat and manual resume load the packet ledger before asking PM for the
-current decision and must audit the mail chain without opening bodies. The
+Manual resume and foreground patrol load the packet ledger before asking PM for
+the current decision and must audit the mail chain without opening bodies. The
 controller may not mint packets, finish worker packets, or advance from
 controller-origin evidence. If PM issues a packet, the ledger must show
 `controller_reminder`, router direct-dispatch preflight, controller relay
@@ -669,12 +664,11 @@ result exists, the next action is controller-relayed reviewer review. If packet 
 signature, body-open record, or worker-result state is ambiguous, the next
 action is PM recovery/reissue, not controller execution.
 
-On any controlled stop before terminal completion, the frontier or heartbeat
-record stores a `controlled_stop_notice` packet. Automated mode may set
-`can_wait_for_heartbeat` true and include both heartbeat and manual resume
-instructions. `manual-resume` mode sets `can_wait_for_heartbeat` false and
-instructs the user to type `continue FlowPilot`. Terminal completion stores a
-completion notice instead of a resume prompt.
+On any controlled stop before terminal completion, the frontier stores a
+`controlled_stop_notice` packet. Current manual-resume mode records whether a
+foreground patrol receipt is active and instructs the user to type
+`continue FlowPilot`. Terminal completion stores a completion notice instead
+of a resume prompt.
 
 Before a terminal run is finally observed as closed, stopped, cancelled, or a
 protocol dead end, FlowPilot writes a run-scoped final summary receipt:
@@ -698,10 +692,10 @@ new project evidence, role opening, or writes outside the final summary files,
 `.flowpilot/index.json`, `.flowpilot/current.json`, and router state.
 
 The execution frontier stores the native plan sync status separately from the
-PM runway evidence. `synced_to_visible_plan` requires either native plan tool
-evidence when available or an explicit no-native-tool fallback. It also records
-whether the projection includes downstream runway depth; a current-gate-only
-projection is invalid for formal continuation.
+PM runway evidence. `synced_to_visible_plan` requires native plan tool evidence
+when available or an explicit no-native-tool blocker/receipt when unavailable.
+It also records whether the projection includes downstream runway depth; a
+current-gate-only projection is invalid for formal continuation.
 
 Child-skill gate manifests live in the frontier because they determine the
 next legal gate. The initial manifest is PM-owned route-design evidence; the
@@ -719,7 +713,7 @@ Before any child-skill, imagegen, implementation, or formal route chunk starts,
 the human-like reviewer personally checks `.flowpilot/current.json`,
 `.flowpilot/index.json`, current-run `state.json`, `execution_frontier.json`,
 `routes/<active-route>/flow.json`, `role_binding_ledger.json`, all role memory packets,
-continuation evidence, Codex heartbeat automation or manual-resume evidence,
+continuation evidence, current manual-resume and foreground patrol evidence,
 requested cleanup evidence, and prior-work import boundary when continuing.
 The reviewer then writes
 `startup_review/latest.json` inside the current run as a factual report.
@@ -848,7 +842,7 @@ when PM records why earlier segments cannot be affected.
 
 `terminal_closure_suite.json` is run after final route-wide ledger approval and
 before the terminal completion notice. It prevents a clean review from ending
-with stale state or stale automation.
+with stale state, stale lifecycle evidence, or stale resume binding.
 
 It records:
 
@@ -856,7 +850,7 @@ It records:
   paths checked;
 - standard scenario and residual-risk replay status;
 - terminal human backward replay pass status and repair/restart freshness;
-- heartbeat stop or manual-resume no-automation evidence;
+- foreground patrol stop and manual-resume no-automation evidence;
 - role memory and role binding archive status;
 - FlowPilot skill improvement report path and written status;
 - controlled-stop/completion notice status;
@@ -992,11 +986,11 @@ must cite this observation.
 `lifecycle/latest.json` is the unified inventory snapshot for pause, restart,
 and terminal cleanup. It records the status seen across:
 
-- Codex app automation records for FlowPilot heartbeat automations;
+- current FlowPilot foreground patrol and manual-resume binding records;
 - `.flowpilot/current.json`;
 - `.flowpilot/runs/<run-id>/state.json`;
 - `.flowpilot/runs/<run-id>/execution_frontier.json`;
-- latest heartbeat or manual-resume evidence.
+- latest manual-resume evidence.
 
 Lifecycle closure is valid only when the snapshot records either no required
 actions or explicit waived actions with reasons.

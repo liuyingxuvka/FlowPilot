@@ -267,7 +267,7 @@ import role_output_runtime_schema_quality as role_output_schema_quality  # noqa:
 import role_output_runtime_schema_specs as role_output_schema_specs  # noqa: E402
 from flowpilot_router_errors import RouterError  # noqa: E402
 from packet_control_plane_model_state import (  # noqa: E402
-    HeartbeatCase,
+    ManualResumeCase,
     NodeCase,
     NodePacket,
     NodeResult,
@@ -1522,8 +1522,8 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 project_root,
                 {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"},
             )
-            heartbeat_reset = {"resume_cycle_id": "old", "flags": {"resume_reentry_requested": True}}
-            lifecycle_support._reset_resume_cycle_for_wakeup(heartbeat_reset)
+            manual_resume_reset = {"resume_cycle_id": "old", "flags": {"resume_reentry_requested": True}}
+            lifecycle_support._reset_resume_cycle_for_wakeup(manual_resume_reset)
             display_hash = startup_display._display_text_hash(router, "FlowPilot display")
             display_gate = startup_display._user_dialog_display_gate(
                 router,
@@ -1531,11 +1531,32 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 display_kind="route_map",
                 display_text="FlowPilot display",
             )
-            boot_depends = startup_bootloader._startup_bootloader_action_depends_on_role_slots(
+            boot_action = startup_bootloader._next_boot_action(
                 router,
-                "recover_role_bindings",
+                project_root,
+                {"router_loaded": True, "flags": {"run_shell_created": True}},
             )
-            closure_ready = startup_closure._host_heartbeat_binding_ready(router, run_root, run_state)
+            with self.assertRaisesRegex(RouterError, "heartbeat automation fields"):
+                lifecycle_support._write_manual_resume_binding(
+                    project_root,
+                    run_root,
+                    run_state,
+                    {"recorded_by": "contract_test", "host_automation_id": "old-automation"},
+                )
+            lifecycle_support._write_manual_resume_binding(
+                project_root,
+                run_root,
+                run_state,
+                {"recorded_by": "contract_test"},
+            )
+            manual_resume_binding = router.read_json_if_exists(router._continuation_binding_path(run_root))
+            manual_resume_ready = (
+                manual_resume_binding.get("schema_version") == "flowpilot.continuation_binding.v1"
+                and manual_resume_binding.get("mode") == "manual_resume"
+                and manual_resume_binding.get("manual_resume_required") is True
+                and manual_resume_binding.get("foreground_patrol_active") is True
+                and manual_resume_binding.get("host_automation_supported") is False
+            )
             constraints = startup_fact_boundary._controller_boundary_constraints(router)
             intake_contract = startup_intake_ui._startup_intake_result_payload_contract(
                 router,
@@ -1563,12 +1584,12 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(packet_authority_status, "terminal_lifecycle_quarantined")
         self.assertEqual(startup_support_state["run_id"], "run-test")
         self.assertEqual(startup_support_run_root, run_root)
-        self.assertIn("resume_cycle_id", heartbeat_reset)
-        self.assertFalse(heartbeat_reset["flags"]["resume_reentry_requested"])
+        self.assertIn("resume_cycle_id", manual_resume_reset)
+        self.assertFalse(manual_resume_reset["flags"]["resume_reentry_requested"])
         self.assertEqual(len(display_hash), 64)
         self.assertEqual(display_gate["required_render_target"], "user_dialog")
-        self.assertIsInstance(boot_depends, bool)
-        self.assertFalse(closure_ready)
+        self.assertIsNotNone(boot_action)
+        self.assertTrue(manual_resume_ready)
         self.assertFalse(constraints["controller_may_read_sealed_bodies"])
         self.assertEqual(intake_contract["payload_key"], "startup_intake_result")
         self.assertFalse(intake_contract["formal_launch_provenance"]["headless"])
@@ -1778,6 +1799,12 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 run_root,
                 mode="cancelled_by_user",
             )
+            startup_closure_status = startup_closure._terminal_closure_reconciliation_status(
+                router,
+                project_root,
+                run_root,
+                {"run_id": "run-test", "flags": {}},
+            )
             closure_closed = terminal_closure._terminal_closure_suite_is_closed(router, run_root)
             material_reconciled = work_packets_next_actions._try_reconcile_material_scan_body_delivery(
                 router,
@@ -1838,6 +1865,11 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(role_ledger["schema_version"], role_io_protocol.ROLE_IO_PROTOCOL_LEDGER_SCHEMA)
         self.assertEqual(terminal_status, "cancelled_by_user")
         self.assertEqual(summary_action["action_type"], "write_terminal_summary")
+        self.assertTrue(startup_closure_status["clean"])
+        self.assertEqual(startup_closure_status["dirty_families"], [])
+        self.assertFalse(startup_closure_status["defect_ledger"]["present"])
+        self.assertFalse(startup_closure_status["role_memory"]["present"])
+        self.assertFalse(startup_closure_status["continuation_quarantine"]["present"])
         self.assertFalse(closure_closed)
         self.assertFalse(material_reconciled)
         self.assertFalse(pm_role_reconciled)
@@ -2132,7 +2164,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         relayed = list(packet_relay.ControllerEnvelopeOnlyHandoff().apply(reminder_checked[0].output, reminder_checked[0].new_state))
         dispatch_state = replace(relayed[0].new_state, current_assignments=("packet-1",))
         dispatched = list(packet_dispatch_results.RouterDirectDispatch().apply(relayed[0].output, dispatch_state))
-        resumed = list(packet_issue_resume.HeartbeatResumeLoad().apply(HeartbeatCase("heartbeat-packet"), state))
+        resumed = list(packet_issue_resume.ManualResumeLoad().apply(ManualResumeCase("manual-resume-packet"), state))
         reviewed = list(
             packet_review_pm.ReviewerResultEnvelopeCheck().apply(
                 NodeResult("packet-1", "worker", "agent-worker"),
@@ -2202,7 +2234,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertEqual(reminder_checked[0].label, "controller_reminder_checked")
         self.assertEqual(relayed[0].label, "controller_handoff_envelope_only")
         self.assertEqual(dispatched[0].label, "router_direct_dispatch_approved")
-        self.assertEqual(resumed[0].label, "heartbeat_state_loaded")
+        self.assertEqual(resumed[0].label, "manual_resume_state_loaded")
         self.assertEqual(reviewed[0].label, "result_envelope_checked")
         self.assertTrue(invariant.ok)
         self.assertTrue(audit["packet_envelope_checked"])
@@ -2240,10 +2272,10 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
                 "result_requires_dispatch",
                 "dispatch_requires_controller_reminder",
                 "packet_open_blocks_never_produce_result_or_advance",
-                "heartbeat_resume_packet_requires_pm_request",
-                "heartbeat_resume_packet_requires_loaded_state",
+                "manual_resume_packet_requires_pm_request",
+                "manual_resume_packet_requires_loaded_state",
                 "ambiguous_worker_state_never_advances",
-                "missing_heartbeat_state_never_advances",
+                "missing_manual_resume_state_never_advances",
             ],
         )
 

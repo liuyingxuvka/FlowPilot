@@ -20,7 +20,7 @@
     "rebuild_final_ledger_if_evidence_changed",
     "verify_self_interrogation_index_clean",
     "run_lifecycle_reconciliation",
-    "pause_or_delete_heartbeat",
+    "pause_or_delete_manual_resume",
     "archive_role_bindings_and_role_memory",
     "write_flowpilot_skill_improvement_report",
     "write_final_report"
@@ -163,7 +163,7 @@
     "final_acceptance_recheck_rerun": false
   },
   "lifecycle_cleanup": {
-    "heartbeat_paused_or_absent": false,
+    "manual_resume_paused_or_absent": false,
     "lifecycle_scan_required_actions_zero": false,
     "lifecycle_evidence_path": "<path-or-null>"
   },
@@ -181,3 +181,4 @@
   "completion_allowed": false,
   "blocked_reason": "<reason-or-null>"
 }
+

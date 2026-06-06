@@ -44,7 +44,7 @@ with `encoding="utf-8"` rejects a leading BOM.
 | 2 | Fix UI source output. | Replace PowerShell `Set-Content -Encoding UTF8` for startup UI artifacts with a no-BOM UTF-8 writer. | `skills/flowpilot/assets/ui/startup_intake/flowpilot_startup_intake.ps1` | Headless UI output starts with `{` for JSON files, not `EF BB BF`. |
 | 3 | Keep Router compatible with old UI artifacts. | Read JSON with a BOM-tolerant codec while still writing canonical no-BOM JSON. | `skills/flowpilot/assets/flowpilot_router.py` | A unsupported historical BOM JSON result parses without manual byte editing. |
 | 4 | Avoid body marker leakage into PM packet text. | Strip a leading UTF-8 BOM when reading the sealed body into PM-bound packet body text. | `skills/flowpilot/assets/flowpilot_router.py` | Old BOM body files do not inject `\ufeff` into the PM packet text. |
-| 5 | Add focused regressions. | Test UI headless output bytes and Router BOM JSON fallback. | `tests/test_flowpilot_router_runtime.py` | Tests fail before the repair and pass after it. |
+| 5 | Add focused regressions. | Test UI headless output bytes and Router BOM-resistant JSON parsing. | `tests/test_flowpilot_router_runtime.py` | Tests fail before the repair and pass after it. |
 | 6 | Sync installation and local git only. | Run install sync/check and commit scoped repair. | local install, local git | Installed FlowPilot matches repo; no GitHub push. |
 
 ## PowerShell Source Encoding Repair Checklist
@@ -71,11 +71,11 @@ the script can run.
 | Hazard id | Possible regression | FlowGuard/model expectation |
 | --- | --- | --- |
 | H1 | Controller starts before UI confirm/cancel. | Fail if Controller core loads before confirmed UI result. |
-| H2 | User closes UI and FlowPilot still creates a run or starts roles. | Fail if cancel path reaches run shell, Controller, roles, heartbeat, or Cockpit. |
+| H2 | User closes UI and FlowPilot still creates a run or starts roles. | Fail if cancel path reaches run shell, Controller, roles, manual-resume binding, foreground patrol, or Cockpit. |
 | H3 | Router or Controller-visible envelope leaks user body text. | Fail if body text appears in bootstrap state, startup answers, user request envelope, or Controller handoff. |
 | H4 | UI result is accepted without receipt, envelope, body path, or matching body hash. | Fail if any required artifact or hash check is missing. |
 | H5 | The remaining background-collaboration toggle drifts from existing startup answer enums. | Fail if toggle mapping is missing or produces non-enum values. |
-| H6 | Runtime role assistance or heartbeat are started against the recorded startup defaults. | Fail if `single-agent` still opens live role bindings or `manual` still creates heartbeat. |
+| H6 | Background or parallel agents are treated as optional. | Fail if a confirmed startup can continue without `background_collaboration_authorized=true` or without current background role bindings. |
 | H7 | Removed continuation or display-surface UI choices return as formal startup options. | Fail if startup accepts `scheduled_continuation=allow` or `display_surface=cockpit` from the startup UI. |
 | H8 | Reviewer startup or live review relies on chat text instead of UI result/receipt/envelope evidence. | Fail if reviewer pass does not reference UI record, receipt, and hash evidence. |
 | H9 | Existing old multi-question payload path remains the only legal startup path. | Fail if UI-confirmed startup cannot advance through reused post-answer boot actions. |
@@ -98,7 +98,7 @@ Before production code edits, the new FlowGuard model must show:
 
 - the approved UI-confirmed path reaches post-startup work without Controller
   body access;
-- the cancelled UI path terminates before any run, role, heartbeat, or
+- the cancelled UI path terminates before any run, role, manual-resume binding, foreground patrol, or
   Controller start;
 - every hazard above has a corresponding known-bad mutation that fails;
 - the model preserves the existing old-flow unsupported historical boundary where

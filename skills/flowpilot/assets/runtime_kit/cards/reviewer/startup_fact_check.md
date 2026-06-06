@@ -4,7 +4,7 @@ recipient_identity: FlowPilot human-like reviewer role
 allowed_scope: Use this card only while acting as the recipient role named above for the FlowPilot runtime duty assigned by the manifest.
 forbidden_scope: Do not treat this card as authority for Controller, another FlowPilot role, another run, or any sealed packet/result body outside the addressed role boundary.
 required_return: System-card ACKs go through the current runtime card check-in command; this is the current-runtime return path for card ACKs. Current work-package ACKs and completion outputs go through the assigned current packet lease when present. For formal role outputs, write the body only to a run-scoped packet, result, report, decision, or blocker file, then submit it with `flowpilot_new.py submit-result --lease-id <lease-id> --packet-id <packet-id> --body <sealed_result_summary>` so the current runtime ledger records the event and later exposes only controller-visible envelope metadata with status, paths, and hashes. A local file write is only local storage and must not be treated as wait completion until the current runtime records the packet result. Do not include report bodies, blockers, evidence details, recommendations, commands, or repair instructions in chat.
-post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the work assigned by this card and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
+post_ack: ACK is receipt only; ACK is not completion. This is a work item when it asks for an output, report, decision, result, or blocker. After work-card ACK, do not stop or wait for another prompt; immediately continue the assigned work and submit the formal output or blocker through the current runtime path. The task remains unfinished until the current runtime receives that output or blocker.
 next_step_source: Do not infer the next FlowPilot action from this card, chat history, or prior prompts. System-card ACKs, current work-package outputs, and formal role-output submissions go directly through the current runtime commands. Controller must follow the `flowpilot_new.py` lifecycle guard and foreground duty; no unsupported command text, stale runtime state, chat history, or historical artifact authorizes current-run progress.
 runtime_context: Treat the runtime delivery envelope as the live source for the current run, current task, current card, current phase, current node/frontier, user_request_path, and source paths. If that live context is missing or stale, do not continue from memory; submit a protocol blocker through the current runtime path.
 -->
@@ -42,8 +42,8 @@ The router writes `startup/startup_mechanical_audit.json` and a
 `router_owned_check_proof` companion proof for recomputable startup checks. Treat that
 audit as proof only for mechanical file/state checks. It does not prove that an
 AI honestly captured facts outside the host-visible run record, that live
-agents are fresh, that a host heartbeat is really bound to this run, or that
-Cockpit/fallback behavior is real. Those facts remain reviewer-owned unless the
+role bindings are fresh, that manual lifecycle resume is actually recorded for
+this run, or that Cockpit display recovery behavior is real. Those facts remain reviewer-owned unless the
 audit cites a host receipt.
 
 Do not try to prove the original chat transcript or the user's private intent.
@@ -68,12 +68,12 @@ Required checks:
 - `.flowpilot/current.json` points to the current run root;
 - `.flowpilot/index.json` includes the current run id;
 - the router-dispatched FlowPilot role bindings are fresh for this run or have
-  explicit same-task rehydration/fallback evidence;
+  explicit same-task reuse or replacement evidence;
 - role binding records, when host-supported isolated role surfaces are used, show the
   strongest-available model policy and highest-available reasoning-effort
   policy rather than foreground/Controller model inheritance;
 - continuation mode is recorded from the user's startup answer and matched to
-  heartbeat or manual-resume evidence for this run;
+  manual-resume lifecycle evidence for this run;
 - display surface is recorded from the user's startup answer;
 - prior top-level control state is absent or quarantined from current authority.
 

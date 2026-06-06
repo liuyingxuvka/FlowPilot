@@ -100,7 +100,7 @@
     "node-001-start"
   ],
   "next_node": "<node-id-or-null>",
-  "fallback_node": "<node-id-or-null>",
+  "repair_or_block_node": "<node-id-or-null>",
   "current_chunk": "<current-bounded-chunk-or-null>",
   "next_chunk": "<next-bounded-chunk-or-null>",
   "continuation": {
@@ -111,13 +111,13 @@
     "probe_evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
     "automated_bundle_required": false,
     "automated_bundle_ready": false,
-    "route_heartbeat_interval_minutes": 1,
-    "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "foreground_patrol_interval_minutes": 1,
+    "foreground_patrol_rrule": "FREQ=MINUTELY;INTERVAL=1",
     "manual_resume_recorded": false,
     "unsupported_reason": "<reason-or-null>",
     "unattended_recovery_claim_allowed": false,
     "continuation_readiness_checked": false,
-    "continuation_readiness_kind": "<automated-heartbeat-health|manual-resume-packet|blocked|unknown>"
+    "continuation_readiness_kind": "<foreground-patrol|manual-resume-packet|blocked|unknown>"
   },
   "startup_activation": {
     "hard_gate_required": true,
@@ -132,12 +132,12 @@
       "answered_at": null,
       "banner_emitted_after_answers": false,
       "answers": {
-        "runtime_role_assistances": {
+        "background_collaboration": {
           "question": "May FlowPilot use background collaboration for this task?",
           "answer": null,
           "answered": false
         },
-        "scheduled_continuation": {
+        "manual_resume_continuation": {
           "question": "Fixed startup default: manual resume.",
           "answer": "manual",
           "answered": true,
@@ -185,7 +185,7 @@
       "reused_historical_agent_ids": [],
       "historical_agent_reuse_blocked": true,
       "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/role_bindings_current_for_current_task.json",
-      "single_agent_role_continuity_authorized": false,
+      "background_collaboration_required": false,
       "blocker": "no_user_decision",
       "evidence_path": null
     },
@@ -202,10 +202,10 @@
       "checked_user_authorization_vs_state": false,
       "checked_route_state_frontier_consistency": false,
       "checked_old_route_and_asset_reuse_boundary": false,
-      "checked_heartbeat_or_manual_resume_evidence": false,
-      "checked_runtime_role_assistance_role_evidence": false,
-      "checked_runtime_role_assistance_user_decision_matches_actual_state": false,
-      "checked_runtime_role_binding_count_or_single_agent_authorization": false,
+      "checked_manual_resume_or_manual_resume_evidence": false,
+      "checked_background_collaboration_role_evidence": false,
+      "checked_background_collaboration_user_decision_matches_actual_state": false,
+      "checked_background_role_binding_count_and_background_only_authorization": false,
       "checked_runtime_role_binding_current_task_freshness": false,
       "checked_no_historical_agent_id_reuse": false,
       "checked_shadow_route_and_residual_state": false,
@@ -233,8 +233,8 @@
     "required_when_nonterminal": true,
     "route_complete": false,
     "checkpoint_saved": false,
-    "can_wait_for_heartbeat": false,
-    "resume_instruction": "<wait-for-heartbeat-or-type-continue-flowpilot>",
+    "manual_resume_available": false,
+    "resume_instruction": "<type-continue-flowpilot>",
     "manual_resume_prompt": "continue FlowPilot",
     "blocker_summary": "<blocker-or-hard-gate-or-null>",
     "notice_text": "<complete-message-or-nonterminal-resume-message>",
@@ -266,7 +266,7 @@
       "host_native_plan_tool_available": null,
       "native_plan_tool_name": "<update_plan-or-equivalent-or-null>",
       "native_plan_tool_called": false,
-      "fallback_projection_method": "<chat_and_flowpilot_state|none|null>",
+      "manual_projection_method": "<chat_and_flowpilot_state|none|null>",
       "synced_at": "<iso-8601-timestamp-or-null>",
       "item_count": 0,
       "contains_current_gate": false,
@@ -560,7 +560,7 @@
       "required_gates_completed",
       "declared_verification_passed",
       "node_evidence_written",
-      "heartbeat_evidence_written"
+      "manual_resume_evidence_written"
     ],
     "evidence_paths": []
   },
@@ -707,22 +707,21 @@
       "project_manager",
       "human_like_reviewer",
       "flowguard_operator",
-      "flowguard_operator",
-        "worker"
+      "worker"
     ],
     "role_memory_required": true,
     "role_memory_packets_loaded": 0,
-    "role_memory_packets_required": 6,
+    "role_memory_packets_required": 4,
     "role_memory_schema_checked": false,
-    "live_agent_continuity": "best_effort",
-    "role_continuity": "mandatory",
+    "live_agent_continuity": "current_run_liveness_checked",
+    "role_continuity": "mandatory_background_or_parallel_agents",
     "rehydration_report_template": "templates/flowpilot/role_binding_memory/role_binding_recovery_report.template.json",
     "restored_roles": [],
     "replaced_roles": [],
     "unavailable_roles": [],
     "all_replacements_seeded_from_memory": false,
-    "restored_for_current_heartbeat": false,
-    "rehydrated_for_current_heartbeat": false,
+    "restored_for_current_manual_resume": false,
+    "rehydrated_for_current_manual_resume": false,
     "archived_for_terminal": false
   },
   "project_manager_decision": {
@@ -750,7 +749,7 @@
       "status": "pending"
     },
     {
-      "step": "Write heartbeat, checkpoint, and next jump evidence",
+      "step": "Write manual_resume, checkpoint, and next jump evidence",
       "status": "pending"
     }
   ],
@@ -778,11 +777,11 @@
       "codex_automations",
       "state_json",
       "execution_frontier_json",
-      "heartbeat_evidence"
+      "manual_resume_evidence"
     ],
     "completed_for_current_status": false
   },
-  "heartbeat_launcher": {
+  "legacy_manual_resume_launcher": {
     "stable": true,
     "automation_id": "<automation-id-or-null>",
     "status": "<active|paused_after_completion|deleted_after_completion|not_created_unsupported_host|null>",
@@ -792,3 +791,4 @@
   },
   "updated_at": "<iso-8601-timestamp>"
 }
+

@@ -1,10 +1,10 @@
 {
   "schema_version": "flowpilot.current.v1",
-  "current_run_id": "run-001",
-  "current_run_root": ".flowpilot/runs/run-001",
+  "run_id": "run-001",
+  "run_root": ".flowpilot/runs/run-001",
   "selected_at": "<iso-8601-timestamp>",
   "selected_by": "flowpilot-controller",
-  "selection_reason": "<new_formal_start|resume_active_run|user_selected_run|migration>",
+  "selection_reason": "<new_formal_start|manual_resume_current_run|user_selected_current_run>",
   "status": "<startup_pending|running|paused|blocked|complete>",
   "thin_pointer_only": true,
   "control_state_must_live_under_run_root": true,

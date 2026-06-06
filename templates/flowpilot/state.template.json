@@ -17,7 +17,7 @@
   "plan_version": 1,
   "execution_frontier": ".flowpilot/runs/run-001/execution_frontier.json",
   "last_checkpoint": null,
-  "last_heartbeat": null,
+  "last_manual_resume": null,
   "continuation_mode": "<unknown|automated|manual-resume|blocked>",
   "host_continuation_probe": {
     "done": false,
@@ -39,12 +39,12 @@
       "answered_at": null,
       "banner_emitted_after_answers": false,
       "answers": {
-        "runtime_role_assistances": {
+        "background_collaboration": {
           "question": "May FlowPilot use background collaboration for this task?",
           "answer": null,
           "answered": false
         },
-        "scheduled_continuation": {
+        "manual_resume_continuation": {
           "question": "Fixed startup default: manual resume.",
           "answer": "manual",
           "answered": true,
@@ -70,18 +70,18 @@
     "startup_capability_resolution": {
       "required": true,
       "requested_capabilities": {
-        "runtime_role_assistances": "<allow|single-agent|pause|unknown>",
-        "scheduled_continuation": "<allow|manual|pause|unknown>",
+        "background_collaboration": "<allow|blocked|pause|unknown>",
+        "manual_resume_continuation": "<allow|manual|pause|unknown>",
         "display_surface": "<cockpit|chat|pause|unknown>"
       },
       "resolved_capabilities": {
-        "runtime_role_assistances": "<current-role-bindings|single-agent-fallback|blocked|unknown>",
-        "scheduled_continuation": "<current-run-heartbeat|manual-resume-fallback|blocked|unknown>",
-        "display_surface": "<cockpit|chat-fallback|chat-requested|blocked|unknown>"
+        "background_collaboration": "<current-role-bindings|blocked|blocked|unknown>",
+        "manual_resume_continuation": "<manual-resume|manual-resume-user-selected|blocked|unknown>",
+        "display_surface": "<cockpit|chat-user-selected|blocked|unknown>"
       },
-      "reviewer_probe_required_before_fallback": true,
-      "pm_fallback_decision_required": true,
-      "worker_claim_only_fallback_forbidden": true,
+      "reviewer_probe_required_before_blocker": true,
+      "pm_capability_gap_decision_required": true,
+      "worker_claim_only_substitution_forbidden": true,
       "review_report_path": ".flowpilot/runs/run-001/startup_review/latest.json",
       "pm_decision_path": ".flowpilot/runs/run-001/startup_pm_gate/latest.json"
     },
@@ -100,7 +100,7 @@
       "decision": "unknown",
       "user_decision_recorded": false,
       "user_authorized_live_start": false,
-      "requested_runtime_role_assistance": "<allow|single-agent|unknown>",
+      "requested_background_collaboration": "<allow|blocked|unknown>",
       "capability_status": "<unknown|available|unavailable|damaged>",
       "live_start_attempted": false,
       "live_agents_active": 0,
@@ -112,9 +112,9 @@
       "reused_historical_agent_ids": [],
       "historical_agent_reuse_blocked": true,
       "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/role_bindings_current_for_current_task.json",
-      "single_agent_role_continuity_authorized": false,
-      "single_agent_fallback_pm_recorded": false,
-      "single_agent_fallback_reviewer_verified_unavailable_or_damaged": false,
+      "background_collaboration_required": false,
+      "background_collaboration_unavailable": false,
+      "background_collaboration_blocked": false,
       "blocker": "no_user_decision",
       "evidence_path": null
     },
@@ -124,25 +124,25 @@
       "cockpit_open_attempted": false,
       "cockpit_ui_opened": false,
       "chat_route_sign_displayed": false,
-      "chat_fallback_pm_recorded": false,
-      "chat_fallback_reviewer_verified_missing_or_damaged_cockpit": false,
-      "fallback_does_not_satisfy_product_ui_delivery": true,
+      "chat_user_selected": false,
+      "display_capability_gap_blocked": false,
+      "chat_display_does_not_satisfy_cockpit_delivery": true,
       "evidence_path": null
     },
     "continuation_ready": false,
-    "scheduled_continuation_startup": {
-      "requested_scheduled_continuation": "<allow|manual|unknown>",
+    "manual_resume_continuation_startup": {
+      "requested_manual_resume_continuation": "<allow|manual|unknown>",
       "capability_status": "<unknown|available|unavailable|damaged>",
-      "current_run_heartbeat_required_when_available": true,
-      "heartbeat_id": null,
-      "heartbeat_name": null,
-      "heartbeat_bound_to_current_run": false,
-      "heartbeat_target_thread_or_workspace_matches_current_run": false,
-      "heartbeat_prompt_or_metadata_contains_current_run_id": false,
-      "heartbeat_frontier_source_matches_current_run": false,
-      "same_name_heartbeat_only_is_insufficient": true,
-      "manual_resume_fallback_pm_recorded": false,
-      "manual_resume_fallback_reviewer_verified_unavailable_or_damaged": false,
+      "manual_resume_required_when_available": true,
+      "manual_resume_id": null,
+      "manual_resume_name": null,
+      "manual_resume_bound_to_current_run": false,
+      "manual_resume_target_thread_or_workspace_matches_current_run": false,
+      "manual_resume_prompt_or_metadata_contains_current_run_id": false,
+      "manual_resume_frontier_source_matches_current_run": false,
+      "same_name_manual_resume_only_is_insufficient": true,
+      "manual_resume_user_selected": false,
+      "manual_resume_continuation_capability_gap_blocked": false,
       "evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json"
     },
     "startup_preflight_review": {
@@ -157,20 +157,20 @@
       "checked_user_authorization_vs_state": false,
       "checked_route_state_frontier_consistency": false,
       "checked_old_route_and_asset_reuse_boundary": false,
-      "checked_heartbeat_or_manual_resume_evidence": false,
-      "checked_runtime_role_assistance_role_evidence": false,
-      "checked_runtime_role_assistance_user_decision_matches_actual_state": false,
-      "checked_runtime_role_binding_count_or_single_agent_authorization": false,
+      "checked_manual_resume_or_manual_resume_evidence": false,
+      "checked_background_collaboration_role_evidence": false,
+      "checked_background_collaboration_user_decision_matches_actual_state": false,
+      "checked_background_role_binding_count_and_background_only_authorization": false,
       "checked_runtime_role_binding_current_task_freshness": false,
       "checked_no_historical_agent_id_reuse": false,
       "checked_shadow_route_and_residual_state": false,
       "checked_real_codex_automation_records": false,
-      "checked_runtime_role_assistance_capability_probe": false,
-      "checked_scheduled_continuation_capability_probe": false,
+      "checked_background_collaboration_capability_probe": false,
+      "checked_manual_resume_continuation_capability_probe": false,
       "checked_cockpit_capability_probe": false,
-      "checked_current_run_heartbeat_binding": false,
-      "checked_no_same_name_heartbeat_substitution": false,
-      "verified_any_fallbacks_are_capability_fallbacks_only": false,
+      "checked_manual_resume_binding": false,
+      "checked_no_same_name_manual_resume_substitution": false,
+      "verified_capability_gaps_block_or_repair": false,
       "factual_evidence_checked": false
     },
     "pm_start_gate": {
@@ -191,7 +191,7 @@
     "required_when_nonterminal": true,
     "route_complete": false,
     "checkpoint_saved": false,
-    "can_wait_for_heartbeat": false,
+    "manual_resume_available": false,
     "manual_resume_prompt": "continue FlowPilot",
     "notice_text": "<complete-message-or-nonterminal-resume-message>",
     "last_written_at": "<iso-8601-timestamp-or-null>"
@@ -321,3 +321,4 @@
   "project": "<project-name>",
   "status": "initialized"
 }
+

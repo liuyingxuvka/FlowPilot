@@ -5,7 +5,7 @@ run_id: <run-id>
 route_id: <route-id>
 node_id: <node-id>
 completed_by_role: <same-as-result-envelope-completed_by_role>
-completed_by_agent_id: <agent-id-or-single-agent-role-continuity-id>
+completed_by_agent_id: <agent-id-or-background-agent-id>
 result_body_hash_algorithm: sha256
 controller_may_read: false
 recipient_must_verify_current_assignment_before_opening: true
@@ -172,3 +172,4 @@ Bindings` section says no role skill use bindings apply.
 ## Requested Next Recipient
 
 <human_like_reviewer|project_manager|flowguard_operator>
+

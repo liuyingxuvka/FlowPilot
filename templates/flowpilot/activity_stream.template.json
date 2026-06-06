@@ -5,7 +5,7 @@
   "route_id": "<route-id-or-null>",
   "route_version": 0,
   "status": "<active|paused|complete>",
-  "purpose": "Append-only human-readable and machine-readable stream of important run activity across roles, route changes, gates, ledgers, defects, evidence, generated resources, heartbeats, and lifecycle events.",
+  "purpose": "Append-only human-readable and machine-readable stream of important run activity across roles, route changes, gates, ledgers, defects, evidence, generated resources, manual_resumes, and lifecycle events.",
   "event_log_path": ".flowpilot/runs/<run-id>/activity_stream.jsonl",
   "latest_event_path": ".flowpilot/runs/<run-id>/activity_latest.json",
   "allowed_event_types": [
@@ -28,7 +28,7 @@
     "evidence_event",
     "generated_resource_event",
     "checkpoint_written",
-    "heartbeat_recorded",
+    "manual_resume_recorded",
     "pause_recorded",
     "completion_recorded"
   ],
@@ -49,3 +49,4 @@
     "important_gate_and_lifecycle_decisions_must_have_dedicated_evidence": true
   }
 }
+

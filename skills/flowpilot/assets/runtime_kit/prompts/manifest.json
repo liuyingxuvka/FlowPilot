@@ -3,7 +3,7 @@
     {
       "id": "controller.action_ledger_table",
       "path": "prompts/controller/action_ledger_table.md",
-      "sha256": "53e9242d5ef6cd2840206c6ff25317891f5d4b5427f129191c7ee7b01b87d0d4",
+      "sha256": "07424b2cc344b400172e53ee7617c87a3b9e0f825a25eb73620c7983d0fa3e1e",
       "strip_trailing_newline": true,
       "template_variables": [
         "break_glass_text",
@@ -11,9 +11,9 @@
       ]
     },
     {
-      "id": "startup.heartbeat_resume",
-      "path": "prompts/startup/heartbeat_resume.md",
-      "sha256": "bbbbe2e7b6a4da418695213a566ef4f644ecf6c9c01e672e490444818463c01a",
+      "id": "startup.lifecycle_resume",
+      "path": "prompts/startup/lifecycle_resume.md",
+      "sha256": "18c04df2525e9895a004156587fae55fe9704b0d021721aad6033b3ba339d720",
       "strip_trailing_newline": true,
       "template_variables": [
         "project_root",
@@ -72,7 +72,7 @@
     {
       "id": "packets.packet_identity_boundary",
       "path": "prompts/packets/packet_identity_boundary.md",
-      "sha256": "0734fd2b27af70174908977ec9ad81e096245e08b637de5a240e7ef257328acb",
+      "sha256": "cd86d1a1299cfda6ef3dce165458ded337129f88830c339702a7add215b9b346",
       "strip_trailing_newline": false,
       "template_variables": [
         "packet_identity_marker",
@@ -92,7 +92,7 @@
     {
       "id": "packets.output_contract_section",
       "path": "prompts/packets/output_contract_section.md",
-      "sha256": "2affdb1661c2529dfdebe2617759780a9c8601f97c66a52538082f45f5b94bad",
+      "sha256": "090fc6db3cfcf9280148d779e0a4d2984f09272db6c4047ae7325162c8d1865f",
       "strip_trailing_newline": false,
       "template_variables": [
         "allowed_decisions_block",

@@ -20,10 +20,10 @@
     "fixture_only_evidence_to_disclose": []
   },
   "lifecycle_summary": {
-    "heartbeat_automation_ids": [],
+    "legacy_automation_ids": [],
     "codex_automation_status_checked": false,
-    "active_runtime_role_assistances": [],
-    "closed_or_paused_runtime_role_assistances": [],
+    "active_background_collaboration": [],
+    "closed_or_paused_background_collaboration": [],
     "manual_resume_notice_required": false
   },
   "cleanup_boundary": {
@@ -33,3 +33,4 @@
   },
   "human_readable_summary": "<short pause summary>"
 }
+

@@ -7,9 +7,9 @@
   "memory_root": ".flowpilot/runs/run-001/role_binding_memory",
   "memory_policy": {
     "role_memory_required": true,
-    "live_agent_continuity": "fresh_per_new_task_with_user_fallback",
+    "live_agent_continuity": "fresh_per_new_task_or_block",
     "role_continuity": "mandatory",
-    "runtime_role_binding_policy": "For every formal FlowPilot task, authorized background collaboration must be freshly bound to the current task after startup answers and current route allocation. The host may provide those bindings through any supported addressable and isolated role surface. Prior-route or earlier-task agent_id values are audit history only and must not be resumed or counted as current live-agent evidence. Continue with memory-seeded single-agent runtime-role continuity only after an explicit user fallback decision, and block if a required role cannot be created or same-task continuation cannot be recovered.",
+    "runtime_role_binding_policy": "For every formal FlowPilot task, authorized background collaboration must be freshly bound to the current task after startup answers and current route allocation. The host may provide those bindings through any supported addressable and isolated role surface. Prior-route or earlier-task agent_id values are audit history only and must not be resumed or counted as current live-agent evidence. Block if a required role cannot be created or same-task continuation cannot be recovered.",
     "current_role_binding_ids_required_per_new_task": true,
     "same_task_agent_id_resume_only": true,
     "raw_transcript_is_authoritative": false,

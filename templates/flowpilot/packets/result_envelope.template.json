@@ -28,7 +28,7 @@
   },
   "completed_at": "<iso-8601-timestamp>",
   "completed_by_role": "<worker|human_like_reviewer|flowguard_operator|project_manager>",
-  "completed_by_agent_id": "<agent-id-or-single-agent-role-continuity-id>",
+  "completed_by_agent_id": "<agent-id-or-background-agent-id>",
   "expected_role_from_packet_envelope": "<packet-envelope-to_role>",
   "completed_role_matches_packet_to_role": false,
   "completed_agent_id_belongs_to_role": false,
@@ -103,3 +103,4 @@
     "private_role_to_role_delivery_blocks_body_open": true
   }
 }
+

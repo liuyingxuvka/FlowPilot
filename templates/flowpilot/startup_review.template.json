@@ -17,11 +17,11 @@
     "prior_control_state_quarantined",
     "prior_work_import_boundary",
     "old_route_and_asset_reuse_boundary",
-    "heartbeat_or_manual_resume_evidence",
-    "current_run_heartbeat_binding_not_same_name_only",
-    "runtime_role_assistance_user_decision_and_role_evidence",
-    "runtime_role_assistance_capability_probe",
-    "scheduled_continuation_capability_probe",
+    "manual_resume_or_manual_resume_evidence",
+    "manual_resume_binding_not_same_name_only",
+    "background_collaboration_user_decision_and_role_evidence",
+    "background_collaboration_capability_probe",
+    "manual_resume_continuation_capability_probe",
     "cockpit_display_capability_probe",
     "current_task_live_agent_freshness",
     "first_user_intake_packet_delivered_to_pm",
@@ -48,20 +48,20 @@
     "current_role_binding_evidence": ".flowpilot/runs/<run-id>/evidence/role_bindings_current_for_current_task.json",
     "excluded_historical_agent_ids": ".flowpilot/runs/<run-id>/evidence/excluded_historical_agent_ids.json",
     "codex_automation_records": "$CODEX_HOME/automations",
-    "current_run_heartbeat_record": "$CODEX_HOME/automations/<automation-id>/automation.toml",
+    "manual_resume_record": "$CODEX_HOME/automations/<automation-id>/automation.toml",
     "clean_start_boundary": ".flowpilot/runs/<run-id>/routes/<route-id>/evidence/clean_start_nonreuse_boundary.json"
   },
   "required_facts": {
-    "route_heartbeat_interval_minutes": 1,
-    "route_heartbeat_rrule": "FREQ=MINUTELY;INTERVAL=1",
-    "route_heartbeat_must_target_current_run_not_same_name": true,
-    "runtime_role_bindings_required_when_user_allows_runtime_role_assistances": 6,
+    "foreground_patrol_interval_minutes": 1,
+    "foreground_patrol_rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "foreground_patrol_must_target_current_run_not_same_name": true,
+    "runtime_role_bindings_required_when_background_collaboration_is_authorized": 4,
     "runtime_role_bindings_must_be_fresh_for_current_task": true,
     "prior_route_agent_ids_must_not_be_reused_as_current_live_agents": true,
     "new_flowpilot_invocation_requires_new_run_directory": true,
     "continue_previous_work_requires_prior_work_import_packet": true,
     "old_control_state_reuse_for_current_run_forbidden": true,
-    "single_agent_role_continuity_requires_explicit_user_authorization": true
+    "background_collaboration_only": true
   },
   "mail_control_plane": {
     "first_user_intake_packet_from_user_to_pm": "<true|false>",
@@ -76,22 +76,22 @@
   },
   "startup_capability_resolution": {
     "worker_claims_are_pointers_only": true,
-    "fallback_requires_reviewer_direct_probe": true,
-    "fallback_requires_pm_decision": true,
-    "runtime_role_assistances": {
-      "requested": "<allow|single-agent|unknown>",
+    "capability_gap_requires_reviewer_direct_probe": true,
+    "capability_gap_requires_pm_block_or_repair_decision": true,
+    "background_collaboration": {
+      "requested": "<allow|blocked|unknown>",
       "capability_status": "<available|unavailable|damaged|unknown>",
       "reviewer_direct_probe_done": "<true|false>",
       "reviewer_verified_unavailable_or_damaged": "<true|false>",
-      "resolved_mode": "<six-live-agents|single-agent-fallback|blocked|unknown>",
+      "resolved_mode": "<background-agents|blocked|blocked|unknown>",
       "evidence_refs": []
     },
-    "scheduled_continuation": {
+    "manual_resume_continuation": {
       "requested": "<allow|manual|unknown>",
       "capability_status": "<available|unavailable|damaged|unknown>",
       "reviewer_direct_probe_done": "<true|false>",
       "reviewer_verified_unavailable_or_damaged": "<true|false>",
-      "resolved_mode": "<current-run-heartbeat|manual-resume-fallback|blocked|unknown>",
+      "resolved_mode": "<manual-resume|manual-resume-user-selected|blocked|unknown>",
       "evidence_refs": []
     },
     "display_surface": {
@@ -99,13 +99,13 @@
       "capability_status": "<available|unavailable|damaged|unknown>",
       "reviewer_direct_probe_done": "<true|false>",
       "reviewer_verified_missing_or_damaged_cockpit": "<true|false>",
-      "resolved_mode": "<cockpit|chat-fallback|chat-requested|blocked|unknown>",
-      "fallback_is_display_only_not_product_ui_completion": true,
+      "resolved_mode": "<cockpit|chat-user-selected|blocked|unknown>",
+      "chat_display_is_not_cockpit_product_ui_completion": true,
       "evidence_refs": []
     }
   },
-  "heartbeat_binding": {
-    "required_when_scheduled_continuation_resolves_to_heartbeat": true,
+  "legacy_manual_resume_binding": {
+    "required_when_manual_resume_continuation_resolves_to_manual_resume": true,
     "automation_id": "<automation-id-or-null>",
     "automation_name": "<name-or-null>",
     "rrule": "<rrule-or-null>",
@@ -119,8 +119,8 @@
     "frontier_source_matches_current_run": "<true|false>",
     "same_name_only_match_rejected": true
   },
-  "runtime_role_assistance_freshness": {
-    "user_allowed_runtime_role_assistances": "<true|false>",
+  "background_collaboration_freshness": {
+    "user_allowed_background_collaboration": "<true|false>",
     "current_task_fresh_agents": "<true|false>",
     "role_bindings_opened_after_startup_answers": "<true|false>",
     "role_bindings_opened_after_route_allocation": "<true|false>",
@@ -144,3 +144,4 @@
   "checks": [],
   "errors": []
 }
+

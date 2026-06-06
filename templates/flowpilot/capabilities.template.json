@@ -91,11 +91,11 @@
         "role_memory_root",
         "role_memory_packets_for_currently_required_requested_responsibilities",
         "requested_responsibility_agent_ids_recorded",
-        "current_task_fresh_agent_ids_when_live_runtime_role_assistance_authorized",
+        "current_task_fresh_agent_ids_when_live_background_collaboration_authorized",
         "historical_agent_ids_compared_and_excluded",
         "project_manager_decision_evidence",
-        "heartbeat_recovery_loaded_role_memory",
-        "heartbeat_recovery_resumed_replaced_or_blocked_each_currently_required_responsibility",
+        "manual_resume_recovery_loaded_role_memory",
+        "manual_resume_recovery_resumed_replaced_or_blocked_each_currently_required_responsibility",
         "replacement_roles_seeded_from_memory",
         "role_memory_refreshed_after_meaningful_role_work",
         "terminal_role_binding_and_memory_archive"
@@ -105,7 +105,7 @@
     {
       "evidence_path": ".flowpilot/runs/run-001/capabilities/pm-completion-runway-when-formal.json",
       "id": "pm_completion_runway",
-      "required": "for every formal heartbeat resume or PM route-position decision",
+      "required": "for every formal manual_resume resume or PM route-position decision",
       "source_skill": "flowpilot",
       "evidence_required": [
         "pm_runway_decision_path",
@@ -152,10 +152,10 @@
       "evidence_required": [
         "host_capability_probe_result",
         "automated_or_manual_resume_mode",
-        "if_automated_then_stable_heartbeat_ready",
-        "if_manual_resume_then_no_heartbeat_automation_created",
+        "if_automated_then_stable_manual_resume_ready",
+        "if_manual_resume_then_no_legacy_automation_created",
         "unattended_recovery_claim_allowed_flag",
-        "fallback_or_blocker_reason_when_setup_fails"
+        "blocker_or_repair_reason_when_setup_fails"
       ],
       "status": "planned"
     },
@@ -272,3 +272,4 @@
     }
   ]
 }
+

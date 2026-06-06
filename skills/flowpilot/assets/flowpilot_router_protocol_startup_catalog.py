@@ -23,16 +23,8 @@ PM_PRIOR_CONTEXT_REQUIRED_CARD_IDS = {
 
 STARTUP_QUESTIONS = (
     {
-        "id": "runtime_role_assistances",
-        "question": "Allow live role bindings through host-supported isolated role surfaces when the runtime requests them, or use single-controller continuity?",
-    },
-    {
-        "id": "scheduled_continuation",
-        "question": "Allow scheduled continuation/heartbeat, or use manual resume only?",
-    },
-    {
-        "id": "display_surface",
-        "question": "Open FlowPilot Cockpit when startup state is ready, or use chat route signs?",
+        "id": "background_collaboration_authorized",
+        "question": "Acknowledge that FlowPilot must use background or parallel agents.",
     },
 )
 
@@ -69,7 +61,7 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "action_type": "open_startup_intake_ui",
         "flag": "startup_intake_ui_completed",
         "label": "startup_intake_ui_opened_from_router",
-        "summary": "Open the native FlowPilot startup intake UI, then return to Router daemon status and the Controller action ledger without reading the body text in Controller context.",
+        "summary": "Open the native FlowPilot startup intake UI, then return to background driver status and the Controller action ledger without reading the body text in Controller context. Receipt repair: require a current startup_intake_result path and current controller-receipt evidence; it is not external recovery authority.",
         "actor": "bootloader",
         "requires_host_automation": True,
         "requires_payload": "startup_intake_result",
@@ -95,6 +87,15 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "label": "mailbox_initialized_from_copied_kit",
         "summary": "Create mailbox, prompt-delivery, and packet-ledger state files.",
         "actor": "bootloader",
+    },
+    {
+        "action_type": "bind_background_role_agents",
+        "flag": "background_role_agents_bound",
+        "label": "background_role_agents_bound_for_current_run",
+        "summary": "Bind current background or parallel agents to the active run before Controller work can proceed.",
+        "actor": "host",
+        "requires_host_role_binding": True,
+        "requires_payload": "background_agent_bindings",
     },
     {
         "action_type": "record_user_request",
@@ -124,28 +125,6 @@ BOOT_ACTIONS: tuple[dict[str, Any], ...] = (
         "summary": "Display the startup banner in the user dialog after Controller core is loaded, then record the confirmed display.",
         "actor": "bootloader",
         "card_id": "startup_banner",
-    },
-    {
-        "action_type": "create_heartbeat_automation",
-        "flag": "continuation_binding_recorded",
-        "label": "host_bootstraps_startup_heartbeat_automation",
-        "summary": "Create the one-minute Codex heartbeat after Controller core handoff and before startup review or route work.",
-        "actor": "bootloader",
-        "requires_host_automation": True,
-    },
-    {
-        "action_type": "start_role_slots",
-        "flag": "roles_started",
-        "label": "runtime_role_bindings_recorded_from_user_answer",
-        "summary": "Record the startup role-binding mode and same-action role core prompt delivery according to the user's host-mechanism answer.",
-        "actor": "bootloader",
-    },
-    {
-        "action_type": "inject_role_core_prompts",
-        "flag": "role_core_prompts_injected",
-        "label": "role_core_prompts_injected_from_copied_kit",
-        "summary": "Receipt repair: deliver each role only its role core card from the copied runtime kit when bootstrap state lacks the delivery receipt; this is not external recovery authority.",
-        "actor": "bootloader",
     },
 )
 

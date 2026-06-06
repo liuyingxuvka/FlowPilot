@@ -486,8 +486,8 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.record_external_event(root, "pm_completes_current_node_from_reviewed_result")
 
         current = read_json(root / ".flowpilot" / "current.json")
-        run_root = root / current["current_run_root"]
-        frontier = read_json(root / current["current_run_root"] / "execution_frontier.json")
+        run_root = root / current["run_root"]
+        frontier = read_json(root / current["run_root"] / "execution_frontier.json")
         self.assertEqual(frontier["status"], "node_completed_by_pm")
         self.assertIn("node-001", frontier["completed_nodes"])
 
@@ -693,6 +693,30 @@ class PacketsRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 },
             ),
         )
+    def test_current_node_reviewer_agent_map_cannot_replace_role_binding_ledger(self) -> None:
+        root = self.make_project()
+        run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(
+            root,
+            packet_id="node-packet-no-ledger-agent-map",
+            deliver_review_card=True,
+        )
+        result_envelope = read_json(root / result_path)
+        (run_root / "role_binding_ledger.json").unlink()
+
+        with self.assertRaisesRegex(router.RouterError, "role_binding_ledger agent-role map is required"):
+            router.record_external_event(
+                root,
+                "current_node_reviewer_passes_result",
+                self.role_report_envelope(
+                    root,
+                    "reviews/current_node_result_self_declared_map",
+                    {
+                        "reviewed_by_role": "human_like_reviewer",
+                        "passed": True,
+                        "agent_role_map": {result_envelope["completed_by_agent_id"]: "worker"},
+                    },
+                ),
+            )
     def test_router_packet_audit_rejection_routes_pm_repair_decision(self) -> None:
         root = self.make_project()
         _run_root, _packet_path, result_path = self.prepare_current_node_result_for_review(

@@ -47,7 +47,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.start_run",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_shared.py",
             symbol="start_run",
             implements=(
                 "new_entrypoint.startup_ui_to_new_ledger",
@@ -59,7 +59,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.assert_formal_interactive_result",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_shared.py",
             symbol="_assert_formal_interactive_result",
             implements=("new_entrypoint.formal_headless_rejection",),
             external_inputs=("result_path",),
@@ -67,7 +67,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.run_fake_e2e",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_run_commands.py",
             symbol="run_fake_e2e",
             implements=(
                 "new_entrypoint.rehearsal_closure",
@@ -90,7 +90,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.lease_agent",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_role_commands.py",
             symbol="lease_agent",
             implements=(
                 "new_entrypoint.symmetric_role_packet_lifecycle",
@@ -102,7 +102,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.ack",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_role_commands.py",
             symbol="ack",
             implements=("new_entrypoint.symmetric_role_packet_lifecycle",),
             external_inputs=("root", "lease_id", "packet_id"),
@@ -111,7 +111,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.submit_result",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_run_commands.py",
             symbol="submit_result",
             implements=(
                 "new_entrypoint.symmetric_role_packet_lifecycle",
@@ -124,7 +124,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.status",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_run_commands.py",
             symbol="status",
             implements=(
                 "new_entrypoint.symmetric_role_packet_lifecycle",
@@ -135,7 +135,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.patrol",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_run_commands.py",
             symbol="patrol",
             implements=(
                 "new_entrypoint.lifecycle_guard_stop_authority",
@@ -147,7 +147,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.resume",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_run_commands.py",
             symbol="resume",
             implements=("new_entrypoint.lifecycle_guard_resume_patrol",),
             external_inputs=("root", "reason"),
@@ -177,7 +177,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
         ),
         _contract(
             "flowpilot_new.main",
-            path="skills/flowpilot/assets/flowpilot_new.py",
+            path="skills/flowpilot/assets/flowpilot_new_cli.py",
             symbol="main",
             implements=(
                 "new_entrypoint.side_command_surface_unsupported",
@@ -520,6 +520,14 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("record",),
         ),
         _contract(
+            "startup_closure.terminal_closure_reconciliation_status",
+            path="skills/flowpilot/assets/flowpilot_router_startup_closure.py",
+            symbol="_terminal_closure_reconciliation_status",
+            implements=("runtime_owner.router_owner_external_contracts",),
+            external_inputs=("router", "project_root", "run_root", "run_state"),
+            external_outputs=("return",),
+        ),
+        _contract(
             "runtime_closure.route_display_refresh_record",
             path="skills/flowpilot/assets/flowpilot_runtime_closure.py",
             symbol="route_display_refresh_record",
@@ -604,9 +612,9 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("lock",),
         ),
         _contract(
-            "startup_daemon.heartbeat_monitor",
+            "startup_daemon.patrol_monitor",
             path="skills/flowpilot/assets/flowpilot_router_startup_daemon.py",
-            symbol="_router_daemon_heartbeat_monitor",
+            symbol="_router_daemon_patrol_monitor",
             implements=("startup_daemon.lock_liveness_contract",),
             external_inputs=("lock", "liveness", "status_exists", "status_ok"),
         ),
@@ -950,7 +958,7 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             symbol="_apply_startup_bootloader_receipt_effects",
             implements=("runtime_owner.receipt_bootloader_policy_boundary",),
             external_inputs=("router", "project_root", "run_root", "run_state", "action", "receipt_payload"),
-            side_effects=("save_bootstrap_state", "save_run_state", "update", "write_json"),
+            side_effects=("save_bootstrap_state", "save_run_state", "update"),
         ),
         _contract(
             "receipt_packet_fold_registry.registered_actions",
@@ -1186,18 +1194,20 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             external_inputs=("run_root",),
         ),
         _contract(
-            "startup_bootloader.depends_on_role_slots",
+            "startup_bootloader.next_boot_action",
             path="skills/flowpilot/assets/flowpilot_router_startup_bootloader_progress.py",
-            symbol="_startup_bootloader_action_depends_on_role_slots",
+            symbol="_next_boot_action",
             implements=("runtime_owner.router_owner_external_contracts",),
-            external_inputs=("router", "action_type"),
+            external_inputs=("router", "project_root", "state"),
         ),
         _contract(
-            "startup_closure.host_heartbeat_binding_ready",
-            path="skills/flowpilot/assets/flowpilot_router_startup_closure.py",
-            symbol="_host_heartbeat_binding_ready",
+            "lifecycle_support.write_manual_resume_binding",
+            path="skills/flowpilot/assets/flowpilot_router_lifecycle_support.py",
+            symbol="_write_manual_resume_binding",
             implements=("runtime_owner.router_owner_external_contracts",),
-            external_inputs=("router", "run_root", "run_state"),
+            external_inputs=("project_root", "run_root", "run_state", "payload"),
+            external_outputs=(),
+            side_effects=("write_manual_resume_binding",),
         ),
         _contract(
             "startup_display.display_text_hash",

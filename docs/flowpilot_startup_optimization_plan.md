@@ -11,21 +11,21 @@ Controller sealed-body boundaries.
 
 Protected harms:
 
-- a formal run starts work with fewer than the six required role authorities;
+- a formal run starts work before all current runtime role authorities are bound;
 - role bindings exist but did not receive their current-run core prompt and role
   I/O protocol at startup;
-- heartbeat is forgotten, delayed until after long startup work, or bound to the
-  wrong run;
+- manual-resume binding or foreground patrol state is missing after Controller
+  core loads;
 - reviewer startup fact review is delayed behind PM prep work or forced to
   re-prove router-owned mechanical facts;
 - PM activation opens work before reviewer startup findings and PM prep have
   joined;
-- display fallback or host receipts are hidden from reviewer, creating repair
+- display-surface host receipts are hidden from reviewer, creating repair
   loops;
 - a speed path uses Controller inference or self-attested claims as proof.
 
 Residual blindspot: the startup optimization model is a control-plane model. It
-does not prove host-specific role binding or Codex heartbeat UI behavior by
+does not prove host-specific role binding or manual-resume host behavior by
 itself; runtime tests and local install checks remain required after code
 changes.
 
@@ -33,25 +33,25 @@ changes.
 
 | Order | Optimization | Current Friction | Target Behavior | Acceptance Evidence |
 | --- | --- | --- | --- | --- |
-| 1 | Merge role binding with role-core delivery | `start_role_slots` and `inject_role_core_prompts` are separate bootloader actions | Every role binding receipt also records the role core card path/hash and current role I/O protocol receipt; no later startup core-injection action is needed | `role_binding_ledger.json`, `role_core_prompt_delivery.json`, and role I/O receipts are written by `start_role_slots`; bootstrap flag `role_core_prompts_injected` is set during the same action |
-| 2 | Create heartbeat early when the user allows scheduled continuation | Heartbeat is currently a Controller action after display-plan sync; if later startup gets slow, continuation protection is delayed | After run id and role ledger exist, the first Controller action for scheduled continuation is heartbeat creation, before reviewer/PM startup work | `continuation_binding.json` has current run id, one-minute cadence, verified host automation proof, and exists before startup fact-card delivery |
+| 1 | Bind background role agents with role-core evidence | Startup must not reach Controller work before host-opened current role agents exist | Every role binding receipt records the role core card path/hash and current role I/O protocol receipt; no later startup core-injection action is needed | `role_binding_ledger.json`, role memory packets, and role I/O receipts are written by `bind_background_role_agents`; bootstrap flag `background_role_agents_bound` is set during the same action |
+| 2 | Record manual-resume binding after Controller core | FlowPilot no longer creates scheduled-continuation or heartbeat automation | After Controller core loads, the run records foreground patrol plus stable manual-resume launcher evidence | `continuation_binding.json` has current run id, `mode=manual_resume`, `foreground_patrol_active=true`, and no heartbeat automation fields |
 | 3 | Dispatch reviewer startup fact check before PM prep cards | Reviewer fact check currently waits behind several PM card deliveries and user-intake mail | Controller writes mechanical audit and display receipt, then sends `reviewer.startup_fact_check` before PM prep cards; after reviewer card ack, PM prep cards can be delivered while the reviewer report is still pending | Card ledger shows reviewer startup card delivery before PM prep cards; PM activation still waits for reviewer report |
-| 4 | Split router-owned mechanical proof from reviewer external facts | Reviewer may get pushed into rechecking facts already proved by the router, while missing direct external receipts such as display fallback | Reviewer receives router-owned proof for mechanical facts, is told not to re-prove them, and receives direct evidence paths for external facts such as display-surface receipt | `startup_mechanical_audit.json` owns mechanical checks; reviewer delivery context includes display evidence; startup report blockers do not cite router-computable facts |
+| 4 | Split router-owned mechanical proof from reviewer external facts | Reviewer may get pushed into rechecking facts already proved by the router, while missing direct external receipts such as display-surface host evidence | Reviewer receives router-owned proof for mechanical facts, is told not to re-prove them, and receives direct evidence paths for external facts such as display-surface receipt | `startup_mechanical_audit.json` owns mechanical checks; reviewer delivery context includes display evidence; startup report blockers do not cite router-computable facts |
 | 5 | Keep system-card batching as a separate future replay-mode change | Barrier bundles exist, but same-role multi-card delivery is not implemented and generic `card_bundle_fold` is rejected today | Do not depend on multi-card body merging for this startup pass; only consider a later batch-envelope feature with per-card receipts and dedicated replay semantics | Existing command-refinement rejection remains valid unless a dedicated replay model and runtime are added |
 
 ## Failure Modes The Model Must Catch
 
 | ID | Possible Bug | Required Detection |
 | --- | --- | --- |
-| B1 | Roles are marked ready but their role core prompt or role I/O protocol was not delivered at spawn/start | Fail if role readiness is recorded without same-action core prompt and current role I/O receipts |
+| B1 | Roles are marked ready but their role core prompt or role I/O protocol was not delivered at startup binding | Fail if role readiness is recorded without same-action core prompt and current role I/O receipts |
 | B2 | A delayed separate role-core injection becomes required before Controller can load | Fail if optimized startup still requires a later core-injection gate |
-| B3 | Heartbeat is created before a run id or role ledger exists | Fail if heartbeat proof is not bound to a current run and current role ledger |
-| B4 | Heartbeat is delayed until after reviewer/PM startup work | Fail if scheduled continuation is requested and reviewer startup dispatch occurs before heartbeat binding |
-| B5 | Heartbeat cadence or host proof is missing/stale | Fail unless cadence is one minute and host proof is verified for the current run |
+| B3 | Startup reaches Controller without current background agent bindings | Fail if Controller loads before `background_role_agents_bound` and role I/O receipts |
+| B4 | Manual-resume binding is missing after Controller core | Fail if continuation binding is not current-run manual resume with foreground patrol |
+| B5 | Old heartbeat or scheduled-continuation automation is recreated | Fail if startup emits heartbeat automation actions or heartbeat fields |
 | B6 | Reviewer fact card is delayed behind PM prep cards | Fail if PM prep starts before reviewer startup fact card dispatch in the optimized plan |
 | B7 | PM activation opens before reviewer report and PM prep both join | Fail if `work_beyond_startup_allowed` is true before both prerequisites |
 | B8 | Reviewer is asked to re-prove router-owned mechanical facts | Fail if reviewer-required checks include router-owned flags, hashes, or event order |
-| B9 | Display fallback host receipt is not visible to reviewer | Fail if reviewer dispatch lacks display-surface direct evidence paths |
+| B9 | Display-surface host receipt is not visible to reviewer | Fail if reviewer dispatch lacks display-surface direct evidence paths |
 | B10 | PM prep blocks reviewer progress instead of running independently after reviewer dispatch | Fail if PM prep starts while reviewer pending without an independence/join policy |
 | B11 | Controller reads sealed role bodies or uses self-attested claims as proof | Fail if Controller body access or self-attested proof is present |
 | B12 | Startup work proceeds before PM activation | Fail if route/material/product work starts before PM startup activation |

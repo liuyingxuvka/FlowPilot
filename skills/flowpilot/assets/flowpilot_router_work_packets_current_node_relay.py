@@ -34,9 +34,14 @@ from flowpilot_router_work_packets_current_node_relay_leases import *
 from flowpilot_router_work_packets_current_node_relay_runtime_ops import *
 
 _DEFAULT_SENTINEL = object()
+_BOUND_ROUTER: ModuleType | None = None
 
 
 def _bind_router(router: ModuleType) -> None:
+    global _BOUND_ROUTER
+    if _BOUND_ROUTER is router:
+        return
+    _BOUND_ROUTER = router
     current = globals()
     local_names = current.get('_LOCAL_NAMES', set())
     for name, value in vars(router).items():
@@ -99,14 +104,20 @@ def _agent_role_map_from_role_binding_ledger(router: ModuleType, run_root: Path)
             agent_role_map[agent_id.strip()] = role_key
     return agent_role_map or None
 
-def _merge_agent_role_maps(router: ModuleType, primary: dict[str, str] | None, fallback: dict[str, str] | None) -> dict[str, str] | None:
+def _verified_agent_role_map_from_binding_ledger(router: ModuleType, primary: dict[str, str] | None, declared: dict[str, str] | None) -> dict[str, str]:
     _bind_router(router)
-    merged: dict[str, str] = {}
-    if isinstance(fallback, dict):
-        merged.update({str(key): str(value) for key, value in fallback.items()})
-    if isinstance(primary, dict):
-        merged.update({str(key): str(value) for key, value in primary.items()})
-    return merged or None
+    if not isinstance(primary, dict) or not primary:
+        raise RouterError('current role_binding_ledger agent-role map is required; reviewer agent_role_map cannot replace background bindings')
+    if isinstance(declared, dict):
+        declared_pairs = {str(key): str(value) for key, value in declared.items()}
+        conflicts = {
+            agent_id: declared_role
+            for agent_id, declared_role in declared_pairs.items()
+            if agent_id in primary and primary[agent_id] != declared_role
+        }
+        if conflicts:
+            raise RouterError(f'reviewer agent_role_map conflicts with current role_binding_ledger: {sorted(conflicts)}')
+    return {str(key): str(value) for key, value in primary.items()}
 
 def _validate_packet_bodies_opened_by_targets(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]]) -> None:
     _bind_router(router)
@@ -143,7 +154,7 @@ def _validate_results_exist_for_packets(router: ModuleType, project_root: Path, 
 def _validate_packet_group_for_reviewer(router: ModuleType, project_root: Path, run_state: dict[str, Any], records: list[dict[str, Any]], *, audit_path: Path, agent_role_map: dict[str, str] | None=None) -> None:
     _bind_router(router)
     trusted_agent_role_map = router._agent_role_map_from_role_binding_ledger(project_root / str(run_state['run_root']))
-    merged_agent_role_map = router._merge_agent_role_maps(trusted_agent_role_map, agent_role_map)
+    verified_agent_role_map = router._verified_agent_role_map_from_binding_ledger(trusted_agent_role_map, agent_role_map)
     audits: list[dict[str, Any]] = []
     blockers: list[str] = []
     evidence_paths: list[Path] = []
@@ -153,7 +164,7 @@ def _validate_packet_group_for_reviewer(router: ModuleType, project_root: Path, 
         evidence_paths.extend([packet_path, result_path])
         packet_envelope = packet_runtime.load_envelope(project_root, packet_path)
         result_envelope = packet_runtime.load_envelope(project_root, result_path)
-        audit = packet_runtime.validate_for_reviewer(project_root, packet_envelope=packet_envelope, result_envelope=result_envelope, agent_role_map=merged_agent_role_map)
+        audit = packet_runtime.validate_for_reviewer(project_root, packet_envelope=packet_envelope, result_envelope=result_envelope, agent_role_map=verified_agent_role_map)
         audits.append(audit)
         blockers.extend((str(blocker) for blocker in audit.get('blockers') or []))
     run_root = project_root / str(run_state['run_root'])
@@ -177,7 +188,7 @@ __all__ = (
     '_result_runtime_relay_operations',
     '_relay_result_records',
     '_agent_role_map_from_role_binding_ledger',
-    '_merge_agent_role_maps',
+    '_verified_agent_role_map_from_binding_ledger',
     '_validate_packet_bodies_opened_by_targets',
     '_validate_results_exist_for_packets',
     '_validate_packet_group_for_reviewer',

@@ -92,9 +92,10 @@
   "state_updates": {
     "state_path": ".flowpilot/runs/<run-id>/state.json",
     "frontier_path": ".flowpilot/runs/<run-id>/execution_frontier.json",
-    "heartbeat_path": ".flowpilot/runs/<run-id>/heartbeats/<hb-id>.json",
+    "manual_resume_path": ".flowpilot/runs/<run-id>/manual_resumes/<hb-id>.json",
     "state_continuation_fields_updated": false,
     "frontier_continuation_fields_updated": false,
-    "heartbeat_continuation_fields_updated": false
+    "manual_resume_continuation_fields_updated": false
   }
 }
+

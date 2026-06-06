@@ -398,7 +398,8 @@
     "terminal_state_files_synced": false,
     "completion_state_evidence_refreshed": false,
     "lifecycle_reconciliation_required_actions_zero": false,
-    "heartbeat_or_manual_resume_lifecycle_reconciled": false
+    "manual_resume_or_manual_resume_lifecycle_reconciled": false
   },
   "completion_allowed": false
 }
+

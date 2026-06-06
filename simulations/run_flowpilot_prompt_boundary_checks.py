@@ -26,8 +26,8 @@ def _state_id(state: model.State) -> str:
         f"{state.controller_writes_receipt},{state.controller_standby_when_no_row}|"
         f"router={state.router_owns_ordering_and_barriers},diag_only={state.diagnostic_router_commands_only},"
         f"metronome={state.manual_router_metronome_allowed}|"
-        f"heartbeat={state.heartbeat_records_resume_event},{state.heartbeat_attaches_existing_daemon},"
-        f"{state.heartbeat_repairs_stale_daemon_only},loop={state.heartbeat_continues_router_loop}|"
+        f"lifecycle_resume={state.lifecycle_records_resume_request},{state.lifecycle_loads_current_guard},"
+        f"{state.lifecycle_blocks_or_recovers_stale_duty},loop={state.lifecycle_continues_router_loop}|"
         f"unclear={state.unclear_step_rereads_daemon_and_ledger},{state.unclear_step_returns_to_router}|"
         f"rows=router_between:{state.row_to_row_uses_router_command}|"
         f"partial=wait:{state.partial_table_read_waits_next_tick},error:{state.partial_table_read_errors}|"
@@ -203,6 +203,9 @@ def _actual_prompt_source_report() -> dict[str, object]:
     startup_fact_card = _source_text("skills/flowpilot/assets/runtime_kit/cards/reviewer/startup_fact_check.md")
     packet_body_template = _source_text("templates/flowpilot/packets/packet_body.template.md")
     packet_runtime = _source_text("skills/flowpilot/assets/packet_runtime.py")
+    lifecycle_resume_prompt = _source_text(
+        "skills/flowpilot/assets/runtime_kit/prompts/startup/lifecycle_resume.md"
+    )
     router = _source_bundle(
         "skills/flowpilot/assets/flowpilot_router.py",
         "skills/flowpilot/assets/flowpilot_router_action_factory_envelope.py",
@@ -212,10 +215,7 @@ def _actual_prompt_source_report() -> dict[str, object]:
         "skills/flowpilot/assets/flowpilot_router_startup_intake_ui.py",
         "skills/flowpilot/assets/runtime_kit/prompts/cards/post_ack_policy.md",
         "skills/flowpilot/assets/runtime_kit/prompts/cards/next_step_source_policy.md",
-        "skills/flowpilot/assets/runtime_kit/prompts/startup/heartbeat_resume.md",
     )
-    heartbeat_template = _source_text("templates/flowpilot/heartbeats/hb.template.md")
-
     checks: dict[str, bool] = {
         "skill_no_broad_wait_boundary_prefer_run_until_wait": (
             "After applying a wait-boundary action, prefer `run-until-wait`" not in skill
@@ -227,14 +227,15 @@ def _actual_prompt_source_report() -> dict[str, object]:
             and "run-until-wait --new-invocation" not in skill
             and "next --new-invocation" not in skill
         ),
-        "skill_heartbeat_no_return_to_router": (
+        "skill_lifecycle_resume_no_return_to_router": (
             "record `heartbeat_or_manual_resume_requested` and return to the router" not in skill
+            and "On heartbeat or manual mid-run wakeup" not in skill
         ),
-        "skill_has_pre_daemon_split": _contains_all(
+        "skill_has_background_driver_bootloader_split": _contains_all(
             skill,
             (
-                "Before the daemon is started or attached",
-                "After `start_router_daemon` succeeds",
+                "Before the background driver is started or attached",
+                "After the background driver startup action succeeds",
                 "diagnostic, test, or explicit repair",
             ),
         ),
@@ -275,17 +276,16 @@ def _actual_prompt_source_report() -> dict[str, object]:
                 '"controller_completion_mode"',
             ),
         ),
-        "router_heartbeat_prompt_no_continue_router_loop": (
-            "continue the router loop" not in router
-            and "returning to the FlowPilot router loop" not in router
+        "lifecycle_resume_prompt_no_continue_router_loop": (
+            "continue the router loop" not in lifecycle_resume_prompt
+            and "returning to the FlowPilot router loop" not in lifecycle_resume_prompt
+            and "heartbeat/manual resume" not in lifecycle_resume_prompt
+            and "Every heartbeat" not in lifecycle_resume_prompt
+            and "Rehydrate only" not in lifecycle_resume_prompt
         ),
-        "router_heartbeat_prompt_attaches_daemon_ledger": _contains_all(
-            router,
-            ("attach to daemon status", "Controller action ledger", "process only exposed Controller rows"),
-        ),
-        "heartbeat_template_disclaims_manual_router_loop": _contains_all(
-            heartbeat_template,
-            ("does not authorize a manual Router loop", "daemon status", "Controller action ledger"),
+        "lifecycle_resume_prompt_uses_new_runtime_guard": _contains_all(
+            lifecycle_resume_prompt,
+            ("flowpilot_new.py resume", "lifecycle guard", "foreground duty"),
         ),
         "controller_display_rows_use_receipt_wording": _contains_all(
             controller,
@@ -297,14 +297,14 @@ def _actual_prompt_source_report() -> dict[str, object]:
         ),
         "skill_startup_intake_returns_to_router_work_board": _contains_all(
             skill,
-            ("open_startup_intake_ui", "After the UI closes", "Router daemon status", "Controller action ledger"),
+            ("open_startup_intake_ui", "After the UI closes", "current lifecycle guard", "foreground duty", "Controller action ledger"),
         ),
         "skill_startup_intake_no_direct_apply_wording": (
             "After the UI closes, apply that same pending action" not in skill
         ),
         "router_startup_intake_returns_to_router_work_board": _contains_all(
             router,
-            ("Open the native FlowPilot startup intake UI", "Router daemon status", "Controller action ledger"),
+            ("Open the native FlowPilot startup intake UI", "background driver status", "Controller action ledger"),
         ),
         "router_startup_intake_no_direct_apply_wording": (
             "After the UI closes, apply this pending action with only the returned startup_intake_result.result_path." not in router
@@ -320,7 +320,7 @@ def _actual_prompt_source_report() -> dict[str, object]:
             (
                 "After work-card ACK, do not stop or wait for another prompt",
                 "immediately continue the assigned work",
-                "task remains unfinished until Router receives",
+                "task remains unfinished until the current runtime receives",
             ),
         ),
         "packet_ack_continues_and_waits_for_router_result": _contains_all(
@@ -328,7 +328,7 @@ def _actual_prompt_source_report() -> dict[str, object]:
             (
                 "Packet ACK is receipt only",
                 "do not stop or wait for another prompt",
-                "remains unfinished until Router receives",
+                "remains unfinished until the current runtime receives",
             ),
         ),
         "router_card_checkin_policy_mentions_work_item_output": _contains_all(
@@ -336,7 +336,7 @@ def _actual_prompt_source_report() -> dict[str, object]:
             (
                 "work cards that ask for an output, report, decision",
                 "must not stop after ACK",
-                "unfinished until Router receives",
+                "unfinished until the current runtime receives",
             ),
         ),
     }

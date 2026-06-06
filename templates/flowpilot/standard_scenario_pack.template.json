@@ -106,7 +106,7 @@
     {
       "scenario_id": "host_capability_absent",
       "risk_family": "host_or_tool_boundary",
-      "description": "A host capability such as tray, browser, image generation, automation, or external scheduler is absent; route behavior must block, repair, or use an explicit allowed fallback.",
+      "description": "A host capability such as tray, browser, image generation, automation, or external scheduler is absent; route behavior must block or require an explicit current-runtime repair path.",
       "default_required_when": [
         "host-dependent feature",
         "automation",
