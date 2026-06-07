@@ -52,6 +52,76 @@
         "test_evidence_id": "info_flow.test.pm_opened_body_validation"
       },
       {
+        "code_contract_id": "info_flow.runtime.apply_pm_repair_decision",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.current_scope_repair_identity_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.issue_current_scope_repair_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.current_scope_repair_identity_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.required_recheck_packet",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_recheck_packet_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.packet_repair_blocker_id",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_recheck_packet_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.packet_repair_blocker_id",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.current_scope_repair_identity_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.attach_staged_effect",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.staged_effect_convergence_edge"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.build_current_handoff_contract",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.handoff_contract_visible_edge"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.build_current_handoff_contract",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.formal_repair_identity_mismatch_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.formal_repair_identity_gate",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.required_recheck_packet_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.formal_repair_identity_gate",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.formal_repair_identity_mismatch_negative"
+      },
+      {
         "code_contract_id": "info_flow.runtime.ensure_pm_repair_packet",
         "gaps": [],
         "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
@@ -140,7 +210,7 @@
         "gaps": [],
         "model_obligation_id": "info_flow.blocker.reviewer_recheck_followup",
         "status": "locked",
-        "test_evidence_id": "info_flow.test.required_recheck_packet_positive"
+        "test_evidence_id": "info_flow.test.required_recheck_packet_replay"
       },
       {
         "code_contract_id": "info_flow.closure.classify_control_blocker",
@@ -386,10 +456,10 @@
       "semantic proof that every private helper branch is correct"
     ]
   },
-  "code_contract_count": 24,
+  "code_contract_count": 28,
   "code_symbol_ok": true,
   "code_symbol_report": {
-    "contract_count": 24,
+    "contract_count": 28,
     "evidence": [
       {
         "calls": [
@@ -403,6 +473,8 @@
           "_require",
           "blocker.get",
           "bool",
+          "existing.get",
+          "existing_envelope.get",
           "get",
           "isinstance",
           "issue_task_packet",
@@ -456,6 +528,7 @@
           "dict",
           "dumps",
           "existing",
+          "existing_envelope",
           "gate_kind",
           "get",
           "isinstance",
@@ -480,6 +553,7 @@
           "authorized_result_reads",
           "blocker",
           "existing",
+          "existing_envelope",
           "packet_id",
           "pm_repair_packet_id",
           "repair_target_envelope",
@@ -643,7 +717,6 @@
         "state_writes": [
           "packet_id",
           "packet_kind",
-          "repair_blocker_id",
           "repair_role",
           "repeat_context",
           "target_envelope",
@@ -966,6 +1039,260 @@
           "subject_packet_id"
         ],
         "symbol": "_issue_required_recheck_packet_for_stopped_blocker"
+      },
+      {
+        "calls": [
+          "_packet_repair_blocker_id",
+          "envelope.get",
+          "get",
+          "isinstance",
+          "ledger.get",
+          "packet.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.packet_repair_blocker_id",
+        "found": true,
+        "parameters": [
+          "ledger",
+          "packet_id"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [
+          "_packet_repair_blocker_id",
+          "str"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Mapping",
+          "_packet_repair_blocker_id",
+          "envelope",
+          "get",
+          "isinstance",
+          "ledger",
+          "packet",
+          "packet_id",
+          "str",
+          "subject_id"
+        ],
+        "state_writes": [
+          "envelope",
+          "packet",
+          "subject_id"
+        ],
+        "symbol": "_packet_repair_blocker_id"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "existing.get",
+          "isinstance",
+          "now_iso",
+          "record.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.attach_staged_effect",
+        "found": true,
+        "parameters": [
+          "blocker_id",
+          "effect_kind",
+          "gate_id",
+          "record",
+          "route_scope",
+          "source_packet_id",
+          "source_result_id",
+          "target_node_id"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [
+          "effect",
+          "existing"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "STAGED_EFFECT_KINDS",
+          "STAGED_EFFECT_SCHEMA_VERSION",
+          "blocker_id",
+          "dict",
+          "effect",
+          "effect_kind",
+          "existing",
+          "existing_blocker_id",
+          "gate_id",
+          "get",
+          "incoming_blocker_id",
+          "isinstance",
+          "now_iso",
+          "record",
+          "route_scope",
+          "source_packet_id",
+          "source_result_id",
+          "str",
+          "target_node_id"
+        ],
+        "state_writes": [
+          "effect",
+          "existing",
+          "existing_blocker_id",
+          "incoming_blocker_id",
+          "staged_effect"
+        ],
+        "symbol": "_attach_staged_effect"
+      },
+      {
+        "calls": [
+          "_copy_jsonable",
+          "_packet_handoff_missing_information_response",
+          "envelope.get",
+          "family_row.get",
+          "int",
+          "isinstance",
+          "ledger.get",
+          "list",
+          "packet_result_contracts.branch_valid_shapes_for_family",
+          "packet_result_contracts.contract_for_family",
+          "packet_result_contracts.forbidden_fields_for_family",
+          "packet_result_contracts.minimal_valid_shape_for_family",
+          "packet_result_contracts.packet_result_family_id",
+          "packet_result_contracts.required_fields_for_family",
+          "row.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.build_current_handoff_contract",
+        "found": true,
+        "parameters": [
+          "authorized_result_reads",
+          "envelope",
+          "ledger"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Mapping",
+          "_copy_jsonable",
+          "_packet_handoff_missing_information_response",
+          "authorized_result_reads",
+          "branch_valid_shapes_for_family",
+          "contract_for_family",
+          "dict",
+          "envelope",
+          "family_id",
+          "family_row",
+          "field",
+          "forbidden_fields_for_family",
+          "get",
+          "int",
+          "isinstance",
+          "ledger",
+          "list",
+          "minimal_valid_shape_for_family",
+          "packet_result_contracts",
+          "packet_result_family_id",
+          "required_fields",
+          "required_fields_for_family",
+          "row",
+          "str"
+        ],
+        "state_writes": [
+          "family_id",
+          "family_row",
+          "required_fields"
+        ],
+        "symbol": "_build_current_handoff_contract"
+      },
+      {
+        "calls": [
+          "_strict_json_object_from_body",
+          "blockers.append",
+          "declared_ids.append",
+          "entry.get",
+          "enumerate",
+          "envelope.get",
+          "envelope_handoff.get",
+          "handoff.get",
+          "isinstance",
+          "manifest.get",
+          "packet.get",
+          "payload.get",
+          "section.get",
+          "set",
+          "sorted",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.formal_repair_identity_gate",
+        "found": true,
+        "parameters": [
+          "packet"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [
+          "sorted"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Mapping",
+          "_strict_json_object_from_body",
+          "append",
+          "blockers",
+          "declared_id",
+          "declared_ids",
+          "entry",
+          "enumerate",
+          "envelope",
+          "envelope_handoff",
+          "envelope_repair_blocker_id",
+          "field",
+          "formal_id",
+          "get",
+          "handoff",
+          "index",
+          "isinstance",
+          "label",
+          "list",
+          "manifest",
+          "packet",
+          "packet_repair_blocker_id",
+          "payload",
+          "section",
+          "section_name",
+          "set",
+          "sorted",
+          "str",
+          "tuple"
+        ],
+        "state_writes": [
+          "blockers",
+          "declared_ids",
+          "envelope",
+          "envelope_handoff",
+          "envelope_repair_blocker_id",
+          "formal_id",
+          "handoff",
+          "manifest",
+          "packet_repair_blocker_id",
+          "payload",
+          "section"
+        ],
+        "symbol": "_formal_repair_identity_blockers"
       },
       {
         "calls": [
@@ -2034,6 +2361,7 @@
       {
         "calls": [
           "BlackBoxRuntimeError",
+          "_bind_packet_repair_blocker_identity",
           "_event",
           "_latest_open_packet_for_repair",
           "_mark_repair_target_noncurrent_after_current_reissue",
@@ -2088,6 +2416,7 @@
           "Any",
           "BlackBoxRuntimeError",
           "Mapping",
+          "_bind_packet_repair_blocker_identity",
           "_event",
           "_latest_open_packet_for_repair",
           "_mark_repair_target_noncurrent_after_current_reissue",
@@ -2129,7 +2458,6 @@
           "old_node_ids",
           "old_version",
           "packet",
-          "packets",
           "pending_route_mutation",
           "reason",
           "route_nodes",
@@ -2161,7 +2489,6 @@
           "old_node_ids",
           "old_route_disposition",
           "old_version",
-          "repair_blocker_id",
           "route_nodes",
           "route_plan",
           "row",
@@ -2252,7 +2579,7 @@
   "findings": [],
   "marker_ok": true,
   "model_id": "flowpilot_information_flow_alignment",
-  "obligation_count": 10,
+  "obligation_count": 11,
   "ok": true,
   "plan": {
     "allow_orphan_code_contracts": false,
@@ -2302,6 +2629,7 @@
           "repair_packet_or_route_mutation"
         ],
         "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate",
           "info_flow.blocker.required_repair_to_pm_package",
           "info_flow.blocker.worker_packet_progress_delta"
         ],
@@ -2333,6 +2661,7 @@
           "fresh_repair_packet"
         ],
         "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate",
           "info_flow.blocker.worker_packet_progress_delta"
         ],
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
@@ -2467,6 +2796,7 @@
           "reviewer_recheck_packet"
         ],
         "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate",
           "info_flow.blocker.reviewer_recheck_followup"
         ],
         "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
@@ -2481,6 +2811,145 @@
         ],
         "surface_type": "function",
         "symbol": "_issue_required_recheck_packet_for_stopped_blocker"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.packet_repair_blocker_id",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "packet_id"
+        ],
+        "external_outputs": [
+          "current_repair_blocker_id"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "packet_ledger",
+          "active_blockers"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "_packet_repair_blocker_id"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.attach_staged_effect",
+        "error_paths": [],
+        "external_inputs": [
+          "record",
+          "effect_kind",
+          "source_packet_id",
+          "source_result_id",
+          "blocker_id"
+        ],
+        "external_outputs": [
+          "s",
+          "t",
+          "a",
+          "g",
+          "e",
+          "d",
+          "_",
+          "e",
+          "f",
+          "f",
+          "e",
+          "c",
+          "t"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": [
+          "result_or_gate_record"
+        ],
+        "surface_type": "function",
+        "symbol": "_attach_staged_effect"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.build_current_handoff_contract",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "packet_envelope",
+          "authorized_result_reads"
+        ],
+        "external_outputs": [
+          "c",
+          "u",
+          "r",
+          "r",
+          "e",
+          "n",
+          "t",
+          "_",
+          "h",
+          "a",
+          "n",
+          "d",
+          "o",
+          "f",
+          "f",
+          "_",
+          "c",
+          "o",
+          "n",
+          "t",
+          "r",
+          "a",
+          "c",
+          "t"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "packet_envelope",
+          "active_blocker",
+          "repair_blocker_id"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "_build_current_handoff_contract"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.formal_repair_identity_gate",
+        "error_paths": [],
+        "external_inputs": [
+          "packet"
+        ],
+        "external_outputs": [
+          "mechanical_blockers"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "packet",
+          "packet_envelope",
+          "current_handoff_contract"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "_formal_repair_identity_blockers"
       },
       {
         "code_contract_id": "info_flow.new_runtime.resume_entrypoint",
@@ -2957,6 +3426,32 @@
       {
         "allow_shared_evidence": true,
         "allow_shared_implementation": true,
+        "description": "Runtime/Router binds repair blocker identity as formal fields in the repair packet, handoff manifest, staged effect, FlowGuard evidence inputs, and review handoff before Reviewer receives the package; prose mentions do not satisfy this gate.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.blocker.formal_repair_identity_gate",
+        "obligation_type": "mechanical_identity_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "edge_path",
+          "negative_path",
+          "replay"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
         "description": "Reviewer required_repair and recommendation are preserved into the PM repair decision/package instead of being replaced by a generic reason.",
         "error_paths": [],
         "exact_external_contract": false,
@@ -3413,13 +3908,42 @@
         "closure_evidence_role": "",
         "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear -q",
         "covered_code_contracts": [
-          "info_flow.runtime.required_recheck_packet"
+          "info_flow.runtime.required_recheck_packet",
+          "info_flow.runtime.packet_repair_blocker_id",
+          "info_flow.runtime.formal_repair_identity_gate"
         ],
         "covered_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate",
           "info_flow.blocker.reviewer_recheck_followup"
         ],
         "evidence_current": true,
-        "evidence_id": "info_flow.test.required_recheck_packet_positive",
+        "evidence_id": "info_flow.test.required_recheck_packet_replay",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "replay",
+        "test_name": "test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_repair_packet_handoff_contract_carries_formal_blocker_identity -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.apply_pm_repair_decision",
+          "info_flow.runtime.issue_current_scope_repair_packet",
+          "info_flow.runtime.packet_repair_blocker_id"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.current_scope_repair_identity_positive",
         "evidence_role": "primary",
         "evidence_target_id": "",
         "overclaims_model_confidence": false,
@@ -3430,7 +3954,80 @@
         "reuse_ticket": null,
         "stale_reasons": [],
         "test_kind": "happy_path",
-        "test_name": "test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear"
+        "test_name": "test_repair_packet_handoff_contract_carries_formal_blocker_identity"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.build_current_handoff_contract"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.handoff_contract_visible_edge",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "edge_path",
+        "test_name": "test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_staged_effect_same_family_rejects_different_formal_blocker_identity -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.attach_staged_effect"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.staged_effect_convergence_edge",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_staged_effect_same_family_rejects_different_formal_blocker_identity"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.formal_repair_identity_gate",
+          "info_flow.runtime.build_current_handoff_contract"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.formal_repair_identity_mismatch_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker"
       },
       {
         "assertion_scope": "external_contract",
@@ -3859,7 +4456,7 @@
   },
   "result_type": "flowpilot_information_flow_alignment",
   "source_marker_report": {
-    "check_count": 17,
+    "check_count": 18,
     "checks": [
       {
         "covers": [
@@ -3980,6 +4577,15 @@
       },
       {
         "covers": [
+          "info_flow.blocker.formal_repair_identity_gate"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "requirement_id": "runtime.formal_repair_identity_gate"
+      },
+      {
+        "covers": [
           "info_flow.resume.current_authority_context",
           "info_flow.role_assignment.current_packet_binding"
         ],
@@ -4030,7 +4636,7 @@
     "findings": [],
     "ok": true
   },
-  "test_evidence_count": 27,
+  "test_evidence_count": 31,
   "underlying_model_ok": true,
   "underlying_model_reports": {
     "blocker_repair_information_flow": {
@@ -4046,8 +4652,10 @@
       "rejected": [
         "blocker_routed_without_pm_decision",
         "current_blocker_payload_missing_details",
+        "flowguard_evidence_has_blocker_but_staged_effect_empty",
         "flowguard_recheck_evidence_not_delivered_to_reviewer",
         "followup_blocker_lost",
+        "formal_blocker_id_only_in_prose_reaches_reviewer",
         "no_success_evidence_contract",
         "pm_closes_blocker_without_recheck",
         "pm_repair_package_omits_new_blocker_content",
@@ -4059,6 +4667,7 @@
         "same_blocker_repeat_loop_allowed",
         "stale_blocker_used_for_pm_repair",
         "stale_context_copied_without_disposition",
+        "superseded_repair_blocker_left_open",
         "worker_packet_has_no_semantic_delta",
         "worker_packet_omits_repair_direction"
       ]

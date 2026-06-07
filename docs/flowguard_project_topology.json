@@ -113,7 +113,7 @@
     "other": {
       "alignment_family_count": 5,
       "code_surface_count": 239,
-      "known_bad_count": 1292,
+      "known_bad_count": 1298,
       "model_count": 81,
       "runner_keys": [
         "capability",
@@ -12735,13 +12735,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780849412.9636433,
+  "generated_at_epoch": 1780855037.915912,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 11,
     "code_surfaces": 942,
     "evidence_summaries": 5,
-    "known_bad_signals": 2411,
+    "known_bad_signals": 2417,
     "models": 142,
     "test_commands": 350
   },
@@ -13115,7 +13115,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 42,
+        "edge_count": 48,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -13124,8 +13124,10 @@
           "ok",
           "blocker_routed_without_pm_decision",
           "current_blocker_payload_missing_details",
+          "flowguard_evidence_has_blocker_but_staged_effect_empty",
           "flowguard_recheck_evidence_not_delivered_to_reviewer",
           "followup_blocker_lost",
+          "formal_blocker_id_only_in_prose_reaches_reviewer",
           "no_success_evidence_contract",
           "pm_closes_blocker_without_recheck",
           "pm_repair_package_omits_new_blocker_content",
@@ -13137,13 +13139,14 @@
           "same_blocker_repeat_loop_allowed",
           "stale_blocker_used_for_pm_repair",
           "stale_context_copied_without_disposition",
+          "superseded_repair_blocker_left_open",
           "worker_packet_has_no_semantic_delta",
           "worker_packet_omits_repair_direction"
         ],
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 43
+        "state_count": 49
       },
       "model_path": "simulations/flowpilot_blocker_repair_information_flow_model.py",
       "result_path": "simulations/flowpilot_blocker_repair_information_flow_results.json",
@@ -14676,7 +14679,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 32,
+        "edge_count": 41,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -14687,6 +14690,9 @@
           "missing_background_ack_advances_accepted",
           "packet_result_contract_misaligned_accepted",
           "provenance_promoted_to_scope_accepted",
+          "repair_identity_chain_misaligned_accepted",
+          "repair_identity_prose_only_accepted",
+          "repair_identity_reviewer_owned_accepted",
           "startup_fixed_role_binding_gate_required_accepted",
           "success_overblocked",
           "unsupported_field_translated_accepted",
@@ -14695,7 +14701,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 33
+        "state_count": 42
       },
       "model_path": "simulations/flowpilot_field_contract_model.py",
       "result_path": "simulations/flowpilot_field_contract_results.json",
@@ -18342,7 +18348,7 @@
   "sources": [
     {
       "exists": true,
-      "mtime_ns": 1780848613406782800,
+      "mtime_ns": 1780854883152929000,
       "path": "AGENTS.md",
       "size": 10984
     },
@@ -18552,7 +18558,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780849227977955200,
+      "mtime_ns": 1780855004844763700,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20666
     },
@@ -18582,15 +18588,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780837939925870200,
+      "mtime_ns": 1780851528071325300,
       "path": "simulations/flowpilot_blocker_repair_information_flow_model.py",
-      "size": 27104
+      "size": 32809
     },
     {
       "exists": true,
-      "mtime_ns": 1780838926983165000,
+      "mtime_ns": 1780854904656583500,
       "path": "simulations/flowpilot_blocker_repair_information_flow_results.json",
-      "size": 7707
+      "size": 9571
     },
     {
       "exists": true,
@@ -19086,15 +19092,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780844580108835700,
+      "mtime_ns": 1780853465195880600,
       "path": "simulations/flowpilot_field_contract_model.py",
-      "size": 51087
+      "size": 60992
     },
     {
       "exists": true,
-      "mtime_ns": 1780849139450151900,
+      "mtime_ns": 1780854904762882600,
       "path": "simulations/flowpilot_field_contract_results.json",
-      "size": 65887
+      "size": 83077
     },
     {
       "exists": true,
@@ -19170,9 +19176,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780849158602973300,
+      "mtime_ns": 1780854924217182700,
       "path": "simulations/flowpilot_information_flow_alignment_results.json",
-      "size": 138112
+      "size": 158384
     },
     {
       "exists": true,
@@ -20172,7 +20178,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780849227964897000,
+      "mtime_ns": 1780855004871602600,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26202
     },
@@ -20256,9 +20262,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780837939926882400,
+      "mtime_ns": 1780851550921198600,
       "path": "simulations/run_flowpilot_blocker_repair_information_flow_checks.py",
-      "size": 11736
+      "size": 13124
     },
     {
       "exists": true,
@@ -20508,9 +20514,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780844605878182800,
+      "mtime_ns": 1780854184338835400,
       "path": "simulations/run_flowpilot_field_contract_checks.py",
-      "size": 15025
+      "size": 18740
     },
     {
       "exists": true,

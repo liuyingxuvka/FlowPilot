@@ -22,6 +22,7 @@ CHECK_COMMAND = (
 )
 
 OBL_BLOCKER_PAYLOAD = "info_flow.blocker.current_payload_to_pm"
+OBL_FORMAL_REPAIR_IDENTITY = "info_flow.blocker.formal_repair_identity_gate"
 OBL_REQUIRED_REPAIR = "info_flow.blocker.required_repair_to_pm_package"
 OBL_WORKER_DELTA = "info_flow.blocker.worker_packet_progress_delta"
 OBL_RECHECK_FOLLOWUP = "info_flow.blocker.reviewer_recheck_followup"
@@ -44,6 +45,19 @@ def _obligations() -> tuple[Any, ...]:
                 "authorized result reads."
             ),
             required_test_kinds=(HAPPY, NEGATIVE),
+            allow_shared_evidence=True,
+            allow_shared_implementation=True,
+        ),
+        _obligation(
+            OBL_FORMAL_REPAIR_IDENTITY,
+            obligation_type="mechanical_identity_contract",
+            description=(
+                "Runtime/Router binds repair blocker identity as formal fields "
+                "in the repair packet, handoff manifest, staged effect, "
+                "FlowGuard evidence inputs, and review handoff before Reviewer "
+                "receives the package; prose mentions do not satisfy this gate."
+            ),
+            required_test_kinds=(HAPPY, EDGE, NEGATIVE, REPLAY),
             allow_shared_evidence=True,
             allow_shared_implementation=True,
         ),

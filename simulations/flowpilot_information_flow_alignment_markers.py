@@ -11,6 +11,7 @@ from flowpilot_information_flow_alignment_obligations import (
     OBL_BLOCKER_PAYLOAD,
     OBL_BREAK_GLASS,
     OBL_CLOSURE_STOP,
+    OBL_FORMAL_REPAIR_IDENTITY,
     OBL_RECHECK_FOLLOWUP,
     OBL_REOPEN_HISTORY,
     OBL_REQUIRED_REPAIR,
@@ -163,6 +164,19 @@ MARKER_REQUIREMENTS: tuple[Mapping[str, Any], ...] = (
             "role_assignment_committed",
         ),
         "covers": (OBL_ROLE_ASSIGNMENT,),
+    },
+    {
+        "requirement_id": "runtime.formal_repair_identity_gate",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "markers": (
+            "def _packet_repair_blocker_id",
+            "repair_blocker_id",
+            "def _attach_staged_effect",
+            '"blocker_id": blocker_id',
+            '"input_material_manifest"',
+            '"blocker_id": str(envelope.get("repair_blocker_id")',
+        ),
+        "covers": (OBL_FORMAL_REPAIR_IDENTITY,),
     },
     {
         "requirement_id": "test.lifecycle_resume_no_role_prewarm",

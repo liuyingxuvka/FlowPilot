@@ -49,6 +49,11 @@ NO_SUCCESS_EVIDENCE_CONTRACT = "no_success_evidence_contract"
 BLOCKER_ROUTED_WITHOUT_PM_DECISION = "blocker_routed_without_pm_decision"
 FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER = "flowguard_recheck_evidence_not_delivered_to_reviewer"
 REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS = "repair_stage_not_updated_after_flowguard_pass"
+FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER = "formal_blocker_id_only_in_prose_reaches_reviewer"
+FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY = (
+    "flowguard_evidence_has_blocker_but_staged_effect_empty"
+)
+SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN = "superseded_repair_blocker_left_open"
 
 VALID_SCENARIOS = (
     VALID_REVIEWER_BLOCKER_REPAIR_PACKET,
@@ -75,6 +80,9 @@ NEGATIVE_SCENARIOS = (
     BLOCKER_ROUTED_WITHOUT_PM_DECISION,
     FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER,
     REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS,
+    FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER,
+    FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY,
+    SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -121,6 +129,7 @@ class State:
     pm_package_includes_required_repair: bool = False
     pm_package_includes_new_work_content: bool = False
     pm_package_disposes_old_context: bool = False
+    pm_package_formal_blocker_id_bound: bool = False
 
     worker_packet_issued: bool = False
     worker_packet_references_current_blocker: bool = False
@@ -135,6 +144,7 @@ class State:
     flowguard_recheck_references_repair_result: bool = False
     flowguard_recheck_passed: bool = False
     flowguard_evidence_manifest_attached: bool = False
+    flowguard_evidence_formal_blocker_id_bound: bool = False
 
     reviewer_recheck_requested: bool = False
     reviewer_recheck_references_current_blocker: bool = False
@@ -143,6 +153,13 @@ class State:
     reviewer_recheck_passed: bool = False
     blocker_closed: bool = False
     blocker_stage_current: bool = True
+    runtime_mechanical_identity_gate_passed: bool = False
+    staged_effect_blocker_id_bound: bool = False
+    blocker_identity_in_prose_only: bool = False
+    formal_identity_missing_reached_reviewer: bool = False
+    route_replacement_supersedes_prior_repair: bool = False
+    superseded_blocker_disposition_recorded: bool = True
+    superseded_blocker_still_repair_open: bool = False
 
     followup_blocker_returned: bool = False
     followup_blocker_recorded: bool = False
@@ -191,6 +208,7 @@ def _safe_reviewer_base(**changes: object) -> State:
             pm_package_includes_required_repair=True,
             pm_package_includes_new_work_content=True,
             pm_package_disposes_old_context=True,
+            pm_package_formal_blocker_id_bound=True,
             worker_packet_issued=True,
             worker_packet_references_current_blocker=True,
             worker_packet_includes_required_repair=True,
@@ -202,6 +220,7 @@ def _safe_reviewer_base(**changes: object) -> State:
             flowguard_recheck_references_repair_result=True,
             flowguard_recheck_passed=True,
             flowguard_evidence_manifest_attached=True,
+            flowguard_evidence_formal_blocker_id_bound=True,
             reviewer_recheck_requested=True,
             reviewer_recheck_references_current_blocker=True,
             reviewer_recheck_uses_worker_evidence=True,
@@ -209,6 +228,8 @@ def _safe_reviewer_base(**changes: object) -> State:
             reviewer_recheck_passed=True,
             blocker_closed=True,
             blocker_stage_current=True,
+            runtime_mechanical_identity_gate_passed=True,
+            staged_effect_blocker_id_bound=True,
         ),
         **changes,
     )
@@ -259,10 +280,14 @@ def _scenario_state(scenario: str) -> State:
             pm_decision_includes_required_repair=True,
             pm_decision_integrates_reviewer_advice=True,
             pm_decision_names_new_work=True,
+            pm_package_formal_blocker_id_bound=True,
             same_blocker_repeat_count=2,
             same_work_packet_hash_repeated=True,
             loop_escape_recorded=True,
             terminal_stop_or_route_mutation=True,
+            runtime_mechanical_identity_gate_passed=True,
+            staged_effect_blocker_id_bound=True,
+            flowguard_evidence_formal_blocker_id_bound=True,
         )
 
     if scenario == CURRENT_BLOCKER_PAYLOAD_MISSING_DETAILS:
@@ -371,6 +396,33 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             blocker_stage_current=False,
         )
+    if scenario == FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            pm_package_formal_blocker_id_bound=False,
+            staged_effect_blocker_id_bound=False,
+            flowguard_evidence_formal_blocker_id_bound=False,
+            runtime_mechanical_identity_gate_passed=False,
+            blocker_identity_in_prose_only=True,
+            formal_identity_missing_reached_reviewer=True,
+        )
+    if scenario == FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            staged_effect_blocker_id_bound=False,
+            flowguard_evidence_formal_blocker_id_bound=True,
+            runtime_mechanical_identity_gate_passed=False,
+        )
+    if scenario == SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            route_replacement_supersedes_prior_repair=True,
+            superseded_blocker_disposition_recorded=False,
+            superseded_blocker_still_repair_open=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -416,6 +468,8 @@ def information_flow_failures(state: State) -> list[str]:
             failures.append("PM repair package dropped required repair guidance")
         if not state.pm_package_disposes_old_context:
             failures.append("PM repair package copied stale context without disposition or quarantine")
+        if state.blocker_detected and not state.pm_package_formal_blocker_id_bound:
+            failures.append("PM repair package did not bind blocker identity as a formal runtime field")
 
     if state.worker_packet_issued:
         if not state.pm_repair_package_issued:
@@ -443,8 +497,15 @@ def information_flow_failures(state: State) -> list[str]:
             and state.flowguard_evidence_manifest_attached
         ):
             failures.append("FlowGuard recheck did not bind current repair result to an attached evidence manifest")
+        if state.blocker_detected and not state.flowguard_evidence_formal_blocker_id_bound:
+            failures.append("FlowGuard recheck evidence did not bind blocker identity as a formal evidence field")
+
+    if state.flowguard_evidence_formal_blocker_id_bound and not state.staged_effect_blocker_id_bound:
+        failures.append("FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty")
 
     if state.reviewer_recheck_requested:
+        if not state.runtime_mechanical_identity_gate_passed:
+            failures.append("reviewer received repair package before Runtime mechanical blocker identity gate passed")
         if not (
             state.reviewer_recheck_references_current_blocker
             and state.reviewer_recheck_uses_worker_evidence
@@ -464,6 +525,19 @@ def information_flow_failures(state: State) -> list[str]:
 
     if state.flowguard_recheck_passed and not state.blocker_stage_current:
         failures.append("blocker repair stage was not updated after FlowGuard recheck pass")
+
+    if state.blocker_identity_in_prose_only:
+        failures.append("blocker identity appeared only in prose instead of formal repair fields")
+
+    if state.formal_identity_missing_reached_reviewer:
+        failures.append("formal blocker identity missing reached Reviewer instead of Runtime reissue")
+
+    if (
+        state.route_replacement_supersedes_prior_repair
+        and state.superseded_blocker_still_repair_open
+        and not state.superseded_blocker_disposition_recorded
+    ):
+        failures.append("superseded repair blocker remained open after route replacement")
 
     if state.followup_blocker_returned and not state.followup_blocker_recorded:
         failures.append("follow-up blocker returned by recheck was not recorded as current work")
@@ -502,10 +576,14 @@ class BlockerRepairInformationFlowStep:
         "worker_packet",
         "worker_result",
         "reviewer_recheck",
+        "staged_effect_blocker_id",
+        "flowguard_evidence_blocker_id",
+        "superseded_repair_blocker_status",
     )
     writes = (
         "repair_flow_decision",
         "worker_packet_generation",
+        "runtime_mechanical_identity_gate",
         "reviewer_recheck_binding",
         "followup_blocker_or_loop_escape",
     )
@@ -584,6 +662,31 @@ def repeated_blockers_escape_or_block(state: State, trace: object) -> InvariantR
     return InvariantResult.pass_()
 
 
+def mechanical_identity_gate_precedes_review(state: State, trace: object) -> InvariantResult:
+    del trace
+    if state.status == "accepted" and state.reviewer_recheck_requested:
+        if not (
+            state.runtime_mechanical_identity_gate_passed
+            and state.pm_package_formal_blocker_id_bound
+            and state.staged_effect_blocker_id_bound
+            and state.flowguard_evidence_formal_blocker_id_bound
+        ):
+            return InvariantResult.fail("accepted review reached before formal blocker identity gate")
+    return InvariantResult.pass_()
+
+
+def superseded_repair_blockers_are_dispositioned(state: State, trace: object) -> InvariantResult:
+    del trace
+    if (
+        state.status == "accepted"
+        and state.route_replacement_supersedes_prior_repair
+        and state.superseded_blocker_still_repair_open
+        and not state.superseded_blocker_disposition_recorded
+    ):
+        return InvariantResult.fail("accepted route replacement left superseded repair blocker open")
+    return InvariantResult.pass_()
+
+
 INVARIANTS = (
     Invariant(
         name="accepted_flows_are_complete",
@@ -604,6 +707,16 @@ INVARIANTS = (
         name="repeated_blockers_escape_or_block",
         description="Repeated same-blocker/same-packet loops must route to mutation, terminal stop, or follow-up blocker.",
         predicate=repeated_blockers_escape_or_block,
+    ),
+    Invariant(
+        name="mechanical_identity_gate_precedes_review",
+        description="Runtime/Router mechanical blocker identity fields must be bound before Reviewer receives repair review.",
+        predicate=mechanical_identity_gate_precedes_review,
+    ),
+    Invariant(
+        name="superseded_repair_blockers_are_dispositioned",
+        description="Route replacement must disposition superseded repair blockers instead of leaving them active.",
+        predicate=superseded_repair_blockers_are_dispositioned,
     ),
 )
 

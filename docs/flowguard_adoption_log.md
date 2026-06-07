@@ -20220,6 +20220,133 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-formal-repair-identity-model-miss-20260607 - FlowPilot formal repair identity model miss
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a live FlowPilot run repeated repair because blocker identity was present in prose and some evidence, but not formally carried through the current Runtime handoff and staged-effect path.
+- Status: model gap identified; Runtime repair pending
+- Skill decision: predictive KB + FlowGuard existing-model preflight + model-miss review + field lifecycle mesh + model-test alignment
+- Recorded: 2026-06-07T17:11:46Z
+- Commands OK: partially; blocker repair and field-contract models pass, information-flow alignment intentionally fails until Runtime repair and negative/replay tests are added.
+
+### Model Files
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/run_flowpilot_blocker_repair_information_flow_checks.py`
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/flowpilot_information_flow_alignment_obligations.py`
+- `simulations/flowpilot_information_flow_alignment_contracts.py`
+- `simulations/flowpilot_information_flow_alignment_evidence.py`
+- `simulations/flowpilot_information_flow_alignment_markers.py`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py` passed; new hazards are rejected.
+- `python simulations/run_flowpilot_field_contract_checks.py` passed.
+- `python -m unittest -v tests.test_flowpilot_field_contract_model` passed.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py` failed as expected: the new formal repair identity gate lacks negative/replay evidence and the current Runtime handoff marker.
+- `python scripts/flowguard_project_topology.py build` passed.
+- `python scripts/flowguard_project_topology.py check` passed.
+
+### Findings
+- The model now rejects prose-only blocker identity reaching Reviewer.
+- The model now rejects FlowGuard evidence that names a blocker while `staged_effect.blocker_id` is empty.
+- The model now rejects superseded repair blockers left open after route replacement.
+- The field contract model now covers repair blocker identity fields, handoff manifest fields, staged-effect blocker fields, FlowGuard evidence blocker fields, and active-blocker disposition fields.
+- Old FlowPilot's reusable lesson is the envelope/body packet-chain idea: formal packet identity, body/hash, role origin, replacement disposition, and chain audit were explicit metadata before semantic review.
+- Do not restore old startup, fixed-role, heartbeat, fallback, or micro-action requirements. Borrow only the formal identity and disposition principle inside the current Runtime path.
+
+### Counterexamples
+- `formal_blocker_id_only_in_prose_reaches_reviewer`
+- `flowguard_evidence_has_blocker_but_staged_effect_empty`
+- `superseded_repair_blocker_left_open`
+
+### Skipped Steps
+- No production Runtime code was modified in this pass.
+- No local install sync, commit, push, release, tag, or OpenSpec archive was performed because the Runtime repair and tests are still pending.
+
+### Next Actions
+- Implement one Runtime-owned formal repair identity gate: carry the canonical blocker id through repair packet, `current_handoff_contract.input_material_manifest`, `staged_effect.blocker_id`, FlowGuard evidence inputs/result, and Reviewer handoff before Reviewer sees the package.
+- Missing or mismatched identity must mechanically reissue/block. Do not infer it from prose.
+- Dispose superseded repair blockers with current `active_blocker.status` and `retired_by_blocker_id`.
+- Add negative and historical live-run replay tests for prose-only identity, empty staged-effect blocker identity, and superseded repair blockers left open.
+
+
+## flowpilot-formal-repair-identity-runtime-closure-20260607 - Formal repair identity runtime closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: live FlowPilot repair loops showed blocker identity crossing packet boundaries as prose or mismatched metadata instead of a Runtime-owned formal field chain.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: predictive KB + FlowGuard model miss review + FieldLifecycleMesh + Model-Test Alignment + DevelopmentProcessFlow
+- FlowGuard package/schema: 0.41.4 / 1.0
+- Source version: 0.10.5
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/run_flowpilot_blocker_repair_information_flow_checks.py`
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/run_flowpilot_field_contract_checks.py`
+- `simulations/flowpilot_information_flow_alignment_obligations.py`
+- `simulations/flowpilot_information_flow_alignment_contracts.py`
+- `simulations/flowpilot_information_flow_alignment_evidence.py`
+- `simulations/flowpilot_information_flow_alignment_markers.py`
+- `simulations/flowpilot_information_flow_alignment_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Runtime And Tests
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `tests/test_flowpilot_core_runtime.py`
+- `tests/test_flowpilot_field_contract_model.py`
+
+### Findings
+- Runtime now carries `repair_blocker_id` through packet rows, envelopes, current handoff contracts, FlowGuard inputs/results, reviewer handoffs, and reviewer FlowGuard evidence manifests.
+- Runtime now mechanically rejects prose-only or mismatched repair blocker identity before Reviewer sees the package.
+- Reviewer remains responsible for human-quality review only; formal field correctness stays in Runtime/Router gates.
+- Pending staged effects can only be reused for the same formal blocker identity.
+- FieldLifecycleMesh now models the end-to-end repair identity chain and catches prose-only, chain-misaligned, and reviewer-owned mechanical-field hazards.
+- Alignment evidence now includes negative and replay rows for this gate, so happy-path fake AI output alone cannot make the model appear green.
+
+### Counterexamples
+- `formal_blocker_id_only_in_prose_reaches_reviewer`
+- `formal_repair_identity_chain_misaligned`
+- `reviewer_owns_mechanical_repair_identity_check`
+- `pending_staged_effect_reused_for_different_blocker`
+
+### Commands
+- `python simulations/run_flowpilot_field_contract_checks.py --json-out simulations/flowpilot_field_contract_results.json` - passed.
+- `python -m unittest -v tests.test_flowpilot_field_contract_model tests.test_flowpilot_core_runtime` - 72 tests passed.
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py` - passed.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py` - passed; alignment_ok true; evidence count 31.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` - passed; alignment_ok true; full_coverage_ok true; covered surface count 942.
+- `python -m unittest -v tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_role_output_runtime tests.test_flowpilot_new_entrypoint tests.test_flowpilot_fake_project_rehearsal` - 69 tests passed.
+- `python scripts/flowguard_project_topology.py build` - passed; models 142, code surfaces 942, test commands 350.
+- `python scripts/flowguard_project_topology.py check` - passed; source_count 969.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - passed.
+- `python scripts/audit_local_install_sync.py --json` - passed.
+- `python scripts/install_flowpilot.py --check --json` - passed.
+- `python scripts/check_install.py --json` - passed.
+- `python simulations/run_meta_checks.py` - passed; `tmp/flowguard_background/run_meta_checks.exit.txt` = 0; stderr empty.
+- `python simulations/run_capability_checks.py` - passed; `tmp/flowguard_background/run_capability_checks.exit.txt` = 0; stderr empty.
+
+### Friction Points
+- The previous model pass correctly turned the miss red, but field inventory alone was not enough; the repair needed a lifecycle chain with owner, writer, reader, projection, gate, negative evidence, and replay evidence together.
+- Some packets are created before their final packet id is known, so Runtime needs one current-contract rebind point that updates packet row, envelope, handoff contract, body, and body hash together.
+- Generated topology must be rebuilt after refreshed result files.
+
+### Skipped Steps
+- No legacy aliases, fallback shape translation, old six-role path, heartbeat path, public old-router wrapper, release, tag, deploy, remote push, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports local current-contract closure for the formal repair identity class: missing or mismatched blocker identity is now a Runtime mechanical blocker and is covered by model, negative tests, replay-style fake evidence, install sync, topology, and project-level regression.
+- This does not claim a public release or remote push.
+
+### Next Actions
+- Commit the local Git version after final diff review and KB postflight.
+
+
 ## flowpilot-current-branch-contract-dispatch-tightening-20260607 - Current-contract maintenance closure
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -24985,6 +25112,45 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 - FlowGuard package version recorded: 0.41.3
 - FlowGuard schema version recorded: 1.0
 - Artifact upgrade scan: apply: scanned=4 upgraded=0 blocked=0 changed=0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-07T17:54:43+00:00
+- Ended: 2026-06-07T17:54:43+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.41.4
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
 
 ### Counterexamples
 - none recorded

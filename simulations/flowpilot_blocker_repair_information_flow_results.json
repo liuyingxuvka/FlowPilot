@@ -7,7 +7,10 @@
       "fresh PM repair package generation",
       "worker repair packet semantic delta and success evidence",
       "FlowGuard recheck evidence attachment for repaired results",
+      "Runtime mechanical blocker identity gate before reviewer review",
+      "formal blocker identity in PM package, staged_effect, FlowGuard evidence, and replay inputs",
       "reviewer recheck binding",
+      "superseded repair blocker disposition after route replacement",
       "same-blocker no-progress loop escape"
     ],
     "does_not_cover": [
@@ -22,7 +25,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=126",
+    "summary": "sequences=3 initial_states=1 traces=144",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -42,6 +45,14 @@
           "current blocker payload lacks blocker id, source result reference, or specific failure"
         ]
       },
+      "flowguard_evidence_has_blocker_but_staged_effect_empty": {
+        "detected": true,
+        "expected_failure": "FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty",
+        "failures": [
+          "FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty",
+          "reviewer received repair package before Runtime mechanical blocker identity gate passed"
+        ]
+      },
       "flowguard_recheck_evidence_not_delivered_to_reviewer": {
         "detected": true,
         "expected_failure": "reviewer recheck lacks the current FlowGuard evidence",
@@ -56,6 +67,17 @@
         "expected_failure": "follow-up blocker returned by recheck was not recorded as current work",
         "failures": [
           "follow-up blocker returned by recheck was not recorded as current work"
+        ]
+      },
+      "formal_blocker_id_only_in_prose_reaches_reviewer": {
+        "detected": true,
+        "expected_failure": "formal blocker identity missing reached Reviewer instead of Runtime reissue",
+        "failures": [
+          "PM repair package did not bind blocker identity as a formal runtime field",
+          "FlowGuard recheck evidence did not bind blocker identity as a formal evidence field",
+          "reviewer received repair package before Runtime mechanical blocker identity gate passed",
+          "blocker identity appeared only in prose instead of formal repair fields",
+          "formal blocker identity missing reached Reviewer instead of Runtime reissue"
         ]
       },
       "no_success_evidence_contract": {
@@ -137,6 +159,13 @@
           "PM repair package copied stale context without disposition or quarantine"
         ]
       },
+      "superseded_repair_blocker_left_open": {
+        "detected": true,
+        "expected_failure": "superseded repair blocker remained open after route replacement",
+        "failures": [
+          "superseded repair blocker remained open after route replacement"
+        ]
+      },
       "worker_packet_has_no_semantic_delta": {
         "detected": true,
         "expected_failure": "worker packet repeats the failed work without semantic delta",
@@ -162,7 +191,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 21
+    "terminal_state_count": 24
   },
   "result_type": "flowpilot_blocker_repair_information_flow_checks",
   "safe_graph": {
@@ -172,15 +201,17 @@
       "valid_reviewer_blocker_repair_packet",
       "valid_worker_blocker_reissue"
     ],
-    "edge_count": 42,
+    "edge_count": 48,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
       "blocker_routed_without_pm_decision",
       "current_blocker_payload_missing_details",
+      "flowguard_evidence_has_blocker_but_staged_effect_empty",
       "flowguard_recheck_evidence_not_delivered_to_reviewer",
       "followup_blocker_lost",
+      "formal_blocker_id_only_in_prose_reaches_reviewer",
       "no_success_evidence_contract",
       "pm_closes_blocker_without_recheck",
       "pm_repair_package_omits_new_blocker_content",
@@ -192,9 +223,10 @@
       "same_blocker_repeat_loop_allowed",
       "stale_blocker_used_for_pm_repair",
       "stale_context_copied_without_disposition",
+      "superseded_repair_blocker_left_open",
       "worker_packet_has_no_semantic_delta",
       "worker_packet_omits_repair_direction"
     ],
-    "state_count": 43
+    "state_count": 49
   }
 }

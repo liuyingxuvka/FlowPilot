@@ -637,7 +637,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(flowguard_packets), 1)
         self.assertEqual(json.loads(flowguard_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
-    def test_staged_effect_same_family_reuses_pending_effect(self) -> None:
+    def test_staged_effect_same_family_rejects_different_formal_blocker_identity(self) -> None:
         record: dict[str, object] = {}
 
         first = runtime._attach_staged_effect(
@@ -650,21 +650,135 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             gate_id="gate-1",
             route_scope="node",
         )
-        second = runtime._attach_staged_effect(
+        reused = runtime._attach_staged_effect(
             record,
             effect_kind="commit_route_redesign",
             source_packet_id="packet-2",
             source_result_id="result-2",
             target_node_id="node-2",
-            blocker_id="blocker-2",
+            blocker_id="blocker-1",
             gate_id="gate-2",
             route_scope="node",
         )
 
-        self.assertIs(second, first)
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "repair blocker identity mismatch"):
+            runtime._attach_staged_effect(
+                record,
+                effect_kind="commit_route_redesign",
+                source_packet_id="packet-3",
+                source_result_id="result-3",
+                target_node_id="node-3",
+                blocker_id="blocker-2",
+                gate_id="gate-3",
+                route_scope="node",
+            )
+
+        self.assertIs(reused, first)
         self.assertEqual(record["staged_effect"], first)
         self.assertEqual(first["source_packet_id"], "packet-1")
         self.assertEqual(first["gate_id"], "gate-1")
+
+    def test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Repair",
+            json.dumps({"blocker_id": "blocker-body", "instruction": "Repair"}),
+            repair_blocker_id="blocker-formal",
+        )
+        packet = ledger["packets"][packet_id]
+        payload = json.loads(packet["body"])
+        payload["current_handoff_contract"]["input_material_manifest"]["blocker_id"] = "blocker-body"
+        packet["body"] = json.dumps(payload, indent=2, sort_keys=True)
+        packet["envelope"]["body_hash"] = runtime.hash_text(packet["body"])
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-formal", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(ledger, lease_id, packet_id, role_result_body("Mismatched blocker."))
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "blocked")
+        self.assertTrue(
+            any("repair_blocker_id_mismatch" in item for item in result["mechanical_blockers"]),
+            result["mechanical_blockers"],
+        )
+
+    def test_repair_packet_handoff_contract_carries_formal_blocker_identity(self) -> None:
+        ledger, _packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, _packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            _packet_id,
+            role_result_body(
+                "Worker found a current blocker.",
+                decision="block",
+                blocking=True,
+                blocker_class="needs_repair",
+                recommended_resolution="repair current scope",
+            ),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-formal", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+        runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            json.dumps({"decision": "repair_current_scope", "reason": "Repair current packet."}),
+        )
+        repair_packets = [
+            packet
+            for packet in ledger["packets"].values()
+            if packet.get("repair_blocker_id") == blocker_id
+            and packet["envelope"]["packet_kind"] == "task"
+            and packet["status"] == "open"
+        ]
+        self.assertEqual(len(repair_packets), 1)
+        repair_packet = repair_packets[0]
+        body = json.loads(repair_packet["body"])
+
+        self.assertEqual(repair_packet["envelope"]["repair_blocker_id"], blocker_id)
+        self.assertEqual(repair_packet["repair_blocker_id"], blocker_id)
+        self.assertEqual(body["blocker_id"], blocker_id)
+        self.assertEqual(
+            repair_packet["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+        self.assertEqual(
+            body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+
+    def test_formal_repair_identity_prose_only_is_runtime_mechanical_blocker(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Repair",
+            json.dumps({"blocker_id": "blocker-body", "instruction": "Repair"}),
+        )
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-prose-only", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(ledger, lease_id, packet_id, role_result_body("Body-only blocker."))
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "blocked")
+        self.assertTrue(
+            any("repair_blocker_id_missing_formal_field" in item for item in result["mechanical_blockers"]),
+            result["mechanical_blockers"],
+        )
 
     def test_redesign_route_pm_decision_stages_route_effect_until_gate_applies(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -1925,7 +2039,19 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
         self.assertEqual(ledger["packets"][fresh_flowguard_packet]["repair_blocker_id"], blocker_id)
         self.assertEqual(ledger["packets"][fresh_flowguard_packet]["envelope"]["packet_kind"], "flowguard_check")
-        self.assertEqual(json.loads(ledger["packets"][fresh_flowguard_packet]["body"])["recheck_for_blocker_id"], blocker_id)
+        fresh_flowguard_body = json.loads(ledger["packets"][fresh_flowguard_packet]["body"])
+        self.assertEqual(ledger["packets"][fresh_flowguard_packet]["envelope"]["repair_blocker_id"], blocker_id)
+        self.assertEqual(
+            ledger["packets"][fresh_flowguard_packet]["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+        self.assertEqual(fresh_flowguard_body["recheck_for_blocker_id"], blocker_id)
+        self.assertEqual(
+            fresh_flowguard_body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+        self.assertEqual(fresh_flowguard_body["generator_inputs"]["blocker_id"], blocker_id)
+        self.assertEqual(fresh_flowguard_body["subject_context"]["blocker_id"], blocker_id)
 
         flowguard_lease = runtime.lease_agent(
             ledger,
@@ -1935,7 +2061,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         runtime.assign_packet(ledger, fresh_flowguard_packet, flowguard_lease)
         runtime.ack_lease(ledger, flowguard_lease, fresh_flowguard_packet)
         open_required_result_reads(ledger, fresh_flowguard_packet, flowguard_lease)
-        runtime.submit_result(
+        fresh_flowguard_result_id = runtime.submit_result(
             ledger,
             flowguard_lease,
             fresh_flowguard_packet,
@@ -1943,6 +2069,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         )
 
         self.assertEqual(ledger["active_blockers"][blocker_id]["status"], "awaiting_recheck")
+        self.assertEqual(ledger["results"][fresh_flowguard_result_id]["blocker_id"], blocker_id)
         fresh_review_packets = [
             packet
             for packet in ledger["packets"].values()
@@ -1954,7 +2081,22 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(fresh_review_packets), 1)
         fresh_review_packet = fresh_review_packets[0]["packet_id"]
         self.assertEqual(ledger["packets"][fresh_review_packet]["repair_blocker_id"], blocker_id)
-        self.assertEqual(json.loads(ledger["packets"][fresh_review_packet]["body"])["recheck_for_blocker_id"], blocker_id)
+        fresh_review_body = json.loads(ledger["packets"][fresh_review_packet]["body"])
+        self.assertEqual(ledger["packets"][fresh_review_packet]["envelope"]["repair_blocker_id"], blocker_id)
+        self.assertEqual(
+            ledger["packets"][fresh_review_packet]["envelope"]["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+        self.assertEqual(fresh_review_body["recheck_for_blocker_id"], blocker_id)
+        self.assertEqual(
+            fresh_review_body["current_handoff_contract"]["input_material_manifest"]["blocker_id"],
+            blocker_id,
+        )
+        self.assertEqual(fresh_review_body["subject_context"]["blocker_id"], blocker_id)
+        self.assertEqual(
+            fresh_review_body["flowguard_evidence_manifest"]["entries"][0]["blocker_id"],
+            blocker_id,
+        )
 
         review_lease = runtime.lease_agent(
             ledger,

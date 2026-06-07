@@ -39,6 +39,9 @@ STARTUP_FIXED_ROLE_BINDING_GATE_REQUIRED = "startup_fixed_role_binding_gate_requ
 FIXED_ROLE_COUNT_GATE_REQUIRED = "fixed_role_count_gate_required"
 LEGACY_BOOT_ACTION_ACCEPTED = "legacy_boot_action_accepted"
 PACKET_RESULT_CONTRACT_MISALIGNED = "packet_result_contract_misaligned"
+REPAIR_IDENTITY_PROSE_ONLY = "repair_identity_prose_only"
+REPAIR_IDENTITY_CHAIN_MISALIGNED = "repair_identity_chain_misaligned"
+REPAIR_IDENTITY_REVIEWER_OWNED = "repair_identity_reviewer_owned"
 
 SCENARIOS = (
     SUCCESS,
@@ -50,6 +53,9 @@ SCENARIOS = (
     FIXED_ROLE_COUNT_GATE_REQUIRED,
     LEGACY_BOOT_ACTION_ACCEPTED,
     PACKET_RESULT_CONTRACT_MISALIGNED,
+    REPAIR_IDENTITY_PROSE_ONLY,
+    REPAIR_IDENTITY_CHAIN_MISALIGNED,
+    REPAIR_IDENTITY_REVIEWER_OWNED,
 )
 RISK_SCENARIOS = set(SCENARIOS) - {SUCCESS}
 
@@ -611,6 +617,156 @@ CURRENT_FIELD_CONTRACTS = (
         "unlocks": "public_status_shows_current_repair_chain",
     },
     {
+        "field": "packet.repair_blocker_id",
+        "logical_field": "repair_blocker_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_packet_repair_blocker_id",
+        "required_value": "current_blocker_id_for_repair_chain",
+        "unlocks": "current_repair_identity_scope",
+    },
+    {
+        "field": "packet.envelope.repair_blocker_id",
+        "logical_field": "repair_blocker_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "issue_task_packet",
+        "required_value": "same_current_blocker_id_as_packet_repair_blocker_id",
+        "unlocks": "current_handoff_contract_blocker_projection",
+    },
+    {
+        "field": "packet.active_blocker_id",
+        "logical_field": "active_blocker_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_record_semantic_blocker",
+        "required_value": "current_active_blocker_id_or_empty_after_disposition",
+        "unlocks": "current_blocker_repair_or_review_gate",
+    },
+    {
+        "field": "current_handoff_contract.input_material_manifest.subject_id",
+        "logical_field": "handoff_subject_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_build_current_handoff_contract",
+        "required_value": "current_subject_packet_or_blocker_id",
+        "unlocks": "role_receives_current_subject_identity",
+    },
+    {
+        "field": "current_handoff_contract.input_material_manifest.target_result_id",
+        "logical_field": "handoff_target_result_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_build_current_handoff_contract",
+        "required_value": "current_target_result_id_when_result_bound",
+        "unlocks": "role_receives_current_target_result_identity",
+    },
+    {
+        "field": "current_handoff_contract.input_material_manifest.route_node_id",
+        "logical_field": "handoff_route_node_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_build_current_handoff_contract",
+        "required_value": "current_route_node_id",
+        "unlocks": "role_receives_current_route_node_identity",
+    },
+    {
+        "field": "current_handoff_contract.input_material_manifest.blocker_id",
+        "logical_field": "handoff_blocker_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_build_current_handoff_contract",
+        "required_value": "current_repair_blocker_id_or_explicit_not_applicable",
+        "unlocks": "runtime_mechanical_repair_identity_gate",
+    },
+    {
+        "field": "staged_effect.blocker_id",
+        "logical_field": "staged_effect_blocker_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_attach_staged_effect",
+        "required_value": "same_current_repair_blocker_id_or_explicit_not_applicable",
+        "unlocks": "review_gate_after_runtime_identity_check",
+    },
+    {
+        "field": "flowguard_evidence.generator_inputs.blocker_id",
+        "logical_field": "flowguard_generator_blocker_id",
+        "layer": "leaf",
+        "owner": "flowguard_operator",
+        "status": "flowguard_process_owned",
+        "validator": "generate_flowguard_evidence",
+        "required_value": "same_current_repair_blocker_id_or_explicit_not_applicable",
+        "unlocks": "flowguard_replay_binds_repair_identity",
+    },
+    {
+        "field": "flowguard_evidence.subject_context.blocker_id",
+        "logical_field": "flowguard_subject_context_blocker_id",
+        "layer": "leaf",
+        "owner": "flowguard_operator",
+        "status": "flowguard_process_owned",
+        "validator": "generate_flowguard_evidence",
+        "required_value": "same_current_repair_blocker_id_or_explicit_not_applicable",
+        "unlocks": "flowguard_subject_context_binds_repair_identity",
+    },
+    {
+        "field": "flowguard_result.blocker_id",
+        "logical_field": "flowguard_result_blocker_id",
+        "layer": "leaf",
+        "owner": "flowguard_operator",
+        "status": "flowguard_process_owned",
+        "validator": "_record_flowguard_from_packet_result",
+        "required_value": "same_current_repair_blocker_id_or_explicit_not_applicable",
+        "unlocks": "reviewer_receives_process_evidence_after_runtime_identity_gate",
+    },
+    {
+        "field": "flowguard_evidence_manifest.entries[].blocker_id",
+        "logical_field": "flowguard_evidence_manifest_blocker_id",
+        "layer": "leaf",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_flowguard_evidence_reads_for_review",
+        "required_value": "same_current_repair_blocker_id_as_flowguard_result_blocker_id",
+        "unlocks": "review_packet_receives_matching_process_evidence_identity",
+    },
+    {
+        "field": "review_packet.repair_blocker_id",
+        "logical_field": "review_repair_blocker_id",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_ensure_review_packet_for_task_result",
+        "required_value": "same_current_repair_blocker_id_as_flowguard_packet",
+        "unlocks": "reviewer_quality_review_after_runtime_identity_gate",
+    },
+    {
+        "field": "active_blocker.status",
+        "logical_field": "active_blocker_status",
+        "layer": "middle",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_retire_prior_same_chain_blockers",
+        "required_value": "current_open_or_dispositioned_after_route_replacement",
+        "unlocks": "final_preflight_ignores_audit_only_superseded_blockers",
+    },
+    {
+        "field": "active_blocker.retired_by_blocker_id",
+        "logical_field": "retired_by_blocker_id",
+        "layer": "leaf",
+        "owner": "flowpilot_router",
+        "status": "mechanical_runtime_owned",
+        "validator": "_retire_prior_same_chain_blockers",
+        "required_value": "new_current_blocker_id_when_superseded",
+        "unlocks": "superseded_repair_chain_disposition",
+    },
+    {
         "field": "preplanning.high_standard_contract.requirements[]",
         "logical_field": "high_standard_requirements",
         "layer": "middle",
@@ -853,6 +1009,29 @@ CURRENT_FIELD_CONTRACTS = (
 )
 REQUIRED_CURRENT_FIELD_CONTRACT_COUNT = len(CURRENT_FIELD_CONTRACTS)
 
+FIELD_LIFECYCLE_CHAINS = (
+    {
+        "chain_id": "repair_blocker_identity_recheck_chain",
+        "source": "active_blocker.blocker_id",
+        "field_sequence": (
+            "packet.repair_blocker_id",
+            "packet.envelope.repair_blocker_id",
+            "current_handoff_contract.input_material_manifest.blocker_id",
+            "flowguard_evidence.generator_inputs.blocker_id",
+            "flowguard_evidence.subject_context.blocker_id",
+            "flowguard_result.blocker_id",
+            "flowguard_evidence_manifest.entries[].blocker_id",
+            "review_packet.repair_blocker_id",
+        ),
+        "mechanical_gate": "_formal_repair_identity_blockers",
+        "human_quality_gate": "_record_review_from_packet_result",
+        "terminal_disposition": "active_blocker.status",
+        "no_prose_authority": True,
+        "no_reviewer_mechanical_field_check": True,
+    },
+)
+REQUIRED_FIELD_LIFECYCLE_CHAIN_COUNT = len(FIELD_LIFECYCLE_CHAINS)
+
 PACKET_RESULT_CONTRACTS = packet_result_contracts.PACKET_RESULT_CONTRACTS
 REQUIRED_PACKET_RESULT_CONTRACT_COUNT = len(PACKET_RESULT_CONTRACTS)
 
@@ -980,6 +1159,7 @@ class State:
     scenario: str = ""
     current_field_contracts_cataloged: int = 0
     field_statuses_cataloged: int = 0
+    field_lifecycle_chains_cataloged: int = 0
     legacy_dispositions_cataloged: bool = False
     startup_answers_validated: bool = False
     packet_scope_filtered_to_current_options: bool = False
@@ -987,6 +1167,8 @@ class State:
     startup_mechanical_field_audit_written: bool = False
     packet_role_runtime_fields_bound: bool = False
     runtime_leaf_mechanical_fields_bound: bool = False
+    formal_repair_identity_chain_bound: bool = False
+    formal_repair_identity_mechanical_gate_bound: bool = False
     pm_decision_fields_bound: bool = False
     reviewer_quality_fields_bound: bool = False
     flowguard_process_fields_bound: bool = False
@@ -1001,6 +1183,9 @@ class State:
     fixed_role_count_gate_required: bool = False
     legacy_boot_action_accepted: bool = False
     packet_result_contract_misaligned: bool = False
+    repair_identity_prose_only: bool = False
+    repair_identity_chain_misaligned: bool = False
+    repair_identity_reviewer_owned: bool = False
     classification: str = ""
 
 
@@ -1041,6 +1226,12 @@ def _selected_state(scenario: str) -> State:
         return replace(base, legacy_boot_action_accepted=True)
     if scenario == PACKET_RESULT_CONTRACT_MISALIGNED:
         return replace(base, packet_result_contract_misaligned=True)
+    if scenario == REPAIR_IDENTITY_PROSE_ONLY:
+        return replace(base, repair_identity_prose_only=True)
+    if scenario == REPAIR_IDENTITY_CHAIN_MISALIGNED:
+        return replace(base, repair_identity_chain_misaligned=True)
+    if scenario == REPAIR_IDENTITY_REVIEWER_OWNED:
+        return replace(base, repair_identity_reviewer_owned=True)
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -1049,6 +1240,7 @@ def field_contract_ready(state: State) -> bool:
         state.status == "running"
         and state.current_field_contracts_cataloged == REQUIRED_CURRENT_FIELD_CONTRACT_COUNT
         and state.field_statuses_cataloged == len(FIELD_STATUSES)
+        and state.field_lifecycle_chains_cataloged == REQUIRED_FIELD_LIFECYCLE_CHAIN_COUNT
         and state.legacy_dispositions_cataloged
         and state.startup_answers_validated
         and state.packet_scope_filtered_to_current_options
@@ -1056,6 +1248,8 @@ def field_contract_ready(state: State) -> bool:
         and state.startup_mechanical_field_audit_written
         and state.packet_role_runtime_fields_bound
         and state.runtime_leaf_mechanical_fields_bound
+        and state.formal_repair_identity_chain_bound
+        and state.formal_repair_identity_mechanical_gate_bound
         and state.pm_decision_fields_bound
         and state.reviewer_quality_fields_bound
         and state.flowguard_process_fields_bound
@@ -1069,6 +1263,9 @@ def field_contract_ready(state: State) -> bool:
         and not state.fixed_role_count_gate_required
         and not state.legacy_boot_action_accepted
         and not state.packet_result_contract_misaligned
+        and not state.repair_identity_prose_only
+        and not state.repair_identity_chain_misaligned
+        and not state.repair_identity_reviewer_owned
     )
 
 
@@ -1089,6 +1286,12 @@ def _block_label(state: State) -> str:
         return "block_legacy_boot_action_accepted"
     if state.packet_result_contract_misaligned:
         return "block_packet_result_contract_misaligned"
+    if state.repair_identity_prose_only:
+        return "block_repair_identity_prose_only"
+    if state.repair_identity_chain_misaligned:
+        return "block_repair_identity_chain_misaligned"
+    if state.repair_identity_reviewer_owned:
+        return "block_repair_identity_reviewer_owned"
     return "block_field_contract_incomplete"
 
 
@@ -1111,6 +1314,12 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         return
     if state.field_statuses_cataloged != len(FIELD_STATUSES):
         yield Transition("catalog_field_status_lifecycle", replace(state, field_statuses_cataloged=len(FIELD_STATUSES)))
+        return
+    if state.field_lifecycle_chains_cataloged != REQUIRED_FIELD_LIFECYCLE_CHAIN_COUNT:
+        yield Transition(
+            "catalog_field_lifecycle_chains",
+            replace(state, field_lifecycle_chains_cataloged=REQUIRED_FIELD_LIFECYCLE_CHAIN_COUNT),
+        )
         return
     if not state.legacy_dispositions_cataloged:
         yield Transition("catalog_retired_and_forbidden_legacy_fields", replace(state, legacy_dispositions_cataloged=True))
@@ -1146,6 +1355,18 @@ def next_safe_states(state: State) -> Iterable[Transition]:
         yield Transition(
             "bind_runtime_leaf_mechanical_fields",
             replace(state, runtime_leaf_mechanical_fields_bound=True),
+        )
+        return
+    if not state.formal_repair_identity_chain_bound:
+        yield Transition(
+            "bind_formal_repair_identity_chain",
+            replace(state, formal_repair_identity_chain_bound=True),
+        )
+        return
+    if not state.formal_repair_identity_mechanical_gate_bound:
+        yield Transition(
+            "bind_runtime_repair_identity_mechanical_gate",
+            replace(state, formal_repair_identity_mechanical_gate_bound=True),
         )
         return
     if not state.pm_decision_fields_bound:
@@ -1218,7 +1439,7 @@ INVARIANTS = (
 )
 
 EXTERNAL_INPUTS = (Tick(),)
-MAX_SEQUENCE_LENGTH = 18
+MAX_SEQUENCE_LENGTH = 21
 
 
 class FlowPilotFieldContractStep:
@@ -1234,6 +1455,7 @@ class FlowPilotFieldContractStep:
         "reviewer_quality_review",
         "flowguard_process_review",
         "packet_result_contracts",
+        "field_lifecycle_chains",
     )
     writes = ("field_contract_acceptance_or_block",)
     input_description = "field-contract scenario"

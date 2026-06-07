@@ -44,6 +44,15 @@ HAZARD_EXPECTED_FAILURES = {
     model.BLOCKER_ROUTED_WITHOUT_PM_DECISION: "repair packet was issued without a PM repair decision",
     model.FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER: "reviewer recheck lacks the current FlowGuard evidence",
     model.REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS: "blocker repair stage was not updated",
+    model.FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER: (
+        "formal blocker identity missing reached Reviewer instead of Runtime reissue"
+    ),
+    model.FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY: (
+        "FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty"
+    ),
+    model.SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN: (
+        "superseded repair blocker remained open after route replacement"
+    ),
 }
 
 
@@ -59,17 +68,25 @@ def _state_id(state: model.State) -> str:
         f"package=issued:{state.pm_repair_package_issued},gen:{state.pm_package_generation_new},"
         f"current:{state.pm_package_references_current_blocker},specific:{state.pm_package_includes_specific_failure},"
         f"required:{state.pm_package_includes_required_repair},new:{state.pm_package_includes_new_work_content},"
-        f"dispose_old:{state.pm_package_disposes_old_context}|"
+        f"dispose_old:{state.pm_package_disposes_old_context},formal:{state.pm_package_formal_blocker_id_bound}|"
         f"worker=packet:{state.worker_packet_issued},delta:{state.worker_packet_has_semantic_delta},"
         f"success_contract:{state.worker_packet_includes_success_evidence_contract},"
         f"result_addresses:{state.worker_result_addresses_required_repair}|"
         f"flowguard=recheck:{state.flowguard_recheck_requested},"
         f"repair_ref:{state.flowguard_recheck_references_repair_result},"
-        f"passed:{state.flowguard_recheck_passed},manifest:{state.flowguard_evidence_manifest_attached}|"
+        f"passed:{state.flowguard_recheck_passed},manifest:{state.flowguard_evidence_manifest_attached},"
+        f"formal_blocker:{state.flowguard_evidence_formal_blocker_id_bound}|"
         f"review=recheck:{state.reviewer_recheck_requested},bound:{state.reviewer_recheck_references_current_blocker},"
         f"evidence:{state.reviewer_recheck_uses_worker_evidence},passed:{state.reviewer_recheck_passed},"
         f"flowguard_evidence:{state.reviewer_recheck_uses_flowguard_evidence},"
         f"closed:{state.blocker_closed},stage_current:{state.blocker_stage_current}|"
+        f"runtime_identity_gate={state.runtime_mechanical_identity_gate_passed},"
+        f"staged_effect_blocker={state.staged_effect_blocker_id_bound},"
+        f"prose_only={state.blocker_identity_in_prose_only},"
+        f"missing_reached_reviewer={state.formal_identity_missing_reached_reviewer}|"
+        f"superseded={state.route_replacement_supersedes_prior_repair},"
+        f"superseded_disposition={state.superseded_blocker_disposition_recorded},"
+        f"superseded_open={state.superseded_blocker_still_repair_open}|"
         f"followup={state.followup_blocker_returned},{state.followup_blocker_recorded}|"
         f"loop={state.same_blocker_repeat_count},{state.same_work_packet_hash_repeated},"
         f"{state.loop_escape_recorded},{state.terminal_stop_or_route_mutation}|reason={state.terminal_reason}"
@@ -226,7 +243,10 @@ def run_checks() -> dict[str, Any]:
                 "fresh PM repair package generation",
                 "worker repair packet semantic delta and success evidence",
                 "FlowGuard recheck evidence attachment for repaired results",
+                "Runtime mechanical blocker identity gate before reviewer review",
+                "formal blocker identity in PM package, staged_effect, FlowGuard evidence, and replay inputs",
                 "reviewer recheck binding",
+                "superseded repair blocker disposition after route replacement",
                 "same-blocker no-progress loop escape",
             ],
             "does_not_cover": [

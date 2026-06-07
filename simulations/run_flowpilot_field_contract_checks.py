@@ -19,6 +19,7 @@ REQUIRED_LABELS = (
     "select_success",
     "catalog_current_field_contracts",
     "catalog_field_status_lifecycle",
+    "catalog_field_lifecycle_chains",
     "catalog_retired_and_forbidden_legacy_fields",
     "validate_startup_answer_fields",
     "filter_packet_startup_scope_fields",
@@ -26,6 +27,8 @@ REQUIRED_LABELS = (
     "write_startup_mechanical_field_audit",
     "bind_packet_role_result_current_fields",
     "bind_runtime_leaf_mechanical_fields",
+    "bind_formal_repair_identity_chain",
+    "bind_runtime_repair_identity_mechanical_gate",
     "bind_pm_decision_fields",
     "bind_reviewer_quality_fields",
     "bind_flowguard_process_fields",
@@ -40,6 +43,9 @@ REQUIRED_LABELS = (
     "block_fixed_role_count_gate",
     "block_legacy_boot_action_accepted",
     "block_packet_result_contract_misaligned",
+    "block_repair_identity_prose_only",
+    "block_repair_identity_chain_misaligned",
+    "block_repair_identity_reviewer_owned",
 )
 
 EXPECTED_HAZARD_FAILURES = {
@@ -51,6 +57,9 @@ EXPECTED_HAZARD_FAILURES = {
     "fixed_role_count_gate_required_accepted": "risk scenario was accepted: fixed_role_count_gate_required",
     "legacy_boot_action_accepted_accepted": "risk scenario was accepted: legacy_boot_action_accepted",
     "packet_result_contract_misaligned_accepted": "risk scenario was accepted: packet_result_contract_misaligned",
+    "repair_identity_prose_only_accepted": "risk scenario was accepted: repair_identity_prose_only",
+    "repair_identity_chain_misaligned_accepted": "risk scenario was accepted: repair_identity_chain_misaligned",
+    "repair_identity_reviewer_owned_accepted": "risk scenario was accepted: repair_identity_reviewer_owned",
     "success_overblocked": "current field contract was blocked",
 }
 
@@ -60,6 +69,7 @@ def _state_id(state: model.State) -> str:
         f"status={state.status}|scenario={state.scenario}|"
         f"catalog={state.current_field_contracts_cataloged}/{model.REQUIRED_CURRENT_FIELD_CONTRACT_COUNT}|"
         f"statuses={state.field_statuses_cataloged}/{len(model.FIELD_STATUSES)}|"
+        f"chains={state.field_lifecycle_chains_cataloged}/{model.REQUIRED_FIELD_LIFECYCLE_CHAIN_COUNT}|"
         f"legacy_disposition={state.legacy_dispositions_cataloged}|"
         f"answers={state.startup_answers_validated}|"
         f"scope={state.packet_scope_filtered_to_current_options}|"
@@ -67,6 +77,8 @@ def _state_id(state: model.State) -> str:
         f"audit={state.startup_mechanical_field_audit_written}|"
         f"packet_role={state.packet_role_runtime_fields_bound}|"
         f"leaf={state.runtime_leaf_mechanical_fields_bound}|"
+        f"repair_chain={state.formal_repair_identity_chain_bound}|"
+        f"repair_gate={state.formal_repair_identity_mechanical_gate_bound}|"
         f"pm={state.pm_decision_fields_bound}|"
         f"reviewer_quality={state.reviewer_quality_fields_bound}|"
         f"flowguard={state.flowguard_process_fields_bound}|"
@@ -78,7 +90,10 @@ def _state_id(state: model.State) -> str:
         f"fixed_startup={state.startup_fixed_role_binding_gate_required}|"
         f"fixed_count={state.fixed_role_count_gate_required}|"
         f"legacy_action={state.legacy_boot_action_accepted}|"
-        f"packet_misaligned={state.packet_result_contract_misaligned}"
+        f"packet_misaligned={state.packet_result_contract_misaligned}|"
+        f"repair_prose={state.repair_identity_prose_only}|"
+        f"repair_misaligned={state.repair_identity_chain_misaligned}|"
+        f"repair_reviewer_owned={state.repair_identity_reviewer_owned}"
     )
 
 
@@ -245,6 +260,9 @@ def _source_alignment_report() -> dict[str, object]:
             "test_review_packet_authorizes_matching_flowguard_result_read",
             "test_pm_repair_handoff_contract_includes_branch_shapes",
             "test_pm_repair_redesign_route_reissue_names_branch_field_path",
+            "test_repair_packet_handoff_contract_carries_formal_blocker_identity",
+            "test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
+            "test_staged_effect_same_family_rejects_different_formal_blocker_identity",
         )
         if name not in test_text
     ]
@@ -256,6 +274,53 @@ def _source_alignment_report() -> dict[str, object]:
         and "matching_flowguard_result_for_review" in runtime_text
         and "current_handoff_contract" in test_text
     )
+    missing_repair_identity_markers = [
+        label
+        for label, token, source in (
+            ("issue_task_packet_accepts_repair_blocker_id", "repair_blocker_id: str = \"\"", runtime_text),
+            ("envelope_carries_repair_blocker_id", '"repair_blocker_id": repair_blocker_id', runtime_text),
+            (
+                "handoff_manifest_projects_repair_blocker_id",
+                '"blocker_id": str(envelope.get("repair_blocker_id") or "")',
+                runtime_text,
+            ),
+            ("runtime_formal_repair_identity_gate", "def _formal_repair_identity_blockers", runtime_text),
+            (
+                "result_gate_calls_formal_repair_identity_gate",
+                "blockers.extend(_formal_repair_identity_blockers(packet))",
+                runtime_text,
+            ),
+            ("flowguard_generator_inputs_bind_blocker_id", 'body_payload["generator_inputs"] = {', runtime_text),
+            ("flowguard_subject_context_binds_blocker_id", 'body_payload["subject_context"] = {', runtime_text),
+            (
+                "flowguard_result_records_blocker_id",
+                'result["blocker_id"] = repair_blocker_id',
+                runtime_text,
+            ),
+            (
+                "review_manifest_carries_blocker_id",
+                '"blocker_id": str(order.get("blocker_id") or "")',
+                runtime_text,
+            ),
+            (
+                "runtime_negative_test_for_formal_identity_mismatch",
+                "test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
+                test_text,
+            ),
+            (
+                "runtime_replay_test_for_formal_identity_chain",
+                "test_repair_packet_handoff_contract_carries_formal_blocker_identity",
+                test_text,
+            ),
+            (
+                "staged_effect_negative_test_for_identity_mismatch",
+                "test_staged_effect_same_family_rejects_different_formal_blocker_identity",
+                test_text,
+            ),
+        )
+        if token not in source
+    ]
+    formal_repair_identity_source_ok = not missing_repair_identity_markers
     missing_fake_contract_terms = [
         term
         for term in (
@@ -274,6 +339,7 @@ def _source_alignment_report() -> dict[str, object]:
             and not private_runtime_contract_tables
             and shared_contract_source_ok
             and current_handoff_source_ok
+            and formal_repair_identity_source_ok
             and not missing_negative_tests
             and not missing_fake_contract_terms
         ),
@@ -287,6 +353,8 @@ def _source_alignment_report() -> dict[str, object]:
         "private_runtime_contract_tables": private_runtime_contract_tables,
         "shared_contract_source_ok": shared_contract_source_ok,
         "current_handoff_source_ok": current_handoff_source_ok,
+        "formal_repair_identity_source_ok": formal_repair_identity_source_ok,
+        "missing_repair_identity_markers": missing_repair_identity_markers,
         "missing_negative_tests": missing_negative_tests,
         "missing_fake_contract_terms": missing_fake_contract_terms,
     }
@@ -314,6 +382,7 @@ def run_checks() -> dict[str, object]:
         "packet_result_contracts": model.PACKET_RESULT_CONTRACTS,
         "field_layers": model.FIELD_LAYERS,
         "field_statuses": model.FIELD_STATUSES,
+        "field_lifecycle_chains": model.FIELD_LIFECYCLE_CHAINS,
         "retired_field_contracts": model.RETIRED_FIELD_CONTRACTS,
         "forbidden_legacy_field_contracts": model.FORBIDDEN_LEGACY_FIELD_CONTRACTS,
         "unsupported_historical_field_samples": sorted(model.UNSUPPORTED_HISTORICAL_FIELD_SAMPLES),

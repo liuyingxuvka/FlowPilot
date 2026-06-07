@@ -9,6 +9,7 @@ from flowpilot_information_flow_alignment_obligations import (
     OBL_BLOCKER_PAYLOAD,
     OBL_BREAK_GLASS,
     OBL_CLOSURE_STOP,
+    OBL_FORMAL_REPAIR_IDENTITY,
     OBL_RECHECK_FOLLOWUP,
     OBL_REOPEN_HISTORY,
     OBL_REQUIRED_REPAIR,
@@ -147,16 +148,75 @@ def _test_evidence() -> tuple[Any, ...]:
             code_contracts=("info_flow.closure.classify_control_blocker",),
         ),
         _evidence(
-            "info_flow.test.required_recheck_packet_positive",
+            "info_flow.test.required_recheck_packet_replay",
             test_name="test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear",
             path="tests/test_flowpilot_core_runtime.py",
             command=(
                 "python -m pytest tests/test_flowpilot_core_runtime.py "
                 "-k test_reattach_required_recheck_freshens_flowguard_then_reviewer_before_clear -q"
             ),
+            test_kind=REPLAY,
+            covers=(OBL_FORMAL_REPAIR_IDENTITY, OBL_RECHECK_FOLLOWUP),
+            code_contracts=(
+                "info_flow.runtime.required_recheck_packet",
+                "info_flow.runtime.packet_repair_blocker_id",
+                "info_flow.runtime.formal_repair_identity_gate",
+            ),
+        ),
+        _evidence(
+            "info_flow.test.current_scope_repair_identity_positive",
+            test_name="test_repair_packet_handoff_contract_carries_formal_blocker_identity",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_repair_packet_handoff_contract_carries_formal_blocker_identity -q"
+            ),
             test_kind=HAPPY,
-            covers=(OBL_RECHECK_FOLLOWUP,),
-            code_contracts=("info_flow.runtime.required_recheck_packet",),
+            covers=(OBL_FORMAL_REPAIR_IDENTITY,),
+            code_contracts=(
+                "info_flow.runtime.apply_pm_repair_decision",
+                "info_flow.runtime.issue_current_scope_repair_packet",
+                "info_flow.runtime.packet_repair_blocker_id",
+            ),
+        ),
+        _evidence(
+            "info_flow.test.handoff_contract_visible_edge",
+            test_name="test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff -q"
+            ),
+            test_kind=EDGE,
+            covers=(OBL_FORMAL_REPAIR_IDENTITY,),
+            code_contracts=("info_flow.runtime.build_current_handoff_contract",),
+        ),
+        _evidence(
+            "info_flow.test.staged_effect_convergence_edge",
+            test_name="test_staged_effect_same_family_rejects_different_formal_blocker_identity",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_staged_effect_same_family_rejects_different_formal_blocker_identity -q"
+            ),
+            test_kind=NEGATIVE,
+            covers=(OBL_FORMAL_REPAIR_IDENTITY,),
+            code_contracts=("info_flow.runtime.attach_staged_effect",),
+        ),
+        _evidence(
+            "info_flow.test.formal_repair_identity_mismatch_negative",
+            test_name="test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker -q"
+            ),
+            test_kind=NEGATIVE,
+            covers=(OBL_FORMAL_REPAIR_IDENTITY,),
+            code_contracts=(
+                "info_flow.runtime.formal_repair_identity_gate",
+                "info_flow.runtime.build_current_handoff_contract",
+            ),
         ),
         _evidence(
             "info_flow.test.lifecycle_resume_on_demand_assignment_positive",

@@ -60,6 +60,21 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("current_handoff_contract.missing_information_response", fields)
         self.assertIn("current_handoff_contract.downstream_consumer.unlocks", fields)
         self.assertIn("current_handoff_contract.status_projection_requirements.repair_chain_visible_when_current", fields)
+        self.assertIn("packet.repair_blocker_id", fields)
+        self.assertIn("packet.envelope.repair_blocker_id", fields)
+        self.assertIn("packet.active_blocker_id", fields)
+        self.assertIn("current_handoff_contract.input_material_manifest.subject_id", fields)
+        self.assertIn("current_handoff_contract.input_material_manifest.target_result_id", fields)
+        self.assertIn("current_handoff_contract.input_material_manifest.route_node_id", fields)
+        self.assertIn("current_handoff_contract.input_material_manifest.blocker_id", fields)
+        self.assertIn("staged_effect.blocker_id", fields)
+        self.assertIn("flowguard_evidence.generator_inputs.blocker_id", fields)
+        self.assertIn("flowguard_evidence.subject_context.blocker_id", fields)
+        self.assertIn("flowguard_result.blocker_id", fields)
+        self.assertIn("flowguard_evidence_manifest.entries[].blocker_id", fields)
+        self.assertIn("review_packet.repair_blocker_id", fields)
+        self.assertIn("active_blocker.status", fields)
+        self.assertIn("active_blocker.retired_by_blocker_id", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[]", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[].requirement_id", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[].classification", fields)
@@ -81,6 +96,10 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("reviewer_quality_review.decision", fields)
         self.assertIn("flowguard_process_review.target_result_id", fields)
         self.assertIn("current_packet_id", logical_fields)
+        self.assertIn("repair_blocker_id", logical_fields)
+        self.assertIn("handoff_blocker_id", logical_fields)
+        self.assertIn("staged_effect_blocker_id", logical_fields)
+        self.assertIn("flowguard_result_blocker_id", logical_fields)
         self.assertIn("missing_fields", logical_fields)
         self.assertIn("repair_instruction", logical_fields)
         self.assertTrue({"top_level", "middle", "leaf"}.issubset(layers))
@@ -120,6 +139,29 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertNotIn("preplanning.skill_standard.selected_skills", fields)
         self.assertNotIn("preplanning.high_standard_contract.decision", fields)
         self.assertNotIn("preplanning.high_standard_contract.contract_rows", fields)
+
+    def test_field_lifecycle_chain_models_repair_identity_end_to_end(self) -> None:
+        chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}
+
+        chain = chains["repair_blocker_identity_recheck_chain"]
+        self.assertEqual(chain["source"], "active_blocker.blocker_id")
+        self.assertEqual(chain["mechanical_gate"], "_formal_repair_identity_blockers")
+        self.assertEqual(chain["human_quality_gate"], "_record_review_from_packet_result")
+        self.assertTrue(chain["no_prose_authority"])
+        self.assertTrue(chain["no_reviewer_mechanical_field_check"])
+        self.assertEqual(
+            chain["field_sequence"],
+            (
+                "packet.repair_blocker_id",
+                "packet.envelope.repair_blocker_id",
+                "current_handoff_contract.input_material_manifest.blocker_id",
+                "flowguard_evidence.generator_inputs.blocker_id",
+                "flowguard_evidence.subject_context.blocker_id",
+                "flowguard_result.blocker_id",
+                "flowguard_evidence_manifest.entries[].blocker_id",
+                "review_packet.repair_blocker_id",
+            ),
+        )
 
     def test_field_status_catalog_marks_retired_and_forbidden_legacy(self) -> None:
         self.assertEqual(
@@ -200,6 +242,18 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         )
         self.assertTrue(
             hazards["hazards"]["packet_result_contract_misaligned_accepted"]["detected"],
+            hazards,
+        )
+        self.assertTrue(
+            hazards["hazards"]["repair_identity_prose_only_accepted"]["detected"],
+            hazards,
+        )
+        self.assertTrue(
+            hazards["hazards"]["repair_identity_chain_misaligned_accepted"]["detected"],
+            hazards,
+        )
+        self.assertTrue(
+            hazards["hazards"]["repair_identity_reviewer_owned_accepted"]["detected"],
             hazards,
         )
 
