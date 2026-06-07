@@ -170,8 +170,7 @@ MARKER_REQUIREMENTS: tuple[Mapping[str, Any], ...] = (
         "markers": (
             "test_manual_resume_uses_lifecycle_guard_without_heartbeat_or_role_prewarm",
             "role_assignments",
-            "resolve_role_assignment",
-            "lease_agent",
+            "dispatch_current_role",
             "heartbeat",
         ),
         "covers": (OBL_RESUME_CURRENT, OBL_ROLE_ASSIGNMENT),

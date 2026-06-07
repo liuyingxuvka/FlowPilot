@@ -283,35 +283,21 @@
         "test_evidence_id": "info_flow.test.route_mutation_stale_replay"
       },
       {
-        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "code_contract_id": "info_flow.new_runtime.dispatch_current_role",
         "gaps": [],
         "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
         "status": "locked",
         "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
       },
       {
-        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "code_contract_id": "info_flow.new_runtime.dispatch_current_role",
         "gaps": [],
         "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
         "status": "locked",
         "test_evidence_id": "info_flow.test.role_assignment_wrong_responsibility_negative"
       },
       {
-        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
-        "gaps": [],
-        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
-        "status": "locked",
-        "test_evidence_id": "info_flow.test.role_assignment_packet_specific_positive"
-      },
-      {
-        "code_contract_id": "info_flow.new_runtime.lease_agent",
-        "gaps": [],
-        "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
-        "status": "locked",
-        "test_evidence_id": "info_flow.test.lifecycle_resume_on_demand_assignment_positive"
-      },
-      {
-        "code_contract_id": "info_flow.new_runtime.lease_agent",
+        "code_contract_id": "info_flow.new_runtime.dispatch_current_role",
         "gaps": [],
         "model_obligation_id": "info_flow.role_assignment.current_packet_binding",
         "status": "locked",
@@ -400,10 +386,10 @@
       "semantic proof that every private helper branch is correct"
     ]
   },
-  "code_contract_count": 25,
+  "code_contract_count": 24,
   "code_symbol_ok": true,
   "code_symbol_report": {
-    "contract_count": 25,
+    "contract_count": 24,
     "evidence": [
       {
         "calls": [
@@ -1104,19 +1090,25 @@
       },
       {
         "calls": [
-          "_role_assignment_commit_command",
+          "_dispatch_retry_command",
           "_runtime_state",
           "assignment.get",
           "bool",
+          "get",
+          "host.lease_responsibility",
+          "ledger.get",
+          "role_handoff.render_current_packet_handoff",
           "run_shell.load_run_ledger",
           "run_shell.load_run_shell",
           "run_shell.save_run_ledger",
+          "runtime.assign_packet",
           "runtime.resolve_role_assignment",
           "str"
         ],
-        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "code_contract_id": "info_flow.new_runtime.dispatch_current_role",
         "found": true,
         "parameters": [
+          "agent_id",
           "host_kind",
           "packet_id",
           "responsibility",
@@ -1125,79 +1117,6 @@
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
         "raised_errors": [],
-        "return_values": [
-          "payload"
-        ],
-        "returns_value": true,
-        "side_effects": [
-          "save_run_ledger"
-        ],
-        "state_reads": [
-          "Any",
-          "Path",
-          "_role_assignment_commit_command",
-          "_runtime_state",
-          "assignment",
-          "bool",
-          "dict",
-          "get",
-          "host_kind",
-          "ledger",
-          "load_run_ledger",
-          "load_run_shell",
-          "ok",
-          "packet_id",
-          "payload",
-          "resolve_role_assignment",
-          "responsibility",
-          "root",
-          "run_shell",
-          "runtime",
-          "save_run_ledger",
-          "shell",
-          "str"
-        ],
-        "state_writes": [
-          "assignment",
-          "error",
-          "lease_commit_command",
-          "ledger",
-          "payload",
-          "shell"
-        ],
-        "symbol": "resolve_role_assignment"
-      },
-      {
-        "calls": [
-          "_runtime_state",
-          "assignment.get",
-          "get",
-          "host.lease_responsibility",
-          "isinstance",
-          "ledger.get",
-          "role_handoff.render_current_packet_handoff",
-          "run_shell.load_run_ledger",
-          "run_shell.load_run_shell",
-          "run_shell.save_run_ledger",
-          "runtime.BlackBoxRuntimeError",
-          "runtime.assign_packet",
-          "str"
-        ],
-        "code_contract_id": "info_flow.new_runtime.lease_agent",
-        "found": true,
-        "parameters": [
-          "agent_id",
-          "assignment_id",
-          "host_kind",
-          "packet_id",
-          "responsibility",
-          "root"
-        ],
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
-        "raised_errors": [
-          "BlackBoxRuntimeError"
-        ],
         "return_values": [],
         "returns_value": true,
         "side_effects": [
@@ -1205,21 +1124,20 @@
         ],
         "state_reads": [
           "Any",
-          "BlackBoxRuntimeError",
           "ENTRYPOINT_PATH",
           "Path",
+          "_dispatch_retry_command",
           "_runtime_state",
           "agent_id",
           "assign_packet",
           "assignment",
-          "assignment_id",
+          "bool",
           "dict",
           "disposition",
           "get",
           "handoff",
           "host",
           "host_kind",
-          "isinstance",
           "lease_id",
           "lease_responsibility",
           "ledger",
@@ -1227,6 +1145,7 @@
           "load_run_shell",
           "packet_id",
           "render_current_packet_handoff",
+          "resolve_role_assignment",
           "responsibility",
           "role_handoff",
           "root",
@@ -1246,7 +1165,7 @@
           "ledger",
           "shell"
         ],
-        "symbol": "lease_agent"
+        "symbol": "dispatch_current_role"
       },
       {
         "calls": [
@@ -2648,17 +2567,19 @@
         "symbol": "reconcile_resume_request"
       },
       {
-        "code_contract_id": "info_flow.new_runtime.resolve_role_assignment",
+        "code_contract_id": "info_flow.new_runtime.dispatch_current_role",
         "error_paths": [],
         "external_inputs": [
           "root",
           "packet_id",
           "responsibility",
-          "host_kind"
+          "host_kind",
+          "agent_id"
         ],
         "external_outputs": [
           "role_assignment",
-          "lease_commit_command"
+          "lease_id",
+          "role_handoff"
         ],
         "implements_obligations": [
           "info_flow.role_assignment.current_packet_binding"
@@ -2673,43 +2594,13 @@
           "role_continuity"
         ],
         "state_writes": [
-          "role_assignments"
-        ],
-        "surface_type": "function",
-        "symbol": "resolve_role_assignment"
-      },
-      {
-        "code_contract_id": "info_flow.new_runtime.lease_agent",
-        "error_paths": [],
-        "external_inputs": [
-          "root",
-          "packet_id",
-          "responsibility",
-          "assignment_id",
-          "agent_id"
-        ],
-        "external_outputs": [
-          "lease_id",
-          "role_handoff"
-        ],
-        "implements_obligations": [
-          "info_flow.role_assignment.current_packet_binding"
-        ],
-        "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
-        "required": true,
-        "role": "owner",
-        "side_effects": [],
-        "state_reads": [
-          "role_assignment",
-          "current_packet"
-        ],
-        "state_writes": [
+          "role_assignments",
           "lease",
           "packet_assignment",
           "role_continuity"
         ],
         "surface_type": "function",
-        "symbol": "lease_agent"
+        "symbol": "dispatch_current_role"
       },
       {
         "code_contract_id": "info_flow.runtime.resolve_role_assignment",
@@ -3549,8 +3440,7 @@
           "info_flow.new_runtime.resume_entrypoint",
           "info_flow.runtime.record_resume_request",
           "info_flow.runtime.reconcile_resume_request",
-          "info_flow.new_runtime.resolve_role_assignment",
-          "info_flow.new_runtime.lease_agent",
+          "info_flow.new_runtime.dispatch_current_role",
           "info_flow.runtime.resolve_role_assignment",
           "info_flow.runtime.lease_agent"
         ],
@@ -3602,7 +3492,7 @@
         "closure_evidence_role": "",
         "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_flowguard_operator_is_leased_through_its_own_packet -q",
         "covered_code_contracts": [
-          "info_flow.new_runtime.resolve_role_assignment",
+          "info_flow.new_runtime.dispatch_current_role",
           "info_flow.runtime.resolve_role_assignment"
         ],
         "covered_obligations": [
@@ -3848,8 +3738,7 @@
         "closure_evidence_role": "",
         "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_flowguard_operator_is_leased_through_its_own_packet -q",
         "covered_code_contracts": [
-          "info_flow.new_runtime.resolve_role_assignment",
-          "info_flow.new_runtime.lease_agent",
+          "info_flow.new_runtime.dispatch_current_role",
           "info_flow.runtime.resolve_role_assignment",
           "info_flow.runtime.lease_agent"
         ],
@@ -4192,6 +4081,7 @@
       "ok": true,
       "rejected": [
         "blocker_repair_stage_hidden_from_status",
+        "branch_contract_shape_not_visible",
         "break_glass_bypasses_pm_reviewer_reintegration",
         "break_glass_unbounded_or_target_project_repair",
         "break_glass_without_normal_repair_failure",

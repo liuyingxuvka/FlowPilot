@@ -105,7 +105,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             ),
             code_contracts=(
                 "flowpilot_new.start_run",
-                "flowpilot_new.lease_agent",
+                "flowpilot_new.dispatch_current_role",
                 "flowpilot_new.ack",
                 "flowpilot_new.submit_result",
                 "flowpilot_new.status",
@@ -120,7 +120,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             covers=("new_entrypoint.role_lease_requires_matching_packet",),
             code_contracts=(
                 "flowpilot_new.start_run",
-                "flowpilot_new.lease_agent",
+                "flowpilot_new.dispatch_current_role",
                 "flowpilot_new.ack",
                 "flowpilot_new.submit_result",
             ),
@@ -143,7 +143,7 @@ def source_test_evidence() -> tuple[TestEvidence, ...]:
             covers=("new_entrypoint.symmetric_role_packet_lifecycle",),
             code_contracts=(
                 "flowpilot_new.start_run",
-                "flowpilot_new.lease_agent",
+                "flowpilot_new.dispatch_current_role",
                 "flowpilot_new.ack",
                 "flowpilot_new.submit_result",
                 "flowpilot_new.status",

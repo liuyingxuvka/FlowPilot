@@ -91,10 +91,16 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("role_binding_ledger.role_slots[].agent_id", fields)
         self.assertIn("role_binding_ledger.role_binding_mode", fields)
         self.assertIn("role_binding_ledger.role_slots[].host_liveness_status", fields)
+        self.assertNotIn("role_binding_ledger.role_slots[].liveness_status", fields)
         self.assertIn("current_role_agent_binding.role_key", fields)
         self.assertIn("current_role_agent_binding.agent_id", fields)
         self.assertIn("current_role_agent_binding.host_liveness_status", fields)
         self.assertIn("current_role_agent_binding.liveness_decision", fields)
+        self.assertIn("current_handoff_contract.required_report_contract.required_child_fields", fields)
+        self.assertIn("current_handoff_contract.required_report_contract.branch_valid_shapes", fields)
+        self.assertIn("output_contract.mechanical_contract_failure.failed_branch", fields)
+        self.assertIn("output_contract.mechanical_contract_failure.failed_field_path", fields)
+        self.assertIn("output_contract.branch_minimal_valid_shape", fields)
         self.assertNotIn(
             "startup_fact_report.external_fact_review.reviewer_checked_requirement_ids",
             fields,
@@ -169,6 +175,15 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("node_context_package", contracts["task.node_acceptance_plan"]["required_fields"])
         self.assertIn("pm_visible_summary", contracts["flowguard_check.post_result"]["required_fields"])
         self.assertIn("authority", contracts["pm_repair_decision.pm_repair_decision"]["forbidden_fields"])
+        self.assertIn(
+            "route_plan.nodes[].title when decision=redesign_route",
+            contracts["pm_repair_decision.pm_repair_decision"]["required_child_fields"],
+        )
+        branch_shapes = model.packet_result_contracts.branch_valid_shapes_for_family(
+            "pm_repair_decision.pm_repair_decision"
+        )
+        self.assertIn("decision=redesign_route", branch_shapes)
+        self.assertIn("route_plan", branch_shapes["decision=redesign_route"])
         self.assertIn("summary", contracts["pm_disposition.node_pm_disposition"]["forbidden_fields"])
 
     def test_field_contract_model_blocks_old_field_translation_and_fixed_role_gates(self) -> None:

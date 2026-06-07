@@ -34,7 +34,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=192",
+    "summary": "sequences=3 initial_states=1 traces=198",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -45,6 +45,13 @@
         "expected_failure": "blocker repair chain stage is hidden",
         "failures": [
           "blocker repair chain stage is hidden or stale in status projection"
+        ]
+      },
+      "branch_contract_shape_not_visible": {
+        "detected": true,
+        "expected_failure": "branch-specific current result shapes",
+        "failures": [
+          "work packet lacks branch-specific current result shapes for branch outputs"
         ]
       },
       "break_glass_bypasses_pm_reviewer_reintegration": {
@@ -221,7 +228,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 32
+    "terminal_state_count": 33
   },
   "result_type": "flowpilot_project_control_information_flow_checks",
   "safe_graph": {
@@ -236,12 +243,13 @@
       "valid_route_mutation_with_replay_scope",
       "valid_terminal_stop_preserves_unresolved_work"
     ],
-    "edge_count": 64,
+    "edge_count": 66,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
       "blocker_repair_stage_hidden_from_status",
+      "branch_contract_shape_not_visible",
       "break_glass_bypasses_pm_reviewer_reintegration",
       "break_glass_unbounded_or_target_project_repair",
       "break_glass_without_normal_repair_failure",
@@ -265,6 +273,6 @@
       "work_packet_missing_input_materials",
       "work_packet_missing_report_requirements"
     ],
-    "state_count": 65
+    "state_count": 67
   }
 }

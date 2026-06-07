@@ -91,6 +91,9 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
     def test_current_prompt_surfaces_reject_obsolete_runtime_paths(self) -> None:
         self.assertFalse(model.forbidden_current_prompt_surface_errors(ROOT))
 
+    def test_current_reference_surfaces_reject_obsolete_startup_and_role_paths(self) -> None:
+        self.assertFalse(model.forbidden_current_reference_surface_errors(ROOT))
+
     def test_current_packet_rows_use_lease_ack_result_authority(self) -> None:
         action_table = (RUNTIME_KIT / "prompts" / "controller" / "action_ledger_table.md").read_text(encoding="utf-8").lower()
         controller_card = _card_path_by_id("controller.core").read_text(encoding="utf-8").lower()
@@ -98,8 +101,9 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
             obsolete_relay = "flowpilot_" + "runtime.py relay-envelope"
             self.assertNotIn(obsolete_relay, text)
             self.assertNotIn("controller_relay", text)
-            self.assertIn("flowpilot_new.py resolve-role-assignment", text)
-            self.assertIn("flowpilot_new.py lease-agent", text)
+            self.assertNotIn("flowpilot_new.py resolve-role-assignment", text)
+            self.assertNotIn("flowpilot_new.py lease-agent", text)
+            self.assertIn("flowpilot_new.py dispatch-current-role", text)
             self.assertIn("flowpilot_new.py role-handoff", text)
             self.assertIn("flowpilot_new.py ack", text)
             self.assertIn("flowpilot_new.py open-packet", text)
@@ -458,8 +462,9 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("current assignment", packet_runtime_text)
         for text in (packet_template, pm_card):
             self.assertIn("successful", text)
-            self.assertIn("flowpilot_new.py resolve-role-assignment", text)
-            self.assertIn("flowpilot_new.py lease-agent", text)
+            self.assertNotIn("flowpilot_new.py resolve-role-assignment", text)
+            self.assertNotIn("flowpilot_new.py lease-agent", text)
+            self.assertIn("flowpilot_new.py dispatch-current-role", text)
             self.assertIn("flowpilot_new.py role-handoff", text)
             self.assertIn("flowpilot_new.py ack", text)
             self.assertIn("flowpilot_new.py open-packet", text)
@@ -484,8 +489,9 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         for path in ordinary_role_cards:
             with self.subTest(path=path.name):
                 text = normalized(path)
-                self.assertIn("flowpilot_new.py resolve-role-assignment", text)
-                self.assertIn("flowpilot_new.py lease-agent", text)
+                self.assertNotIn("flowpilot_new.py resolve-role-assignment", text)
+                self.assertNotIn("flowpilot_new.py lease-agent", text)
+                self.assertIn("flowpilot_new.py dispatch-current-role", text)
                 self.assertIn("flowpilot_new.py ack", text)
                 self.assertIn("flowpilot_new.py open-packet", text)
                 self.assertIn("flowpilot_new.py submit-result", text)

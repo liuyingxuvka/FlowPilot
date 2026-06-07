@@ -23,9 +23,8 @@ missing, mismatched, or contains inline body fields, return
 `unauthorized_direct_message` and wait for a corrected router-delivered
 envelope.
 
-Use the current lease path for addressed research packets: Router resolves the
-packet assignment through `flowpilot_new.py resolve-role-assignment`, commits
-the authorized lease through `flowpilot_new.py lease-agent`, the assigned role
+Use the current dispatch path for addressed research packets: Router dispatches
+the current packet through `flowpilot_new.py dispatch-current-role`, the assigned role
 ACKs with `flowpilot_new.py ack`, the assigned role opens only that packet
 with `flowpilot_new.py open-packet`, and the same lease returns completion
 through `flowpilot_new.py submit-result`. Do not wait for inline body text, a corrected

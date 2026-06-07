@@ -141,8 +141,8 @@ for review.
    `parent_backward_replay.json`, have the reviewer start from the
    parent-level delivered result and replay the child rollup, then record the
    PM segment decision. Repair reruns the same parent replay.
-26. Record the current manual-resume binding after Controller core is loaded.
-   FlowPilot does not create scheduled-continuation automation.
+26. Record the current manual-resume binding after Controller foreground duty
+   is available. FlowPilot does not create external continuation automation.
    Manual resume reloads current ledgers and rehydrates the current role
    bindings before normal work continues. If background or parallel agents cannot be
    opened, FlowPilot blocks instead of switching to an unsupported
@@ -154,7 +154,7 @@ for review.
    any PM-authored worker packet envelope only after router direct-dispatch
    preflight passes.
    The controller replaces the current visible plan projection from the PM
-   runway but does not read or execute Workerodies itself. If the host exposes a native
+   runway but does not read or execute worker bodies itself. If the host exposes a native
    plan/task-list tool such as Codex `update_plan`, call it with that runway
    before packet dispatch; if not, record that native plan projection is
    unavailable and show the runway in chat without treating display as

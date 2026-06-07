@@ -421,6 +421,36 @@
       "validator": "contract_self_check_metadata"
     },
     {
+      "field": "output_contract.mechanical_contract_failure.failed_branch",
+      "layer": "leaf",
+      "logical_field": "failed_branch",
+      "owner": "flowpilot_router",
+      "required_value": "current_contract_branch_that_failed",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_ai_reissue_with_branch_specific_correction",
+      "validator": "_contract_block"
+    },
+    {
+      "field": "output_contract.mechanical_contract_failure.failed_field_path",
+      "layer": "leaf",
+      "logical_field": "failed_field_path",
+      "owner": "flowpilot_router",
+      "required_value": "current_contract_field_path_that_failed",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_ai_reissue_with_branch_specific_correction",
+      "validator": "_contract_block"
+    },
+    {
+      "field": "output_contract.branch_minimal_valid_shape",
+      "layer": "leaf",
+      "logical_field": "branch_minimal_valid_shape",
+      "owner": "flowpilot_router",
+      "required_value": "branch_specific_current_shape_example",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "current_ai_reissue_without_branch_shape_guessing",
+      "validator": "_block_result_and_reissue_current_packet_family"
+    },
+    {
       "field": "current_handoff_contract.contract_family_id",
       "layer": "middle",
       "logical_field": "contract_family_id",
@@ -449,6 +479,26 @@
       "status": "mechanical_runtime_owned",
       "unlocks": "role_submits_contract_declared_result",
       "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "field": "current_handoff_contract.required_report_contract.required_child_fields",
+      "layer": "middle",
+      "logical_field": "required_child_fields",
+      "owner": "flowpilot_router",
+      "required_value": "same_child_fields_as_packet_result_contract_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_submits_nested_contract_declared_result",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.required_report_contract.branch_valid_shapes",
+      "layer": "middle",
+      "logical_field": "branch_valid_shapes",
+      "owner": "flowpilot_router",
+      "required_value": "branch_specific_current_shape_examples",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_submits_contract_declared_branch_result",
+      "validator": "branch_valid_shapes_for_family"
     },
     {
       "field": "current_handoff_contract.required_report_contract.forbidden_result_body_fields",
@@ -1472,7 +1522,11 @@
       "packet_kind": "pm_repair_decision",
       "required_child_fields": [
         "authority_ref when decision=waive_with_authority",
-        "route_plan when decision=redesign_route"
+        "route_plan when decision=redesign_route",
+        "route_plan.schema_version when decision=redesign_route",
+        "route_plan.nodes[] when decision=redesign_route",
+        "route_plan.nodes[].node_id when decision=redesign_route",
+        "route_plan.nodes[].title when decision=redesign_route"
       ],
       "required_fields": [
         "decision",

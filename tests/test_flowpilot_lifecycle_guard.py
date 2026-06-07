@@ -37,23 +37,15 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         agent_id: str,
         host_kind: str = "fake",
     ) -> str:
-        assignment = flowpilot_new.resolve_role_assignment(
+        dispatch = flowpilot_new.dispatch_current_role(
             root,
             packet_id=packet_id,
             responsibility=responsibility,
             host_kind=host_kind,
+            agent_id=agent_id,
         )
-        self.assertTrue(assignment["ok"], assignment)
-        kwargs: dict[str, object] = {
-            "packet_id": packet_id,
-            "responsibility": responsibility,
-            "assignment_id": assignment["assignment_id"],
-            "host_kind": host_kind,
-        }
-        if assignment["role_surface_required"]:
-            kwargs["agent_id"] = agent_id
-        lease = flowpilot_new.lease_agent(root, **kwargs)
-        return str(lease["lease_id"])
+        self.assertTrue(dispatch["ok"], dispatch)
+        return str(dispatch["lease_id"])
 
     def test_nonterminal_status_blocks_controller_stop_and_persists_guard(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -66,7 +58,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             )
 
             self.assertFalse(started["lifecycle_guard"]["controller_stop_allowed"])
-            self.assertEqual(started["lifecycle_guard"]["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(started["lifecycle_guard"]["next_action"]["action_type"], "dispatch_current_role")
             status = flowpilot_new.status(root)
             guard = status["status"]["lifecycle_guard"]
             self.assertFalse(guard["controller_stop_allowed"])
@@ -149,7 +141,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
 
             self.assertFalse(preflight["ok"])
             self.assertFalse(preflight["final_return_preflight"]["allowed"])
-            self.assertIn("next_action:resolve_role_assignment", preflight["final_return_preflight"]["blockers"])
+            self.assertIn("next_action:dispatch_current_role", preflight["final_return_preflight"]["blockers"])
             self.assertEqual(preflight["foreground_duty"]["action"], "process_next_action")
 
     def test_progress_keeps_slow_live_result_wait_in_patrol(self) -> None:
@@ -355,11 +347,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             self.assertEqual(cancelled["next_action"]["action_type"], "terminal_lifecycle")
             self.assertTrue(cancelled["final_return_preflight"]["allowed"])
             with self.assertRaisesRegex(Exception, "run is terminal"):
-                flowpilot_new.resolve_role_assignment(
+                flowpilot_new.dispatch_current_role(
                     root,
                     packet_id=packet_id,
                     responsibility="pm",
                     host_kind="fake",
+                    agent_id="pm-agent",
                 )
 
     def test_orphan_runner_summary_routes_recovery_without_accepting_packet(self) -> None:
@@ -435,11 +428,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
             run_shell.save_run_ledger(shell, ledger, guard_trigger="test_accept")
 
             with self.assertRaisesRegex(Exception, "cannot assign accepted packet"):
-                flowpilot_new.resolve_role_assignment(
+                flowpilot_new.dispatch_current_role(
                     root,
                     packet_id=packet_id,
                     responsibility="pm",
                     host_kind="fake",
+                    agent_id="pm-agent",
                 )
             with self.assertRaisesRegex(Exception, "cannot ACK an accepted packet"):
                 flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
@@ -493,7 +487,7 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
 
             self.assertEqual(repaired["repair"]["closed_replacement_lease_ids"], [replacement_lease])
             self.assertNotEqual(repaired["next_action"]["subject_id"], packet_id)
-            self.assertEqual(repaired["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(repaired["next_action"]["action_type"], "dispatch_current_role")
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(ledger["packets"][packet_id]["status"], "accepted")
             self.assertEqual(ledger["packets"][packet_id]["accepted_result_id"], result_id)

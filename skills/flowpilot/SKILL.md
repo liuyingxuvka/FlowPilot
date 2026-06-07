@@ -31,7 +31,7 @@ The assistant is only the FlowPilot bootloader until a new `flowpilot_new.py` ru
 
 Do not read FlowPilot reference files, prior run state, old screenshots, old UI assets, old prompt bodies, or runtime kit cards unless the Router action explicitly names them.
 
-FlowPilot is new-only by default. Do not add or rely on compatibility shims, legacy field aliases, prose parsers, missing-field defaults, nested payload normalization, old-router fallback, newest-run fallback, or historical-artifact promotion. If a returned packet/result does not satisfy the current structured contract, block or reissue through the runtime command named by `foreground_duty`; do not translate the old shape into a valid current result.
+FlowPilot is new-only by default. Do not add or rely on compatibility shims, legacy field aliases, prose parsers, missing-field defaults, nested payload normalization, old-router alternate paths, newest-run alternate paths, or historical-artifact promotion. If a returned packet/result does not satisfy the current structured contract, block or reissue through the runtime command named by `foreground_duty`; do not translate the old shape into a valid current result.
 
 Fresh formal invocation:
 
@@ -54,8 +54,7 @@ python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json sta
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json patrol --sleep-seconds 60
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json final-preflight
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resume --reason manual_resume
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json resolve-role-assignment --packet-id <packet_id> --responsibility <role> --host-kind live
-python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json lease-agent --packet-id <packet_id> --responsibility <role> --assignment-id <role_assignment_id> --host-kind live
+python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json dispatch-current-role --packet-id <packet_id> --responsibility <role> --host-kind live --agent-id <role_surface_agent_id_if_requested>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json role-handoff --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json ack --lease-id <lease_id> --packet-id <packet_id>
 python skills\flowpilot\assets\flowpilot_new.py --root <project-root> --json open-packet --lease-id <lease_id> --packet-id <packet_id>
@@ -83,9 +82,9 @@ Formal startup must use the interactive native startup intake UI result. Do not 
 
 For `open_startup_intake_ui`, after the UI closes, return through the current lifecycle guard and foreground duty, then use the Controller action ledger. The startup UI result is acknowledged by a Controller ledger row and a controller-receipt; it is not a direct pending action to apply in place.
 
-When the runtime returns `lease_agent`, create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface, record the actual surface with `flowpilot_new.py lease-agent`, and relay only the runtime-generated `role_handoff_text`. Prefer durable, addressable role surfaces without practical parallel-count or model-capability limits when such surfaces are available.
+When the runtime returns `dispatch_current_role`, create or attach only the requested responsibility through an available host-supported, addressable, isolated role surface when the dispatch result asks for one, continue through `flowpilot_new.py dispatch-current-role`, and relay only the runtime-generated `role_handoff_text`. Prefer durable, addressable role surfaces without practical parallel-count or model-capability limits when such surfaces are available.
 
-All formal role work follows the same current path: issued packet -> lease -> ACK -> sealed result -> ledger side effect -> next packet. Missing payload fields return to the named role/user; Controller must not guess or repair them.
+All formal role work follows the same current path: issued packet -> current role dispatch -> ACK -> sealed result -> ledger side effect -> next packet. Missing payload fields return to the named role/user; Controller must not guess or repair them.
 
 On manual resume, run `flowpilot_new.py resume --reason manual_resume` and then follow the returned `foreground_duty`. Treat `work_chain_status` as diagnostic only; never use stale role bindings, prior run state, chat history, or wait timeouts as authority.
 

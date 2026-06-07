@@ -508,7 +508,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         command = duty["recovery"]["recommended_command"]
 
         self.assertEqual(duty["action"], "recover_or_reissue")
-        self.assertEqual(command["command"], "resolve-role-assignment")
+        self.assertEqual(command["command"], "dispatch-current-role")
         self.assertEqual(command["packet_id"], packet_id)
         self.assertEqual(command["responsibility"], "worker")
         self.assertEqual(command["host_kind"], "live")
@@ -1512,7 +1512,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
         self.assertFalse(ledger["active_blockers"])
         action = runtime.router_next_action(ledger)
-        self.assertEqual(action.action_type, "resolve_role_assignment")
+        self.assertEqual(action.action_type, "dispatch_current_role")
         self.assertEqual(action.responsibility, "worker")
 
     def test_structured_verdict_alias_is_mechanically_reissued(self) -> None:
@@ -1564,7 +1564,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         boundary = runtime.run_until_wait(ledger)
 
         self.assertEqual(boundary["boundary_class"], "role_dispatch")
-        self.assertEqual(boundary["next_action"]["action_type"], "resolve_role_assignment")
+        self.assertEqual(boundary["next_action"]["action_type"], "dispatch_current_role")
         self.assertEqual(boundary["folded_applied_count"], 1)
         self.assertEqual(boundary["folded_applied_actions"][0]["action_type"], "issue_task_packet")
 
@@ -1714,6 +1714,72 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["results"][result_id]["missing_required_fields"], ["authority_ref"])
         self.assertEqual(ledger["results"][result_id]["forbidden_fields_seen"], ["authority"])
 
+    def test_pm_repair_handoff_contract_includes_branch_shapes(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker reports that route redesign may be needed.", decision="block", blocking=True, recommended_resolution="needs PM"),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        handoff_contract = ledger["packets"][pm_packet]["envelope"]["current_handoff_contract"]
+        report_contract = handoff_contract["required_report_contract"]
+        branch_shapes = report_contract["branch_valid_shapes"]
+
+        self.assertIn("decision=redesign_route", branch_shapes)
+        redesign_shape = branch_shapes["decision=redesign_route"]
+        self.assertEqual(redesign_shape["decision"], "redesign_route")
+        self.assertEqual(redesign_shape["route_plan"]["schema_version"], runtime.ROUTE_PLAN_SCHEMA_VERSION)
+        self.assertEqual(redesign_shape["route_plan"]["nodes"][0]["node_id"], "repair-current-scope")
+        self.assertIn("title", redesign_shape["route_plan"]["nodes"][0])
+        self.assertIn("route_plan.nodes[].title when decision=redesign_route", report_contract["required_child_fields"])
+
+    def test_pm_repair_redesign_route_reissue_names_branch_field_path(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker reports that route redesign may be needed.", decision="block", blocking=True, recommended_resolution="needs PM"),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-redesign-bad", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+
+        result_id = runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "reason": "Route needs redesign, but this body omits the node title.",
+                    "route_plan": {
+                        "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                        "nodes": [{"node_id": "node-redesign"}],
+                    },
+                }
+            ),
+        )
+        result = ledger["results"][result_id]
+        fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
+        fresh_body = json.loads(ledger["packets"][fresh_pm_packet]["body"])
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["mechanical_contract_failure"]["failed_branch"], "decision=redesign_route")
+        self.assertEqual(result["mechanical_contract_failure"]["failed_field_path"], "route_plan.nodes[].title")
+        self.assertEqual(fresh_body["failed_branch"], "decision=redesign_route")
+        self.assertEqual(fresh_body["failed_field_path"], "route_plan.nodes[].title")
+        self.assertEqual(fresh_body["branch_minimal_valid_shape"]["decision"], "redesign_route")
+        self.assertIn("title", fresh_body["branch_minimal_valid_shape"]["route_plan"]["nodes"][0])
+
     def test_june3_same_node_empty_fresh_packet_regression_is_rejected(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
@@ -1773,7 +1839,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
         self.assertFalse(ledger["pm_repair_decisions"])
         self.assertEqual(ledger["results"][bad_result]["missing_required_fields"], ["decision", "reason"])
-        self.assertEqual(runtime.router_next_action(ledger).action_type, "resolve_role_assignment")
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "dispatch_current_role")
 
         fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
         self.assertNotEqual(fresh_pm_packet, pm_packet)

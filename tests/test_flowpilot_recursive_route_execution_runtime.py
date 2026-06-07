@@ -19,7 +19,10 @@ host = importlib.import_module("flowpilot_core_runtime.host")
 
 def _recursive_ledger() -> tuple[dict, str]:
     ledger = runtime.new_ledger("Build target", "Accept only after every route node is complete.")
-    ledger["startup_intake"] = {"sealed": True}
+    ledger["startup_intake"] = {
+        "sealed": True,
+        "startup_answers": {runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True},
+    }
     ledger["recursive_route_execution_required"] = True
     runtime.create_route(ledger, "Recursive route", ["planning", "implementation", "validation"])
     packet_id = runtime.issue_task_packet(
@@ -46,9 +49,17 @@ def _open_packets(ledger: dict, kind: str | None = None, scope: str | None = Non
     return rows
 
 
-def _complete_open_packet(ledger: dict, packet_id: str, body: str = '{"decision": "pass"}') -> str:
+def _pass_body(summary: str, **extra: object) -> str:
+    payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
+    payload.update(extra)
+    return json.dumps(payload)
+
+
+def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None) -> str:
     packet = ledger["packets"][packet_id]
     responsibility = packet["envelope"]["responsibility"]
+    if body is None:
+        body = _pass_body(f"{responsibility} completed {packet_id}.")
     lease_id = host.lease_responsibility(
         ledger,
         responsibility,
@@ -59,6 +70,7 @@ def _complete_open_packet(ledger: dict, packet_id: str, body: str = '{"decision"
     )
     runtime.assign_packet(ledger, packet_id, lease_id)
     runtime.ack_lease(ledger, lease_id, packet_id)
+    runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
     return host.submit_host_result(ledger, lease_id, packet_id, body)
 
 
@@ -99,7 +111,7 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
     _complete_open_packet(ledger, pm_packet, _route_plan_body())
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
-        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "summary": kind}))
+        _complete_open_packet(ledger, packet_id, _pass_body(f"{kind} accepted foundation planning."))
 
 
 def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
@@ -109,13 +121,16 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
         _complete_open_packet(
             ledger,
             prework_packet,
-            json.dumps({"decision": "pass", "selected_routes": ["flowguard-development-process-flow"]}),
+            _pass_body(
+                f"Prework FlowGuard accepted {node_id}.",
+                selected_routes=["flowguard-development-process-flow"],
+            ),
         )
     task_packet = _open_packets(ledger, "task", scope="node")[0]
-    _complete_open_packet(ledger, task_packet, json.dumps({"decision": "pass", "node_id": node_id}))
+    _complete_open_packet(ledger, task_packet, _pass_body(f"Worker completed {node_id}.", node_id=node_id))
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
-        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "summary": f"{kind} for {node_id}"}))
+        _complete_open_packet(ledger, packet_id, _pass_body(f"{kind} accepted {node_id}."))
     pm_packet = _open_packets(ledger, "pm_disposition")[0]
     _complete_open_packet(ledger, pm_packet, json.dumps({"decision": disposition, "reason": f"{disposition} {node_id}"}))
     if disposition == "redesign_route":
@@ -124,7 +139,7 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
             _complete_open_packet(
                 ledger,
                 packet_id,
-                json.dumps({"decision": "pass", "summary": f"PM disposition gate {kind} for {node_id}"}),
+                _pass_body(f"PM disposition gate {kind} accepted {node_id}."),
             )
     return node_id
 
@@ -179,7 +194,7 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(len(ledger["route_nodes"]), 3)
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-001")
         action = runtime.router_next_action(ledger).to_json()
-        self.assertEqual(action["action_type"], "resolve_role_assignment")
+        self.assertEqual(action["action_type"], "dispatch_current_role")
         self.assertEqual(action["subject_id"], _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0])
 
     def test_numbered_text_plan_is_rejected_without_route_fallback(self) -> None:

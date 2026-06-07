@@ -110,7 +110,7 @@ def scenario_wrong_role_recovery(work_root: Path) -> dict[str, Any]:
     rejected = run_cli(
         root,
         command_log,
-        "resolve-role-assignment",
+        "dispatch-current-role",
         "--packet-id",
         pm_packet,
         "--responsibility",
@@ -119,7 +119,7 @@ def scenario_wrong_role_recovery(work_root: Path) -> dict[str, Any]:
         "fake",
         expect_ok=False,
     )
-    ensure(rejected.get("ok") is False, f"wrong-role assignment was not rejected: {rejected}")
+    ensure(rejected.get("ok") is False, f"wrong-role dispatch was not rejected: {rejected}")
     ensure(
         "assignment responsibility does not match packet" in str(rejected.get("error", "")),
         f"wrong rejection error: {rejected}",
@@ -485,7 +485,7 @@ def scenario_slow_reviewer_progress_preserved(work_root: Path) -> dict[str, Any]
     for step_index in range(40):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action before reviewer step: {current_payload}")
-        ensure(action.get("action_type") == "resolve_role_assignment", f"unexpected action before reviewer step: {action}")
+        ensure(action.get("action_type") == "dispatch_current_role", f"unexpected action before reviewer step: {action}")
         responsibility = str(action.get("responsibility", ""))
         packet_id = str(action.get("subject_id", ""))
         projection = status_projection(root, command_log)
@@ -574,7 +574,7 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
     for step_index in range(20):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), f"missing next action before accepted packet: {current_payload}")
-        ensure(action.get("action_type") == "resolve_role_assignment", f"unexpected action before accepted packet: {action}")
+        ensure(action.get("action_type") == "dispatch_current_role", f"unexpected action before accepted packet: {action}")
         packet_id = str(action.get("subject_id", ""))
         responsibility = str(action.get("responsibility", ""))
         projection = status_projection(root, command_log)
@@ -614,7 +614,7 @@ def scenario_accepted_packet_reassignment_rejected(work_root: Path) -> dict[str,
     reassignment = run_cli(
         root,
         command_log,
-        "resolve-role-assignment",
+        "dispatch-current-role",
         "--packet-id",
         pm_packet,
         "--responsibility",

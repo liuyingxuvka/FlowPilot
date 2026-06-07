@@ -50,6 +50,7 @@ HAZARD_EXPECTED_FAILURES = {
     model.WORK_PACKET_MISSING_REPORT_REQUIREMENTS: "required report contract",
     model.DOWNSTREAM_REPORT_NOT_AUTHORIZED: "downstream packet is not authorized",
     model.MISSING_INFO_RESPONSE_NOT_DEFINED: "does not define the current-runtime response",
+    model.BRANCH_CONTRACT_SHAPE_NOT_VISIBLE: "branch-specific current result shapes",
 }
 
 
@@ -74,6 +75,7 @@ def _state_id(state: model.State) -> str:
         f"{state.work_packet_carries_forbidden_result_fields},"
         f"materials={state.work_packet_carries_input_material_manifest},"
         f"report={state.work_packet_carries_required_report_contract},"
+        f"branch_shapes={state.work_packet_carries_branch_valid_shapes},"
         f"consumer={state.work_packet_names_downstream_consumer},"
         f"missing_info={state.work_packet_names_missing_info_response},"
         f"submitted={state.result_report_submitted},"

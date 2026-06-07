@@ -17,6 +17,7 @@ if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
 flowpilot_new = importlib.import_module("flowpilot_new")
+flowpilot_new_role_commands = importlib.import_module("flowpilot_new_role_commands")
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 fake_e2e = importlib.import_module("flowpilot_core_runtime.fake_e2e")
 packet_result_contracts = importlib.import_module("flowpilot_core_runtime.packet_result_contracts")
@@ -119,23 +120,16 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             packet_id = str(started["next_action"]["subject_id"])
-            assignment = flowpilot_new.resolve_role_assignment(
+            dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 host_kind="fake",
-            )
-            self.assertTrue(assignment["ok"], assignment)
-            lease = flowpilot_new.lease_agent(
-                root,
-                packet_id=packet_id,
-                responsibility="pm",
-                assignment_id=assignment["assignment_id"],
                 agent_id="pm-handoff-agent",
-                host_kind="fake",
             )
+            self.assertTrue(dispatch["ok"], dispatch)
 
-            rendered = json.dumps(lease["role_handoff"], sort_keys=True)
+            rendered = json.dumps(dispatch["role_handoff"], sort_keys=True)
             self.assertIn("flowpilot_new.py", rendered)
             self.assertNotIn("flowpilot_new_role_commands.py", rendered)
             self.assertNotIn("flowpilot_new_cli.py", rendered)
@@ -191,23 +185,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         agent_id: str,
         host_kind: str = "fake",
     ) -> str:
-        assignment = flowpilot_new.resolve_role_assignment(
+        dispatch = flowpilot_new.dispatch_current_role(
             root,
             packet_id=packet_id,
             responsibility=responsibility,
             host_kind=host_kind,
+            agent_id=agent_id,
         )
-        self.assertTrue(assignment["ok"], assignment)
-        kwargs: dict[str, object] = {
-            "packet_id": packet_id,
-            "responsibility": responsibility,
-            "assignment_id": assignment["assignment_id"],
-            "host_kind": host_kind,
-        }
-        if assignment["role_surface_required"]:
-            kwargs["agent_id"] = agent_id
-        lease = flowpilot_new.lease_agent(root, **kwargs)
-        return str(lease["lease_id"])
+        self.assertTrue(dispatch["ok"], dispatch)
+        return str(dispatch["lease_id"])
 
     def _open_authorized_result_reads(self, root: Path, *, packet_id: str, lease_id: str) -> None:
         flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
@@ -235,7 +221,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
 
             self.assertTrue(result["ok"], result)
             self.assertEqual(result["mode"], "rehearsal")
-            self.assertEqual(result["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(result["next_action"]["action_type"], "dispatch_current_role")
             self.assertEqual(result["next_action"]["responsibility"], "pm")
             self.assertEqual(result["progress_fraction"]["display"], "0/1")
             self.assertEqual(result["status"]["progress_fraction"]["display"], "0/1")
@@ -265,7 +251,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             shell = run_shell.load_run_shell(root, run_id="run-lifecycle-resume")
             ledger = run_shell.load_run_ledger(shell)
 
-            self.assertEqual(resumed["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(resumed["next_action"]["action_type"], "dispatch_current_role")
             self.assertEqual(resumed["next_action"]["responsibility"], "pm")
             self.assertEqual(resumed["foreground_duty"]["action"], "process_next_action")
             self.assertEqual(ledger["lifecycle"]["resume_source"], "manual_resume")
@@ -276,32 +262,21 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertNotIn("heartbeat", rendered.lower())
 
             packet_id = resumed["next_action"]["subject_id"]
-            assignment = flowpilot_new.resolve_role_assignment(
+            dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=packet_id,
                 responsibility="pm",
                 host_kind="fake",
+                agent_id="pm-agent",
             )
-            self.assertTrue(assignment["ok"], assignment)
-            self.assertEqual(assignment["role_assignment"]["packet_id"], packet_id)
-            self.assertEqual(assignment["role_assignment"]["responsibility"], "pm")
+            self.assertTrue(dispatch["ok"], dispatch)
+            self.assertEqual(dispatch["role_assignment"]["packet_id"], packet_id)
+            self.assertEqual(dispatch["role_assignment"]["responsibility"], "pm")
             ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(len(ledger["role_assignments"]), 1)
             self.assertEqual({row["responsibility"] for row in ledger["role_assignments"].values()}, {"pm"})
-            self.assertEqual(ledger.get("leases"), {})
-
-            lease_id = str(
-                flowpilot_new.lease_agent(
-                    root,
-                    packet_id=packet_id,
-                    responsibility="pm",
-                    assignment_id=assignment["assignment_id"],
-                    agent_id="pm-agent",
-                    host_kind="fake",
-                )["lease_id"]
-            )
-            ledger = run_shell.load_run_ledger(shell)
             self.assertEqual(len(ledger["leases"]), 1)
+            lease_id = str(dispatch["lease_id"])
             self.assertEqual(ledger["leases"][lease_id]["responsibility"], "pm")
             self.assertEqual(ledger["leases"][lease_id]["packet_id"], packet_id)
             self.assertEqual(set(ledger["role_continuity"]["roles"]), {"pm"})
@@ -427,22 +402,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             shell = run_shell.load_run_shell(root, run_id="run-no-shortcut")
             ledger = run_shell.load_run_ledger(shell)
             pm_packet = next(iter(ledger["packets"]))
-            assignment = flowpilot_new.resolve_role_assignment(
+            dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=pm_packet,
                 responsibility="pm",
                 host_kind="fake",
+                agent_id="pm-agent",
             )
-            self.assertTrue(assignment["ok"], assignment)
-            lease_kwargs: dict[str, object] = {
-                "packet_id": pm_packet,
-                "responsibility": "pm",
-                "assignment_id": assignment["assignment_id"],
-                "host_kind": "fake",
-            }
-            if assignment["role_surface_required"]:
-                lease_kwargs["agent_id"] = "pm-agent"
-            pm_lease = str(flowpilot_new.lease_agent(root, **lease_kwargs)["lease_id"])
+            self.assertTrue(dispatch["ok"], dispatch)
+            pm_lease = str(dispatch["lease_id"])
             flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
 
             ack_only_status = flowpilot_new.status(root)
@@ -455,7 +423,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=pm_packet,
                 body=high_standard_contract_body(),
             )
-            self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(after_pm["next_action"]["action_type"], "dispatch_current_role")
             self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
             self.assertNotEqual(after_pm["next_action"]["action_type"], "terminal_complete")
             after_pm_status = flowpilot_new.status(root)
@@ -482,22 +450,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 require_formal_ui=False,
             )
             pm_packet = started["next_action"]["subject_id"]
-            pm_assignment = flowpilot_new.resolve_role_assignment(
+            pm_dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=pm_packet,
                 responsibility="pm",
                 host_kind="fake",
+                agent_id="pm-agent",
             )
-            self.assertTrue(pm_assignment["ok"], pm_assignment)
-            pm_lease_kwargs: dict[str, object] = {
-                "packet_id": pm_packet,
-                "responsibility": "pm",
-                "assignment_id": pm_assignment["assignment_id"],
-                "host_kind": "fake",
-            }
-            if pm_assignment["role_surface_required"]:
-                pm_lease_kwargs["agent_id"] = "pm-agent"
-            pm_lease = str(flowpilot_new.lease_agent(root, **pm_lease_kwargs)["lease_id"])
+            self.assertTrue(pm_dispatch["ok"], pm_dispatch)
+            pm_lease = str(pm_dispatch["lease_id"])
             flowpilot_new.ack(root, lease_id=pm_lease, packet_id=pm_packet)
             self._open_authorized_result_reads(root, packet_id=pm_packet, lease_id=pm_lease)
             flowpilot_new.submit_result(
@@ -575,7 +536,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertNotEqual(fresh_packet["packet_id"], repair_packet)
             self.assertEqual(fresh_packet["envelope"]["packet_kind"], "pm_repair_decision")
             self.assertTrue(recovered["recovery"]["user_requested"])
-            self.assertEqual(recovered["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(recovered["next_action"]["action_type"], "dispatch_current_role")
 
     def test_flowguard_operator_is_leased_through_its_own_packet(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -591,11 +552,12 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             pm_packet = next(iter(ledger["packets"]))
 
             with self.assertRaisesRegex(Exception, "assignment responsibility does not match packet"):
-                flowpilot_new.resolve_role_assignment(
+                flowpilot_new.dispatch_current_role(
                     root,
                     packet_id=pm_packet,
                     responsibility="flowguard_operator",
                     host_kind="fake",
+                    agent_id="flowguard-agent",
                 )
 
             pm_lease = self._lease_packet(
@@ -612,7 +574,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 body=high_standard_contract_body(),
             )
 
-            self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
+            self.assertEqual(after_pm["next_action"]["action_type"], "dispatch_current_role")
             self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
             flowguard_packet = after_pm["next_action"]["subject_id"]
             ledger = run_shell.load_run_ledger(shell)
@@ -620,22 +582,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn(f"/evidence/flowguard/{flowguard_packet}", flowguard_body["evidence_output_policy"]["run_local_evidence_root"])
             self.assertNotIn("recommended_runner_commands", flowguard_body)
             self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
-            flowguard_assignment = flowpilot_new.resolve_role_assignment(
+            flowguard_dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=flowguard_packet,
                 responsibility="flowguard_operator",
                 host_kind="fake",
+                agent_id="flowguard-agent",
             )
-            self.assertTrue(flowguard_assignment["ok"], flowguard_assignment)
-            flowguard_lease_kwargs: dict[str, object] = {
-                "packet_id": flowguard_packet,
-                "responsibility": "flowguard_operator",
-                "assignment_id": flowguard_assignment["assignment_id"],
-                "host_kind": "fake",
-            }
-            if flowguard_assignment["role_surface_required"]:
-                flowguard_lease_kwargs["agent_id"] = "flowguard-agent"
-            flowguard_lease = str(flowpilot_new.lease_agent(root, **flowguard_lease_kwargs)["lease_id"])
+            self.assertTrue(flowguard_dispatch["ok"], flowguard_dispatch)
+            flowguard_lease = str(flowguard_dispatch["lease_id"])
             flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
             self._open_authorized_result_reads(root, packet_id=flowguard_packet, lease_id=flowguard_lease)
             flowpilot_new.submit_result(
@@ -684,22 +639,15 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             )
             ledger = run_shell.load_run_ledger(shell)
             review_packet = self._open_packet_by_kind(ledger, "review")
-            reviewer_assignment = flowpilot_new.resolve_role_assignment(
+            reviewer_dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=review_packet,
                 responsibility="reviewer",
                 host_kind="fake",
+                agent_id="reviewer-agent",
             )
-            self.assertTrue(reviewer_assignment["ok"], reviewer_assignment)
-            reviewer_lease_kwargs: dict[str, object] = {
-                "packet_id": review_packet,
-                "responsibility": "reviewer",
-                "assignment_id": reviewer_assignment["assignment_id"],
-                "host_kind": "fake",
-            }
-            if reviewer_assignment["role_surface_required"]:
-                reviewer_lease_kwargs["agent_id"] = "reviewer-agent"
-            reviewer_lease = str(flowpilot_new.lease_agent(root, **reviewer_lease_kwargs)["lease_id"])
+            self.assertTrue(reviewer_dispatch["ok"], reviewer_dispatch)
+            reviewer_lease = str(reviewer_dispatch["lease_id"])
 
             before_ack = flowpilot_new.status(root)["status"]
             reviewer_rows = [row for row in before_ack["leases"] if row["lease_id"] == reviewer_lease]
@@ -773,9 +721,18 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertGreater(len(after_patrol.get("lifecycle_guard_history") or []), before_history)
 
     def test_formal_public_surface_omits_unsupported_side_command_paths(self) -> None:
-        unsupported_functions = ("complete_flowguard", "review", "record_validation", "close")
+        unsupported_functions = (
+            "complete_flowguard",
+            "review",
+            "record_validation",
+            "close",
+            "resolve_role_assignment",
+            "lease_agent",
+        )
         for name in unsupported_functions:
             self.assertFalse(hasattr(flowpilot_new, name), name)
+        for name in ("resolve_role_assignment", "lease_agent"):
+            self.assertFalse(hasattr(flowpilot_new_role_commands, name), name)
 
         direct_help = io.StringIO()
         with self.assertRaises(SystemExit) as help_exit:
@@ -800,26 +757,29 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 0, completed.stderr)
         self.assertIn("run-until-wait", completed.stdout)
-        self.assertIn("resolve-role-assignment", completed.stdout)
+        self.assertIn("dispatch-current-role", completed.stdout)
+        self.assertNotIn("resolve-role-assignment", completed.stdout)
+        self.assertNotIn("lease-agent", completed.stdout)
         self.assertIn("repair-accepted-packet", completed.stdout)
         self.assertNotIn("run-fake-e2e", completed.stdout)
         self.assertNotIn("headless-startup-text", completed.stdout)
         for command in ("complete-flowguard", "record-validation"):
             self.assertNotIn(command, completed.stdout)
 
-        lease_help = subprocess.run(
-            [sys.executable, str(ASSETS / "flowpilot_new.py"), "lease-agent", "--help"],
+        dispatch_help = subprocess.run(
+            [sys.executable, str(ASSETS / "flowpilot_new.py"), "dispatch-current-role", "--help"],
             text=True,
             capture_output=True,
             check=False,
         )
-        self.assertEqual(lease_help.returncode, 0, lease_help.stderr)
-        self.assertIn("--assignment-id", lease_help.stdout)
-        self.assertIn("{live,fake,dry_run}", lease_help.stdout)
-        self.assertIn("live=real host-supported role surface", lease_help.stdout)
-        self.assertIn("role surface", lease_help.stdout)
-        self.assertIn("Do not invent values outside", lease_help.stdout)
-        self.assertIn("this menu", lease_help.stdout)
+        self.assertEqual(dispatch_help.returncode, 0, dispatch_help.stderr)
+        self.assertIn("--agent-id", dispatch_help.stdout)
+        self.assertNotIn("--assignment-id", dispatch_help.stdout)
+        self.assertIn("{live,fake,dry_run}", dispatch_help.stdout)
+        self.assertIn("live=real host-supported role surface", dispatch_help.stdout)
+        self.assertIn("role surface", dispatch_help.stdout)
+        self.assertIn("Do not invent values outside", dispatch_help.stdout)
+        self.assertIn("this menu", dispatch_help.stdout)
 
         rejected = subprocess.run(
             [sys.executable, str(ASSETS / "flowpilot_new.py"), "--root", str(Path.cwd()), "complete-flowguard"],
@@ -830,7 +790,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertNotEqual(rejected.returncode, 0)
         self.assertIn("invalid choice", rejected.stderr)
 
-        raw_lease = subprocess.run(
+        old_lease = subprocess.run(
             [
                 sys.executable,
                 str(ASSETS / "flowpilot_new.py"),
@@ -850,8 +810,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             capture_output=True,
             check=False,
         )
-        self.assertNotEqual(raw_lease.returncode, 0)
-        self.assertIn("assignment-id", raw_lease.stderr)
+        self.assertNotEqual(old_lease.returncode, 0)
+        self.assertIn("invalid choice", old_lease.stderr)
 
     def test_invalid_host_kind_is_rejected_instead_of_normalized(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -872,7 +832,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     str(ASSETS / "flowpilot_new.py"),
                     "--root",
                     str(root),
-                    "resolve-role-assignment",
+                    "dispatch-current-role",
                     "--packet-id",
                     packet_id,
                     "--responsibility",
@@ -895,7 +855,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                         [
                             "--root",
                             str(root),
-                            "resolve-role-assignment",
+                            "dispatch-current-role",
                             "--packet-id",
                             packet_id,
                             "--responsibility",

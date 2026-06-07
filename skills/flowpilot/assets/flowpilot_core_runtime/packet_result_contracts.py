@@ -188,6 +188,10 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "required_child_fields": (
             "authority_ref when decision=waive_with_authority",
             "route_plan when decision=redesign_route",
+            "route_plan.schema_version when decision=redesign_route",
+            "route_plan.nodes[] when decision=redesign_route",
+            "route_plan.nodes[].node_id when decision=redesign_route",
+            "route_plan.nodes[].title when decision=redesign_route",
         ),
         "forbidden_fields": ("authority", "summary", "repair_decision", "pm_repair_decision"),
         "fake_ai_success_fields": ("decision", "reason", "authority_ref", "route_plan"),
@@ -271,6 +275,49 @@ def undeclared_success_fields_for_family(family_id: str, payload: Mapping[str, A
 def forbidden_success_fields_for_family(family_id: str, payload: Mapping[str, Any]) -> tuple[str, ...]:
     forbidden = set(forbidden_fields_for_family(family_id))
     return tuple(sorted(str(field) for field in payload if str(field) in forbidden))
+
+
+def strict_route_plan_minimal_shape() -> dict[str, Any]:
+    return {
+        "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+        "nodes": [
+            {
+                "node_id": "repair-current-scope",
+                "title": "Repair current scope",
+                "responsibility": "worker",
+                "acceptance_criteria": ["Current repair acceptance criterion."],
+            }
+        ],
+    }
+
+
+def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
+    if family_id == "pm_repair_decision.pm_repair_decision":
+        return {
+            "decision=repair_current_scope": {
+                "decision": "repair_current_scope",
+                "reason": "Concrete PM repair reason.",
+            },
+            "decision=repair_parent_scope": {
+                "decision": "repair_parent_scope",
+                "reason": "Concrete PM parent-scope repair reason.",
+            },
+            "decision=redesign_route": {
+                "decision": "redesign_route",
+                "reason": "Concrete PM redesign reason.",
+                "route_plan": strict_route_plan_minimal_shape(),
+            },
+            "decision=waive_with_authority": {
+                "decision": "waive_with_authority",
+                "reason": "Concrete PM waiver reason.",
+                "authority_ref": "current authority reference",
+            },
+            "decision=stop_for_user": {
+                "decision": "stop_for_user",
+                "reason": "Concrete stop reason for user.",
+            },
+        }
+    return {}
 
 
 def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:

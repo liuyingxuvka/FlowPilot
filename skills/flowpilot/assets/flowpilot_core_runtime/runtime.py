@@ -236,7 +236,7 @@ ROUTER_INTERNAL_ACTION_TYPES = {
     "issue_pm_disposition_packet",
     "close_project",
 }
-ROLE_DISPATCH_ACTION_TYPES = {"resolve_role_assignment"}
+ROLE_DISPATCH_ACTION_TYPES = {"dispatch_current_role"}
 ROLE_WAIT_ACTION_TYPES = {"wait_for_ack", "wait_for_result"}
 RECOVERY_ACTION_TYPES = {"replace_lease", "repair_accepted_packet", "repair_packet"}
 USER_REQUIRED_ACTION_TYPES = {"open_startup_intake", "wait_for_resume", "resume_reconcile", "repair_cutover_gate"}
@@ -4929,6 +4929,7 @@ def _build_current_handoff_contract(
             "required_child_fields": [str(field) for field in family_row.get("required_child_fields", ())],
             "forbidden_result_body_fields": list(packet_result_contracts.forbidden_fields_for_family(family_id)),
             "minimal_valid_shape": packet_result_contracts.minimal_valid_shape_for_family(family_id),
+            "branch_valid_shapes": packet_result_contracts.branch_valid_shapes_for_family(family_id),
             "validator": str(family_row.get("validator") or ""),
         },
         "missing_information_response": _packet_handoff_missing_information_response(
@@ -5481,6 +5482,9 @@ class PacketResultContractCheck:
     forbidden_fields_seen: tuple[str, ...] = ()
     required_result_body_fields: tuple[str, ...] = ()
     minimal_valid_shape: Mapping[str, Any] | None = None
+    failed_branch: str = ""
+    failed_field_path: str = ""
+    branch_minimal_valid_shape: Mapping[str, Any] | None = None
 
     def to_json(self) -> dict[str, Any]:
         return {
@@ -5491,6 +5495,9 @@ class PacketResultContractCheck:
             "forbidden_fields_seen": list(self.forbidden_fields_seen),
             "required_result_body_fields": list(self.required_result_body_fields),
             "minimal_valid_shape": _copy_jsonable(self.minimal_valid_shape or {}),
+            "failed_branch": self.failed_branch,
+            "failed_field_path": self.failed_field_path,
+            "branch_minimal_valid_shape": _copy_jsonable(self.branch_minimal_valid_shape or {}),
         }
 
 
@@ -5522,6 +5529,10 @@ def _packet_result_minimal_valid_shape(packet: Mapping[str, Any]) -> dict[str, A
     return packet_result_contracts.minimal_valid_shape_for_family(_packet_result_family_id(packet))
 
 
+def _packet_result_branch_valid_shapes(packet: Mapping[str, Any]) -> dict[str, Any]:
+    return packet_result_contracts.branch_valid_shapes_for_family(_packet_result_family_id(packet))
+
+
 def _contract_pass(packet: Mapping[str, Any]) -> PacketResultContractCheck:
     return PacketResultContractCheck(
         ok=True,
@@ -5538,6 +5549,9 @@ def _contract_block(
     missing_required_fields: tuple[str, ...] | list[str] = (),
     forbidden_fields_seen: tuple[str, ...] | list[str] = (),
     required_result_body_fields: tuple[str, ...] | list[str] | None = None,
+    failed_branch: str = "",
+    failed_field_path: str = "",
+    branch_minimal_valid_shape: Mapping[str, Any] | None = None,
 ) -> PacketResultContractCheck:
     return PacketResultContractCheck(
         ok=False,
@@ -5547,6 +5561,9 @@ def _contract_block(
         forbidden_fields_seen=tuple(dict.fromkeys(str(field) for field in forbidden_fields_seen if str(field))),
         required_result_body_fields=tuple(required_result_body_fields or _packet_result_required_fields(packet)),
         minimal_valid_shape=_packet_result_minimal_valid_shape(packet),
+        failed_branch=failed_branch,
+        failed_field_path=failed_field_path,
+        branch_minimal_valid_shape=branch_minimal_valid_shape,
     )
 
 
@@ -5722,6 +5739,34 @@ def _pm_visible_summary_contract_violation(packet: Mapping[str, Any], result: Ma
     return _contract_pass(packet)
 
 
+def _pm_repair_decision_branch_shape(decision: str) -> Mapping[str, Any]:
+    return _packet_result_branch_valid_shapes(
+        {
+            "envelope": {
+                "packet_kind": "pm_repair_decision",
+                "route_scope": "pm_repair_decision",
+            }
+        }
+    ).get(f"decision={decision}", {})
+
+
+def _route_plan_failure_field_path(error: str) -> str:
+    lowered = error.lower()
+    if "schema_version" in lowered:
+        return "route_plan.schema_version"
+    if "nodes" in lowered:
+        if "node_id" in lowered:
+            return "route_plan.nodes[].node_id"
+        if "title" in lowered:
+            return "route_plan.nodes[].title"
+        return "route_plan.nodes"
+    if "node_id" in lowered:
+        return "route_plan.nodes[].node_id"
+    if "title" in lowered:
+        return "route_plan.nodes[].title"
+    return "route_plan"
+
+
 def _pm_repair_decision_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
     payload = _strict_json_object_from_body(str(result.get("body", "")))
     if not payload:
@@ -5733,10 +5778,19 @@ def _pm_repair_decision_result_violation(packet: Mapping[str, Any], result: Mapp
     forbidden = list(_top_level_forbidden_fields(payload, _packet_result_forbidden_fields(packet)))
     missing = list(_top_level_missing_fields(payload, _packet_result_required_fields(packet)))
     decision = _normalize_outcome_token(payload.get("decision"))
+    failed_branch = ""
+    failed_field_path = ""
+    branch_shape: Mapping[str, Any] | None = None
     if decision == "waive_with_authority" and not str(payload.get("authority_ref") or ""):
         missing.append("authority_ref")
+        failed_branch = "decision=waive_with_authority"
+        failed_field_path = "authority_ref"
+        branch_shape = _pm_repair_decision_branch_shape("waive_with_authority")
     if decision == "redesign_route" and not isinstance(payload.get("route_plan"), Mapping):
         missing.append("route_plan")
+        failed_branch = "decision=redesign_route"
+        failed_field_path = "route_plan"
+        branch_shape = _pm_repair_decision_branch_shape("redesign_route")
     if forbidden or missing:
         pieces: list[str] = []
         if missing:
@@ -5753,6 +5807,9 @@ def _pm_repair_decision_result_violation(packet: Mapping[str, Any], result: Mapp
             missing_required_fields=tuple(missing),
             forbidden_fields_seen=tuple(forbidden),
             required_result_body_fields=tuple(required),
+            failed_branch=failed_branch,
+            failed_field_path=failed_field_path,
+            branch_minimal_valid_shape=branch_shape,
         )
     if decision in _REMOVED_PM_REPAIR_DECISIONS:
         return _contract_block(packet, "PM repair decision uses a removed decision; request a current five-choice decision")
@@ -5763,7 +5820,15 @@ def _pm_repair_decision_result_violation(packet: Mapping[str, Any], result: Mapp
             route_plan = _parse_strict_route_plan(json.dumps(payload.get("route_plan"), sort_keys=True))
             _normalize_strict_route_plan_nodes(route_plan)
         except BlackBoxRuntimeError as exc:
-            return _contract_block(packet, str(exc))
+            return _contract_block(
+                packet,
+                str(exc),
+                missing_required_fields=(_route_plan_failure_field_path(str(exc)),),
+                required_result_body_fields=tuple(dict.fromkeys((*_packet_result_required_fields(packet), "route_plan"))),
+                failed_branch="decision=redesign_route",
+                failed_field_path=_route_plan_failure_field_path(str(exc)),
+                branch_minimal_valid_shape=_pm_repair_decision_branch_shape("redesign_route"),
+            )
     return _contract_pass(packet)
 
 
@@ -5894,6 +5959,8 @@ def _block_result_and_reissue_current_packet_family(
                 "mechanical_contract_failure": contract_check.to_json(),
                 "missing_required_fields": list(contract_check.missing_required_fields),
                 "forbidden_fields_seen": list(contract_check.forbidden_fields_seen),
+                "failed_branch": contract_check.failed_branch,
+                "failed_field_path": contract_check.failed_field_path,
                 "original_packet_kind": packet_kind,
                 "route_scope": str(envelope.get("route_scope") or ""),
                 "route_node_id": str(envelope.get("route_node_id") or ""),
@@ -5901,11 +5968,13 @@ def _block_result_and_reissue_current_packet_family(
                 "contract": _copy_jsonable(envelope.get("output_contract") or {}),
                 "required_result_body_fields": list(contract_check.required_result_body_fields),
                 "minimal_valid_shape": _copy_jsonable(contract_check.minimal_valid_shape or {}),
+                "branch_minimal_valid_shape": _copy_jsonable(contract_check.branch_minimal_valid_shape or {}),
                 "instruction": (
                     "Submit a fresh current-contract result for the same packet family. "
                     "Do not reuse obsolete field names, wrapper shapes, fallback evidence, or prior blocked text as passing evidence. "
                     "When pm_visible_summary is required, the producing role must write it directly; runtime cannot synthesize it. "
-                    "Use missing_required_fields and forbidden_fields_seen as the authoritative mechanical correction list."
+                    "Use missing_required_fields, forbidden_fields_seen, failed_branch, failed_field_path, and "
+                    "branch_minimal_valid_shape as the authoritative mechanical correction list."
                 ),
             },
             indent=2,
@@ -8343,11 +8412,16 @@ def _current_target_preflight_blockers(
             continue
         blocker_id = str(blocker.get("blocker_id") or "")
         status = str(blocker.get("status") or "")
-        target_fields = ("repair_packet_id",) if status == "repair_packet_open" else (
-            "packet_id",
-            "subject_packet_id",
-            "repair_target_packet_id",
-        )
+        if status == "repair_packet_open":
+            target_fields = ("repair_packet_id",)
+        elif status == "awaiting_pm_decision_gate":
+            target_fields = ()
+        else:
+            target_fields = (
+                "packet_id",
+                "subject_packet_id",
+                "repair_target_packet_id",
+            )
         for field in target_fields:
             packet_id = str(blocker.get(field) or "")
             if not packet_id:
@@ -8370,9 +8444,9 @@ def _current_target_preflight_blockers(
             packet_id = str(gate.get(field) or "")
             if not packet_id:
                 continue
-            violation = _packet_current_target_violation(ledger, packet_id, require_responsibility=False)
-            if violation:
-                blockers.append(f"pm_gate_current_target:{gate_id}:{field}:{packet_id}:{violation}")
+            packet = ledger.get("packets", {}).get(packet_id)
+            if not isinstance(packet, Mapping):
+                blockers.append(f"pm_gate_missing_source_packet:{gate_id}:{field}:{packet_id}")
     return blockers
 
 
@@ -8463,14 +8537,14 @@ def _foreground_recovery_command(
             "sealed_bodies_visible": False,
         }
     else:
-        command = "resolve-role-assignment"
+        command = "dispatch-current-role"
         args = {
             "packet_id": packet_id,
             "responsibility": responsibility,
             "host_kind": "live",
         }
         cli_args = [
-            "resolve-role-assignment",
+            "dispatch-current-role",
             "--packet-id",
             packet_id,
             "--responsibility",
@@ -8487,7 +8561,7 @@ def _foreground_recovery_command(
         "responsibility": responsibility,
         "host_kind": str(args.get("host_kind", "")),
         "stale_lease_ids": stale_lease_ids,
-        "cleanup_action": "resolve_assignment_then_commit_authorized_lease",
+        "cleanup_action": "dispatch_current_role",
         "reason": str(guard.get("reason", "")),
         "sealed_bodies_visible": False,
     }
@@ -8810,8 +8884,8 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             )
         if packet["status"] == "open":
             return RuntimeAction(
-                "resolve_role_assignment",
-                "packet role assignment must resolve before lease commit",
+                "dispatch_current_role",
+                "packet role must be dispatched through the current runtime",
                 packet["packet_id"],
                 packet["envelope"]["responsibility"],
             )

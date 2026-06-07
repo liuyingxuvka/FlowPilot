@@ -27,7 +27,7 @@ preventing controller/worker over-execution.
 Controller bootstraps only user-approved startup options
 -> Controller writes USER_INTAKE envelope/body and delivers envelope metadata to PM
 -> PM asks Reviewer for startup-readiness review through Controller
--> PM issues PACKET_ENVELOPE + PACKET_BODY after startup gate opens
+-> PM issues PACKET_ENVELOPE + PACKET_BODY after startup intake release
 -> Router assigns the packet through the current assignment and ACK path
 -> Recipient verifies assignment, target role, and hash before opening the body
 -> Worker reads and executes exactly its packet body
@@ -98,7 +98,7 @@ active-holder packet ACKs, active-holder packet result submission, and formal
 role-output submission are Router-direct check-ins. PM, reviewer, worker, and
 FlowGuard operator roles must not privately pass packet/result bodies or formal
 review/decision mail to Controller. The current formal path is Router-first:
-`flowpilot_new.py lease-agent`, role `ack`, and `submit-result`. The recipient
+`flowpilot_new.py dispatch-current-role`, role `ack`, and `submit-result`. The recipient
 verifies current assignment, addressed role, and body hash before opening any
 body. Wrong recipients, hash mismatch, private delivery, contaminated mail, or
 missing assignment evidence block body open and force sender reissue via PM.
@@ -291,23 +291,21 @@ ROLE_ECHO:
 
 Missing reminders are dispatch/review blockers, not cosmetic formatting gaps.
 
-## Heartbeat And Manual Resume
+## Manual Resume
 
-Heartbeat and manual resume use the same packet control plane. The waking
-assistant is Controller only. It first records
-`heartbeat_or_manual_resume_requested` to the router, then resolves
-`.flowpilot/current.json`, loads the active run state/frontier/route,
-role-binding ledger, role memory, latest heartbeat or manual-resume evidence,
-`packet_ledger.json`, visible plan projection, and current assignment history.
-Only after that router re-entry may it run the runtime-required role-binding
-liveness preflight, restore or replace required bindings, and ask PM for the
-current decision. It must
-not open `packet_body.md` or `result_body.md`.
+Manual resume uses the same packet control plane. The waking assistant is
+Controller only. It runs the current runtime resume/patrol path, resolves the
+bound run, loads the active run state/frontier/route, role-binding ledger,
+role memory, latest manual-resume evidence, `packet_ledger.json`, visible plan
+projection, and current assignment history. Only after that runtime re-entry
+may it run the runtime-required role-binding liveness preflight, dispatch or
+replace required current responsibilities, and ask PM for the current decision.
+It must not open `packet_body.md` or `result_body.md`.
 
-The heartbeat prompt is a stable launcher. It must not carry route-specific
-next-step instructions, must not classify the old work chain as alive from
-stored route/role binding state, and must not be rewritten just because the route or PM
-runway changed. Current work comes from persisted state and PM decisions.
+The resume path must not carry route-specific next-step instructions in chat,
+must not classify the old work chain as alive from stored route/role binding
+state, and must not be rewritten just because the route or PM runway changed.
+Current work comes from persisted state and PM decisions.
 
 `wait_agent` timeout is `timeout_unknown`, not active. Missing, cancelled,
 unknown, or timeout-unknown host role status must enter replacement or recovery

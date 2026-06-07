@@ -24,11 +24,10 @@ Current source and runtime checks must preserve these boundaries:
 - manual resume must be recorded through
   `flowpilot_new.py resume --reason manual_resume`, then the Controller must
   follow the returned lifecycle guard, foreground duty, packet/lease state, and
-  status projection before deciding what can proceed. Role assignment is
-  on-demand: only the currently requested packet responsibility may be opened,
-  reused, replaced, or leased through `resolve-role-assignment` and
-  `lease-agent`; fixed role-set prewarming and stale role reports are not
-  current authority;
+  status projection before deciding what can proceed. Role dispatch is
+  on-demand: only the currently requested packet responsibility may be opened
+  through `dispatch-current-role`; fixed role-set prewarming and stale role
+  reports are not current authority;
 - router direct-dispatch validation is mandatory before PM-authored work
   packets reach a worker. Existing or fresh worker results must return to the
   PM for a recorded package-result disposition before any PM-built formal

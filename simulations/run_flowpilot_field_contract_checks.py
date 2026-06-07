@@ -243,12 +243,16 @@ def _source_alignment_report() -> dict[str, object]:
             "test_fake_project_success_bodies_use_declared_contract_fields",
             "test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff",
             "test_review_packet_authorizes_matching_flowguard_result_read",
+            "test_pm_repair_handoff_contract_includes_branch_shapes",
+            "test_pm_repair_redesign_route_reissue_names_branch_field_path",
         )
         if name not in test_text
     ]
     current_handoff_source_ok = (
         "_build_current_handoff_contract" in runtime_text
         and '"current_handoff_contract"' in runtime_text
+        and "branch_valid_shapes_for_family" in runtime_text
+        and "branch_minimal_valid_shape" in runtime_text
         and "matching_flowguard_result_for_review" in runtime_text
         and "current_handoff_contract" in test_text
     )

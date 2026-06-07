@@ -20220,6 +20220,75 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-current-branch-contract-dispatch-tightening-20260607 - Current-contract maintenance closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested one complete OpenSpec and FlowGuard maintenance pass with no old FlowPilot fallback or compatibility path, plus local install and Git synchronization.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: predictive_kb_preflight + openspec_apply_change + flowguard_development_process_flow + flowguard_model_test_alignment
+- Started: 2026-06-07T16:03:30+00:00
+- Ended: 2026-06-07T16:21:55+00:00
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_field_contract_model.py
+- simulations/flowpilot_project_control_information_flow_model.py
+- simulations/flowpilot_information_flow_alignment_results.json
+- simulations/flowpilot_model_test_alignment_results.json
+- docs/flowguard_project_topology.json
+- docs/flowguard_project_topology.md
+
+### Commands
+- `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_lifecycle_guard.py tests/test_flowpilot_recursive_route_execution_runtime.py tests/test_flowpilot_field_contract_model.py tests/test_flowpilot_card_instruction_coverage.py -q` - OK, 140 passed and 173 subtests passed.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations/flowpilot_fake_project_rehearsal_results.json --work-root tmp/flowpilot_fake_project_rehearsal_full_current` - OK, exit code 0.
+- `python simulations/run_card_instruction_coverage_checks.py` - OK.
+- `python simulations/run_flowpilot_field_contract_checks.py` - OK.
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py` - OK.
+- `python simulations/run_flowpilot_core_runtime_checks.py` - OK.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py` - OK.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` - OK.
+- `python simulations/run_flowpilot_packet_result_family_parity_checks.py` - OK.
+- `python simulations/run_meta_checks.py` - OK, `tmp/flowguard_background/run_meta_checks.exit.txt` is 0.
+- `python simulations/run_capability_checks.py` - OK, `tmp/flowguard_background/run_capability_checks.exit.txt` is 0.
+- `python scripts/install_flowpilot.py --install-missing --sync-repo-owned --json` - OK after repository-owned skill sync.
+- `python scripts/audit_local_install_sync.py --json` - OK.
+- `python scripts/install_flowpilot.py --check --json` - OK.
+- `python scripts/check_install.py` - OK.
+- `python scripts/flowguard_project_topology.py build && python scripts/flowguard_project_topology.py check` - OK.
+- `openspec validate tighten-flowpilot-current-information-flow --strict` - OK.
+- `python -m flowguard project-audit --root .` - OK, status pass with FlowGuard package 0.41.3.
+
+### Findings
+- Current handoff contracts expose branch-specific valid shapes for conditional outputs such as PM route redesign.
+- Mechanical reissue metadata names failed branch, failed field path, and branch-specific correction shape instead of relying on hidden runtime knowledge.
+- The normal public role path is `dispatch-current-role`; old resolve/lease wrappers are not exported as normal current workflow.
+- Staged PM gate status projection no longer misreports accepted source packets as stale current targets while the gate is pending.
+- Current reference surfaces are scanned for obsolete heartbeat/startup-gate/public old-command wording.
+- Full fake-AI rehearsal completed with exit code 0 and current evidence freshness.
+
+### Counterexamples
+- branch_contract_shape_not_visible
+- synthetic_trace_bypasses_visible_contract
+- unsupported_historical_field_translated
+- unsupported_startup_field_accepted
+- stale_controller_ack_guidance
+- role_assignment_without_current_packet_context
+
+### Friction Points
+- Generated model result files stale topology until topology is rebuilt after the last validation run.
+- The install sync command reports a pre-sync mismatch before overwriting the installed skill; follow-up install check and local sync audit passed.
+- PowerShell background stderr wraps FlowGuard progress as NativeCommandError text, but exit artifacts and stdout evidence show successful completion.
+
+### Skipped Steps
+- No GitHub push, release, tag, deploy, OpenSpec archive, destructive cleanup, or legacy compatibility shim was performed.
+
+### Risk Evidence Summary
+- Evidence supports local current-contract maintenance, install synchronization, and model/test/fake-AI coverage for the changed FlowPilot surfaces. It does not claim a public release or remote push.
+
+### Next Actions
+- Commit the local Git version after final diff review and KB postflight.
+
+
 ## flowpilot-information-flow-handoff-model-upgrade-20260607
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -24847,6 +24916,84 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Skipped Steps
 - Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
 - Artifact/model/test upgrade scan was scoped out by records-only mode.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-07T14:37:37+00:00
+- Ended: 2026-06-07T14:37:37+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.41.1
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-07T16:10:13+00:00
+- Ended: 2026-06-07T16:10:13+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.41.3
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=0 blocked=0 changed=0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
 
 ### Risk Evidence Summary
 - none recorded

@@ -72,9 +72,8 @@ same batch. Router owns busy/idle enforcement, result joining, review routing,
 and stage advancement.
 
 When PM is the addressed packet recipient, successful current work authority comes from
-Router's current-run packet assignment resolved by `flowpilot_new.py
-resolve-role-assignment`, the matching authorized `flowpilot_new.py
-lease-agent` commit, the runtime-generated `flowpilot_new.py role-handoff`,
+Router's current-run packet dispatch through `flowpilot_new.py
+dispatch-current-role`, the runtime-generated `flowpilot_new.py role-handoff`,
 PM's `flowpilot_new.py ack`, PM's `flowpilot_new.py open-packet`, and the
 matching `flowpilot_new.py submit-result` return. Do not wait for inline body
 text, a corrected prompt, a Controller-written relay, or extra permission

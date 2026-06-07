@@ -232,31 +232,19 @@ def resolve_and_lease_packet(
     agent_id: str,
     host_kind: str = "fake",
 ) -> dict[str, Any]:
-    assignment_payload = run_cli(
+    return run_cli(
         root,
         command_log,
-        "resolve-role-assignment",
+        "dispatch-current-role",
         "--packet-id",
         packet_id,
         "--responsibility",
         responsibility,
         "--host-kind",
         host_kind,
+        "--agent-id",
+        agent_id,
     )
-    lease_args = [
-        "lease-agent",
-        "--packet-id",
-        packet_id,
-        "--responsibility",
-        responsibility,
-        "--assignment-id",
-        str(assignment_payload.get("assignment_id", "")),
-        "--host-kind",
-        host_kind,
-    ]
-    if assignment_payload.get("role_surface_required"):
-        lease_args.extend(["--agent-id", agent_id])
-    return run_cli(root, command_log, *lease_args)
 
 
 def open_current_packet_inputs(
@@ -496,7 +484,7 @@ def complete_full_packet_chain(
         if action.get("action_type") == "terminal_complete":
             break
         ensure(
-            action.get("action_type") == "resolve_role_assignment",
+            action.get("action_type") == "dispatch_current_role",
             f"expected role assignment action at step {step_index}: {action}",
         )
         responsibility = str(action.get("responsibility", ""))
@@ -599,7 +587,7 @@ def complete_planning_chain_only(
     for step_index in range(PLANNING_PACKET_CHAIN_BUDGET):
         action = current_payload.get("next_action")
         ensure(isinstance(action, dict), "missing planning next action")
-        ensure(action.get("action_type") == "resolve_role_assignment", f"expected planning role assignment action: {action}")
+        ensure(action.get("action_type") == "dispatch_current_role", f"expected planning role dispatch action: {action}")
         responsibility = str(action.get("responsibility", ""))
         packet_id = str(action.get("subject_id", ""))
         projection = status_projection(root, command_log)
@@ -640,7 +628,7 @@ def complete_planning_chain_only(
     projection = status_projection(root, command_log)
     assert_public_projection_is_sealed(projection)
     next_action = projection.get("next_action", {})
-    ensure(next_action.get("action_type") == "resolve_role_assignment", "planning chain did not continue to node planning")
+    ensure(next_action.get("action_type") == "dispatch_current_role", "planning chain did not continue to node planning")
     next_packet = packet_row(projection, str(next_action.get("subject_id", "")))
     ensure(
         next_packet.get("route_scope") == "node_acceptance_plan",
@@ -667,8 +655,8 @@ def start_rehearsal(root: Path, command_log: list[dict[str, Any]], run_id: str) 
     payload = run_internal_rehearsal_start(root, command_log, run_id=run_id, startup_text=FAKE_STARTUP_TEXT)
     ensure(payload.get("mode") == "rehearsal", "headless startup should be recorded as rehearsal mode")
     ensure(
-        payload.get("next_action", {}).get("action_type") == "resolve_role_assignment",
-        "startup did not request first role assignment",
+        payload.get("next_action", {}).get("action_type") == "dispatch_current_role",
+        "startup did not request first role dispatch",
     )
     ensure(payload.get("next_action", {}).get("responsibility") == "pm", "startup did not request PM first")
     projection = payload.get("status", {})

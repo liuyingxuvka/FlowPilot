@@ -65,6 +65,7 @@ WORK_PACKET_MISSING_INPUT_MATERIALS = "work_packet_missing_input_materials"
 WORK_PACKET_MISSING_REPORT_REQUIREMENTS = "work_packet_missing_report_requirements"
 DOWNSTREAM_REPORT_NOT_AUTHORIZED = "downstream_report_not_authorized"
 MISSING_INFO_RESPONSE_NOT_DEFINED = "missing_info_response_not_defined"
+BRANCH_CONTRACT_SHAPE_NOT_VISIBLE = "branch_contract_shape_not_visible"
 
 VALID_SCENARIOS = (
     VALID_REPAIR_PACKET_PROGRESS,
@@ -102,6 +103,7 @@ NEGATIVE_SCENARIOS = (
     WORK_PACKET_MISSING_REPORT_REQUIREMENTS,
     DOWNSTREAM_REPORT_NOT_AUTHORIZED,
     MISSING_INFO_RESPONSE_NOT_DEFINED,
+    BRANCH_CONTRACT_SHAPE_NOT_VISIBLE,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -156,6 +158,7 @@ class State:
     work_packet_carries_forbidden_result_fields: bool = False
     work_packet_carries_input_material_manifest: bool = False
     work_packet_carries_required_report_contract: bool = False
+    work_packet_carries_branch_valid_shapes: bool = False
     work_packet_names_downstream_consumer: bool = False
     work_packet_names_missing_info_response: bool = False
     result_report_submitted: bool = False
@@ -265,6 +268,7 @@ def _base_work_packet(**changes: object) -> State:
             work_packet_carries_forbidden_result_fields=True,
             work_packet_carries_input_material_manifest=True,
             work_packet_carries_required_report_contract=True,
+            work_packet_carries_branch_valid_shapes=True,
             work_packet_names_downstream_consumer=True,
             work_packet_names_missing_info_response=True,
             result_report_submitted=True,
@@ -539,6 +543,12 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             work_packet_names_missing_info_response=False,
         )
+    if scenario == BRANCH_CONTRACT_SHAPE_NOT_VISIBLE:
+        return replace(
+            _scenario_state(VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT),
+            scenario=scenario,
+            work_packet_carries_branch_valid_shapes=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -589,6 +599,8 @@ def information_sufficiency_failures(state: State) -> list[str]:
             failures.append("work packet lacks the required input material manifest for the actor")
         if not state.work_packet_carries_required_report_contract:
             failures.append("work packet lacks required report contract for the actor output")
+        if not state.work_packet_carries_branch_valid_shapes:
+            failures.append("work packet lacks branch-specific current result shapes for branch outputs")
         if not state.work_packet_names_downstream_consumer:
             failures.append("work packet does not name the downstream consumer for its report")
         if not state.work_packet_names_missing_info_response:

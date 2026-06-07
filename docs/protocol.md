@@ -132,11 +132,10 @@ branches, staged process behavior, and any task-local behavior models.
     addressable role surface, or the startup acknowledgement is disabled,
     FlowPilot records a structured stop or blocker instead of continuing as a
     single-agent route.
-26. Open, reuse, replace, or lease background roles only through the current
-    `resolve-role-assignment` and `lease-agent` path for the current packet,
-    current role, current run, and current route version. Historical role ids,
-    role-memory packets, and fixed six-role startup evidence are audit context
-    only.
+26. Dispatch the requested background or parallel role only through the current
+    `dispatch-current-role` path for the current packet, current role, current
+    run, and current route version. Historical role ids, role-memory packets,
+    and fixed six-role startup evidence are audit context only.
 27. Record the controlled-stop notice policy: completed routes emit a
     completion notice; controlled nonterminal stops emit a resume notice that
     names the current foreground duty and how to continue FlowPilot manually.
@@ -771,8 +770,8 @@ Each role memory packet
 stores the role charter, authority boundary, frozen contract pointer, current
 route position, latest decisions, open obligations, blockers, evidence paths,
 and "do not redo" notes. On manual resume, FlowPilot may try to reuse a stored
-agent id only through current `resolve-role-assignment` and `lease-agent`
-evidence for the requested responsibility. Missing, cancelled, unknown, or
+agent id only through current `dispatch-current-role` evidence for the
+requested responsibility. Missing, cancelled, unknown, or
 timeout-unknown role status must block, replace, reissue, or stop through the
 current runtime path. A replacement role started only from a generic prompt is
 not recovered and cannot approve gates.

@@ -100,7 +100,7 @@ assignment, closure, and terminal stop. The current contract forbids treating
 heartbeat automation, stale role reports, or fixed role-set restoration
 as current formal-run authority. PM result disposition has a direct opened-body
 validation test, and resume/role-dispatch evidence is bound to
-`flowpilot_new.py resume`, `resolve-role-assignment`, and `lease-agent`.
+`flowpilot_new.py resume` and `dispatch-current-role`.
 
 The current startup trunk is Runtime/Router mechanical entry followed by PM
 first-round work. Startup no longer has a Reviewer startup fact gate or a PM
@@ -111,10 +111,10 @@ mechanical conditions pass, Router delivers the sealed `user_intake` packet to
 PM for the first material/intake decision. Background or parallel roles remain
 mandatory FlowPilot capability: if the user-facing acknowledgement is disabled
 or the host cannot open the requested current role surface, Runtime stops or
-blocks; after authorization it opens, reuses, replaces, or leases only the
-currently requested packet responsibility through `resolve-role-assignment` and
-`lease-agent`. Reviewer judges human quality, evidence credibility, requirement
-satisfaction, and repair need only after Runtime accepts mechanics. FlowGuard
+blocks; after authorization it dispatches only the currently requested packet
+responsibility through `dispatch-current-role`. Reviewer judges human quality,
+evidence credibility, requirement satisfaction, and repair need only after
+Runtime accepts mechanics. FlowGuard
 operator judges model/process/state risks; Runtime/Router owns fields, hashes,
 paths, packet/result/current-run ids, role-agent binding, output-contract shape,
 and ledger absorption.
@@ -330,7 +330,7 @@ and model-confidence overclaims must also fail.
 - Manual lifecycle resume does not restore a fixed role set. It returns the
   current foreground duty; when that duty asks for role work, Controller opens,
   reuses, or replaces only the requested packet responsibility through
-  `resolve-role-assignment` and `lease-agent`.
+  `dispatch-current-role`.
 - Runtime-required roles are persistent as responsibilities, but each new
   formal FlowPilot task must receive fresh current-run assignment/lease evidence
   when the user authorizes host-supported role assistance. Prior-route or
@@ -580,9 +580,9 @@ FlowGuard caught and fixed these design issues:
   Controller loads current-run ledger, packet/lease state, active blockers, and
   status projection without reading sealed bodies or inferring progress from
   chat history. Role work is opened only through the current
-  `resolve-role-assignment` / `lease-agent` pair for the requested packet
-  responsibility; fixed role-set restoration and heartbeat recovery are not
-  current runtime mechanisms.
+  `dispatch-current-role` path for the requested packet responsibility; fixed
+  role-set restoration and heartbeat recovery are not current runtime
+  mechanisms.
 - `flowpilot_new.py` now drives the fresh current-run packet loop through the
   physical envelope/body system. It requires route activation, current-node
   packet registration, runtime dispatch preflight, packet ledger checks,

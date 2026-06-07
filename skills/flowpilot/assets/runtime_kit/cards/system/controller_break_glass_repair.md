@@ -222,7 +222,7 @@ Before exiting Recovery Supervisor mode, record a Controller reinjection under:
 `.flowpilot/runs/<run-id>/controller_break_glass/controller_reinjections/`
 
 The record must name the previous Controller generation, the next Controller
-generation, Controller core path/hash or boundary proof, and proof artifacts.
+generation, Controller foreground card path/hash or boundary proof, and proof artifacts.
 After reinjection, the ordinary Controller body boundary and gate restrictions
 are active again.
 

@@ -9,10 +9,9 @@ import sys
 
 from flowpilot_new_role_commands import (
     ack,
-    lease_agent,
+    dispatch_current_role,
     open_packet,
     open_result,
-    resolve_role_assignment,
     role_handoff_payload,
 )
 from flowpilot_new_run_commands import (
@@ -64,23 +63,11 @@ def main(argv: list[str] | None = None) -> int:
         help="Required when reissuing or reattaching after stop_for_user.",
     )
 
-    resolve = sub.add_parser("resolve-role-assignment", help="Resolve reuse/create/block before opening a role surface")
-    resolve.add_argument("--packet-id", required=True)
-    resolve.add_argument("--responsibility", required=True)
-    resolve.add_argument(
-        "--host-kind",
-        default="live",
-        choices=sorted(host.HOST_KINDS),
-        metavar="{live,fake,dry_run}",
-        help=HOST_KIND_HELP,
-    )
-
-    lease = sub.add_parser("lease-agent", help="Commit an authorized role assignment and assign a packet")
-    lease.add_argument("--packet-id", required=True)
-    lease.add_argument("--responsibility", required=True)
-    lease.add_argument("--assignment-id", required=True)
-    lease.add_argument("--agent-id", default="")
-    lease.add_argument(
+    dispatch = sub.add_parser("dispatch-current-role", help="Dispatch the current packet to its authorized role")
+    dispatch.add_argument("--packet-id", required=True)
+    dispatch.add_argument("--responsibility", required=True)
+    dispatch.add_argument("--agent-id", default="")
+    dispatch.add_argument(
         "--host-kind",
         default="live",
         choices=sorted(host.HOST_KINDS),
@@ -157,21 +144,13 @@ def main(argv: list[str] | None = None) -> int:
                 reason=args.reason,
                 user_requested=args.user_requested,
             )
-        elif args.command == "resolve-role-assignment":
-            payload = resolve_role_assignment(
+        elif args.command == "dispatch-current-role":
+            payload = dispatch_current_role(
                 root,
                 packet_id=args.packet_id,
                 responsibility=args.responsibility,
                 host_kind=args.host_kind,
-            )
-        elif args.command == "lease-agent":
-            payload = lease_agent(
-                root,
-                packet_id=args.packet_id,
-                responsibility=args.responsibility,
-                assignment_id=args.assignment_id,
                 agent_id=args.agent_id,
-                host_kind=args.host_kind,
             )
         elif args.command == "ack":
             payload = ack(root, lease_id=args.lease_id, packet_id=args.packet_id)

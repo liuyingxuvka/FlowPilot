@@ -4,12 +4,28 @@ All notable changes to FlowPilot will be documented in this file.
 
 ## 0.10.5 - 2026-06-07
 
+### Breaking
+
+- Replaced the normal public `resolve-role-assignment` plus `lease-agent`
+  sequence with one current `dispatch-current-role` path while keeping
+  responsibility, liveness, reuse, replacement, and self-review checks owned by
+  the runtime.
+- Tightened current packet/result branch contracts so conditional outputs such
+  as PM route redesign must use the declared branch shape; hidden fields,
+  undeclared fake-AI success shapes, and legacy public wrappers are rejected.
+
 ### Changed
 
 - Made `flowpilot_new.py open-packet` deliver authorized input materials for
   the assigned role, so sealed result/report bodies still flow through the
   current runtime but no longer require a separate normal-path `open-result`
   micro-step.
+- Added branch-specific minimal valid shapes to handoff and reissue metadata so
+  roles can repair missing nested fields from the current packet instead of
+  relying on hidden runtime knowledge.
+- Refreshed FieldContract, project-control information flow, Model-Test
+  Alignment, fake-AI rehearsal, topology, install sync, and meta/capability
+  evidence for the strict current-contract path.
 - Bound the new packet-open material delivery path into FlowGuard
   information-flow alignment, blocker repair modeling, prompt markers, and
   fake-project rehearsal evidence.
@@ -246,8 +262,8 @@ All notable changes to FlowPilot will be documented in this file.
   issued packet, lease, ACK, sealed result, packet-owned ledger side effect,
   and next packet.
 - Removed the unsupported formal side-command surface from `flowpilot_new.py`;
-  fresh formal operation now advances through `lease-agent`, `ack`, and
-  `submit-result` only after startup.
+  fresh formal operation now advances through `dispatch-current-role`, `ack`,
+  `open-packet`, and `submit-result` only after startup.
 - Updated fake-host rehearsal, runtime scenario runners, and complete-system
   runtime checks to exercise the full role-packet chain instead of injecting
   FlowGuard/review/validation/closure evidence directly.

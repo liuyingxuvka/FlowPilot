@@ -113,7 +113,7 @@
     "other": {
       "alignment_family_count": 5,
       "code_surface_count": 239,
-      "known_bad_count": 1291,
+      "known_bad_count": 1292,
       "model_count": 81,
       "runner_keys": [
         "capability",
@@ -12735,13 +12735,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780839472.0238333,
+  "generated_at_epoch": 1780849412.9636433,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 11,
     "code_surfaces": 942,
     "evidence_summaries": 5,
-    "known_bad_signals": 2410,
+    "known_bad_signals": 2411,
     "models": 142,
     "test_commands": 350
   },
@@ -15966,7 +15966,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 64,
+        "edge_count": 66,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -15974,6 +15974,7 @@
           "hazards",
           "ok",
           "blocker_repair_stage_hidden_from_status",
+          "branch_contract_shape_not_visible",
           "break_glass_bypasses_pm_reviewer_reintegration",
           "break_glass_unbounded_or_target_project_repair",
           "break_glass_without_normal_repair_failure",
@@ -16000,7 +16001,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 65
+        "state_count": 67
       },
       "model_path": "simulations/flowpilot_project_control_information_flow_model.py",
       "result_path": "simulations/flowpilot_project_control_information_flow_results.json",
@@ -18341,7 +18342,7 @@
   "sources": [
     {
       "exists": true,
-      "mtime_ns": 1780838902701414600,
+      "mtime_ns": 1780848613406782800,
       "path": "AGENTS.md",
       "size": 10984
     },
@@ -18551,19 +18552,19 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780838185923169200,
+      "mtime_ns": 1780849227977955200,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20666
     },
     {
       "exists": true,
-      "mtime_ns": 1780720957281956900,
+      "mtime_ns": 1780848027022674100,
       "path": "simulations/card_instruction_coverage_model.py",
-      "size": 48519
+      "size": 50184
     },
     {
       "exists": true,
-      "mtime_ns": 1780786511454513100,
+      "mtime_ns": 1780849141005025100,
       "path": "simulations/card_instruction_coverage_results.json",
       "size": 45443
     },
@@ -18839,9 +18840,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780839080097797000,
+      "mtime_ns": 1780849138264708200,
       "path": "simulations/flowpilot_core_runtime_results.json",
-      "size": 26218
+      "size": 26191
     },
     {
       "exists": true,
@@ -19079,21 +19080,21 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780838736208926800,
+      "mtime_ns": 1780848808973004600,
       "path": "simulations/flowpilot_fake_project_rehearsal_results.json",
-      "size": 588674
+      "size": 482598
     },
     {
       "exists": true,
-      "mtime_ns": 1780835540397933900,
+      "mtime_ns": 1780844580108835700,
       "path": "simulations/flowpilot_field_contract_model.py",
-      "size": 48872
+      "size": 51087
     },
     {
       "exists": true,
-      "mtime_ns": 1780839081811984500,
+      "mtime_ns": 1780849139450151900,
       "path": "simulations/flowpilot_field_contract_results.json",
-      "size": 63446
+      "size": 65887
     },
     {
       "exists": true,
@@ -19169,9 +19170,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780839084704407100,
+      "mtime_ns": 1780849158602973300,
       "path": "simulations/flowpilot_information_flow_alignment_results.json",
-      "size": 141316
+      "size": 138112
     },
     {
       "exists": true,
@@ -19511,15 +19512,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780833718074338200,
+      "mtime_ns": 1780844888406660200,
       "path": "simulations/flowpilot_project_control_information_flow_model.py",
-      "size": 37618
+      "size": 38270
     },
     {
       "exists": true,
-      "mtime_ns": 1780838091001185200,
+      "mtime_ns": 1780849139417066300,
       "path": "simulations/flowpilot_project_control_information_flow_results.json",
-      "size": 11749
+      "size": 12068
     },
     {
       "exists": true,
@@ -19961,7 +19962,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780790134560616500,
+      "mtime_ns": 1780846863622622300,
       "path": "simulations/flowpilot_startup_intake_ui_results.json",
       "size": 79408
     },
@@ -20171,7 +20172,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780838185963282900,
+      "mtime_ns": 1780849227964897000,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26202
     },
@@ -20507,9 +20508,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780835575811688800,
+      "mtime_ns": 1780844605878182800,
       "path": "simulations/run_flowpilot_field_contract_checks.py",
-      "size": 14760
+      "size": 15025
     },
     {
       "exists": true,
@@ -20705,9 +20706,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780833738657792500,
+      "mtime_ns": 1780844917600474400,
       "path": "simulations/run_flowpilot_project_control_information_flow_checks.py",
-      "size": 14709
+      "size": 14869
     },
     {
       "exists": true,
@@ -21107,9 +21108,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780721605425102200,
+      "mtime_ns": 1780847970157414000,
       "path": "skills/flowpilot/SKILL.md",
-      "size": 8182
+      "size": 8111
     },
     {
       "exists": true,
@@ -21203,21 +21204,21 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780655904919615500,
+      "mtime_ns": 1780844279599017900,
       "path": "skills/flowpilot/assets/flowpilot_new.py",
-      "size": 1686
+      "size": 1629
     },
     {
       "exists": true,
-      "mtime_ns": 1780655904918617300,
+      "mtime_ns": 1780844267124362400,
       "path": "skills/flowpilot/assets/flowpilot_new_cli.py",
-      "size": 10078
+      "size": 9242
     },
     {
       "exists": true,
-      "mtime_ns": 1780837316355686300,
+      "mtime_ns": 1780845606147755800,
       "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
-      "size": 10256
+      "size": 9521
     },
     {
       "exists": true,
@@ -22967,9 +22968,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780671242763173800,
+      "mtime_ns": 1780843981553510400,
       "path": "skills/flowpilot/assets/flowpilot_router_work_packets_current_node_relay_runtime_ops.py",
-      "size": 6036
+      "size": 6013
     },
     {
       "exists": true,
@@ -23801,45 +23802,45 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780657218751108500,
+      "mtime_ns": 1780843781502524300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/controller.md",
-      "size": 21480
+      "size": 21409
     },
     {
       "exists": true,
-      "mtime_ns": 1780837657659632600,
+      "mtime_ns": 1780843850474361400,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
-      "size": 15084
+      "size": 15015
     },
     {
       "exists": true,
-      "mtime_ns": 1780837657658633700,
+      "mtime_ns": 1780843800433093500,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
-      "size": 22578
+      "size": 22527
     },
     {
       "exists": true,
-      "mtime_ns": 1780837657657628300,
+      "mtime_ns": 1780843792247554300,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
-      "size": 33805
+      "size": 33734
     },
     {
       "exists": true,
-      "mtime_ns": 1780837657655618600,
+      "mtime_ns": 1780843809128175900,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker.md",
-      "size": 9632
+      "size": 9563
     },
     {
       "exists": true,
-      "mtime_ns": 1780666234606647600,
+      "mtime_ns": 1780843839172705700,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/worker_research_report.md",
-      "size": 8355
+      "size": 8286
     },
     {
       "exists": true,
-      "mtime_ns": 1780720957294957800,
+      "mtime_ns": 1780848003042754800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_break_glass_repair.md",
-      "size": 15038
+      "size": 15049
     },
     {
       "exists": true,
@@ -23909,9 +23910,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780657218744115000,
+      "mtime_ns": 1780843742313595200,
       "path": "skills/flowpilot/assets/runtime_kit/prompts/controller/action_ledger_table.md",
-      "size": 5418
+      "size": 5373
     },
     {
       "exists": true,
@@ -23927,9 +23928,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780837657654114100,
+      "mtime_ns": 1780843754421641600,
       "path": "skills/flowpilot/assets/runtime_kit/prompts/packets/packet_identity_boundary.md",
-      "size": 3697
+      "size": 3635
     },
     {
       "exists": true,

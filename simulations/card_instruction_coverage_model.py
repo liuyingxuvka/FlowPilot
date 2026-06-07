@@ -581,6 +581,28 @@ FORBIDDEN_CURRENT_PROMPT_SURFACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ..
 )
 
 
+FORBIDDEN_CURRENT_REFERENCE_SURFACE_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("obsolete heartbeat path", re.compile(r"\bheartbeat\b", re.IGNORECASE)),
+    ("obsolete scheduled continuation path", re.compile(r"\bscheduled-continuation\b", re.IGNORECASE)),
+    ("obsolete startup gate wording", re.compile(r"\bstartup[_ -]gate\b", re.IGNORECASE)),
+    ("obsolete controller-core wording", re.compile(r"\bcontroller\s+core\b", re.IGNORECASE)),
+    ("obsolete role-assignment command", re.compile(r"\bresolve-role-assignment\b", re.IGNORECASE)),
+    ("obsolete lease-agent command", re.compile(r"\blease-agent\b", re.IGNORECASE)),
+)
+
+
+def _iter_current_reference_surface_paths(project_root: Path) -> Iterable[Path]:
+    for path in (
+        project_root / "skills" / "flowpilot" / "SKILL.md",
+        project_root / "skills" / "flowpilot" / "references" / "protocol.md",
+        project_root / "skills" / "flowpilot" / "references" / "packet_control_plane.md",
+        project_root / "skills" / "flowpilot" / "references" / "failure_modes.md",
+        project_root / "templates" / "flowpilot" / "README.md",
+    ):
+        if path.exists():
+            yield path
+
+
 def _iter_current_prompt_surface_paths(project_root: Path) -> Iterable[Path]:
     roots = (
         project_root / "skills" / "flowpilot" / "SKILL.md",
@@ -605,6 +627,17 @@ def forbidden_current_prompt_surface_errors(project_root: Path) -> tuple[str, ..
         text = path.read_text(encoding="utf-8")
         rel = path.relative_to(project_root).as_posix()
         for label, pattern in FORBIDDEN_CURRENT_PROMPT_SURFACE_PATTERNS:
+            if pattern.search(text):
+                errors.append(f"{rel}: contains {label}")
+    return tuple(errors)
+
+
+def forbidden_current_reference_surface_errors(project_root: Path) -> tuple[str, ...]:
+    errors: list[str] = []
+    for path in _iter_current_reference_surface_paths(project_root):
+        text = path.read_text(encoding="utf-8")
+        rel = path.relative_to(project_root).as_posix()
+        for label, pattern in FORBIDDEN_CURRENT_REFERENCE_SURFACE_PATTERNS:
             if pattern.search(text):
                 errors.append(f"{rel}: contains {label}")
     return tuple(errors)

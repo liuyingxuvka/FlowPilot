@@ -42,8 +42,8 @@ source `output_contract`, result `Contract Self-Check`, and current
 acceptance sources cannot be recovered, block through the normal review report
 `blockers` and `recommended_resolution` fields so PM can repair, reissue, or
 collect evidence.
-A successful current assignment through `flowpilot_new.py resolve-role-assignment`,
-the authorized `flowpilot_new.py lease-agent` commit, the runtime-generated
+A successful current packet dispatch through `flowpilot_new.py dispatch-current-role`,
+the runtime-generated
 `flowpilot_new.py role-handoff`, `flowpilot_new.py ack`,
 `flowpilot_new.py open-packet`, and `flowpilot_new.py submit-result` is
 sufficient authority to perform the authorized review. Do not wait for inline

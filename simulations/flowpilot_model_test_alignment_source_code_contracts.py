@@ -105,16 +105,16 @@ def source_code_contracts() -> tuple[CodeContract, ...]:
             side_effects=("save_run_ledger",),
         ),
         _contract(
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             path="skills/flowpilot/assets/flowpilot_new_role_commands.py",
-            symbol="lease_agent",
+            symbol="dispatch_current_role",
             implements=(
                 "new_entrypoint.symmetric_role_packet_lifecycle",
                 "new_entrypoint.role_lease_requires_matching_packet",
             ),
             external_inputs=("root", "packet_id", "responsibility", "agent_id", "host_kind"),
             external_outputs=("return",),
-            side_effects=("lease_responsibility", "assign_packet", "save_run_ledger"),
+            side_effects=("resolve_role_assignment", "lease_responsibility", "assign_packet", "save_run_ledger"),
         ),
         _contract(
             "flowpilot_new.ack",

@@ -10,10 +10,9 @@ from __future__ import annotations
 from flowpilot_new_cli import main
 from flowpilot_new_role_commands import (
     ack,
-    lease_agent,
+    dispatch_current_role,
     open_packet,
     open_result,
-    resolve_role_assignment,
     role_handoff_payload,
 )
 from flowpilot_new_run_commands import (
@@ -50,16 +49,15 @@ __all__ = [
     "_assert_formal_interactive_result",
     "ack",
     "cancel_run",
+    "dispatch_current_role",
     "final_preflight",
     "host_liveness",
-    "lease_agent",
     "main",
     "open_packet",
     "open_result",
     "patrol",
     "progress",
     "repair_accepted_packet",
-    "resolve_role_assignment",
     "resolve_stopped_blocker",
     "resume",
     "role_handoff_payload",

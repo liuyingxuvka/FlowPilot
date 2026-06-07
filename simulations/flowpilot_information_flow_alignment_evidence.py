@@ -172,8 +172,7 @@ def _test_evidence() -> tuple[Any, ...]:
                 "info_flow.new_runtime.resume_entrypoint",
                 "info_flow.runtime.record_resume_request",
                 "info_flow.runtime.reconcile_resume_request",
-                "info_flow.new_runtime.resolve_role_assignment",
-                "info_flow.new_runtime.lease_agent",
+                "info_flow.new_runtime.dispatch_current_role",
                 "info_flow.runtime.resolve_role_assignment",
                 "info_flow.runtime.lease_agent",
             ),
@@ -201,7 +200,7 @@ def _test_evidence() -> tuple[Any, ...]:
             test_kind=NEGATIVE,
             covers=(OBL_ROLE_ASSIGNMENT,),
             code_contracts=(
-                "info_flow.new_runtime.resolve_role_assignment",
+                "info_flow.new_runtime.dispatch_current_role",
                 "info_flow.runtime.resolve_role_assignment",
             ),
         ),
@@ -333,8 +332,7 @@ def _test_evidence() -> tuple[Any, ...]:
             test_kind=HAPPY,
             covers=(OBL_ROLE_ASSIGNMENT,),
             code_contracts=(
-                "info_flow.new_runtime.resolve_role_assignment",
-                "info_flow.new_runtime.lease_agent",
+                "info_flow.new_runtime.dispatch_current_role",
                 "info_flow.runtime.resolve_role_assignment",
                 "info_flow.runtime.lease_agent",
             ),

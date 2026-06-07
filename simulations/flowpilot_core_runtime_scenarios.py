@@ -460,7 +460,7 @@ def recovery_duty_names_command_payload() -> dict[str, Any]:
     command = duty.get("recovery", {}).get("recommended_command", {})
     ok = (
         duty.get("action") == "recover_or_reissue"
-        and command.get("command") == "resolve-role-assignment"
+        and command.get("command") == "dispatch-current-role"
         and command.get("packet_id") == packet_id
         and command.get("responsibility") == "worker"
         and command.get("host_kind") == "live"

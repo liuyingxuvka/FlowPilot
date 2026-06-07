@@ -23,21 +23,21 @@ The FlowGuard models for FlowPilot found or guard against:
 - user flow diagram display after route mutation uses an old Mermaid artifact
   instead of refreshing from the rechecked route and execution frontier;
 - formal chunks that begin before the current node roadmap is visible in chat;
-- continuation records written without automated heartbeat health when
-  supported or manual-resume readiness checks when unsupported;
-- FlowPilot assumes every host supports real wakeups and blocks or creates
-  fake heartbeat evidence in hosts such as generic CLI or VS Code agents that
+- continuation records written without current manual-resume readiness checks;
+- FlowPilot assumes every host supports external continuation and creates
+  fake wakeup evidence in hosts such as generic CLI or VS Code agents that
   expose no automation interface;
-- host continuation capability is not probed before heartbeat setup;
-- host does not support real wakeups but FlowPilot still creates heartbeat
-  automation;
-- host does not support real wakeups and FlowPilot treats that as skill
-  failure instead of recording `manual-resume` fallback evidence;
-- heartbeat automation prompt rewritten for ordinary route/plan changes instead
-  of using a stable launcher that reads persisted execution frontier state;
+- FlowPilot creates external continuation automation instead of using the
+  current manual-resume runtime path;
+- FlowPilot treats unavailable background or parallel role surfaces as
+  permission to continue in a single-agent route instead of recording a
+  blocker and stopping;
+- manual-resume prompt rewritten for ordinary route/plan changes instead of
+  using the current runtime resume/patrol path that reads persisted execution
+  frontier state;
 - route mutation or next-jump change leaves `execution_frontier.json` or the
   visible Codex plan projection stale;
-- heartbeat recovery asks the project manager for only one current gate, so the
+- manual-resume recovery asks the project manager for only one current gate, so the
   resumed run walks for one or two minutes and stops instead of receiving a
   completion-oriented runway;
 - project manager resume output is not synced into the visible Codex plan
@@ -53,15 +53,15 @@ The FlowGuard models for FlowPilot found or guard against:
 - continuation resumes an unfinished node, writes a future-facing "continue to
   next gate" decision, and stops without executing the persisted `next_gate` or
   recording a concrete blocker;
-- host automation is marked active while heartbeat evidence stops advancing and
-  FlowPilot claims unattended recovery without a later continuation turn that
-  loads current state and makes or records concrete progress;
+- continuation state is marked active while manual-resume evidence stops
+  advancing and FlowPilot claims recovery without a later continuation turn
+  that loads current state and makes or records concrete progress;
 - route decided before FlowGuard process design;
 - formal route work starts before runtime-required role bindings are opened,
   restored, and persisted in `role_binding_ledger.json`;
-- heartbeat recovery reads state but does not restore or replace required role
+- manual-resume recovery reads state but does not restore or replace required role
   bindings before asking the project manager what to do next;
-- heartbeat recovery assumes stored role ids still have live private
+- manual-resume recovery assumes stored role ids still have live private
   context and asks the project manager before loading role memory packets;
 - an unavailable role is replaced from a generic prompt instead of the latest
   `.flowpilot/runs/<run-id>/role_binding_memory/` packet;
@@ -133,7 +133,7 @@ The FlowGuard models for FlowPilot found or guard against:
   blocker;
 - formal chunk execution without verification;
 - formal chunk execution without focused parent-scope self-interrogation, parent-subtree
-  FlowGuard review, focused node-level self-interrogation, or lightweight heartbeat
+  FlowGuard review, focused node-level self-interrogation, or lightweight runtime
   self-check;
 - formal chunk execution without the reusable quality package;
 - quality package treated as an empty pass with no typed result for thinness,
@@ -202,7 +202,7 @@ Keep these failure modes in the model and tests.
   questions per active layer, and cover the full layer matrix:
   goal/acceptance, functional capability, data/state/source of truth,
   implementation strategy, UI/UX when relevant, validation/QA,
-  recovery/heartbeat, and delivery/showcase/public-boundary quality.
+  recovery/route, and delivery/showcase/public-boundary quality.
 - Startup full self-interrogation seeds the frozen floor, improvement candidate pool, and
   initial validation direction in one round. Do not add separate immediate
   post-freeze interviews for the same topics.
@@ -214,7 +214,7 @@ Keep these failure modes in the model and tests.
 - Lightweight self-check runs at continuation micro-steps with 5-10 targeted
   questions and cannot satisfy a full or focused self-interrogation gate.
 - Until the Cockpit UI is available, chat is the temporary cockpit: emit user
-  flow diagrams, simulated next jumps, checks, fallback exits, continuation
+  flow diagrams, simulated next jumps, checks, blocked exits, continuation
   state, and acceptance delta at startup, route updates, and node transitions.
 - Treat the user flow diagram as a projection of canonical `.flowpilot` state:
   current route first, current node and next checks second, superseded route
@@ -223,25 +223,23 @@ Keep these failure modes in the model and tests.
   route/frontier before showing chat or UI progress, especially after route
   mutation. Raw FlowGuard Mermaid exports stay off by default and are generated
   only on explicit request.
-- FlowPilot must probe host continuation capability before route execution. If
-  real wakeups are supported, create automated continuation as one lifecycle
-  setup: stable one-minute heartbeat with lifecycle evidence. If real wakeups
-  are unsupported, record `manual-resume` fallback evidence and do not create
-  heartbeat automation.
-- Heartbeat must include real host continuation when available and a health
-  check before each formal node. Manual-resume mode must include state/frontier
-  freshness evidence instead of claiming unattended recovery.
-- Heartbeat automation should stay a stable launcher. Route version, active
-  node, next node, current mainline, fallback, checks-before-advance, and
-  visible plan projection live in `.flowpilot/runs/<run-id>/execution_frontier.json`.
+- FlowPilot must use current manual-resume runtime continuation before route
+  execution. If required background or parallel role surfaces cannot be opened,
+  record a blocker and stop instead of switching to a single-agent route.
+- Manual-resume mode must include state/frontier, packet-ledger,
+  role-binding, and checkpoint freshness evidence instead of claiming
+  unattended recovery.
+- Route version, active node, next node, current mainline, blocked exits,
+  checks-before-advance, and visible plan projection live in
+  `.flowpilot/runs/<run-id>/execution_frontier.json`.
 - Route mutations must recheck the affected model, rewrite the execution
   frontier, sync the visible Codex plan from that frontier, and only then
   resume behavior-bearing work.
 - `next_node` is a future jump, not the current execution target, until the
   frontier current-node completion guard sets `advance_allowed: true`.
-- While the active node is unfinished, heartbeat evidence must name and execute
+- While the active node is unfinished, manual-resume evidence must name and execute
   the persisted `current_subnode` or `next_gate`, or record a concrete blocker.
-  A heartbeat may not close by only writing "continue to X" when the next gate
+  A resume turn may not close by only writing "continue to X" when the next gate
   is still executable.
 - PM-initiated FlowGuard modeling must not be vague delegation. If PM asks a
   FlowGuard operator to model an uncertain route, product, object, file format,
@@ -251,8 +249,8 @@ Keep these failure modes in the model and tests.
   evidence creates evidence work, over-broad requests split, and only an
   actionable report can feed PM route decision.
 - Pause, restart, and terminal cleanup must scan all lifecycle authorities:
-  Codex heartbeat automations, local state, execution frontier, and
-  heartbeat/manual-resume evidence.
+  local state, execution frontier, packet/role ledgers, and manual-resume
+  evidence.
 - Every invoked child skill must pass a fidelity gate: load its contract, map
   its workflow and completion standard into route gates, show the child-skill
   mini-route, write the evidence checklist, and verify completion against the
@@ -311,10 +309,10 @@ Keep these failure modes in the model and tests.
 - `Helper_report_returned` is not completion evidence; authorized integration/review and
   verification are required.
 - Formal routes keep persistent role authority and current-run role memory.
-  The project manager owns route, heartbeat-resume,
+  The project manager owns route, manual-resume,
   completion-runway, PM stop, repair, and completion decisions; workers are
   helpers only.
-- Heartbeat recovery loads the role-binding ledger and role memory packets,
+- Manual-resume recovery loads the role-binding ledger and role memory packets,
   restores/replaces the role binding from that memory, asks the project manager for a
   completion-oriented runway, syncs that runway into the visible plan, executes
   at least the current gate when executable, then continues until a PM stop

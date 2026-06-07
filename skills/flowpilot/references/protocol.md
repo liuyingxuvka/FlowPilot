@@ -10,25 +10,24 @@ long-form public explanation lives in `docs/protocol.md`.
    shell, current pointer, run index, lifecycle guard, and first legal
    foreground duty.
 2. The fresh runtime lifecycle guard is the startup driver before startup
-   intake UI, role startup, heartbeat binding, or Controller core handoff. Old
+   intake UI, current-role dispatch, or Controller foreground duty. Old
    `flowpilot_router.py` daemon files are diagnostics for old runs only.
 3. The runtime records startup work and later packet work in the current-run
    ledger family. Controller follows `foreground_duty`, packet leases, and
    lifecycle guard decisions; it does not infer dependency metadata from chat.
 4. When the fresh-runtime next action is `open_startup_intake_ui`, open the
-   native startup intake UI. The UI records requested role-binding,
-   scheduled-continuation, display-surface, and work-request answers as
-   path/hash evidence. Do not
+   native startup intake UI. The UI records the work request and the
+   background-collaboration authorization answer as path/hash evidence. Do not
    paste the sealed work request body into chat or router payloads. If the UI
    result is `cancelled`, startup terminates after the daemon-first shell and
-   does not start roles, heartbeat, Controller core, or route work.
+   does not dispatch roles or route work.
 5. Record the explicit answer set in state/frontier startup activation
    evidence, then emit the fenced `FlowPilot` ASCII startup banner in chat.
    The banner means the startup-question gate is open. The run directory,
    `.flowpilot/current.json`, and `.flowpilot/index.json` are pointer/catalog
    state only.
    Current control state must live under the run directory. `.flowpilot/current.json`
-   is UI focus/default-target metadata; a daemon, heartbeat, or explicit
+   is UI focus/default-target metadata; an explicit
    runtime command that already has a `run_id`/`run_root` must load that bound
    run directly and must not re-resolve a different run from the current
    pointer. Old top-level state files are archival evidence only and must not
@@ -51,8 +50,8 @@ long-form public explanation lives in `docs/protocol.md`.
    role-binding ledgers, or older role-memory packets are audit history only and must
    not be resumed, relabeled, or counted as current role-binding evidence.
 9. Ask the project manager to ratify the startup self-interrogation and own
-   material understanding, product-function architecture, route,
-   heartbeat-resume, repair, and completion decisions from this point forward.
+   material understanding, product-function architecture, route, current
+   lifecycle-resume, repair, and completion decisions from this point forward.
    The main assistant becomes the controller for packet flow, not the default
    implementation worker.
    Before startup activation, PM sees startup authorization metadata only:
@@ -140,21 +139,17 @@ long-form public explanation lives in `docs/protocol.md`.
     current route/model checks.
 23. Defer future route, chunk, or native-build dependencies until the node or
     check that actually needs them.
-24. Probe host continuation capability only after the scheduled-continuation
-    startup answer is recorded. If the user allowed scheduled continuation and
-    setup fails, stop and ask for a new decision instead of silently switching
-    to manual resume.
-25. If the user allowed scheduled continuation and the host supports real
-    wakeups, create the automated continuation: a stable one-minute heartbeat
-    launcher. The launcher loads persisted route/frontier state and the packet
-    ledger rather than carrying route-specific next-jump instructions in its
-    prompt. On every heartbeat or manual mid-run wakeup, it first records
-    `heartbeat_or_manual_resume_requested` to the router, restores the current
-    visible plan from the run, checks the current packet-ledger holder and
-    runtime-required role bindings, resumes or replaces required bindings from current-run memory, then
-    asks the project manager for the current `PM_DECISION` and
-    completion-oriented runway. A `wait_agent` timeout is `timeout_unknown`,
-    never active. The controller may relay only PM packets after router
+24. Record manual lifecycle resume as the fixed continuation mode for the
+    current runtime. FlowPilot does not create external continuation or
+    old-daemon automation as part of the current contract.
+25. On every manual mid-run wakeup, run the current runtime resume/patrol
+    command, reload the persisted route/frontier state and packet ledger,
+    checks the current packet-ledger holder and runtime-required role
+    bindings, dispatches or replaces only the current runtime-requested
+    responsibility through `dispatch-current-role`, then asks the project
+    manager for the current `PM_DECISION` and completion-oriented runway when
+    PM input is required. A `wait_agent` timeout is `timeout_unknown`, never
+    active. The controller may relay only PM packets after router
     direct-dispatch preflight, reviewer result-review decisions, worker
     results, visible-plan sync, and status/control-stop notices.
     Runtime-owned waiting preempts foreground waits. The fresh lifecycle guard
@@ -169,20 +164,20 @@ long-form public explanation lives in `docs/protocol.md`.
     terminal/user-required state, recovery state, wait-target reminder/liveness
     check, or blocker state is returned. One status read, a live target role,
     or diagnostic `timeout_still_waiting` is not completion.
-26. Before loading Controller core, formal startup verifies lifecycle-guard
+26. Before exposing Controller foreground duty, formal startup verifies lifecycle-guard
     ownership: current-run status, packet/lease state, requested responsibility
     state, and startup next-action rows. Startup must fail rather than load
-    Controller core if startup UI, role startup, heartbeat binding, or
-    Controller core would be scheduled outside the fresh runtime. After
-    Controller core loads, Controller follows lifecycle guard and foreground
+    Controller foreground duty if startup UI, current-role dispatch, or
+    Controller work would be scheduled outside the fresh runtime. After
+    Controller foreground duty appears, Controller follows lifecycle guard and foreground
     duty; direct `flowpilot_router.py next/apply/run-until-wait` calls are
     old-run diagnostics, tests, or explicit repair/recovery tools rather than
     the normal runtime metronome.
-27. If the user selected manual resume, record `manual-resume` mode and do not
-    create heartbeat automation.
+27. Record `manual-resume` mode. There is no scheduled continuation automation
+    in the current runtime.
 28. Record the controlled-stop notice policy: completed routes emit a
     completion notice; controlled nonterminal stops emit a resume notice that
-    says whether to wait for heartbeat or type `continue FlowPilot`.
+    says to type `continue FlowPilot` or run the current resume command.
 29. Ask the project manager for the initial route-design decision.
 30. Ask the FlowGuard operator to use FlowGuard as process designer for
     the active route.
@@ -219,7 +214,7 @@ long-form public explanation lives in `docs/protocol.md`.
     mutation, review/validation failure return, completion review, or user
     request, unless Cockpit UI is open and showing the same graph. Major node
     means an effective node in the current route/mainline, not an internal
-    subnode, micro-step, or heartbeat tick. Include active route, active node, next jumps,
+    subnode or micro-step. Include active route, active node, next jumps,
     checks, repair or block branches, continuation state, and acceptance
     delta as nearby text. If the route returns for repair, the Mermaid must
     show that return edge and the reviewer must check the visible chat block
@@ -293,17 +288,16 @@ long-form public explanation lives in `docs/protocol.md`.
     for that recipient, and every recipient-role response must echo both the
     controller boundary and its own role boundary. Missing reminders are
     blockers, not cosmetic omissions.
-    On heartbeat or manual resume, the controller reloads the packet ledger and
+    On manual resume, the controller reloads the packet ledger and
     resumes from the packet holder. If an active-holder lease is open, Controller
     waits for the packet-specific Router next-action notice instead of treating
     worker chat as completion. If a worker result is already Router-accepted, it
     goes to reviewer. If holder, router direct-dispatch evidence, worker identity,
     or result state is unclear, the controller asks PM for recovery/reissue/
     reassignment and must not finish the packet itself.
-39. Start only the first chunk whose continuation mode is known. Automated
-    routes use heartbeat restore; manual-resume routes load the same
-    state/frontier/role-binding-memory inputs in the active turn. In both modes the
-    project manager issues a completion-oriented runway, the controller syncs that
+39. Start only the first chunk whose continuation mode is known. Manual-resume
+    routes load the current state/frontier/role-binding-memory inputs in the
+    active turn. The project manager issues a completion-oriented runway, the controller syncs that
     runway into the visible plan, and focused parent self-interrogation, parent-subtree
     review, unfinished-current-node recovery check, focused node self-interrogation,
     lightweight self-check, quality package, child-skill gates when needed,
@@ -588,7 +582,7 @@ generated resource has a current terminal disposition and reason.
 
 The activity stream is append-only. PM decisions, reviewer holds/releases and
 reports, FlowGuard operator modeling actions, worker reports, route mutations, checkpoint
-writes, heartbeat/manual-resume actions, and terminal closure events append
+writes, manual-resume actions, and terminal closure events append
 progress records as they happen. Cockpit and chat progress displays read from
 this stream plus current route/frontier state, so users see progress without
 manual refresh or ad hoc status reconstruction.
@@ -711,7 +705,7 @@ Reviewer fact checks must name what was directly checked:
 - source artifacts or material samples for material sufficiency;
 - user request, inspected materials, and expected workflow reality for
   product-function architecture usefulness;
-- live startup state, route, frontier, role memory, heartbeat or manual-resume
+- live startup state, route, frontier, role memory, manual-resume
   evidence, and cleanup boundary for startup;
 - loaded child-skill source instructions, mapped gates, evidence plan, actual
   child-skill outputs, and output/evidence match for child-skill gates;
@@ -730,14 +724,14 @@ gate blockers.
 
 Repeat until complete or blocked:
 
-1. Resolve the bound run first. If the router action, heartbeat, or CLI command
+1. Resolve the bound run first. If the router action or CLI command
    names a `run_id`/`run_root`, load that run directly; otherwise use
    `.flowpilot/current.json` only as the foreground UI/default target. Then load
    `.flowpilot/runs/<run-id>/state.json`,
    `.flowpilot/runs/<run-id>/execution_frontier.json`,
    `.flowpilot/runs/<run-id>/role_binding_ledger.json`,
    `.flowpilot/runs/<run-id>/role_binding_memory/`, active route,
-   active node, continuation mode, last heartbeat or manual-resume record,
+   active node, continuation mode, last manual-resume record,
    lifecycle evidence, and last checkpoint.
    `.flowpilot/current.json` is not daemon authority after a run binding exists;
    top-level archival state is import or quarantine evidence only and must not
@@ -769,18 +763,16 @@ Repeat until complete or blocked:
    Do not jump to `next_node` until the current-node completion guard passes.
    Load the persisted `current_subnode` or `next_gate` selected by the project
    manager for that active node, execute at least that gate in the current
-   heartbeat or manual-resume turn when executable, then continue along the PM
+   manual-resume turn when executable, then continue along the PM
    runway as far as hard gates and real execution limits allow. Do not write only a
    future-facing "continue to X" decision while the gate is still executable.
    If the selected gate has draft evidence but lacks the required role's
    approval, request that approval or block; do not let the controller
    self-approve.
 6. Confirm no hard gate, issue branch, or unmerged helper worker work is open.
-7. Confirm automated heartbeat health when supported, or manual-resume
-   state/checkpoint freshness when unsupported, then confirm
+7. Confirm manual-resume state/checkpoint freshness, then confirm
    unfinished-current-node recovery state. Continuation evidence records host
-   kind (`codex_heartbeat_automation`, `windows_scheduled_task`,
-   `manual_resume`, or `blocked_unsupported`) and the exact host evidence
+   kind (`manual_resume` or `blocked_unsupported`) and the exact host evidence
    source.
 8. Run focused parent-scope self-interrogation, then rerun the current parent node's
    FlowGuard process model against its existing child subtree and rerun the
@@ -815,8 +807,8 @@ Repeat until complete or blocked:
     inspection, model approval, helper report, or blocker note in this turn.
     Compact structured summaries are authoritative; raw transcripts are not.
 24. Write node completion evidence, set the frontier completion guard to
-    `advance_allowed: true`, then write heartbeat or manual-resume evidence and
-    checkpoint evidence after verified progress.
+    `advance_allowed: true`, then write manual-resume evidence and checkpoint
+    evidence after verified progress.
 
 FlowPilot uses three self-interrogation depths. Full self-interrogation is for formal
 boundaries: startup product-function architecture and contract freeze, route
@@ -882,17 +874,16 @@ record equivalent reviewer evidence.
 
 Each full round must also cover the full layer matrix: goal/acceptance,
 functional capability, data/state/source of truth, implementation strategy and
-toolchain, UI/UX when user-facing, validation/QA, recovery/heartbeat/route
+toolchain, UI/UX when user-facing, validation/QA, recovery/route
 updates, and delivery/showcase/public-boundary quality. Focused rounds may
 emphasize the active scope, but they must still record local cross-layer
 impacts, unchanged layers, and parent impact-bubbling decisions. A single-axis
 UI-only or backend-only interview does not satisfy a full gate.
 
-For formal multi-hour routes, continuation evidence must include the real
-host-level continuation or wakeup record when the host supports it. If no such
-tool exists, record the `manual-resume` limitation instead of treating
-JSON heartbeat files as a passed real-continuation gate. Unsupported hosts must
-not create heartbeat automation.
+For formal multi-hour routes, continuation evidence must include current
+manual-resume freshness and the runtime foreground-duty path. Local JSON files
+from obsolete scheduled continuation systems cannot close a current
+continuation gate.
 
 Every meaningful route scope has two FlowGuard scopes: the
 development-process model and the product-function model. The process model
@@ -1028,46 +1019,36 @@ contract changed. The affected evidence and parent rollups become stale until
 the changed child/subtree passes and the same parent backward review reruns.
 
 Pause, restart, and terminal closure use a unified lifecycle reconciliation
-gate. Before claiming any of those states, FlowPilot scans Codex app heartbeat
-automations, `.flowpilot/runs/<run-id>/state.json`,
-`.flowpilot/runs/<run-id>/execution_frontier.json`, and latest heartbeat or
-manual-resume evidence. `scripts/flowpilot_lifecycle.py` provides a read-only
-inventory and required action list; actual Codex automation changes still use
-the official Codex app automation interface.
-
-Heartbeat automations should stay stable after creation. Route mutations,
-next-node changes, and current-mainline plan updates are persisted in
-`execution_frontier.json`; the heartbeat simply reloads that frontier on the
-next wakeup. Change the heartbeat automation only when the host continuation is
-missing, stale, or requires an official reset.
-
-Stable heartbeat reload is an execution gate, not a passive reminder. While
-`unfinished_current_node` is true or `advance_allowed` is false, the heartbeat
-must select the persisted `current_subnode` or `next_gate` for `active_node`
-and either execute that gate or record a concrete blocker. Heartbeat evidence
-must name the selected gate, action attempted, result, and updated completion
-guard. A heartbeat that only writes "next I will..." is a no-progress failure.
-
-Automated continuation is heartbeat-only lifecycle state. The route heartbeat
-cadence is fixed at one minute: route heartbeat automations use
-`rrule: FREQ=MINUTELY;INTERVAL=1`, and route/frontier evidence records
-`route_heartbeat_interval_minutes: 1`. Creating or repairing real heartbeat
-continuation writes lifecycle evidence with the heartbeat id, cadence, active
-state, and official host automation source. If the heartbeat cannot be created
-or verified, roll back to `manual-resume` before route execution or record a
-concrete blocker.
-
-On terminal closure for automated routes, write terminal/inactive route state,
-write the inactive lifecycle snapshot back to
+gate. Before claiming any of those states, FlowPilot scans
 `.flowpilot/runs/<run-id>/state.json`,
-`.flowpilot/runs/<run-id>/execution_frontier.json`, write lifecycle evidence,
-and then disable or delete the heartbeat automation. For manual-resume routes,
-record that no heartbeat automation exists to stop.
+`.flowpilot/runs/<run-id>/execution_frontier.json`, current packet/role
+ledgers, and latest manual-resume evidence. `scripts/flowpilot_lifecycle.py`
+provides a read-only inventory and required action list.
+
+Manual resume is a runtime reload gate, not a passive reminder. Route
+mutations, next-node changes, and current-mainline plan updates are persisted
+in `execution_frontier.json`; each resume/patrol reloads that frontier through
+the current runtime. While `unfinished_current_node` is true or
+`advance_allowed` is false, the runtime must select the persisted
+`current_subnode` or `next_gate` for `active_node` and either execute that gate
+or record a concrete blocker. Manual-resume evidence must name the selected
+gate, action attempted, result, and updated completion guard. A resume turn
+that only writes "next I will..." is a no-progress failure.
+
+The current runtime does not create, repair, register, restart, or disable
+scheduled continuation automation. If host policy prevents the required background or
+parallel role surfaces, FlowPilot records a structured blocker and stops
+instead of switching to a non-background route.
+
+On terminal closure, write terminal/inactive route state, write the inactive
+lifecycle snapshot back to `.flowpilot/runs/<run-id>/state.json` and
+`.flowpilot/runs/<run-id>/execution_frontier.json`, then write lifecycle
+evidence. There is no scheduled continuation cleanup step in the current
+contract.
 
 This lifecycle policy is not node-local. Ordinary checkpoints, node
-transitions, user-flow-diagram refreshes, and Codex plan syncs must not
-recreate, re-register, start, restart, or re-enable heartbeat automation unless
-they are explicitly in the lifecycle setup/repair gate.
+transitions, user-flow-diagram refreshes, and Codex plan syncs must continue
+through resume/patrol and current foreground duty only.
 
 ## Capability Gates
 
@@ -1081,9 +1062,8 @@ Required:
   challenge;
 - user flow diagram before route execution, fresh FlowPilot Route Sign display
   at each current-node entry, and visible node roadmap before formal chunks;
-- continuation readiness before behavior-bearing work: real one-minute route
-  heartbeat schedule and heartbeat health when supported, or manual-resume
-  packet freshness when unsupported;
+- continuation readiness before behavior-bearing work: manual-resume packet,
+  frontier, role-binding, and checkpoint freshness;
 - execution frontier and visible Codex plan sync before behavior-bearing work;
 - FlowGuard dependency, process design, and model checks before
   behavior-bearing work;
@@ -1229,10 +1209,9 @@ counts, reviewer replay, standard scenario replay, node acceptance plan
 coverage, and risk-or-blindspot triage with zero unresolved residual risks,
 completion self-interrogation finds no obvious high-value work remaining, and
 final report evidence exists. Open inspection issues, unrechecked repairs, or
-missing same-inspector recheck evidence block completion. For routes with
-automated heartbeat continuation, completion closure writes terminal lifecycle
-state back to local state/frontier/lifecycle evidence before stopping the
-heartbeat. Terminal closure also runs
+missing same-inspector recheck evidence block completion. Completion closure
+writes terminal lifecycle state back to local state/frontier/lifecycle
+evidence. Terminal closure also runs
 `.flowpilot/runs/<run-id>/terminal_closure_suite.json`, refreshing terminal
 state/frontier/ledger/checkpoint evidence, controlled-stop/completion notice
 status, automation lifecycle, role memory, and final user-report readiness.

@@ -45,7 +45,7 @@ def _flowpilot_runtime_relay_operation(
     if isinstance(active_holder_item, dict):
         holder_agent_id = str(active_holder_item.get('target_agent_id') or '').strip()
     args: list[str] = [
-        'resolve-role-assignment',
+        'dispatch-current-role',
         '--packet-id',
         packet_id,
         '--responsibility',
@@ -66,8 +66,8 @@ def _flowpilot_runtime_relay_operation(
     expected_writes = [item for item in expected_writes if item]
     return {
         'schema_version': 'flowpilot.runtime_delivery_operation.v1',
-        'operation_type': 'current_assignment_resolution',
-        'runtime_entrypoint': 'flowpilot_new.py resolve-role-assignment',
+        'operation_type': 'current_role_dispatch',
+        'runtime_entrypoint': 'flowpilot_new.py dispatch-current-role',
         'runtime_args': args,
         'packet_id': packet_id,
         'packet_family': packet_family,
@@ -76,13 +76,13 @@ def _flowpilot_runtime_relay_operation(
         'received_from_role': source_role,
         'assigned_to_role': target_role,
         'postcondition': postcondition,
-        'expected_delivery_kind': 'current_assignment',
+        'expected_delivery_kind': 'current_role_dispatch',
         'expected_writes': sorted(dict.fromkeys(expected_writes)),
         'active_holder_lease_required': False,
         'active_holder_lease_path': str(active_holder_item.get('active_holder_lease_path') or '') if isinstance(active_holder_item, dict) else '',
         'target_agent_id': '',
         'prior_target_agent_id_observed': holder_agent_id,
-        'lease_commit_requires_role_assignment_id': True,
+        'lease_commit_requires_role_assignment_id': False,
         'sealed_body_reads_allowed': False,
         'path_only_handoff_is_not_completion': True,
     }
