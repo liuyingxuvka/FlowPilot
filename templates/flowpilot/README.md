@@ -42,8 +42,8 @@ for review.
    host-supported, addressable, isolated role surfaces where the host and current
    tool policy permit them. Prior-route
    `agent_id` values are audit history only. If authorization is missing,
-   startup fails, or required same-task continuation cannot be recovered, pause
-   and ask or block the run.
+   startup fails, or required same-task continuation cannot be opened, record a
+   structured stop or blocker.
 10. PM issues a material-intake packet envelope/body pair; after router
    direct-dispatch, an authorized non-controller worker reads the body and
    writes the material scan result back to PM. PM records a package-result
@@ -235,9 +235,9 @@ for review.
   packet used to resume or replace unavailable requested helper responsibilities after manual_resume or
   manual resume.
 - `role_binding_memory/role_binding_recovery_report.template.json`: resume-time recovery report
-  proving every currently required requested responsibility was restored,
-  replaced, or blocked from current-run ledger and role memory before PM runway
-  work.
+  proving every currently required requested responsibility was resumed for the
+  same task, freshly replaced, or blocked from current-run ledger and role
+  memory before PM runway work.
 - `material_intake_packet.template.json`: authorized-worker material inventory,
   local skill and host capability inventory, and source-quality packet
   reviewed before PM planning.

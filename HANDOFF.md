@@ -340,12 +340,13 @@ and model-confidence overclaims must also fail.
 - Public invocation text should explicitly say: use FlowPilot full protocol,
   including permission for FlowPilot to request additional runtime role
   assistance where the host and current tool policy support it,
-  manual lifecycle resume continuation, and the startup hard gate. If requested
-  host role bindings are unavailable or not yet authorized, FlowPilot pauses and
-  asks. It continues with explicit fallback continuity only after user approval;
-  it blocks when neither requested role bindings nor user-authorized fallback
-  are recorded, when a required role cannot be recovered, or when a hard gate
-  cannot be satisfied.
+  manual lifecycle resume continuation, Runtime/Router startup mechanical
+  audit, and PM startup intake release. If requested host role bindings are
+  unavailable or not authorized, FlowPilot records a structured stop or blocker
+  instead of continuing through a foreground-only route. It blocks when
+  the requested current role surface cannot be opened, when the current packet
+  responsibility cannot be leased, or when the current mechanical or PM release
+  condition cannot be satisfied.
 - Role authority is now an explicit protocol gate. Startup self-interrogation,
   product-function architecture synthesis, route advancement, manual lifecycle
   resume, repair strategy, route mutation, and completion require

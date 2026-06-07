@@ -1,6 +1,6 @@
 # FlowPilot Meta-Process Preflight Findings
 
-Date: 2026-06-05
+Date: 2026-06-07
 
 ## Current Finding Set
 
@@ -33,10 +33,11 @@ Current source and runtime checks must preserve these boundaries:
   packets reach a worker. Existing or fresh worker results must return to the
   PM for a recorded package-result disposition before any PM-built formal
   gate package is released to the reviewer;
-- Cockpit UI unavailability is a startup display-surface fallback, not proof
-  that route execution is blocked. If the user requested Cockpit and the UI
-  cannot open, PM records the fallback and the reviewer independently verifies
-  the display evidence before PM opens the start gate;
+- startup display and status evidence are Runtime/Router mechanical evidence,
+  not a Reviewer startup gate. If the user-facing acknowledgement is disabled
+  or the host cannot open the current background or parallel role surface,
+  Runtime records the structured stop or blocker instead of continuing on a
+  foreground-only route;
 - old recovery scripts, prompts, and templates must remain absent from the
   active tree. `scripts/check_install.py` and
   `scripts/audit_local_install_sync.py` both enforce that absence.
@@ -53,8 +54,8 @@ skill. The current model boundary covers:
   workers;
 - manual lifecycle resume, foreground duty, and on-demand role assignment
   behavior;
-- display-surface startup behavior for Cockpit or chat route signs;
-- reviewer factual checks before PM start-gate release;
+- display and status startup behavior for current chat route signs;
+- Runtime/Router mechanical startup audit followed by PM startup intake release;
 - child-skill fidelity gates and capability routing;
 - planning-quality gates for PM planning profiles, child-skill standard
   contracts, route/node/work-packet projection, reviewer hard-blindspot
@@ -76,37 +77,45 @@ skill. The current model boundary covers:
 
 FlowGuard applicability decision: `use_flowguard`.
 
-Commands run during the 2026-05-04 cleanup and synchronization pass:
+Commands run during the 2026-06-07 strict current-contract maintenance pass:
 
 ```powershell
 python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"
-python -m py_compile scripts\audit_local_install_sync.py scripts\check_install.py scripts\install_flowpilot.py
-python scripts\check_install.py
-python simulations\run_meta_checks.py
-python simulations\run_capability_checks.py
-python simulations\run_startup_pm_review_checks.py
-python simulations\run_flowpilot_recursive_closure_reconciliation_checks.py
+python -c "import importlib.metadata as m; print(m.version('flowguard'))"
+python -m flowguard project-audit --root .
+python simulations\run_meta_checks.py --full --force
+python simulations\run_capability_checks.py --full --force
+python simulations\run_flowpilot_field_mesh_checks.py
+python simulations\run_flowpilot_field_contract_checks.py
+python simulations\run_flowpilot_model_test_alignment_checks.py
+python simulations\run_flowpilot_router_facade_split_checks.py
+python -m unittest -v tests.test_flowpilot_high_standard_control_flow
+python -m unittest -v tests.test_flowpilot_role_output_runtime
+python -m unittest -v tests.test_flowpilot_new_entrypoint
+python scripts\flowguard_project_topology.py build
+python scripts\flowguard_project_topology.py check
 python scripts\install_flowpilot.py --sync-repo-owned --json
 python scripts\audit_local_install_sync.py --json
 python scripts\install_flowpilot.py --check --json
-python scripts\smoke_flowpilot.py
+python scripts\check_install.py --json
 ```
 
 Results:
 
 - FlowGuard schema version: `1.0`;
+- FlowGuard package version: `0.40.12`;
 - install self-check: passed, including unsupported-path absence checks;
 - local install sync audit: passed, including source-fresh installed skill
   checks;
-- meta model: 564071 states, 584243 edges, zero invariant failures, zero stuck
-  states, zero nonterminating components;
-- capability model: 534893 states, 560353 edges, zero invariant failures, zero
-  stuck states, zero nonterminating components;
-- startup PM-review model: passed, including hazard detection and safe-graph
-  checks;
-- recursive closure reconciliation model: passed, including parent/module
-  traversal and dirty terminal-closure hazard detection;
-- smoke FlowPilot: passed.
+- meta and capability full parent checks passed with current layered evidence;
+- field mesh and field contract checks passed, including stale old-field
+  disposal;
+- model-test alignment passed with full source/test coverage for the registered
+  current surfaces;
+- router facade split checks passed after the current child-module split;
+- strict role output, high-standard control-flow, and entrypoint regressions
+  passed;
+- topology build and check passed.
 
 ## 2026-05-16 Small Pre-Release Maintenance Note
 

@@ -69,8 +69,9 @@ Expected:
 - FlowPilot release tooling cannot publish or package companion skills.
 - execution frontier and visible Codex plan sync labels are present before
   behavior-bearing work.
-- startup PM-review checks reject shadow routes, report-only reviewer bypasses,
-  wrong heartbeat cadence, and any work before PM startup opening.
+- startup runtime-intake checks reject shadow routes, report-only reviewer
+  startup bypasses, background-collaboration authorization gaps, and any work
+  before PM startup intake release.
 - card instruction coverage checks reject cards that lack role identity,
   `required_return`, `next_step_source`, router-return wording, or
   role-appropriate action guidance.
@@ -162,7 +163,7 @@ Expected:
 - release tooling simulation passes;
 - meta simulation passes;
 - capability simulation passes.
-- startup PM-review simulation passes.
+- startup runtime-intake simulation passes.
 - card instruction coverage simulation passes.
 
 ## Startup Runtime Intake Release Check
@@ -197,11 +198,11 @@ Expected:
 - continuing prior work has a current-run prior-work import packet;
 - `role_binding_ledger.json` is current for that route and required role memory
   packets are present and current;
-- continuation is either a complete automated bundle or explicit
-  `manual-resume` evidence with no automation claim;
-- startup role-binding evidence records either current-run live bindings for
-  runtime-required roles after a user decision or explicit user-authorized
-  fallback continuity;
+- continuation records current manual-resume or foreground-duty evidence with
+  no heartbeat automation claim;
+- startup role-binding evidence records current-run live bindings for
+  runtime-required roles after user authorization, or a structured stop/blocker
+  when the host cannot open the requested background or parallel role surface;
 - `startup_runtime_intake_release.startup_mechanical_audit` records a clean
   runtime mechanical audit;
 - `startup_runtime_intake_release.pm_startup_intake_release` records the
@@ -216,7 +217,7 @@ completion work. A route-local file without matching canonical
 state/frontier/role-binding/continuation evidence is a shadow route, not a
 recoverable partial pass.
 
-## Heartbeat Lifecycle Check
+## Lifecycle Currentness Check
 
 Run:
 
@@ -226,11 +227,11 @@ python scripts/flowpilot_lifecycle.py --root . --mode scan --write-record --json
 
 Expected:
 
-- the active route, latest heartbeat/manual-resume evidence, state, and
-  execution frontier are loaded;
-- automated routes record a one-minute heartbeat schedule and official
-  automation source when supported;
-- manual-resume routes record that no heartbeat automation exists;
+- the active route, latest manual-resume or foreground-duty evidence, state,
+  and execution frontier are loaded;
+- current routes record that no heartbeat automation is current authority;
+- stale Codex automations are reported as required pause actions rather than
+  accepted as FlowPilot liveness;
 - terminal routes write inactive lifecycle state back to state/frontier
   evidence before completion is claimed.
 
@@ -246,14 +247,14 @@ python scripts/flowpilot_lifecycle.py --root . --mode terminal --write-record --
 ```
 
 Use the mode that matches the lifecycle operation. The command is read-only
-except for writing `.flowpilot/runs/<run-id>/lifecycle/latest.json` and events. It does not
-change Codex automations. If it reports required actions, complete them through
-the official Codex app automation interface, then rerun the inventory before
-claiming pause, restart, or terminal cleanup.
+except for writing `.flowpilot/runs/<run-id>/lifecycle/latest.json` and events.
+It does not change Codex automations. If it reports stale automation pause
+actions, complete them through the official Codex app automation interface,
+then rerun the inventory before claiming pause, restart, or terminal cleanup.
 
 Expected:
 
-- Codex heartbeat automations, local state, execution frontier, and
-  heartbeat/manual-resume evidence are all represented;
+- local state, execution frontier, current lifecycle evidence, and any stale
+  Codex automation pause actions are all represented;
 - local state/frontier lifecycle fields agree with the intended operation;
 - `.flowpilot/runs/<run-id>/lifecycle/latest.json` exists for the latest lifecycle operation.

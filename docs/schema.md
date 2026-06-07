@@ -312,27 +312,25 @@ state for requested responsibilities. Each packet records:
 - latest rehydration result;
 - update timestamp.
 
-Live host context is not the source of truth. Heartbeat or manual resume may
-try to resume a stored agent id only when the current runtime ledger still
-requires that role binding. If a required live binding is unavailable,
-FlowPilot records the block and asks for a user decision before falling back to
-replacement from the latest role memory packet. Raw transcripts are optional
-evidence only; a compact structured memory packet is required before a
-replacement role can approve gates. Manual-resume recovery loads the ledger and
-memory packets, records which runtime-required roles were resumed through
-current background or parallel-agent bindings, replaced through a current
-binding transaction, or blocked, and only then asks the project manager for a
-completion-oriented runway from the current route position to project
-completion.
+Live host context is not the source of truth. Current role authority comes from
+the current-run role-binding ledger plus current host liveness evidence. Manual
+resume may reuse an `agent_id` only for same-task continuation when the ledger
+still requires that responsibility and `host_liveness_status` proves the role
+surface is active. Prior-route or earlier-task `agent_id` values are audit
+history only. If a required live binding is unavailable, FlowPilot records the
+current blocker or stop; it must not translate old role memory into current
+authority or continue through a foreground-only path. Raw transcripts are
+optional evidence only; a compact structured memory packet may seed a fresh
+current binding transaction, but that replacement cannot approve gates until
+Runtime/Router records active host liveness and current packet ownership.
 
-Valid current role statuses may represent live or memory-seeded continuity,
-including `active`, `idle`, `ready`, `running`, `restored`, `recovered`,
-`replaced_from_memory`, `memory_recovered`, or `memory_seeded`. `archived`,
-`paused`, `blocked`, `live_unavailable_memory_seeded`, and other
-terminal statuses cannot satisfy startup activation. FlowPilot must distinguish
-between "the role is recovered and authorized" and "a live role binding is
-currently addressable"; when the latter is unavailable, FlowPilot records a
-current-runtime blocker instead of using single-agent continuity.
+The canonical role ledger status is `active`, `idle`, `blocked`, or `closed`.
+Operation result fields may describe the current transaction, such as
+`opened_for_current_task`, `resumed_same_task_agent`, `replaced_from_memory`, or
+`blocked`, but only `active` host liveness on the current run can satisfy role
+readiness. FlowPilot must distinguish "current responsibility has a fresh
+addressable role surface" from "memory exists for this responsibility"; memory
+alone is never live-agent authority.
 
 ## Material Intake Packet
 
@@ -567,8 +565,9 @@ The frontier records:
   `advance_allowed`;
 - checks required before the next jump;
 - visible Codex plan projection for the current mainline;
-- role-binding ledger path, role memory root, rehydration status, restored/replaced
-  role lists, and latest project-manager decision, including the PM repair
+- role-binding ledger path, role memory root, rehydration status,
+  current-run resumed, replaced, or blocked responsibility lists, and latest
+  project-manager decision, including the PM repair
   strategy interrogation evidence path when a review failure mutates the route;
 - route mutation status;
 - current manual-resume launcher metadata and lifecycle evidence;
