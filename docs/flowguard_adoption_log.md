@@ -3,6 +3,139 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-06-07 FlowPilot Packet Result Contract Source Of Truth
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested a complete strict FlowPilot maintenance pass
+  after a live latest-FlowPilot run showed that generic task result gating,
+  high-standard contract packets, fake-AI success bodies, and field models were
+  not aligned.
+- Status: completed_validated_installed_synced_pushed
+- OpenSpec change: `enforce-packet-contract-source-of-truth`
+- Skill decision: predictive KB preflight, OpenSpec apply/explore routing,
+  FlowGuard existing-model preflight, DevelopmentProcessFlow,
+  FieldLifecycleMesh, Model-Test Alignment, TestMesh, and StructureMesh checks.
+- FlowGuard schema: `1.0`
+- FlowGuard package version: `0.40.12`
+
+### Model Files
+
+- `skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py`
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/run_flowpilot_field_contract_checks.py`
+- `simulations/flowpilot_field_contract_results.json`
+- `simulations/flowpilot_field_mesh_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+- `simulations/meta_layered_full_results.json`
+- `simulations/capability_layered_full_results.json`
+
+### Commands
+
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`;
+  returned schema `1.0`.
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`;
+  returned package `0.40.12`.
+- OK: `python -m flowguard project-audit --root .`; status pass.
+- OK: `openspec validate enforce-packet-contract-source-of-truth --strict`;
+  change passed.
+- OK: targeted `py_compile` for changed runtime, fake e2e, contract, and model
+  files.
+- OK: `python -m unittest -v tests.test_flowpilot_core_runtime
+  tests.test_flowpilot_high_standard_control_flow
+  tests.test_flowpilot_new_entrypoint
+  tests.test_flowpilot_fake_project_rehearsal
+  tests.test_flowpilot_field_contract_model`; 118 tests passed.
+- OK: `python -m unittest -v tests.test_flowpilot_lifecycle_guard`;
+  18 tests passed.
+- OK: `python -m unittest -v tests.router_runtime.control_blockers`;
+  23 tests passed.
+- OK: `python -m unittest -v tests.test_flowpilot_planning_quality`;
+  2 tests passed.
+- OK: `python -m unittest -v
+  tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_child_skill_gates_block_raw_inventory_and_controller_approval`.
+- OK: `python simulations/run_flowpilot_field_contract_checks.py`;
+  source alignment true, 12 packet result families modeled.
+- OK: `python simulations/run_flowpilot_field_mesh_checks.py`;
+  47,785 fields classified, production legacy references `0`, prompt legacy
+  references `0`, stale fixed-role gate references `0`.
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py
+  --json-out simulations/flowpilot_model_test_alignment_results.json`;
+  alignment and full coverage true, 942 covered surfaces, no gaps.
+- OK: `python simulations/run_meta_checks.py --full` and
+  `python simulations/run_capability_checks.py --full`; layered full parents
+  current.
+- OK: `python simulations/run_flowpilot_router_facade_split_checks.py` and
+  `python simulations/run_flowpilot_new_entrypoint_checks.py`.
+- OK: serialized `python scripts/flowguard_project_topology.py build` then
+  `python scripts/flowguard_project_topology.py check`; findings empty.
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`;
+  installed FlowPilot digest matches source digest
+  `6e1a261fb0ccfd9263151b68cc048b0a9f18a97984abdc9fa79c3c566d7ce890`.
+- OK: `python scripts/audit_local_install_sync.py --json`,
+  `python scripts/install_flowpilot.py --check --json`, and
+  `python scripts/check_install.py --json`.
+
+### Findings
+
+- Packet/result contract definitions now live in one shared source used by the
+  runtime, fake-AI rehearsal, FieldContract, FieldMesh, install checks, and
+  tests.
+- The high-standard contract success path remains top-level `requirements`.
+  Hidden generic `decision`, old `contract_rows`, and old `overall_contract`
+  fields are forbidden and reissued through the same current packet family with
+  explicit missing/forbidden field feedback.
+- Mechanical contract failures now record the contract family id, missing
+  fields, forbidden fields seen, failure reason, and minimal valid shape before
+  reissuing. Runtime owns those checks; Reviewer and FlowGuard remain semantic
+  and process reviewers.
+- Fake-AI contract-chaos rehearsal now injects old wrappers, missing fields,
+  forbidden old fields, and hidden-field overproduction so a broad fake e2e
+  green result cannot hide a real packet-contract mismatch.
+- The router no longer maps child-skill `skill_decisions` into
+  `selected_skills`; that old shape is now rejected by runtime tests.
+- Public README current wording and source version were updated to `v0.10.4`;
+  README no longer describes current patrol/resume behavior as heartbeat.
+
+### Counterexamples
+
+- high_standard_contract_hidden_generic_decision_masks_packet_contract
+- fake_ai_success_body_contains_fields_not_declared_by_packet_body
+- skill_standard_missing_obligations_defaulted_to_pass
+- child_skill_skill_decisions_translated_to_selected_skills
+- topology_check_parallelized_with_generated_result_refresh
+- installed_skill_omits_new_split_entry_or_contract_source_file
+
+### Friction Points
+
+- A full fake-project foreground run exceeded the practical foreground timeout,
+  so the normal full-path fake-project scenario was accepted from managed
+  background artifacts with exit code `0`; the timeout itself is not pass
+  evidence.
+- Topology build/check must be serialized after generated result refreshes. A
+  parallel run correctly produced a stale-source finding until rerun in order.
+- Historical CHANGELOG and adoption-log heartbeat mentions remain historical
+  records, not current prompt/runtime authority.
+
+### Skipped Or Deferred Steps
+
+- No release, tag, deploy, OpenSpec archive, destructive cleanup, or
+  compatibility shim was performed. GitHub push was performed for the completed
+  local git version.
+- No old packet/result shape was preserved as a current compatibility surface.
+
+### Risk Evidence Summary
+
+The current evidence supports the claim that the core-runtime packet/result
+families now use one current mechanical contract path, fake-AI rehearsals no
+longer hide undeclared success fields for the covered packet families, field
+models account for the current fields and forbidden old fields, local install
+contains the split entry modules and shared contract source, and broad
+model-test-code coverage is green. The claim is bounded to the tested current
+FlowPilot runtime surfaces and does not convert historical docs into current
+authority.
+
 ## 2026-05-27 FlowPilot Singleton Identity Authority Safeguards
 
 - Project: FlowGuardProjectAutopilot_20260430
