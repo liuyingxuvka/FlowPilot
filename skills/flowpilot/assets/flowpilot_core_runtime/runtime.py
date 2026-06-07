@@ -835,12 +835,13 @@ def _ensure_discovery_packet(ledger: dict[str, Any]) -> str:
                     "Record current-run material discovery and local skill inventory before route planning. "
                     "Skill inventory is candidate-only; material summaries are navigation, not acceptance proof."
                 ),
-                "required_sections": [
-                    "material_sources",
-                    "material_sufficiency",
-                    "local_skill_inventory",
-                    "candidate_only_skill_policy",
-                ],
+                "required_output": {
+                    "decision": "pass",
+                    "material_sources": ["sealed_startup_intake"],
+                    "material_sufficiency": "sufficient_for_route_planning",
+                    "local_skill_inventory": ["flowguard-development-process-flow"],
+                    "candidate_only_skill_policy": True,
+                },
             },
             indent=2,
             sort_keys=True,
@@ -869,13 +870,19 @@ def _ensure_skill_standard_packet(ledger: dict[str, Any]) -> str:
                     "Select only required or conditional child/process-support skills and convert each selected "
                     "skill into reviewer-checkable evidence obligations."
                 ),
-                "default_required_obligation": {
-                    "obligation_id": "skill-std-001",
-                    "skill": "flowguard-development-process-flow",
-                    "role_use": "pm_or_flowguard_operator",
-                    "use_context": "planning_validation_or_repair",
-                    "evidence_required": "current-run FlowGuard work order/report evidence",
-                    "closure_blocking": True,
+                "required_output": {
+                    "decision": "pass",
+                    "obligations": [
+                        {
+                            "obligation_id": "skill-std-001",
+                            "skill": "flowguard-development-process-flow",
+                            "classification": "required",
+                            "role_use": "flowguard_operator",
+                            "use_context": "node_validation",
+                            "evidence_required": "current-run FlowGuard work order/report evidence",
+                            "closure_blocking": True,
+                        }
+                    ],
                 },
             },
             indent=2,
@@ -2268,10 +2275,14 @@ def _default_blocker_class(packet_kind: str, owner_role: str, token: str) -> str
 def _parse_packet_outcome(packet: Mapping[str, Any], result: Mapping[str, Any]) -> dict[str, Any]:
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     packet_kind = str(envelope.get("packet_kind", "task"))
+    route_scope = str(envelope.get("route_scope") or "")
     owner_role = str(envelope.get("responsibility", ""))
     body = str(result.get("body", ""))
     payload = _strict_json_object_from_body(body)
-    token = _payload_outcome_token(payload, packet_kind) if payload else ""
+    if packet_kind == "task" and route_scope == "high_standard_contract" and isinstance(payload, Mapping) and isinstance(payload.get("requirements"), list):
+        token = "pass"
+    else:
+        token = _payload_outcome_token(payload, packet_kind) if payload else ""
     if token in _PASSING_OUTCOME_DECISIONS:
         decision = "pass"
     elif token in _BLOCKING_OUTCOME_DECISIONS:
@@ -5239,6 +5250,64 @@ def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result:
     return ""
 
 
+def _high_standard_contract_result_violation(result: Mapping[str, Any]) -> str:
+    payload = _strict_json_object_from_body(str(result.get("body", "")))
+    if not payload:
+        return "high_standard_contract result requires a current strict JSON object"
+    if "decision" in payload:
+        decision = _normalize_outcome_token(payload.get("decision"))
+        if decision in _BLOCKING_OUTCOME_DECISIONS and "requirements" not in payload:
+            return ""
+        return "high_standard_contract result must use requirements as authority; top-level pass decision is unsupported"
+    rows = payload.get("requirements")
+    if not isinstance(rows, list) or not rows:
+        return "high_standard_contract result requires top-level requirements list"
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, Mapping):
+            return f"high_standard_contract requirements[{index}] must be an object"
+        if not str(row.get("requirement_id") or "").strip():
+            return f"high_standard_contract requirements[{index}] requires requirement_id"
+        if not str(row.get("classification") or "").strip():
+            return f"high_standard_contract requirements[{index}] requires classification"
+        if not str(row.get("summary") or "").strip():
+            return f"high_standard_contract requirements[{index}] requires summary"
+        if not isinstance(row.get("closure_blocking"), bool):
+            return f"high_standard_contract requirements[{index}] requires boolean closure_blocking"
+    return ""
+
+
+def _discovery_result_violation(result: Mapping[str, Any]) -> str:
+    payload = _strict_json_object_from_body(str(result.get("body", "")))
+    if not payload:
+        return "discovery result requires a current strict JSON object"
+    decision = _normalize_outcome_token(payload.get("decision"))
+    if decision in _BLOCKING_OUTCOME_DECISIONS:
+        return ""
+    if not isinstance(payload.get("material_sources"), list) or not payload.get("material_sources"):
+        return "discovery result requires non-empty material_sources list"
+    if not str(payload.get("material_sufficiency") or "").strip():
+        return "discovery result requires material_sufficiency"
+    if not isinstance(payload.get("local_skill_inventory"), list):
+        return "discovery result requires local_skill_inventory list"
+    if payload.get("candidate_only_skill_policy") is not True:
+        return "discovery result requires candidate_only_skill_policy true"
+    return ""
+
+
+def _skill_standard_result_violation(result: Mapping[str, Any]) -> str:
+    payload = _strict_json_object_from_body(str(result.get("body", "")))
+    if not payload:
+        return "skill_standard result requires a current strict JSON object"
+    decision = _normalize_outcome_token(payload.get("decision"))
+    if decision in _BLOCKING_OUTCOME_DECISIONS:
+        return ""
+    try:
+        _parse_skill_obligations(str(result.get("body", "")))
+    except BlackBoxRuntimeError as exc:
+        return str(exc)
+    return ""
+
+
 def _pm_visible_summary_contract_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> str:
     if not _packet_requires_pm_visible_summary(packet):
         return ""
@@ -5259,12 +5328,18 @@ def _current_result_submission_contract_violation(
     packet_kind = str(envelope.get("packet_kind", "task"))
     route_scope = str(envelope.get("route_scope") or "")
     body = str(result.get("body", ""))
+    if packet_kind == "task" and route_scope == "high_standard_contract":
+        return _high_standard_contract_result_violation(result)
     outcome_violation = _strict_packet_outcome_contract_violation(packet, result)
     if outcome_violation:
         return outcome_violation
     summary_violation = _pm_visible_summary_contract_violation(packet, result)
     if summary_violation:
         return summary_violation
+    if packet_kind == "task" and route_scope == "discovery":
+        return _discovery_result_violation(result)
+    if packet_kind == "task" and route_scope == "skill_standard":
+        return _skill_standard_result_violation(result)
     if packet_kind == "task" and route_scope == "planning":
         try:
             route_plan = _parse_strict_route_plan(body)
@@ -5322,6 +5397,23 @@ def _block_result_and_reissue_current_packet_family(
     close_lease(ledger, str(lease["lease_id"]), "current_result_contract_blocked")
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     packet_kind = str(envelope.get("packet_kind", "task"))
+    route_scope = str(envelope.get("route_scope") or "")
+    if packet_kind == "task" and route_scope == "high_standard_contract":
+        required_result_body_fields = ["requirements"]
+    elif packet_kind == "task" and route_scope == "discovery":
+        required_result_body_fields = [
+            "decision",
+            "material_sources",
+            "material_sufficiency",
+            "local_skill_inventory",
+            "candidate_only_skill_policy",
+        ]
+    elif packet_kind == "task" and route_scope == "skill_standard":
+        required_result_body_fields = ["decision", "obligations"]
+    elif _packet_requires_pm_visible_summary(packet):
+        required_result_body_fields = ["decision", "pm_visible_summary"]
+    else:
+        required_result_body_fields = ["decision"]
     fresh_packet_id = issue_task_packet(
         ledger,
         str(envelope.get("responsibility") or "pm"),
@@ -5337,13 +5429,12 @@ def _block_result_and_reissue_current_packet_family(
                 "route_node_id": str(envelope.get("route_node_id") or ""),
                 "acceptance_criteria": list(envelope.get("acceptance_criteria") or []),
                 "contract": _copy_jsonable(envelope.get("output_contract") or {}),
-                "required_result_body_fields": ["decision", "pm_visible_summary"]
-                if _packet_requires_pm_visible_summary(packet)
-                else ["decision"],
+                "required_result_body_fields": required_result_body_fields,
                 "instruction": (
                     "Submit a fresh current-contract result for the same packet family. "
                     "Do not reuse obsolete field names, wrapper shapes, fallback evidence, or prior blocked text as passing evidence. "
-                    "When pm_visible_summary is required, the producing role must write it directly; runtime cannot synthesize it."
+                    "When pm_visible_summary is required, the producing role must write it directly; runtime cannot synthesize it. "
+                    "For high_standard_contract, submit the contract as top-level requirements and do not add a decision wrapper."
                 ),
             },
             indent=2,
@@ -5707,14 +5798,18 @@ def _record_preplanning_gate_closure(
         _event(ledger, "high_standard_contract_accepted", contract_id=contract_id, requirement_count=len(requirements))
         return
     if route_scope == "discovery":
+        discovery = _parse_discovery_result(body)
         discovery_id = _next_id(ledger, "discovery")
         ledger["preplanning_discovery"] = {
             "discovery_id": discovery_id,
             "status": "accepted",
             "source_packet_id": subject_packet.get("packet_id", ""),
             "source_result_id": result_id,
-            "material_current": True,
-            "skill_inventory_candidate_only": True,
+            "material_sources": discovery["material_sources"],
+            "material_sufficiency": discovery["material_sufficiency"],
+            "local_skill_inventory": discovery["local_skill_inventory"],
+            "material_current": discovery["material_current"],
+            "skill_inventory_candidate_only": discovery["skill_inventory_candidate_only"],
             "created_at": now_iso(),
         }
         _event(ledger, "discovery_record_accepted", discovery_id=discovery_id)
@@ -5748,68 +5843,100 @@ def _parse_high_standard_requirements(body: str) -> list[dict[str, Any]]:
     payload = _parse_json_object(body)
     rows = payload.get("requirements")
     if not isinstance(rows, list) or not rows:
-        rows = [
-            {
-                "requirement_id": "hsr-001",
-                "classification": "hard_current",
-                "summary": "Complete the user's requested outcome to the highest reasonable current-run standard.",
-            }
-        ]
+        raise BlackBoxRuntimeError("high_standard_contract result requires top-level requirements list")
     normalized: list[dict[str, Any]] = []
     for index, row in enumerate(rows, start=1):
         if not isinstance(row, dict):
-            continue
-        classification = str(row.get("classification") or "hard_current")
-        closure_blocking = classification in {"hard_current", "high_standard_current"} and not bool(row.get("waived", False))
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] must be an object")
+        requirement_id = str(row.get("requirement_id") or "").strip()
+        classification = str(row.get("classification") or "").strip()
+        summary = str(row.get("summary") or "").strip()
+        if not requirement_id:
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires requirement_id")
+        if not classification:
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires classification")
+        if not summary:
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires summary")
+        if not isinstance(row.get("closure_blocking"), bool):
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires boolean closure_blocking")
         normalized.append(
             {
-                "requirement_id": str(row.get("requirement_id") or f"hsr-{index:03d}"),
+                "requirement_id": requirement_id,
                 "classification": classification,
-                "summary": str(row.get("summary") or row.get("requirement") or f"High-standard requirement {index}"),
-                "closure_blocking": bool(row.get("closure_blocking", closure_blocking)),
-                "evidence_rule": str(row.get("evidence_rule") or "must be traced through route node evidence"),
+                "summary": summary,
+                "closure_blocking": bool(row["closure_blocking"]),
+                "evidence_rule": str(row.get("evidence_rule") or ""),
             }
         )
-    return normalized or [
-        {
-            "requirement_id": "hsr-001",
-            "classification": "hard_current",
-            "summary": "Complete the user's requested outcome to the highest reasonable current-run standard.",
-            "closure_blocking": True,
-            "evidence_rule": "must be traced through route node evidence",
-        }
-    ]
+    return normalized
+
+
+def _parse_discovery_result(body: str) -> dict[str, Any]:
+    payload = _parse_json_object(body)
+    sources = payload.get("material_sources")
+    if not isinstance(sources, list) or not sources:
+        raise BlackBoxRuntimeError("discovery result requires non-empty material_sources list")
+    source_texts = [str(item).strip() for item in sources if str(item).strip()]
+    if not source_texts:
+        raise BlackBoxRuntimeError("discovery result requires non-empty material_sources list")
+    material_sufficiency = str(payload.get("material_sufficiency") or "").strip()
+    if not material_sufficiency:
+        raise BlackBoxRuntimeError("discovery result requires material_sufficiency")
+    inventory = payload.get("local_skill_inventory")
+    if not isinstance(inventory, list):
+        raise BlackBoxRuntimeError("discovery result requires local_skill_inventory list")
+    skill_texts = [str(item).strip() for item in inventory if str(item).strip()]
+    if payload.get("candidate_only_skill_policy") is not True:
+        raise BlackBoxRuntimeError("discovery result requires candidate_only_skill_policy true")
+    return {
+        "material_sources": source_texts,
+        "material_sufficiency": material_sufficiency,
+        "local_skill_inventory": skill_texts,
+        "material_current": True,
+        "skill_inventory_candidate_only": True,
+    }
 
 
 def _parse_skill_obligations(body: str) -> list[dict[str, Any]]:
     payload = _parse_json_object(body)
-    rows = payload.get("obligations") or payload.get("selected_skills")
+    if "selected_skills" in payload:
+        raise BlackBoxRuntimeError("skill_standard result must use obligations; selected_skills is unsupported")
+    rows = payload.get("obligations")
     if not isinstance(rows, list) or not rows:
-        rows = [
-            {
-                "obligation_id": "skill-std-001",
-                "skill": "flowguard-development-process-flow",
-                "role_use": "pm_or_flowguard_operator",
-                "use_context": "planning_validation_or_repair",
-                "evidence_required": "current-run FlowGuard work order/report evidence",
-                "closure_blocking": True,
-            }
-        ]
+        raise BlackBoxRuntimeError("skill_standard result requires top-level obligations list")
     normalized: list[dict[str, Any]] = []
     for index, row in enumerate(rows, start=1):
         if not isinstance(row, dict):
-            continue
-        status = str(row.get("classification") or row.get("status") or "required")
-        blocking = status in {"required", "conditional"} and not bool(row.get("waived", False))
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] must be an object")
+        obligation_id = str(row.get("obligation_id") or "").strip()
+        skill = str(row.get("skill") or "").strip()
+        classification = str(row.get("classification") or "").strip()
+        role_use = str(row.get("role_use") or "").strip()
+        use_context = str(row.get("use_context") or "").strip()
+        evidence_required = str(row.get("evidence_required") or "").strip()
+        if not obligation_id:
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires obligation_id")
+        if not skill:
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires skill")
+        if not classification:
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires classification")
+        if not role_use:
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires role_use")
+        if not use_context:
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires use_context")
+        if not evidence_required:
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires evidence_required")
+        if not isinstance(row.get("closure_blocking"), bool):
+            raise BlackBoxRuntimeError(f"skill_standard obligations[{index}] requires boolean closure_blocking")
         normalized.append(
             {
-                "obligation_id": str(row.get("obligation_id") or row.get("skill_standard_id") or f"skill-std-{index:03d}"),
-                "skill": str(row.get("skill") or row.get("name") or "unspecified-skill"),
-                "classification": status,
-                "role_use": str(row.get("role_use") or "worker_or_formal_role"),
-                "use_context": str(row.get("use_context") or "execution_or_review"),
-                "evidence_required": str(row.get("evidence_required") or "current-run role skill use evidence"),
-                "closure_blocking": bool(row.get("closure_blocking", blocking)),
+                "obligation_id": obligation_id,
+                "skill": skill,
+                "classification": classification,
+                "role_use": role_use,
+                "use_context": use_context,
+                "evidence_required": evidence_required,
+                "closure_blocking": bool(row["closure_blocking"]),
             }
         )
     return normalized

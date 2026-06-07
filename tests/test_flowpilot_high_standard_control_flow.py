@@ -46,6 +46,52 @@ def _block_body(summary: str, *, blocker_class: str, recommended_resolution: str
     return json.dumps(payload)
 
 
+def _high_standard_contract_body() -> str:
+    return json.dumps(
+        {
+            "requirements": [
+                {
+                    "requirement_id": "hsr-001",
+                    "classification": "hard_current",
+                    "summary": "Complete the requested outcome.",
+                    "closure_blocking": True,
+                }
+            ],
+        }
+    )
+
+
+def _discovery_body() -> str:
+    return json.dumps(
+        {
+            "decision": "pass",
+            "material_sources": ["startup"],
+            "material_sufficiency": "sufficient_for_route_planning",
+            "local_skill_inventory": ["flowguard-development-process-flow"],
+            "candidate_only_skill_policy": True,
+        }
+    )
+
+
+def _skill_standard_body() -> str:
+    return json.dumps(
+        {
+            "decision": "pass",
+            "obligations": [
+                {
+                    "obligation_id": "skill-std-001",
+                    "skill": "flowguard-development-process-flow",
+                    "classification": "required",
+                    "role_use": "flowguard_operator",
+                    "use_context": "node_validation",
+                    "evidence_required": "current-run FlowGuard work order",
+                    "closure_blocking": True,
+                }
+            ],
+        }
+    )
+
+
 def _ledger() -> dict:
     ledger = runtime.new_ledger("Build target", "Finish only with high-standard evidence.")
     ledger["startup_intake"] = {
@@ -119,39 +165,17 @@ def _complete_preplanning(ledger: dict) -> None:
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="high_standard_contract")[0],
-        _pass_body(
-            "PM accepted the high-standard contract.",
-            requirements=[
-                {
-                    "requirement_id": "hsr-001",
-                    "classification": "hard_current",
-                    "summary": "Complete the requested outcome.",
-                }
-            ],
-        ),
+        _high_standard_contract_body(),
     )
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="discovery")[0],
-        _pass_body(
-            "PM accepted current discovery material.",
-            material_sources=["startup"],
-            local_skill_inventory=["flowguard-development-process-flow"],
-        ),
+        _discovery_body(),
     )
     _complete_task_chain(
         ledger,
         _open_packets(ledger, scope="skill_standard")[0],
-        _pass_body(
-            "PM accepted the skill standard contract.",
-            obligations=[
-                {
-                    "obligation_id": "skill-std-001",
-                    "skill": "flowguard-development-process-flow",
-                    "classification": "required",
-                }
-            ],
-        ),
+        _skill_standard_body(),
     )
 
 
@@ -264,7 +288,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
     def test_reviewer_pass_auto_closes_without_closure_flowguard_operator_packet(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        _complete_open_packet(ledger, packet_id, _pass_body("PM accepted the high-standard contract.", requirements=[]))
+        _complete_open_packet(ledger, packet_id, _high_standard_contract_body())
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], _flowguard_pass_body())
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
 
@@ -286,7 +310,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
     def test_system_validation_failure_routes_to_pm_repair(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
-        _complete_open_packet(ledger, packet_id, _pass_body("PM accepted the high-standard contract.", requirements=[]))
+        _complete_open_packet(ledger, packet_id, _high_standard_contract_body())
         runtime._ensure_review_packet_for_task_result(ledger, packet_id)
 
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
@@ -301,6 +325,157 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(active[0]["gate_kind"], "system_validation")
         self.assertEqual(active[0]["required_recheck_role"], "system")
         self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
+
+    def test_high_standard_contract_accepts_requirements_without_decision(self) -> None:
+        ledger = _ledger()
+        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
+
+        _complete_open_packet(ledger, packet_id, _high_standard_contract_body())
+
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_submitted")
+        result = ledger["results"][ledger["packets"][packet_id]["result_ids"][-1]]
+        self.assertNotIn("decision", json.loads(result["body"]))
+        self.assertTrue(_open_packets(ledger, kind="flowguard_check"))
+
+    def test_high_standard_contract_rejects_hidden_decision_wrapper(self) -> None:
+        ledger = _ledger()
+        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
+
+        _complete_open_packet(
+            ledger,
+            packet_id,
+            _pass_body(
+                "PM accepted the high-standard contract.",
+                requirements=[
+                    {
+                        "requirement_id": "hsr-001",
+                        "classification": "hard_current",
+                        "summary": "Complete the requested outcome.",
+                    }
+                ],
+            ),
+        )
+
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("top-level pass decision is unsupported", result["quarantine_reason"])
+        reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
+        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        self.assertEqual(reissue_body["required_result_body_fields"], ["requirements"])
+
+    def test_high_standard_contract_reissue_names_missing_requirements(self) -> None:
+        ledger = _ledger()
+        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
+
+        _complete_open_packet(ledger, packet_id, json.dumps({"overall_contract": "complete the work"}))
+
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("requires top-level requirements list", result["quarantine_reason"])
+        reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
+        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        self.assertEqual(reissue_body["required_result_body_fields"], ["requirements"])
+        self.assertIn("requirements", reissue_body["blocked_reason"])
+
+    def test_high_standard_contract_requires_closure_blocking_field(self) -> None:
+        ledger = _ledger()
+        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
+
+        _complete_open_packet(
+            ledger,
+            packet_id,
+            json.dumps(
+                {
+                    "requirements": [
+                        {
+                            "requirement_id": "hsr-001",
+                            "classification": "hard_current",
+                            "summary": "Complete the requested outcome.",
+                        }
+                    ]
+                }
+            ),
+        )
+
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertIn("requires boolean closure_blocking", result["quarantine_reason"])
+
+    def test_discovery_reissue_names_missing_required_fields(self) -> None:
+        ledger = _ledger()
+        _complete_task_chain(
+            ledger,
+            _open_packets(ledger, scope="high_standard_contract")[0],
+            _high_standard_contract_body(),
+        )
+        packet_id = _open_packets(ledger, scope="discovery")[0]
+
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass", "material_sources": ["startup"]}))
+
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("material_sufficiency", result["quarantine_reason"])
+        reissue_id = _open_packets(ledger, scope="discovery")[0]
+        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        self.assertEqual(
+            reissue_body["required_result_body_fields"],
+            [
+                "decision",
+                "material_sources",
+                "material_sufficiency",
+                "local_skill_inventory",
+                "candidate_only_skill_policy",
+            ],
+        )
+
+    def test_skill_standard_rejects_default_and_selected_skills_paths(self) -> None:
+        ledger = _ledger()
+        _complete_task_chain(
+            ledger,
+            _open_packets(ledger, scope="high_standard_contract")[0],
+            _high_standard_contract_body(),
+        )
+        _complete_task_chain(ledger, _open_packets(ledger, scope="discovery")[0], _discovery_body())
+        packet_id = _open_packets(ledger, scope="skill_standard")[0]
+
+        _complete_open_packet(ledger, packet_id, json.dumps({"decision": "pass"}))
+
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertIn("requires top-level obligations list", result["quarantine_reason"])
+        reissue_id = _open_packets(ledger, scope="skill_standard")[0]
+        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        self.assertEqual(reissue_body["required_result_body_fields"], ["decision", "obligations"])
+
+        _complete_open_packet(
+            ledger,
+            reissue_id,
+            json.dumps(
+                {
+                    "decision": "pass",
+                    "selected_skills": [
+                        {
+                            "skill": "flowguard-development-process-flow",
+                            "classification": "required",
+                        }
+                    ],
+                }
+            ),
+        )
+
+        second_packet = ledger["packets"][reissue_id]
+        self.assertEqual(second_packet["status"], "superseded_after_repair")
+        second_result = ledger["results"][second_packet["superseded_by_result_id"]]
+        self.assertIn("selected_skills is unsupported", second_result["quarantine_reason"])
 
     def test_preplanning_gates_run_before_pm_planning(self) -> None:
         ledger = _ledger()
@@ -633,16 +808,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_open_packet(
             ledger,
             packet_id,
-            _pass_body(
-                "PM accepted the high-standard contract draft.",
-                requirements=[
-                    {
-                        "requirement_id": "hsr-001",
-                        "classification": "hard_current",
-                        "summary": "Initial contract draft.",
-                    }
-                ],
-            ),
+            _high_standard_contract_body(),
         )
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], _flowguard_pass_body())
 
@@ -678,7 +844,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ]
         self.assertEqual(len(repair_packets), 1)
 
-        _complete_open_packet(ledger, repair_packets[0], _pass_body("PM completed the repair packet."))
+        _complete_open_packet(ledger, repair_packets[0], _high_standard_contract_body())
         _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], _flowguard_pass_body())
         _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
 

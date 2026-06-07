@@ -74,6 +74,16 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
         self.assertIn("dead_lease_advances_node", recursive_hazards)
         self.assertIn("mutation_without_frontier_rewrite", recursive_hazards)
 
+    def test_fake_rehearsal_high_standard_contract_matches_packet_contract(self) -> None:
+        high_standard_body = json.loads(fake_project_cli._high_standard_contract_body())
+        self.assertIn("requirements", high_standard_body)
+        self.assertNotIn("decision", high_standard_body)
+        self.assertNotIn("pm_visible_summary", high_standard_body)
+
+        skill_standard_body = json.loads(fake_project_cli._skill_standard_body())
+        self.assertIn("obligations", skill_standard_body)
+        self.assertNotIn("selected_skills", skill_standard_body)
+
     def test_open_current_packet_inputs_uses_authorized_reads_from_sealed_packet(self) -> None:
         calls: list[tuple[str, ...]] = []
 

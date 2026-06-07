@@ -18,6 +18,7 @@ if str(ASSETS) not in sys.path:
 
 flowpilot_new = importlib.import_module("flowpilot_new")
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
+fake_e2e = importlib.import_module("flowpilot_core_runtime.fake_e2e")
 run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
 entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entrypoint_checks")
 install_check_common = importlib.import_module("scripts.install_checks.common")
@@ -29,7 +30,38 @@ def role_result_body(summary: str, **fields: object) -> str:
     return json.dumps(payload)
 
 
+def high_standard_contract_body() -> str:
+    return json.dumps(
+        {
+            "requirements": [
+                {
+                    "requirement_id": "hsr-001",
+                    "classification": "hard_current",
+                    "summary": "Complete the requested outcome.",
+                    "closure_blocking": True,
+                }
+            ]
+        }
+    )
+
+
 class FlowPilotNewEntrypointTests(unittest.TestCase):
+    def test_fake_e2e_high_standard_contract_matches_packet_contract(self) -> None:
+        body = json.loads(
+            fake_e2e._body_for_packet(
+                {
+                    "envelope": {
+                        "packet_kind": "task",
+                        "route_scope": "high_standard_contract",
+                    }
+                }
+            )
+        )
+
+        self.assertIn("requirements", body)
+        self.assertNotIn("decision", body)
+        self.assertNotIn("pm_visible_summary", body)
+
     def test_split_entrypoint_modules_are_install_required(self) -> None:
         required = set(install_check_common.REQUIRED_FILES)
 
@@ -339,7 +371,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body=role_result_body("PM result is not enough for closure."),
+                body=high_standard_contract_body(),
             )
             self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
             self.assertEqual(after_pm["next_action"]["responsibility"], "flowguard_operator")
@@ -477,7 +509,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
-                body=role_result_body("PM result"),
+                body=high_standard_contract_body(),
             )
 
             self.assertEqual(after_pm["next_action"]["action_type"], "resolve_role_assignment")
@@ -539,7 +571,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=pm_packet,
                 responsibility="pm",
                 agent_id="pm-agent",
-                body=role_result_body("PM result"),
+                body=high_standard_contract_body(),
             )
             ledger = run_shell.load_run_ledger(shell)
             flowguard_packet = self._open_packet_by_kind(ledger, "flowguard_check")

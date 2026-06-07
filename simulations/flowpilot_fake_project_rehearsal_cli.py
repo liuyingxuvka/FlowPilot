@@ -409,8 +409,6 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
 def _high_standard_contract_body() -> str:
     return json.dumps(
         {
-            "decision": "pass",
-            "pm_visible_summary": ["PM recorded current high-standard requirements for the fake project."],
             "requirements": [
                 {
                     "requirement_id": "hsr-001",

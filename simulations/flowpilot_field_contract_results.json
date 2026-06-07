@@ -381,6 +381,176 @@
       "validator": "contract_self_check_metadata"
     },
     {
+      "field": "preplanning.high_standard_contract.requirements[]",
+      "layer": "middle",
+      "logical_field": "high_standard_requirements",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_top_level_requirements_list_without_decision_wrapper",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "high_standard_contract_flowguard_review",
+      "validator": "_high_standard_contract_result_violation"
+    },
+    {
+      "field": "preplanning.high_standard_contract.requirements[].requirement_id",
+      "layer": "leaf",
+      "logical_field": "high_standard_requirement_id",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "high_standard_requirement_binding",
+      "validator": "_parse_high_standard_requirements"
+    },
+    {
+      "field": "preplanning.high_standard_contract.requirements[].classification",
+      "layer": "leaf",
+      "logical_field": "high_standard_requirement_classification",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "current_requirement_classification",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "high_standard_requirement_binding",
+      "validator": "_parse_high_standard_requirements"
+    },
+    {
+      "field": "preplanning.high_standard_contract.requirements[].summary",
+      "layer": "leaf",
+      "logical_field": "high_standard_requirement_summary",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "high_standard_requirement_binding",
+      "validator": "_parse_high_standard_requirements"
+    },
+    {
+      "field": "preplanning.high_standard_contract.requirements[].closure_blocking",
+      "layer": "leaf",
+      "logical_field": "high_standard_requirement_closure_blocking",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "boolean",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "high_standard_requirement_binding",
+      "validator": "_parse_high_standard_requirements"
+    },
+    {
+      "field": "preplanning.discovery.material_sources",
+      "layer": "leaf",
+      "logical_field": "preplanning_material_sources",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_list",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "preplanning_discovery_acceptance",
+      "validator": "_parse_discovery_result"
+    },
+    {
+      "field": "preplanning.discovery.material_sufficiency",
+      "layer": "leaf",
+      "logical_field": "preplanning_material_sufficiency",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "preplanning_discovery_acceptance",
+      "validator": "_parse_discovery_result"
+    },
+    {
+      "field": "preplanning.discovery.local_skill_inventory",
+      "layer": "leaf",
+      "logical_field": "preplanning_local_skill_inventory",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "list",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "preplanning_discovery_acceptance",
+      "validator": "_parse_discovery_result"
+    },
+    {
+      "field": "preplanning.discovery.candidate_only_skill_policy",
+      "layer": "leaf",
+      "logical_field": "preplanning_candidate_only_skill_policy",
+      "owner": "flowpilot_core_runtime",
+      "required_value": true,
+      "status": "mechanical_runtime_owned",
+      "unlocks": "preplanning_discovery_acceptance",
+      "validator": "_parse_discovery_result"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[]",
+      "layer": "middle",
+      "logical_field": "skill_standard_obligations",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_top_level_obligations_list",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_contract_acceptance",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].obligation_id",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_id",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].skill",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_skill",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].classification",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_classification",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].role_use",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_role_use",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].use_context",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_use_context",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].evidence_required",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_evidence_required",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "non_empty_string",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
+      "field": "preplanning.skill_standard.obligations[].closure_blocking",
+      "layer": "leaf",
+      "logical_field": "skill_standard_obligation_closure_blocking",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "boolean",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "skill_standard_obligation_binding",
+      "validator": "_parse_skill_obligations"
+    },
+    {
       "field": "control_blocker.target_role_repair_instruction",
       "layer": "leaf",
       "logical_field": "repair_instruction",
@@ -514,6 +684,21 @@
     {
       "disposition": "replaced_by_startup_runtime_release_status",
       "field": "user_intake.metadata.startup_gate_status",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_missing_current_obligations",
+      "field": "preplanning.skill_standard.default_required_obligation",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_old_skill_standard_shape",
+      "field": "preplanning.skill_standard.selected_skills",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_hidden_generic_decision_wrapper",
+      "field": "preplanning.high_standard_contract.decision",
       "status": "forbidden_legacy"
     }
   ],
@@ -864,6 +1049,9 @@
     "boot_action.open_current_background_collaboration",
     "boot_action.start_role_slots",
     "payload.current_background_role_bindings",
+    "preplanning.high_standard_contract.decision",
+    "preplanning.skill_standard.default_required_obligation",
+    "preplanning.skill_standard.selected_skills",
     "startup_answers.heartbeat_requested",
     "startup_answers.runtime_role_assistance_authorized",
     "startup_answers.runtime_role_assistances",

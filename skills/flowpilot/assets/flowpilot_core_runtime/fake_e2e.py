@@ -61,7 +61,6 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
     if kind == "task" and scope == "high_standard_contract":
         return json.dumps(
             {
-                "decision": "pass",
                 "requirements": [
                     {
                         "requirement_id": "hsr-001",

@@ -20087,6 +20087,103 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-high-standard-contract-gate-miss-20260607 - High-standard preplanning contract gate repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user reported a live latest-FlowPilot run blocked because the
+  high-standard contract packet asked the PM for `requirements`, while the
+  generic runtime result gate required a top-level `decision` before the
+  high-standard parser could accept the contract.
+- Status: completed_validated_installed_synced
+- Skill decision: predictive KB preflight, FlowGuard model-miss review,
+  DevelopmentProcessFlow, FieldLifecycleMesh, Model-Test Alignment.
+- Started: 2026-06-07T10:07:18+02:00
+- Ended: 2026-06-07T10:07:18+02:00
+
+### Model Files
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/flowpilot_field_contract_results.json`
+- `simulations/flowpilot_field_mesh_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py`
+- `simulations/flowpilot_fake_project_rehearsal_cli.py`
+- `tests/test_flowpilot_high_standard_control_flow.py`
+- `tests/test_flowpilot_new_entrypoint.py`
+- `tests/test_flowpilot_fake_project_rehearsal.py`
+- `tests/test_flowpilot_field_contract_model.py`
+
+### Findings
+- The previous fake-AI path returned a hidden top-level `decision` for
+  `high_standard_contract`, so tests satisfied the generic gate without proving
+  that the real packet body instructed the role to produce that field.
+- High-standard contract success now uses top-level `requirements` as the only
+  authority. Hidden top-level pass decisions are rejected.
+- Formal blocking decisions remain the current failure exit for the same packet
+  family.
+- Discovery and skill-standard preplanning packets now have strict
+  runtime-owned field checks instead of accepting missing fields or generated
+  default obligations.
+- `selected_skills` and `default_required_obligation` are forbidden legacy
+  surfaces for this current core-runtime skill-standard packet family.
+- FieldContract and FieldMesh now catalog the preplanning requirement,
+  discovery, and obligation fields and bind them to runtime validators.
+
+### Counterexamples
+- `high_standard_contract_hidden_decision_pass_in_fake_ai`
+- `specialized_parser_never_runs_after_generic_decision_gate`
+- `missing_requirements_reissued_as_decision_required`
+- `skill_standard_missing_obligations_defaulted_to_pass`
+- `fake_rehearsal_contract_shape_diverges_from_packet_body`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK,
+  schema `1.0`.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`
+  -> OK, package `0.40.12`.
+- `python -m flowguard project-audit --root .` -> OK.
+- `python -m py_compile ...` -> OK.
+- `python -m unittest -v tests.test_flowpilot_high_standard_control_flow` -> OK,
+  27 tests.
+- `python -m unittest -v tests.test_flowpilot_new_entrypoint` -> OK, 18 tests.
+- `python -m unittest -v tests.test_flowpilot_new_entrypoint tests.test_flowpilot_fake_project_rehearsal` -> OK, 22 tests.
+- `python -m unittest -v tests.test_flowpilot_fake_project_rehearsal tests.test_flowpilot_synthetic_agent_coverage_matrix` -> OK, 9 tests.
+- `python -m unittest -v tests.test_flowpilot_field_contract_model tests.test_flowpilot_field_mesh_model` -> OK, 8 tests.
+- `python simulations\run_flowpilot_field_contract_checks.py --json-out simulations\flowpilot_field_contract_results.json` -> OK.
+- `python simulations\run_flowpilot_field_mesh_checks.py --json-out simulations\flowpilot_field_mesh_results.json` -> OK.
+- `python simulations\run_flowpilot_new_entrypoint_checks.py` -> OK.
+- `python simulations\run_flowpilot_model_test_alignment_checks.py` -> OK,
+  `alignment_ok=true`, `full_coverage_ok=true`, findings empty.
+- `python scripts\flowguard_project_topology.py build` -> OK.
+- `python scripts\flowguard_project_topology.py check` -> OK.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` -> OK.
+- `python scripts\install_flowpilot.py --check --json` -> OK.
+- `python scripts\audit_local_install_sync.py --json` -> OK.
+- `python scripts\check_install.py --json` -> OK.
+- `git diff --check` -> OK, no whitespace errors.
+
+### Skipped Steps
+- No release, tag, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports the scoped claim that high-standard preplanning success no
+  longer depends on a hidden generic `decision` wrapper and that the three
+  preplanning packets use runtime-owned mechanical field gates before
+  FlowGuard/reviewer quality review.
+- This does not prove every historical router `selected_skills` surface is
+  removed. It proves this current core-runtime skill-standard packet no longer
+  accepts it as a success shape.
+
+### Next Actions
+- Keep fake AI success bodies contract-parity tested against packet
+  `required_output` for specialized packets.
+- For future specialized packet families, add a negative test for hidden
+  generic pass wrappers before accepting broad e2e evidence.
+
+
 ## flowpilot-startup-path-alignment-mta-closure-20260607
 
 - Project: FlowGuardProjectAutopilot_20260430

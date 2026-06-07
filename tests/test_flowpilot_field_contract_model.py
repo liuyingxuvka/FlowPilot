@@ -49,6 +49,23 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("packet_result.packet_id", fields)
         self.assertIn("packet_result.result_id", fields)
         self.assertIn("output_contract.missing_required_fields", fields)
+        self.assertIn("preplanning.high_standard_contract.requirements[]", fields)
+        self.assertIn("preplanning.high_standard_contract.requirements[].requirement_id", fields)
+        self.assertIn("preplanning.high_standard_contract.requirements[].classification", fields)
+        self.assertIn("preplanning.high_standard_contract.requirements[].summary", fields)
+        self.assertIn("preplanning.high_standard_contract.requirements[].closure_blocking", fields)
+        self.assertIn("preplanning.discovery.material_sources", fields)
+        self.assertIn("preplanning.discovery.material_sufficiency", fields)
+        self.assertIn("preplanning.discovery.local_skill_inventory", fields)
+        self.assertIn("preplanning.discovery.candidate_only_skill_policy", fields)
+        self.assertIn("preplanning.skill_standard.obligations[]", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].obligation_id", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].skill", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].classification", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].role_use", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].use_context", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].evidence_required", fields)
+        self.assertIn("preplanning.skill_standard.obligations[].closure_blocking", fields)
         self.assertIn("control_blocker.target_role_repair_instruction", fields)
         self.assertIn("reviewer_quality_review.decision", fields)
         self.assertIn("flowguard_process_review.target_result_id", fields)
@@ -82,6 +99,9 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             fields,
         )
         self.assertNotIn("user_intake.metadata.startup_gate_status", fields)
+        self.assertNotIn("preplanning.skill_standard.default_required_obligation", fields)
+        self.assertNotIn("preplanning.skill_standard.selected_skills", fields)
+        self.assertNotIn("preplanning.high_standard_contract.decision", fields)
 
     def test_field_status_catalog_marks_retired_and_forbidden_legacy(self) -> None:
         self.assertEqual(
@@ -100,6 +120,10 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertTrue(
             all(entry["status"] == "forbidden_legacy" for entry in model.FORBIDDEN_LEGACY_FIELD_CONTRACTS)
         )
+        forbidden = {entry["field"] for entry in model.FORBIDDEN_LEGACY_FIELD_CONTRACTS}
+        self.assertIn("preplanning.skill_standard.default_required_obligation", forbidden)
+        self.assertIn("preplanning.skill_standard.selected_skills", forbidden)
+        self.assertIn("preplanning.high_standard_contract.decision", forbidden)
 
     def test_field_contract_model_blocks_old_field_translation_and_fixed_role_gates(self) -> None:
         hazards = runner._check_hazards()
