@@ -1374,6 +1374,8 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
                 ],
             }
         ]
+        with self.assertRaisesRegex(router.RouterError, "selected_skills"):
+            router.record_external_event(root, "pm_writes_child_skill_selection", {"skill_decisions": safe_selected_skill})
         router.record_external_event(root, "pm_writes_child_skill_selection", {"selected_skills": safe_selected_skill})
 
         self.deliver_expected_card(root, "pm.child_skill_gate_manifest")

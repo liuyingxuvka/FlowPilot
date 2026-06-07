@@ -16,9 +16,10 @@ from pathlib import Path
 from typing import Any, Mapping
 
 try:  # pragma: no cover - direct module test harness path.
-    from . import control_surface
+    from . import control_surface, packet_result_contracts
 except ImportError:  # pragma: no cover
     import control_surface  # type: ignore
+    import packet_result_contracts  # type: ignore
 
 
 SCHEMA_VERSION = "black_box_flowpilot_runtime.v1"
@@ -134,7 +135,6 @@ EVENT_FAMILY_BY_TYPE = {
     "semantic_blocker_recorded": "repair",
     "semantic_blocker_cleared": "repair",
     "pm_repair_decision_recorded": "repair",
-    "pm_repair_decision_blocked": "repair",
     "pm_decision_gate_staged": "repair",
     "pm_decision_gate_applied": "repair",
     "staged_effect_committed": "repair",
@@ -2185,7 +2185,18 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
                 "schema_version": "black_box_flowpilot.pm_disposition_packet.v1",
                 "route_node_id": node_id,
                 "subject_packet_id": subject_packet_id,
-                "instruction": "Return a PM disposition. Default valid decision is accept; other valid decisions are repair_current_scope, redesign_route, block, or stop.",
+                "contract_family_id": "pm_disposition.node_pm_disposition",
+                "required_result_body_fields": ["decision", "reason"],
+                "forbidden_fields": ["summary", "pm_disposition_summary"],
+                "minimal_valid_shape": {
+                    "decision": "accept",
+                    "reason": "Concrete PM disposition reason.",
+                },
+                "instruction": (
+                    "Return exactly one structured JSON object for the PM disposition. "
+                    "Default valid decision is accept; other valid decisions are repair_current_scope, redesign_route, block, or stop. "
+                    "Use top-level reason; do not use summary or pm_disposition_summary."
+                ),
             },
             indent=2,
             sort_keys=True,
@@ -2574,7 +2585,7 @@ def _current_pm_repair_decision_packet_reusable(packet: Mapping[str, Any]) -> bo
     status = str(packet.get("status") or "")
     if status in _NONCURRENT_PACKET_STATUSES or status in _CURRENT_PACKET_BLOCKING_STATUSES:
         return False
-    if status in {"pm_repair_decision_blocked", "result_blocked"}:
+    if status == "result_blocked":
         return False
     return status in {"open", "assigned", "acknowledged", "result_submitted"}
 
@@ -2934,6 +2945,17 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 },
                 "repeat_context": repeat_context,
                 "allowed_decisions": sorted(_PM_REPAIR_DECISIONS),
+                "contract_family_id": "pm_repair_decision.pm_repair_decision",
+                "required_result_body_fields": ["decision", "reason"],
+                "forbidden_fields": ["authority", "summary", "repair_decision", "pm_repair_decision"],
+                "conditional_required_fields": {
+                    "redesign_route": ["route_plan"],
+                    "waive_with_authority": ["authority_ref"],
+                },
+                "minimal_valid_shape": {
+                    "decision": "repair_current_scope",
+                    "reason": "Concrete PM repair reason.",
+                },
                 "repair_decision_contract": {
                     "pm_must_choose_allowed_decision": True,
                     "required_json_shape": {"decision": "<allowed_decision>", "reason": "<brief reason>"},
@@ -5252,121 +5274,344 @@ _OUTCOME_ALIAS_KEYS = {
 }
 
 
-def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> str:
+@dataclass(frozen=True)
+class PacketResultContractCheck:
+    ok: bool
+    contract_family_id: str
+    blocked_reason: str = ""
+    missing_required_fields: tuple[str, ...] = ()
+    forbidden_fields_seen: tuple[str, ...] = ()
+    required_result_body_fields: tuple[str, ...] = ()
+    minimal_valid_shape: Mapping[str, Any] | None = None
+
+    def to_json(self) -> dict[str, Any]:
+        return {
+            "ok": self.ok,
+            "contract_family_id": self.contract_family_id,
+            "blocked_reason": self.blocked_reason,
+            "missing_required_fields": list(self.missing_required_fields),
+            "forbidden_fields_seen": list(self.forbidden_fields_seen),
+            "required_result_body_fields": list(self.required_result_body_fields),
+            "minimal_valid_shape": _copy_jsonable(self.minimal_valid_shape or {}),
+        }
+
+
+def _packet_result_family_id(packet: Mapping[str, Any]) -> str:
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
-    packet_kind = str(envelope.get("packet_kind", "task"))
-    if packet_kind in {"pm_repair_decision", "pm_disposition"}:
-        return ""
+    return packet_result_contracts.packet_result_family_id(envelope)
+
+
+_SKILL_STANDARD_REQUIRED_CHILD_FIELDS = (
+    "obligation_id",
+    "skill",
+    "classification",
+    "role_use",
+    "use_context",
+    "evidence_required",
+    "closure_blocking",
+)
+
+
+def _packet_result_required_fields(packet: Mapping[str, Any]) -> tuple[str, ...]:
+    return packet_result_contracts.required_fields_for_family(_packet_result_family_id(packet))
+
+
+def _packet_result_forbidden_fields(packet: Mapping[str, Any]) -> tuple[str, ...]:
+    return packet_result_contracts.forbidden_fields_for_family(_packet_result_family_id(packet))
+
+
+def _packet_result_minimal_valid_shape(packet: Mapping[str, Any]) -> dict[str, Any]:
+    return packet_result_contracts.minimal_valid_shape_for_family(_packet_result_family_id(packet))
+
+
+def _contract_pass(packet: Mapping[str, Any]) -> PacketResultContractCheck:
+    return PacketResultContractCheck(
+        ok=True,
+        contract_family_id=_packet_result_family_id(packet),
+        required_result_body_fields=_packet_result_required_fields(packet),
+        minimal_valid_shape=_packet_result_minimal_valid_shape(packet),
+    )
+
+
+def _contract_block(
+    packet: Mapping[str, Any],
+    reason: str,
+    *,
+    missing_required_fields: tuple[str, ...] | list[str] = (),
+    forbidden_fields_seen: tuple[str, ...] | list[str] = (),
+    required_result_body_fields: tuple[str, ...] | list[str] | None = None,
+) -> PacketResultContractCheck:
+    return PacketResultContractCheck(
+        ok=False,
+        contract_family_id=_packet_result_family_id(packet),
+        blocked_reason=reason,
+        missing_required_fields=tuple(dict.fromkeys(str(field) for field in missing_required_fields if str(field))),
+        forbidden_fields_seen=tuple(dict.fromkeys(str(field) for field in forbidden_fields_seen if str(field))),
+        required_result_body_fields=tuple(required_result_body_fields or _packet_result_required_fields(packet)),
+        minimal_valid_shape=_packet_result_minimal_valid_shape(packet),
+    )
+
+
+def _top_level_missing_fields(payload: Mapping[str, Any], required_fields: tuple[str, ...]) -> tuple[str, ...]:
+    missing: list[str] = []
+    for field in required_fields:
+        value = payload.get(field)
+        if value is None or value == "":
+            missing.append(field)
+    return tuple(missing)
+
+
+def _top_level_forbidden_fields(payload: Mapping[str, Any], forbidden_fields: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(field for field in forbidden_fields if field in payload)
+
+
+def _json_payload_contract_check(packet: Mapping[str, Any], result: Mapping[str, Any]) -> tuple[dict[str, Any] | None, PacketResultContractCheck | None]:
     payload = _strict_json_object_from_body(str(result.get("body", "")))
     if not payload:
-        return "packet result requires a current strict JSON object"
+        return None, _contract_block(
+            packet,
+            f"{_packet_result_family_id(packet)} result requires a current strict JSON object",
+            missing_required_fields=_packet_result_required_fields(packet),
+        )
+    forbidden = _top_level_forbidden_fields(payload, _packet_result_forbidden_fields(packet))
+    missing = _top_level_missing_fields(payload, _packet_result_required_fields(packet))
+    if forbidden or missing:
+        pieces: list[str] = []
+        if missing:
+            pieces.append("missing required field(s): " + ", ".join(missing))
+        if forbidden:
+            pieces.append("forbidden field(s): " + ", ".join(forbidden))
+        return payload, _contract_block(
+            packet,
+            "; ".join(pieces),
+            missing_required_fields=missing,
+            forbidden_fields_seen=forbidden,
+        )
+    return payload, None
+
+
+def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
+    if not payload:
+        return _contract_block(packet, "packet result requires a current strict JSON object")
     if "decision" not in payload:
         alias_keys = sorted(key for key in _OUTCOME_ALIAS_KEYS if key in payload)
         if alias_keys:
-            return "packet result uses unsupported outcome alias field(s): " + ",".join(alias_keys)
-        return "packet result requires top-level decision"
+            return _contract_block(
+                packet,
+                "packet result uses unsupported outcome alias field(s): " + ",".join(alias_keys),
+                forbidden_fields_seen=alias_keys,
+                missing_required_fields=("decision",),
+            )
+        return _contract_block(packet, "packet result requires top-level decision", missing_required_fields=("decision",))
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision not in (_PASSING_OUTCOME_DECISIONS | _BLOCKING_OUTCOME_DECISIONS):
-        return "packet result decision must be an explicit allowed pass/block decision"
-    return ""
+        return _contract_block(packet, "packet result decision must be an explicit allowed pass/block decision")
+    return _contract_pass(packet)
 
 
-def _high_standard_contract_result_violation(result: Mapping[str, Any]) -> str:
-    payload = _strict_json_object_from_body(str(result.get("body", "")))
-    if not payload:
-        return "high_standard_contract result requires a current strict JSON object"
-    if "decision" in payload:
-        decision = _normalize_outcome_token(payload.get("decision"))
-        if decision in _BLOCKING_OUTCOME_DECISIONS and "requirements" not in payload:
-            return ""
-        return "high_standard_contract result must use requirements as authority; top-level pass decision is unsupported"
+def _high_standard_contract_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
     rows = payload.get("requirements")
     if not isinstance(rows, list) or not rows:
-        return "high_standard_contract result requires top-level requirements list"
+        return _contract_block(
+            packet,
+            "high_standard_contract result requires top-level requirements list",
+            missing_required_fields=("requirements",),
+        )
     for index, row in enumerate(rows, start=1):
         if not isinstance(row, Mapping):
-            return f"high_standard_contract requirements[{index}] must be an object"
+            return _contract_block(packet, f"high_standard_contract requirements[{index}] must be an object")
         if not str(row.get("requirement_id") or "").strip():
-            return f"high_standard_contract requirements[{index}] requires requirement_id"
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires requirement_id",
+                missing_required_fields=(f"requirements[{index}].requirement_id",),
+            )
         if not str(row.get("classification") or "").strip():
-            return f"high_standard_contract requirements[{index}] requires classification"
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires classification",
+                missing_required_fields=(f"requirements[{index}].classification",),
+            )
         if not str(row.get("summary") or "").strip():
-            return f"high_standard_contract requirements[{index}] requires summary"
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires summary",
+                missing_required_fields=(f"requirements[{index}].summary",),
+            )
         if not isinstance(row.get("closure_blocking"), bool):
-            return f"high_standard_contract requirements[{index}] requires boolean closure_blocking"
-    return ""
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires boolean closure_blocking",
+                missing_required_fields=(f"requirements[{index}].closure_blocking",),
+            )
+    return _contract_pass(packet)
 
 
-def _discovery_result_violation(result: Mapping[str, Any]) -> str:
-    payload = _strict_json_object_from_body(str(result.get("body", "")))
-    if not payload:
-        return "discovery result requires a current strict JSON object"
+def _discovery_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision in _BLOCKING_OUTCOME_DECISIONS:
-        return ""
+        return _contract_pass(packet)
     if not isinstance(payload.get("material_sources"), list) or not payload.get("material_sources"):
-        return "discovery result requires non-empty material_sources list"
+        return _contract_block(packet, "discovery result requires non-empty material_sources list", missing_required_fields=("material_sources",))
     if not str(payload.get("material_sufficiency") or "").strip():
-        return "discovery result requires material_sufficiency"
+        return _contract_block(packet, "discovery result requires material_sufficiency", missing_required_fields=("material_sufficiency",))
     if not isinstance(payload.get("local_skill_inventory"), list):
-        return "discovery result requires local_skill_inventory list"
+        return _contract_block(packet, "discovery result requires local_skill_inventory list", missing_required_fields=("local_skill_inventory",))
     if payload.get("candidate_only_skill_policy") is not True:
-        return "discovery result requires candidate_only_skill_policy true"
-    return ""
+        return _contract_block(packet, "discovery result requires candidate_only_skill_policy true", missing_required_fields=("candidate_only_skill_policy",))
+    return _contract_pass(packet)
 
 
-def _skill_standard_result_violation(result: Mapping[str, Any]) -> str:
-    payload = _strict_json_object_from_body(str(result.get("body", "")))
-    if not payload:
-        return "skill_standard result requires a current strict JSON object"
+def _skill_standard_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision in _BLOCKING_OUTCOME_DECISIONS:
-        return ""
-    try:
-        _parse_skill_obligations(str(result.get("body", "")))
-    except BlackBoxRuntimeError as exc:
-        return str(exc)
-    return ""
+        return _contract_pass(packet)
+    rows = payload.get("obligations")
+    if not isinstance(rows, list) or not rows:
+        return _contract_block(
+            packet,
+            "skill_standard result requires top-level obligations list",
+            missing_required_fields=("obligations",),
+        )
+    for index, row in enumerate(rows, start=1):
+        if not isinstance(row, Mapping):
+            return _contract_block(packet, f"skill_standard obligations[{index}] must be an object")
+        missing: list[str] = []
+        for field in _SKILL_STANDARD_REQUIRED_CHILD_FIELDS:
+            value = row.get(field)
+            if field == "closure_blocking":
+                if not isinstance(value, bool):
+                    missing.append(f"obligations[{index}].closure_blocking")
+            elif not str(value or "").strip():
+                missing.append(f"obligations[{index}].{field}")
+        if missing:
+            return _contract_block(
+                packet,
+                "skill_standard result obligation row is missing required field(s): " + ", ".join(missing),
+                missing_required_fields=tuple(missing),
+            )
+    return _contract_pass(packet)
 
 
-def _pm_visible_summary_contract_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> str:
+def _pm_visible_summary_contract_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
     if not _packet_requires_pm_visible_summary(packet):
-        return ""
+        return _contract_pass(packet)
     payload = _strict_json_object_from_body(str(result.get("body", "")))
     if not payload:
-        return "packet result requires a current strict JSON object"
+        return _contract_block(packet, "packet result requires a current strict JSON object")
     if not _pm_visible_summary_from_payload(payload):
-        return "formal role result requires role-authored pm_visible_summary as a non-empty list of non-empty strings"
-    return ""
+        return _contract_block(
+            packet,
+            "formal role result requires role-authored pm_visible_summary as a non-empty list of non-empty strings",
+            missing_required_fields=("pm_visible_summary",),
+        )
+    return _contract_pass(packet)
+
+
+def _pm_repair_decision_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload = _strict_json_object_from_body(str(result.get("body", "")))
+    if not payload:
+        return _contract_block(
+            packet,
+            "pm_repair_decision.pm_repair_decision result requires a current strict JSON object",
+            missing_required_fields=_packet_result_required_fields(packet),
+        )
+    forbidden = list(_top_level_forbidden_fields(payload, _packet_result_forbidden_fields(packet)))
+    missing = list(_top_level_missing_fields(payload, _packet_result_required_fields(packet)))
+    decision = _normalize_outcome_token(payload.get("decision"))
+    if decision == "waive_with_authority" and not str(payload.get("authority_ref") or ""):
+        missing.append("authority_ref")
+    if decision == "redesign_route" and not isinstance(payload.get("route_plan"), Mapping):
+        missing.append("route_plan")
+    if forbidden or missing:
+        pieces: list[str] = []
+        if missing:
+            pieces.append("missing required field(s): " + ", ".join(dict.fromkeys(missing)))
+        if forbidden:
+            pieces.append("forbidden field(s): " + ", ".join(dict.fromkeys(forbidden)))
+        required = list(_packet_result_required_fields(packet))
+        for field in missing:
+            if field not in required:
+                required.append(field)
+        return _contract_block(
+            packet,
+            "; ".join(pieces),
+            missing_required_fields=tuple(missing),
+            forbidden_fields_seen=tuple(forbidden),
+            required_result_body_fields=tuple(required),
+        )
+    if decision in _REMOVED_PM_REPAIR_DECISIONS:
+        return _contract_block(packet, "PM repair decision uses a removed decision; request a current five-choice decision")
+    if decision not in _PM_REPAIR_DECISIONS:
+        return _contract_block(packet, "PM repair decision requires an explicit allowed decision")
+    if decision == "redesign_route":
+        try:
+            route_plan = _parse_strict_route_plan(json.dumps(payload.get("route_plan"), sort_keys=True))
+            _normalize_strict_route_plan_nodes(route_plan)
+        except BlackBoxRuntimeError as exc:
+            return _contract_block(packet, str(exc))
+    return _contract_pass(packet)
+
+
+def _pm_disposition_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
+    decision = _normalize_outcome_token(payload.get("decision"))
+    if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
+        return _contract_block(packet, "PM disposition requires an explicit allowed decision")
+    return _contract_pass(packet)
 
 
 def _current_result_submission_contract_violation(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
     result: Mapping[str, Any],
-) -> str:
+) -> PacketResultContractCheck:
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     packet_kind = str(envelope.get("packet_kind", "task"))
     route_scope = str(envelope.get("route_scope") or "")
     body = str(result.get("body", ""))
     if packet_kind == "task" and route_scope == "high_standard_contract":
-        return _high_standard_contract_result_violation(result)
+        return _high_standard_contract_result_violation(packet, result)
+    if packet_kind == "pm_repair_decision":
+        return _pm_repair_decision_result_violation(packet, result)
+    if packet_kind == "pm_disposition":
+        return _pm_disposition_result_violation(packet, result)
     outcome_violation = _strict_packet_outcome_contract_violation(packet, result)
-    if outcome_violation:
+    if not outcome_violation.ok:
         return outcome_violation
     summary_violation = _pm_visible_summary_contract_violation(packet, result)
-    if summary_violation:
+    if not summary_violation.ok:
         return summary_violation
     if packet_kind == "task" and route_scope == "discovery":
-        return _discovery_result_violation(result)
+        return _discovery_result_violation(packet, result)
     if packet_kind == "task" and route_scope == "skill_standard":
-        return _skill_standard_result_violation(result)
+        return _skill_standard_result_violation(packet, result)
     if packet_kind == "task" and route_scope == "planning":
         try:
             route_plan = _parse_strict_route_plan(body)
             _normalize_strict_route_plan_nodes(route_plan)
         except BlackBoxRuntimeError as exc:
-            return str(exc)
+            missing = ("nodes",) if "nodes" in str(exc) else ()
+            return _contract_block(packet, str(exc), missing_required_fields=missing)
     if packet_kind == "task" and route_scope == "node_acceptance_plan":
         node_id = str(envelope.get("route_node_id") or "")
         try:
@@ -5380,7 +5625,14 @@ def _current_result_submission_contract_violation(
                 status="staged",
             )
         except BlackBoxRuntimeError as exc:
-            return str(exc)
+            missing: list[str] = []
+            text = str(exc)
+            if "node_context_package" in text:
+                missing.append("node_context_package")
+            for field in NODE_CONTEXT_PACKAGE_REQUIRED_LIST_FIELDS | {"purpose"}:
+                if field in text:
+                    missing.append(f"node_context_package.{field}")
+            return _contract_block(packet, text, missing_required_fields=tuple(missing))
         _attach_staged_effect(
             result,  # type: ignore[arg-type]
             effect_kind="commit_node_acceptance_plan",
@@ -5392,8 +5644,16 @@ def _current_result_submission_contract_violation(
     if packet_kind == "flowguard_check":
         lowered_body = body.lower()
         if "api_fallback_manual_block_eval" in lowered_body or "fallback_manual_block_eval" in lowered_body:
-            return "FlowGuard fallback evidence is forbidden; submit real FlowGuard evidence or a toolchain blocker"
-    return ""
+            return _contract_block(
+                packet,
+                "FlowGuard fallback evidence is forbidden; submit real FlowGuard evidence or a toolchain blocker",
+                forbidden_fields_seen=(
+                    "api_fallback_manual_block_eval"
+                    if "api_fallback_manual_block_eval" in lowered_body
+                    else "fallback_manual_block_eval",
+                ),
+            )
+    return _contract_pass(packet)
 
 
 def _block_result_and_reissue_current_packet_family(
@@ -5402,14 +5662,18 @@ def _block_result_and_reissue_current_packet_family(
     result: dict[str, Any],
     lease: Mapping[str, Any],
     *,
-    reason: str,
+    contract_check: PacketResultContractCheck,
 ) -> str:
     blocker_name = "current_result_contract_violation"
     result["status"] = "mechanical_contract_blocked"
     result["accepted"] = False
     result["non_authoritative"] = True
     result.setdefault("mechanical_blockers", []).append(blocker_name)
-    result["quarantine_reason"] = reason
+    result["quarantine_reason"] = contract_check.blocked_reason
+    result["mechanical_contract_failure"] = contract_check.to_json()
+    result["missing_required_fields"] = list(contract_check.missing_required_fields)
+    result["forbidden_fields_seen"] = list(contract_check.forbidden_fields_seen)
+    result["contract_family_id"] = contract_check.contract_family_id
     old_packet_id = str(packet.get("packet_id") or "")
     packet["status"] = "superseded_after_repair"
     packet["superseded_by_result_id"] = str(result.get("result_id") or "")
@@ -5418,23 +5682,6 @@ def _block_result_and_reissue_current_packet_family(
     close_lease(ledger, str(lease["lease_id"]), "current_result_contract_blocked")
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     packet_kind = str(envelope.get("packet_kind", "task"))
-    route_scope = str(envelope.get("route_scope") or "")
-    if packet_kind == "task" and route_scope == "high_standard_contract":
-        required_result_body_fields = ["requirements"]
-    elif packet_kind == "task" and route_scope == "discovery":
-        required_result_body_fields = [
-            "decision",
-            "material_sources",
-            "material_sufficiency",
-            "local_skill_inventory",
-            "candidate_only_skill_policy",
-        ]
-    elif packet_kind == "task" and route_scope == "skill_standard":
-        required_result_body_fields = ["decision", "obligations"]
-    elif _packet_requires_pm_visible_summary(packet):
-        required_result_body_fields = ["decision", "pm_visible_summary"]
-    else:
-        required_result_body_fields = ["decision"]
     fresh_packet_id = issue_task_packet(
         ledger,
         str(envelope.get("responsibility") or "pm"),
@@ -5444,18 +5691,23 @@ def _block_result_and_reissue_current_packet_family(
                 "schema_version": "black_box_flowpilot.current_contract_reissue_packet.v1",
                 "blocked_packet_id": old_packet_id,
                 "blocked_result_id": str(result.get("result_id") or ""),
-                "blocked_reason": reason,
+                "blocked_reason": contract_check.blocked_reason,
+                "contract_family_id": contract_check.contract_family_id,
+                "mechanical_contract_failure": contract_check.to_json(),
+                "missing_required_fields": list(contract_check.missing_required_fields),
+                "forbidden_fields_seen": list(contract_check.forbidden_fields_seen),
                 "original_packet_kind": packet_kind,
                 "route_scope": str(envelope.get("route_scope") or ""),
                 "route_node_id": str(envelope.get("route_node_id") or ""),
                 "acceptance_criteria": list(envelope.get("acceptance_criteria") or []),
                 "contract": _copy_jsonable(envelope.get("output_contract") or {}),
-                "required_result_body_fields": required_result_body_fields,
+                "required_result_body_fields": list(contract_check.required_result_body_fields),
+                "minimal_valid_shape": _copy_jsonable(contract_check.minimal_valid_shape or {}),
                 "instruction": (
                     "Submit a fresh current-contract result for the same packet family. "
                     "Do not reuse obsolete field names, wrapper shapes, fallback evidence, or prior blocked text as passing evidence. "
                     "When pm_visible_summary is required, the producing role must write it directly; runtime cannot synthesize it. "
-                    "For high_standard_contract, submit the contract as top-level requirements and do not add a decision wrapper."
+                    "Use missing_required_fields and forbidden_fields_seen as the authoritative mechanical correction list."
                 ),
             },
             indent=2,
@@ -5471,12 +5723,18 @@ def _block_result_and_reissue_current_packet_family(
         node_context_package_id=str(envelope.get("node_context_package_id") or ""),
     )
     ledger["packets"][fresh_packet_id]["repair_blocker_id"] = str(packet.get("active_blocker_id") or "")
+    if packet_kind == "pm_repair_decision":
+        blocker_id = str(envelope.get("subject_id") or "")
+        blocker = ledger.setdefault("active_blockers", {}).get(blocker_id)
+        if isinstance(blocker, dict):
+            blocker["pm_repair_packet_id"] = fresh_packet_id
     _event(
         ledger,
         "result_mechanical_contract_blocked",
         packet_id=old_packet_id,
         result_id=str(result.get("result_id") or ""),
-        reason=reason,
+        reason=contract_check.blocked_reason,
+        contract_family_id=contract_check.contract_family_id,
     )
     _event(
         ledger,
@@ -5496,34 +5754,18 @@ def _apply_valid_packet_result(
     lease: dict[str, Any],
 ) -> None:
     packet_kind = packet["envelope"].get("packet_kind", "task")
-    contract_violation = _current_result_submission_contract_violation(ledger, packet, result)
-    if contract_violation:
+    contract_check = _current_result_submission_contract_violation(ledger, packet, result)
+    if not contract_check.ok:
         _block_result_and_reissue_current_packet_family(
             ledger,
             packet,
             result,
             lease,
-            reason=contract_violation,
+            contract_check=contract_check,
         )
         return
     if packet_kind == "pm_repair_decision":
-        try:
-            repair_decision, repair_reason, authority_ref, route_plan = _parse_pm_repair_decision_body(str(result.get("body", "")))
-        except BlackBoxRuntimeError as exc:
-            result["status"] = "pm_repair_decision_blocked"
-            result["accepted"] = False
-            result.setdefault("mechanical_blockers", []).append("pm_repair_decision_payload_contract")
-            result["quarantine_reason"] = str(exc)
-            packet["status"] = "result_blocked"
-            close_lease(ledger, lease["lease_id"], "pm_repair_decision_payload_blocked")
-            _event(
-                ledger,
-                "pm_repair_decision_blocked",
-                packet_id=packet["packet_id"],
-                result_id=result["result_id"],
-                reason=str(exc),
-            )
-            return
+        repair_decision, repair_reason, authority_ref, route_plan = _parse_pm_repair_decision_body(str(result.get("body", "")))
         outcome = {
             "decision": "pass",
             "blocking": False,
@@ -5655,23 +5897,7 @@ def _apply_valid_packet_result(
         node_id = str(packet["envelope"].get("route_node_id") or "")
         if not node_id:
             raise BlackBoxRuntimeError("PM disposition packet is missing route_node_id")
-        try:
-            decision, reason = _decision_from_pm_body(str(result.get("body", "")))
-        except BlackBoxRuntimeError as exc:
-            result["status"] = "pm_disposition_blocked"
-            result["accepted"] = False
-            result.setdefault("mechanical_blockers", []).append("pm_disposition_payload_contract")
-            result["quarantine_reason"] = str(exc)
-            packet["status"] = "result_blocked"
-            close_lease(ledger, lease["lease_id"], "pm_disposition_payload_blocked")
-            _event(
-                ledger,
-                "pm_disposition_blocked",
-                packet_id=packet["packet_id"],
-                result_id=result["result_id"],
-                reason=str(exc),
-            )
-            return
+        decision, reason = _decision_from_pm_body(str(result.get("body", "")))
         _accept_packet_result(ledger, packet, result, lease, reason="pm_disposition_submitted")
         if decision in _HIGH_RISK_PM_DISPOSITION_DECISIONS:
             _stage_pm_decision_gate(

@@ -360,10 +360,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(packet["status"], "superseded_after_repair")
         result = ledger["results"][packet["superseded_by_result_id"]]
         self.assertEqual(result["status"], "mechanical_contract_blocked")
-        self.assertIn("top-level pass decision is unsupported", result["quarantine_reason"])
+        self.assertEqual(result["contract_family_id"], "task.high_standard_contract")
+        self.assertIn("decision", result["forbidden_fields_seen"])
+        self.assertIn("pm_visible_summary", result["forbidden_fields_seen"])
         reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
         reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
         self.assertEqual(reissue_body["required_result_body_fields"], ["requirements"])
+        self.assertIn("decision", reissue_body["forbidden_fields_seen"])
 
     def test_high_standard_contract_reissue_names_missing_requirements(self) -> None:
         ledger = _ledger()
@@ -375,11 +378,13 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(packet["status"], "superseded_after_repair")
         result = ledger["results"][packet["superseded_by_result_id"]]
         self.assertEqual(result["status"], "mechanical_contract_blocked")
-        self.assertIn("requires top-level requirements list", result["quarantine_reason"])
+        self.assertEqual(result["missing_required_fields"], ["requirements"])
+        self.assertEqual(result["forbidden_fields_seen"], ["overall_contract"])
         reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
         reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
         self.assertEqual(reissue_body["required_result_body_fields"], ["requirements"])
-        self.assertIn("requirements", reissue_body["blocked_reason"])
+        self.assertEqual(reissue_body["missing_required_fields"], ["requirements"])
+        self.assertEqual(reissue_body["forbidden_fields_seen"], ["overall_contract"])
 
     def test_high_standard_contract_requires_closure_blocking_field(self) -> None:
         ledger = _ledger()
@@ -451,10 +456,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(packet["status"], "superseded_after_repair")
         result = ledger["results"][packet["superseded_by_result_id"]]
         self.assertEqual(result["status"], "mechanical_contract_blocked")
-        self.assertIn("requires top-level obligations list", result["quarantine_reason"])
+        self.assertEqual(result["missing_required_fields"], ["obligations"])
         reissue_id = _open_packets(ledger, scope="skill_standard")[0]
         reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
         self.assertEqual(reissue_body["required_result_body_fields"], ["decision", "obligations"])
+        self.assertEqual(reissue_body["missing_required_fields"], ["obligations"])
 
         _complete_open_packet(
             ledger,
@@ -475,7 +481,47 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         second_packet = ledger["packets"][reissue_id]
         self.assertEqual(second_packet["status"], "superseded_after_repair")
         second_result = ledger["results"][second_packet["superseded_by_result_id"]]
-        self.assertIn("selected_skills is unsupported", second_result["quarantine_reason"])
+        self.assertEqual(second_result["missing_required_fields"], ["obligations"])
+        self.assertEqual(second_result["forbidden_fields_seen"], ["selected_skills"])
+
+    def test_skill_standard_reissue_names_missing_obligation_child_fields(self) -> None:
+        ledger = _ledger()
+        _complete_task_chain(
+            ledger,
+            _open_packets(ledger, scope="high_standard_contract")[0],
+            _high_standard_contract_body(),
+        )
+        _complete_task_chain(ledger, _open_packets(ledger, scope="discovery")[0], _discovery_body())
+        packet_id = _open_packets(ledger, scope="skill_standard")[0]
+
+        _complete_open_packet(
+            ledger,
+            packet_id,
+            json.dumps(
+                {
+                    "decision": "pass",
+                    "obligations": [
+                        {
+                            "obligation_id": "skill-std-001",
+                            "classification": "required",
+                            "role_use": "flowguard_operator",
+                            "use_context": "node_validation",
+                            "evidence_required": "current-run FlowGuard work order",
+                            "closure_blocking": True,
+                        }
+                    ],
+                }
+            ),
+        )
+
+        packet = ledger["packets"][packet_id]
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["missing_required_fields"], ["obligations[1].skill"])
+        reissue_id = _open_packets(ledger, scope="skill_standard")[0]
+        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        self.assertEqual(reissue_body["missing_required_fields"], ["obligations[1].skill"])
+        self.assertEqual(reissue_body["contract_family_id"], "task.skill_standard")
 
     def test_preplanning_gates_run_before_pm_planning(self) -> None:
         ledger = _ledger()
@@ -558,7 +604,7 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
         node_id = ledger["execution_frontier"]["active_node_id"]
         self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
-        self.assertIn("top-level node_context_package", ledger["results"][result_id]["quarantine_reason"])
+        self.assertEqual(ledger["results"][result_id]["missing_required_fields"], ["node_context_package"])
         self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
         self.assertTrue(_open_packets(ledger, scope="node_acceptance_plan"))
         self.assertFalse(runtime._node_context_package_current(ledger, node_id))
@@ -743,10 +789,11 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(ledger["results"][result_id]["status"], "pm_disposition_blocked")
-        self.assertEqual(ledger["packets"][packet_id]["status"], "result_blocked")
+        self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
         self.assertFalse(ledger["pm_dispositions"])
-        self.assertIn("top-level reason", ledger["results"][result_id]["quarantine_reason"])
+        self.assertEqual(ledger["results"][result_id]["missing_required_fields"], ["reason"])
+        self.assertEqual(ledger["results"][result_id]["forbidden_fields_seen"], ["summary"])
 
         fresh_packet_id = runtime._ensure_pm_disposition_packet_for_node(
             ledger,
@@ -757,6 +804,9 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertNotEqual(fresh_packet_id, packet_id)
         self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
         self.assertEqual(ledger["packets"][fresh_packet_id]["envelope"]["packet_kind"], "pm_disposition")
+        fresh_body = json.loads(ledger["packets"][fresh_packet_id]["body"])
+        self.assertEqual(fresh_body["missing_required_fields"], ["reason"])
+        self.assertEqual(fresh_body["forbidden_fields_seen"], ["summary"])
 
     def test_pm_repair_parent_scope_replaces_parent_and_descendants(self) -> None:
         ledger = _ledger()
@@ -914,11 +964,19 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
 
     def test_pm_repair_current_scope_for_packet_scope_remains_direct(self) -> None:
         ledger = _ledger()
-        packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+        _complete_prework_flowguard(ledger)
+        packet_id = _open_packets(ledger, scope="node")[0]
         _complete_open_packet(
             ledger,
             packet_id,
-            json.dumps({"decision": "block", "blocking": True, "blocker_class": "local_artifact", "recommended_resolution": "sender fix"}),
+            _block_body(
+                "Worker blocked on the current node.",
+                blocker_class="local_artifact",
+                recommended_resolution="sender fix",
+            ),
         )
         blocker = [row for row in ledger["active_blockers"].values() if row["status"] == "active"][0]
 
@@ -1111,12 +1169,20 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(ledger["packets"][packet_id]["status"], "result_blocked")
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        result = ledger["results"][packet["superseded_by_result_id"]]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["contract_family_id"], "task.high_standard_contract")
+        self.assertIn("requirements", result["missing_required_fields"])
+        self.assertIn("decision", result["forbidden_fields_seen"])
         self.assertFalse(_open_packets(ledger, kind="flowguard_check"))
         active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
-        self.assertEqual(len(active), 1)
-        self.assertEqual(active[0]["owner_role"], "pm")
-        self.assertTrue(_open_packets(ledger, kind="pm_repair_decision"))
+        self.assertEqual(active, [])
+        reissue_id = _open_packets(ledger, scope="high_standard_contract")[0]
+        reissue_body = json.loads(ledger["packets"][reissue_id]["body"])
+        self.assertEqual(reissue_body["contract_family_id"], "task.high_standard_contract")
+        self.assertEqual(reissue_body["required_result_body_fields"], ["requirements"])
 
     def test_final_matrix_blocks_missing_node_acceptance_plan(self) -> None:
         ledger = _ledger()

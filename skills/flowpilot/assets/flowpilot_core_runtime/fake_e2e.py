@@ -152,12 +152,50 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
     )
 
 
+def _fault_body_for_packet(packet: dict[str, Any]) -> str:
+    family_id = runtime._packet_result_family_id(packet)
+    if family_id == "task.high_standard_contract":
+        return json.dumps(
+            {
+                "overall_contract": "old contract wrapper must be rejected",
+                "contract_rows": [],
+            },
+            sort_keys=True,
+        )
+    if family_id == "task.skill_standard":
+        return json.dumps(
+            {
+                "decision": "pass",
+                "selected_skills": ["flowguard-development-process-flow"],
+            },
+            sort_keys=True,
+        )
+    if family_id == "task.node_acceptance_plan":
+        return json.dumps(
+            {
+                "decision": "pass",
+                "repair_policy": "repair_scope_replacement_default",
+            },
+            sort_keys=True,
+        )
+    if family_id == "pm_disposition.node_pm_disposition":
+        return json.dumps(
+            {
+                "decision": "accept",
+                "summary": "old PM disposition summary must be rejected as a reason alias",
+            },
+            sort_keys=True,
+        )
+    return _body_for_packet(packet)
+
+
 def run_fake_e2e(
     root: Path,
     *,
     run_id: str | None,
     startup_text: str,
     start_run: StartRun,
+    inject_contract_faults: bool = False,
 ) -> dict[str, Any]:
     start_result = start_run(
         root,
@@ -188,6 +226,8 @@ def run_fake_e2e(
 
     completed_packets: list[dict[str, str]] = []
     folded_boundaries: list[dict[str, Any]] = []
+    injected_fault_families: set[str] = set()
+    mechanical_contract_blocks: list[dict[str, Any]] = []
     for index in range(80):
         boundary = runtime.run_until_wait(ledger)
         folded_boundaries.append(boundary)
@@ -200,11 +240,34 @@ def run_fake_e2e(
         packet_id = str(action_json.get("subject_id") or "")
         packet = ledger["packets"][packet_id]
         kind = packet["envelope"].get("packet_kind", "task")
+        family_id = runtime._packet_result_family_id(packet)
+        should_fault = inject_contract_faults and family_id in {
+            "task.high_standard_contract",
+            "task.skill_standard",
+            "task.node_acceptance_plan",
+            "pm_disposition.node_pm_disposition",
+        } and family_id not in injected_fault_families
+        if should_fault:
+            body = _fault_body_for_packet(packet)
+            injected_fault_families.add(family_id)
+        else:
+            body = _body_for_packet(packet)
         lease_id, result_id = complete_leased_packet(
             packet_id,
             agent_id=f"fake-{kind}-{index}",
-            body=_body_for_packet(packet),
+            body=body,
         )
+        result = ledger["results"][result_id]
+        if result.get("status") == "mechanical_contract_blocked":
+            mechanical_contract_blocks.append(
+                {
+                    "packet_id": packet_id,
+                    "result_id": result_id,
+                    "contract_family_id": str(result.get("contract_family_id") or ""),
+                    "missing_required_fields": list(result.get("missing_required_fields") or []),
+                    "forbidden_fields_seen": list(result.get("forbidden_fields_seen") or []),
+                }
+            )
         completed_packets.append({"packet_id": packet_id, "packet_kind": kind, "lease_id": lease_id, "result_id": result_id})
     else:
         raise runtime.BlackBoxRuntimeError("fake e2e exceeded packet completion budget")
@@ -216,6 +279,7 @@ def run_fake_e2e(
         "mode": "rehearsal",
         "run": shell.to_json(),
         "completed_packets": completed_packets,
+        "mechanical_contract_blocks": mechanical_contract_blocks,
         "folded_boundaries": folded_boundaries,
         "accepted_node_ids": [
             node_id for node_id, node in ledger.get("route_nodes", {}).items() if node.get("status") == "accepted"

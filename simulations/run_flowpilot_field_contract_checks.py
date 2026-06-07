@@ -179,16 +179,31 @@ def _flowguard_report() -> dict[str, object]:
 
 def _source_alignment_report() -> dict[str, object]:
     runtime_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
+    contract_module_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "flowpilot_core_runtime"
+        / "packet_result_contracts.py"
+    )
     core_test_path = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
     high_standard_test_path = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
+    fake_project_test_path = REPO_ROOT / "tests" / "test_flowpilot_fake_project_rehearsal.py"
+    new_entrypoint_test_path = REPO_ROOT / "tests" / "test_flowpilot_new_entrypoint.py"
     fake_e2e_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py"
     fake_cli_path = REPO_ROOT / "simulations" / "flowpilot_fake_project_rehearsal_cli.py"
 
     runtime_text = runtime_path.read_text(encoding="utf-8")
+    contract_module_text = contract_module_path.read_text(encoding="utf-8")
     test_text = (
         core_test_path.read_text(encoding="utf-8")
         + "\n"
         + high_standard_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + fake_project_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + new_entrypoint_test_path.read_text(encoding="utf-8")
     )
     fake_text = fake_e2e_path.read_text(encoding="utf-8") + "\n" + fake_cli_path.read_text(encoding="utf-8")
 
@@ -204,11 +219,28 @@ def _source_alignment_report() -> dict[str, object]:
         "pm_repair_decision.authority_alias": 'payload.get("authority")' in runtime_text,
         "pm_disposition.summary_reason_alias": 'payload.get("reason") or payload.get("summary")' in runtime_text,
     }
+    private_runtime_contract_tables = [
+        token
+        for token in (
+            "_PACKET_RESULT_REQUIRED_FIELDS",
+            "_PACKET_RESULT_FORBIDDEN_FIELDS",
+        )
+        if token in runtime_text
+    ]
+    shared_contract_source_ok = (
+        "import packet_result_contracts" in runtime_text
+        and "PACKET_RESULT_CONTRACTS" in contract_module_text
+        and "PACKET_RESULT_CONTRACTS = packet_result_contracts.PACKET_RESULT_CONTRACTS" in (
+            REPO_ROOT / "simulations" / "flowpilot_field_contract_model.py"
+        ).read_text(encoding="utf-8")
+    )
     missing_negative_tests = [
         name
         for name in (
             "test_pm_repair_decision_rejects_authority_alias",
             "test_pm_disposition_summary_is_not_reason_fallback",
+            "test_fake_e2e_success_bodies_use_declared_contract_fields",
+            "test_fake_project_success_bodies_use_declared_contract_fields",
         )
         if name not in test_text
     ]
@@ -224,13 +256,23 @@ def _source_alignment_report() -> dict[str, object]:
         if term not in fake_text
     ]
     return {
-        "ok": not missing_validators and not any(forbidden_alias_hits.values()) and not missing_negative_tests and not missing_fake_contract_terms,
+        "ok": (
+            not missing_validators
+            and not any(forbidden_alias_hits.values())
+            and not private_runtime_contract_tables
+            and shared_contract_source_ok
+            and not missing_negative_tests
+            and not missing_fake_contract_terms
+        ),
         "runtime_path": runtime_path.as_posix(),
+        "contract_module_path": contract_module_path.as_posix(),
         "test_paths": [core_test_path.as_posix(), high_standard_test_path.as_posix()],
         "fake_paths": [fake_e2e_path.as_posix(), fake_cli_path.as_posix()],
         "packet_result_contract_count": model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT,
         "missing_validators": missing_validators,
         "forbidden_alias_hits": forbidden_alias_hits,
+        "private_runtime_contract_tables": private_runtime_contract_tables,
+        "shared_contract_source_ok": shared_contract_source_ok,
         "missing_negative_tests": missing_negative_tests,
         "missing_fake_contract_terms": missing_fake_contract_terms,
     }

@@ -287,7 +287,8 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertIn("selection_dimensions", pm_selection_template)
         self.assertIn("FlowGuard satellite skills", pm_selection_template["selection_rule"])
         self.assertIn("process_support", pm_selection_template["selection_dimensions"])
-        skill_decision = pm_selection_template["skill_decisions"][0]
+        self.assertNotIn("skill_decisions", pm_selection_template)
+        skill_decision = pm_selection_template["selected_skills"][0]
         self.assertIn("support_dimensions", skill_decision)
         self.assertIn("role_skill_use_candidates", skill_decision)
         selected_skill = manifest_template["selected_skills"][0]

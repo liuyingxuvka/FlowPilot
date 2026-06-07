@@ -2,6 +2,28 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.4 - 2026-06-07
+
+### Breaking
+
+- Made packet/result contracts the single source of truth for current runtime
+  mechanical checks; old generic wrappers and legacy field aliases are rejected
+  instead of translated.
+- Removed the remaining child-skill `skill_decisions` compatibility shape from
+  the current router path; current child-skill selection uses `selected_skills`
+  only.
+
+### Changed
+
+- Added the shared `packet_result_contracts.py` contract table and bound
+  runtime reissue metadata, fake-AI success bodies, negative contract-chaos
+  rehearsals, FieldContract, FieldMesh, and Model-Test Alignment to it.
+- Kept high-standard contract success on top-level `requirements` while
+  mechanically reissuing missing fields and forbidden hidden `decision`/old
+  contract rows through the same current packet family.
+- Refreshed topology, layered Meta/Capability evidence, install checks, and
+  README current-path wording for the strict no-fallback runtime.
+
 ## 0.10.3 - 2026-06-04
 
 ### Breaking

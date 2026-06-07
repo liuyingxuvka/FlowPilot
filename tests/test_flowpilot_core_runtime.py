@@ -1547,13 +1547,17 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                     json.dumps({"decision": removed, "reason": "old menu value"}),
                 )
 
-                self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
+                self.assertEqual(ledger["results"][bad_result]["status"], "mechanical_contract_blocked")
                 self.assertFalse(ledger["pm_repair_decisions"])
                 self.assertIn("removed decision", ledger["results"][bad_result]["quarantine_reason"])
+                self.assertEqual(
+                    ledger["results"][bad_result]["contract_family_id"],
+                    "pm_repair_decision.pm_repair_decision",
+                )
 
     def test_waive_with_authority_requires_authority_ref_and_opens_no_repair_packet(self) -> None:
         for body, expected_status in (
-            ({"decision": "waive_with_authority", "reason": "authorized exception"}, "pm_repair_decision_blocked"),
+            ({"decision": "waive_with_authority", "reason": "authorized exception"}, "mechanical_contract_blocked"),
             (
                 {
                     "decision": "waive_with_authority",
@@ -1582,10 +1586,11 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
                 result_id = runtime.submit_result(ledger, pm_lease, pm_packet, json.dumps(body))
 
-                if expected_status == "pm_repair_decision_blocked":
+                if expected_status == "mechanical_contract_blocked":
                     self.assertEqual(ledger["results"][result_id]["status"], expected_status)
                     self.assertFalse(ledger["pm_repair_decisions"])
-                    self.assertIn("authority_ref", ledger["results"][result_id]["quarantine_reason"])
+                    self.assertEqual(ledger["results"][result_id]["missing_required_fields"], ["authority_ref"])
+                    self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
                 else:
                     self.assertEqual(ledger["active_blockers"][blocker_id]["status"], expected_status)
                     self.assertEqual(ledger["active_blockers"][blocker_id]["authority_ref"], "AUTH-20260604-001")
@@ -1620,9 +1625,10 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(ledger["results"][result_id]["status"], "pm_repair_decision_blocked")
+        self.assertEqual(ledger["results"][result_id]["status"], "mechanical_contract_blocked")
         self.assertFalse(ledger["pm_repair_decisions"])
-        self.assertIn("authority_ref", ledger["results"][result_id]["quarantine_reason"])
+        self.assertEqual(ledger["results"][result_id]["missing_required_fields"], ["authority_ref"])
+        self.assertEqual(ledger["results"][result_id]["forbidden_fields_seen"], ["authority"])
 
     def test_june3_same_node_empty_fresh_packet_regression_is_rejected(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -1679,10 +1685,11 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "This body says block and stop_for_user, but it has no structured decision field.",
         )
 
-        self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
-        self.assertEqual(ledger["packets"][pm_packet]["status"], "result_blocked")
+        self.assertEqual(ledger["results"][bad_result]["status"], "mechanical_contract_blocked")
+        self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
         self.assertFalse(ledger["pm_repair_decisions"])
-        self.assertEqual(runtime.router_next_action(ledger).action_type, "issue_pm_repair_decision_packet")
+        self.assertEqual(ledger["results"][bad_result]["missing_required_fields"], ["decision", "reason"])
+        self.assertEqual(runtime.router_next_action(ledger).action_type, "resolve_role_assignment")
 
         fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
         self.assertNotEqual(fresh_pm_packet, pm_packet)
@@ -1840,15 +1847,15 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             json.dumps({"repair_decision": {"decision": "same_node_repair", "reason": "legacy wrapper"}}),
         )
 
-        self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
+        self.assertEqual(ledger["results"][bad_result]["status"], "mechanical_contract_blocked")
         self.assertFalse(ledger["pm_repair_decisions"])
         fresh_pm_packet = runtime._ensure_pm_repair_decision_packet_for_blocker(ledger, blocker_id)
 
         self.assertNotEqual(fresh_pm_packet, pm_packet)
         self.assertEqual(ledger["packets"][pm_packet]["status"], "superseded_after_repair")
         body = json.loads(ledger["packets"][fresh_pm_packet]["body"])
-        self.assertTrue(body["repair_decision_contract"]["top_level_decision_only"])
-        self.assertTrue(body["repair_decision_contract"]["nested_repair_decision_wrappers_forbidden"])
+        self.assertEqual(body["contract_family_id"], "pm_repair_decision.pm_repair_decision")
+        self.assertIn("repair_decision", body["forbidden_fields_seen"])
 
     def test_pm_repair_decision_summary_is_not_reason_fallback(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -1879,8 +1886,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ),
         )
 
-        self.assertEqual(ledger["results"][bad_result]["status"], "pm_repair_decision_blocked")
-        self.assertIn("top-level reason", ledger["results"][bad_result]["quarantine_reason"])
+        self.assertEqual(ledger["results"][bad_result]["status"], "mechanical_contract_blocked")
+        self.assertEqual(ledger["results"][bad_result]["missing_required_fields"], ["reason"])
+        self.assertEqual(ledger["results"][bad_result]["forbidden_fields_seen"], ["summary"])
         self.assertFalse(ledger["pm_repair_decisions"])
 
 

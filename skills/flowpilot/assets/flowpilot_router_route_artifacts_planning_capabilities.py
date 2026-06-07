@@ -127,9 +127,11 @@ def _write_child_skill_selection(project_root: Path, run_root: Path, run_state: 
         raise RouterError("child-skill selection must be PM-owned")
     if payload.get("raw_inventory_used_as_authority") is True or payload.get("raw_inventory_is_authority") is True:
         raise RouterError("raw local skill inventory cannot authorize child-skill selection")
+    if "skill_decisions" in payload and "selected_skills" not in payload:
+        raise RouterError("child-skill selection requires selected_skills; skill_decisions is unsupported")
     selected_skills = payload.get("selected_skills")
     if selected_skills is None:
-        selected_skills = payload.get("skill_decisions") or []
+        raise RouterError("child-skill selection requires selected_skills")
     selected_skills = _validate_selected_child_skills(selected_skills)
     selection = {
         "schema_version": "flowpilot.pm_child_skill_selection.v1",

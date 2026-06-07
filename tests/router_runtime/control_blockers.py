@@ -411,7 +411,7 @@ class ControlBlockersRuntimeTests(FlowPilotRouterRuntimeTestBase):
         router.record_external_event(
             root,
             "pm_records_control_blocker_repair_decision",
-            self.role_decision_envelope(root, "control_blocks/material_reissue_pm_repair_decision_blocked", decision),
+            self.role_decision_envelope(root, "control_blocks/material_reissue_pm_repair_decision_contract", decision),
         )
 
         router.record_external_event(

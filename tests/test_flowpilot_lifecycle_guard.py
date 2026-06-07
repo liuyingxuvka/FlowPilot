@@ -559,7 +559,12 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
 
     def test_late_result_after_route_mutation_stays_quarantined(self) -> None:
         ledger = runtime.new_ledger("Build", "Finish")
-        ledger["startup_intake"] = {"sealed": True}
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
         runtime.create_route(ledger, "route one", ["one"])
         packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
         lease_id = host.lease_responsibility(

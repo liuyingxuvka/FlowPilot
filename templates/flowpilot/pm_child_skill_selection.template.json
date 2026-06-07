@@ -22,7 +22,7 @@
     "raw_availability_is_not_a_reason": true,
     "deferred_or_rejected_is_valid_high_quality_decision": true
   },
-  "skill_decisions": [
+  "selected_skills": [
     {
       "skill_name": "<skill-name>",
       "decision": "<required|conditional|deferred|rejected>",

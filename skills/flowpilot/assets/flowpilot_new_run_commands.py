@@ -91,8 +91,20 @@ def submit_result(root: Path, *, lease_id: str, packet_id: str, body: str) -> di
     }
 
 
-def run_fake_e2e(root: Path, *, run_id: str | None = None, startup_text: str) -> dict[str, Any]:
-    return fake_e2e.run_fake_e2e(root, run_id=run_id, startup_text=startup_text, start_run=start_run)
+def run_fake_e2e(
+    root: Path,
+    *,
+    run_id: str | None = None,
+    startup_text: str,
+    inject_contract_faults: bool = False,
+) -> dict[str, Any]:
+    return fake_e2e.run_fake_e2e(
+        root,
+        run_id=run_id,
+        startup_text=startup_text,
+        start_run=start_run,
+        inject_contract_faults=inject_contract_faults,
+    )
 
 
 def status(root: Path, *, full: bool = False) -> dict[str, Any]:

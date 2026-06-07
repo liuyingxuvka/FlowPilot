@@ -19,6 +19,7 @@ if str(ASSETS) not in sys.path:
 flowpilot_new = importlib.import_module("flowpilot_new")
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 fake_e2e = importlib.import_module("flowpilot_core_runtime.fake_e2e")
+packet_result_contracts = importlib.import_module("flowpilot_core_runtime.packet_result_contracts")
 run_shell = importlib.import_module("flowpilot_core_runtime.run_shell")
 entrypoint_runner = importlib.import_module("simulations.run_flowpilot_new_entrypoint_checks")
 install_check_common = importlib.import_module("scripts.install_checks.common")
@@ -62,6 +63,39 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         self.assertNotIn("decision", body)
         self.assertNotIn("pm_visible_summary", body)
 
+    def test_fake_e2e_success_bodies_use_declared_contract_fields(self) -> None:
+        packets = [
+            {"packet_id": "packet-hs", "envelope": {"packet_kind": "task", "route_scope": "high_standard_contract"}},
+            {"packet_id": "packet-discovery", "envelope": {"packet_kind": "task", "route_scope": "discovery"}},
+            {"packet_id": "packet-skill", "envelope": {"packet_kind": "task", "route_scope": "skill_standard"}},
+            {"packet_id": "packet-plan", "envelope": {"packet_kind": "task", "route_scope": "planning"}},
+            {
+                "packet_id": "packet-context",
+                "envelope": {"packet_kind": "task", "route_scope": "node_acceptance_plan", "route_node_id": "node-001"},
+            },
+            {
+                "packet_id": "packet-replay",
+                "envelope": {"packet_kind": "task", "route_scope": "parent_backward_replay", "route_node_id": "node-001"},
+            },
+            {"packet_id": "packet-node", "envelope": {"packet_kind": "task", "route_scope": "node"}},
+            {"packet_id": "packet-flowguard", "envelope": {"packet_kind": "flowguard_check", "route_scope": "node"}},
+            {"packet_id": "packet-review", "envelope": {"packet_kind": "review", "route_scope": "node"}},
+            {"packet_id": "packet-pm", "envelope": {"packet_kind": "pm_disposition", "route_scope": "node_pm_disposition"}},
+        ]
+
+        for packet in packets:
+            with self.subTest(packet=packet["packet_id"]):
+                family_id = runtime._packet_result_family_id(packet)
+                body = json.loads(fake_e2e._body_for_packet(packet))
+                self.assertFalse(
+                    packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
+                    (family_id, body),
+                )
+                self.assertFalse(
+                    packet_result_contracts.forbidden_success_fields_for_family(family_id, body),
+                    (family_id, body),
+                )
+
     def test_split_entrypoint_modules_are_install_required(self) -> None:
         required = set(install_check_common.REQUIRED_FILES)
 
@@ -71,6 +105,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             "skills/flowpilot/assets/flowpilot_new_role_commands.py",
             "skills/flowpilot/assets/flowpilot_new_run_commands.py",
             "skills/flowpilot/assets/flowpilot_new_shared.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
         ):
             self.assertIn(path, required)
 
@@ -333,6 +368,45 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertFalse(status["sealed_bodies_visible"])
             self.assertFalse([lease for lease in status["leases"] if lease["status"] == "active"])
 
+    def test_fake_end_to_end_contract_chaos_reissues_missing_fields_and_finishes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = flowpilot_new.run_fake_e2e(
+                root,
+                run_id="run-e2e-contract-chaos",
+                startup_text="Build and validate a toy command with contract chaos.",
+                inject_contract_faults=True,
+            )
+
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["closure"]["decision"], "complete")
+            blocks = result["mechanical_contract_blocks"]
+            families = {block["contract_family_id"] for block in blocks}
+            self.assertTrue(
+                {
+                    "task.high_standard_contract",
+                    "task.skill_standard",
+                    "task.node_acceptance_plan",
+                    "pm_disposition.node_pm_disposition",
+                }.issubset(families),
+                blocks,
+            )
+            high_standard = next(block for block in blocks if block["contract_family_id"] == "task.high_standard_contract")
+            self.assertIn("requirements", high_standard["missing_required_fields"])
+            self.assertIn("overall_contract", high_standard["forbidden_fields_seen"])
+            self.assertIn("contract_rows", high_standard["forbidden_fields_seen"])
+            disposition = next(block for block in blocks if block["contract_family_id"] == "pm_disposition.node_pm_disposition")
+            self.assertEqual(disposition["missing_required_fields"], ["reason"])
+            self.assertEqual(disposition["forbidden_fields_seen"], ["summary"])
+            shell = run_shell.load_run_shell(root, run_id="run-e2e-contract-chaos")
+            ledger = run_shell.load_run_ledger(shell)
+            self.assertTrue(
+                any(
+                    packet.get("status") == "superseded_after_repair"
+                    for packet in ledger["packets"].values()
+                )
+            )
+
     def test_ack_only_and_pm_only_result_do_not_reach_terminal_closure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
@@ -422,14 +496,31 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=pm_lease,
                 packet_id=pm_packet,
+                body=high_standard_contract_body(),
+            )
+            shell = run_shell.load_run_shell(root, run_id="run-stopped-blocker")
+            ledger = run_shell.load_run_ledger(shell)
+            flowguard_packet = self._open_packet_by_kind(ledger, "flowguard_check")
+            flowguard_lease = self._lease_packet(
+                root,
+                packet_id=flowguard_packet,
+                responsibility="flowguard_operator",
+                agent_id="flowguard-agent",
+            )
+            flowpilot_new.ack(root, lease_id=flowguard_lease, packet_id=flowguard_packet)
+            self._open_authorized_result_reads(root, packet_id=flowguard_packet, lease_id=flowguard_lease)
+            flowpilot_new.submit_result(
+                root,
+                lease_id=flowguard_lease,
+                packet_id=flowguard_packet,
                 body=role_result_body(
-                    "PM identified a blocker that needs a user decision.",
+                    "FlowGuard identified a blocker that needs a user decision.",
                     decision="block",
                     blocking=True,
+                    blocker_class="needs_user",
                     recommended_resolution="needs user decision",
                 ),
             )
-            shell = run_shell.load_run_shell(root, run_id="run-stopped-blocker")
             ledger = run_shell.load_run_ledger(shell)
             blocker_id = next(iter(ledger["active_blockers"]))
             repair_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
@@ -445,10 +536,11 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=repair_lease,
                 packet_id=repair_packet,
-                body=role_result_body(
-                    "PM stopped the blocker for explicit user decision.",
-                    decision="stop_for_user",
-                    reason="Need explicit user decision.",
+                body=json.dumps(
+                    {
+                        "decision": "stop_for_user",
+                        "reason": "Need explicit user decision.",
+                    }
                 ),
             )
 

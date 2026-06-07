@@ -3,12 +3,17 @@ from __future__ import annotations
 import importlib
 import json
 from pathlib import Path
+import sys
 import unittest
 from unittest import mock
 
 
 fake_project_cli = importlib.import_module("simulations.flowpilot_fake_project_rehearsal_cli")
 fake_project_runner = importlib.import_module("simulations.run_flowpilot_fake_project_rehearsal_checks")
+CORE_RUNTIME = fake_project_cli.ASSETS / "flowpilot_core_runtime"
+if str(CORE_RUNTIME) not in sys.path:
+    sys.path.insert(0, str(CORE_RUNTIME))
+packet_result_contracts = importlib.import_module("packet_result_contracts")
 
 
 class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
@@ -83,6 +88,37 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
         skill_standard_body = json.loads(fake_project_cli._skill_standard_body())
         self.assertIn("obligations", skill_standard_body)
         self.assertNotIn("selected_skills", skill_standard_body)
+
+    def test_fake_project_success_bodies_use_declared_contract_fields(self) -> None:
+        packets = [
+            {"packet_id": "packet-hs", "packet_kind": "task", "route_scope": "high_standard_contract"},
+            {"packet_id": "packet-discovery", "packet_kind": "task", "route_scope": "discovery"},
+            {"packet_id": "packet-skill", "packet_kind": "task", "route_scope": "skill_standard"},
+            {"packet_id": "packet-plan", "packet_kind": "task", "route_scope": "planning"},
+            {
+                "packet_id": "packet-context",
+                "packet_kind": "task",
+                "route_scope": "node_acceptance_plan",
+                "route_node_id": "node-001",
+            },
+            {"packet_id": "packet-node", "packet_kind": "task", "route_scope": "node"},
+            {"packet_id": "packet-flowguard", "packet_kind": "flowguard_check", "route_scope": "node"},
+            {"packet_id": "packet-review", "packet_kind": "review", "route_scope": "node"},
+            {"packet_id": "packet-pm", "packet_kind": "pm_disposition", "route_scope": "node_pm_disposition"},
+        ]
+
+        for packet in packets:
+            with self.subTest(packet=packet["packet_id"]):
+                family_id = packet_result_contracts.packet_result_family_id(packet)
+                body = json.loads(fake_project_cli.current_contract_body_for_packet(packet))
+                self.assertFalse(
+                    packet_result_contracts.undeclared_success_fields_for_family(family_id, body),
+                    (family_id, body),
+                )
+                self.assertFalse(
+                    packet_result_contracts.forbidden_success_fields_for_family(family_id, body),
+                    (family_id, body),
+                )
 
     def test_open_current_packet_inputs_uses_authorized_reads_from_sealed_packet(self) -> None:
         calls: list[tuple[str, ...]] = []

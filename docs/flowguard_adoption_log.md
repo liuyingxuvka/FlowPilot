@@ -20087,6 +20087,74 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-packet-contract-source-of-truth - Packet result contract source of truth
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: live latest FlowPilot evidence showed fake AI and runtime packet-result contracts could diverge after the high-standard contract gate miss.
+- Status: completed validated installed synced
+- Skill decision: OpenSpec + FlowGuard FieldLifecycleMesh + Model-Test Alignment + TestMesh + DevelopmentProcessFlow
+- Started: 2026-06-07T10:30:00+02:00
+- Ended: 2026-06-07T12:31:00+02:00
+- FlowGuard package version: 0.40.12
+- FlowGuard schema version: 1.0
+
+### Model Files
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/flowpilot_field_contract_results.json`
+- `simulations/flowpilot_field_mesh_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py`
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py`
+- `skills/flowpilot/assets/flowpilot_new_run_commands.py`
+- `scripts/install_checks/common.py`
+- `tests/test_flowpilot_core_runtime.py`
+- `tests/test_flowpilot_high_standard_control_flow.py`
+- `tests/test_flowpilot_new_entrypoint.py`
+- `tests/test_flowpilot_fake_project_rehearsal.py`
+- `tests/test_flowpilot_field_contract_model.py`
+
+### Findings
+- Packet result contracts now have a single shared source consumed by runtime checks, FieldContract, fake AI parity tests, and install checks.
+- Runtime mechanical blocks now expose `contract_family_id`, `missing_required_fields`, `forbidden_fields_seen`, and `minimal_valid_shape`, and reissue the same current packet family with the same metadata.
+- Fake AI success bodies are checked against declared packet-family fields so hidden extra fields can no longer make broad rehearsal pass while live packets fail.
+- Old hidden fields such as `overall_contract`, `contract_rows`, `selected_skills` in skill-standard result bodies, `summary` as PM disposition reason, and `authority` as PM repair authority are rejected rather than translated.
+- The install surface no longer requires the old heartbeat plan document, while retired heartbeat templates remain explicitly forbidden.
+
+### Commands
+- `python -m unittest -v tests.test_flowpilot_core_runtime tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_new_entrypoint tests.test_flowpilot_fake_project_rehearsal tests.test_flowpilot_field_contract_model` -> OK, 118 tests.
+- `python -m unittest -v tests.test_flowpilot_lifecycle_guard` -> OK, 18 tests.
+- `python -m unittest -v tests.router_runtime.control_blockers` -> OK, 23 tests.
+- `python -m unittest -v tests.test_flowpilot_planning_quality` -> OK, 2 tests.
+- `python -m unittest -v tests.router_runtime.foreground_controller.ForegroundControllerRuntimeTests.test_child_skill_gates_block_raw_inventory_and_controller_approval` -> OK.
+- `python simulations/run_flowpilot_field_contract_checks.py --json-out simulations/flowpilot_field_contract_results.json` -> OK.
+- `python simulations/run_flowpilot_field_mesh_checks.py --json-out simulations/flowpilot_field_mesh_results.json` -> OK.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` -> OK.
+- `python simulations/run_meta_checks.py --full --force` -> OK, background log `tmp/flowguard_background/run_meta_checks.*`, exit 0, proof reuse false.
+- `python simulations/run_capability_checks.py --full --force` -> OK, background log `tmp/flowguard_background/run_capability_checks.*`, exit 0, proof reuse false.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK.
+- `openspec validate enforce-packet-contract-source-of-truth --strict` -> OK.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> OK after install self-check rerun.
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> OK.
+- `python -m flowguard project-audit --root .` -> OK.
+- `git diff --check` -> OK, line-ending warnings only.
+
+### Friction Points
+- The first install self-check failed because topology was built before the newly refreshed parent result timestamps; rebuilding topology after generated results fixed it.
+- The first full `control_blockers` background wrapper stalled after partial stderr capture; the module was rerun in foreground with a longer timeout and passed.
+- Existing fake AI success coverage was too permissive because it tested a richer hidden body than the real packet contract requested.
+
+### Risk Evidence Summary
+- Evidence supports the claim that current core-runtime packet/result families are contract-owned by a single shared contract table, fake AI success bodies are field-parity checked, and mechanical reissues now tell the current AI exactly which fields are missing or forbidden.
+- This pass intentionally preserves negative tests and historical/adoption text that mention old paths; those are not production fallback routes.
+
+### Next Actions
+- New packet families must add a shared contract row, fake success parity check, negative hidden-field test, FieldContract evidence, and install/source-alignment coverage before broad fake e2e success is trusted.
+
+
 ## flowpilot-packet-result-contract-mesh-20260607 - Packet Result Contract Mesh
 
 - Project: FlowGuardProjectAutopilot_20260430

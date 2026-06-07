@@ -49,6 +49,10 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("packet_result.packet_id", fields)
         self.assertIn("packet_result.result_id", fields)
         self.assertIn("output_contract.missing_required_fields", fields)
+        self.assertIn("output_contract.forbidden_fields_seen", fields)
+        self.assertIn("output_contract.contract_family_id", fields)
+        self.assertIn("output_contract.mechanical_contract_failure", fields)
+        self.assertIn("output_contract.minimal_valid_shape", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[]", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[].requirement_id", fields)
         self.assertIn("preplanning.high_standard_contract.requirements[].classification", fields)
@@ -102,6 +106,7 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertNotIn("preplanning.skill_standard.default_required_obligation", fields)
         self.assertNotIn("preplanning.skill_standard.selected_skills", fields)
         self.assertNotIn("preplanning.high_standard_contract.decision", fields)
+        self.assertNotIn("preplanning.high_standard_contract.contract_rows", fields)
 
     def test_field_status_catalog_marks_retired_and_forbidden_legacy(self) -> None:
         self.assertEqual(
@@ -124,10 +129,12 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("preplanning.skill_standard.default_required_obligation", forbidden)
         self.assertIn("preplanning.skill_standard.selected_skills", forbidden)
         self.assertIn("preplanning.high_standard_contract.decision", forbidden)
+        self.assertIn("preplanning.high_standard_contract.contract_rows", forbidden)
         self.assertIn("pm_repair_decision.authority", forbidden)
         self.assertIn("pm_disposition.summary", forbidden)
 
     def test_packet_result_contract_catalog_covers_current_packet_families(self) -> None:
+        self.assertIs(model.PACKET_RESULT_CONTRACTS, model.packet_result_contracts.PACKET_RESULT_CONTRACTS)
         contracts = {entry["family_id"]: entry for entry in model.PACKET_RESULT_CONTRACTS}
 
         self.assertEqual(model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT, len(contracts))
@@ -149,6 +156,7 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
 
         self.assertEqual(contracts["task.high_standard_contract"]["required_fields"], ("requirements",))
         self.assertIn("decision", contracts["task.high_standard_contract"]["forbidden_fields"])
+        self.assertIn("contract_rows", contracts["task.high_standard_contract"]["forbidden_fields"])
         self.assertIn("obligations", contracts["task.skill_standard"]["required_fields"])
         self.assertIn("selected_skills", contracts["task.skill_standard"]["forbidden_fields"])
         self.assertIn("node_context_package", contracts["task.node_acceptance_plan"]["required_fields"])
