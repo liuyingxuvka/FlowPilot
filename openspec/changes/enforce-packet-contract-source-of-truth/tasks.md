@@ -27,4 +27,4 @@
 - [x] 5.1 Run targeted unit tests for runtime, high-standard flow, fake AI rehearsal, and field contract model.
 - [x] 5.2 Run FieldContract, FieldMesh, Model-Test Alignment, topology build/check, and layered parent regressions.
 - [x] 5.3 Sync local FlowPilot install and run install/audit checks.
-- [x] 5.4 Record FlowGuard and KB postflight evidence, commit, and push.
+- [x] 5.4 Record FlowGuard and KB postflight evidence, then commit the local git version.
