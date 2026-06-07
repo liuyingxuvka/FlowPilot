@@ -173,7 +173,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             agent_id=agent_id,
         )
         flowpilot_new.ack(root, lease_id=lease_id, packet_id=packet_id)
-        self._open_authorized_result_reads(root, packet_id=packet_id, lease_id=lease_id)
+        flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
         result_id = flowpilot_new.submit_result(
             root,
             lease_id=lease_id,
@@ -210,17 +210,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
         return str(lease["lease_id"])
 
     def _open_authorized_result_reads(self, root: Path, *, packet_id: str, lease_id: str) -> None:
-        shell = run_shell.load_run_shell(root)
-        ledger = run_shell.load_run_ledger(shell)
-        packet = ledger["packets"][packet_id]
-        envelope = packet["envelope"]
-        for read in envelope.get("authorized_result_reads", []):
-            flowpilot_new.open_result(
-                root,
-                lease_id=lease_id,
-                packet_id=packet_id,
-                result_id=str(read["result_id"]),
-            )
+        flowpilot_new.open_packet(root, lease_id=lease_id, packet_id=packet_id)
 
     def _open_packet_by_kind(self, ledger: dict[str, object], packet_kind: str) -> str:
         packets = ledger["packets"]
@@ -334,6 +324,24 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertEqual(next(iter(ledger["flowguard_work_orders"].values()))["modeled_target"], "development_process")
             packet_kinds = [packet["envelope"].get("packet_kind", "task") for packet in ledger["packets"].values()]
             route_scopes = [packet["envelope"].get("route_scope", "") for packet in ledger["packets"].values()]
+            self.assertTrue(
+                all(packet["envelope"].get("current_handoff_contract") for packet in ledger["packets"].values())
+            )
+            review_packets = [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"].get("packet_kind") == "review"
+            ]
+            self.assertTrue(review_packets)
+            self.assertTrue(
+                all(
+                    any(
+                        read.get("purpose") == "matching_flowguard_result_for_review"
+                        for read in packet["envelope"].get("authorized_result_reads", [])
+                    )
+                    for packet in review_packets
+                )
+            )
             for expected_scope in (
                 "high_standard_contract",
                 "discovery",

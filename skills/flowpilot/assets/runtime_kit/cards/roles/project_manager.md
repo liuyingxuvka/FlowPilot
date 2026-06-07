@@ -90,10 +90,9 @@ is addressed to another role.
 
 When a PM packet includes `recent_role_report_summary`, treat it as a fast
 navigation aid written by the source role, not as the report body. When the
-same packet includes `authorized_result_reads`, run each required
-`flowpilot_new.py open-result --lease-id <lease-id> --packet-id <packet-id>
---result-id <result-id>` command after ACK/open-packet and before submitting
-the PM decision. Base repair choices on the opened result/report body and the
+same packet includes `authorized_result_reads`, use the authorized input
+materials delivered by `flowpilot_new.py open-packet` before submitting the PM
+decision. Base repair choices on the delivered result/report body and the
 packet contract; do not decide from the summary alone.
 
 If PM cannot proceed after a verified open, PM must not send an ordinary

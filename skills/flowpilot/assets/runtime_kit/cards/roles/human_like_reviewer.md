@@ -52,12 +52,11 @@ extra permission. If you truly cannot complete the review, return the existing f
 blocker or PM suggestion allowed by the review contract so PM or Router can
 decide.
 
-When the assigned review packet includes `authorized_result_reads`, run each
-required `flowpilot_new.py open-result --lease-id <lease-id> --packet-id
-<packet-id> --result-id <result-id>` command after ACK/open-packet and before
-submitting the review. Those opened result bodies are the authorized subject
+When the assigned review packet includes `authorized_result_reads`, use the
+authorized input materials delivered by `flowpilot_new.py open-packet` before
+submitting the review. Those delivered result bodies are the authorized subject
 artifacts for this review. Controller-visible summaries and PM navigation
-summaries are pointers only; they do not replace direct review of the opened
+summaries are pointers only; they do not replace direct review of the delivered
 body and cited evidence.
 
 ## Reviewer Anti-Repair Boundary

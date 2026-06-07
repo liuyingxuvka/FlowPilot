@@ -42,6 +42,14 @@ HAZARD_EXPECTED_FAILURES = {
     model.FOLLOWUP_BLOCKER_NOT_PROPAGATED_TO_NEXT_RUNWAY: "follow-up blocker did not propagate",
     model.FINAL_CLOSURE_WITH_UNRESOLVED_INFORMATION_GAP: "closure was claimed with unresolved information gap",
     model.HISTORICAL_EVIDENCE_PROMOTED_TO_CURRENT: "historical state or evidence was promoted to current authority",
+    model.PACKET_RESULT_CONTRACT_NOT_VISIBLE_TO_ROLE: "role-visible result output contract",
+    model.FLOWGUARD_EVIDENCE_NOT_BOUND_TO_REVIEWER: "FlowGuard evidence handoff lacks current subject result",
+    model.BLOCKER_REPAIR_STAGE_HIDDEN_FROM_STATUS: "blocker repair chain stage is hidden",
+    model.SYNTHETIC_TRACE_BYPASSES_VISIBLE_CONTRACT: "synthetic trace used hidden success contract",
+    model.WORK_PACKET_MISSING_INPUT_MATERIALS: "required input material manifest",
+    model.WORK_PACKET_MISSING_REPORT_REQUIREMENTS: "required report contract",
+    model.DOWNSTREAM_REPORT_NOT_AUTHORIZED: "downstream packet is not authorized",
+    model.MISSING_INFO_RESPONSE_NOT_DEFINED: "does not define the current-runtime response",
 }
 
 
@@ -61,7 +69,24 @@ def _state_id(state: model.State) -> str:
         f"{state.work_packet_carries_current_blocker},{state.work_packet_carries_new_repair_direction},"
         f"{state.work_packet_carries_allowed_reads_writes},{state.work_packet_carries_forbidden_actions},"
         f"{state.work_packet_carries_success_evidence},{state.work_packet_disposes_stale_context},"
-        f"delta={state.new_information_delta_present}|"
+        f"contract={state.work_packet_carries_output_contract},"
+        f"{state.work_packet_carries_minimal_valid_result_shape},"
+        f"{state.work_packet_carries_forbidden_result_fields},"
+        f"materials={state.work_packet_carries_input_material_manifest},"
+        f"report={state.work_packet_carries_required_report_contract},"
+        f"consumer={state.work_packet_names_downstream_consumer},"
+        f"missing_info={state.work_packet_names_missing_info_response},"
+        f"submitted={state.result_report_submitted},"
+        f"satisfies={state.result_report_satisfies_required_contract},"
+        f"authorized_report={state.downstream_packet_authorized_to_read_report},"
+        f"delta={state.new_information_delta_present},hidden_contract={state.synthetic_trace_uses_hidden_contract}|"
+        f"flowguard_review={state.flowguard_gate_required},{state.flowguard_result_current_for_subject},"
+        f"{state.flowguard_evidence_manifest_attached},{state.flowguard_evidence_subject_matches_result},"
+        f"reviewer={state.reviewer_packet_issued},{state.reviewer_packet_authorized_to_read_subject_result},"
+        f"{state.reviewer_packet_authorized_to_read_flowguard_evidence},"
+        f"{state.reviewer_packet_names_flowguard_evidence_id}|"
+        f"blocker_stage={state.blocker_repair_chain_open},{state.blocker_status_reflects_current_stage},"
+        f"{state.status_projection_shows_repair_chain}|"
         f"breakglass={state.break_glass_used},{state.normal_repair_path_failed},"
         f"{state.break_glass_bounded_reads_writes},{state.break_glass_control_plane_only},"
         f"{state.break_glass_target_project_repair},{state.break_glass_reenters_normal_flow}|"
@@ -223,6 +248,12 @@ def run_checks() -> dict[str, Any]:
                 "same-work/no-new-information loop rejection",
                 "break-glass reintegration requirements",
                 "route mutation information and replay requirements",
+                "actor input material manifest requirements",
+                "required report contract and downstream consumer authorization",
+                "missing-information response definition",
+                "role-visible packet result output contracts",
+                "FlowGuard evidence manifest handoff into reviewer packets",
+                "repair-chain status projection visibility",
             ],
             "does_not_cover": [
                 "full concrete runtime conformance for every packet builder",

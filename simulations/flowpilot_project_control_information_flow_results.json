@@ -5,7 +5,13 @@
       "stale historical evidence rejection",
       "same-work/no-new-information loop rejection",
       "break-glass reintegration requirements",
-      "route mutation information and replay requirements"
+      "route mutation information and replay requirements",
+      "actor input material manifest requirements",
+      "required report contract and downstream consumer authorization",
+      "missing-information response definition",
+      "role-visible packet result output contracts",
+      "FlowGuard evidence manifest handoff into reviewer packets",
+      "repair-chain status projection visibility"
     ],
     "does_not_cover": [
       "full concrete runtime conformance for every packet builder",
@@ -28,12 +34,19 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=132",
+    "summary": "sequences=3 initial_states=1 traces=192",
     "violation_count": 0
   },
   "hazard_detection": {
     "failures": [],
     "hazards": {
+      "blocker_repair_stage_hidden_from_status": {
+        "detected": true,
+        "expected_failure": "blocker repair chain stage is hidden",
+        "failures": [
+          "blocker repair chain stage is hidden or stale in status projection"
+        ]
+      },
       "break_glass_bypasses_pm_reviewer_reintegration": {
         "detected": true,
         "expected_failure": "break-glass did not reintegrate through PM/reviewer validation",
@@ -56,11 +69,27 @@
           "break-glass used before normal PM/control-blocker repair was proven blocked"
         ]
       },
+      "downstream_report_not_authorized": {
+        "detected": true,
+        "expected_failure": "downstream packet is not authorized",
+        "failures": [
+          "work packet does not name the downstream consumer for its report",
+          "downstream packet is not authorized to read the required report"
+        ]
+      },
       "final_closure_with_unresolved_information_gap": {
         "detected": true,
         "expected_failure": "closure was claimed with unresolved information gap",
         "failures": [
           "closure was claimed with unresolved information gap"
+        ]
+      },
+      "flowguard_evidence_not_bound_to_reviewer": {
+        "detected": true,
+        "expected_failure": "FlowGuard evidence handoff lacks current subject result",
+        "failures": [
+          "FlowGuard evidence handoff lacks current subject result, attached evidence manifest, or subject-result match",
+          "reviewer packet lacks authorized subject result and FlowGuard evidence reads"
         ]
       },
       "followup_blocker_not_propagated_to_next_runway": {
@@ -76,6 +105,20 @@
         "expected_failure": "historical state or evidence was promoted to current authority",
         "failures": [
           "historical state or evidence was promoted to current authority"
+        ]
+      },
+      "missing_info_response_not_defined": {
+        "detected": true,
+        "expected_failure": "does not define the current-runtime response",
+        "failures": [
+          "work packet does not define the current-runtime response when required information is missing"
+        ]
+      },
+      "packet_result_contract_not_visible_to_role": {
+        "detected": true,
+        "expected_failure": "role-visible result output contract",
+        "failures": [
+          "work packet lacks role-visible result output contract, minimal valid shape, or forbidden fields"
         ]
       },
       "pm_runway_omits_active_blocker": {
@@ -138,11 +181,34 @@
           "same work repeated without new information, blocker, terminal stop, or route mutation"
         ]
       },
+      "synthetic_trace_bypasses_visible_contract": {
+        "detected": true,
+        "expected_failure": "synthetic trace used hidden success contract",
+        "failures": [
+          "work packet lacks role-visible result output contract, minimal valid shape, or forbidden fields",
+          "synthetic trace used hidden success contract instead of visible packet output contract"
+        ]
+      },
       "work_packet_lacks_minimum_information": {
         "detected": true,
         "expected_failure": "work packet lacks minimum executable information",
         "failures": [
           "work packet lacks minimum executable information"
+        ]
+      },
+      "work_packet_missing_input_materials": {
+        "detected": true,
+        "expected_failure": "required input material manifest",
+        "failures": [
+          "work packet lacks the required input material manifest for the actor"
+        ]
+      },
+      "work_packet_missing_report_requirements": {
+        "detected": true,
+        "expected_failure": "required report contract",
+        "failures": [
+          "work packet lacks required report contract for the actor output",
+          "submitted report does not satisfy the packet's required report contract"
         ]
       }
     },
@@ -155,30 +221,37 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 22
+    "terminal_state_count": 32
   },
   "result_type": "flowpilot_project_control_information_flow_checks",
   "safe_graph": {
     "accepted_scenarios": [
+      "valid_actor_handoff_material_and_report_contract",
       "valid_break_glass_control_repair",
       "valid_interrupt_resume_with_blocker_context",
+      "valid_packet_contract_and_review_evidence_handoff",
       "valid_reopen_imports_history_and_current_run",
       "valid_repair_packet_progress",
       "valid_role_assignment_reissues_current_packet",
       "valid_route_mutation_with_replay_scope",
       "valid_terminal_stop_preserves_unresolved_work"
     ],
-    "edge_count": 44,
+    "edge_count": 64,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
+      "blocker_repair_stage_hidden_from_status",
       "break_glass_bypasses_pm_reviewer_reintegration",
       "break_glass_unbounded_or_target_project_repair",
       "break_glass_without_normal_repair_failure",
+      "downstream_report_not_authorized",
       "final_closure_with_unresolved_information_gap",
+      "flowguard_evidence_not_bound_to_reviewer",
       "followup_blocker_not_propagated_to_next_runway",
       "historical_evidence_promoted_to_current",
+      "missing_info_response_not_defined",
+      "packet_result_contract_not_visible_to_role",
       "pm_runway_omits_active_blocker",
       "reopen_reuses_old_agent_ids_as_current",
       "resume_from_chat_history_loses_blocker",
@@ -187,8 +260,11 @@
       "route_mutation_does_not_invalidate_stale_evidence",
       "route_mutation_omits_blocker_or_acceptance_plan",
       "same_work_repeated_with_no_new_info",
-      "work_packet_lacks_minimum_information"
+      "synthetic_trace_bypasses_visible_contract",
+      "work_packet_lacks_minimum_information",
+      "work_packet_missing_input_materials",
+      "work_packet_missing_report_requirements"
     ],
-    "state_count": 45
+    "state_count": 65
   }
 }

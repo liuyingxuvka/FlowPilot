@@ -65,12 +65,11 @@ targets, inspection targets, known risks, and references while completing the
 bounded worker packet. The package does not grant permission to open another
 role's sealed body or expand writes beyond the packet boundary.
 
-When a repair or worker packet includes `authorized_result_reads`, run each
-required `flowpilot_new.py open-result --lease-id <lease-id> --packet-id
-<packet-id> --result-id <result-id>` command after ACK/open-packet and before
-submitting the worker result. Use the opened report body to understand the
+When a repair or worker packet includes `authorized_result_reads`, use the
+authorized input materials delivered by `flowpilot_new.py open-packet` before
+submitting the worker result. Use the delivered report body to understand the
 concrete prior failure being repaired. Do not rely on PM summary text alone,
-and do not open any result body that the packet did not authorize.
+and do not read any result body that the packet did not authorize.
 
 Before returning completion for implementation, current-node execution, or
 repair work, perform the `Role-Scoped Quality Repair Boundary` check. Inspect

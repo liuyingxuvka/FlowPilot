@@ -45,6 +45,31 @@ old fields, hidden runtime knowledge, or prose fallback.
   forbidden fields seen, missing fields, blocked reason, and minimal valid
   shape for the same contract family id
 
+### Requirement: Current handoff contracts bind input, output, and next consumer
+FlowPilot SHALL attach one current handoff contract to every issued packet. The
+contract MUST be visible in the packet envelope and, when the packet body is a
+strict JSON object, in the opened packet body. The contract MUST name the packet
+family, authorized input/result reads, required report fields, forbidden fields,
+missing-information response, downstream consumer, and status projection
+requirements.
+
+#### Scenario: Role sees the same contract runtime enforces
+- **WHEN** a role opens a current packet
+- **THEN** the opened packet metadata MUST include the same current handoff
+  contract that runtime uses for result-family validation and authorized result
+  reads
+
+#### Scenario: Reviewer gets FlowGuard evidence through the same handoff
+- **WHEN** runtime issues a reviewer packet after a matching FlowGuard check
+- **THEN** the reviewer packet MUST authorize the matching FlowGuard result read
+  and name it in the current handoff contract before reviewer submission
+
+#### Scenario: Repair status remains visible
+- **WHEN** a blocker has opened a current repair packet or is waiting for
+  FlowGuard/reviewer recheck
+- **THEN** public status projection MUST keep that blocker visible as the
+  current repair chain and MUST NOT hide it as a retired or stale path
+
 ### Requirement: Contract changes refresh model and test evidence
 FlowPilot SHALL treat packet contract row changes as model, field lifecycle,
 fake AI, runtime, and test evidence invalidations.

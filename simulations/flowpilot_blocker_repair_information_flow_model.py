@@ -34,7 +34,7 @@ VALID_LOOP_ESCAPE_ROUTE_MUTATION = "valid_loop_escape_route_mutation"
 
 CURRENT_BLOCKER_PAYLOAD_MISSING_DETAILS = "current_blocker_payload_missing_details"
 STALE_BLOCKER_USED_FOR_PM_REPAIR = "stale_blocker_used_for_pm_repair"
-PM_DID_NOT_OPEN_REQUIRED_REPORT = "pm_did_not_open_required_report"
+PM_REQUIRED_REPORT_NOT_DELIVERED = "pm_required_report_not_delivered"
 REVIEWER_REQUIRED_REPAIR_DROPPED = "reviewer_required_repair_dropped"
 REVIEWER_ADVICE_NOT_INTEGRATED = "reviewer_advice_not_integrated"
 PM_REPAIR_PACKAGE_OMITS_NEW_BLOCKER_CONTENT = "pm_repair_package_omits_new_blocker_content"
@@ -47,6 +47,8 @@ FOLLOWUP_BLOCKER_LOST = "followup_blocker_lost"
 SAME_BLOCKER_REPEAT_LOOP_ALLOWED = "same_blocker_repeat_loop_allowed"
 NO_SUCCESS_EVIDENCE_CONTRACT = "no_success_evidence_contract"
 BLOCKER_ROUTED_WITHOUT_PM_DECISION = "blocker_routed_without_pm_decision"
+FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER = "flowguard_recheck_evidence_not_delivered_to_reviewer"
+REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS = "repair_stage_not_updated_after_flowguard_pass"
 
 VALID_SCENARIOS = (
     VALID_REVIEWER_BLOCKER_REPAIR_PACKET,
@@ -58,7 +60,7 @@ VALID_SCENARIOS = (
 NEGATIVE_SCENARIOS = (
     CURRENT_BLOCKER_PAYLOAD_MISSING_DETAILS,
     STALE_BLOCKER_USED_FOR_PM_REPAIR,
-    PM_DID_NOT_OPEN_REQUIRED_REPORT,
+    PM_REQUIRED_REPORT_NOT_DELIVERED,
     REVIEWER_REQUIRED_REPAIR_DROPPED,
     REVIEWER_ADVICE_NOT_INTEGRATED,
     PM_REPAIR_PACKAGE_OMITS_NEW_BLOCKER_CONTENT,
@@ -71,6 +73,8 @@ NEGATIVE_SCENARIOS = (
     SAME_BLOCKER_REPEAT_LOOP_ALLOWED,
     NO_SUCCESS_EVIDENCE_CONTRACT,
     BLOCKER_ROUTED_WITHOUT_PM_DECISION,
+    FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER,
+    REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -101,8 +105,8 @@ class State:
     required_repair_present: bool = False
     reviewer_advice_present: bool = False
 
-    pm_required_to_open_body: bool = False
-    pm_opened_required_body: bool = False
+    pm_requires_authorized_report_body: bool = False
+    pm_authorized_report_delivered: bool = False
     pm_repair_decision_recorded: bool = False
     pm_single_owner: bool = True
     pm_decision_references_current_blocker: bool = False
@@ -127,11 +131,18 @@ class State:
     worker_result_returned: bool = False
     worker_result_addresses_required_repair: bool = False
 
+    flowguard_recheck_requested: bool = False
+    flowguard_recheck_references_repair_result: bool = False
+    flowguard_recheck_passed: bool = False
+    flowguard_evidence_manifest_attached: bool = False
+
     reviewer_recheck_requested: bool = False
     reviewer_recheck_references_current_blocker: bool = False
     reviewer_recheck_uses_worker_evidence: bool = False
+    reviewer_recheck_uses_flowguard_evidence: bool = False
     reviewer_recheck_passed: bool = False
     blocker_closed: bool = False
+    blocker_stage_current: bool = True
 
     followup_blocker_returned: bool = False
     followup_blocker_recorded: bool = False
@@ -165,8 +176,8 @@ def _safe_reviewer_base(**changes: object) -> State:
             specific_failure_present=True,
             required_repair_present=True,
             reviewer_advice_present=True,
-            pm_required_to_open_body=True,
-            pm_opened_required_body=True,
+            pm_requires_authorized_report_body=True,
+            pm_authorized_report_delivered=True,
             pm_repair_decision_recorded=True,
             pm_single_owner=True,
             pm_decision_references_current_blocker=True,
@@ -187,11 +198,17 @@ def _safe_reviewer_base(**changes: object) -> State:
             worker_packet_has_semantic_delta=True,
             worker_result_returned=True,
             worker_result_addresses_required_repair=True,
+            flowguard_recheck_requested=True,
+            flowguard_recheck_references_repair_result=True,
+            flowguard_recheck_passed=True,
+            flowguard_evidence_manifest_attached=True,
             reviewer_recheck_requested=True,
             reviewer_recheck_references_current_blocker=True,
             reviewer_recheck_uses_worker_evidence=True,
+            reviewer_recheck_uses_flowguard_evidence=True,
             reviewer_recheck_passed=True,
             blocker_closed=True,
+            blocker_stage_current=True,
         ),
         **changes,
     )
@@ -234,8 +251,8 @@ def _scenario_state(scenario: str) -> State:
             specific_failure_present=True,
             required_repair_present=True,
             reviewer_advice_present=True,
-            pm_required_to_open_body=True,
-            pm_opened_required_body=True,
+            pm_requires_authorized_report_body=True,
+            pm_authorized_report_delivered=True,
             pm_repair_decision_recorded=True,
             pm_single_owner=True,
             pm_decision_references_current_blocker=True,
@@ -258,8 +275,8 @@ def _scenario_state(scenario: str) -> State:
         )
     if scenario == STALE_BLOCKER_USED_FOR_PM_REPAIR:
         return replace(_safe_reviewer_base(), scenario=scenario, blocker_payload_current=False)
-    if scenario == PM_DID_NOT_OPEN_REQUIRED_REPORT:
-        return replace(_safe_reviewer_base(), scenario=scenario, pm_opened_required_body=False)
+    if scenario == PM_REQUIRED_REPORT_NOT_DELIVERED:
+        return replace(_safe_reviewer_base(), scenario=scenario, pm_authorized_report_delivered=False)
     if scenario == REVIEWER_REQUIRED_REPAIR_DROPPED:
         return replace(
             _safe_reviewer_base(),
@@ -341,6 +358,19 @@ def _scenario_state(scenario: str) -> State:
             pm_decision_includes_required_repair=False,
             pm_decision_names_new_work=False,
         )
+    if scenario == FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            flowguard_evidence_manifest_attached=False,
+            reviewer_recheck_uses_flowguard_evidence=False,
+        )
+    if scenario == REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            blocker_stage_current=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -362,8 +392,8 @@ def information_flow_failures(state: State) -> list[str]:
             failures.append("PM repair decision lacks single owner")
         if state.blocker_detected and not state.pm_decision_references_current_blocker:
             failures.append("PM repair decision does not reference the current blocker")
-        if state.pm_required_to_open_body and not state.pm_opened_required_body:
-            failures.append("PM repair decision was made before opening the required report body")
+        if state.pm_requires_authorized_report_body and not state.pm_authorized_report_delivered:
+            failures.append("PM repair decision was made before the required report body was delivered")
         if state.required_repair_present and not state.pm_decision_includes_required_repair:
             failures.append("PM repair decision dropped the role required_repair")
         if state.reviewer_advice_present and not state.pm_decision_integrates_reviewer_advice:
@@ -406,20 +436,34 @@ def information_flow_failures(state: State) -> list[str]:
     ):
         failures.append("worker result did not address the required repair")
 
+    if state.flowguard_recheck_requested:
+        if not (
+            state.flowguard_recheck_references_repair_result
+            and state.flowguard_recheck_passed
+            and state.flowguard_evidence_manifest_attached
+        ):
+            failures.append("FlowGuard recheck did not bind current repair result to an attached evidence manifest")
+
     if state.reviewer_recheck_requested:
         if not (
             state.reviewer_recheck_references_current_blocker
             and state.reviewer_recheck_uses_worker_evidence
         ):
             failures.append("reviewer recheck is not bound to the current blocker and repair evidence")
+        if state.flowguard_recheck_requested and not state.reviewer_recheck_uses_flowguard_evidence:
+            failures.append("reviewer recheck lacks the current FlowGuard evidence produced for the repair")
 
     if state.blocker_closed and not (
         state.reviewer_recheck_requested
         and state.reviewer_recheck_references_current_blocker
         and state.reviewer_recheck_uses_worker_evidence
+        and (not state.flowguard_recheck_requested or state.reviewer_recheck_uses_flowguard_evidence)
         and state.reviewer_recheck_passed
     ):
         failures.append("blocker was closed without a bound reviewer recheck pass")
+
+    if state.flowguard_recheck_passed and not state.blocker_stage_current:
+        failures.append("blocker repair stage was not updated after FlowGuard recheck pass")
 
     if state.followup_blocker_returned and not state.followup_blocker_recorded:
         failures.append("follow-up blocker returned by recheck was not recorded as current work")
@@ -438,9 +482,9 @@ class BlockerRepairInformationFlowStep:
     """Model one FlowPilot blocker repair information-flow transition.
 
     Input x State -> Set(Output x State)
-    reads: blocker payload, role report body-open receipt, PM repair decision,
-    PM repair package, worker repair packet, worker result, reviewer recheck,
-    repeated blocker/work-package identities
+    reads: blocker payload, delivered authorized report body, PM repair decision,
+    PM repair package, worker repair packet, worker result, FlowGuard recheck
+    evidence, reviewer recheck, repeated blocker/work-package identities
     writes: accepted repair flow, explicit rejection, follow-up blocker, route
     mutation, or terminal stop
     idempotency: current blocker id plus repair package generation determine

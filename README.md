@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.4</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.5</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.4` |
+| Source version | `v0.10.5` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for work request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.4` makes packet/result contracts the runtime source of truth: each packet family declares its required result fields, forbidden legacy fields, current validator, fake-AI success shape, and negative contract-chaos evidence. High-standard contracts use top-level `requirements`; hidden generic wrappers and old child-skill/contract fields are rejected instead of translated.
+`v0.10.5` keeps packet/result contracts as the runtime source of truth and makes `open-packet` deliver every authorized input material for the assigned role. Required sealed result/report bodies still have current-run hashes and role-scoped receipts, but normal work no longer depends on a separate `open-result` micro-step.
 
 ## What FlowPilot Is
 
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.4`
+**Source version:** `v0.10.5`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -280,7 +280,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.4` |
+| Source version | `v0.10.5` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -289,7 +289,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 work request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.4` 把 packet/result contract 收成 runtime 的单一事实来源：每个 packet family 都声明必需结果字段、禁止的旧字段、当前 validator、fake-AI 成功形状和负向 contract-chaos 证据。高标准合同使用顶层 `requirements`；隐藏的通用 wrapper 和旧 child-skill/contract 字段会被拒绝，而不是被翻译兼容。
+`v0.10.5` 继续把 packet/result contract 作为 runtime 的单一事实来源，并让 `open-packet` 直接交付该角色被授权读取的输入材料。必需的 sealed result/report body 仍然有 current-run hash 和 role-scoped receipt，但正常工作不再依赖额外的 `open-result` 微动作。
 
 ## 它是什么
 

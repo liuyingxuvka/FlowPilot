@@ -84,6 +84,16 @@ def _code_contracts() -> tuple[Any, ...]:
             state_writes=("packet_envelope",),
         ),
         _contract(
+            "info_flow.runtime.open_packet_authorized_material_delivery",
+            path=runtime,
+            symbol="open_authorized_input_materials_for_role",
+            implements=(OBL_BLOCKER_PAYLOAD, OBL_REQUIRED_REPAIR),
+            external_inputs=("ledger", "packet_id", "lease_id"),
+            external_outputs=("authorized_input_materials",),
+            state_reads=("authorized_result_reads", "result_body", "lease", "packet_assignment"),
+            state_writes=("authorized_result_read_receipts",),
+        ),
+        _contract(
             "info_flow.runtime.pm_opened_result_bodies",
             path=pm_role_result,
             symbol="_validate_result_bodies_opened_by_pm",

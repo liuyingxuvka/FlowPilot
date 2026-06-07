@@ -31,6 +31,20 @@
         "test_evidence_id": "info_flow.test.pm_summary_positive"
       },
       {
+        "code_contract_id": "info_flow.runtime.authorized_result_reads",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_packet_open_delivers_authorized_body"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.open_packet_authorized_material_delivery",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_packet_open_delivers_authorized_body"
+      },
+      {
         "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
         "gaps": [],
         "model_obligation_id": "info_flow.blocker.current_payload_to_pm",
@@ -64,6 +78,13 @@
         "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
         "status": "locked",
         "test_evidence_id": "info_flow.test.pm_summary_positive"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.open_packet_authorized_material_delivery",
+        "gaps": [],
+        "model_obligation_id": "info_flow.blocker.required_repair_to_pm_package",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.pm_packet_open_delivers_authorized_body"
       },
       {
         "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
@@ -379,10 +400,10 @@
       "semantic proof that every private helper branch is correct"
     ]
   },
-  "code_contract_count": 24,
+  "code_contract_count": 25,
   "code_symbol_ok": true,
   "code_symbol_report": {
-    "contract_count": 24,
+    "contract_count": 25,
     "evidence": [
       {
         "calls": [
@@ -691,9 +712,11 @@
       {
         "calls": [
           "BlackBoxRuntimeError",
+          "_build_current_handoff_contract",
           "_merge_authorized_result_reads",
           "_normalize_authorized_result_reads",
           "_packet_body_with_authorized_result_reads",
+          "_packet_body_with_current_handoff_contract",
           "_require",
           "envelope.get",
           "hash_text",
@@ -721,9 +744,11 @@
           "Any",
           "BlackBoxRuntimeError",
           "Mapping",
+          "_build_current_handoff_contract",
           "_merge_authorized_result_reads",
           "_normalize_authorized_result_reads",
           "_packet_body_with_authorized_result_reads",
+          "_packet_body_with_current_handoff_contract",
           "_require",
           "body",
           "body_hash",
@@ -731,6 +756,7 @@
           "envelope",
           "existing",
           "get",
+          "handoff_contract",
           "hash_text",
           "isinstance",
           "ledger",
@@ -747,13 +773,97 @@
           "authorized_result_reads",
           "body",
           "body_hash",
+          "current_handoff_contract",
           "envelope",
           "existing",
+          "handoff_contract",
           "merged",
           "normalized",
           "packet"
         ],
         "symbol": "_attach_authorized_result_reads_to_packet"
+      },
+      {
+        "calls": [
+          "BlackBoxRuntimeError",
+          "_packet_authorized_result_reads",
+          "_require",
+          "_result_body_open_receipt",
+          "dict",
+          "envelope.get",
+          "isinstance",
+          "lease.get",
+          "materials.append",
+          "open_result_body_for_role",
+          "packet.get",
+          "result.get",
+          "row.get",
+          "str"
+        ],
+        "code_contract_id": "info_flow.runtime.open_packet_authorized_material_delivery",
+        "found": true,
+        "parameters": [
+          "lease_id",
+          "ledger",
+          "packet_id"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [
+          "BlackBoxRuntimeError"
+        ],
+        "return_values": [
+          "materials"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "BlackBoxRuntimeError",
+          "Mapping",
+          "_packet_authorized_result_reads",
+          "_require",
+          "_result_body_open_receipt",
+          "append",
+          "body",
+          "body_hash",
+          "dict",
+          "envelope",
+          "get",
+          "isinstance",
+          "lease",
+          "lease_id",
+          "leases",
+          "ledger",
+          "list",
+          "materials",
+          "open_result_body_for_role",
+          "opened",
+          "packet",
+          "packet_id",
+          "packets",
+          "receipt",
+          "responsibility",
+          "result",
+          "result_id",
+          "results",
+          "row",
+          "str"
+        ],
+        "state_writes": [
+          "body",
+          "body_hash",
+          "envelope",
+          "lease",
+          "materials",
+          "opened",
+          "packet",
+          "receipt",
+          "responsibility",
+          "result",
+          "result_id"
+        ],
+        "symbol": "open_authorized_input_materials_for_role"
       },
       {
         "calls": [
@@ -2373,6 +2483,37 @@
         "symbol": "_attach_authorized_result_reads_to_packet"
       },
       {
+        "code_contract_id": "info_flow.runtime.open_packet_authorized_material_delivery",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "packet_id",
+          "lease_id"
+        ],
+        "external_outputs": [
+          "authorized_input_materials"
+        ],
+        "implements_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "authorized_result_reads",
+          "result_body",
+          "lease",
+          "packet_assignment"
+        ],
+        "state_writes": [
+          "authorized_result_read_receipts"
+        ],
+        "surface_type": "function",
+        "symbol": "open_authorized_input_materials_for_role"
+      },
+      {
         "code_contract_id": "info_flow.runtime.pm_opened_result_bodies",
         "error_paths": [],
         "external_inputs": [
@@ -3205,6 +3346,32 @@
       {
         "assertion_scope": "external_contract",
         "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_pm_repair_decision_receives_authorized_block_report_with_packet_open -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.authorized_result_reads",
+          "info_flow.runtime.open_packet_authorized_material_delivery"
+        ],
+        "covered_obligations": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.pm_packet_open_delivers_authorized_body",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_pm_repair_decision_receives_authorized_block_report_with_packet_open"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
         "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_missing_pm_visible_summary_is_mechanically_reissued -q",
         "covered_code_contracts": [
           "info_flow.runtime.ensure_pm_repair_packet"
@@ -3803,7 +3970,7 @@
   },
   "result_type": "flowpilot_information_flow_alignment",
   "source_marker_report": {
-    "check_count": 15,
+    "check_count": 17,
     "checks": [
       {
         "covers": [
@@ -3844,6 +4011,26 @@
         "ok": true,
         "path": "skills/flowpilot/assets/runtime_kit/prompts/packets/output_contract_section.md",
         "requirement_id": "card.role_outputs_pm_visible_summary"
+      },
+      {
+        "covers": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/prompts/packets/packet_identity_boundary.md",
+        "requirement_id": "prompt.open_packet_delivers_authorized_materials"
+      },
+      {
+        "covers": [
+          "info_flow.blocker.current_payload_to_pm",
+          "info_flow.blocker.required_repair_to_pm_package"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+        "requirement_id": "role.open_packet_materials_guidance"
       },
       {
         "covers": [
@@ -3954,7 +4141,7 @@
     "findings": [],
     "ok": true
   },
-  "test_evidence_count": 26,
+  "test_evidence_count": 27,
   "underlying_model_ok": true,
   "underlying_model_reports": {
     "blocker_repair_information_flow": {
@@ -3970,11 +4157,13 @@
       "rejected": [
         "blocker_routed_without_pm_decision",
         "current_blocker_payload_missing_details",
+        "flowguard_recheck_evidence_not_delivered_to_reviewer",
         "followup_blocker_lost",
         "no_success_evidence_contract",
         "pm_closes_blocker_without_recheck",
-        "pm_did_not_open_required_report",
         "pm_repair_package_omits_new_blocker_content",
+        "pm_required_report_not_delivered",
+        "repair_stage_not_updated_after_flowguard_pass",
         "reviewer_advice_not_integrated",
         "reviewer_recheck_not_bound_to_blocker",
         "reviewer_required_repair_dropped",
@@ -3988,8 +4177,10 @@
     "ok": true,
     "project_control_information_flow": {
       "accepted": [
+        "valid_actor_handoff_material_and_report_contract",
         "valid_break_glass_control_repair",
         "valid_interrupt_resume_with_blocker_context",
+        "valid_packet_contract_and_review_evidence_handoff",
         "valid_reopen_imports_history_and_current_run",
         "valid_repair_packet_progress",
         "valid_role_assignment_reissues_current_packet",
@@ -4000,12 +4191,17 @@
       "model_id": "flowpilot_project_control_information_flow",
       "ok": true,
       "rejected": [
+        "blocker_repair_stage_hidden_from_status",
         "break_glass_bypasses_pm_reviewer_reintegration",
         "break_glass_unbounded_or_target_project_repair",
         "break_glass_without_normal_repair_failure",
+        "downstream_report_not_authorized",
         "final_closure_with_unresolved_information_gap",
+        "flowguard_evidence_not_bound_to_reviewer",
         "followup_blocker_not_propagated_to_next_runway",
         "historical_evidence_promoted_to_current",
+        "missing_info_response_not_defined",
+        "packet_result_contract_not_visible_to_role",
         "pm_runway_omits_active_blocker",
         "reopen_reuses_old_agent_ids_as_current",
         "resume_from_chat_history_loses_blocker",
@@ -4014,7 +4210,10 @@
         "route_mutation_does_not_invalidate_stale_evidence",
         "route_mutation_omits_blocker_or_acceptance_plan",
         "same_work_repeated_with_no_new_info",
-        "work_packet_lacks_minimum_information"
+        "synthetic_trace_bypasses_visible_contract",
+        "work_packet_lacks_minimum_information",
+        "work_packet_missing_input_materials",
+        "work_packet_missing_report_requirements"
       ]
     }
   }

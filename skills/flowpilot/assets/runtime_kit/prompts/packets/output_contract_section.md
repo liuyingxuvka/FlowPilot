@@ -15,7 +15,7 @@ This task packet is the source of truth for the result, report, or decision body
 - Return in chat only the controller-visible envelope. Do not include body content, findings, blockers, or evidence details in chat.
 - Use the exact field names and exact required values from this contract. Do not rename fields with synonyms.
 - When the contract requires `pm_visible_summary`, write a non-empty short summary list yourself; runtime relays it to PM and does not synthesize it.
-- When the packet includes `authorized_result_reads`, open the required result bodies through `flowpilot_new.py open-result` before submitting; summaries are navigation aids, not substitutes for opened bodies.
+- When the packet includes `authorized_result_reads`, use the required result bodies delivered by `flowpilot_new.py open-packet`; summaries are navigation aids, not substitutes for delivered bodies.
 - Include every required field even when the value is `[]`, `false`, or `null`.
 - If the work cannot satisfy the contract, return a blocked or needs-PM result body that still includes every required field and a `Contract Self-Check` section.
 - You may add a short `controller_aside` only to the runtime progress/status or returned envelope. It is Controller-only process/status metadata, not formal work content, evidence, findings, recommendations, decisions, approvals, or a Router event source.

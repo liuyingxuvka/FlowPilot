@@ -29,7 +29,7 @@ REQUIRED_LABELS = tuple(
 HAZARD_EXPECTED_FAILURES = {
     model.CURRENT_BLOCKER_PAYLOAD_MISSING_DETAILS: "current blocker payload lacks blocker id",
     model.STALE_BLOCKER_USED_FOR_PM_REPAIR: "PM repair used stale blocker payload",
-    model.PM_DID_NOT_OPEN_REQUIRED_REPORT: "PM repair decision was made before opening the required report body",
+    model.PM_REQUIRED_REPORT_NOT_DELIVERED: "PM repair decision was made before the required report body was delivered",
     model.REVIEWER_REQUIRED_REPAIR_DROPPED: "PM repair decision dropped the role required_repair",
     model.REVIEWER_ADVICE_NOT_INTEGRATED: "PM repair decision did not integrate reviewer repair advice",
     model.PM_REPAIR_PACKAGE_OMITS_NEW_BLOCKER_CONTENT: "PM repair package omits current blocker",
@@ -42,6 +42,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.SAME_BLOCKER_REPEAT_LOOP_ALLOWED: "same blocker repeated with same work packet",
     model.NO_SUCCESS_EVIDENCE_CONTRACT: "worker packet lacks success evidence contract",
     model.BLOCKER_ROUTED_WITHOUT_PM_DECISION: "repair packet was issued without a PM repair decision",
+    model.FLOWGUARD_RECHECK_EVIDENCE_NOT_DELIVERED_TO_REVIEWER: "reviewer recheck lacks the current FlowGuard evidence",
+    model.REPAIR_STAGE_NOT_UPDATED_AFTER_FLOWGUARD_PASS: "blocker repair stage was not updated",
 }
 
 
@@ -51,7 +53,7 @@ def _state_id(state: model.State) -> str:
         f"blocker=current:{state.blocker_payload_current},id:{state.blocker_id_present},"
         f"source_ref:{state.source_result_ref_present},specific:{state.specific_failure_present},"
         f"required:{state.required_repair_present}|"
-        f"pm=decision:{state.pm_repair_decision_recorded},body:{state.pm_opened_required_body},"
+        f"pm=decision:{state.pm_repair_decision_recorded},body:{state.pm_authorized_report_delivered},"
         f"current:{state.pm_decision_references_current_blocker},required:{state.pm_decision_includes_required_repair},"
         f"advice:{state.pm_decision_integrates_reviewer_advice},new_work:{state.pm_decision_names_new_work}|"
         f"package=issued:{state.pm_repair_package_issued},gen:{state.pm_package_generation_new},"
@@ -61,9 +63,13 @@ def _state_id(state: model.State) -> str:
         f"worker=packet:{state.worker_packet_issued},delta:{state.worker_packet_has_semantic_delta},"
         f"success_contract:{state.worker_packet_includes_success_evidence_contract},"
         f"result_addresses:{state.worker_result_addresses_required_repair}|"
+        f"flowguard=recheck:{state.flowguard_recheck_requested},"
+        f"repair_ref:{state.flowguard_recheck_references_repair_result},"
+        f"passed:{state.flowguard_recheck_passed},manifest:{state.flowguard_evidence_manifest_attached}|"
         f"review=recheck:{state.reviewer_recheck_requested},bound:{state.reviewer_recheck_references_current_blocker},"
         f"evidence:{state.reviewer_recheck_uses_worker_evidence},passed:{state.reviewer_recheck_passed},"
-        f"closed:{state.blocker_closed}|"
+        f"flowguard_evidence:{state.reviewer_recheck_uses_flowguard_evidence},"
+        f"closed:{state.blocker_closed},stage_current:{state.blocker_stage_current}|"
         f"followup={state.followup_blocker_returned},{state.followup_blocker_recorded}|"
         f"loop={state.same_blocker_repeat_count},{state.same_work_packet_hash_repeated},"
         f"{state.loop_escape_recorded},{state.terminal_stop_or_route_mutation}|reason={state.terminal_reason}"
@@ -215,10 +221,11 @@ def run_checks() -> dict[str, Any]:
         "claim_boundary": {
             "covers": [
                 "blocker payload currency",
-                "PM repair decision body-open and current-blocker references",
+                "PM repair decision delivered-body and current-blocker references",
                 "reviewer required repair and advice propagation",
                 "fresh PM repair package generation",
                 "worker repair packet semantic delta and success evidence",
+                "FlowGuard recheck evidence attachment for repaired results",
                 "reviewer recheck binding",
                 "same-blocker no-progress loop escape",
             ],

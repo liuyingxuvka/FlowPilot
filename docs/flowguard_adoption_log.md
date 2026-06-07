@@ -20220,6 +20220,55 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-information-flow-handoff-model-upgrade-20260607
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: a live FlowPilot run exposed information-handoff friction across packet contracts, FlowGuard evidence, reviewer authorization, and blocker status projection.
+- Status: model upgraded and validated; runtime patch not started in this pass.
+- FlowGuard schema: `1.0`
+- FlowGuard package: `0.40.12`
+
+### Findings
+- The parent information-flow model now defines information as "in place" only when a packet carries the actor's input material manifest, required report contract, downstream consumer, missing-information response, visible result-output contract, and downstream read authorization.
+- The parent model now rejects FlowGuard evidence handoffs where the evidence manifest is missing, does not match the current subject result, or is not authorized into the reviewer packet.
+- The blocker repair child model now requires repaired-result FlowGuard evidence to be attached and delivered to reviewer recheck before blocker closure.
+- Status projection is now modeled as part of information flow: an open repair chain cannot be hidden or left at a stale stage.
+- Synthetic/fake-agent success that relies on hidden output fields rather than visible packet contracts is now a modeled bad path.
+
+### Counterexamples
+- `packet_result_contract_not_visible_to_role`
+- `synthetic_trace_bypasses_visible_contract`
+- `work_packet_missing_input_materials`
+- `work_packet_missing_report_requirements`
+- `downstream_report_not_authorized`
+- `missing_info_response_not_defined`
+- `flowguard_evidence_not_bound_to_reviewer`
+- `flowguard_recheck_evidence_not_delivered_to_reviewer`
+- `blocker_repair_stage_hidden_from_status`
+- `repair_stage_not_updated_after_flowguard_pass`
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.40.12`.
+- `python -m flowguard project-audit --root .` -> OK.
+- `python simulations\run_flowpilot_project_control_information_flow_checks.py` -> OK; all new parent handoff hazards detected.
+- `python simulations\run_flowpilot_blocker_repair_information_flow_checks.py` -> OK; FlowGuard evidence and repair-stage hazards detected.
+- `python simulations\run_flowpilot_information_flow_alignment_checks.py` -> OK; upgraded underlying models are green.
+- `python -m py_compile simulations\flowpilot_project_control_information_flow_model.py simulations\run_flowpilot_project_control_information_flow_checks.py simulations\flowpilot_blocker_repair_information_flow_model.py simulations\run_flowpilot_blocker_repair_information_flow_checks.py` -> OK.
+- `python scripts\flowguard_project_topology.py build` -> OK.
+- `python scripts\flowguard_project_topology.py check` -> OK.
+
+### Friction Points
+- A topology check run in parallel with topology build read stale source fingerprints. Serial build then check passed.
+- This pass upgraded models and generated evidence only. Runtime packet builders, prompt text, fake AI behavior, tests, install sync, and versioning still need a follow-up implementation pass.
+
+### Risk Evidence Summary
+- Evidence supports the scoped claim that FlowGuard now models the broader information-handoff class: each actor must receive required inputs and report obligations up front, each report/evidence artifact must be bound to the next consumer with authorization, missing information must route through a current-runtime response, and status projection must expose open repair chains.
+
+### Next Actions
+- Implement the minimal root fix from the upgraded model: one packet handoff envelope section for input/report/output/missing-info rules, one evidence manifest attachment path from FlowGuard result to reviewer packet, one blocker-stage projection, and contract-parity fake AI tests.
+
+
 ## flowpilot-packet-contract-source-of-truth - Packet result contract source of truth
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -21471,6 +21520,78 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowpilot-current-handoff-contract-v0.10.5 - Current packet handoff contract closure
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user clarified that information-flow gates must distinguish real hard gates from micro-action formalism while preserving the strict current FlowPilot path with no old fallback or compatibility surface.
+- Status: completed_validated_installed_synced
+- Skill decision: predictive_kb_preflight + OpenSpec + FlowGuard existing-model preflight + DevelopmentProcessFlow + Model/Test Alignment
+- Started: 2026-06-07T13:28:22+00:00
+- Ended: 2026-06-07T13:35:30+00:00
+- Duration seconds: 403
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_blocker_repair_information_flow_model.py
+- simulations/flowpilot_project_control_information_flow_model.py
+- simulations/flowpilot_information_flow_alignment_contracts.py
+- simulations/flowpilot_information_flow_alignment_evidence.py
+- simulations/flowpilot_information_flow_alignment_markers.py
+- simulations/flowpilot_field_contract_model.py
+- docs/flowguard_project_topology.json
+- docs/flowguard_project_topology.md
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.41.0`.
+- `python -m flowguard project-audit --root .` -> OK, manifest package `0.41.0`.
+- `python simulations\run_flowpilot_information_flow_alignment_checks.py` -> OK.
+- `python simulations\run_flowpilot_field_contract_checks.py` -> OK.
+- `python simulations\run_flowpilot_core_runtime_checks.py` -> OK.
+- `python -m unittest tests.test_flowpilot_core_runtime` -> OK, 61 tests.
+- `python -m unittest tests.test_flowpilot_complete_system_runtime` -> OK, 19 tests.
+- `python -m unittest tests.test_flowpilot_new_entrypoint` -> OK, 20 tests.
+- `python -m unittest tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_fake_project_rehearsal tests.test_flowpilot_field_contract_model tests.test_flowpilot_card_instruction_coverage tests.test_flowpilot_output_contracts tests.test_flowpilot_prompt_store` -> OK, 72 tests.
+- `openspec validate enforce-packet-contract-source-of-truth --strict` -> OK.
+- `python scripts\install_flowpilot.py --sync-repo-owned --json` -> synchronized the installed skill to the repository source; the command reported the expected pre-sync mismatch before confirming the after-install digest matched.
+- `python scripts\audit_local_install_sync.py --json` -> OK.
+- `python scripts\install_flowpilot.py --check --json` -> OK.
+- `python scripts\check_install.py --json` -> OK after topology rebuild.
+- `python scripts\flowguard_project_topology.py build` -> OK.
+- `python scripts\flowguard_project_topology.py check` -> OK.
+
+### Findings
+- Current task, FlowGuard, review, and PM packets now carry a `current_handoff_contract` in the envelope and JSON body. It declares authorized input material reads, required output fields, forbidden output fields, the missing-information response, downstream consumer, and status projection duties.
+- `open-packet` now delivers authorized input materials for the assigned current role and records receipts through the current runtime. This keeps required information delivery as a hard gate without forcing a separate normal-path `open-result` micro-action.
+- Reviewer packets receive matching FlowGuard result evidence through the same authorization channel, so reviewer judgment sees the actual current evidence while controller projections still avoid sealed body leakage.
+- Repair-chain status remains visible while PM repair, FlowGuard recheck, or reviewer recheck packets are pending.
+- Fake AI rehearsal and test helpers now use packet-open delivery instead of hidden extra fields or separate old-style read loops.
+- Prompt/card guidance now tells roles that packet-open includes the current handoff contract and delivered input materials; old fallback wording is not used as a normal path.
+
+### Counterexamples
+- `pm_required_report_not_delivered`
+- `flowguard_evidence_not_bound_to_reviewer`
+- `flowguard_recheck_evidence_not_delivered_to_reviewer`
+- `blocker_repair_stage_hidden_from_status`
+- `synthetic_trace_bypasses_visible_contract`
+- `packet_result_contract_not_visible_to_role`
+
+### Friction Points
+- Full FlowGuard project artifact upgrade with package `0.41.0` hit a tool-side Windows write exception while touching `docs\flowguard_project_topology.json`; `project-upgrade --records-only` succeeded, `project-audit` now passes, and affected executable checks were rerun.
+- `scripts\install_flowpilot.py --sync-repo-owned --json` returned a nonzero code because it records the pre-sync mismatch as a failed precondition, but the same output showed the after-install source digest matched. Independent install audit and install check both passed after sync.
+- Topology checks can become stale after generated result files are refreshed. The final topology build/check was therefore rerun after validation and before the final install check.
+
+### Skipped Steps
+- No GitHub push, release, tag, deploy, OpenSpec archive, destructive cleanup, or old-path compatibility shim was performed.
+- The standalone `open-result` surface remains available as a diagnostic/manual command, not as a normal-path fallback.
+
+### Risk Evidence Summary
+- Evidence supports the claim that covered current FlowPilot packet families now receive required input/report/evidence information through one current `open-packet` path, while runtime/router still owns mechanical fields, hashes, packet identities, and unsupported old-field rejection. This pass does not claim a public release or GitHub publication.
+
+### Next Actions
+- For future packet families, add the packet-result contract row, handoff-contract fields, authorized input material expectations, fake-AI parity, negative legacy-field tests, and model/test alignment evidence before trusting broad green rehearsal output.
 
 
 
@@ -24687,6 +24808,45 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Skipped Steps
 - Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-07T13:28:22+00:00
+- Ended: 2026-06-07T13:28:22+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.41.0
+- FlowGuard schema version recorded: 1.0
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+- Artifact/model/test upgrade scan was scoped out by records-only mode.
 
 ### Risk Evidence Summary
 - none recorded

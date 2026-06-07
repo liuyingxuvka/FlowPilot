@@ -241,9 +241,17 @@ def _source_alignment_report() -> dict[str, object]:
             "test_pm_disposition_summary_is_not_reason_fallback",
             "test_fake_e2e_success_bodies_use_declared_contract_fields",
             "test_fake_project_success_bodies_use_declared_contract_fields",
+            "test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff",
+            "test_review_packet_authorizes_matching_flowguard_result_read",
         )
         if name not in test_text
     ]
+    current_handoff_source_ok = (
+        "_build_current_handoff_contract" in runtime_text
+        and '"current_handoff_contract"' in runtime_text
+        and "matching_flowguard_result_for_review" in runtime_text
+        and "current_handoff_contract" in test_text
+    )
     missing_fake_contract_terms = [
         term
         for term in (
@@ -261,6 +269,7 @@ def _source_alignment_report() -> dict[str, object]:
             and not any(forbidden_alias_hits.values())
             and not private_runtime_contract_tables
             and shared_contract_source_ok
+            and current_handoff_source_ok
             and not missing_negative_tests
             and not missing_fake_contract_terms
         ),
@@ -273,6 +282,7 @@ def _source_alignment_report() -> dict[str, object]:
         "forbidden_alias_hits": forbidden_alias_hits,
         "private_runtime_contract_tables": private_runtime_contract_tables,
         "shared_contract_source_ok": shared_contract_source_ok,
+        "current_handoff_source_ok": current_handoff_source_ok,
         "missing_negative_tests": missing_negative_tests,
         "missing_fake_contract_terms": missing_fake_contract_terms,
     }

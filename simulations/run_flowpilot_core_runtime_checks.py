@@ -20,7 +20,7 @@ from flowpilot_core_runtime_scenarios import (
     compact_status_does_not_leak_sealed_bodies,
     console_does_not_leak_sealed_bodies,
     final_preflight_blocks_accepted_packet_stale_lease,
-    pm_repair_decision_requires_authorized_body_read,
+    pm_repair_decision_receives_authorized_body_on_packet_open,
     reassignment_supersedes_active_packet_lease,
     recovery_duty_names_command_payload,
     replacement_worker_success,

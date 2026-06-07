@@ -464,22 +464,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -608,22 +592,6 @@
             "lease-0003",
             "--packet-id",
             "packet-0003"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0003",
-            "--packet-id",
-            "packet-0003",
-            "--result-id",
-            "result-0001"
           ],
           "payload": {
             "ok": true
@@ -903,22 +871,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0005",
-            "--packet-id",
-            "packet-0005",
-            "--result-id",
-            "result-0004"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0005",
@@ -1045,22 +997,6 @@
             "lease-0006",
             "--packet-id",
             "packet-0006"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0006",
-            "--packet-id",
-            "packet-0006",
-            "--result-id",
-            "result-0004"
           ],
           "payload": {
             "ok": true
@@ -1340,22 +1276,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0008",
-            "--packet-id",
-            "packet-0008",
-            "--result-id",
-            "result-0007"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -1482,22 +1402,6 @@
             "lease-0009",
             "--packet-id",
             "packet-0009"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0009",
-            "--packet-id",
-            "packet-0009",
-            "--result-id",
-            "result-0007"
           ],
           "payload": {
             "ok": true
@@ -1777,22 +1681,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0011",
-            "--packet-id",
-            "packet-0011",
-            "--result-id",
-            "result-0010"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0011",
@@ -1919,22 +1807,6 @@
             "lease-0012",
             "--packet-id",
             "packet-0012"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0012",
-            "--packet-id",
-            "packet-0012",
-            "--result-id",
-            "result-0010"
           ],
           "payload": {
             "ok": true
@@ -2214,22 +2086,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0014",
-            "--packet-id",
-            "packet-0014",
-            "--result-id",
-            "result-0013"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0014",
@@ -2365,22 +2221,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0015",
-            "--packet-id",
-            "packet-0015",
-            "--result-id",
-            "result-0013"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0015",
@@ -2507,22 +2347,6 @@
             "lease-0016",
             "--packet-id",
             "packet-0016"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0016",
-            "--packet-id",
-            "packet-0016",
-            "--result-id",
-            "result-0013"
           ],
           "payload": {
             "ok": true
@@ -2804,22 +2628,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0018",
-            "--packet-id",
-            "packet-0018",
-            "--result-id",
-            "result-0017"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0018",
@@ -2946,22 +2754,6 @@
             "lease-0019",
             "--packet-id",
             "packet-0019"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0019",
-            "--packet-id",
-            "packet-0019",
-            "--result-id",
-            "result-0017"
           ],
           "payload": {
             "ok": true
@@ -3376,22 +3168,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0022",
-            "--packet-id",
-            "packet-0022",
-            "--result-id",
-            "result-0021"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0022",
@@ -3527,22 +3303,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0023",
-            "--packet-id",
-            "packet-0023",
-            "--result-id",
-            "result-0021"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0023",
@@ -3669,22 +3429,6 @@
             "lease-0024",
             "--packet-id",
             "packet-0024"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0024",
-            "--packet-id",
-            "packet-0024",
-            "--result-id",
-            "result-0021"
           ],
           "payload": {
             "ok": true
@@ -3964,22 +3708,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0026",
-            "--packet-id",
-            "packet-0026",
-            "--result-id",
-            "result-0025"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0026",
@@ -4106,22 +3834,6 @@
             "lease-0027",
             "--packet-id",
             "packet-0027"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0027",
-            "--packet-id",
-            "packet-0027",
-            "--result-id",
-            "result-0025"
           ],
           "payload": {
             "ok": true
@@ -4536,22 +4248,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0030",
-            "--packet-id",
-            "packet-0030",
-            "--result-id",
-            "result-0029"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0030",
@@ -4687,22 +4383,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0031",
-            "--packet-id",
-            "packet-0031",
-            "--result-id",
-            "result-0029"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0031",
@@ -4829,22 +4509,6 @@
             "lease-0032",
             "--packet-id",
             "packet-0032"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0032",
-            "--packet-id",
-            "packet-0032",
-            "--result-id",
-            "result-0029"
           ],
           "payload": {
             "ok": true
@@ -5124,22 +4788,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0034",
-            "--packet-id",
-            "packet-0034",
-            "--result-id",
-            "result-0033"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0034",
@@ -5266,22 +4914,6 @@
             "lease-0035",
             "--packet-id",
             "packet-0035"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0035",
-            "--packet-id",
-            "packet-0035",
-            "--result-id",
-            "result-0033"
           ],
           "payload": {
             "ok": true
@@ -6003,22 +5635,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -6147,22 +5763,6 @@
             "lease-0003",
             "--packet-id",
             "packet-0003"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0003",
-            "--packet-id",
-            "packet-0003",
-            "--result-id",
-            "result-0001"
           ],
           "payload": {
             "ok": true
@@ -6442,22 +6042,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0005",
-            "--packet-id",
-            "packet-0005",
-            "--result-id",
-            "result-0004"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0005",
@@ -6584,22 +6168,6 @@
             "lease-0006",
             "--packet-id",
             "packet-0006"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0006",
-            "--packet-id",
-            "packet-0006",
-            "--result-id",
-            "result-0004"
           ],
           "payload": {
             "ok": true
@@ -6879,22 +6447,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0008",
-            "--packet-id",
-            "packet-0008",
-            "--result-id",
-            "result-0007"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -7021,22 +6573,6 @@
             "lease-0009",
             "--packet-id",
             "packet-0009"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0009",
-            "--packet-id",
-            "packet-0009",
-            "--result-id",
-            "result-0007"
           ],
           "payload": {
             "ok": true
@@ -7316,22 +6852,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0011",
-            "--packet-id",
-            "packet-0011",
-            "--result-id",
-            "result-0010"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0011",
@@ -7458,22 +6978,6 @@
             "lease-0012",
             "--packet-id",
             "packet-0012"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0012",
-            "--packet-id",
-            "packet-0012",
-            "--result-id",
-            "result-0010"
           ],
           "payload": {
             "ok": true
@@ -7753,22 +7257,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0014",
-            "--packet-id",
-            "packet-0014",
-            "--result-id",
-            "result-0013"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0014",
@@ -7904,22 +7392,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0015",
-            "--packet-id",
-            "packet-0015",
-            "--result-id",
-            "result-0013"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0015",
@@ -8046,22 +7518,6 @@
             "lease-0016",
             "--packet-id",
             "packet-0016"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0016",
-            "--packet-id",
-            "packet-0016",
-            "--result-id",
-            "result-0013"
           ],
           "payload": {
             "ok": true
@@ -8343,22 +7799,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0018",
-            "--packet-id",
-            "packet-0018",
-            "--result-id",
-            "result-0017"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0018",
@@ -8485,22 +7925,6 @@
             "lease-0019",
             "--packet-id",
             "packet-0019"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0019",
-            "--packet-id",
-            "packet-0019",
-            "--result-id",
-            "result-0017"
           ],
           "payload": {
             "ok": true
@@ -8915,22 +8339,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0022",
-            "--packet-id",
-            "packet-0022",
-            "--result-id",
-            "result-0021"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0022",
@@ -9066,22 +8474,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0023",
-            "--packet-id",
-            "packet-0023",
-            "--result-id",
-            "result-0021"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0023",
@@ -9208,22 +8600,6 @@
             "lease-0024",
             "--packet-id",
             "packet-0024"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0024",
-            "--packet-id",
-            "packet-0024",
-            "--result-id",
-            "result-0021"
           ],
           "payload": {
             "ok": true
@@ -9503,22 +8879,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0026",
-            "--packet-id",
-            "packet-0026",
-            "--result-id",
-            "result-0025"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0026",
@@ -9645,22 +9005,6 @@
             "lease-0027",
             "--packet-id",
             "packet-0027"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0027",
-            "--packet-id",
-            "packet-0027",
-            "--result-id",
-            "result-0025"
           ],
           "payload": {
             "ok": true
@@ -10075,22 +9419,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0030",
-            "--packet-id",
-            "packet-0030",
-            "--result-id",
-            "result-0029"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0030",
@@ -10226,22 +9554,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0031",
-            "--packet-id",
-            "packet-0031",
-            "--result-id",
-            "result-0029"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0031",
@@ -10368,22 +9680,6 @@
             "lease-0032",
             "--packet-id",
             "packet-0032"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0032",
-            "--packet-id",
-            "packet-0032",
-            "--result-id",
-            "result-0029"
           ],
           "payload": {
             "ok": true
@@ -10663,22 +9959,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0034",
-            "--packet-id",
-            "packet-0034",
-            "--result-id",
-            "result-0033"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0034",
@@ -10805,22 +10085,6 @@
             "lease-0035",
             "--packet-id",
             "packet-0035"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0035",
-            "--packet-id",
-            "packet-0035",
-            "--result-id",
-            "result-0033"
           ],
           "payload": {
             "ok": true
@@ -11331,22 +10595,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -11475,22 +10723,6 @@
             "lease-0003",
             "--packet-id",
             "packet-0003"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0003",
-            "--packet-id",
-            "packet-0003",
-            "--result-id",
-            "result-0001"
           ],
           "payload": {
             "ok": true
@@ -11770,22 +11002,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0005",
-            "--packet-id",
-            "packet-0005",
-            "--result-id",
-            "result-0004"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0005",
@@ -11912,22 +11128,6 @@
             "lease-0006",
             "--packet-id",
             "packet-0006"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0006",
-            "--packet-id",
-            "packet-0006",
-            "--result-id",
-            "result-0004"
           ],
           "payload": {
             "ok": true
@@ -12207,22 +11407,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0008",
-            "--packet-id",
-            "packet-0008",
-            "--result-id",
-            "result-0007"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -12349,22 +11533,6 @@
             "lease-0009",
             "--packet-id",
             "packet-0009"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0009",
-            "--packet-id",
-            "packet-0009",
-            "--result-id",
-            "result-0007"
           ],
           "payload": {
             "ok": true
@@ -12644,22 +11812,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0011",
-            "--packet-id",
-            "packet-0011",
-            "--result-id",
-            "result-0010"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0011",
@@ -12786,22 +11938,6 @@
             "lease-0012",
             "--packet-id",
             "packet-0012"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0012",
-            "--packet-id",
-            "packet-0012",
-            "--result-id",
-            "result-0010"
           ],
           "payload": {
             "ok": true
@@ -13162,22 +12298,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -13306,22 +12426,6 @@
             "lease-0003",
             "--packet-id",
             "packet-0003"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0003",
-            "--packet-id",
-            "packet-0003",
-            "--result-id",
-            "result-0001"
           ],
           "payload": {
             "ok": true
@@ -13601,22 +12705,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0005",
-            "--packet-id",
-            "packet-0005",
-            "--result-id",
-            "result-0004"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0005",
@@ -13743,22 +12831,6 @@
             "lease-0006",
             "--packet-id",
             "packet-0006"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0006",
-            "--packet-id",
-            "packet-0006",
-            "--result-id",
-            "result-0004"
           ],
           "payload": {
             "ok": true
@@ -14038,22 +13110,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0008",
-            "--packet-id",
-            "packet-0008",
-            "--result-id",
-            "result-0007"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0008",
@@ -14180,22 +13236,6 @@
             "lease-0009",
             "--packet-id",
             "packet-0009"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0009",
-            "--packet-id",
-            "packet-0009",
-            "--result-id",
-            "result-0007"
           ],
           "payload": {
             "ok": true
@@ -14475,22 +13515,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0011",
-            "--packet-id",
-            "packet-0011",
-            "--result-id",
-            "result-0010"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0011",
@@ -14617,22 +13641,6 @@
             "lease-0012",
             "--packet-id",
             "packet-0012"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0012",
-            "--packet-id",
-            "packet-0012",
-            "--result-id",
-            "result-0010"
           ],
           "payload": {
             "ok": true
@@ -14912,22 +13920,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0014",
-            "--packet-id",
-            "packet-0014",
-            "--result-id",
-            "result-0013"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0014",
@@ -15063,22 +14055,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0015",
-            "--packet-id",
-            "packet-0015",
-            "--result-id",
-            "result-0013"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0015",
@@ -15205,22 +14181,6 @@
             "lease-0016",
             "--packet-id",
             "packet-0016"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0016",
-            "--packet-id",
-            "packet-0016",
-            "--result-id",
-            "result-0013"
           ],
           "payload": {
             "ok": true
@@ -15502,22 +14462,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0018",
-            "--packet-id",
-            "packet-0018",
-            "--result-id",
-            "result-0017"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0018",
@@ -15644,22 +14588,6 @@
             "lease-0019",
             "--packet-id",
             "packet-0019"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0019",
-            "--packet-id",
-            "packet-0019",
-            "--result-id",
-            "result-0017"
           ],
           "payload": {
             "ok": true
@@ -15939,22 +14867,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0021",
-            "--packet-id",
-            "packet-0021",
-            "--result-id",
-            "result-0020"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0021",
@@ -16081,22 +14993,6 @@
             "lease-0022",
             "--packet-id",
             "packet-0022"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0022",
-            "--packet-id",
-            "packet-0022",
-            "--result-id",
-            "result-0020"
           ],
           "payload": {
             "ok": true
@@ -16376,22 +15272,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0024",
-            "--packet-id",
-            "packet-0024",
-            "--result-id",
-            "result-0023"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0024",
@@ -16527,22 +15407,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0025",
-            "--packet-id",
-            "packet-0025",
-            "--result-id",
-            "result-0023"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0025",
@@ -16669,22 +15533,6 @@
             "lease-0026",
             "--packet-id",
             "packet-0026"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0026",
-            "--packet-id",
-            "packet-0026",
-            "--result-id",
-            "result-0023"
           ],
           "payload": {
             "ok": true
@@ -16964,22 +15812,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0028",
-            "--packet-id",
-            "packet-0028",
-            "--result-id",
-            "result-0027"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0028",
@@ -17106,22 +15938,6 @@
             "lease-0029",
             "--packet-id",
             "packet-0029"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0029",
-            "--packet-id",
-            "packet-0029",
-            "--result-id",
-            "result-0027"
           ],
           "payload": {
             "ok": true
@@ -17536,22 +16352,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0032",
-            "--packet-id",
-            "packet-0032",
-            "--result-id",
-            "result-0031"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0032",
@@ -17687,22 +16487,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0033",
-            "--packet-id",
-            "packet-0033",
-            "--result-id",
-            "result-0031"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0033",
@@ -17829,22 +16613,6 @@
             "lease-0034",
             "--packet-id",
             "packet-0034"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0034",
-            "--packet-id",
-            "packet-0034",
-            "--result-id",
-            "result-0031"
           ],
           "payload": {
             "ok": true
@@ -18124,22 +16892,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0036",
-            "--packet-id",
-            "packet-0036",
-            "--result-id",
-            "result-0035"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0036",
@@ -18266,22 +17018,6 @@
             "lease-0037",
             "--packet-id",
             "packet-0037"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0037",
-            "--packet-id",
-            "packet-0037",
-            "--result-id",
-            "result-0035"
           ],
           "payload": {
             "ok": true
@@ -18696,22 +17432,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0040",
-            "--packet-id",
-            "packet-0040",
-            "--result-id",
-            "result-0039"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0040",
@@ -18847,22 +17567,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0041",
-            "--packet-id",
-            "packet-0041",
-            "--result-id",
-            "result-0039"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0041",
@@ -18989,22 +17693,6 @@
             "lease-0042",
             "--packet-id",
             "packet-0042"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0042",
-            "--packet-id",
-            "packet-0042",
-            "--result-id",
-            "result-0039"
           ],
           "payload": {
             "ok": true
@@ -19284,22 +17972,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0044",
-            "--packet-id",
-            "packet-0044",
-            "--result-id",
-            "result-0043"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0044",
@@ -19426,22 +18098,6 @@
             "lease-0045",
             "--packet-id",
             "packet-0045"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0045",
-            "--packet-id",
-            "packet-0045",
-            "--result-id",
-            "result-0043"
           ],
           "payload": {
             "ok": true
@@ -20450,22 +19106,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -20934,22 +19574,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -21078,22 +19702,6 @@
             "lease-0003",
             "--packet-id",
             "packet-0003"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0003",
-            "--packet-id",
-            "packet-0003",
-            "--result-id",
-            "result-0001"
           ],
           "payload": {
             "ok": true
@@ -21491,22 +20099,6 @@
         },
         {
           "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0002",
-            "--packet-id",
-            "packet-0002",
-            "--result-id",
-            "result-0001"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
             "submit-result",
             "--lease-id",
             "lease-0002",
@@ -21654,22 +20246,6 @@
             "lease-0003",
             "--packet-id",
             "packet-0003"
-          ],
-          "payload": {
-            "ok": true
-          },
-          "returncode": 0,
-          "stderr_excerpt": ""
-        },
-        {
-          "args": [
-            "open-result",
-            "--lease-id",
-            "lease-0003",
-            "--packet-id",
-            "packet-0003",
-            "--result-id",
-            "result-0001"
           ],
           "payload": {
             "ok": true

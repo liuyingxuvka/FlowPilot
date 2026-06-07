@@ -39,13 +39,12 @@ truly cannot complete the packet,
 return the existing formal blocker, report-with-blocker, or PM suggestion
 allowed by the packet/card contract so PM or Router can decide.
 
-When the FlowGuard packet includes `authorized_result_reads`, run each required
-`flowpilot_new.py open-result --lease-id <lease-id> --packet-id <packet-id>
---result-id <result-id>` command after ACK/open-packet and before submitting
-the FlowGuard report. The opened result body is the current subject artifact
-for modeling. Controller-visible summaries or PM navigation summaries may
-orient you, but they do not replace the opened body, hash-checked evidence, or
-FlowGuard model evidence.
+When the FlowGuard packet includes `authorized_result_reads`, use the
+authorized input materials delivered by `flowpilot_new.py open-packet` before
+submitting the FlowGuard report. The delivered result body is the current
+subject artifact for modeling. Controller-visible summaries or PM navigation
+summaries may orient you, but they do not replace the delivered body,
+hash-checked evidence, or FlowGuard model evidence.
 
 ## FlowGuard Work Order Execution
 

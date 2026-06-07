@@ -1,9 +1,125 @@
 {
-  "mode": "implementation",
+  "mode": "planning",
   "model_id": "flowpilot_complete_system_alignment",
   "ok": true,
-  "pending_evidence": [],
+  "pending_evidence": [
+    "test_complete_runtime_future"
+  ],
   "report": {
+    "binding_rows": [
+      {
+        "code_contract_id": "run_shell_create_contract",
+        "gaps": [],
+        "model_obligation_id": "current_run_shell_persistence",
+        "status": "locked",
+        "test_evidence_id": "test_current_run_shell_persistence"
+      },
+      {
+        "code_contract_id": "run_shell_create_contract",
+        "gaps": [],
+        "model_obligation_id": "current_run_shell_persistence",
+        "status": "locked",
+        "test_evidence_id": "test_current_run_shell_boundary"
+      },
+      {
+        "code_contract_id": "startup_intake_import_contract",
+        "gaps": [],
+        "model_obligation_id": "startup_intake_sealed_authority",
+        "status": "locked",
+        "test_evidence_id": "test_startup_intake_sealed_scenario"
+      },
+      {
+        "code_contract_id": "startup_intake_import_contract",
+        "gaps": [],
+        "model_obligation_id": "startup_intake_sealed_authority",
+        "status": "locked",
+        "test_evidence_id": "test_startup_intake_sealed_authority"
+      },
+      {
+        "code_contract_id": "runtime_ledger_contract",
+        "gaps": [],
+        "model_obligation_id": "ledger_authority",
+        "status": "locked",
+        "test_evidence_id": "test_ledger_authority"
+      },
+      {
+        "code_contract_id": "runtime_ledger_contract",
+        "gaps": [],
+        "model_obligation_id": "ledger_authority",
+        "status": "locked",
+        "test_evidence_id": "test_ledger_boundary"
+      },
+      {
+        "code_contract_id": "runtime_lease_contract",
+        "gaps": [],
+        "model_obligation_id": "dynamic_lease_lifecycle",
+        "status": "locked",
+        "test_evidence_id": "test_lease_scenario"
+      },
+      {
+        "code_contract_id": "runtime_lease_contract",
+        "gaps": [],
+        "model_obligation_id": "dynamic_lease_lifecycle",
+        "status": "locked",
+        "test_evidence_id": "test_lease_lifecycle"
+      },
+      {
+        "code_contract_id": "runtime_flowguard_contract",
+        "gaps": [],
+        "model_obligation_id": "flowguard_target_scheduler",
+        "status": "locked",
+        "test_evidence_id": "test_flowguard_target"
+      },
+      {
+        "code_contract_id": "run_artifact_materialization_contract",
+        "gaps": [],
+        "model_obligation_id": "run_artifact_materialization",
+        "status": "locked",
+        "test_evidence_id": "test_run_artifact_materialization_boundary"
+      },
+      {
+        "code_contract_id": "run_artifact_materialization_contract",
+        "gaps": [],
+        "model_obligation_id": "run_artifact_materialization",
+        "status": "locked",
+        "test_evidence_id": "test_run_artifact_materialization"
+      },
+      {
+        "code_contract_id": "runtime_console_contract",
+        "gaps": [],
+        "model_obligation_id": "cockpit_projection_only",
+        "status": "locked",
+        "test_evidence_id": "test_run_artifact_materialization"
+      },
+      {
+        "code_contract_id": "runtime_console_contract",
+        "gaps": [],
+        "model_obligation_id": "cockpit_projection_only",
+        "status": "locked",
+        "test_evidence_id": "test_cockpit_projection"
+      },
+      {
+        "code_contract_id": "runtime_console_contract",
+        "gaps": [],
+        "model_obligation_id": "cockpit_projection_only",
+        "status": "locked",
+        "test_evidence_id": "test_cockpit_boundary"
+      },
+      {
+        "code_contract_id": "runtime_closure_contract",
+        "gaps": [],
+        "model_obligation_id": "full_evidence_gate",
+        "status": "locked",
+        "test_evidence_id": "test_ledger_authority"
+      },
+      {
+        "code_contract_id": "runtime_closure_contract",
+        "gaps": [],
+        "model_obligation_id": "full_evidence_gate",
+        "status": "locked",
+        "test_evidence_id": "test_scoped_release_gate"
+      }
+    ],
     "decision": "model_test_alignment_green",
     "findings": [],
     "model_id": "flowpilot_complete_system_alignment",
@@ -26,11 +142,13 @@
         "status": "passed"
       },
       {
-        "evidence": [],
-        "freshness": "current",
+        "evidence": [
+          "test_complete_runtime_future"
+        ],
+        "freshness": "not_run",
         "id": "complete_implementation_evidence",
         "scope": "implementation",
-        "status": "passed"
+        "status": "not_run"
       }
     ]
   }

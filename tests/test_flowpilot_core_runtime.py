@@ -76,12 +76,7 @@ def authorize_background_collaboration(ledger: dict[str, object], *, authorized:
 
 
 def open_required_result_reads(ledger: dict[str, object], packet_id: str, lease_id: str) -> None:
-    packet = ledger["packets"][packet_id]  # type: ignore[index]
-    envelope = packet.get("envelope", {}) if isinstance(packet, dict) else {}
-    for row in envelope.get("authorized_result_reads", []) if isinstance(envelope, dict) else []:
-        if not isinstance(row, dict) or row.get("required_before_submit") is not True:
-            continue
-        runtime.open_result_body_for_role(ledger, packet_id, lease_id, str(row.get("result_id") or ""))
+    runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
 
 
 class FlowPilotCoreRuntimeTests(unittest.TestCase):
@@ -257,6 +252,107 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         criteria = ledger["packets"][packet_id]["envelope"]["acceptance_criteria"]
         self.assertEqual(criteria[0], "specific criterion")
         self.assertIn(runtime.REPLAYABLE_ARTIFACT_ACCEPTANCE_CRITERION, criteria)
+
+    def test_packet_handoff_contract_is_visible_in_envelope_body_and_role_handoff(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Do work",
+            json.dumps({"instruction": "Produce the current deliverable."}),
+            route_scope="node",
+        )
+        packet = ledger["packets"][packet_id]
+        envelope_contract = packet["envelope"]["current_handoff_contract"]
+        body = json.loads(packet["body"])
+
+        self.assertEqual(body["current_handoff_contract"], envelope_contract)
+        self.assertEqual(envelope_contract["contract_family_id"], "task.node")
+        self.assertEqual(
+            envelope_contract["required_report_contract"]["required_result_body_fields"],
+            ["decision", "pm_visible_summary"],
+        )
+        self.assertEqual(envelope_contract["downstream_consumer"]["next_consumer_authority"], "runtime_router")
+        self.assertTrue(envelope_contract["status_projection_requirements"]["repair_chain_visible_when_current"])
+        self.assertEqual(runtime.hash_text(packet["body"]), packet["envelope"]["body_hash"])
+
+        lease_id = runtime.lease_agent(ledger, "worker", agent_id="worker-handoff", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        with tempfile.TemporaryDirectory() as tmp:
+            handoff = role_handoff.render_current_packet_handoff(
+                ledger,
+                root=Path(tmp),
+                script_path=ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_new.py",
+                run_id="run-test",
+                packet_id=packet_id,
+                lease_id=lease_id,
+            )
+
+        self.assertEqual(handoff["current_handoff_contract"], envelope_contract)
+        self.assertIn("current_handoff_contract", handoff["text"])
+
+    def test_review_packet_authorizes_matching_flowguard_result_read(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        subject_result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker produced implementation result evidence."),
+        )
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="flowguard-current",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        flowguard_result_id = runtime.submit_result(
+            ledger,
+            flowguard_lease,
+            flowguard_packet,
+            role_result_body("FlowGuard evidence passed for the current packet."),
+        )
+
+        review_packet = runtime_runner._open_packet_by_kind(ledger, "review")
+        review_record = ledger["packets"][review_packet]
+        read_ids = {
+            row["result_id"]
+            for row in review_record["envelope"]["authorized_result_reads"]
+            if row.get("required_before_submit") is True
+        }
+        review_body = json.loads(review_record["body"])
+        handoff_required_reads = set(
+            review_body["current_handoff_contract"]["input_material_manifest"]["required_authorized_reads_before_submit"]
+        )
+
+        self.assertIn(subject_result_id, read_ids)
+        self.assertIn(flowguard_result_id, read_ids)
+        self.assertIn(subject_result_id, handoff_required_reads)
+        self.assertIn(flowguard_result_id, handoff_required_reads)
+        self.assertEqual(
+            review_body["flowguard_evidence_manifest"]["entries"][0]["flowguard_result_id"],
+            flowguard_result_id,
+        )
+
+        reviewer = runtime.lease_agent(ledger, "reviewer", agent_id="reviewer-current", packet_id=review_packet)
+        runtime.assign_packet(ledger, review_packet, reviewer)
+        runtime.ack_lease(ledger, reviewer, review_packet)
+        delivered = runtime.open_authorized_input_materials_for_role(ledger, review_packet, reviewer)
+        accepted_review_result = runtime.submit_result(
+            ledger,
+            reviewer,
+            review_packet,
+            role_result_body("Reviewer received worker and FlowGuard evidence through open-packet."),
+        )
+
+        self.assertEqual({row["result_id"] for row in delivered}, {subject_result_id, flowguard_result_id})
+        self.assertEqual(ledger["results"][accepted_review_result]["status"], "accepted")
 
     def test_current_progress_fraction_counts_route_nodes_and_repairs_equally(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
@@ -1197,7 +1293,7 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             ["Worker found the stale lifecycle path and cannot complete until PM repairs it."],
         )
 
-    def test_pm_repair_decision_requires_opening_authorized_block_report_body(self) -> None:
+    def test_pm_repair_decision_receives_authorized_block_report_with_packet_open(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)
         blocking_result_id = runtime.submit_result(
@@ -1221,21 +1317,9 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-a", packet_id=pm_packet)
         runtime.assign_packet(ledger, pm_packet, pm_lease)
         runtime.ack_lease(ledger, pm_lease, pm_packet)
-        blocked_decision_id = runtime.submit_result(
-            ledger,
-            pm_lease,
-            pm_packet,
-            json.dumps({"decision": "repair_current_scope", "reason": "repair the stale lifecycle path"}),
-        )
-
-        self.assertEqual(ledger["results"][blocked_decision_id]["status"], "blocked")
-        self.assertIn(
-            f"required_result_body_not_opened:{blocking_result_id}",
-            ledger["results"][blocked_decision_id]["mechanical_blockers"],
-        )
-
-        opened = runtime.open_result_body_for_role(ledger, pm_packet, pm_lease, blocking_result_id)
-        self.assertIn("stale lifecycle path", opened["body"])
+        delivered = runtime.open_authorized_input_materials_for_role(ledger, pm_packet, pm_lease)
+        self.assertEqual([row["result_id"] for row in delivered], [blocking_result_id])
+        self.assertIn("stale lifecycle path", delivered[0]["sealed_result_body"])
         accepted_decision_id = runtime.submit_result(
             ledger,
             pm_lease,

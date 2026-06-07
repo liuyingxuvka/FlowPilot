@@ -269,30 +269,8 @@ def open_current_packet_inputs(
     packet_id = str(packet.get("packet_id") or "")
     ensure(packet_id, f"cannot open packet inputs without packet_id: {packet}")
     opened_packet = run_cli(root, command_log, "open-packet", "--lease-id", lease_id, "--packet-id", packet_id)
-    sealed_body = str(opened_packet.get("sealed_packet_body") or "")
-    authorized_reads: list[dict[str, Any]] = []
-    if sealed_body:
-        try:
-            parsed_body = json.loads(sealed_body)
-        except json.JSONDecodeError as exc:
-            raise RehearsalFailure(f"opened packet body is not JSON for {packet_id}") from exc
-        reads = parsed_body.get("authorized_result_reads")
-        if isinstance(reads, list):
-            authorized_reads = [item for item in reads if isinstance(item, dict)]
-    for authorized_read in authorized_reads:
-        target_result_id = str(authorized_read.get("result_id") or "")
-        ensure(target_result_id, f"authorized result read is missing result_id: {authorized_read}")
-        run_cli(
-            root,
-            command_log,
-            "open-result",
-            "--lease-id",
-            lease_id,
-            "--packet-id",
-            packet_id,
-            "--result-id",
-            target_result_id,
-        )
+    if opened_packet.get("authorized_input_materials_delivered") is False:
+        raise RehearsalFailure(f"open-packet did not deliver authorized input materials for {packet_id}")
 
 
 def reset_scenario_root(work_root: Path, name: str) -> Path:

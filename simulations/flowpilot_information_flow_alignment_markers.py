@@ -71,6 +71,29 @@ MARKER_REQUIREMENTS: tuple[Mapping[str, Any], ...] = (
         "covers": (OBL_BLOCKER_PAYLOAD,),
     },
     {
+        "requirement_id": "prompt.open_packet_delivers_authorized_materials",
+        "path": "skills/flowpilot/assets/runtime_kit/prompts/packets/packet_identity_boundary.md",
+        "markers": (
+            "authorized_result_reads",
+            "flowpilot_new.py open-packet",
+            "assigned role receives",
+            "Do not ask Controller to relay them",
+            "do not run a separate open-result step in the normal packet path",
+        ),
+        "covers": (OBL_BLOCKER_PAYLOAD, OBL_REQUIRED_REPAIR),
+    },
+    {
+        "requirement_id": "role.open_packet_materials_guidance",
+        "path": "skills/flowpilot/assets/runtime_kit/cards/roles/project_manager.md",
+        "markers": (
+            "authorized input",
+            "flowpilot_new.py open-packet",
+            "delivered result/report body",
+            "do not decide from the summary alone",
+        ),
+        "covers": (OBL_BLOCKER_PAYLOAD, OBL_REQUIRED_REPAIR),
+    },
+    {
         "requirement_id": "card.resume_current_authority",
         "path": "skills/flowpilot/assets/runtime_kit/cards/system/controller_resume_reentry.md",
         "markers": (

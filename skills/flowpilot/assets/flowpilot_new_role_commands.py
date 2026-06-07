@@ -181,6 +181,7 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
     ledger = run_shell.load_run_ledger(shell)
     role_memory = runtime.role_memory_seed_for_lease(ledger, lease_id, packet_id)
     body = packets.open_sealed_body_for_role(ledger, packet_id, lease_id)
+    authorized_input_materials = runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
     packet = ledger["packets"][packet_id]
     lease = ledger["leases"][lease_id]
     envelope = packet["envelope"]
@@ -197,6 +198,7 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
             "route_version": envelope["route_version"],
             "body_hash": envelope["body_hash"],
             "output_contract": envelope.get("output_contract", {}),
+            "current_handoff_contract": envelope.get("current_handoff_contract", {}),
         },
         "lease": {
             "lease_id": lease_id,
@@ -211,7 +213,10 @@ def open_packet(root: Path, *, lease_id: str, packet_id: str) -> dict[str, Any]:
         "role_memory_visibility": "assigned_role_only",
         "sealed_packet_body": body,
         "sealed_body_visibility": "assigned_role_only",
+        "authorized_input_materials": authorized_input_materials,
+        "authorized_input_materials_delivered": True,
         "controller_may_read_packet_body": False,
+        "controller_may_read_authorized_input_materials": False,
         "sealed_body_text_included": True,
         "open_receipt": {
             "event_type": "sealed_packet_body_opened",

@@ -2,6 +2,20 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.5 - 2026-06-07
+
+### Changed
+
+- Made `flowpilot_new.py open-packet` deliver authorized input materials for
+  the assigned role, so sealed result/report bodies still flow through the
+  current runtime but no longer require a separate normal-path `open-result`
+  micro-step.
+- Bound the new packet-open material delivery path into FlowGuard
+  information-flow alignment, blocker repair modeling, prompt markers, and
+  fake-project rehearsal evidence.
+- Refreshed strict packet handoff contracts, prompt hashes, fake-AI package
+  paths, and runtime regression evidence for the current no-fallback path.
+
 ## 0.10.4 - 2026-06-07
 
 ### Breaking

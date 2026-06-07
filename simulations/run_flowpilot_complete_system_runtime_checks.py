@@ -16,7 +16,16 @@ ASSETS = REPO_ROOT / "skills" / "flowpilot" / "assets"
 if str(ASSETS) not in sys.path:
     sys.path.insert(0, str(ASSETS))
 
-from flowpilot_core_runtime import cockpit, flowguard_orders, host, migration, packets, review_closure, runtime  # noqa: E402
+from flowpilot_core_runtime import (  # noqa: E402
+    cockpit,
+    flowguard_orders,
+    host,
+    migration,
+    packet_result_contracts,
+    packets,
+    review_closure,
+    runtime,
+)
 
 
 ScenarioFn = Callable[[], dict[str, Any]]
@@ -27,7 +36,15 @@ def _base_ledger() -> tuple[dict[str, Any], str, str]:
         "Complete black-box FlowPilot system",
         "Accept only with current ledger, dynamic lease, FlowGuard, review, validation, and cutover evidence.",
     )
-    ledger["startup_intake"] = {"sealed": True, "source": "test"}
+    ledger["startup_intake"] = {
+        "status": "confirmed",
+        "sealed": True,
+        "source": "test",
+        "current_run_authority": True,
+        "controller_may_read_body": False,
+        "body_text_included": False,
+        "startup_answers": {"background_collaboration_authorized": True},
+    }
     runtime.create_route(ledger, "Complete-system route", ["execute packet"])
     packet_id = packets.issue_packet(ledger, "worker", "Execute packet", "SEALED_TASK_BODY: complete-system work")
     lease_id = host.lease_responsibility(ledger, "worker", host_kind="fake", scope="node")
@@ -42,7 +59,15 @@ def _open_packet_by_kind(ledger: dict[str, Any], packet_kind: str) -> str:
     raise AssertionError(f"missing open {packet_kind} packet")
 
 
-def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: str, body: str) -> str:
+def _current_contract_body(ledger: dict[str, Any], packet_id: str, **updates: Any) -> str:
+    packet = ledger["packets"][packet_id]
+    family_id = packet_result_contracts.packet_result_family_id(packet["envelope"])
+    payload = dict(packet_result_contracts.minimal_valid_shape_for_family(family_id))
+    payload.update(updates)
+    return json.dumps(payload)
+
+
+def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: str, body: str = "") -> str:
     packet = ledger["packets"][packet_id]
     lease_id = host.lease_responsibility(
         ledger,
@@ -54,11 +79,12 @@ def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: s
     )
     runtime.assign_packet(ledger, packet_id, lease_id)
     runtime.ack_lease(ledger, lease_id, packet_id)
+    runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
     return host.submit_host_result(
         ledger,
         lease_id,
         packet_id,
-        body,
+        body or _current_contract_body(ledger, packet_id),
         evidence_ids=[f"{packet['envelope'].get('packet_kind', 'task')}-complete-system"],
     )
 
@@ -78,7 +104,7 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         ledger,
         lease_id,
         packet_id,
-        json.dumps({"decision": "pass", "summary": "complete-system result"}),
+        _current_contract_body(ledger, packet_id),
         evidence_ids=["runtime-unit"],
     )
     flowguard_packet = _open_packet_by_kind(ledger, "flowguard_check")
@@ -86,14 +112,12 @@ def _complete_packet(ledger: dict[str, Any], packet_id: str, lease_id: str) -> s
         ledger,
         flowguard_packet,
         agent_id="flowguard-complete-system",
-        body=json.dumps({"decision": "pass", "summary": "complete-system FlowGuard evidence"}),
     )
     review_packet = _open_packet_by_kind(ledger, "review")
     _complete_open_packet(
         ledger,
         review_packet,
         agent_id="reviewer-complete-system",
-        body=json.dumps({"decision": "pass", "summary": "complete-system reviewer accepted evidence"}),
     )
     return result_id
 
@@ -103,7 +127,7 @@ def dead_worker_replaced() -> dict[str, Any]:
     runtime.ack_lease(ledger, worker, packet_id)
     runtime.record_progress(ledger, worker, packet_id, "working")
     runtime.expire_lease(ledger, worker)
-    late = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass", "summary": "late"}))
+    late = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
     replacement = host.lease_responsibility(ledger, "worker", host_kind="fake", scope="replacement")
     runtime.assign_packet(ledger, packet_id, replacement)
     _complete_packet(ledger, packet_id, replacement)
@@ -172,7 +196,7 @@ def cutover_requires_live_host() -> dict[str, Any]:
 def wrong_flowguard_target_blocks_complete_system() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
+    result_id = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
     order_id = flowguard_orders.create_work_order(ledger, "target_product_behavior", "wrong_target", packet_id)
     flowguard_orders.complete_work_order(ledger, order_id)
     reviewer = host.lease_responsibility(ledger, "reviewer", host_kind="fake")
@@ -208,7 +232,7 @@ def body_hash_mismatch_blocks_result() -> dict[str, Any]:
         ledger,
         worker,
         packet_id,
-        json.dumps({"decision": "pass"}),
+        _current_contract_body(ledger, packet_id),
         packet_body_hash="wrong-body-hash",
     )
     return _scenario_result(
@@ -222,8 +246,8 @@ def body_hash_mismatch_blocks_result() -> dict[str, Any]:
 def duplicate_output_blocks_second_result() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    first = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass", "seq": 1}))
-    second = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass", "seq": 2}))
+    first = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
+    second = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
     return _scenario_result(
         "duplicate_output_blocks_second_result",
         ledger["results"][first]["status"] == "mechanically_valid"
@@ -236,7 +260,7 @@ def duplicate_output_blocks_second_result() -> dict[str, Any]:
 def missing_target_and_report_only_flowguard_block_review() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
+    result_id = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
     missing_target_blocked = False
     try:
         flowguard_orders.create_work_order(ledger, "", "done_claim", packet_id)
@@ -259,7 +283,7 @@ def missing_target_and_report_only_flowguard_block_review() -> dict[str, Any]:
 def stale_proof_artifact_blocks_review() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
-    result_id = host.submit_host_result(ledger, worker, packet_id, json.dumps({"decision": "pass"}))
+    result_id = host.submit_host_result(ledger, worker, packet_id, _current_contract_body(ledger, packet_id))
     order_id = flowguard_orders.create_work_order(ledger, "development_process", "done_claim", packet_id)
     flowguard_orders.complete_work_order(ledger, order_id, proof_artifact="simulations/stale.json")
     ledger["flowguard_work_orders"][order_id]["proof_stale"] = True

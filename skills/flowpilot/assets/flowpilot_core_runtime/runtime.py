@@ -2242,7 +2242,7 @@ _BLOCKING_OUTCOME_DECISIONS = {
     "stop",
     "stopped",
 }
-_ACTIVE_SEMANTIC_BLOCKER_STATUSES = {"active", "repairing", "awaiting_recheck"}
+_ACTIVE_SEMANTIC_BLOCKER_STATUSES = {"active", "repairing", "repair_packet_open", "awaiting_recheck"}
 _CLEARABLE_SEMANTIC_BLOCKER_STATUSES = _ACTIVE_SEMANTIC_BLOCKER_STATUSES | {"repair_packet_open"}
 _CURRENT_PACKET_BLOCKING_STATUSES = {"result_blocked", "review_blocked", "system_validation_blocked", "flowguard_blocked"}
 _REPAIR_REPLACED_PACKET_STATUSES = _CURRENT_PACKET_BLOCKING_STATUSES | {"result_submitted"}
@@ -2530,12 +2530,16 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _blocker_current_effective(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> bool:
-    if blocker.get("status") not in _ACTIVE_SEMANTIC_BLOCKER_STATUSES:
+    status = str(blocker.get("status") or "")
+    if status not in _ACTIVE_SEMANTIC_BLOCKER_STATUSES:
         return False
     if blocker.get("cleared_by_outcome_id"):
         return False
     if _route_node_is_noncurrent(ledger, str(blocker.get("route_node_id") or "")):
         return False
+    if status == "repair_packet_open":
+        repair_packet_id = str(blocker.get("repair_packet_id") or "")
+        return bool(repair_packet_id) and not _packet_current_target_violation(ledger, repair_packet_id)
     target_packet_ids = [
         str(blocker.get("repair_target_packet_id") or ""),
         str(blocker.get("subject_packet_id") or ""),
@@ -2972,8 +2976,8 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                 "instruction": (
                     "Return exactly one structured JSON object with a top-level allowed decision, for example "
                     "{\"decision\":\"repair_current_scope\",\"reason\":\"current node needs replacement repair\"}. "
-                    "Before deciding, open every required authorized_result_reads entry and use the opened report "
-                    "body as the source of the concrete failure. "
+                    "Before deciding, use every required authorized input material delivered by open-packet as the "
+                    "source of the concrete failure. "
                     "Use repair_parent_scope only when the explicit parent scope should be replaced. Use redesign_route "
                     "only with a strict route_plan object. Use waive_with_authority only with authority_ref. "
                     "Do not wrap the decision inside repair_decision, pm_repair_decision, prose, or any legacy shape. "
@@ -4762,6 +4766,21 @@ def _packet_body_with_authorized_result_reads(body: str, reads: list[dict[str, A
     return body
 
 
+def _packet_body_with_current_handoff_contract(
+    body: str,
+    contract: Mapping[str, Any],
+    *,
+    replace_existing: bool = False,
+) -> str:
+    payload = _strict_json_object_from_body(body)
+    if payload is None:
+        return body
+    if not replace_existing and "current_handoff_contract" in payload:
+        raise BlackBoxRuntimeError("current_handoff_contract must be issued by the runtime envelope")
+    payload["current_handoff_contract"] = _copy_jsonable(contract)
+    return json.dumps(payload, indent=2, sort_keys=True)
+
+
 def _merge_authorized_result_reads(
     existing: list[Mapping[str, Any]],
     additions: list[Mapping[str, Any]],
@@ -4795,9 +4814,12 @@ def _attach_authorized_result_reads_to_packet(
     normalized = _normalize_authorized_result_reads(ledger, list(reads))
     merged = _merge_authorized_result_reads(existing, normalized)
     body = _packet_body_with_authorized_result_reads(str(packet.get("body", "")), merged)
+    envelope["authorized_result_reads"] = merged
+    handoff_contract = _build_current_handoff_contract(ledger, envelope, merged)
+    envelope["current_handoff_contract"] = handoff_contract
+    body = _packet_body_with_current_handoff_contract(body, handoff_contract, replace_existing=True)
     body_hash = hash_text(body)
     packet["body"] = body
-    envelope["authorized_result_reads"] = merged
     envelope["body_hash"] = body_hash
 
 
@@ -4844,6 +4866,97 @@ def _blocker_authorized_result_reads(
     ]
 
 
+def _packet_handoff_missing_information_response(
+    *,
+    family_id: str,
+    required_fields: tuple[str, ...],
+) -> dict[str, Any]:
+    if "decision" in required_fields:
+        return {
+            "if_required_information_is_missing": (
+                "Submit a current JSON result for this packet family with decision=block, "
+                "blocker_class=missing_required_information, recommended_resolution naming the missing input, "
+                "and pm_visible_summary when that field is required."
+            ),
+            "old_shapes_forbidden": True,
+            "runtime_reissue_on_mechanical_contract_failure": True,
+        }
+    return {
+        "if_required_information_is_missing": (
+            "Do not guess or switch result shape. Submit only the contract-defined current-family fields; "
+            "if those fields cannot be produced, the runtime mechanical contract gate reissues the current packet."
+        ),
+        "contract_family_id": family_id,
+        "old_shapes_forbidden": True,
+        "runtime_reissue_on_mechanical_contract_failure": True,
+    }
+
+
+def _build_current_handoff_contract(
+    ledger: Mapping[str, Any],
+    envelope: Mapping[str, Any],
+    authorized_result_reads: list[Mapping[str, Any]],
+) -> dict[str, Any]:
+    family_id = packet_result_contracts.packet_result_family_id(envelope)
+    family_row = packet_result_contracts.contract_for_family(family_id) or {}
+    required_fields = packet_result_contracts.required_fields_for_family(family_id)
+    return {
+        "schema_version": "black_box_flowpilot.current_handoff_contract.v1",
+        "contract_id": "black_box_flowpilot.current_handoff_contract.v1",
+        "packet_id": str(envelope.get("packet_id") or ""),
+        "packet_kind": str(envelope.get("packet_kind") or "task"),
+        "route_scope": str(envelope.get("route_scope") or ""),
+        "recipient_responsibility": str(envelope.get("responsibility") or ""),
+        "contract_family_id": family_id,
+        "current_run_only": True,
+        "input_material_manifest": {
+            "subject_id": str(envelope.get("subject_id") or ""),
+            "target_result_id": str(envelope.get("target_result_id") or ""),
+            "route_node_id": str(envelope.get("route_node_id") or ""),
+            "node_context_package_id": str(envelope.get("node_context_package_id") or ""),
+            "authorized_result_reads": _copy_jsonable(authorized_result_reads),
+            "required_authorized_reads_before_submit": [
+                str(row.get("result_id") or "")
+                for row in authorized_result_reads
+                if isinstance(row, Mapping) and row.get("required_before_submit") is True
+            ],
+            "packet_body_hash_authority": "envelope.body_hash",
+            "sealed_body_visibility": str(envelope.get("body_visibility") or "sealed"),
+        },
+        "required_report_contract": {
+            "output_contract": _copy_jsonable(envelope.get("output_contract") or {}),
+            "required_result_body_fields": list(required_fields),
+            "required_child_fields": [str(field) for field in family_row.get("required_child_fields", ())],
+            "forbidden_result_body_fields": list(packet_result_contracts.forbidden_fields_for_family(family_id)),
+            "minimal_valid_shape": packet_result_contracts.minimal_valid_shape_for_family(family_id),
+            "validator": str(family_row.get("validator") or ""),
+        },
+        "missing_information_response": _packet_handoff_missing_information_response(
+            family_id=family_id,
+            required_fields=required_fields,
+        ),
+        "downstream_consumer": {
+            "unlocks": str(family_row.get("unlocks") or ""),
+            "next_consumer_authority": "runtime_router",
+            "accepted_by_role_text_alone": False,
+        },
+        "status_projection_requirements": {
+            "repair_chain_visible_when_current": True,
+            "sealed_bodies_visible": False,
+            "controller_projection_is_display_only": True,
+        },
+        "unsupported_paths_forbidden": {
+            "legacy_aliases": True,
+            "wrapper_shapes": True,
+            "missing_field_defaults": True,
+            "historical_artifact_promotion": True,
+            "old_router_path": True,
+        },
+        "source_generation": int(ledger.get("source_generation", 0) or 0),
+        "route_version": envelope.get("route_version"),
+    }
+
+
 def _packet_authorized_result_reads(packet: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
     raw = envelope.get("authorized_result_reads", [])
@@ -4862,9 +4975,26 @@ def _has_result_body_open_receipt(
     result_id: str,
     body_hash: str,
 ) -> bool:
+    return _result_body_open_receipt(
+        packet,
+        lease_id=lease_id,
+        responsibility=responsibility,
+        result_id=result_id,
+        body_hash=body_hash,
+    ) is not None
+
+
+def _result_body_open_receipt(
+    packet: Mapping[str, Any],
+    *,
+    lease_id: str,
+    responsibility: str,
+    result_id: str,
+    body_hash: str,
+) -> Mapping[str, Any] | None:
     receipts = packet.get("authorized_result_read_receipts", [])
     if not isinstance(receipts, list):
-        return False
+        return None
     for receipt in receipts:
         if not isinstance(receipt, Mapping):
             continue
@@ -4874,8 +5004,8 @@ def _has_result_body_open_receipt(
             and receipt.get("result_id") == result_id
             and receipt.get("body_hash") == body_hash
         ):
-            return True
-    return False
+            return receipt
+    return None
 
 
 def _required_authorized_result_read_blockers(
@@ -4941,7 +5071,6 @@ def issue_task_packet(
     normalized_result_reads = _normalize_authorized_result_reads(ledger, authorized_result_reads)
     body = _pm_packet_body_with_recent_role_reports(ledger, responsibility, body)
     body = _packet_body_with_authorized_result_reads(body, normalized_result_reads)
-    body_hash = hash_text(body)
     envelope = {
         "packet_id": packet_id,
         "packet_kind": packet_kind,
@@ -4958,7 +5087,7 @@ def issue_task_packet(
         "route_scope": route_scope,
         "node_context_package_id": node_context_package_id,
         "acceptance_criteria": _default_packet_acceptance_criteria(acceptance_criteria),
-        "body_hash": body_hash,
+        "body_hash": "",
         "body_visibility": "sealed",
         "source_generation": ledger["source_generation"],
     }
@@ -4977,6 +5106,10 @@ def issue_task_packet(
         output_contract["pm_visible_summary_shape"] = "non_empty_string_list"
         output_contract["runner_may_synthesize_pm_visible_summary"] = False
         envelope["output_contract"] = output_contract
+    current_handoff_contract = _build_current_handoff_contract(ledger, envelope, normalized_result_reads)
+    envelope["current_handoff_contract"] = current_handoff_contract
+    body = _packet_body_with_current_handoff_contract(body, current_handoff_contract)
+    envelope["body_hash"] = hash_text(body)
     ledger["packets"][packet_id] = {
         "packet_id": packet_id,
         "status": "open",
@@ -5102,6 +5235,71 @@ def open_result_body_for_role(
         receipt_id=receipt_id,
     )
     return {"body": body, "receipt": receipt}
+
+
+def open_authorized_input_materials_for_role(
+    ledger: dict[str, Any],
+    packet_id: str,
+    lease_id: str,
+) -> list[dict[str, Any]]:
+    """Deliver the packet's authorized result inputs as part of packet open.
+
+    The role still opens one current packet. Runtime delivers the authorized
+    result bodies named by that packet and records receipts so submit-result can
+    verify the inputs were current and role-scoped without requiring a separate
+    micro-step for each material.
+    """
+
+    packet = _require(ledger["packets"], packet_id, "packet")
+    lease = _require(ledger["leases"], lease_id, "lease")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    if packet.get("assigned_lease_id") != lease_id:
+        raise BlackBoxRuntimeError("lease cannot open this packet's authorized input materials")
+    if lease.get("status") != "active":
+        raise BlackBoxRuntimeError("inactive lease cannot open authorized input materials")
+    if lease.get("packet_id") != packet_id:
+        raise BlackBoxRuntimeError("lease packet mismatch")
+    if lease.get("responsibility") != envelope.get("responsibility"):
+        raise BlackBoxRuntimeError("lease responsibility does not match packet")
+    if not lease.get("ack_received"):
+        raise BlackBoxRuntimeError("lease must ACK before opening authorized input materials")
+    if packet.get("accepted_result_id") or packet.get("status") in {"accepted", "quarantined_after_route_mutation"}:
+        raise BlackBoxRuntimeError("accepted or stale packet cannot open authorized input materials")
+    responsibility = str(lease.get("responsibility") or "")
+    materials: list[dict[str, Any]] = []
+    for row in _packet_authorized_result_reads(packet):
+        result_id = str(row.get("result_id") or "")
+        body_hash = str(row.get("body_hash") or "")
+        if not result_id:
+            continue
+        result = _require(ledger["results"], result_id, "result")
+        receipt = _result_body_open_receipt(
+            packet,
+            lease_id=lease_id,
+            responsibility=responsibility,
+            result_id=result_id,
+            body_hash=body_hash,
+        )
+        if receipt is None:
+            opened = open_result_body_for_role(ledger, packet_id, lease_id, result_id)
+            body = str(opened["body"])
+            receipt = opened["receipt"]
+        else:
+            body = str(result.get("body", ""))
+        materials.append(
+            {
+                "schema_version": "black_box_flowpilot.authorized_input_material.v1",
+                "result_id": result_id,
+                "source_packet_id": str(result.get("packet_id") or ""),
+                "purpose": str(row.get("purpose") or "authorized_result_read"),
+                "required_before_submit": row.get("required_before_submit") is True,
+                "body_hash": body_hash,
+                "sealed_result_body": body,
+                "sealed_body_visibility": "assigned_role_only",
+                "open_receipt": dict(receipt),
+            }
+        )
+    return materials
 
 
 def record_progress(ledger: dict[str, Any], lease_id: str, packet_id: str, status: str) -> None:
@@ -6457,6 +6655,9 @@ def _record_flowguard_from_packet_result(
         order["flowguard_operator_lease_id"] = result["producer_lease_id"]
         order["packet_id"] = packet["packet_id"]
         order["producer_result_id"] = result["result_id"]
+        order["proof_result_id"] = result["result_id"]
+        order["proof_artifact_kind"] = "flowguard_packet_result"
+        order["reviewer_authorized_read_required"] = True
         order["flowguard_phase"] = "prework_node_gate"
         order["pm_visible_artifacts_required"] = True
         semantic = outcome if isinstance(outcome, Mapping) else {}
@@ -6488,6 +6689,9 @@ def _record_flowguard_from_packet_result(
     order["flowguard_operator_lease_id"] = result["producer_lease_id"]
     order["packet_id"] = packet["packet_id"]
     order["producer_result_id"] = result["result_id"]
+    order["proof_result_id"] = result["result_id"]
+    order["proof_artifact_kind"] = "flowguard_packet_result"
+    order["reviewer_authorized_read_required"] = True
     node_id = str(subject_packet["envelope"].get("route_node_id") or "")
     semantic = outcome if isinstance(outcome, Mapping) else {}
     decision = "fail" if semantic.get("blocking") else "pass"
@@ -6498,6 +6702,59 @@ def _record_flowguard_from_packet_result(
         ledger["route_nodes"][node_id].setdefault("flowguard_order_ids", []).append(order_id)
     _mark_pm_decision_gate_flowguard(ledger, subject_id, order_id)
     return order_id
+
+
+def _flowguard_evidence_reads_for_review(
+    ledger: Mapping[str, Any],
+    subject_id: str,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    subject_packet = ledger.get("packets", {}).get(subject_id)
+    if not isinstance(subject_packet, Mapping):
+        return [], []
+    subject_envelope = (
+        subject_packet.get("envelope", {})
+        if isinstance(subject_packet.get("envelope"), Mapping)
+        else {}
+    )
+    modeled_target = str(subject_envelope.get("required_flowguard_target") or "")
+    reads: list[dict[str, Any]] = []
+    manifest: list[dict[str, Any]] = []
+    for order in ledger.get("flowguard_work_orders", {}).values():
+        if not isinstance(order, Mapping):
+            continue
+        if str(order.get("subject_id") or "") != subject_id:
+            continue
+        if modeled_target and str(order.get("modeled_target") or "") != modeled_target:
+            continue
+        if order.get("status") != "complete" or order.get("decision") != "pass":
+            continue
+        if order.get("progress_only") or order.get("skipped_checks") or order.get("proof_stale"):
+            continue
+        if order.get("source_generation") != ledger.get("source_generation"):
+            continue
+        result_id = str(order.get("proof_result_id") or order.get("producer_result_id") or "")
+        if not result_id or not isinstance(ledger.get("results", {}).get(result_id), Mapping):
+            continue
+        reads.append(
+            _authorized_read_for_result(
+                ledger,
+                result_id,
+                allowed_roles=["reviewer"],
+                purpose="matching_flowguard_result_for_review",
+                required_before_submit=True,
+            )
+        )
+        manifest.append(
+            {
+                "order_id": str(order.get("order_id") or ""),
+                "modeled_target": str(order.get("modeled_target") or ""),
+                "flowguard_packet_id": str(order.get("packet_id") or ""),
+                "flowguard_result_id": result_id,
+                "proof_artifact_kind": str(order.get("proof_artifact_kind") or "flowguard_packet_result"),
+                "required_before_review_submit": True,
+            }
+        )
+    return reads, manifest
 
 
 def _ensure_review_packet_for_task_result(
@@ -6523,11 +6780,17 @@ def _ensure_review_packet_for_task_result(
         return str(existing["packet_id"])
     node_id = str(subject_packet["envelope"].get("route_node_id") or "")
     node_context = _optional_node_context_reference(ledger, node_id) if node_id else {}
+    flowguard_reads, flowguard_manifest = _flowguard_evidence_reads_for_review(ledger, subject_id)
     body_payload = {
         "schema_version": "black_box_flowpilot.review_packet.v1",
         "subject_packet_id": subject_id,
         "target_result_id": target_result_id,
         **node_context,
+        "flowguard_evidence_manifest": {
+            "subject_packet_id": subject_id,
+            "matching_flowguard_result_reads_required": True,
+            "entries": flowguard_manifest,
+        },
         "instruction": (
             "Review the subject result and matching FlowGuard evidence independently. Start from "
             "node_context_package as the minimum checklist, then actively inspect relevant files, UI/screenshots, "
@@ -6560,7 +6823,7 @@ def _ensure_review_packet_for_task_result(
                 purpose="subject_result_for_review",
                 required_before_submit=True,
             )
-        ]
+        ] + flowguard_reads
         if target_result_id
         else None,
     )
@@ -8079,7 +8342,13 @@ def _current_target_preflight_blockers(
         if blocker.get("status") not in (_ACTIVE_SEMANTIC_BLOCKER_STATUSES | {"awaiting_pm_decision_gate"}):
             continue
         blocker_id = str(blocker.get("blocker_id") or "")
-        for field in ("packet_id", "subject_packet_id", "repair_target_packet_id"):
+        status = str(blocker.get("status") or "")
+        target_fields = ("repair_packet_id",) if status == "repair_packet_open" else (
+            "packet_id",
+            "subject_packet_id",
+            "repair_target_packet_id",
+        )
+        for field in target_fields:
             packet_id = str(blocker.get(field) or "")
             if not packet_id:
                 continue

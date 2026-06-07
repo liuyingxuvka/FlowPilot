@@ -27,6 +27,7 @@ complete_structure_runner = importlib.import_module("simulations.run_flowpilot_c
 complete_ui_runner = importlib.import_module("simulations.run_flowpilot_complete_system_ui_checks")
 complete_testmesh_runner = importlib.import_module("simulations.run_flowpilot_complete_system_testmesh_checks")
 complete_alignment_runner = importlib.import_module("simulations.run_flowpilot_complete_system_alignment_checks")
+complete_runtime_runner = importlib.import_module("simulations.run_flowpilot_complete_system_runtime_checks")
 
 
 def role_result_body(*, decision: str = "pass", summary: str = "role result", **extra: object) -> str:
@@ -39,12 +40,7 @@ def role_result_body(*, decision: str = "pass", summary: str = "role result", **
 
 
 def open_required_result_reads(ledger: dict[str, object], packet_id: str, lease_id: str) -> None:
-    packet = ledger["packets"][packet_id]  # type: ignore[index]
-    envelope = packet.get("envelope", {}) if isinstance(packet, dict) else {}
-    for row in envelope.get("authorized_result_reads", []) if isinstance(envelope, dict) else []:
-        if not isinstance(row, dict) or row.get("required_before_submit") is not True:
-            continue
-        runtime.open_result_body_for_role(ledger, packet_id, lease_id, str(row.get("result_id") or ""))
+    runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
 
 
 def authorize_background_collaboration(ledger: dict[str, object]) -> None:
@@ -315,6 +311,46 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertTrue(repair_body["repair_completion_contract"]["source_artifact_is_context_not_passing_evidence"])
         self.assertTrue(repair_body["repair_completion_contract"]["repair_summary_alone_is_not_completion"])
 
+    def test_repair_packet_open_blocker_stays_visible_in_status_projection(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = packets.issue_packet(ledger, "worker", "Do work", "SEALED_TASK")
+        worker = host.lease_responsibility(ledger, "worker", agent_id="worker-agent-1", host_kind="fake", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, worker)
+        runtime.ack_lease(ledger, worker, packet_id)
+        host.submit_host_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body(
+                decision="block",
+                summary="Deliverable gap blocks this worker packet.",
+                blocker_class="deliverable_gap",
+                recommended_resolution="Create the missing concrete deliverable.",
+            ),
+        )
+        blocker = next(iter(ledger["active_blockers"].values()))
+        pm_packet_id = blocker["pm_repair_packet_id"]
+        pm_lease = host.lease_responsibility(ledger, "pm", agent_id="pm-agent-1", host_kind="fake", packet_id=pm_packet_id)
+        runtime.assign_packet(ledger, pm_packet_id, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet_id)
+        open_required_result_reads(ledger, pm_packet_id, pm_lease)
+        host.submit_host_result(
+            ledger,
+            pm_lease,
+            pm_packet_id,
+            json.dumps({"decision": "repair_current_scope", "reason": "open a fresh current-scope repair packet"}),
+        )
+
+        compact = runtime.render_compact_console(ledger)
+        projected = compact["active_blockers"]
+
+        self.assertEqual(blocker["status"], "repair_packet_open")
+        self.assertEqual(compact["counts"]["active_blockers"], 1)
+        self.assertEqual(projected[0]["blocker_id"], blocker["blocker_id"])
+        self.assertEqual(projected[0]["status"], "repair_packet_open")
+
     def test_repeated_blocker_family_is_visible_as_advisory_context(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
         authorize_background_collaboration(ledger)
@@ -515,6 +551,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             complete_structure_runner,
             complete_ui_runner,
             complete_alignment_runner,
+            complete_runtime_runner,
         ):
             with self.subTest(runner=runner.__name__):
                 self.assertTrue(runner.run_checks()["ok"])
@@ -523,6 +560,26 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertTrue(testmesh["ok"], testmesh)
         self.assertFalse(testmesh["release_gate"]["ok"])
         self.assertIn("live_host", testmesh["release_gate"]["required_suites"])
+
+    def test_complete_system_runner_uses_current_contract_for_all_packets(self) -> None:
+        ledger, packet_id, lease_id = complete_runtime_runner._base_ledger()
+        result_id = complete_runtime_runner._complete_packet(ledger, packet_id, lease_id)
+
+        self.assertTrue(runtime.background_collaboration_authorized(ledger))
+        worker_payload = json.loads(ledger["results"][result_id]["body"])
+        self.assertIn("decision", worker_payload)
+        self.assertIn("pm_visible_summary", worker_payload)
+        for packet in ledger["packets"].values():
+            contract = packet["envelope"].get("current_handoff_contract")
+            self.assertIsInstance(contract, dict)
+            self.assertEqual(contract["packet_id"], packet["packet_id"])
+            required_reads = contract["input_material_manifest"]["required_authorized_reads_before_submit"]
+            receipts = packet.get("authorized_result_read_receipts", [])
+            for required_result_id in required_reads:
+                self.assertIn(required_result_id, {receipt["result_id"] for receipt in receipts})
+        for result in ledger["results"].values():
+            blockers = ",".join(result.get("mechanical_blockers", []))
+            self.assertNotIn("required_result_body_not_opened", blockers)
 
 
 if __name__ == "__main__":

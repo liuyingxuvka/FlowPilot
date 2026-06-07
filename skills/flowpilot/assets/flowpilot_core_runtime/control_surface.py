@@ -297,6 +297,18 @@ def audit_packet_contracts(
                     {"responsibility": role, "output_contract": dict(output_contract)},
                 )
             )
+        handoff_contract = envelope.get("current_handoff_contract")
+        if not isinstance(handoff_contract, Mapping):
+            missing_fields.append("current_handoff_contract")
+        elif handoff_contract.get("recipient_responsibility") != role:
+            findings.append(
+                _packet_finding(
+                    "packet_handoff_contract_role_mismatch",
+                    str(packet_id),
+                    "packet handoff contract recipient does not match responsibility",
+                    {"responsibility": role, "current_handoff_contract": dict(handoff_contract)},
+                )
+            )
         if missing_fields:
             findings.append(
                 _packet_finding(

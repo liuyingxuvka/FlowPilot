@@ -50,6 +50,21 @@ def _test_evidence() -> tuple[Any, ...]:
             code_contracts=("info_flow.runtime.pm_opened_result_bodies",),
         ),
         _evidence(
+            "info_flow.test.pm_packet_open_delivers_authorized_body",
+            test_name="test_pm_repair_decision_receives_authorized_block_report_with_packet_open",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_pm_repair_decision_receives_authorized_block_report_with_packet_open -q"
+            ),
+            test_kind=HAPPY,
+            covers=(OBL_BLOCKER_PAYLOAD, OBL_REQUIRED_REPAIR),
+            code_contracts=(
+                "info_flow.runtime.authorized_result_reads",
+                "info_flow.runtime.open_packet_authorized_material_delivery",
+            ),
+        ),
+        _evidence(
             "info_flow.test.missing_pm_summary_negative",
             test_name="test_missing_pm_visible_summary_is_mechanically_reissued",
             path="tests/test_flowpilot_core_runtime.py",

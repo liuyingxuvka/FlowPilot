@@ -128,12 +128,9 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
             if args[0] == "open-packet":
                 return {
                     "ok": True,
-                    "sealed_packet_body": json.dumps(
-                        {"authorized_result_reads": [{"result_id": "result-authorized"}]}
-                    ),
+                    "authorized_input_materials_delivered": True,
+                    "authorized_input_materials": [{"result_id": "result-authorized"}],
                 }
-            if args[0] == "open-result":
-                return {"ok": True}
             raise AssertionError(f"unexpected CLI command: {args}")
 
         with mock.patch.object(fake_project_cli, "run_cli", side_effect=fake_run_cli):
@@ -144,18 +141,8 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
                 packet={"packet_id": "packet-001", "target_result_id": "result-public-projection"},
             )
 
-        self.assertIn(
-            (
-                "open-result",
-                "--lease-id",
-                "lease-001",
-                "--packet-id",
-                "packet-001",
-                "--result-id",
-                "result-authorized",
-            ),
-            calls,
-        )
+        self.assertIn(("open-packet", "--lease-id", "lease-001", "--packet-id", "packet-001"), calls)
+        self.assertFalse(any(call and call[0] == "open-result" for call in calls))
         self.assertNotIn("result-public-projection", {part for call in calls for part in call})
 
 

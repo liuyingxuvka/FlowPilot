@@ -219,8 +219,7 @@ def run_fake_e2e(
         )
         runtime.assign_packet(ledger, packet_id, lease_id)
         runtime.ack_lease(ledger, lease_id, packet_id)
-        for read in packet["envelope"].get("authorized_result_reads", []):
-            runtime.open_result_body_for_role(ledger, packet_id, lease_id, str(read["result_id"]))
+        runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
         result_id = host.submit_host_result(ledger, lease_id, packet_id, body)
         return lease_id, result_id
 

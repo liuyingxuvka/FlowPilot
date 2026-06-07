@@ -28,3 +28,11 @@
 - [x] 5.2 Run FieldContract, FieldMesh, Model-Test Alignment, topology build/check, and layered parent regressions.
 - [x] 5.3 Sync local FlowPilot install and run install/audit checks.
 - [x] 5.4 Record FlowGuard and KB postflight evidence, then commit the local git version.
+
+## 6. Current Handoff Contract Closure
+
+- [x] 6.1 Add a current handoff contract to every packet envelope and JSON body, covering input reads, output fields, missing-info response, downstream consumer, and status projection duties.
+- [x] 6.2 Authorize reviewer packets to read matching FlowGuard result evidence through the same handoff contract.
+- [x] 6.3 Keep current repair chains visible while repair packets, FlowGuard rechecks, or reviewer rechecks are pending.
+- [x] 6.4 Add runtime, fake-AI, and FlowGuard alignment tests for missing contract visibility, missing FlowGuard evidence reads, and hidden repair status.
+- [x] 6.5 Rerun OpenSpec, FlowGuard, topology, install, and targeted runtime/fake-AI regressions before local git sync.

@@ -39,6 +39,8 @@ VALID_BREAK_GLASS_CONTROL_REPAIR = "valid_break_glass_control_repair"
 VALID_ROUTE_MUTATION_WITH_REPLAY_SCOPE = "valid_route_mutation_with_replay_scope"
 VALID_ROLE_ASSIGNMENT_REISSUES_CURRENT_PACKET = "valid_role_assignment_reissues_current_packet"
 VALID_TERMINAL_STOP_PRESERVES_UNRESOLVED_WORK = "valid_terminal_stop_preserves_unresolved_work"
+VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF = "valid_packet_contract_and_review_evidence_handoff"
+VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT = "valid_actor_handoff_material_and_report_contract"
 
 RESUME_FROM_CHAT_HISTORY_LOSES_BLOCKER = "resume_from_chat_history_loses_blocker"
 RESUME_LOADS_OLD_RUN_AS_CURRENT = "resume_loads_old_run_as_current"
@@ -55,6 +57,14 @@ ROLE_ASSIGNMENT_WITHOUT_CURRENT_PACKET_CONTEXT = "role_assignment_without_curren
 FOLLOWUP_BLOCKER_NOT_PROPAGATED_TO_NEXT_RUNWAY = "followup_blocker_not_propagated_to_next_runway"
 FINAL_CLOSURE_WITH_UNRESOLVED_INFORMATION_GAP = "final_closure_with_unresolved_information_gap"
 HISTORICAL_EVIDENCE_PROMOTED_TO_CURRENT = "historical_evidence_promoted_to_current"
+PACKET_RESULT_CONTRACT_NOT_VISIBLE_TO_ROLE = "packet_result_contract_not_visible_to_role"
+FLOWGUARD_EVIDENCE_NOT_BOUND_TO_REVIEWER = "flowguard_evidence_not_bound_to_reviewer"
+BLOCKER_REPAIR_STAGE_HIDDEN_FROM_STATUS = "blocker_repair_stage_hidden_from_status"
+SYNTHETIC_TRACE_BYPASSES_VISIBLE_CONTRACT = "synthetic_trace_bypasses_visible_contract"
+WORK_PACKET_MISSING_INPUT_MATERIALS = "work_packet_missing_input_materials"
+WORK_PACKET_MISSING_REPORT_REQUIREMENTS = "work_packet_missing_report_requirements"
+DOWNSTREAM_REPORT_NOT_AUTHORIZED = "downstream_report_not_authorized"
+MISSING_INFO_RESPONSE_NOT_DEFINED = "missing_info_response_not_defined"
 
 VALID_SCENARIOS = (
     VALID_REPAIR_PACKET_PROGRESS,
@@ -64,6 +74,8 @@ VALID_SCENARIOS = (
     VALID_ROUTE_MUTATION_WITH_REPLAY_SCOPE,
     VALID_ROLE_ASSIGNMENT_REISSUES_CURRENT_PACKET,
     VALID_TERMINAL_STOP_PRESERVES_UNRESOLVED_WORK,
+    VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF,
+    VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -82,6 +94,14 @@ NEGATIVE_SCENARIOS = (
     FOLLOWUP_BLOCKER_NOT_PROPAGATED_TO_NEXT_RUNWAY,
     FINAL_CLOSURE_WITH_UNRESOLVED_INFORMATION_GAP,
     HISTORICAL_EVIDENCE_PROMOTED_TO_CURRENT,
+    PACKET_RESULT_CONTRACT_NOT_VISIBLE_TO_ROLE,
+    FLOWGUARD_EVIDENCE_NOT_BOUND_TO_REVIEWER,
+    BLOCKER_REPAIR_STAGE_HIDDEN_FROM_STATUS,
+    SYNTHETIC_TRACE_BYPASSES_VISIBLE_CONTRACT,
+    WORK_PACKET_MISSING_INPUT_MATERIALS,
+    WORK_PACKET_MISSING_REPORT_REQUIREMENTS,
+    DOWNSTREAM_REPORT_NOT_AUTHORIZED,
+    MISSING_INFO_RESPONSE_NOT_DEFINED,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -131,7 +151,31 @@ class State:
     work_packet_carries_forbidden_actions: bool = False
     work_packet_carries_success_evidence: bool = False
     work_packet_disposes_stale_context: bool = False
+    work_packet_carries_output_contract: bool = False
+    work_packet_carries_minimal_valid_result_shape: bool = False
+    work_packet_carries_forbidden_result_fields: bool = False
+    work_packet_carries_input_material_manifest: bool = False
+    work_packet_carries_required_report_contract: bool = False
+    work_packet_names_downstream_consumer: bool = False
+    work_packet_names_missing_info_response: bool = False
+    result_report_submitted: bool = False
+    result_report_satisfies_required_contract: bool = False
+    downstream_packet_authorized_to_read_report: bool = False
     new_information_delta_present: bool = False
+    synthetic_trace_uses_hidden_contract: bool = False
+
+    flowguard_gate_required: bool = False
+    flowguard_result_current_for_subject: bool = False
+    flowguard_evidence_manifest_attached: bool = False
+    flowguard_evidence_subject_matches_result: bool = False
+    reviewer_packet_issued: bool = False
+    reviewer_packet_authorized_to_read_subject_result: bool = False
+    reviewer_packet_authorized_to_read_flowguard_evidence: bool = False
+    reviewer_packet_names_flowguard_evidence_id: bool = False
+
+    blocker_repair_chain_open: bool = False
+    blocker_status_reflects_current_stage: bool = False
+    status_projection_shows_repair_chain: bool = False
 
     repeated_same_work: bool = False
     loop_escape_or_blocker_recorded: bool = False
@@ -216,6 +260,16 @@ def _base_work_packet(**changes: object) -> State:
             work_packet_carries_forbidden_actions=True,
             work_packet_carries_success_evidence=True,
             work_packet_disposes_stale_context=True,
+            work_packet_carries_output_contract=True,
+            work_packet_carries_minimal_valid_result_shape=True,
+            work_packet_carries_forbidden_result_fields=True,
+            work_packet_carries_input_material_manifest=True,
+            work_packet_carries_required_report_contract=True,
+            work_packet_names_downstream_consumer=True,
+            work_packet_names_missing_info_response=True,
+            result_report_submitted=True,
+            result_report_satisfies_required_contract=True,
+            downstream_packet_authorized_to_read_report=True,
             new_information_delta_present=True,
         ),
         **changes,
@@ -277,6 +331,29 @@ def _scenario_state(scenario: str) -> State:
             unresolved_work_visible=True,
             closure_claimed=False,
             new_information_delta_present=False,
+        )
+    if scenario == VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF:
+        return replace(
+            _base_work_packet(),
+            scenario=scenario,
+            surface="packet_review_handoff",
+            flowguard_gate_required=True,
+            flowguard_result_current_for_subject=True,
+            flowguard_evidence_manifest_attached=True,
+            flowguard_evidence_subject_matches_result=True,
+            reviewer_packet_issued=True,
+            reviewer_packet_authorized_to_read_subject_result=True,
+            reviewer_packet_authorized_to_read_flowguard_evidence=True,
+            reviewer_packet_names_flowguard_evidence_id=True,
+            blocker_repair_chain_open=True,
+            blocker_status_reflects_current_stage=True,
+            status_projection_shows_repair_chain=True,
+        )
+    if scenario == VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT:
+        return replace(
+            _base_work_packet(),
+            scenario=scenario,
+            surface="actor_handoff",
         )
 
     if scenario == RESUME_FROM_CHAT_HISTORY_LOSES_BLOCKER:
@@ -405,6 +482,63 @@ def _scenario_state(scenario: str) -> State:
             old_evidence_marked_historical=False,
             historical_evidence_used_as_current=True,
         )
+    if scenario == PACKET_RESULT_CONTRACT_NOT_VISIBLE_TO_ROLE:
+        return replace(
+            _scenario_state(VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF),
+            scenario=scenario,
+            work_packet_carries_output_contract=False,
+            work_packet_carries_minimal_valid_result_shape=False,
+            work_packet_carries_forbidden_result_fields=False,
+        )
+    if scenario == FLOWGUARD_EVIDENCE_NOT_BOUND_TO_REVIEWER:
+        return replace(
+            _scenario_state(VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF),
+            scenario=scenario,
+            flowguard_evidence_manifest_attached=False,
+            flowguard_evidence_subject_matches_result=False,
+            reviewer_packet_authorized_to_read_flowguard_evidence=False,
+            reviewer_packet_names_flowguard_evidence_id=False,
+        )
+    if scenario == BLOCKER_REPAIR_STAGE_HIDDEN_FROM_STATUS:
+        return replace(
+            _scenario_state(VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF),
+            scenario=scenario,
+            blocker_status_reflects_current_stage=False,
+            status_projection_shows_repair_chain=False,
+        )
+    if scenario == SYNTHETIC_TRACE_BYPASSES_VISIBLE_CONTRACT:
+        return replace(
+            _scenario_state(VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF),
+            scenario=scenario,
+            work_packet_carries_output_contract=False,
+            synthetic_trace_uses_hidden_contract=True,
+        )
+    if scenario == WORK_PACKET_MISSING_INPUT_MATERIALS:
+        return replace(
+            _scenario_state(VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT),
+            scenario=scenario,
+            work_packet_carries_input_material_manifest=False,
+        )
+    if scenario == WORK_PACKET_MISSING_REPORT_REQUIREMENTS:
+        return replace(
+            _scenario_state(VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT),
+            scenario=scenario,
+            work_packet_carries_required_report_contract=False,
+            result_report_satisfies_required_contract=False,
+        )
+    if scenario == DOWNSTREAM_REPORT_NOT_AUTHORIZED:
+        return replace(
+            _scenario_state(VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT),
+            scenario=scenario,
+            work_packet_names_downstream_consumer=False,
+            downstream_packet_authorized_to_read_report=False,
+        )
+    if scenario == MISSING_INFO_RESPONSE_NOT_DEFINED:
+        return replace(
+            _scenario_state(VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT),
+            scenario=scenario,
+            work_packet_names_missing_info_response=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -445,8 +579,47 @@ def information_sufficiency_failures(state: State) -> list[str]:
             and state.work_packet_disposes_stale_context
         ):
             failures.append("work packet lacks minimum executable information")
+        if not (
+            state.work_packet_carries_output_contract
+            and state.work_packet_carries_minimal_valid_result_shape
+            and state.work_packet_carries_forbidden_result_fields
+        ):
+            failures.append("work packet lacks role-visible result output contract, minimal valid shape, or forbidden fields")
+        if not state.work_packet_carries_input_material_manifest:
+            failures.append("work packet lacks the required input material manifest for the actor")
+        if not state.work_packet_carries_required_report_contract:
+            failures.append("work packet lacks required report contract for the actor output")
+        if not state.work_packet_names_downstream_consumer:
+            failures.append("work packet does not name the downstream consumer for its report")
+        if not state.work_packet_names_missing_info_response:
+            failures.append("work packet does not define the current-runtime response when required information is missing")
+        if state.result_report_submitted and not state.result_report_satisfies_required_contract:
+            failures.append("submitted report does not satisfy the packet's required report contract")
+        if state.result_report_submitted and not state.downstream_packet_authorized_to_read_report:
+            failures.append("downstream packet is not authorized to read the required report")
         if not state.new_information_delta_present and not state.loop_escape_or_blocker_recorded:
             failures.append("work packet has no new information delta and no loop escape")
+        if state.synthetic_trace_uses_hidden_contract:
+            failures.append("synthetic trace used hidden success contract instead of visible packet output contract")
+
+    if state.flowguard_gate_required:
+        if not (
+            state.flowguard_result_current_for_subject
+            and state.flowguard_evidence_manifest_attached
+            and state.flowguard_evidence_subject_matches_result
+        ):
+            failures.append("FlowGuard evidence handoff lacks current subject result, attached evidence manifest, or subject-result match")
+        if state.reviewer_packet_issued and not (
+            state.reviewer_packet_authorized_to_read_subject_result
+            and state.reviewer_packet_authorized_to_read_flowguard_evidence
+            and state.reviewer_packet_names_flowguard_evidence_id
+        ):
+            failures.append("reviewer packet lacks authorized subject result and FlowGuard evidence reads")
+
+    if state.blocker_repair_chain_open and not (
+        state.blocker_status_reflects_current_stage and state.status_projection_shows_repair_chain
+    ):
+        failures.append("blocker repair chain stage is hidden or stale in status projection")
 
     if state.repeated_same_work and not (
         state.new_information_delta_present or state.loop_escape_or_blocker_recorded
@@ -509,7 +682,8 @@ class ProjectControlInformationFlowStep:
     Input x State -> Set(Output x State)
     reads: current run, frontier, packet ledger, active blocker, PM runway,
     work packet, role assignment, break-glass incident, route mutation, follow-up
-    blocker, and closure state
+    blocker, actor input material manifest, required report contract,
+    FlowGuard evidence handoff, reviewer packet reads, and closure state
     writes: accepted information flow, explicit rejection, terminal stop,
     route mutation, or current follow-up blocker
     idempotency: current run id plus current packet/blocker generation decide

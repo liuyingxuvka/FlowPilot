@@ -53,7 +53,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-04T17:09:12.777535+00:00",
+        "created_at": "2026-06-07T13:14:49.965820+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -123,7 +123,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-04T17:09:12.779535+00:00",
+        "created_at": "2026-06-07T13:14:49.971362+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -135,7 +135,7 @@
             "packets"
           ],
           "cockpit_event_type": "pause",
-          "created_at": "2026-06-04T17:09:12.779535+00:00"
+          "created_at": "2026-06-07T13:14:49.971362+00:00"
         }
       },
       "name": "cockpit_direct_write_rejected",
@@ -198,14 +198,14 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-04T17:09:12.781534+00:00",
+        "created_at": "2026-06-07T13:14:49.974888+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
       },
       "details": {
         "import": {
-          "created_at": "2026-06-04T17:09:12.781534+00:00",
+          "created_at": "2026-06-07T13:14:49.974888+00:00",
           "current_authority": false,
           "disposition": "imported_read_only",
           "import_id": "import-0001",
@@ -275,7 +275,7 @@
         "blockers": [
           "cutover_gate_blocked"
         ],
-        "created_at": "2026-06-04T17:09:12.783540+00:00",
+        "created_at": "2026-06-07T13:14:49.978406+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -332,7 +332,7 @@
           "blockers": [
             "cutover_gate_blocked"
           ],
-          "created_at": "2026-06-04T17:09:12.783540+00:00",
+          "created_at": "2026-06-07T13:14:49.978406+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -341,7 +341,7 @@
           "blockers": [
             "live_host_not_current"
           ],
-          "created_at": "2026-06-04T17:09:12.783540+00:00",
+          "created_at": "2026-06-07T13:14:49.978406+00:00",
           "decision": "blocked",
           "old_runtime_authority": false
         }
@@ -366,7 +366,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-04T17:09:12.785534+00:00",
+          "created_at": "2026-06-07T13:14:49.981427+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -399,7 +399,7 @@
           "affected_packets": [
             "packet-0001"
           ],
-          "created_at": "2026-06-04T17:09:12.785534+00:00",
+          "created_at": "2026-06-07T13:14:49.981427+00:00",
           "mutation_id": "mutation-0001",
           "new_route_version": 2,
           "old_route_version": 1,
@@ -411,10 +411,95 @@
           "assigned_lease_id": "lease-0001",
           "body": "SEALED_TASK_BODY: complete-system work",
           "envelope": {
-            "acceptance_criteria": [],
+            "acceptance_criteria": [
+              "Scripts, checkers, and evidence generators must be replayable; do not make execution depend on a specific FlowPilot packet id, current active packet, or one-time phase."
+            ],
             "allowed_tools": [],
             "body_hash": "91a4b45c122c77bef7837213696fe091a884b4c01cf2579341bfdb6b076d6e96",
             "body_visibility": "sealed",
+            "current_handoff_contract": {
+              "contract_family_id": "task.node",
+              "contract_id": "black_box_flowpilot.current_handoff_contract.v1",
+              "current_run_only": true,
+              "downstream_consumer": {
+                "accepted_by_role_text_alone": false,
+                "next_consumer_authority": "runtime_router",
+                "unlocks": "node_result_flowguard_review"
+              },
+              "input_material_manifest": {
+                "authorized_result_reads": [],
+                "node_context_package_id": "",
+                "packet_body_hash_authority": "envelope.body_hash",
+                "required_authorized_reads_before_submit": [],
+                "route_node_id": "",
+                "sealed_body_visibility": "sealed",
+                "subject_id": "",
+                "target_result_id": ""
+              },
+              "missing_information_response": {
+                "if_required_information_is_missing": "Submit a current JSON result for this packet family with decision=block, blocker_class=missing_required_information, recommended_resolution naming the missing input, and pm_visible_summary when that field is required.",
+                "old_shapes_forbidden": true,
+                "runtime_reissue_on_mechanical_contract_failure": true
+              },
+              "packet_id": "packet-0001",
+              "packet_kind": "task",
+              "recipient_responsibility": "worker",
+              "required_report_contract": {
+                "forbidden_result_body_fields": [
+                  "outcome",
+                  "status",
+                  "passed",
+                  "verdict",
+                  "result",
+                  "pass_or_block",
+                  "validation_status"
+                ],
+                "minimal_valid_shape": {
+                  "decision": "pass",
+                  "pm_visible_summary": [
+                    "Role-authored summary for PM."
+                  ]
+                },
+                "output_contract": {
+                  "accepted_authority": "runtime_acceptance_gate",
+                  "ack_authority": "lease_ack_only",
+                  "ack_result_accepted_separate": true,
+                  "contract_id": "black_box_flowpilot.output.task.v1",
+                  "expected_result_visibility": "sealed",
+                  "packet_id": "packet-0001",
+                  "pm_visible_summary_required": true,
+                  "pm_visible_summary_shape": "non_empty_string_list",
+                  "recipient_responsibility": "worker",
+                  "result_authority": "sealed_result_envelope",
+                  "route_version": 1,
+                  "runner_may_synthesize_pm_visible_summary": false,
+                  "schema_version": "black_box_flowpilot.packet_output_contract.v1",
+                  "source_generation": 1
+                },
+                "required_child_fields": [],
+                "required_result_body_fields": [
+                  "decision",
+                  "pm_visible_summary"
+                ],
+                "validator": "_strict_packet_outcome_contract_violation"
+              },
+              "route_scope": "",
+              "route_version": 1,
+              "schema_version": "black_box_flowpilot.current_handoff_contract.v1",
+              "source_generation": 1,
+              "status_projection_requirements": {
+                "controller_projection_is_display_only": true,
+                "repair_chain_visible_when_current": true,
+                "sealed_bodies_visible": false
+              },
+              "unsupported_paths_forbidden": {
+                "historical_artifact_promotion": true,
+                "legacy_aliases": true,
+                "missing_field_defaults": true,
+                "old_router_path": true,
+                "wrapper_shapes": true
+              }
+            },
             "node_context_package_id": "",
             "objective": "Execute packet",
             "output_contract": {
@@ -424,9 +509,12 @@
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
               "packet_id": "packet-0001",
+              "pm_visible_summary_required": true,
+              "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
               "route_version": 1,
+              "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
               "source_generation": 1
             },
@@ -466,10 +554,10 @@
       "details": {
         "result": {
           "accepted": false,
-          "body": "{\"decision\": \"pass\"}",
+          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"]}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "cc722b8660243e4257aef5609d40643c65d6d218afb5eb241d87562a996b2312",
+            "body_hash": "5dcd456359f9183bc8290e39580113fcda95587e7ff11a42e8255c3f3f1d9287",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -480,9 +568,12 @@
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
               "packet_id": "packet-0001",
+              "pm_visible_summary_required": true,
+              "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
               "route_version": 1,
+              "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
               "source_generation": 1
             },
@@ -524,10 +615,10 @@
       "details": {
         "first": {
           "accepted": false,
-          "body": "{\"decision\": \"pass\", \"seq\": 1}",
+          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"]}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "1a72c965ef18c370a16cc6d58188f1315709414237d8fff5a43e6e2d76478af3",
+            "body_hash": "5dcd456359f9183bc8290e39580113fcda95587e7ff11a42e8255c3f3f1d9287",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -538,9 +629,12 @@
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
               "packet_id": "packet-0001",
+              "pm_visible_summary_required": true,
+              "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
               "route_version": 1,
+              "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
               "source_generation": 1
             },
@@ -566,10 +660,10 @@
         },
         "second": {
           "accepted": false,
-          "body": "{\"decision\": \"pass\", \"seq\": 2}",
+          "body": "{\"decision\": \"pass\", \"pm_visible_summary\": [\"Role-authored summary for PM.\"]}",
           "envelope": {
             "ack_result_accepted_separate": true,
-            "body_hash": "193290c54bffdc931481b9e1c9cf740f9c70d838299d55800ef5ec84a86c8c44",
+            "body_hash": "5dcd456359f9183bc8290e39580113fcda95587e7ff11a42e8255c3f3f1d9287",
             "body_visibility": "sealed",
             "evidence_generation": 1,
             "evidence_ids": [],
@@ -580,9 +674,12 @@
               "contract_id": "black_box_flowpilot.output.task.v1",
               "expected_result_visibility": "sealed",
               "packet_id": "packet-0001",
+              "pm_visible_summary_required": true,
+              "pm_visible_summary_shape": "non_empty_string_list",
               "recipient_responsibility": "worker",
               "result_authority": "sealed_result_envelope",
               "route_version": 1,
+              "runner_may_synthesize_pm_visible_summary": false,
               "schema_version": "black_box_flowpilot.packet_output_contract.v1",
               "source_generation": 1
             },
@@ -628,7 +725,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-04T17:09:12.789534+00:00",
+          "created_at": "2026-06-07T13:14:49.986961+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -658,9 +755,9 @@
       },
       "details": {
         "order": {
-          "completed_at": "2026-06-04T17:09:12.790534+00:00",
+          "completed_at": "2026-06-07T13:14:49.989981+00:00",
           "confidence_boundary": "scoped",
-          "created_at": "2026-06-04T17:09:12.790534+00:00",
+          "created_at": "2026-06-07T13:14:49.989981+00:00",
           "decision": "pass",
           "evidence_id": "flowguard-report",
           "flowguard_operator_lease_id": "",
@@ -682,7 +779,7 @@
             "missing_matching_flowguard_report"
           ],
           "checks_evidence": true,
-          "created_at": "2026-06-04T17:09:12.790534+00:00",
+          "created_at": "2026-06-07T13:14:49.989981+00:00",
           "decision": "block",
           "direct_evidence_ids": [],
           "failure_hypotheses": [],
@@ -716,7 +813,7 @@
           "unresolved_residual_risks",
           "unresolved_resources"
         ],
-        "created_at": "2026-06-04T17:09:12.793536+00:00",
+        "created_at": "2026-06-07T13:14:49.993532+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -731,7 +828,7 @@
             "unresolved_residual_risks",
             "unresolved_resources"
           ],
-          "created_at": "2026-06-04T17:09:12.793536+00:00",
+          "created_at": "2026-06-07T13:14:49.993532+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "validation-result-0003"
@@ -752,15 +849,15 @@
         "decision": "not_attempted"
       },
       "details": {
-        "fallback": {
-          "active": "chat_route_sign",
-          "created_at": "2026-06-04T17:09:12.793536+00:00",
-          "fallback_reason": "cockpit_unavailable",
+        "blocker": {
+          "active": "blocked",
+          "block_reason": "cockpit_unavailable",
+          "created_at": "2026-06-07T13:14:49.994534+00:00",
           "preferred": "cockpit",
-          "route_sign_required": true
+          "repair_required": true
         }
       },
-      "name": "cockpit_disconnect_records_chat_fallback",
+      "name": "cockpit_disconnect_records_display_surface_blocker",
       "next_action": {
         "action_type": "wait_for_ack",
         "modeled_target": "",

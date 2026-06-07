@@ -421,6 +421,76 @@
       "validator": "contract_self_check_metadata"
     },
     {
+      "field": "current_handoff_contract.contract_family_id",
+      "layer": "middle",
+      "logical_field": "contract_family_id",
+      "owner": "flowpilot_router",
+      "required_value": "current_packet_result_family_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_visible_current_contract",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.input_material_manifest.authorized_result_reads[]",
+      "layer": "middle",
+      "logical_field": "authorized_result_reads",
+      "owner": "flowpilot_router",
+      "required_value": "current_result_read_refs_with_hash_and_allowed_roles",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_reads_current_inputs_before_submit",
+      "validator": "_normalize_authorized_result_reads"
+    },
+    {
+      "field": "current_handoff_contract.required_report_contract.required_result_body_fields",
+      "layer": "middle",
+      "logical_field": "required_result_body_fields",
+      "owner": "flowpilot_router",
+      "required_value": "same_fields_as_packet_result_contract_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_submits_contract_declared_result",
+      "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "field": "current_handoff_contract.required_report_contract.forbidden_result_body_fields",
+      "layer": "middle",
+      "logical_field": "forbidden_fields_seen",
+      "owner": "flowpilot_router",
+      "required_value": "same_forbidden_fields_as_packet_result_contract_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_avoids_unsupported_old_fields",
+      "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "field": "current_handoff_contract.missing_information_response",
+      "layer": "middle",
+      "logical_field": "missing_information_response",
+      "owner": "flowpilot_router",
+      "required_value": "current_contract_exit_without_old_shape_translation",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "role_blocks_or_reissues_without_guessing",
+      "validator": "_packet_handoff_missing_information_response"
+    },
+    {
+      "field": "current_handoff_contract.downstream_consumer.unlocks",
+      "layer": "middle",
+      "logical_field": "downstream_consumer",
+      "owner": "flowpilot_router",
+      "required_value": "same_unlock_as_packet_result_contract_row",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "next_runtime_consumer_receives_expected_report",
+      "validator": "_build_current_handoff_contract"
+    },
+    {
+      "field": "current_handoff_contract.status_projection_requirements.repair_chain_visible_when_current",
+      "layer": "leaf",
+      "logical_field": "repair_chain_visible_when_current",
+      "owner": "flowpilot_router",
+      "required_value": "true_for_current_repair_chain",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "public_status_shows_current_repair_chain",
+      "validator": "_blocker_current_effective"
+    },
+    {
       "field": "preplanning.high_standard_contract.requirements[]",
       "layer": "middle",
       "logical_field": "high_standard_requirements",
@@ -1467,6 +1537,7 @@
   },
   "source_alignment": {
     "contract_module_path": "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+    "current_handoff_source_ok": true,
     "fake_paths": [
       "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
       "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/simulations/flowpilot_fake_project_rehearsal_cli.py"

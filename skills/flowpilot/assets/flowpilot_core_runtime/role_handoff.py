@@ -91,14 +91,11 @@ def render_current_packet_handoff(
         for row in envelope.get("authorized_result_reads", [])
         if isinstance(row, Mapping)
     ]
-    open_result_commands = [
-        (
-            f"python {_quote(script_path)} --root {_quote(root)} --json "
-            f"open-result --lease-id {lease_id} --packet-id {packet_id} --result-id {row.get('result_id')}"
-        )
-        for row in authorized_result_reads
-        if row.get("result_id")
-    ]
+    current_handoff_contract = (
+        dict(envelope.get("current_handoff_contract"))
+        if isinstance(envelope.get("current_handoff_contract"), Mapping)
+        else {}
+    )
     label = _role_label(responsibility)
     host_kind = str(lease.get("host_kind") or "")
     agent_id = str(lease.get("agent_id") or "")
@@ -135,15 +132,15 @@ def render_current_packet_handoff(
             "",
             "Then open only this assigned packet through the runtime command:",
             f"`{open_command}`",
+            "The open-packet output includes `current_handoff_contract` and any authorized input materials this packet may use.",
             "",
             *(
                 [
-                    "This packet also has authorized result/report bodies. Open each required result through:",
-                    *[f"`{command}`" for command in open_result_commands],
-                    "These result bodies are for this role surface only; Controller must not run these commands.",
+                    "Authorized result/report bodies are delivered by open-packet for this role surface only.",
+                    "Controller must not run role-only open commands or read sealed bodies.",
                     "",
                 ]
-                if open_result_commands
+                if authorized_result_reads
                 else []
             ),
             "The open command is for the addressed role surface only. Controller must not run it.",
@@ -174,10 +171,11 @@ def render_current_packet_handoff(
         "role_memory_body_included": False,
         "role_must_not_expose_sealed_body_in_chat": True,
         "authorized_result_reads": authorized_result_reads,
+        "current_handoff_contract": current_handoff_contract,
         "commands": {
             "ack": ack_command,
             "open_packet": open_command,
-            "open_results": open_result_commands,
+            "open_results": [],
             "submit_result": submit_command,
         },
         "text": text,

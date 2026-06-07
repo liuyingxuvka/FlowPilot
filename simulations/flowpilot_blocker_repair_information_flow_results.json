@@ -2,10 +2,11 @@
   "claim_boundary": {
     "covers": [
       "blocker payload currency",
-      "PM repair decision body-open and current-blocker references",
+      "PM repair decision delivered-body and current-blocker references",
       "reviewer required repair and advice propagation",
       "fresh PM repair package generation",
       "worker repair packet semantic delta and success evidence",
+      "FlowGuard recheck evidence attachment for repaired results",
       "reviewer recheck binding",
       "same-blocker no-progress loop escape"
     ],
@@ -21,7 +22,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=114",
+    "summary": "sequences=3 initial_states=1 traces=126",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -39,6 +40,15 @@
         "expected_failure": "current blocker payload lacks blocker id",
         "failures": [
           "current blocker payload lacks blocker id, source result reference, or specific failure"
+        ]
+      },
+      "flowguard_recheck_evidence_not_delivered_to_reviewer": {
+        "detected": true,
+        "expected_failure": "reviewer recheck lacks the current FlowGuard evidence",
+        "failures": [
+          "FlowGuard recheck did not bind current repair result to an attached evidence manifest",
+          "reviewer recheck lacks the current FlowGuard evidence produced for the repair",
+          "blocker was closed without a bound reviewer recheck pass"
         ]
       },
       "followup_blocker_lost": {
@@ -62,18 +72,25 @@
           "blocker was closed without a bound reviewer recheck pass"
         ]
       },
-      "pm_did_not_open_required_report": {
-        "detected": true,
-        "expected_failure": "PM repair decision was made before opening the required report body",
-        "failures": [
-          "PM repair decision was made before opening the required report body"
-        ]
-      },
       "pm_repair_package_omits_new_blocker_content": {
         "detected": true,
         "expected_failure": "PM repair package omits current blocker",
         "failures": [
           "PM repair package omits current blocker, specific failure, or new work content"
+        ]
+      },
+      "pm_required_report_not_delivered": {
+        "detected": true,
+        "expected_failure": "PM repair decision was made before the required report body was delivered",
+        "failures": [
+          "PM repair decision was made before the required report body was delivered"
+        ]
+      },
+      "repair_stage_not_updated_after_flowguard_pass": {
+        "detected": true,
+        "expected_failure": "blocker repair stage was not updated",
+        "failures": [
+          "blocker repair stage was not updated after FlowGuard recheck pass"
         ]
       },
       "reviewer_advice_not_integrated": {
@@ -145,7 +162,7 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 19
+    "terminal_state_count": 21
   },
   "result_type": "flowpilot_blocker_repair_information_flow_checks",
   "safe_graph": {
@@ -155,18 +172,20 @@
       "valid_reviewer_blocker_repair_packet",
       "valid_worker_blocker_reissue"
     ],
-    "edge_count": 38,
+    "edge_count": 42,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
       "blocker_routed_without_pm_decision",
       "current_blocker_payload_missing_details",
+      "flowguard_recheck_evidence_not_delivered_to_reviewer",
       "followup_blocker_lost",
       "no_success_evidence_contract",
       "pm_closes_blocker_without_recheck",
-      "pm_did_not_open_required_report",
       "pm_repair_package_omits_new_blocker_content",
+      "pm_required_report_not_delivered",
+      "repair_stage_not_updated_after_flowguard_pass",
       "reviewer_advice_not_integrated",
       "reviewer_recheck_not_bound_to_blocker",
       "reviewer_required_repair_dropped",
@@ -176,6 +195,6 @@
       "worker_packet_has_no_semantic_delta",
       "worker_packet_omits_repair_direction"
     ],
-    "state_count": 39
+    "state_count": 43
   }
 }

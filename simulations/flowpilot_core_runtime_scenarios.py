@@ -87,8 +87,7 @@ def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: s
     )
     runtime.assign_packet(ledger, packet_id, lease_id)
     runtime.ack_lease(ledger, lease_id, packet_id)
-    for read in packet["envelope"].get("authorized_result_reads", []):
-        runtime.open_result_body_for_role(ledger, packet_id, lease_id, str(read["result_id"]))
+    runtime.open_authorized_input_materials_for_role(ledger, packet_id, lease_id)
     return runtime.submit_result(
         ledger,
         lease_id,
@@ -478,7 +477,7 @@ def recovery_duty_names_command_payload() -> dict[str, Any]:
     )
 
 
-def pm_repair_decision_requires_authorized_body_read() -> dict[str, Any]:
+def pm_repair_decision_receives_authorized_body_on_packet_open() -> dict[str, Any]:
     ledger, packet_id, worker = _base_ledger()
     runtime.ack_lease(ledger, worker, packet_id)
     blocking_result_id = runtime.submit_result(
@@ -499,13 +498,7 @@ def pm_repair_decision_requires_authorized_body_read() -> dict[str, Any]:
     pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-a", packet_id=pm_packet_id)
     runtime.assign_packet(ledger, pm_packet_id, pm_lease)
     runtime.ack_lease(ledger, pm_lease, pm_packet_id)
-    blocked_decision = runtime.submit_result(
-        ledger,
-        pm_lease,
-        pm_packet_id,
-        json.dumps({"decision": "repair_current_scope", "reason": "repair stale lifecycle path"}),
-    )
-    runtime.open_result_body_for_role(ledger, pm_packet_id, pm_lease, blocking_result_id)
+    delivered = runtime.open_authorized_input_materials_for_role(ledger, pm_packet_id, pm_lease)
     accepted_decision = runtime.submit_result(
         ledger,
         pm_lease,
@@ -520,18 +513,20 @@ def pm_repair_decision_requires_authorized_body_read() -> dict[str, Any]:
     ok = (
         body["recent_role_report_summary"][0]["result_id"] == blocking_result_id
         and body["authorized_result_reads"][0]["result_id"] == blocking_result_id
-        and f"required_result_body_not_opened:{blocking_result_id}" in ledger["results"][blocked_decision]["mechanical_blockers"]
+        and len(delivered) == 1
+        and delivered[0]["result_id"] == blocking_result_id
+        and "stale lifecycle path" in delivered[0]["sealed_result_body"]
         and ledger["results"][accepted_decision]["status"] == "accepted"
         and len(fresh_packets) == 1
         and json.loads(fresh_packets[0]["body"])["authorized_result_reads"][0]["result_id"] == blocking_result_id
     )
     return _scenario_result(
-        "pm_repair_decision_requires_authorized_body_read",
+        "pm_repair_decision_receives_authorized_body_on_packet_open",
         ledger,
         accepted=ok,
         expected=True,
         details={
-            "blocked_decision_blockers": ledger["results"][blocked_decision]["mechanical_blockers"],
+            "delivered_material_count": len(delivered),
             "fresh_packet_count": len(fresh_packets),
         },
     )
@@ -551,5 +546,5 @@ SCENARIOS: dict[str, ScenarioFn] = {
     "final_preflight_blocks_accepted_packet_stale_lease": final_preflight_blocks_accepted_packet_stale_lease,
     "compact_status_does_not_leak_sealed_bodies": compact_status_does_not_leak_sealed_bodies,
     "recovery_duty_names_command_payload": recovery_duty_names_command_payload,
-    "pm_repair_decision_requires_authorized_body_read": pm_repair_decision_requires_authorized_body_read,
+    "pm_repair_decision_receives_authorized_body_on_packet_open": pm_repair_decision_receives_authorized_body_on_packet_open,
 }
