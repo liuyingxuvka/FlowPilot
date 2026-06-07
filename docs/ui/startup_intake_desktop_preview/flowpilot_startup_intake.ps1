@@ -54,26 +54,27 @@ $Xaml = @"
     SnapsToDevicePixels="True"
     ResizeMode="CanResizeWithGrip">
   <Window.Resources>
-    <SolidColorBrush x:Key="InkBrush" Color="#19121B" />
-    <SolidColorBrush x:Key="MutedBrush" Color="#746677" />
-    <SolidColorBrush x:Key="LineBrush" Color="#EEE2EF" />
-    <SolidColorBrush x:Key="PanelBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="InkBrush" Color="#18171C" />
+    <SolidColorBrush x:Key="MutedBrush" Color="#667085" />
+    <SolidColorBrush x:Key="LineBrush" Color="#D7DCE3" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#F7F8FA" />
     <SolidColorBrush x:Key="FieldBrush" Color="#FFFFFF" />
-    <SolidColorBrush x:Key="AccentBrush" Color="#8A5AD0" />
-    <SolidColorBrush x:Key="AccentHoverBrush" Color="#7A49C3" />
-    <SolidColorBrush x:Key="AccentPressedBrush" Color="#6537A7" />
-    <SolidColorBrush x:Key="AccentSoftBrush" Color="#F0E7FA" />
-    <SolidColorBrush x:Key="AccentLineBrush" Color="#D8C6EE" />
-    <SolidColorBrush x:Key="AccentTextBrush" Color="#61309A" />
+    <SolidColorBrush x:Key="AccentBrush" Color="#6F4BB8" />
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#6542AA" />
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#563592" />
+    <SolidColorBrush x:Key="AccentSoftBrush" Color="#EEEAF8" />
+    <SolidColorBrush x:Key="AccentLineBrush" Color="#D8D0EE" />
+    <SolidColorBrush x:Key="AccentTextBrush" Color="#5F3DA4" />
 
     <Style x:Key="PrimaryButton" TargetType="Button">
-      <Setter Property="MinWidth" Value="132" />
-      <Setter Property="Height" Value="44" />
-      <Setter Property="Padding" Value="20,0" />
+      <Setter Property="MinWidth" Value="158" />
+      <Setter Property="Height" Value="42" />
+      <Setter Property="Padding" Value="22,0" />
       <Setter Property="Foreground" Value="#FFFFFF" />
       <Setter Property="Background" Value="{StaticResource AccentBrush}" />
       <Setter Property="BorderBrush" Value="{StaticResource AccentBrush}" />
       <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="FontSize" Value="13" />
       <Setter Property="FontWeight" Value="SemiBold" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Template">
@@ -102,11 +103,11 @@ $Xaml = @"
     </Style>
 
     <Style x:Key="IconButton" TargetType="Button">
-      <Setter Property="Width" Value="38" />
-      <Setter Property="Height" Value="38" />
+      <Setter Property="Width" Value="36" />
+      <Setter Property="Height" Value="36" />
       <Setter Property="Foreground" Value="{StaticResource AccentTextBrush}" />
       <Setter Property="Background" Value="#FFFFFF" />
-      <Setter Property="BorderBrush" Value="{StaticResource AccentLineBrush}" />
+      <Setter Property="BorderBrush" Value="{StaticResource LineBrush}" />
       <Setter Property="BorderThickness" Value="1" />
       <Setter Property="FontSize" Value="18" />
       <Setter Property="FontWeight" Value="SemiBold" />
@@ -203,7 +204,7 @@ $Xaml = @"
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="Thumb">
-            <Border Background="#D9B7DA" CornerRadius="4" />
+            <Border Background="#B8B2CF" CornerRadius="4" />
           </ControlTemplate>
         </Setter.Value>
       </Setter>
@@ -234,33 +235,33 @@ $Xaml = @"
     </Style>
 
     <Style x:Key="SwitchToggle" TargetType="ToggleButton">
-      <Setter Property="Width" Value="88" />
-      <Setter Property="Height" Value="40" />
+      <Setter Property="Width" Value="76" />
+      <Setter Property="Height" Value="34" />
       <Setter Property="Cursor" Value="Hand" />
       <Setter Property="Focusable" Value="True" />
       <Setter Property="Template">
         <Setter.Value>
           <ControlTemplate TargetType="ToggleButton">
-            <Grid Width="88" Height="40" SnapsToDevicePixels="True">
+            <Grid Width="76" Height="34" SnapsToDevicePixels="True">
               <Border
                   x:Name="Track"
                   Background="{StaticResource AccentSoftBrush}"
                   BorderBrush="{StaticResource AccentLineBrush}"
                   BorderThickness="1"
-                  CornerRadius="20" />
+                  CornerRadius="17" />
               <TextBlock
                   x:Name="StateLabel"
                   Text="ON"
                   Foreground="{StaticResource AccentTextBrush}"
-                  FontSize="10"
+                  FontSize="9.5"
                   FontWeight="Bold"
                   HorizontalAlignment="Left"
                   VerticalAlignment="Center"
-                  Margin="15,0,0,0" />
+                  Margin="12,0,0,0" />
               <Ellipse
                   x:Name="Knob"
-                  Width="30"
-                  Height="30"
+                  Width="26"
+                  Height="26"
                   Fill="#FFFFFF"
                   Stroke="#E8C8E8"
                   StrokeThickness="1"
@@ -275,7 +276,7 @@ $Xaml = @"
                 <Setter TargetName="StateLabel" Property="Text" Value="OFF" />
                 <Setter TargetName="StateLabel" Property="Foreground" Value="#4F4F4F" />
                 <Setter TargetName="StateLabel" Property="HorizontalAlignment" Value="Right" />
-                <Setter TargetName="StateLabel" Property="Margin" Value="0,0,12,0" />
+                <Setter TargetName="StateLabel" Property="Margin" Value="0,0,10,0" />
                 <Setter TargetName="Knob" Property="HorizontalAlignment" Value="Left" />
                 <Setter TargetName="Knob" Property="Stroke" Value="#CFCFCF" />
               </Trigger>
@@ -296,7 +297,7 @@ $Xaml = @"
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="36,32,36,22">
+        <Grid Grid.Row="0" Margin="42,30,42,20">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -306,19 +307,19 @@ $Xaml = @"
           <Image
               Grid.Column="0"
               Source="$IconUri"
-              Width="56"
-              Height="56"
+              Width="48"
+              Height="48"
               RenderOptions.BitmapScalingMode="HighQuality"
-              Margin="0,0,16,0"
+              Margin="0,0,14,0"
               VerticalAlignment="Center" />
 
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
             <TextBlock
                 x:Name="TitleText"
-                Text="Start FlowPilot"
+                Text="FlowPilot"
                 Foreground="{StaticResource InkBrush}"
                 FontFamily="Segoe UI Variable Display, Segoe UI"
-                FontSize="30"
+                FontSize="25"
                 FontWeight="SemiBold" />
           </StackPanel>
 
@@ -338,7 +339,7 @@ $Xaml = @"
               <Border
                   Width="312"
                   Background="#FFFFFF"
-                  BorderBrush="{StaticResource AccentLineBrush}"
+                  BorderBrush="{StaticResource LineBrush}"
                   BorderThickness="1"
                   CornerRadius="8"
                   Padding="16">
@@ -401,16 +402,16 @@ $Xaml = @"
             Grid.Row="1"
             VerticalScrollBarVisibility="Auto"
             HorizontalScrollBarVisibility="Disabled"
-            Padding="36,0,28,0">
-          <StackPanel MinHeight="350">
-            <Grid MinHeight="78" Margin="0,0,0,22">
+            Padding="42,0,34,0">
+          <StackPanel MinHeight="340">
+            <Grid MinHeight="70" Margin="0,0,0,20">
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
               </Grid.ColumnDefinitions>
               <StackPanel Grid.Column="0" VerticalAlignment="Center">
                 <TextBlock x:Name="AgentsTitle" Text="Background collaboration" Foreground="{StaticResource InkBrush}" FontSize="14" FontWeight="SemiBold" />
-                <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12.5" TextWrapping="Wrap" Margin="0,5,18,0" />
+                <TextBlock x:Name="AgentsBody" Text="Allow FlowPilot to use this environment's supported background workers for isolated role work." Foreground="{StaticResource MutedBrush}" FontSize="12" TextWrapping="Wrap" Margin="0,5,18,0" />
               </StackPanel>
               <ToggleButton x:Name="AgentsToggle" Grid.Column="1" IsChecked="True" Style="{StaticResource SwitchToggle}" VerticalAlignment="Center" />
             </Grid>
@@ -419,7 +420,7 @@ $Xaml = @"
               <DockPanel Margin="0,0,0,10">
                 <TextBlock
                     x:Name="RequestLabel"
-                    Text="Work request"
+                    Text="Project request"
                     Foreground="{StaticResource InkBrush}"
                     FontSize="14"
                     FontWeight="SemiBold"
@@ -433,17 +434,17 @@ $Xaml = @"
                     AcceptsReturn="True"
                     TextWrapping="Wrap"
                     VerticalScrollBarVisibility="Auto"
-                    BorderBrush="#E2C7E2"
+                    BorderBrush="{StaticResource LineBrush}"
                     BorderThickness="1"
                     Background="{StaticResource FieldBrush}"
                     Foreground="{StaticResource InkBrush}"
                     FontSize="14"
-                    Padding="14"
+                    Padding="12"
                     SpellCheck.IsEnabled="True" />
                 <TextBlock
                     x:Name="PlaceholderText"
-                    Text="Write the instructions you want the AI to follow."
-                    Foreground="#9A869E"
+                    Text="Describe the project goal, constraints, and expected outcome."
+                    Foreground="#98A2B3"
                     FontSize="14"
                     Margin="18,15,18,0"
                     TextWrapping="Wrap"
@@ -453,7 +454,7 @@ $Xaml = @"
           </StackPanel>
         </ScrollViewer>
 
-        <Grid Grid.Row="2" Margin="36,4,36,30">
+        <Grid Grid.Row="2" Margin="42,24,42,22">
           <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -470,7 +471,7 @@ $Xaml = @"
               Grid.Row="0"
               HorizontalAlignment="Center"
               Style="{StaticResource PrimaryButton}"
-              Content="Confirm intake" />
+              Content="Start FlowPilot" />
         </Grid>
       </Grid>
 </Window>
@@ -496,34 +497,34 @@ foreach ($Name in $Names) {
 $Copy = @{
     en = @{
         Window = "FlowPilot Startup Intake"
-        Title = "Start FlowPilot"
+        Title = "FlowPilot"
         SettingsTooltip = "Settings"
         SettingsTitle = "Settings"
         LanguageLabel = "Language"
         SupportTitle = "Support developer"
         SupportBody = "Buy the developer a coffee via PayPal."
         SupportNote = "Support is voluntary and does not purchase technical support, warranty, priority service, commercial rights, or feature requests."
-        RequestLabel = "Work request"
-        Placeholder = "Write the instructions you want the AI to follow."
+        RequestLabel = "Project request"
+        Placeholder = "Describe the project goal, constraints, and expected outcome."
         AgentsTitle = "Background collaboration"
         AgentsBody = "Allow FlowPilot to use this environment's supported background workers for isolated role work."
-        Confirm = "Confirm intake"
+        Confirm = "Start FlowPilot"
         Confirmed = "Intake preview confirmed. No FlowPilot process has been started."
     }
     zh = @{
         Window = "FlowPilot 启动注入"
-        Title = "启动 FlowPilot"
+        Title = "FlowPilot"
         SettingsTooltip = "设置"
         SettingsTitle = "设置"
         LanguageLabel = "语言"
         SupportTitle = "支持开发者"
         SupportBody = "通过 PayPal 请开发者喝杯咖啡。"
         SupportNote = "支持是自愿的，不购买技术支持、保修、优先服务、商业权利或功能请求承诺。"
-        RequestLabel = "工作要求"
-        Placeholder = "请写下给 AI 的工作目标和具体命令。"
+        RequestLabel = "项目请求"
+        Placeholder = "描述项目目标、约束和期望结果。"
         AgentsTitle = "后台协作"
         AgentsBody = "允许 FlowPilot 使用当前环境支持的后台工作者处理隔离的角色任务。"
-        Confirm = "确认注入"
+        Confirm = "启动 FlowPilot"
         Confirmed = "注入预览已确认。当前没有启动 FlowPilot 流程。"
     }
 }
