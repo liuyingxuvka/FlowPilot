@@ -333,7 +333,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 250,
+        "line_count": 277,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_blocker_repair_information_flow_checks",
@@ -487,7 +487,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 388,
+        "line_count": 412,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_complete_system_runtime_checks",
@@ -1257,7 +1257,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 332,
+        "line_count": 415,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_field_contract_checks",
@@ -1983,7 +1983,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 251,
+        "line_count": 284,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_project_control_information_flow_checks",
@@ -4150,7 +4150,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 217,
+        "line_count": 196,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": null,
@@ -4174,7 +4174,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 260,
+        "line_count": 249,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": null,
@@ -4187,7 +4187,7 @@
         "surface_id": "asset:flowpilot_new_role_commands",
         "surface_owner": "flowpilot_new_role_commands",
         "top_level_class_count": 0,
-        "top_level_function_count": 10
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -10968,7 +10968,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 77,
+        "line_count": 75,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": null,
@@ -22491,15 +22491,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "completed",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "capability_full",
@@ -22629,15 +22631,17 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "failed",
-              "exit_code": 1,
+              "execution_status": "incomplete",
+              "exit_code": 0,
               "meta_status": "completed",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [],
-              "status": "failed"
+              "reasons": [
+                "unexpected_meta_status:completed"
+              ],
+              "status": "incomplete"
             },
             {
               "artifact_name": "meta_full",
@@ -44962,14 +44966,14 @@
           "test_evidence_id": "source.new_entrypoint.e2e"
         },
         {
-          "code_contract_id": "flowpilot_new.lease_agent",
+          "code_contract_id": "flowpilot_new.dispatch_current_role",
           "gaps": [],
           "model_obligation_id": "new_entrypoint.symmetric_role_packet_lifecycle",
           "status": "locked",
           "test_evidence_id": "source.new_entrypoint.no_shortcut"
         },
         {
-          "code_contract_id": "flowpilot_new.lease_agent",
+          "code_contract_id": "flowpilot_new.dispatch_current_role",
           "gaps": [],
           "model_obligation_id": "new_entrypoint.symmetric_role_packet_lifecycle",
           "status": "locked",
@@ -45018,7 +45022,7 @@
           "test_evidence_id": "source.new_entrypoint.reviewer_clean_projection"
         },
         {
-          "code_contract_id": "flowpilot_new.lease_agent",
+          "code_contract_id": "flowpilot_new.dispatch_current_role",
           "gaps": [],
           "model_obligation_id": "new_entrypoint.role_lease_requires_matching_packet",
           "status": "locked",
@@ -47364,7 +47368,7 @@
           "symbol": "run_fake_e2e"
         },
         {
-          "code_contract_id": "flowpilot_new.lease_agent",
+          "code_contract_id": "flowpilot_new.dispatch_current_role",
           "error_paths": [],
           "external_inputs": [
             "root",
@@ -47384,6 +47388,7 @@
           "required": true,
           "role": "owner",
           "side_effects": [
+            "resolve_role_assignment",
             "lease_responsibility",
             "assign_packet",
             "save_run_ledger"
@@ -47391,7 +47396,7 @@
           "state_reads": [],
           "state_writes": [],
           "surface_type": "function",
-          "symbol": "lease_agent"
+          "symbol": "dispatch_current_role"
         },
         {
           "code_contract_id": "flowpilot_new.ack",
@@ -54566,7 +54571,7 @@
           "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_ack_only_and_pm_only_result_do_not_reach_terminal_closure",
           "covered_code_contracts": [
             "flowpilot_new.start_run",
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.ack",
             "flowpilot_new.submit_result",
             "flowpilot_new.status"
@@ -54595,7 +54600,7 @@
           "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_flowguard_operator_is_leased_through_its_own_packet",
           "covered_code_contracts": [
             "flowpilot_new.start_run",
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.ack",
             "flowpilot_new.submit_result"
           ],
@@ -54646,7 +54651,7 @@
           "command": "python -m unittest tests.test_flowpilot_new_entrypoint.FlowPilotNewEntrypointTests.test_reviewer_packet_lease_projection_is_clean_before_and_after_review",
           "covered_code_contracts": [
             "flowpilot_new.start_run",
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.ack",
             "flowpilot_new.submit_result",
             "flowpilot_new.status"
@@ -57949,7 +57954,7 @@
             "runtime.ack_lease",
             "runtime.assign_packet",
             "runtime.final_return_preflight",
-            "runtime.open_result_body_for_role",
+            "runtime.open_authorized_input_materials_for_role",
             "runtime.run_until_wait",
             "set",
             "shell.to_json",
@@ -58022,12 +58027,11 @@
             "next_action",
             "node",
             "node_id",
-            "open_result_body_for_role",
+            "open_authorized_input_materials_for_role",
             "packet",
             "packet_id",
             "packets",
             "range",
-            "read",
             "render_status",
             "responsibility",
             "result",
@@ -58080,25 +58084,25 @@
         },
         {
           "calls": [
+            "_dispatch_retry_command",
             "_runtime_state",
             "assignment.get",
+            "bool",
             "get",
             "host.lease_responsibility",
-            "isinstance",
             "ledger.get",
             "role_handoff.render_current_packet_handoff",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "run_shell.save_run_ledger",
-            "runtime.BlackBoxRuntimeError",
             "runtime.assign_packet",
+            "runtime.resolve_role_assignment",
             "str"
           ],
-          "code_contract_id": "flowpilot_new.lease_agent",
+          "code_contract_id": "flowpilot_new.dispatch_current_role",
           "found": true,
           "parameters": [
             "agent_id",
-            "assignment_id",
             "host_kind",
             "packet_id",
             "responsibility",
@@ -58106,33 +58110,31 @@
           ],
           "parse_error": "",
           "path": "skills/flowpilot/assets/flowpilot_new_role_commands.py",
-          "raised_errors": [
-            "BlackBoxRuntimeError"
-          ],
+          "raised_errors": [],
           "return_values": [],
           "returns_value": true,
           "side_effects": [
             "assign_packet",
             "lease_responsibility",
+            "resolve_role_assignment",
             "save_run_ledger"
           ],
           "state_reads": [
             "Any",
-            "BlackBoxRuntimeError",
             "ENTRYPOINT_PATH",
             "Path",
+            "_dispatch_retry_command",
             "_runtime_state",
             "agent_id",
             "assign_packet",
             "assignment",
-            "assignment_id",
+            "bool",
             "dict",
             "disposition",
             "get",
             "handoff",
             "host",
             "host_kind",
-            "isinstance",
             "lease_id",
             "lease_responsibility",
             "ledger",
@@ -58140,6 +58142,7 @@
             "load_run_shell",
             "packet_id",
             "render_current_packet_handoff",
+            "resolve_role_assignment",
             "responsibility",
             "role_handoff",
             "root",
@@ -58159,7 +58162,7 @@
             "ledger",
             "shell"
           ],
-          "symbol": "lease_agent"
+          "symbol": "dispatch_current_role"
         },
         {
           "calls": [
@@ -58527,12 +58530,12 @@
             "args.root.resolve",
             "cancel_parser.add_argument",
             "cancel_run",
+            "dispatch.add_argument",
+            "dispatch_current_role",
             "final_preflight",
             "handoff_parser.add_argument",
             "host_liveness",
             "json.dumps",
-            "lease.add_argument",
-            "lease_agent",
             "liveness_parser.add_argument",
             "open_packet",
             "open_parser.add_argument",
@@ -58549,8 +58552,6 @@
             "progress_parser.add_argument",
             "repair_accepted_packet",
             "repair_parser.add_argument",
-            "resolve.add_argument",
-            "resolve_role_assignment",
             "resolve_stopped_blocker",
             "resume",
             "resume_parser.add_argument",
@@ -58602,13 +58603,14 @@
             "argparse",
             "args",
             "argv",
-            "assignment_id",
             "blocker_id",
             "body",
             "cancel_parser",
             "cancel_run",
             "command",
             "detail",
+            "dispatch",
+            "dispatch_current_role",
             "dumps",
             "exc",
             "final_preflight",
@@ -58620,8 +58622,6 @@
             "host_liveness",
             "int",
             "json",
-            "lease",
-            "lease_agent",
             "lease_id",
             "list",
             "liveness_parser",
@@ -58644,7 +58644,6 @@
             "repair_parser",
             "resolution",
             "resolve",
-            "resolve_role_assignment",
             "resolve_stopped_blocker",
             "responsibility",
             "result_id",
@@ -58678,8 +58677,8 @@
             "ack_parser",
             "args",
             "cancel_parser",
+            "dispatch",
             "handoff_parser",
-            "lease",
             "liveness_parser",
             "open_parser",
             "open_result_parser",
@@ -58688,7 +58687,6 @@
             "payload",
             "progress_parser",
             "repair_parser",
-            "resolve",
             "resume_parser",
             "root",
             "run_wait",
@@ -73178,7 +73176,7 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 21,
+          "assert_count": 24,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "fake_e2e.run_fake_e2e",
@@ -73187,6 +73185,7 @@
           "calls": [
             "Path",
             "all",
+            "any",
             "flowpilot_new.run_fake_e2e",
             "get",
             "iter",
@@ -73194,6 +73193,7 @@
             "len",
             "next",
             "packet_kinds.count",
+            "read.get",
             "read_text",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
@@ -73273,7 +73273,7 @@
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.status",
             "flowpilot_new.submit_result"
@@ -73281,8 +73281,7 @@
           "calls": [
             "Path",
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
-            "flowpilot_new.resolve_role_assignment",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.status",
             "flowpilot_new.submit_result",
@@ -73312,15 +73311,14 @@
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.submit_result"
           ],
           "calls": [
             "Path",
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
-            "flowpilot_new.resolve_role_assignment",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.submit_result",
             "get",
@@ -73358,8 +73356,7 @@
           "calls": [
             "Path",
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
-            "flowpilot_new.resolve_role_assignment",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.submit_result",
             "get",
@@ -73393,7 +73390,7 @@
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.status",
             "flowpilot_new.submit_result"
@@ -73401,8 +73398,7 @@
           "calls": [
             "Path",
             "flowpilot_new.ack",
-            "flowpilot_new.lease_agent",
-            "flowpilot_new.resolve_role_assignment",
+            "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
             "flowpilot_new.status",
             "flowpilot_new.submit_result",
@@ -73433,7 +73429,7 @@
           "test_name": "test_reviewer_packet_lease_projection_is_clean_before_and_after_review"
         },
         {
-          "assert_count": 26,
+          "assert_count": 30,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"
@@ -73463,7 +73459,7 @@
           "test_name": "test_formal_public_surface_omits_unsupported_side_command_paths"
         },
         {
-          "assert_count": 26,
+          "assert_count": 30,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.main"

@@ -150,7 +150,7 @@ ROUTER_STRUCTURE_PARTITIONS = (
     StructurePartitionItem(
         "startup_closure_and_mechanical_audit_boundary",
         item_type="function_cluster",
-        owner_module_id="startup_closure_mechanical_audit_boundary",
+        owner_module_id="startup_closure_mechanical_boundary",
         old_path="flowpilot_router_startup_flow closure and old fact-boundary helpers",
         new_path="flowpilot_router_startup_closure + flowpilot_router_startup_mechanical_boundary mechanical audit helpers",
     ),

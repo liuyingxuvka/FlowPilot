@@ -52,13 +52,6 @@
       {
         "detected": true,
         "observed_failures": [
-          "heartbeat could start a second live daemon"
-        ],
-        "scenario": "terminal_projection_heartbeat_no_second_daemon_broken"
-      },
-      {
-        "detected": true,
-        "observed_failures": [
           "daemon child evidence was not registered"
         ],
         "scenario": "terminal_projection_model_registered_missing"
@@ -80,6 +73,13 @@
       {
         "detected": true,
         "observed_failures": [
+          "patrol could start a second live daemon"
+        ],
+        "scenario": "terminal_projection_patrol_no_second_daemon_broken"
+      },
+      {
+        "detected": true,
+        "observed_failures": [
           "terminal lifecycle did not write an immediate daemon fence"
         ],
         "scenario": "terminal_projection_terminal_fence_immediate_broken"
@@ -94,7 +94,7 @@
       {
         "detected": true,
         "observed_failures": [
-          "terminal lifecycle left daemon, Controller, roles, heartbeat, or route work active"
+          "terminal lifecycle left daemon, Controller, roles, patrol, or route work active"
         ],
         "scenario": "terminal_projection_terminal_stops_runtime_broken"
       }

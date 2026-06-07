@@ -24,7 +24,6 @@ from flowguard import (
     ModelSimilarityPlan,
     ObservableArchitectureContract,
     PlanDetail,
-    PlanDetailArtifact,
     PlanDetailEvidence,
     PlanDetailFailureBranch,
     PlanDetailFreshnessRule,
@@ -34,6 +33,7 @@ from flowguard import (
     PlanDetailStep,
     PlanDetailSurface,
     PlanDetailValidation,
+    ProcessArtifact,
     SimilarityHandoff,
     review_architecture_reduction,
     review_existing_model_preflight,
@@ -632,45 +632,45 @@ def build_plan_detail() -> PlanDetail:
             ),
         ),
         artifacts=(
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "similarity_model",
                 "flowguard_model",
                 path="simulations/flowpilot_similarity_convergence_model.py",
                 owner="FlowGuard similarity convergence gate",
             ),
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "similarity_runner",
                 "check_runner",
                 path="simulations/run_flowpilot_similarity_convergence_checks.py",
                 owner="FlowGuard similarity convergence gate",
                 upstream_artifact_ids=("similarity_model",),
             ),
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "similarity_result",
                 "json_result",
                 path=RESULTS_PATH,
                 owner="FlowGuard similarity convergence gate",
                 upstream_artifact_ids=("similarity_runner",),
             ),
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "model_test_alignment_runner",
                 "check_runner",
                 path="simulations/run_flowpilot_model_test_alignment_checks.py",
                 owner="FlowGuard model-test alignment",
             ),
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "install_check_manifest",
                 "install_check",
                 path="scripts/install_checks/common.py",
                 owner="FlowPilot install self-check",
             ),
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "handoff_docs",
                 "documentation",
                 path="HANDOFF.md",
                 owner="FlowPilot handoff",
             ),
-            PlanDetailArtifact(
+            ProcessArtifact(
                 "similarity_docs",
                 "documentation",
                 path="docs/flowpilot_similarity_convergence.md",

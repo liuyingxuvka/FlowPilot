@@ -31,6 +31,8 @@ All notable changes to FlowPilot will be documented in this file.
   fake-project rehearsal evidence.
 - Refreshed strict packet handoff contracts, prompt hashes, fake-AI package
   paths, and runtime regression evidence for the current no-fallback path.
+- Updated the FlowGuard project adoption record to the currently installed
+  `0.41.7` package during the release preflight.
 
 ## 0.10.4 - 2026-06-07
 
