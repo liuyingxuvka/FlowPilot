@@ -13,6 +13,7 @@ import flowpilot_field_contract_model as model
 
 
 RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_field_contract_results.json"
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_LABELS = (
     "select_success",
@@ -29,6 +30,7 @@ REQUIRED_LABELS = (
     "bind_reviewer_quality_fields",
     "bind_flowguard_process_fields",
     "bind_current_background_agent_fields_after_route_allocation",
+    "catalog_packet_result_family_contracts",
     "accept_field_contract",
     "block_unsupported_historical_field_accepted",
     "block_unsupported_historical_field_translated",
@@ -37,6 +39,7 @@ REQUIRED_LABELS = (
     "block_startup_fixed_role_binding_gate",
     "block_fixed_role_count_gate",
     "block_legacy_boot_action_accepted",
+    "block_packet_result_contract_misaligned",
 )
 
 EXPECTED_HAZARD_FAILURES = {
@@ -47,6 +50,7 @@ EXPECTED_HAZARD_FAILURES = {
     "startup_fixed_role_binding_gate_required_accepted": "risk scenario was accepted: startup_fixed_role_binding_gate_required",
     "fixed_role_count_gate_required_accepted": "risk scenario was accepted: fixed_role_count_gate_required",
     "legacy_boot_action_accepted_accepted": "risk scenario was accepted: legacy_boot_action_accepted",
+    "packet_result_contract_misaligned_accepted": "risk scenario was accepted: packet_result_contract_misaligned",
     "success_overblocked": "current field contract was blocked",
 }
 
@@ -67,12 +71,14 @@ def _state_id(state: model.State) -> str:
         f"reviewer_quality={state.reviewer_quality_fields_bound}|"
         f"flowguard={state.flowguard_process_fields_bound}|"
         f"background={state.current_background_agent_fields_bound}|"
+        f"packet_results={state.packet_result_contracts_cataloged}/{model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT}|"
         f"legacy={state.unsupported_historical_field_accepted},{state.unsupported_historical_field_translated}|"
         f"ack_missing={state.background_ack_missing}|"
         f"provenance_scope={state.provenance_leaked_to_controller_scope}|"
         f"fixed_startup={state.startup_fixed_role_binding_gate_required}|"
         f"fixed_count={state.fixed_role_count_gate_required}|"
-        f"legacy_action={state.legacy_boot_action_accepted}"
+        f"legacy_action={state.legacy_boot_action_accepted}|"
+        f"packet_misaligned={state.packet_result_contract_misaligned}"
     )
 
 
@@ -171,6 +177,65 @@ def _flowguard_report() -> dict[str, object]:
     }
 
 
+def _source_alignment_report() -> dict[str, object]:
+    runtime_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py"
+    core_test_path = REPO_ROOT / "tests" / "test_flowpilot_core_runtime.py"
+    high_standard_test_path = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
+    fake_e2e_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py"
+    fake_cli_path = REPO_ROOT / "simulations" / "flowpilot_fake_project_rehearsal_cli.py"
+
+    runtime_text = runtime_path.read_text(encoding="utf-8")
+    test_text = (
+        core_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + high_standard_test_path.read_text(encoding="utf-8")
+    )
+    fake_text = fake_e2e_path.read_text(encoding="utf-8") + "\n" + fake_cli_path.read_text(encoding="utf-8")
+
+    validators = sorted(
+        {
+            str(row["validator"])
+            for row in model.PACKET_RESULT_CONTRACTS
+            if str(row.get("validator") or "").startswith("_")
+        }
+    )
+    missing_validators = [validator for validator in validators if f"def {validator}" not in runtime_text]
+    forbidden_alias_hits = {
+        "pm_repair_decision.authority_alias": 'payload.get("authority")' in runtime_text,
+        "pm_disposition.summary_reason_alias": 'payload.get("reason") or payload.get("summary")' in runtime_text,
+    }
+    missing_negative_tests = [
+        name
+        for name in (
+            "test_pm_repair_decision_rejects_authority_alias",
+            "test_pm_disposition_summary_is_not_reason_fallback",
+        )
+        if name not in test_text
+    ]
+    missing_fake_contract_terms = [
+        term
+        for term in (
+            '"requirements"',
+            '"material_sources"',
+            '"obligations"',
+            '"node_context_package"',
+            '"pm_visible_summary"',
+        )
+        if term not in fake_text
+    ]
+    return {
+        "ok": not missing_validators and not any(forbidden_alias_hits.values()) and not missing_negative_tests and not missing_fake_contract_terms,
+        "runtime_path": runtime_path.as_posix(),
+        "test_paths": [core_test_path.as_posix(), high_standard_test_path.as_posix()],
+        "fake_paths": [fake_e2e_path.as_posix(), fake_cli_path.as_posix()],
+        "packet_result_contract_count": model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT,
+        "missing_validators": missing_validators,
+        "forbidden_alias_hits": forbidden_alias_hits,
+        "missing_negative_tests": missing_negative_tests,
+        "missing_fake_contract_terms": missing_fake_contract_terms,
+    }
+
+
 def run_checks() -> dict[str, object]:
     graph = _build_graph()
     labels = set(graph["labels"])
@@ -178,6 +243,7 @@ def run_checks() -> dict[str, object]:
     progress = _progress_report(graph)
     hazards = _check_hazards()
     flowguard = _flowguard_report()
+    source_alignment = _source_alignment_report()
     result = {
         "ok": (
             not graph["invariant_failures"]
@@ -185,9 +251,11 @@ def run_checks() -> dict[str, object]:
             and bool(progress["ok"])
             and bool(hazards["ok"])
             and bool(flowguard["ok"])
+            and bool(source_alignment["ok"])
         ),
         "model_id": model.MODEL_ID,
         "current_field_contracts": model.CURRENT_FIELD_CONTRACTS,
+        "packet_result_contracts": model.PACKET_RESULT_CONTRACTS,
         "field_layers": model.FIELD_LAYERS,
         "field_statuses": model.FIELD_STATUSES,
         "retired_field_contracts": model.RETIRED_FIELD_CONTRACTS,
@@ -201,6 +269,7 @@ def run_checks() -> dict[str, object]:
         "progress": progress,
         "hazard_checks": hazards,
         "flowguard": flowguard,
+        "source_alignment": source_alignment,
         "scenario_matrix": model.scenario_matrix(),
     }
     return result

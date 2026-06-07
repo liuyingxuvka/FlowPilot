@@ -621,7 +621,7 @@
       "validator": "_system_card_target_agent_id"
     }
   ],
-  "edge_count": 29,
+  "edge_count": 32,
   "field_layers": {
     "leaf": "Concrete evidence, hash, path, receipt, review, and repair fields.",
     "middle": "Package, role, lease, and result identity fields that decide whether work is current.",
@@ -642,7 +642,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=16 initial_states=1 traces=1088",
+    "summary": "sequences=18 initial_states=1 traces=1539",
     "violation_count": 0
   },
   "forbidden_legacy_field_contracts": [
@@ -700,6 +700,16 @@
       "disposition": "reject_as_hidden_generic_decision_wrapper",
       "field": "preplanning.high_standard_contract.decision",
       "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_authority_ref_alias",
+      "field": "pm_repair_decision.authority",
+      "status": "forbidden_legacy"
+    },
+    {
+      "disposition": "reject_as_reason_alias",
+      "field": "pm_disposition.summary",
+      "status": "forbidden_legacy"
     }
   ],
   "hazard_checks": {
@@ -721,6 +731,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -755,6 +767,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": true,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -789,6 +803,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -796,6 +812,42 @@
           "reviewer_quality_fields_bound": false,
           "runtime_leaf_mechanical_fields_bound": false,
           "scenario": "missing_background_ack_advances",
+          "startup_answers_validated": false,
+          "startup_fixed_role_binding_gate_required": false,
+          "startup_mechanical_field_audit_written": false,
+          "status": "complete",
+          "top_level_runtime_fields_bound": false,
+          "unsupported_historical_field_accepted": false,
+          "unsupported_historical_field_seen": false,
+          "unsupported_historical_field_translated": false
+        }
+      },
+      "packet_result_contract_misaligned_accepted": {
+        "detected": true,
+        "expected_failure": "risk scenario was accepted: packet_result_contract_misaligned",
+        "failures": [
+          "field contract was accepted without every current field transition",
+          "risk scenario was accepted: packet_result_contract_misaligned"
+        ],
+        "state": {
+          "background_ack_missing": false,
+          "classification": "",
+          "current_background_agent_fields_bound": false,
+          "current_field_contracts_cataloged": 0,
+          "field_statuses_cataloged": 0,
+          "fixed_role_count_gate_required": false,
+          "flowguard_process_fields_bound": false,
+          "legacy_boot_action_accepted": false,
+          "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": true,
+          "packet_result_contracts_cataloged": 0,
+          "packet_role_runtime_fields_bound": false,
+          "packet_scope_filtered_to_current_options": false,
+          "pm_decision_fields_bound": false,
+          "provenance_leaked_to_controller_scope": false,
+          "reviewer_quality_fields_bound": false,
+          "runtime_leaf_mechanical_fields_bound": false,
+          "scenario": "packet_result_contract_misaligned",
           "startup_answers_validated": false,
           "startup_fixed_role_binding_gate_required": false,
           "startup_mechanical_field_audit_written": false,
@@ -823,6 +875,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -857,6 +911,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -890,6 +946,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -924,6 +982,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -958,6 +1018,8 @@
           "flowguard_process_fields_bound": false,
           "legacy_boot_action_accepted": false,
           "legacy_dispositions_cataloged": false,
+          "packet_result_contract_misaligned": false,
+          "packet_result_contracts_cataloged": 0,
           "packet_role_runtime_fields_bound": false,
           "packet_scope_filtered_to_current_options": false,
           "pm_decision_fields_bound": false,
@@ -991,17 +1053,20 @@
     "block_fixed_role_count_gate",
     "block_legacy_boot_action_accepted",
     "block_missing_background_ack_field",
+    "block_packet_result_contract_misaligned",
     "block_provenance_promoted_to_controller_scope",
     "block_startup_fixed_role_binding_gate",
     "block_unsupported_historical_field_accepted",
     "block_unsupported_historical_field_translated",
     "catalog_current_field_contracts",
     "catalog_field_status_lifecycle",
+    "catalog_packet_result_family_contracts",
     "catalog_retired_and_forbidden_legacy_fields",
     "filter_packet_startup_scope_fields",
     "select_fixed_role_count_gate_required",
     "select_legacy_boot_action_accepted",
     "select_missing_background_ack_advances",
+    "select_packet_result_contract_misaligned",
     "select_provenance_promoted_to_scope",
     "select_startup_fixed_role_binding_gate_required",
     "select_success",
@@ -1013,6 +1078,242 @@
   "missing_labels": [],
   "model_id": "flowpilot_field_contracts",
   "ok": true,
+  "packet_result_contracts": [
+    {
+      "family_id": "task.high_standard_contract",
+      "forbidden_fields": [
+        "decision",
+        "pm_visible_summary",
+        "overall_contract"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [
+        "requirements[].requirement_id",
+        "requirements[].classification",
+        "requirements[].summary",
+        "requirements[].closure_blocking"
+      ],
+      "required_fields": [
+        "requirements"
+      ],
+      "route_scope": "high_standard_contract",
+      "unlocks": "high_standard_contract_flowguard_review",
+      "validator": "_high_standard_contract_result_violation"
+    },
+    {
+      "family_id": "task.discovery",
+      "forbidden_fields": [],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "material_sources",
+        "material_sufficiency",
+        "local_skill_inventory",
+        "candidate_only_skill_policy"
+      ],
+      "route_scope": "discovery",
+      "unlocks": "discovery_record_flowguard_review",
+      "validator": "_discovery_result_violation"
+    },
+    {
+      "family_id": "task.skill_standard",
+      "forbidden_fields": [
+        "selected_skills",
+        "default_required_obligation"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [
+        "obligations[].obligation_id",
+        "obligations[].skill",
+        "obligations[].classification",
+        "obligations[].role_use",
+        "obligations[].use_context",
+        "obligations[].evidence_required",
+        "obligations[].closure_blocking"
+      ],
+      "required_fields": [
+        "decision",
+        "obligations"
+      ],
+      "route_scope": "skill_standard",
+      "unlocks": "skill_standard_contract_flowguard_review",
+      "validator": "_skill_standard_result_violation"
+    },
+    {
+      "family_id": "task.planning",
+      "forbidden_fields": [
+        "route_nodes"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [
+        "nodes[].node_id",
+        "nodes[].title"
+      ],
+      "required_fields": [
+        "schema_version",
+        "decision",
+        "nodes"
+      ],
+      "route_scope": "planning",
+      "unlocks": "route_materialization_after_review",
+      "validator": "_parse_strict_route_plan"
+    },
+    {
+      "family_id": "task.node_acceptance_plan",
+      "forbidden_fields": [],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [
+        "node_context_package.purpose",
+        "node_context_package.acceptance_criteria",
+        "node_context_package.relevant_references",
+        "node_context_package.evidence_targets",
+        "node_context_package.inspection_targets",
+        "node_context_package.known_risks",
+        "node_context_package.flowguard_targets",
+        "node_context_package.reviewer_starting_points"
+      ],
+      "required_fields": [
+        "decision",
+        "node_context_package"
+      ],
+      "route_scope": "node_acceptance_plan",
+      "unlocks": "staged_node_acceptance_plan_effect",
+      "validator": "_node_context_package_from_pm_result"
+    },
+    {
+      "family_id": "task.node",
+      "forbidden_fields": [
+        "outcome",
+        "status",
+        "passed"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "pm_visible_summary"
+      ],
+      "route_scope": "node",
+      "unlocks": "node_result_flowguard_review",
+      "validator": "_strict_packet_outcome_contract_violation"
+    },
+    {
+      "family_id": "task.parent_backward_replay",
+      "forbidden_fields": [
+        "outcome",
+        "status",
+        "passed"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "task",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "pm_visible_summary"
+      ],
+      "route_scope": "parent_backward_replay",
+      "unlocks": "parent_backward_replay_flowguard_review",
+      "validator": "_strict_packet_outcome_contract_violation"
+    },
+    {
+      "family_id": "flowguard_check.node_prework_flowguard",
+      "forbidden_fields": [
+        "api_fallback_manual_block_eval",
+        "fallback_manual_block_eval"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "flowguard_check",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "pm_visible_summary"
+      ],
+      "route_scope": "node_prework_flowguard",
+      "unlocks": "worker_packet_release",
+      "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "family_id": "flowguard_check.post_result",
+      "forbidden_fields": [
+        "api_fallback_manual_block_eval",
+        "fallback_manual_block_eval"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "flowguard_check",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "pm_visible_summary"
+      ],
+      "route_scope": "<subject_route_scope>",
+      "unlocks": "review_packet_release",
+      "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "family_id": "review.any_current_subject",
+      "forbidden_fields": [
+        "outcome",
+        "status",
+        "passed"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "review",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "pm_visible_summary"
+      ],
+      "route_scope": "<subject_route_scope>",
+      "unlocks": "system_validation",
+      "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "family_id": "pm_repair_decision.pm_repair_decision",
+      "forbidden_fields": [
+        "authority",
+        "summary",
+        "repair_decision",
+        "pm_repair_decision"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "pm_repair_decision",
+      "required_child_fields": [
+        "authority_ref when decision=waive_with_authority",
+        "route_plan when decision=redesign_route"
+      ],
+      "required_fields": [
+        "decision",
+        "reason"
+      ],
+      "route_scope": "pm_repair_decision",
+      "unlocks": "current_repair_packet_or_terminal_block",
+      "validator": "_parse_pm_repair_decision_body"
+    },
+    {
+      "family_id": "pm_disposition.node_pm_disposition",
+      "forbidden_fields": [
+        "summary",
+        "pm_disposition_summary"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "pm_disposition",
+      "required_child_fields": [],
+      "required_fields": [
+        "decision",
+        "reason"
+      ],
+      "route_scope": "node_pm_disposition",
+      "unlocks": "node_frontier_disposition_or_staged_route_gate",
+      "validator": "_decision_from_pm_body"
+    }
+  ],
   "progress": {
     "cannot_reach_terminal_count": 0,
     "cannot_reach_terminal_samples": [],
@@ -1036,19 +1337,42 @@
     "fixed_role_count_gate_required": "block_fixed_role_count_gate",
     "legacy_boot_action_accepted": "block_legacy_boot_action_accepted",
     "missing_background_ack_advances": "block_missing_background_ack_field",
+    "packet_result_contract_misaligned": "block_packet_result_contract_misaligned",
     "provenance_promoted_to_scope": "block_provenance_promoted_to_controller_scope",
     "startup_fixed_role_binding_gate_required": "block_startup_fixed_role_binding_gate",
     "success": "catalog_current_field_contracts",
     "unsupported_field_translated": "block_unsupported_historical_field_translated",
     "unsupported_startup_field_accepted": "block_unsupported_historical_field_accepted"
   },
-  "state_count": 30,
+  "source_alignment": {
+    "fake_paths": [
+      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/simulations/flowpilot_fake_project_rehearsal_cli.py"
+    ],
+    "forbidden_alias_hits": {
+      "pm_disposition.summary_reason_alias": false,
+      "pm_repair_decision.authority_alias": false
+    },
+    "missing_fake_contract_terms": [],
+    "missing_negative_tests": [],
+    "missing_validators": [],
+    "ok": true,
+    "packet_result_contract_count": 12,
+    "runtime_path": "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+    "test_paths": [
+      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/tests/test_flowpilot_core_runtime.py",
+      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/tests/test_flowpilot_high_standard_control_flow.py"
+    ]
+  },
+  "state_count": 33,
   "unsupported_historical_field_samples": [
     "boot_action.bind_background_role_agents",
     "boot_action.create_heartbeat_automation",
     "boot_action.open_current_background_collaboration",
     "boot_action.start_role_slots",
     "payload.current_background_role_bindings",
+    "pm_disposition.summary",
+    "pm_repair_decision.authority",
     "preplanning.high_standard_contract.decision",
     "preplanning.skill_standard.default_required_obligation",
     "preplanning.skill_standard.selected_skills",

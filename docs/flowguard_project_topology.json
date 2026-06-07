@@ -113,7 +113,7 @@
     "other": {
       "alignment_family_count": 5,
       "code_surface_count": 239,
-      "known_bad_count": 1280,
+      "known_bad_count": 1281,
       "model_count": 81,
       "runner_keys": [
         "capability",
@@ -12735,13 +12735,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780819556.6053202,
+  "generated_at_epoch": 1780824152.040931,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 11,
     "code_surfaces": 942,
     "evidence_summaries": 5,
-    "known_bad_signals": 2399,
+    "known_bad_signals": 2400,
     "models": 142,
     "test_commands": 350
   },
@@ -14674,7 +14674,7 @@
       "evidence": {
         "confidence": "",
         "decision": "",
-        "edge_count": 29,
+        "edge_count": 32,
         "finding_count": null,
         "full_coverage_ok": null,
         "known_bad": [
@@ -14683,6 +14683,7 @@
           "fixed_role_count_gate_required_accepted",
           "legacy_boot_action_accepted_accepted",
           "missing_background_ack_advances_accepted",
+          "packet_result_contract_misaligned_accepted",
           "provenance_promoted_to_scope_accepted",
           "startup_fixed_role_binding_gate_required_accepted",
           "success_overblocked",
@@ -14692,7 +14693,7 @@
         "ok": true,
         "present": true,
         "release_convergence_ok": null,
-        "state_count": 30
+        "state_count": 33
       },
       "model_path": "simulations/flowpilot_field_contract_model.py",
       "result_path": "simulations/flowpilot_field_contract_results.json",
@@ -15756,7 +15757,6 @@
           "controller_reads_sealed_body",
           "critical_reviewer_gate_removed",
           "formal_evidence_from_undispositioned_result",
-          "unsupported historical_reviewer_relay_used_as_current_acceptance",
           "material_research_decision_without_gate",
           "node_completion_without_reviewer_gate",
           "pm_disposition_half_written_accepted",
@@ -15765,7 +15765,8 @@
           "pm_forwarded_raw_package_to_reviewer",
           "raw_worker_result_relayed_to_reviewer",
           "resume_result_direct_to_reviewer",
-          "reviewer_started_without_pm_gate_package"
+          "reviewer_started_without_pm_gate_package",
+          "unsupported_historical_reviewer_relay_used_as_current_acceptance"
         ],
         "ok": true,
         "present": true,
@@ -18540,7 +18541,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780792113699053200,
+      "mtime_ns": 1780823915606378600,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20666
     },
@@ -19074,15 +19075,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780819276026174600,
+      "mtime_ns": 1780823173396949600,
       "path": "simulations/flowpilot_field_contract_model.py",
-      "size": 42021
+      "size": 50219
     },
     {
       "exists": true,
-      "mtime_ns": 1780819432499169100,
+      "mtime_ns": 1780823403822513500,
       "path": "simulations/flowpilot_field_contract_results.json",
-      "size": 44757
+      "size": 56272
     },
     {
       "exists": true,
@@ -19434,7 +19435,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780174630058883200,
+      "mtime_ns": 1780823488713888200,
       "path": "simulations/flowpilot_pm_package_absorption_results.json",
       "size": 7873
     },
@@ -20160,7 +20161,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780792113818101600,
+      "mtime_ns": 1780823871010693900,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26202
     },
@@ -20496,9 +20497,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780765990921425300,
+      "mtime_ns": 1780823238018739500,
       "path": "simulations/run_flowpilot_field_contract_checks.py",
-      "size": 9241
+      "size": 12522
     },
     {
       "exists": true,
@@ -24060,9 +24061,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780819077105175300,
+      "mtime_ns": 1780823316342633100,
       "path": "tests/test_flowpilot_high_standard_control_flow.py",
-      "size": 54137
+      "size": 55594
     },
     {
       "exists": true,

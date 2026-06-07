@@ -20087,6 +20087,52 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-packet-result-contract-mesh-20260607 - Packet Result Contract Mesh
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: The user clarified that the high-standard contract miss was a symptom; every packet and task family needs explicit modeled result fields, forbidden legacy fields, fake-AI parity checks, and runtime/test alignment.
+- Status: completed_validated_installed_synced
+- FlowGuard schema: 1.0
+- FlowGuard package: 0.40.12
+
+### Scope
+- Expanded `simulations/flowpilot_field_contract_model.py` from selected field rows to a packet/result family contract matrix.
+- Covered 12 current packet result families: high-standard contract, discovery, skill standard, planning, node acceptance plan, node task, parent backward replay, prework FlowGuard, post-result FlowGuard, reviewer, PM repair decision, and PM disposition.
+- Added `packet_result_contract_misaligned` as a modeled blocking hazard.
+
+### Findings
+- Runtime no longer accepts `authority` as a PM repair alias for `authority_ref`.
+- Runtime no longer accepts `summary` as a PM disposition fallback for `reason`.
+- Invalid PM disposition payloads are blocked before acceptance, and blocked PM disposition packets are superseded before a fresh current packet is issued.
+- Fake AI parent backward replay now returns `pm_visible_summary`, so fake package rehearsal no longer skips the generic reviewer/task result field contract.
+- The field-contract runner now checks runtime validator symbols, forbidden alias snippets, required negative tests, and fake-AI contract terms before reporting OK.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.40.12`.
+- `python -m flowguard project-audit --root .` -> OK.
+- `python simulations/run_flowpilot_field_contract_checks.py --json-out simulations/flowpilot_field_contract_results.json` -> OK, `source_alignment.ok=true`, 12 packet result contracts.
+- `python simulations/run_flowpilot_field_mesh_checks.py --json-out simulations/flowpilot_field_mesh_results.json` -> OK, production and prompt legacy references `0`.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` -> OK, `alignment_ok=true`, `full_coverage_ok=true`, no findings.
+- `python -m unittest -v tests.test_flowpilot_field_contract_model tests.test_flowpilot_core_runtime tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_fake_project_rehearsal tests.test_flowpilot_new_entrypoint` -> OK, 114 tests.
+- `python simulations/run_meta_checks.py --full --force` -> OK, background log `tmp/flowguard_background/run_meta_checks.*`, exit `0`, proof reused `false`.
+- `python simulations/run_capability_checks.py --full --force` -> OK, background log `tmp/flowguard_background/run_capability_checks.*`, exit `0`, proof reused `false`.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK, findings empty.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> OK, local FlowPilot skill synchronized from this checkout.
+- `python scripts/audit_local_install_sync.py --json` -> OK, repo-owned skill fresh.
+- `python scripts/install_flowpilot.py --check --json` -> OK.
+- `python -m py_compile` on targeted runtime, model, and test files -> OK.
+- `git diff --check` -> OK, no whitespace errors; line-ending warnings only.
+
+### Friction Points
+- A routine meta thin-parent run correctly downgraded release confidence after a generated child result fingerprint changed. The repair was to rerun the layered full meta parent with `--full --force`.
+- Fake-AI green paths can be too permissive when they return fields that the packet body did not require. Future packet families must be added to the contract matrix instead of being assumed covered by generic e2e tests.
+
+### Risk Evidence Summary
+- Evidence supports the claim that the current core-runtime packet/result families named in the model have explicit success contracts, forbidden legacy field rows, runtime validator alignment, fake-AI parity checks, and negative runtime tests for the confirmed old-field aliases fixed in this pass.
+- This does not claim that every possible generic narrative alias in the wider router has been classified as current or legacy; that would be a separate field-lifecycle audit if new evidence identifies one as old-contract behavior.
+
+
 ## flowpilot-high-standard-contract-gate-miss-20260607 - High-standard preplanning contract gate repair
 
 - Project: FlowGuardProjectAutopilot_20260430

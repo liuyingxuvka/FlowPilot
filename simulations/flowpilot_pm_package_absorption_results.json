@@ -34,17 +34,6 @@
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
       },
-      "unsupported historical_reviewer_relay_used_as_current_acceptance": {
-        "detected": true,
-        "expected_failure": "PM-issued worker result did not return to project_manager",
-        "failures": [
-          "PM-issued worker result did not return to project_manager",
-          "formal evidence used a worker result without PM absorbed disposition",
-          "PM formal gate package release lacked absorbed disposition or package identity",
-          "PM completed a node without PM disposition and reviewer node-completion gate",
-          "unsupported historical direct-reviewer relay flag was used as current acceptance"
-        ]
-      },
       "material_research_decision_without_gate": {
         "detected": true,
         "expected_failure": "critical PM route/node/material/research decision bypassed reviewer gate",
@@ -128,6 +117,17 @@
           "reviewer gate started without PM disposition release and formal gate package identity",
           "PM completed a node without PM disposition and reviewer node-completion gate"
         ]
+      },
+      "unsupported_historical_reviewer_relay_used_as_current_acceptance": {
+        "detected": true,
+        "expected_failure": "PM-issued worker result did not return to project_manager",
+        "failures": [
+          "PM-issued worker result did not return to project_manager",
+          "formal evidence used a worker result without PM absorbed disposition",
+          "PM formal gate package release lacked absorbed disposition or package identity",
+          "PM completed a node without PM disposition and reviewer node-completion gate",
+          "unsupported_historical direct-reviewer relay flag was used as current acceptance"
+        ]
       }
     },
     "ok": true
@@ -155,7 +155,6 @@
       "controller_reads_sealed_body",
       "critical_reviewer_gate_removed",
       "formal_evidence_from_undispositioned_result",
-      "unsupported historical_reviewer_relay_used_as_current_acceptance",
       "material_research_decision_without_gate",
       "node_completion_without_reviewer_gate",
       "pm_disposition_half_written_accepted",
@@ -164,7 +163,8 @@
       "pm_forwarded_raw_package_to_reviewer",
       "raw_worker_result_relayed_to_reviewer",
       "resume_result_direct_to_reviewer",
-      "reviewer_started_without_pm_gate_package"
+      "reviewer_started_without_pm_gate_package",
+      "unsupported_historical_reviewer_relay_used_as_current_acceptance"
     ],
     "state_count": 37
   }

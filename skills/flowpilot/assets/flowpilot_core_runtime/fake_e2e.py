@@ -137,6 +137,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
             {
                 "route_node_id": envelope.get("route_node_id", ""),
                 "decision": "pass",
+                "pm_visible_summary": ["Reviewer accepted the parent backward replay."],
                 "composition_checked": True,
             }
         )

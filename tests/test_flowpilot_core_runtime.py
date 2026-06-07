@@ -1591,6 +1591,39 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                     self.assertEqual(ledger["active_blockers"][blocker_id]["authority_ref"], "AUTH-20260604-001")
                     self.assertNotIn("repair_packet_id", ledger["active_blockers"][blocker_id])
 
+    def test_pm_repair_decision_rejects_authority_alias(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker reports that PM authority is needed.", decision="block", blocking=True, recommended_resolution="needs PM"),
+        )
+        blocker_id = next(iter(ledger["active_blockers"]))
+        pm_packet = ledger["active_blockers"][blocker_id]["pm_repair_packet_id"]
+        pm_lease = runtime.lease_agent(ledger, "pm", agent_id="pm-authority-alias", packet_id=pm_packet)
+        runtime.assign_packet(ledger, pm_packet, pm_lease)
+        runtime.ack_lease(ledger, pm_lease, pm_packet)
+        open_required_result_reads(ledger, pm_packet, pm_lease)
+
+        result_id = runtime.submit_result(
+            ledger,
+            pm_lease,
+            pm_packet,
+            json.dumps(
+                {
+                    "decision": "waive_with_authority",
+                    "reason": "authorized exception",
+                    "authority": "AUTH-LEGACY-ALIAS",
+                }
+            ),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["status"], "pm_repair_decision_blocked")
+        self.assertFalse(ledger["pm_repair_decisions"])
+        self.assertIn("authority_ref", ledger["results"][result_id]["quarantine_reason"])
+
     def test_june3_same_node_empty_fresh_packet_regression_is_rejected(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)

@@ -724,6 +724,40 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         _complete_prework_flowguard(ledger)
         self.assertEqual(ledger["packets"][_open_packets(ledger, scope="node")[0]]["envelope"]["route_node_id"], replacement_id)
 
+    def test_pm_disposition_summary_is_not_reason_fallback(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+        _complete_active_node_packet_loop(ledger)
+        packet_id = _open_packets(ledger, kind="pm_disposition")[0]
+
+        result_id = _complete_open_packet(
+            ledger,
+            packet_id,
+            json.dumps(
+                {
+                    "decision": "accept",
+                    "summary": "legacy PM disposition summary must not be accepted as reason",
+                }
+            ),
+        )
+
+        self.assertEqual(ledger["results"][result_id]["status"], "pm_disposition_blocked")
+        self.assertEqual(ledger["packets"][packet_id]["status"], "result_blocked")
+        self.assertFalse(ledger["pm_dispositions"])
+        self.assertIn("top-level reason", ledger["results"][result_id]["quarantine_reason"])
+
+        fresh_packet_id = runtime._ensure_pm_disposition_packet_for_node(
+            ledger,
+            ledger["execution_frontier"]["active_node_id"],
+            ledger["packets"][packet_id]["envelope"]["subject_id"],
+        )
+
+        self.assertNotEqual(fresh_packet_id, packet_id)
+        self.assertEqual(ledger["packets"][packet_id]["status"], "superseded_after_repair")
+        self.assertEqual(ledger["packets"][fresh_packet_id]["envelope"]["packet_kind"], "pm_disposition")
+
     def test_pm_repair_parent_scope_replaces_parent_and_descendants(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)

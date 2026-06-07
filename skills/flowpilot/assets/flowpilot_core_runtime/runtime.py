@@ -1555,7 +1555,9 @@ def record_pm_disposition(
 ) -> str:
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
     disposition_id = _next_id(ledger, "pm_disposition")
-    normalized = decision if decision in {"accept", "repair_current_scope", "redesign_route", "block", "stop"} else "accept"
+    if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
+        raise BlackBoxRuntimeError("PM disposition requires an explicit allowed decision")
+    normalized = decision
     ledger.setdefault("pm_dispositions", {})[disposition_id] = {
         "disposition_id": disposition_id,
         "node_id": node_id,
@@ -2153,9 +2155,26 @@ def _record_node_closure(ledger: dict[str, Any], node_id: str, result_id: str) -
 
 
 def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str, subject_packet_id: str) -> str:
-    existing = _find_packet(ledger, packet_kind="pm_disposition", subject_id=subject_packet_id)
+    existing = _find_packet(
+        ledger,
+        packet_kind="pm_disposition",
+        subject_id=subject_packet_id,
+        reusable_statuses={"open", "assigned", "acknowledged", "result_submitted"},
+    )
     if existing:
         return str(existing["packet_id"])
+    stale_existing = _find_packet(ledger, packet_kind="pm_disposition", subject_id=subject_packet_id)
+    if isinstance(stale_existing, dict) and stale_existing.get("status") in _CURRENT_PACKET_BLOCKING_STATUSES:
+        stale_existing["status"] = "superseded_after_repair"
+        stale_existing["superseded_reason"] = "blocked_pm_disposition_reissued"
+        stale_existing["superseded_at"] = now_iso()
+        _event(
+            ledger,
+            "blocked_pm_disposition_packet_superseded",
+            packet_id=str(stale_existing.get("packet_id") or ""),
+            node_id=node_id,
+            subject_packet_id=subject_packet_id,
+        )
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
     return issue_task_packet(
         ledger,
@@ -2190,7 +2209,9 @@ def _decision_from_pm_body(body: str) -> tuple[str, str]:
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
         raise BlackBoxRuntimeError("PM disposition requires an explicit allowed decision")
-    reason = str(payload.get("reason") or payload.get("summary") or "")
+    reason = str(payload.get("reason") or "")
+    if not reason:
+        raise BlackBoxRuntimeError("PM disposition requires a top-level reason")
     return decision, reason
 
 
@@ -2968,7 +2989,7 @@ def _parse_pm_repair_decision_body(body: str) -> tuple[str, str, str, dict[str, 
         raise BlackBoxRuntimeError("PM repair decision requires an explicit allowed decision")
     if not reason:
         raise BlackBoxRuntimeError("PM repair decision requires a top-level reason")
-    authority_ref = str(payload.get("authority_ref") or payload.get("authority") or "")
+    authority_ref = str(payload.get("authority_ref") or "")
     if decision == "waive_with_authority" and not authority_ref:
         raise BlackBoxRuntimeError("PM repair decision waive_with_authority requires authority_ref")
     route_plan: dict[str, Any] | None = None
@@ -5631,11 +5652,27 @@ def _apply_valid_packet_result(
             )
         return
     if packet_kind == "pm_disposition":
-        _accept_packet_result(ledger, packet, result, lease, reason="pm_disposition_submitted")
         node_id = str(packet["envelope"].get("route_node_id") or "")
         if not node_id:
             raise BlackBoxRuntimeError("PM disposition packet is missing route_node_id")
-        decision, reason = _decision_from_pm_body(str(result.get("body", "")))
+        try:
+            decision, reason = _decision_from_pm_body(str(result.get("body", "")))
+        except BlackBoxRuntimeError as exc:
+            result["status"] = "pm_disposition_blocked"
+            result["accepted"] = False
+            result.setdefault("mechanical_blockers", []).append("pm_disposition_payload_contract")
+            result["quarantine_reason"] = str(exc)
+            packet["status"] = "result_blocked"
+            close_lease(ledger, lease["lease_id"], "pm_disposition_payload_blocked")
+            _event(
+                ledger,
+                "pm_disposition_blocked",
+                packet_id=packet["packet_id"],
+                result_id=result["result_id"],
+                reason=str(exc),
+            )
+            return
+        _accept_packet_result(ledger, packet, result, lease, reason="pm_disposition_submitted")
         if decision in _HIGH_RISK_PM_DISPOSITION_DECISIONS:
             _stage_pm_decision_gate(
                 ledger,

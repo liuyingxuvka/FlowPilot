@@ -124,6 +124,37 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("preplanning.skill_standard.default_required_obligation", forbidden)
         self.assertIn("preplanning.skill_standard.selected_skills", forbidden)
         self.assertIn("preplanning.high_standard_contract.decision", forbidden)
+        self.assertIn("pm_repair_decision.authority", forbidden)
+        self.assertIn("pm_disposition.summary", forbidden)
+
+    def test_packet_result_contract_catalog_covers_current_packet_families(self) -> None:
+        contracts = {entry["family_id"]: entry for entry in model.PACKET_RESULT_CONTRACTS}
+
+        self.assertEqual(model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT, len(contracts))
+        for family_id in (
+            "task.high_standard_contract",
+            "task.discovery",
+            "task.skill_standard",
+            "task.planning",
+            "task.node_acceptance_plan",
+            "task.node",
+            "task.parent_backward_replay",
+            "flowguard_check.node_prework_flowguard",
+            "flowguard_check.post_result",
+            "review.any_current_subject",
+            "pm_repair_decision.pm_repair_decision",
+            "pm_disposition.node_pm_disposition",
+        ):
+            self.assertIn(family_id, contracts)
+
+        self.assertEqual(contracts["task.high_standard_contract"]["required_fields"], ("requirements",))
+        self.assertIn("decision", contracts["task.high_standard_contract"]["forbidden_fields"])
+        self.assertIn("obligations", contracts["task.skill_standard"]["required_fields"])
+        self.assertIn("selected_skills", contracts["task.skill_standard"]["forbidden_fields"])
+        self.assertIn("node_context_package", contracts["task.node_acceptance_plan"]["required_fields"])
+        self.assertIn("pm_visible_summary", contracts["flowguard_check.post_result"]["required_fields"])
+        self.assertIn("authority", contracts["pm_repair_decision.pm_repair_decision"]["forbidden_fields"])
+        self.assertIn("summary", contracts["pm_disposition.node_pm_disposition"]["forbidden_fields"])
 
     def test_field_contract_model_blocks_old_field_translation_and_fixed_role_gates(self) -> None:
         hazards = runner._check_hazards()
@@ -137,12 +168,17 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             hazards["hazards"]["fixed_role_count_gate_required_accepted"]["detected"],
             hazards,
         )
+        self.assertTrue(
+            hazards["hazards"]["packet_result_contract_misaligned_accepted"]["detected"],
+            hazards,
+        )
 
     def test_field_contract_runner_passes(self) -> None:
         result = runner.run_checks()
 
         self.assertTrue(result["ok"], result)
         self.assertFalse(result["missing_labels"], result)
+        self.assertTrue(result["source_alignment"]["ok"], result["source_alignment"])
 
 
 if __name__ == "__main__":
