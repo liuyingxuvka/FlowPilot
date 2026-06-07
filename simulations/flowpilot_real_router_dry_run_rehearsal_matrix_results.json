@@ -305,8 +305,9 @@
       "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state",
       "expected_standard_state": "closed_run_with_terminal_lifecycle_record_and_no_active_control_blocker",
       "fake_ai_artifacts": [
-        "startup_fact_report",
-        "pm_startup_activation_decision",
+        "startup_intake_record",
+        "startup_mechanical_audit",
+        "startup_display_surface_status",
         "material_scan_packets",
         "product_behavior_model",
         "current_node_packet_body",
@@ -374,11 +375,11 @@
       "evidence_id": "real_router.cli.public_boundary_smoke",
       "evidence_role": "primary_real_router_rehearsal",
       "evidence_status": "passed",
-      "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_router_cli_boundary_runs_fake_role_output_through_public_commands",
-      "expected_standard_state": "legal_wait_after_cli_recorded_startup_activation_event",
+      "evidence_test": "FlowPilotRealRouterDryRunRehearsalTests.test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state",
+      "expected_standard_state": "legal_wait_after_cli_recorded_pm_startup_intake_ack",
       "fake_ai_artifacts": [
-        "reviewer_startup_fact_report_envelope",
-        "pm_startup_activation_decision_envelope"
+        "startup_mechanical_audit_receipt",
+        "pm_startup_intake_card_ack"
       ],
       "forbidden_shortcuts": [
         "direct_state_mutation",
@@ -398,7 +399,8 @@
       ],
       "rehearsal_id": "real_router.cli.public_boundary_smoke",
       "required_ack_or_receipt_gates": [
-        "startup_fact_card_ack",
+        "startup_mechanical_audit_proof",
+        "pm_startup_intake_card_ack",
         "role_output_envelope_hashes",
         "router_cli_json_results"
       ],

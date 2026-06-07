@@ -63,29 +63,29 @@ Router SHALL treat Controller receipts as local completion evidence and SHALL ap
 - **WHEN** Controller marks a receipt-only row done and no Router-visible postcondition is required
 - **THEN** Router marks the matching scheduler row reconciled without requiring additional startup-only evidence.
 
-### Requirement: Startup uses current-scope pre-review reconciliation
-Startup Reviewer fact review SHALL use the same current-scope pre-review reconciliation rule used by later route scopes.
+### Requirement: Startup uses current-scope mechanical reconciliation
+Startup runtime mechanical audit SHALL use the same current-scope reconciliation rule used by later route scopes before PM receives startup intake release.
 
-#### Scenario: Reviewer startup fact card waits for startup scope cleanup
+#### Scenario: Runtime startup mechanical audit waits for startup scope cleanup
 - **WHEN** startup-local Controller rows, startup prep card deliveries, startup
-  prep ACKs, background collaboration, foreground patrol, display/mechanical
+  prep ACKs, background collaboration, manual-resume lifecycle guard, display/mechanical
   evidence, or local blockers remain unresolved
 - **THEN** Router returns `await_current_scope_reconciliation` with `scope_kind` set to `startup` instead of delivering `reviewer.startup_fact_check`.
 
-#### Scenario: Reviewer startup fact event waits for startup scope cleanup
-- **WHEN** `reviewer_reports_startup_facts` arrives before startup scope cleanup is complete
-- **THEN** Router blocks the event as recoverable current-scope reconciliation and does not mark startup facts reported.
+#### Scenario: PM startup intake release waits for startup scope cleanup
+- **WHEN** PM startup intake release is requested before startup scope cleanup is complete
+- **THEN** Router blocks the release as recoverable current-scope reconciliation and does not mark startup runtime release complete.
 
-### Requirement: PM startup activation keeps existing ACK semantics
-FlowPilot SHALL NOT add a second all-startup ACK gate before PM startup activation.
+### Requirement: PM startup intake release keeps same-role ACK semantics
+FlowPilot SHALL NOT add a second all-startup ACK gate before PM startup intake release.
 
-#### Scenario: PM activation waits on same-role ACK
-- **WHEN** PM reports an activation decision before ACKing `pm.startup_activation`
+#### Scenario: PM startup intake release waits on same-role ACK
+- **WHEN** PM reports a startup intake release decision before ACKing `pm.startup_intake_release`
 - **THEN** Router uses the existing pending-card-return blocker for that PM card and does not require a separate startup-wide join.
 
-#### Scenario: PM activation proceeds after reviewer report and PM card ACK
-- **WHEN** Reviewer startup facts are recorded and PM has ACKed `pm.startup_activation`
-- **THEN** Router may accept the PM startup activation decision through the existing event path.
+#### Scenario: PM startup intake release proceeds after runtime audit and PM card ACK
+- **WHEN** startup runtime mechanical audit is recorded and PM has ACKed `pm.startup_intake_release`
+- **THEN** Router may accept the PM startup intake release decision through the existing event path.
 
 ### Requirement: Async scheduler waits on proven in-flight relay work
 FlowPilot SHALL treat packet relay/open/ACK/progress evidence as in-flight work and SHALL NOT issue a duplicate ordinary relay action while the same packet family and packet ids are already in progress.

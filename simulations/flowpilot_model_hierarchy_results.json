@@ -266,8 +266,8 @@
   },
   "inventory": {
     "child_evidence_tier_counts": {
-      "medium": 2,
-      "small": 34,
+      "medium": 1,
+      "small": 35,
       "unknown": 2
     },
     "evidence_contract_version": "flowpilot.parent_evidence_layers.v1",
@@ -278,14 +278,14 @@
     "heavyweight_threshold": 10000,
     "large_child_models": [],
     "missing_child_results": [],
-    "ok": false,
+    "ok": true,
     "parents": [
       {
         "edge_count": 18,
         "layered_full_regression": {
           "current": false,
           "proof": {
-            "created_at": "2026-06-04T18:30:24.425437+00:00",
+            "created_at": "2026-06-06T20:12:50.099228+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -299,7 +299,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-04T18:30:24.425437+00:00",
+          "created_at": "2026-06-06T20:12:50.099228+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -320,7 +320,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-05T21:20:38.435526+00:00",
+            "created_at": "2026-06-06T23:55:03.780113+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -342,11 +342,11 @@
         "tier": "small"
       },
       {
-        "edge_count": 15,
+        "edge_count": 14,
         "layered_full_regression": {
           "current": false,
           "proof": {
-            "created_at": "2026-06-04T18:30:24.412361+00:00",
+            "created_at": "2026-06-06T20:12:50.047163+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -358,9 +358,9 @@
           }
         },
         "model_id": "capability",
-        "ok": false,
+        "ok": true,
         "proof": {
-          "created_at": "2026-06-04T18:30:24.412361+00:00",
+          "created_at": "2026-06-06T20:12:50.047163+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -375,28 +375,28 @@
         "result_file": "simulations/capability_thin_parent_results.json",
         "result_type": "thin_parent",
         "role": "thin_parent",
-        "routine_confidence": "blocked",
+        "routine_confidence": "current",
         "routine_validation_command": "python simulations/run_capability_checks.py --fast",
         "split_review_required": true,
-        "state_count": 9,
+        "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-05T21:52:30.074492+00:00",
+            "created_at": "2026-06-06T23:55:04.035695+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
-            "reason": "previous proof was not successful",
+            "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
-            "valid": false
+            "valid": true
           },
           "result": {
-            "edge_count": 15,
+            "edge_count": 14,
             "model_id": "capability",
-            "ok": false,
+            "ok": true,
             "release_confidence": "requires_full_regression",
             "result_file": "simulations/capability_thin_parent_results.json",
             "result_type": "thin_parent",
-            "routine_confidence": "blocked",
-            "state_count": 9,
+            "routine_confidence": "current",
+            "state_count": 8,
             "tier": "small"
           }
         },
@@ -548,7 +548,7 @@
             "thin_parent_ok"
           ]
         },
-        "runtime_roles_and_heartbeat": {
+        "runtime_roles_and_liveness": {
           "children": [
             "flowpilot_daemon_liveness",
             "flowpilot_resume",
@@ -578,9 +578,9 @@
           ],
           "invariant_families": [
             "fresh_run_pointer",
-            "startup_activation_gate",
             "startup_questions_before_capability_work",
-            "startup_questions_before_work"
+            "startup_questions_before_work",
+            "startup_runtime_intake_release"
           ],
           "owners": [
             "shared_kernel",
@@ -731,7 +731,7 @@
             "invariant_families": [
               "startup_questions_before_capability_work",
               "fresh_run_pointer",
-              "startup_activation_gate"
+              "startup_runtime_intake_release"
             ],
             "owner": "shared_kernel",
             "owner_type": "shared_kernel",
@@ -860,7 +860,7 @@
             "parent": "meta",
             "release_obligation": "thin_parent_ok"
           },
-          "runtime_roles_and_heartbeat": {
+          "runtime_roles_and_liveness": {
             "children": [
               "flowpilot_resume",
               "flowpilot_role_recovery",
@@ -885,7 +885,7 @@
             ],
             "invariant_families": [
               "startup_questions_before_work",
-              "startup_activation_gate",
+              "startup_runtime_intake_release",
               "fresh_run_pointer"
             ],
             "owner": "shared_kernel",
@@ -945,7 +945,7 @@
         },
         {
           "field": "role_binding_memory",
-          "owner": "runtime_roles_and_heartbeat"
+          "owner": "runtime_roles_and_liveness"
         },
         {
           "field": "router_state",
@@ -982,7 +982,7 @@
       "startup",
       "material_intake",
       "product_architecture",
-      "runtime_roles_and_heartbeat",
+      "runtime_roles_and_liveness",
       "router_daemon_resume",
       "packet_and_role_authority",
       "child_skill_capability",
@@ -1134,7 +1134,7 @@
           "thin_parent_ok"
         ]
       },
-      "runtime_roles_and_heartbeat": {
+      "runtime_roles_and_liveness": {
         "children": [
           "flowpilot_daemon_liveness",
           "flowpilot_resume",
@@ -1164,9 +1164,9 @@
         ],
         "invariant_families": [
           "fresh_run_pointer",
-          "startup_activation_gate",
           "startup_questions_before_capability_work",
-          "startup_questions_before_work"
+          "startup_questions_before_work",
+          "startup_runtime_intake_release"
         ],
         "owners": [
           "shared_kernel",
@@ -1238,11 +1238,11 @@
       {
         "edge_count": null,
         "model_id": "card_instruction_coverage",
-        "ok": false,
+        "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/card_instruction_coverage_results.json",
         "role": "child_evidence",
-        "state_count": 2,
+        "state_count": 63,
         "tier": "small"
       },
       {
@@ -1466,13 +1466,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 874,
+        "edge_count": 438,
         "model_id": "flowpilot_resume",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_resume_results.json",
         "role": "child_evidence",
-        "state_count": 875,
+        "state_count": 439,
         "tier": "small"
       },
       {
@@ -1496,13 +1496,13 @@
         "tier": "unknown"
       },
       {
-        "edge_count": 153,
+        "edge_count": 110,
         "model_id": "flowpilot_role_recovery",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_role_recovery_results.json",
         "role": "child_evidence",
-        "state_count": 154,
+        "state_count": 111,
         "tier": "small"
       },
       {
@@ -1536,23 +1536,23 @@
         "tier": "small"
       },
       {
-        "edge_count": 313,
+        "edge_count": 70,
         "model_id": "flowpilot_startup_control",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_startup_control_results.json",
         "role": "child_evidence",
-        "state_count": 298,
+        "state_count": 70,
         "tier": "small"
       },
       {
-        "edge_count": 26,
+        "edge_count": 17,
         "model_id": "flowpilot_startup_intake_ui",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_startup_intake_ui_results.json",
         "role": "child_evidence",
-        "state_count": 27,
+        "state_count": 18,
         "tier": "small"
       },
       {
@@ -1596,14 +1596,14 @@
         "tier": "small"
       },
       {
-        "edge_count": 2012,
+        "edge_count": 183,
         "model_id": "startup_pm_review",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/startup_pm_review_results.json",
         "role": "child_evidence",
-        "state_count": 2013,
-        "tier": "medium"
+        "state_count": 180,
+        "tier": "small"
       },
       {
         "edge_count": 74,
@@ -1621,18 +1621,16 @@
       "capability": "python simulations/run_capability_checks.py --full",
       "meta": "python simulations/run_meta_checks.py --full"
     },
-    "routine_confidence": "blocked",
+    "routine_confidence": "current",
     "routine_validation_commands": {
       "capability": "python simulations/run_capability_checks.py --fast",
       "hierarchy": "python simulations/run_flowpilot_model_hierarchy_checks.py --json-out simulations/flowpilot_model_hierarchy_results.json",
       "meta": "python simulations/run_meta_checks.py --fast"
     },
-    "thin_parent_obligations": [
-      "capability"
-    ]
+    "thin_parent_obligations": []
   },
   "model": "flowpilot_model_hierarchy",
-  "ok": false,
+  "ok": true,
   "progress": {
     "cannot_reach_terminal_count": 0,
     "cannot_reach_terminal_samples": [],

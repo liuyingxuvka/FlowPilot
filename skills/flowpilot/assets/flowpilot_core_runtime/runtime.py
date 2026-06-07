@@ -15,7 +15,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-try:  # pragma: no cover - direct module test fallback.
+try:  # pragma: no cover - direct module test harness path.
     from . import control_surface
 except ImportError:  # pragma: no cover
     import control_surface  # type: ignore

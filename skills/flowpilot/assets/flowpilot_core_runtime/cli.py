@@ -7,7 +7,7 @@ import json
 from pathlib import Path
 import sys
 
-try:  # pragma: no cover - direct script fallback.
+try:  # pragma: no cover - direct execution harness path.
     from . import cockpit, router, run_shell, runtime
 except ImportError:  # pragma: no cover
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))

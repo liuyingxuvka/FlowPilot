@@ -102,9 +102,47 @@ def _resume_role_context(router: ModuleType, project_root: Path, run_root: Path,
         context['pm_resume_context_paths'] = {'resume_reentry': common_context['resume_reentry'], 'execution_frontier': common_context['execution_frontier'], 'packet_ledger': common_context['packet_ledger'], 'prompt_delivery_ledger': common_context['prompt_delivery_ledger'], 'role_binding_ledger': common_context['role_binding_ledger'], 'role_binding_memory': project_relative(project_root, run_root / 'role_binding_memory'), 'route_history_index': common_context['route_history_index'], 'pm_prior_path_context': common_context['pm_prior_path_context'], 'display_plan': common_context['display_plan']}
     return context
 
+def _current_resume_role_keys(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[str]:
+    _bind_router(router)
+    del project_root
+    run_id = str(run_state.get('run_id') or '')
+    role_keys: list[str] = []
+
+    def add_role(raw_role: object) -> None:
+        role = str(raw_role or '').strip()
+        if role in RUNTIME_ROLE_KEYS and role not in role_keys:
+            role_keys.append(role)
+
+    role_binding = read_json_if_exists(run_root / 'role_binding_ledger.json')
+    ledger_run_id = str(role_binding.get('run_id') or '')
+    if not ledger_run_id or ledger_run_id == run_id:
+        slots = role_binding.get('role_slots') if isinstance(role_binding.get('role_slots'), list) else []
+        for slot in slots:
+            if not isinstance(slot, dict):
+                continue
+            slot_run_id = str(slot.get('opened_for_run_id') or slot.get('rehydrated_for_run_id') or ledger_run_id or run_id)
+            if slot_run_id == run_id:
+                add_role(slot.get('role_key'))
+
+    current_bindings = run_state.get('current_role_agent_bindings')
+    if isinstance(current_bindings, dict):
+        for role in current_bindings:
+            add_role(role)
+
+    resume_next = router._derive_resume_next_recipient_from_packet_ledger(run_root)
+    next_role = str(resume_next.get('next_recipient_role') or '')
+    if next_role in RUNTIME_ROLE_KEYS:
+        memory = read_json_if_exists(router._role_memory_path(run_root, next_role))
+        if str(memory.get('run_id') or '') == run_id:
+            add_role(next_role)
+
+    role_order = {role: index for index, role in enumerate(RUNTIME_ROLE_KEYS)}
+    role_keys.sort(key=lambda role: role_order.get(role, 999))
+    return role_keys
+
 def _resume_role_contexts(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any]) -> list[dict[str, Any]]:
     _bind_router(router)
-    return [router._resume_role_context(project_root, run_root, run_state, role) for role in RUNTIME_ROLE_KEYS]
+    return [router._resume_role_context(project_root, run_root, run_state, role) for role in router._current_resume_role_keys(project_root, run_root, run_state)]
 
 def _resume_liveness_probe_batch_id(router: ModuleType, run_state: dict[str, Any]) -> str:
     _bind_router(router)
@@ -183,10 +221,10 @@ def _role_recovery_ready_context(router: ModuleType, project_root: Path, run_roo
             continue
         if role in RUNTIME_ROLE_KEYS and isinstance(agent_id, str) and agent_id.strip() and router._role_slot_has_current_host_liveness(slot):
             ready_agents[role] = agent_id.strip()
-    missing_roles = [role for role in RUNTIME_ROLE_KEYS if role not in ready_agents]
+    missing_roles = [role for role in transaction_targets if role not in ready_agents]
     if missing_roles:
         return None
-    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'runtime_roles_path': runtime_roles_path, 'runtime_roles_relpath': project_relative(project_root, runtime_roles_path), 'ready_role_keys': list(RUNTIME_ROLE_KEYS), 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
+    return {'report': report, 'report_path': report_path, 'report_relpath': project_relative(project_root, report_path), 'runtime_roles_path': runtime_roles_path, 'runtime_roles_relpath': project_relative(project_root, runtime_roles_path), 'ready_role_keys': transaction_targets, 'ready_agents': ready_agents, 'latest_transaction': transaction, 'target_role_keys': transaction_targets}
 
 __all__ = (
     '_latest_resume_tick_id',
@@ -195,6 +233,7 @@ __all__ = (
     '_path_hash',
     '_role_core_prompt_delivery_payload',
     '_resume_role_context',
+    '_current_resume_role_keys',
     '_resume_role_contexts',
     '_resume_liveness_probe_batch_id',
     '_role_recovery_dir',

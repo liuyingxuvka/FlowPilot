@@ -2,20 +2,20 @@
 
 Risk purpose:
 - Uses FlowGuard (https://github.com/liuyingxuvka/FlowGuard) to review the
-  FlowPilot rule that reviewer work starts only after local startup/current-node
-  obligations are reconciled.
+  FlowPilot rule that PM startup intake release and current-node reviewer work
+  start only after local obligations are reconciled.
 - Guards against reviewer passes over moving local state, local reconciliation
   clearing future/sibling work, deferred local obligations without explicit
   carry-forward, review-created obligations crossing node boundaries, and
   no-review scopes transitioning before local reconciliation.
-- Guards against startup pre-review reconciliation treating its own passive
-  wait status row as unresolved Controller work.
+- Guards against startup mechanical reconciliation treating its own passive wait
+  status row as unresolved Controller work.
 - Guards against a stateful Controller receipt being marked Router-reconciled
   while its Router-owned postcondition flag remains false, which would let the
   scheduler skip reapplication and repeatedly queue the same action.
 - Update and run this model whenever Router review-start, current-node
-  completion, startup review, pending-return, or node-scope obligation logic
-  changes.
+  completion, startup mechanical audit, pending-return, or node-scope obligation
+  logic changes.
 - Companion check command:
   `python simulations/run_flowpilot_current_scope_pre_review_reconciliation_checks.py`.
 

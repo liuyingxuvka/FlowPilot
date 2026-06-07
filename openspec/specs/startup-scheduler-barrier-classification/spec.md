@@ -27,11 +27,12 @@ display confirmation, host spawn, or host automation requirements.
 - **THEN** Router MUST stop queueing unrelated work
 - **AND** the stopped reason MUST remain visible as the current wait or barrier.
 
-### Requirement: Startup parallel obligations join before Reviewer startup review
+### Requirement: Startup parallel obligations join before runtime mechanical audit
 
 FlowPilot SHALL allow startup banner, current background collaboration, and
 startup display/status obligations to run in parallel with unrelated startup
-work, but SHALL reconcile them before Reviewer live startup fact review.
+work, but SHALL reconcile them before Runtime/Router writes startup mechanical
+audit or PM receives startup intake release.
 
 #### Scenario: Parallel startup obligation remains open while unrelated work is queued
 
@@ -42,13 +43,13 @@ work, but SHALL reconcile them before Reviewer live startup fact review.
 - **AND** it MUST NOT mark the open obligation complete without its required
   Router-visible proof.
 
-#### Scenario: Reviewer review waits for parallel obligations
+#### Scenario: Runtime startup audit waits for parallel obligations
 
 - **WHEN** any startup parallel obligation remains unresolved
-- **AND** Router would otherwise deliver `reviewer.startup_fact_check` or
-  accept `reviewer_reports_startup_facts`
+- **AND** Router would otherwise write startup mechanical audit or accept
+  `pm_releases_startup_intake`
 - **THEN** Router MUST return startup current-scope reconciliation instead
-- **AND** startup facts MUST remain unreported.
+- **AND** startup intake release MUST remain unrecorded.
 
 ### Requirement: Startup role binding is a local dependency
 

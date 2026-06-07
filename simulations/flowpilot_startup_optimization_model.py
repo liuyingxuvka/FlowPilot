@@ -86,9 +86,9 @@ class State:
     startup_background_agents_preleased: bool = False
     fixed_role_count_gate_required: bool = False
     heartbeat_or_manual_resume_binding_required: bool = False
-    reviewer_mechanical_fact_gate_used: bool = False
-    reviewer_required_to_reprove_router_facts: bool = False
-    pm_startup_activation_gate_used: bool = False
+    legacy_human_startup_review_gate_used: bool = False
+    quality_reviewer_reproves_router_mechanics: bool = False
+    legacy_pm_startup_release_gate_used: bool = False
     fallback_foreground_only_work_used: bool = False
 
 
@@ -265,12 +265,12 @@ def invariant_failures(state: State) -> list[str]:
         )
     ):
         failures.append("user_intake mail was exposed before startup runtime mechanics were ready")
-    if state.reviewer_mechanical_fact_gate_used:
-        failures.append("Reviewer startup mechanical fact gate was used")
-    if state.reviewer_required_to_reprove_router_facts:
-        failures.append("Reviewer was required to re-prove router-owned mechanical facts")
-    if state.pm_startup_activation_gate_used:
-        failures.append("PM startup activation gate was used")
+    if state.legacy_human_startup_review_gate_used:
+        failures.append("legacy human startup review gate was used")
+    if state.quality_reviewer_reproves_router_mechanics:
+        failures.append("quality Reviewer was required to re-prove router-owned startup mechanics")
+    if state.legacy_pm_startup_release_gate_used:
+        failures.append("legacy PM startup release gate was used")
     if state.pm_startup_intake_ack_recorded and not (
         state.user_intake_mail_exposed
         and state.pm_startup_intake_card_delivered
@@ -373,9 +373,9 @@ def hazard_states() -> dict[str, State]:
         "mechanical_audit_without_current_intake": replace(safe, startup_intake_record_current=False),
         "display_status_without_runtime_ready": replace(safe, mechanical_audit_written=False),
         "user_intake_before_runtime_ready": replace(safe, user_intake_exposed_before_runtime_ready=True),
-        "reviewer_mechanical_fact_gate_used": replace(safe, reviewer_mechanical_fact_gate_used=True),
-        "reviewer_reproves_router_facts": replace(safe, reviewer_required_to_reprove_router_facts=True),
-        "pm_startup_activation_gate_used": replace(safe, pm_startup_activation_gate_used=True),
+        "legacy_human_startup_review_gate_used": replace(safe, legacy_human_startup_review_gate_used=True),
+        "quality_reviewer_reproves_router_mechanics": replace(safe, quality_reviewer_reproves_router_mechanics=True),
+        "legacy_pm_startup_release_gate_used": replace(safe, legacy_pm_startup_release_gate_used=True),
         "pm_intake_ack_bypasses_common_ledger": replace(safe, pm_startup_intake_ack_via_common_ledger=False),
         "pm_route_planning_before_pm_intake": replace(safe, pm_startup_intake_ack_recorded=False),
         "role_work_before_pm_route_planning": replace(safe, pm_route_planning_started=False),

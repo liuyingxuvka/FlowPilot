@@ -526,63 +526,63 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
         and _runtime_role_binding_startup_resolved(state)
-        and not state.startup_preflight_review_report_written
+        and not state.startup_runtime_mechanical_audit_written
         and not state.startup_worker_remediation_completed
     ):
         yield _step(
             state,
             label="runtime_startup_entry_blocked",
-            action="human-like reviewer independently checks startup facts including run isolation, prior-work boundary, and current-task role-binding freshness, then reports blockers to PM without opening the start gate",
-            startup_preflight_review_report_written=True,
-            startup_preflight_review_blocking_findings=True,
-            startup_reviewer_fact_evidence_checked=True,
-            startup_reviewer_checked_run_isolation=True,
-            startup_reviewer_checked_prior_work_boundary=True,
-            startup_reviewer_checked_live_agent_freshness=True,
-            startup_reviewer_checked_no_historical_agent_reuse=True,
-            startup_reviewer_checked_capability_resolution=True,
+            action="Runtime/Router mechanically checks sealed startup intake, current run identity, prior-work boundary, display/status evidence, and current requested-responsibility role binding freshness, then records structured blockers for PM without releasing capability work",
+            startup_runtime_mechanical_audit_written=True,
+            startup_runtime_mechanical_blocking_findings=True,
+            startup_runtime_mechanical_evidence_checked=True,
+            startup_runtime_checked_run_identity=True,
+            startup_runtime_checked_prior_work_boundary=True,
+            startup_runtime_checked_role_binding_freshness=True,
+            startup_runtime_checked_no_historical_agent_reuse=True,
+            startup_runtime_checked_capability_resolution=True,
             startup_pm_checked_manual_resume_binding=not state.manual_resume_boundary_recorded,
         )
         return
 
     if (
-        state.startup_preflight_review_report_written
-        and state.startup_preflight_review_blocking_findings
+        state.startup_runtime_mechanical_audit_written
+        and state.startup_runtime_mechanical_blocking_findings
         and not state.pm_returned_startup_blockers
         and not state.startup_worker_remediation_completed
-        and not state.pm_start_gate_opened
+        and not state.pm_startup_intake_released_to_route
     ):
         yield _step(
             state,
             label="pm_returns_startup_blockers_to_worker",
-            action="project manager reads reviewer startup report and returns concrete blockers to workers for remediation",
+            action="project manager reads runtime startup mechanical blockers and returns concrete repair work to workers",
             pm_returned_startup_blockers=True,
         )
         return
 
     if (
-        state.startup_preflight_review_report_written
-        and state.startup_preflight_review_blocking_findings
+        state.startup_runtime_mechanical_audit_written
+        and state.startup_runtime_mechanical_blocking_findings
         and state.pm_returned_startup_blockers
         and not state.startup_worker_remediation_completed
-        and not state.pm_start_gate_opened
+        and not state.pm_startup_intake_released_to_route
     ):
         yield _step(
             state,
             label="startup_worker_remediation_completed",
-            action="workers remediate startup blockers and invalidate the old reviewer report for recheck",
+            action="workers remediate startup mechanical blockers and invalidate the old runtime audit for recheck",
             startup_worker_remediation_completed=True,
             pm_returned_startup_blockers=False,
-            startup_preflight_review_report_written=False,
-            startup_preflight_review_blocking_findings=False,
-            startup_reviewer_fact_evidence_checked=False,
-            startup_reviewer_checked_run_isolation=False,
-            startup_reviewer_checked_prior_work_boundary=False,
-            startup_reviewer_checked_live_agent_freshness=False,
-            startup_reviewer_checked_no_historical_agent_reuse=False,
-            startup_reviewer_checked_capability_resolution=False,
+            startup_runtime_mechanical_audit_written=False,
+            startup_runtime_mechanical_blocking_findings=False,
+            startup_runtime_mechanical_evidence_checked=False,
+            startup_runtime_checked_run_identity=False,
+            startup_runtime_checked_prior_work_boundary=False,
+            startup_runtime_checked_role_binding_freshness=False,
+            startup_runtime_checked_no_historical_agent_reuse=False,
+            startup_runtime_checked_capability_resolution=False,
             startup_pm_checked_manual_resume_binding=False,
-            pm_first_round_startup_entry_audit_done=False,
+            pm_startup_intake_node_package_decision_recorded=False,
             startup_pm_capability_resolution_recorded=False,
         )
         return
@@ -598,51 +598,51 @@ def apply_route_phase(self, state: State) -> Iterable[FunctionResult]:
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
         and _runtime_role_binding_startup_resolved(state)
-        and not state.startup_preflight_review_report_written
+        and not state.startup_runtime_mechanical_audit_written
         and state.startup_worker_remediation_completed
     ):
         yield _step(
             state,
             label="runtime_startup_entry_clean",
-            action="human-like reviewer independently checks user answers, current run directory, current/index pointers, prior-work import boundary, real route state, continuation mode, cleanup boundary, current-task fresh role binding evidence, and writes a clean fact report for PM",
-            startup_preflight_review_report_written=True,
-            startup_preflight_review_blocking_findings=False,
-            startup_reviewer_fact_evidence_checked=True,
-            startup_reviewer_checked_run_isolation=True,
-            startup_reviewer_checked_prior_work_boundary=True,
-            startup_reviewer_checked_live_agent_freshness=True,
-            startup_reviewer_checked_no_historical_agent_reuse=True,
-            startup_reviewer_checked_capability_resolution=True,
+            action="Runtime/Router mechanically checks sealed user intake, current run directory, current/index pointers, prior-work import boundary, route/display status, continuation mode, cleanup boundary, and current requested-responsibility role binding evidence, then writes a clean startup audit for PM",
+            startup_runtime_mechanical_audit_written=True,
+            startup_runtime_mechanical_blocking_findings=False,
+            startup_runtime_mechanical_evidence_checked=True,
+            startup_runtime_checked_run_identity=True,
+            startup_runtime_checked_prior_work_boundary=True,
+            startup_runtime_checked_role_binding_freshness=True,
+            startup_runtime_checked_no_historical_agent_reuse=True,
+            startup_runtime_checked_capability_resolution=True,
             startup_pm_checked_manual_resume_binding=not state.manual_resume_boundary_recorded,
         )
         return
 
     if (
-        state.startup_preflight_review_report_written
-        and not state.startup_preflight_review_blocking_findings
-        and not state.pm_first_round_startup_entry_audit_done
-        and not state.pm_start_gate_opened
+        state.startup_runtime_mechanical_audit_written
+        and not state.startup_runtime_mechanical_blocking_findings
+        and not state.pm_startup_intake_node_package_decision_recorded
+        and not state.pm_startup_intake_released_to_route
     ):
         yield _step(
             state,
-            label="pm_first_round_startup_entry_audit_done",
-            action="PM independently audits capability startup run isolation, prior-work boundary, role-binding freshness or authorized continuity, reviewer evidence paths, and report-only failure hypotheses before opening the start gate",
-            pm_first_round_startup_entry_audit_done=True,
+            label="pm_startup_intake_node_package_decision_recorded",
+            action="PM opens the sealed user_intake packet, records the initial capability node and work-package decision, and verifies runtime mechanical evidence paths before capability work is released",
+            pm_startup_intake_node_package_decision_recorded=True,
             startup_pm_capability_resolution_recorded=True,
         )
         return
 
     if (
-        state.startup_preflight_review_report_written
-        and not state.startup_preflight_review_blocking_findings
-        and state.pm_first_round_startup_entry_audit_done
-        and not state.pm_start_gate_opened
+        state.startup_runtime_mechanical_audit_written
+        and not state.startup_runtime_mechanical_blocking_findings
+        and state.pm_startup_intake_node_package_decision_recorded
+        and not state.pm_startup_intake_released_to_route
     ):
         yield _step(
             state,
             label="pm_first_round_started_after_runtime_entry",
-            action="project manager opens startup and allows work beyond startup from the current clean factual reviewer report",
-            pm_start_gate_opened=True,
+            action="project manager releases startup intake into the initial capability node/work package from the current clean runtime mechanical audit",
+            pm_startup_intake_released_to_route=True,
             work_beyond_startup_allowed=True,
         )
         return

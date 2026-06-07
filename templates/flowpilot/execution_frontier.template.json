@@ -111,23 +111,26 @@
     "probe_evidence_path": ".flowpilot/runs/run-001/continuation_evidence.json",
     "automated_bundle_required": false,
     "automated_bundle_ready": false,
-    "foreground_patrol_interval_minutes": 1,
-    "foreground_patrol_rrule": "FREQ=MINUTELY;INTERVAL=1",
+    "manual_resume_lifecycle_check_interval_seconds": 1,
+    "manual_resume_lifecycle_check_policy": "current-run lifecycle guard; no scheduled automation or foreground-only alternate loop",
     "manual_resume_recorded": false,
     "unsupported_reason": "<reason-or-null>",
     "unattended_recovery_claim_allowed": false,
     "continuation_readiness_checked": false,
-    "continuation_readiness_kind": "<foreground-patrol|manual-resume-packet|blocked|unknown>"
+    "continuation_readiness_kind": "<manual-resume-packet|blocked|unknown>"
   },
-  "startup_activation": {
+  "startup_runtime_intake_release": {
     "hard_gate_required": true,
-    "startup_questions": {
+    "startup_intake": {
       "required": true,
       "status": "pending",
       "asked_before_banner": false,
       "dialog_stopped_for_user_answers": false,
       "explicit_user_answer_recorded": false,
       "provenance": null,
+      "startup_intake_authority_source": null,
+      "router_must_not_use_chat_history_for_startup_intake": true,
+      "startup_intake_record_path": ".flowpilot/runs/run-001/startup_intake/startup_intake_record.json",
       "answer_evidence_path": null,
       "answered_at": null,
       "banner_emitted_after_answers": false,
@@ -170,7 +173,7 @@
     "execution_frontier_written": false,
     "role_binding_ledger_current": false,
     "role_memory_packets_current": 0,
-    "runtime_role_binding_startup": {
+    "startup_runtime_role_binding": {
       "required_by_default": true,
       "decision": "unknown",
       "user_decision_recorded": false,
@@ -185,20 +188,25 @@
       "reused_historical_agent_ids": [],
       "historical_agent_reuse_blocked": true,
       "freshness_evidence_path": ".flowpilot/runs/run-001/evidence/role_bindings_current_for_current_task.json",
-      "background_collaboration_required": false,
+      "background_collaboration_required": true,
       "blocker": "no_user_decision",
       "evidence_path": null
     },
     "continuation_ready": false,
-    "startup_preflight_review": {
+    "startup_mechanical_audit": {
       "required": true,
-      "reviewer_role": "human_like_reviewer",
-      "reviewer_decision_authority": "report_only_no_start_approval",
-      "report_path": ".flowpilot/runs/run-001/startup_review/latest.json",
-      "report_status": "pending",
+      "check_owner": "flowpilot_router",
+      "decision_authority": "mechanical_only_no_pm_approval",
+      "audit_path": ".flowpilot/runs/run-001/startup/startup_mechanical_audit.json",
+      "proof_path": ".flowpilot/runs/run-001/startup/startup_mechanical_audit.json.proof.json",
+      "audit_status": "pending",
       "blocking_findings": null,
       "checked_at": null,
-      "review_iteration": 0,
+      "audit_iteration": 0,
+      "checked_startup_intake_record": false,
+      "checked_startup_intake_authority_source": false,
+      "checked_router_did_not_use_chat_history": false,
+      "checked_user_intake_envelope_path_hash": false,
       "checked_user_authorization_vs_state": false,
       "checked_route_state_frontier_consistency": false,
       "checked_old_route_and_asset_reuse_boundary": false,
@@ -210,22 +218,25 @@
       "checked_no_historical_agent_id_reuse": false,
       "checked_shadow_route_and_residual_state": false,
       "checked_real_codex_automation_records": false,
-      "factual_evidence_checked": false
+      "checked_display_status": false,
+      "mechanical_evidence_checked": false
     },
-    "pm_start_gate": {
+    "pm_startup_intake_release": {
       "required": true,
       "decision_owner": "project_manager",
       "decision": "pending",
       "decision_path": null,
-      "based_on_review_report_path": null,
+      "based_on_startup_mechanical_audit_path": null,
+      "node_package_decision_recorded": false,
+      "startup_runtime_release_status": "pending",
       "independent_validation_required": true,
       "completion_report_only_allowed": false,
       "independent_validation_evidence_path": "<path-or-null>",
       "worker_remediation_required": false,
-      "review_iteration": 0,
+      "audit_iteration": 0,
       "opened_at": null
     },
-    "startup_review_workflow": "human-like reviewer independently checks real facts and writes .flowpilot/runs/<run-id>/startup_review/latest.json; no third startup opener or runtime startup-check script exists",
+    "startup_runtime_intake_release_workflow": "Runtime/Router writes startup/startup_mechanical_audit.json from current sealed startup_intake_record, path/hash, display, run, route, role, and continuation evidence; PM records the node/work-package decision and releases user_intake to route work only from a clean mechanical audit.",
     "shadow_route_detected": false,
     "work_beyond_startup_allowed": false
   },
@@ -686,8 +697,9 @@
     "pm_research_result_absorbed_or_route_mutated_when_required",
     "continuation_mode_checked",
     "continuation_resume_ready_checked",
-    "startup_preflight_reviewer_fact_report_written",
-    "pm_start_gate_opened",
+    "startup_runtime_mechanical_audit_written",
+    "pm_startup_intake_node_package_decision_recorded",
+    "pm_startup_intake_released_to_route",
     "work_beyond_startup_allowed_by_pm",
     "startup_questions_answered_before_banner",
     "startup_question_prompt_stopped_for_user_reply",
@@ -780,14 +792,6 @@
       "manual_resume_evidence"
     ],
     "completed_for_current_status": false
-  },
-  "legacy_manual_resume_launcher": {
-    "stable": true,
-    "automation_id": "<automation-id-or-null>",
-    "status": "<active|paused_after_completion|deleted_after_completion|not_created_unsupported_host|null>",
-    "rrule": "FREQ=MINUTELY;INTERVAL=1",
-    "interval_minutes": 1,
-    "prompt_mutates_with_route": false
   },
   "updated_at": "<iso-8601-timestamp>"
 }

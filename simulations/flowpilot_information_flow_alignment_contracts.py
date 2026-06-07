@@ -23,7 +23,7 @@ def _code_contracts() -> tuple[Any, ...]:
     runtime = "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py"
     new_run_commands = "skills/flowpilot/assets/flowpilot_new_run_commands.py"
     new_role_commands = "skills/flowpilot/assets/flowpilot_new_role_commands.py"
-    router_roles = "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py"
+    router_role_misc = "skills/flowpilot/assets/flowpilot_router_action_handlers_role_misc.py"
     pm_role_result = (
         "skills/flowpilot/assets/"
         "flowpilot_router_work_packets_pm_role_writes_decisions_role_result.py"
@@ -173,7 +173,7 @@ def _code_contracts() -> tuple[Any, ...]:
         ),
         _contract(
             "info_flow.router.controller_repair_work_packet",
-            path=router_roles,
+            path=router_role_misc,
             symbol="_apply_controller_repair_work_packet",
             implements=(OBL_BREAK_GLASS, OBL_WORKER_DELTA),
             external_inputs=("repair_transaction_id", "payload"),

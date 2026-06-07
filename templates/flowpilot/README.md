@@ -143,9 +143,8 @@ for review.
    PM segment decision. Repair reruns the same parent replay.
 26. Record the current manual-resume binding after Controller core is loaded.
    FlowPilot does not create scheduled-continuation automation.
-   The run keeps a foreground patrol plus a stable manual-resume launcher; each
-   resume tick reloads current ledgers and rehydrates the current role bindings
-   before normal work continues. If background or parallel agents cannot be
+   Manual resume reloads current ledgers and rehydrates the current role
+   bindings before normal work continues. If background or parallel agents cannot be
    opened, FlowPilot blocks instead of switching to an unsupported
    non-background route.
 27. Write `.flowpilot/runs/<run-id>/execution_frontier.json` from the checked route before
@@ -161,18 +160,17 @@ for review.
    unavailable and show the runway in chat without treating display as
    completion evidence.
 28. Before any child-skill execution, image generation, implementation, or
-   bounded route chunk, set `startup_activation` in state/frontier from the
-   current route, role bindings, role memory, runtime-collaboration startup decision,
-   continuation, and visible-plan evidence. The human-like reviewer then
-   personally checks the real route, state, frontier, role bindings, role memory,
-   manual-resume evidence, automation records, and cleanup
-   evidence, then writes
-   `.flowpilot/runs/<run-id>/startup_review/latest.json`.
+   bounded route chunk, set `startup_runtime_intake_release` in state/frontier
+   from the current startup intake record, route, role bindings, role memory,
+   runtime-collaboration startup decision, continuation, and visible-plan
+   evidence. Runtime/Router then writes
+   `.flowpilot/runs/<run-id>/startup/startup_mechanical_audit.json` from
+   current path/hash, display, run, route, role, and continuation evidence.
 
-   The reviewer reports facts and blockers only. PM reads the report, returns
-   blockers to workers when needed, and opens `pm_start_gate` only from the
-   current clean report by writing
-   `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and
+   The PM reads the mechanical audit, returns blockers to workers when needed,
+   records the node/work-package decision, and releases startup intake only from
+   the current clean audit by writing
+   `.flowpilot/runs/<run-id>/startup/pm_startup_intake_decision.json` and
    setting `work_beyond_startup_allowed: true` in state and frontier.
 
    Work beyond startup is blocked until the PM-owned gate is open and the
@@ -223,13 +221,13 @@ for review.
 ## Files
 
 - `state.template.json`: current pointer, host continuation mode, startup
-  activation hard-gate state, and controlled-stop/completion notice state.
+  runtime intake release state, and controlled-stop/completion notice state.
 - `execution_frontier.template.json`: current route version, active node, next
   jump, current mainline, host continuation decision, PM completion runway,
   PM-owned child-skill gate manifest, checks before advance,
   native/manual visible plan sync method, visible plan projection depth, the
-  realtime FlowPilot Route Sign chat/UI display gate, and startup PM gate and
-  resume notice metadata.
+  realtime FlowPilot Route Sign chat/UI display gate, startup intake release,
+  and resume notice metadata.
 - `role_binding_ledger.template.json`: persistent role-binding runtime responsibilities, ids, status,
   authority boundaries, memory paths, recovery rules, and terminal archive
   state.

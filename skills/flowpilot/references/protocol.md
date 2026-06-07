@@ -62,8 +62,9 @@ long-form public explanation lives in `docs/protocol.md`.
 10. Before PM product-function synthesis or route decisions, require a
     PM-authored material-intake packet envelope/body pair that passes router
     direct-dispatch preflight.
-    Router exposes the full `user_intake` packet as PM mail only after PM
-    approves startup activation from the reviewer startup fact report.
+    Router exposes the full `user_intake` packet as PM mail only after
+    Runtime/Router writes a clean startup mechanical audit and PM records the
+    startup-intake release decision.
     Router must expose the packet through current assignment before PM opens
     the body; that assigned delivery comes
     before material scan, product-function synthesis, route design, or
@@ -224,43 +225,46 @@ long-form public explanation lives in `docs/protocol.md`.
     show that return edge and the reviewer must check the visible chat block
     before the node can advance. Generated files or display packets alone do
     not satisfy this gate.
-37. Run the startup activation review before any child-skill execution, image
-    generation, implementation, formal route chunk, or completion work. There
-    is no third startup opener or runtime startup-check script. The human-like
-    reviewer personally checks facts and writes
-    `.flowpilot/runs/<run-id>/startup_review/latest.json`; the project manager is the only
-    role that may write `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and set
+37. Run the startup runtime-intake release gate before any child-skill
+    execution, image generation, implementation, formal route chunk, or
+    completion work. Runtime/Router writes
+    `.flowpilot/runs/<run-id>/startup/startup_mechanical_audit.json` and its
+    proof from current mechanical evidence; the project manager is the only
+    role that may write
+    `.flowpilot/runs/<run-id>/startup/pm_startup_intake_decision.json` and set
     `work_beyond_startup_allowed: true`.
 
-    The human-like reviewer report must verify matching active route,
-    canonical current-run state, execution frontier, current role ledger,
-    current role memory, `.flowpilot/current.json`,
-    `.flowpilot/index.json`, the run manifest, prior-work import packet when
-    continuing, the three explicit startup answers, stop-and-wait evidence,
-    banner-after-answers evidence, role-binding freshness,
-    continuation readiness, and `startup_activation` records in state and
-    frontier. It must also verify old top-level control state is absent,
-    archival-only, or quarantined and is not being used as current state. It
-    must also check user authorization against actual state,
-    old-route and old-asset cleanup when a clean start was requested, the real
-    route heartbeat automation at one minute when scheduled continuation is
-    allowed, manual-resume evidence when manual continuation is selected,
-    residual route state, and shadow-route evidence. It must bind the
-    background-collaboration answer to actual role-binding state: if the user
-    allowed role assistance, verify each runtime-required binding was opened for
-    this FlowPilot task after that user decision and after current route allocation, and
-    verify none of its `agent_id` values comes from prior route ledgers or
-    older role-memory packets. If the user chose single-agent continuity, verify
-    the explicit user authorization and do not claim live role bindings. The reviewer writes a report only; the reviewer
-    does not approve startup and does not open the gate. The project manager
-    reads the report. If it contains blockers, PM sends remediation items back
-    to authorized workers through a PM packet and requires a new factual reviewer report. If it
-    is clean, PM writes `pm_start_gate` evidence opening startup from that
-    exact report.
+    The startup mechanical audit must verify matching active route, canonical
+    current-run state, execution frontier, current role ledger, current role
+    memory, `.flowpilot/current.json`, `.flowpilot/index.json`, the run
+    manifest, prior-work import packet when continuing, current sealed
+    `startup_intake_record`, startup-intake path/hash evidence, the
+    `startup_intake_authority_source`, the
+    `router_must_not_use_chat_history_for_startup_intake` rule,
+    banner-after-answers evidence, role-binding freshness, display status,
+    continuation readiness, and `startup_runtime_intake_release` records in
+    state and frontier. It must also verify old top-level control state is
+    absent, archival-only, or quarantined and is not being used as current
+    state. It must also check user authorization against actual state,
+    old-route and old-asset cleanup when a clean start was requested,
+    manual-resume evidence when manual continuation is selected, residual route
+    state, and shadow-route evidence. It must bind the background-collaboration
+    answer to actual role-binding state: if the user allowed role assistance,
+    verify each runtime-required binding was opened for this FlowPilot task
+    after that user decision and after current route allocation, and verify
+    none of its `agent_id` values comes from prior route ledgers or older
+    role-memory packets. If single-agent continuity is explicitly selected,
+    verify the explicit user authorization and do not claim live role bindings.
+
+    The PM reads the mechanical audit. If it contains blockers, PM sends
+    remediation items back to authorized workers through a PM packet and
+    requires a fresh runtime mechanical audit. If it is clean, PM records the
+    node/work-package decision and writes startup-intake release evidence from
+    that exact audit.
 
     Work beyond startup is illegal until the PM records
-    `work_beyond_startup_allowed: true` from the clean factual report. If the
-    three answers are incomplete, the prompt did not stop for the user's
+    `work_beyond_startup_allowed: true` from the clean mechanical audit. If the
+    startup intake record is incomplete, the prompt did not stop for the user's
     reply, answers are inconsistent with role-binding/continuation evidence, or
     required cleanup evidence is missing, route the issue back through PM and
     requested worker responsibilities. A route-local file without matching

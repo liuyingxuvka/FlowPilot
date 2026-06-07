@@ -5,8 +5,8 @@ Risk purpose:
   native startup intake UI as the formal startup boundary.
 - Guard against Controller seeing user request body text, startup continuing
   after UI cancel or missing background-collaboration acknowledgement, removed
-  startup option enums returning as user-visible choices, and reviewer startup
-  checks relying on chat history instead of UI records.
+  startup option enums returning as user-visible choices, and runtime startup
+  mechanical checks relying on chat history instead of UI records.
 - Guard that language selection is no longer a top-level startup option and is
   available only from the settings gear together with the support-developer
   entry.
@@ -52,8 +52,8 @@ REQUIRED_LABELS = (
     "ui_artifact_encoding_contract_verified",
     "run_shell_created_after_ui_confirm",
     "sealed_user_request_ref_recorded",
+    "runtime_mechanical_audit_releases_startup_intake",
     "pm_intake_packet_created_from_sealed_body_ref",
-    "reviewer_checks_ui_record_receipt_and_envelope",
     "background_collaboration_requested_after_ack",
     "controller_core_loaded_after_sealed_intake",
     "startup_ui_path_complete",
@@ -120,11 +120,11 @@ class State:
     pm_intake_packet_created: bool = False
     pm_is_only_body_reader: bool = False
 
-    reviewer_checked_ui_record: bool = False
-    reviewer_checked_ui_receipt: bool = False
-    reviewer_checked_envelope_hash: bool = False
-    reviewer_used_chat_history: bool = False
-    reviewer_startup_passed: bool = False
+    runtime_checked_startup_intake_record: bool = False
+    runtime_checked_startup_receipt: bool = False
+    runtime_checked_startup_envelope_hash: bool = False
+    runtime_mechanical_audit_used_chat_history: bool = False
+    startup_runtime_released: bool = False
 
     background_collaboration_requested: bool = False
     host_background_collaboration_available: bool = True
@@ -162,6 +162,7 @@ class StartupIntakeStep:
         "startup_answers",
         "run_shell",
         "sealed_user_request_ref",
+        "startup_runtime_release",
         "pm_intake_packet",
         "startup_mechanical_audit",
         "host_startup_options",
@@ -344,7 +345,20 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 replace(state, user_request_ref_recorded=True),
             ),
         )
-    if state.user_request_ref_recorded and not state.pm_intake_packet_created:
+    if state.user_request_ref_recorded and not state.startup_runtime_released:
+        return (
+            Transition(
+                "runtime_mechanical_audit_releases_startup_intake",
+                replace(
+                    state,
+                    runtime_checked_startup_intake_record=True,
+                    runtime_checked_startup_receipt=True,
+                    runtime_checked_startup_envelope_hash=True,
+                    startup_runtime_released=True,
+                ),
+            ),
+        )
+    if state.startup_runtime_released and not state.pm_intake_packet_created:
         return (
             Transition(
                 "pm_intake_packet_created_from_sealed_body_ref",
@@ -355,20 +369,7 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 ),
             ),
         )
-    if state.pm_intake_packet_created and not state.reviewer_startup_passed:
-        return (
-            Transition(
-                "reviewer_checks_ui_record_receipt_and_envelope",
-                replace(
-                    state,
-                    reviewer_checked_ui_record=True,
-                    reviewer_checked_ui_receipt=True,
-                    reviewer_checked_envelope_hash=True,
-                    reviewer_startup_passed=True,
-                ),
-            ),
-        )
-    if state.reviewer_startup_passed and not (
+    if state.pm_intake_packet_created and not (
         state.background_collaboration_requested
         or state.cockpit_opened
         or state.chat_display_requirement_recorded
@@ -384,12 +385,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
                 ),
             ),
         )
-    if state.reviewer_startup_passed and not state.controller_core_loaded:
+    if state.pm_intake_packet_created and not state.controller_core_loaded:
         options_applied = (
             state.background_collaboration_authorized is True
             and state.background_collaboration_requested
             and state.host_background_collaboration_available
             and state.chat_display_requirement_recorded
+            and state.startup_runtime_released
         )
         if options_applied:
             return (
@@ -412,6 +414,7 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
     if state.controller_core_loaded and not (
         state.ui_result == "confirmed"
         and state.startup_answers_recorded
+        and state.startup_runtime_released
         and state.pm_intake_packet_created
     ):
         return InvariantResult.fail("Controller loaded before confirmed UI intake and PM packet")
@@ -486,13 +489,15 @@ def startup_intake_invariants(state: State, _trace) -> InvariantResult:
         return InvariantResult.fail("Cockpit opened despite UI chat display choice")
     if state.controller_core_loaded and not state.chat_display_requirement_recorded:
         return InvariantResult.fail("chat display choice reached Controller without required chat display record")
-    if state.reviewer_startup_passed and not (
-        state.reviewer_checked_ui_receipt
-        and state.reviewer_checked_ui_record
-        and state.reviewer_checked_envelope_hash
-        and not state.reviewer_used_chat_history
+    if state.pm_intake_packet_created and not state.startup_runtime_released:
+        return InvariantResult.fail("PM intake packet was created before runtime startup release")
+    if state.startup_runtime_released and not (
+        state.runtime_checked_startup_receipt
+        and state.runtime_checked_startup_intake_record
+        and state.runtime_checked_startup_envelope_hash
+        and not state.runtime_mechanical_audit_used_chat_history
     ):
-        return InvariantResult.fail("reviewer startup pass relied on chat instead of UI record/receipt/envelope")
+        return InvariantResult.fail("runtime startup release relied on chat instead of UI record/receipt/envelope")
     if state.old_chat_answer_required and state.ui_result == "confirmed":
         return InvariantResult.fail("UI-confirmed startup still required old chat answers")
     return InvariantResult.pass_()
@@ -616,10 +621,10 @@ def hazard_states() -> dict[str, State]:
             recorded,
             pm_intake_packet_created=True,
             pm_is_only_body_reader=True,
-            reviewer_checked_ui_record=True,
-            reviewer_checked_ui_receipt=True,
-            reviewer_checked_envelope_hash=True,
-            reviewer_startup_passed=True,
+            runtime_checked_startup_intake_record=True,
+            runtime_checked_startup_receipt=True,
+            runtime_checked_startup_envelope_hash=True,
+            startup_runtime_released=True,
             background_collaboration_requested=True,
             host_background_collaboration_available=False,
             chat_display_requirement_recorded=True,
@@ -629,14 +634,14 @@ def hazard_states() -> dict[str, State]:
             recorded,
             cockpit_opened=True,
         ),
-        "reviewer_uses_chat": replace(
+        "runtime_mechanical_audit_uses_chat": replace(
             recorded,
             pm_intake_packet_created=True,
-            reviewer_startup_passed=True,
-            reviewer_checked_ui_record=False,
-            reviewer_checked_ui_receipt=False,
-            reviewer_checked_envelope_hash=False,
-            reviewer_used_chat_history=True,
+            startup_runtime_released=True,
+            runtime_checked_startup_intake_record=False,
+            runtime_checked_startup_receipt=False,
+            runtime_checked_startup_envelope_hash=False,
+            runtime_mechanical_audit_used_chat_history=True,
         ),
         "ui_confirm_requires_old_chat": replace(recorded, old_chat_answer_required=True),
     }
@@ -661,12 +666,12 @@ def approved_plan_state() -> State:
         artifact_encoding_contract_verified=True,
         run_shell_created=True,
         user_request_ref_recorded=True,
+        runtime_checked_startup_intake_record=True,
+        runtime_checked_startup_receipt=True,
+        runtime_checked_startup_envelope_hash=True,
+        startup_runtime_released=True,
         pm_intake_packet_created=True,
         pm_is_only_body_reader=True,
-        reviewer_checked_ui_record=True,
-        reviewer_checked_ui_receipt=True,
-        reviewer_checked_envelope_hash=True,
-        reviewer_startup_passed=True,
         background_collaboration_requested=True,
         host_background_collaboration_available=True,
         cockpit_opened=False,

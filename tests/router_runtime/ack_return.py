@@ -14,6 +14,8 @@ class AckReturnRuntimeTests(FlowPilotRouterRuntimeTestBase):
             if action["action_type"] in {
                 "confirm_controller_core_boundary",
                 "check_prompt_manifest",
+                "inject_role_io_protocol",
+                "open_current_role_agent",
                 "write_startup_mechanical_audit",
                 "write_display_surface_status",
             }:
@@ -47,6 +49,8 @@ class AckReturnRuntimeTests(FlowPilotRouterRuntimeTestBase):
         action = self.next_after_display_sync(root)
         while action["action_type"] in {
             "confirm_controller_core_boundary",
+            "inject_role_io_protocol",
+            "open_current_role_agent",
             "write_startup_mechanical_audit",
             "write_display_surface_status",
         }:

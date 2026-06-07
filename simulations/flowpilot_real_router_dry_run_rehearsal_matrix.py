@@ -182,7 +182,7 @@ REHEARSAL_ROWS: tuple[dict[str, Any], ...] = (
         "evidence_id": "real_router.cli.public_boundary_smoke",
         "evidence_test": (
             "FlowPilotRealRouterDryRunRehearsalTests."
-            "test_router_cli_boundary_runs_fake_role_output_through_public_commands"
+            "test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state"
         ),
         "evidence_status": "passed",
         "evidence_current": True,

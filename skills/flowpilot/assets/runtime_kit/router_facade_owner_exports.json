@@ -1091,7 +1091,14 @@
           {
             "public": "_next_mail_action",
             "target": "_next_mail_action"
-          },
+          }
+        ],
+        "inject_router": false,
+        "module": "flowpilot_router_controller_runtime_next"
+      },
+      {
+        "bind_router": true,
+        "exports": [
           {
             "public": "apply_action",
             "target": "apply_action"
@@ -2847,7 +2854,7 @@
           }
         ],
         "inject_router": true,
-        "module": "flowpilot_router_startup_fact_boundary"
+        "module": "flowpilot_router_startup_mechanical_boundary"
       },
       {
         "bind_router": true,
@@ -2982,6 +2989,10 @@
           {
             "public": "_latest_role_recovery_transaction",
             "target": "_latest_role_recovery_transaction"
+          },
+          {
+            "public": "_current_resume_role_keys",
+            "target": "_current_resume_role_keys"
           },
           {
             "public": "_load_role_recovery_state",

@@ -6,8 +6,8 @@ It is orientation only; it is not validation evidence.
 ## Summary
 
 - Model runners: 142
-- Model-test alignment families: 10
-- Code surfaces: 934
+- Model-test alignment families: 11
+- Code surfaces: 942
 - Test commands: 350
 - Evidence summaries: 5
 - Known-bad/risk labels surfaced: 2399
@@ -17,17 +17,17 @@ It is orientation only; it is not validation evidence.
 | Area | Models | Alignment families | Code surfaces | Test commands | Known-bad labels |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `closure` | 6 | 1 | 16 | 7 | 73 |
-| `controller` | 7 | 0 | 84 | 22 | 103 |
+| `controller` | 7 | 0 | 87 | 22 | 103 |
 | `install-validation` | 1 | 0 | 17 | 16 | 15 |
 | `material` | 1 | 0 | 22 | 25 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 73 |
 | `model-test-alignment` | 3 | 0 | 12 | 12 | 61 |
-| `other` | 81 | 4 | 237 | 40 | 1280 |
-| `packet` | 9 | 2 | 169 | 124 | 169 |
+| `other` | 81 | 5 | 239 | 40 | 1280 |
+| `packet` | 9 | 2 | 170 | 124 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 77 |
 | `review` | 3 | 0 | 3 | 0 | 67 |
-| `route` | 16 | 2 | 282 | 55 | 304 |
-| `startup` | 6 | 1 | 74 | 43 | 129 |
+| `route` | 16 | 2 | 285 | 55 | 304 |
+| `startup` | 6 | 1 | 73 | 43 | 129 |
 | `structure` | 3 | 0 | 7 | 4 | 37 |
 
 ## Evidence Boundaries
@@ -45,7 +45,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 | `coverage_sweep` | `simulations/flowpilot_full_model_coverage_sweep_results.json` | False | `` | `` | 140 |
 | `model_maturation` | `simulations/flowpilot_model_maturation_results.json` | True | `model_maturation_scoped_claim` | `scoped` | None |
 | `model_mesh` | `simulations/flowpilot_model_mesh_results.json` | True | `` | `` | None |
-| `model_hierarchy` | `simulations/flowpilot_model_hierarchy_results.json` | False | `` | `` | None |
+| `model_hierarchy` | `simulations/flowpilot_model_hierarchy_results.json` | True | `` | `` | None |
 
 ## Model Runner Samples
 
@@ -81,6 +81,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `packet/card/ack` (packet): 4 obligations, 7 test evidence rows
 - `packet result family` (packet): 12 obligations, 12 test evidence rows
 - `route mutation` (route): 2 obligations, 4 test evidence rows
+- `current-node trunk invariant` (other): 1 obligations, 3 test evidence rows
 - `terminal/closure/resume` (closure): 3 obligations, 5 test evidence rows
 - `role/output contracts` (other): 3 obligations, 5 test evidence rows
 - `router loop/daemon` (route): 14 obligations, 31 test evidence rows

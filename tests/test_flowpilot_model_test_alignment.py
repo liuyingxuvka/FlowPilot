@@ -68,6 +68,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "packet/card/ack",
                 "packet result family",
                 "route mutation",
+                "current-node trunk invariant",
                 "terminal/closure/resume",
                 "role/output contracts",
                 "router loop/daemon",
@@ -333,7 +334,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "daemon.run_router_daemon",
             "daemon.acquire_lock",
             "daemon.write_status",
-            "startup_daemon.heartbeat_monitor",
+            "startup_daemon.patrol_monitor",
             "test_tier.commands_for_tier",
             "meta_runner.main",
             "smoke.main",
@@ -551,6 +552,38 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 item = evidence[evidence_id]
                 self.assertTrue(item.path.startswith("tests/router_runtime/route_mutation_"))
                 self.assertIn("tests.router_runtime.route_mutation", item.command)
+
+    def test_current_node_trunk_invariant_names_two_flowguard_gates(self) -> None:
+        entries = alignment_runner.build_alignment_plan_entries()
+        trunk_entry = next(
+            entry for entry in entries if entry["family"] == "current-node trunk invariant"
+        )
+        obligations = {item.obligation_id: item for item in trunk_entry["plan"].obligations}
+        evidence = {item.evidence_id: item for item in trunk_entry["plan"].test_evidence}
+
+        obligation_id = "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+        self.assertIn(obligation_id, obligations)
+        description = obligations[obligation_id].description
+        for phrase in (
+            "PM node context package -> pre-work FlowGuard -> Worker",
+            "post-result FlowGuard -> independent Reviewer",
+            "fresh current-generation pre-work pass",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, description)
+
+        self.assertEqual(
+            evidence["current_node_trunk.happy.context_follows_all_packets"].test_name,
+            "test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+        )
+        self.assertEqual(
+            evidence["current_node_trunk.failure.worker_blocked_before_prework"].test_name,
+            "test_node_task_requires_prework_flowguard_gate",
+        )
+        self.assertEqual(
+            evidence["current_node_trunk.negative.prework_block_requires_fresh_pass"].test_name,
+            "test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+        )
 
     def test_known_friction_alignment_binds_matrix_and_contract_edges(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()

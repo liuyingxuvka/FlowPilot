@@ -93,12 +93,6 @@ REQUIRED_SCOPED_EVENT_POLICIES = {
         "severity": "medium",
         "why": "gate decisions may recur for a later gate/version but same-gate replay must be idempotent",
     },
-    "pm_requests_startup_repair": {
-        "family": "startup_cycle",
-        "dedupe_fields": ("startup_review_cycle", "startup_fact_report_hash"),
-        "severity": "medium",
-        "why": "startup repair can recur across review cycles but same report replay should not duplicate repair state",
-    },
     "pm_writes_route_draft": {
         "family": "route_draft",
         "dedupe_fields": ("draft_version", "route_hash"),

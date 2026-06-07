@@ -15,8 +15,8 @@
       "continues_from_run_id": null,
       "state_path": ".flowpilot/runs/run-001/state.json",
       "execution_frontier_path": ".flowpilot/runs/run-001/execution_frontier.json",
-      "startup_review_path": ".flowpilot/runs/run-001/startup_review/latest.json",
-      "pm_start_gate_path": ".flowpilot/runs/run-001/startup_pm_gate/latest.json"
+      "startup_mechanical_audit_path": ".flowpilot/runs/run-001/startup/startup_mechanical_audit.json",
+      "pm_startup_intake_decision_path": ".flowpilot/runs/run-001/startup/pm_startup_intake_decision.json"
     }
   ],
   "policy": {

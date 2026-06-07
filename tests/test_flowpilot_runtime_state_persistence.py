@@ -60,6 +60,49 @@ def _base_state(run_root: Path) -> dict[str, Any]:
 
 class RuntimeStatePersistenceTests(unittest.TestCase):
 
+    def test_child_merge_preserves_foreground_clear_without_metadata_leak(self) -> None:
+        run_root = Path(".flowpilot/runs/run-persistence-clear-blocker-test")
+        loaded_state = _base_state(run_root)
+        loaded_state["active_control_blocker"] = {
+            "blocker_id": "control-blocker-loaded",
+            "blocker_artifact_path": ".flowpilot/runs/run-persistence-clear-blocker-test/control_blocks/loaded.json",
+            "delivery_status": "pending",
+        }
+        loaded_state["latest_control_blocker_path"] = loaded_state["active_control_blocker"]["blocker_artifact_path"]
+        persistence._attach_run_state_load_metadata(loaded_state)
+
+        foreground_state = _base_state(run_root)
+        foreground_state["active_control_blocker"] = None
+        foreground_state["latest_control_blocker_path"] = None
+
+        merged = persistence._merge_stale_run_state_save(foreground_state, loaded_state)
+
+        self.assertIsNone(merged["active_control_blocker"])
+        self.assertIsNone(merged["latest_control_blocker_path"])
+        self.assertFalse(any(str(key).startswith("_flowpilot_loaded_") for key in merged))
+
+    def test_parent_facade_delegates_load_and_stale_save_to_child(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-runtime-state-load-save-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            _write_json(run_root / "router_state.json", _base_state(run_root))
+            fake_router = _dummy_router(run_root)
+
+            loaded, loaded_root = persistence.load_run_state_from_run_root(fake_router, project_root, run_root)
+            self.assertIsNotNone(loaded)
+            assert loaded is not None
+            assert loaded_root is not None
+            self.assertEqual(loaded_root, run_root.resolve())
+            self.assertTrue(str(loaded.get("_flowpilot_loaded_run_state_hash") or ""))
+
+            loaded["flags"]["foreground_ready"] = True
+            persistence.save_run_state(fake_router, run_root, loaded)
+            saved = _read_json(run_root / "router_state.json")
+
+        self.assertTrue(saved["flags"]["foreground_ready"])
+        self.assertFalse(any(str(key).startswith("_flowpilot_loaded_") for key in saved))
+
     def test_stale_save_does_not_restore_material_progress_flags_after_new_generation(self) -> None:
         run_root = Path(".flowpilot/runs/run-persistence-material-generation-test")
         loaded_state = _base_state(run_root)

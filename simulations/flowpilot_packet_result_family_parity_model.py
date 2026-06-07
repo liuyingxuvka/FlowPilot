@@ -45,7 +45,7 @@ MATERIAL_FULL_COMMAND = (
 MATERIAL_PARTIAL_COMMAND = (
     "python -m unittest "
     "tests.router_runtime.packets.PacketsRuntimeTests."
-    "test_material_scan_partial_batch_status_names_missing_role"
+    "test_material_scan_full_batch_wait_current_work_names_all_missing_roles"
 )
 MATERIAL_SEALED_COMMAND = (
     "python -m unittest "

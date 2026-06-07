@@ -26,9 +26,9 @@ HAZARD_EXPECTED_FAILURES = {
     "mechanical_audit_without_current_intake": "startup mechanical audit was written without current sealed intake",
     "display_status_without_runtime_ready": "startup display status was written without current audit",
     "user_intake_before_runtime_ready": "user_intake mail was exposed before startup runtime mechanics were ready",
-    "reviewer_mechanical_fact_gate_used": "Reviewer startup mechanical fact gate was used",
-    "reviewer_reproves_router_facts": "Reviewer was required to re-prove router-owned mechanical facts",
-    "pm_startup_activation_gate_used": "PM startup activation gate was used",
+    "legacy_human_startup_review_gate_used": "legacy human startup review gate was used",
+    "quality_reviewer_reproves_router_mechanics": "quality Reviewer was required to re-prove router-owned startup mechanics",
+    "legacy_pm_startup_release_gate_used": "legacy PM startup release gate was used",
     "pm_intake_ack_bypasses_common_ledger": "PM startup intake ACK bypassed user_intake mail or common card ledger",
     "pm_route_planning_before_pm_intake": "PM route planning started before PM startup intake ACK",
     "role_work_before_pm_route_planning": "role work was allocated before PM route planning",
@@ -51,8 +51,8 @@ def _state_id(state: model.State) -> str:
         f"role={state.first_role_work_allocated},{state.current_role_agent_open_attempted},"
         f"{state.current_role_agent_bound},{state.current_role_agent_failed}|"
         f"legacy={state.startup_background_agents_preleased},{state.fixed_role_count_gate_required},"
-        f"{state.heartbeat_or_manual_resume_binding_required},{state.reviewer_mechanical_fact_gate_used},"
-        f"{state.pm_startup_activation_gate_used}|work={state.route_work_started}"
+        f"{state.heartbeat_or_manual_resume_binding_required},{state.legacy_human_startup_review_gate_used},"
+        f"{state.legacy_pm_startup_release_gate_used}|work={state.route_work_started}"
     )
 
 

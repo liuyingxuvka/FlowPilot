@@ -25,6 +25,18 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             "user_intake.metadata.controller_bootstrap_scope.background_collaboration_authorized",
             fields,
         )
+        self.assertIn("user_intake.metadata.startup_runtime_release_required", fields)
+        self.assertIn("user_intake.metadata.startup_runtime_release_status", fields)
+        self.assertIn("startup_intake_record.startup_intake_authority_source", fields)
+        self.assertIn(
+            "startup_intake_record.router_must_not_use_chat_history_for_startup_intake",
+            fields,
+        )
+        self.assertIn("user_request_ref.startup_intake_authority_source", fields)
+        self.assertIn(
+            "user_request_ref.router_must_not_use_chat_history_for_startup_intake",
+            fields,
+        )
         self.assertIn(
             "startup_mechanical_audit.mechanical_checks.startup_answers_use_current_fields_only",
             fields,
@@ -63,6 +75,13 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             "startup_fact_report.external_fact_review.direct_evidence_paths_checked",
             fields,
         )
+        self.assertNotIn("reviewer_live_review_source", fields)
+        self.assertNotIn("reviewer_must_not_use_chat_history", fields)
+        self.assertNotIn(
+            "user_intake.metadata.pm_must_request_startup_reviewer_gate_before_opening_start_gate",
+            fields,
+        )
+        self.assertNotIn("user_intake.metadata.startup_gate_status", fields)
 
     def test_field_status_catalog_marks_retired_and_forbidden_legacy(self) -> None:
         self.assertEqual(

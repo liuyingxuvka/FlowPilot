@@ -2,7 +2,7 @@
 
 The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
-dependency so shared state writers and public entrypoints remain compatible.
+dependency so shared state writers and public entrypoints stay aligned.
 """
 
 from __future__ import annotations
@@ -220,8 +220,8 @@ def _derive_resume_next_recipient_from_packet_ledger(router: ModuleType, run_roo
     if active_packet_id:
         if status == 'router-held-startup-material':
             next_recipient = assigned_worker or 'project_manager'
-            controller_next_action = 'wait_for_controller_deliver_mail_after_pm_activation'
-            reason = 'Packet ledger says startup user_intake is held by Router until PM approves startup activation, then Controller must relay it.'
+            controller_next_action = 'deliver_startup_material_after_runtime_release'
+            reason = 'Packet ledger says startup user_intake is held by Router until startup mechanical audit and display status release it to PM.'
         elif status == 'packet-with-controller':
             next_recipient = assigned_worker or 'unknown'
             controller_next_action = 'relay_packet_envelope_to_recorded_recipient'
@@ -337,11 +337,22 @@ def _build_continuation_quarantine_record(router: ModuleType, project_root: Path
     record['path'] = project_relative(project_root, router._continuation_quarantine_path(run_root))
     return record
 
+def _continuation_quarantine_semantic_payload(record: dict[str, Any]) -> dict[str, Any]:
+    return {key: value for key, value in record.items() if key not in {'created_at', 'path'}}
+
 def _write_continuation_quarantine(router: ModuleType, project_root: Path, run_root: Path, run_state: dict[str, Any], record: dict[str, Any] | None=None) -> dict[str, Any]:
     _bind_router(router)
     quarantine = record or router._build_continuation_quarantine_record(project_root, run_root, run_state, created_at=utc_now())
     path = router._continuation_quarantine_path(run_root)
-    write_json(path, quarantine)
+    existing = read_json_if_exists(path)
+    if (
+        existing
+        and not flowpilot_runtime_closure.validate_continuation_quarantine_record(existing)
+        and _continuation_quarantine_semantic_payload(existing) == _continuation_quarantine_semantic_payload(quarantine)
+    ):
+        quarantine = existing
+    else:
+        write_json(path, quarantine)
     run_state['continuation_quarantine'] = {'schema_version': CONTINUATION_QUARANTINE_SCHEMA, 'path': project_relative(project_root, path), 'prior_run_files_are_evidence_by_default': False, 'old_agent_ids_are_current_authority': False, 'updated_at': quarantine.get('created_at')}
     return quarantine
 

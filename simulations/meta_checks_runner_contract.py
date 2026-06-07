@@ -124,7 +124,7 @@ REQUIRED_LABELS = (
     "pm_returns_startup_blockers_to_worker",
     "startup_worker_remediation_completed",
     "runtime_startup_entry_clean",
-    "pm_first_round_startup_entry_audit_done",
+    "pm_startup_intake_node_package_decision_recorded",
     "pm_first_round_started_after_runtime_entry",
     "continuation_resume_ready_checked",
     "resume_loaded_state",
@@ -431,9 +431,9 @@ def _state_id(state: model.State) -> str:
         f"{state.runtime_role_bindings_current_task_ready},"
         f"{state.historical_agent_ids_compared},"
         f"{state.reused_historical_agent_ids}|"
-        f"startup_review_run={state.startup_reviewer_checked_run_isolation},"
-        f"{state.startup_reviewer_checked_prior_work_boundary},"
-        f"{state.pm_first_round_startup_entry_audit_done}|"
+        f"startup_runtime_audit={state.startup_runtime_checked_run_identity},"
+        f"{state.startup_runtime_checked_prior_work_boundary},"
+        f"{state.pm_startup_intake_node_package_decision_recorded}|"
         f"work_beyond_startup={state.work_beyond_startup_allowed}|"
         f"unfinished_recovery={state.unfinished_current_node_recovery_checked}|"
         f"parent_subtree={state.parent_subtree_review_checked},"

@@ -16,7 +16,7 @@
           ],
           "invariant_families": [
             "startup_questions_before_work",
-            "startup_activation_gate",
+            "startup_runtime_intake_release",
             "fresh_run_pointer"
           ],
           "release_obligation": "thin_parent_ok"
@@ -166,7 +166,7 @@
           "invariant_families": [
             "startup_questions_before_capability_work",
             "fresh_run_pointer",
-            "startup_activation_gate"
+            "startup_runtime_intake_release"
           ],
           "release_obligation": "thin_parent_ok"
         },

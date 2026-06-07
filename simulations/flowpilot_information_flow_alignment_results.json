@@ -1382,7 +1382,7 @@
           "run_state"
         ],
         "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_misc.py",
         "raised_errors": [
           "RouterError"
         ],
@@ -2645,7 +2645,7 @@
           "info_flow.break_glass.bounded_reintegrated_repair",
           "info_flow.blocker.worker_packet_progress_delta"
         ],
-        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_misc.py",
         "required": true,
         "role": "owner",
         "side_effects": [],

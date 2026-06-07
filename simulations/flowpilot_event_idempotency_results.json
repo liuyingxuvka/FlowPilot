@@ -139,7 +139,7 @@
           "same dedupe key wrote duplicate side effect",
           "duplicate side effect written for replayed event identity"
         ],
-        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:process_flowguard_operator|prior=gate:route-check:v1:process_flowguard_operator|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
+        "state": "scenario=gate_decision_same_key_replay|status=accepted|event=role_records_gate_decision|family=gate|flag=True|key=gate:route-check:v1:flowguard_operator_route_scope|prior=gate:route-check:v1:flowguard_operator_route_scope|conflict=True|conflict_fields=True|replay=direct|canonical=False|retry=0/2|reset=False|side_effect=True|duplicate=True|escalated=False|stuck=False|reason=unconditional_repeat"
       }
     },
     "ok": true
@@ -193,20 +193,14 @@
     "state_count": 37
   },
   "source_audit": {
-    "external_event_count": 110,
+    "external_event_count": 88,
     "finding_count": 0,
     "findings": [],
     "model_confidence": "source-audit checks that required scoped events have production idempotency policies; targeted router tests cover key runtime behavior",
     "ok": true,
-    "repeatable_exception_count": 1,
-    "repeatable_exceptions": {
-      "heartbeat_or_manual_resume_requested": {
-        "condition": "append_only_tick",
-        "exception_name": "pre_dedupe_special_case",
-        "source_excerpt": "handled before generic duplicate check"
-      }
-    },
-    "required_scoped_event_count": 9,
+    "repeatable_exception_count": 0,
+    "repeatable_exceptions": {},
+    "required_scoped_event_count": 8,
     "router_path": "skills\\flowpilot\\assets\\flowpilot_router.py",
     "scoped_policies": {
       "pm_completes_current_node_from_reviewed_result": {
@@ -366,17 +360,6 @@
           "request_id"
         ]
       },
-      "pm_requests_startup_repair": {
-        "dedupe_fields": [
-          "startup_review_cycle",
-          "startup_fact_report_hash"
-        ],
-        "family": "startup_cycle",
-        "retry_group_fields": [
-          "event",
-          "startup_fact_report_hash"
-        ]
-      },
       "pm_writes_route_draft": {
         "dedupe_fields": [
           "draft_version",
@@ -425,6 +408,6 @@
         ]
       }
     },
-    "scoped_policy_count": 17
+    "scoped_policy_count": 16
   }
 }

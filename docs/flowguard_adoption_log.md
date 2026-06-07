@@ -20087,6 +20087,65 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-startup-path-alignment-mta-closure-20260607
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Status: completed_validated_installed_synced
+- FlowGuard: schema `1.0`, package `0.40.12`
+- Route: predictive KB preflight, OpenSpec validate-all, FlowGuard existing-model preflight, DevelopmentProcessFlow, FieldLifecycleMesh, Model-Test Alignment, project-upgrade
+
+### Findings
+- Current startup path is Runtime/Router mechanical audit and display status -> PM startup-intake decision -> on-demand current role agents -> Worker output -> Runtime mechanical validation -> Reviewer human quality review -> FlowGuard process/state review -> PM disposition -> terminal closure.
+- `startup_intake_authority_source` and `router_must_not_use_chat_history_for_startup_intake` are current startup-intake fields.
+- `reviewer_live_review_source`, `reviewer_must_not_use_chat_history`, startup reviewer gate fields, and old PM startup activation fields are forbidden or retired, not current.
+- Broad MTA source audit, source-test evidence, family plans, real-router matrix, known-friction matrix, synthetic-agent matrix, field results, and persistent-daemon generated results were refreshed.
+- Old startup names now remain only in negative tests, explicit forbidden/legacy scan lists, and historical/adoption-log text.
+- FlowGuard project record was upgraded from `0.40.11` to installed `0.40.12`, then affected evidence, topology, install checks, and project audit were rerun.
+
+### Commands
+- `openspec validate --all` -> OK, 216 passed.
+- `python -m unittest tests.test_flowpilot_model_test_alignment` -> OK, 18 tests.
+- `python -m unittest tests.test_flowpilot_field_contract_model tests.test_flowpilot_model_test_alignment` -> OK, 22 tests.
+- `python -m pytest tests/test_flowpilot_information_flow_alignment.py -q` -> OK, 15 tests.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> OK; `alignment_ok`, `full_coverage_ok`, `full_diagnostic_ok`, and `release_convergence_ok` are true.
+- `python simulations/run_flowpilot_field_contract_checks.py --json-out simulations/flowpilot_field_contract_results.json` -> OK.
+- `python simulations/run_flowpilot_field_mesh_checks.py --json-out simulations/flowpilot_field_mesh_results.json` -> OK.
+- `python simulations/run_flowpilot_startup_control_checks.py --json-out simulations/flowpilot_startup_control_results.json` -> OK.
+- `python simulations/run_flowpilot_startup_intake_ui_checks.py --json-out simulations/flowpilot_startup_intake_ui_results.json` -> OK.
+- `python simulations/run_flowpilot_role_output_runtime_checks.py --json-out simulations/flowpilot_role_output_runtime_results.json` -> OK.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` -> OK.
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json` -> OK.
+- `python simulations/run_flowpilot_packet_result_family_parity_checks.py --json-out simulations/flowpilot_packet_result_family_parity_results.json` -> OK.
+- `python simulations/flowpilot_known_friction_regression_matrix.py --json-out simulations/flowpilot_known_friction_regression_matrix_results.json` -> OK.
+- `python simulations/flowpilot_real_router_dry_run_rehearsal_matrix.py --json-out simulations/flowpilot_real_router_dry_run_rehearsal_matrix_results.json` -> OK.
+- `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` -> OK.
+- `python simulations/run_card_instruction_coverage_checks.py --json-out simulations/card_instruction_coverage_results.json` -> OK.
+- `python simulations/run_flowpilot_model_hierarchy_checks.py --json-out simulations/flowpilot_model_hierarchy_results.json` -> OK.
+- `python simulations/run_flowpilot_persistent_router_daemon_checks.py --json-out simulations/flowpilot_persistent_router_daemon_results.json` -> OK in `tmp/flowguard_background/run_flowpilot_persistent_router_daemon_checks.*`, exit `0`, traces `1304586`.
+- `python simulations/run_meta_checks.py` -> OK in `tmp/flowguard_background/run_meta_checks.*`, exit `0`.
+- `python simulations/run_capability_checks.py` -> OK in `tmp/flowguard_background/run_capability_checks.*`, exit `0`.
+- `python -m flowguard project-upgrade --root .` -> OK; project record updated to `0.40.12`.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> OK; repo and installed FlowPilot digests match.
+- `python scripts/install_flowpilot.py --check --json` -> OK.
+- `python scripts/audit_local_install_sync.py --json` -> OK.
+- `python scripts/check_install.py --json` -> OK.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> OK, findings empty.
+- `python -m flowguard project-audit --root .` -> OK, status pass.
+
+### Friction Points
+- Persistent daemon full model required a long background run. Earlier timed-out foreground attempts left duplicate self-started processes; they were stopped before accepting final evidence.
+- Topology check must be serialized after topology build and generated-result refreshes; a parallel check can falsely report stale source timestamps.
+- FlowGuard project-audit exposed package-record drift to `0.40.12`; project-upgrade and post-upgrade reruns were required.
+
+### Skipped Steps
+- No GitHub push, tag, release, deploy, commit, or OpenSpec archive was performed.
+- Historical/adoption log mentions of old startup names were preserved as history.
+
+### Risk Evidence Summary
+- Evidence supports the active current-contract claim: current generated model/test/source artifacts, field lifecycle outputs, topology, and local install are aligned to the Runtime mechanical -> PM decision -> Worker -> Runtime validation -> Reviewer quality -> FlowGuard process -> PM closure path.
+- Legacy startup names are constrained to negative, forbidden, legacy scan, or historical surfaces.
+
+
 ## flowpilot-current-startup-trunk-cleanup - contract lock
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -24064,3 +24123,229 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Next Actions
 - Archive the OpenSpec change only after the user explicitly asks to finalize it.
 - Keep future startup or role changes on the current Runtime mechanical + PM disposition + Reviewer quality boundary, with legacy symbols accepted only in negative tests or historical documentation.
+
+## 2026-06-06 - FlowPilot Startup Model-Test Evidence Lag Cleanup
+
+### Trigger
+- User reported stale startup model/test evidence naming, a legacy startup activation architecture source path, and two stale full-diagnostic closure items.
+
+### Route
+- Predictive KB preflight, FlowGuard existing-model preflight, Model-Test Alignment, and StructureMesh for the structure diagnostic signal.
+- OpenSpec skipped because this was a scoped model/evidence maintenance pass, not a product requirement change.
+
+### Files Updated
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `simulations/flowpilot_model_test_alignment_source_obligations.py`
+- `simulations/flowpilot_model_test_alignment_source_test_evidence.py`
+- `simulations/flowpilot_synthetic_agent_coverage_matrix_results.json`
+- `skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Findings
+- Startup model text now describes the current Runtime/Router packet path and rejection of legacy reviewer/PM startup role gates, not reviewer facts plus PM activation approval.
+- Startup failure evidence now points to `test_startup_old_role_gate_events_are_unsupported`.
+- Product architecture source paths no longer include legacy `startup/startup_activation.json`.
+- Current full diagnostic no longer reports the requested `flowpilot_router_startup_closure` source-level external-contract gap or the `flowpilot_router_work_packets_parallel` split signal.
+- Full diagnostic still reports unrelated deferred split advisories for `flowpilot_router_action_handlers_roles` and `flowpilot_router_controller_runtime`.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.40.11`
+- `python -m flowguard project-audit --root .` -> OK
+- `python -m unittest tests.test_flowpilot_router_runtime.FlowPilotRouterRuntimeTests.test_startup_old_role_gate_events_are_unsupported` -> OK
+- Full diagnostic target probe -> OK; target findings empty, startup closure covered, work packets parallel covered.
+- `python simulations/flowpilot_synthetic_agent_coverage_matrix.py --json-out simulations/flowpilot_synthetic_agent_coverage_matrix_results.json` -> OK
+- `python -m unittest tests.test_flowpilot_synthetic_agent_coverage_matrix` -> OK, 6 tests.
+- `python scripts/flowguard_project_topology.py build` and `check` -> OK after repeated rebuilds while peer-agent files were still changing.
+
+### Skipped Or Failed
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out tmp/flowpilot_model_test_alignment_pre_patch_probe.json` exposed unrelated source-audit blockers in the dirty worktree; it was not used as completion evidence.
+- `python -m unittest tests.test_flowpilot_model_test_alignment.FlowPilotModelTestAlignmentTests.test_each_declared_test_evidence_path_contains_definition_when_source_auditable` still fails 12 unrelated evidence-name rows. The fixed startup evidence is not among the failures.
+- No GitHub push, tag, release, deploy, install sync, or OpenSpec archive was performed.
+
+## 2026-06-06 - FlowPilot Current Node Trunk Invariant Naming
+
+### Trigger
+- User identified a cognition risk: the existing two-FlowGuard executable-node chain still exists in runtime, design, and tests, but later records hid it under PM node context package, high-standard control flow, and 53-work-package trunk wording.
+
+### Route
+- Predictive KB preflight, OpenSpec apply-change status review for `enforce-flowguard-prework-node-gates`, FlowGuard existing-model preflight, Model-Test Alignment, and DevelopmentProcessFlow.
+- OpenSpec implementation tasks for the referenced change were already complete; this pass clarified the current invariant and evidence surface rather than reopening the change.
+
+### Files Updated
+- `HANDOFF.md`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `tests/test_flowpilot_model_test_alignment.py`
+- `tests/test_flowpilot_synthetic_agent_coverage_matrix.py`
+- `tests/test_flowpilot_high_standard_control_flow.py`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+- `docs/flowguard_adoption_log.md`
+- `.flowguard/adoption_log.jsonl`
+
+### Findings
+- The named current executable-node trunk invariant is now: PM node context package -> pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer.
+- Model-Test Alignment has a dedicated `current-node trunk invariant` family, with one obligation and three evidence rows for the happy, failure, and negative branches.
+- The focused owner remains `simulations/flowpilot_prework_flowguard_gate_model.py` and `python simulations/run_flowpilot_prework_flowguard_gate_checks.py`.
+- High-standard runtime tests now satisfy current packet/result contract prerequisites while still exercising worker-before-prework blocking, ordered packet issuance, post-result FlowGuard, independent Reviewer, and fresh pre-work after PM repair.
+- Broad model-test alignment remains red in the dirty worktree because of unrelated source-audit and source-test evidence rows; this pass did not claim broad MTA closure.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.40.11`
+- `python -m flowguard project-audit --root .` -> OK
+- `openspec status --change enforce-flowguard-prework-node-gates --json` -> OK, tasks already complete
+- `openspec validate enforce-flowguard-prework-node-gates --strict` -> OK
+- `python -m py_compile simulations\flowpilot_model_test_alignment_family_plans.py tests\test_flowpilot_model_test_alignment.py tests\test_flowpilot_synthetic_agent_coverage_matrix.py` -> OK
+- `python simulations\run_flowpilot_prework_flowguard_gate_checks.py --json-out simulations\flowpilot_prework_flowguard_gate_results.json` -> OK
+- Scoped `current-node trunk invariant` model-test alignment probe -> OK, no findings
+- `python -m pytest tests\test_flowpilot_model_test_alignment.py::FlowPilotModelTestAlignmentTests::test_current_node_trunk_invariant_names_two_flowguard_gates tests\test_flowpilot_synthetic_agent_coverage_matrix.py::FlowPilotSyntheticAgentCoverageMatrixTests::test_coverage_matrix_has_current_required_branch_owners -q` -> OK
+- `python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_task_requires_prework_flowguard_gate tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework` -> OK
+- `python scripts\flowguard_project_topology.py build` -> OK
+- `python scripts\flowguard_project_topology.py check` -> OK after a repeated rebuild/check while a peer-updated result artifact settled
+
+### Skipped Or Failed
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` wrote the current broad report but remains red on unrelated source-audit findings, including packet review/source contract and source-test evidence rows outside this invariant.
+- Full pytest for `tests\test_flowpilot_model_test_alignment.py tests\test_flowpilot_synthetic_agent_coverage_matrix.py` still fails on those unrelated broad MTA/source evidence rows; the new `current-node trunk invariant` tests pass.
+- No compatibility shim, release, deploy, GitHub push, install sync, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports the scoped claim that the executable-node chain is now explicit as a named trunk invariant in handoff, MTA source, MTA tests, coverage family expectations, runtime tests, generated broad MTA output, and topology.
+- Broad release/readiness confidence remains outside this pass until the unrelated source-audit rows are repaired.
+
+### Next Actions
+- Repair the unrelated broad MTA source-audit findings in a separate scoped pass before using `simulations/flowpilot_model_test_alignment_results.json` as green completion evidence.
+
+## 2026-06-06 - FlowPilot Startup Path Alignment Audit
+
+### Trigger
+- User requested a startup path alignment audit for the current route:
+  startup intake -> controller core -> Runtime mechanical audit/display status
+  -> `user_intake` to PM -> PM node/work package decision -> on-demand
+  background agents -> Worker output -> Runtime mechanical validation ->
+  Reviewer human quality review -> FlowGuard process/state review -> PM
+  decision -> terminal closure.
+- User also flagged old startup names in generated model results and field
+  surfaces, especially `startup_activation`, startup reviewer names, and
+  `foreground_patrol`.
+
+### Route
+- Predictive KB preflight, FlowGuard existing-model preflight,
+  DevelopmentProcessFlow, FieldLifecycleMesh, and Model-Test Alignment.
+- OpenSpec was used only for current spec validation and wording sync; no
+  OpenSpec change was archived or product scope widened.
+
+### Files Updated
+- Startup/current path models and generated results:
+  `simulations/meta_model.py`, `simulations/capability_model.py`,
+  `simulations/flowpilot_startup_optimization_model.py`,
+  `simulations/flowpilot_optimization_proposal_model.py`,
+  `simulations/flowpilot_two_table_async_scheduler_model.py`,
+  and their refreshed results.
+- Field lifecycle/model-test evidence:
+  `simulations/flowpilot_field_contract_model.py`,
+  `simulations/run_flowpilot_field_mesh_checks.py`,
+  `simulations/flowpilot_field_contract_results.json`,
+  `simulations/flowpilot_field_mesh_results.json`,
+  `simulations/flowpilot_model_test_alignment_results.json`.
+- Current templates and protocol docs:
+  `templates/flowpilot/startup_mechanical_audit.template.json`,
+  `templates/flowpilot/pm_startup_intake_decision.template.json`,
+  `docs/schema.md`, `docs/verification.md`, `docs/protocol.md`,
+  `skills/flowpilot/references/protocol.md`.
+- Current OpenSpec specs and test-tier command naming.
+- `docs/flowguard_project_topology.json` and
+  `docs/flowguard_project_topology.md`.
+
+### Findings
+- Current generated startup path now uses Runtime/Router mechanical audit and
+  PM startup-intake release, not Reviewer startup fact review or PM startup
+  activation.
+- `startup_intake_authority_source` and
+  `router_must_not_use_chat_history_for_startup_intake` are current
+  mechanical-runtime fields.
+- `reviewer_live_review_source` and `reviewer_must_not_use_chat_history` are
+  forbidden legacy fields, not current fields.
+- `simulations/flowpilot_model_test_alignment_results.json` no longer contains
+  the flagged old startup terms after rerun.
+- `simulations/flowpilot_field_mesh_results.json` keeps old startup terms only
+  as legacy/negative-test observations: production legacy references `0`,
+  prompt legacy references `0`.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK,
+  schema `1.0`.
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"`
+  -> OK, package `0.40.11`.
+- `python -m flowguard project-audit --root .` -> OK.
+- `python simulations\run_flowpilot_startup_optimization_checks.py --json-out simulations\flowpilot_startup_optimization_results.json` -> OK.
+- `python simulations\run_flowpilot_field_contract_checks.py --json-out simulations\flowpilot_field_contract_results.json` -> OK.
+- `python simulations\run_flowpilot_field_mesh_checks.py --json-out simulations\flowpilot_field_mesh_results.json` -> OK.
+- `python simulations\run_meta_checks.py` -> OK.
+- `python simulations\run_capability_checks.py` -> OK.
+- `python -m unittest tests.test_flowpilot_maintenance_tools` -> OK, 13 tests.
+- `python scripts\flowguard_project_topology.py build` -> OK.
+- `python scripts\flowguard_project_topology.py check` -> OK.
+- `python scripts\check_install.py` -> OK.
+- `openspec validate --all` -> OK, 216 items.
+
+### Skipped Or Failed
+- `python simulations\run_flowpilot_model_test_alignment_checks.py --json-out simulations\flowpilot_model_test_alignment_results.json` refreshed the generated report and has `alignment_ok=true`, but broad full coverage remains red on unrelated source-audit/source-test rows outside this startup naming pass.
+- Legacy startup symbols remain intentionally in negative tests and historical/adoption-log text.
+- No compatibility shim, release, deploy, GitHub push, install sync, or OpenSpec archive was performed.
+
+### Risk Evidence Summary
+- Evidence supports the scoped claim that current templates, protocol docs,
+  current OpenSpec specs, startup models, field contract results, field mesh
+  results, model-test alignment results, topology, and install checks are
+  aligned to the current startup path.
+- Broad release/readiness confidence remains outside this pass because broad
+  MTA full coverage has unrelated blocker findings.
+
+### Next Actions
+- Keep old startup names only in negative tests, archived changes, historical
+  logs, or explicit forbidden/retired lifecycle rows.
+- Repair unrelated broad MTA source-audit findings in a separate pass before
+  treating `simulations/flowpilot_model_test_alignment_results.json` as a green
+  release gate.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-06T23:54:00+00:00
+- Ended: 2026-06-06T23:54:00+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.40.12
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.

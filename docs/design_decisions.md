@@ -45,18 +45,20 @@ are fixed startup defaults: manual continuation and chat route signs.
 
 Removing modes does not change hard-gate behavior or the quality floor.
 
-Startup includes a PM-owned activation transaction before child skills,
-imagegen, implementation, route chunks, or completion work. The transaction is
-valid only when the human-like reviewer has personally checked real
-state/frontier/route, current role ledger, role memory packets,
-continuation, heartbeat/manual-resume evidence, and cleanup
-evidence for the same active nonterminal route. The reviewer writes a factual
-`.flowpilot/runs/<run-id>/startup_review/latest.json` report and cannot open startup. The PM
-is the only startup opener, writing `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and
-setting `work_beyond_startup_allowed: true` only from the current clean factual
-report; otherwise route-local files are treated as shadow routes that must be
-quarantined or superseded. There is no third startup opener or runtime
-startup-check script.
+Startup includes a PM-owned startup-intake release transaction before child
+skills, imagegen, implementation, route chunks, or completion work. The
+transaction is valid only when Runtime/Router has checked the real
+state/frontier/route, current startup intake record, path/hash evidence, current
+role ledger, role memory packets, continuation, manual-resume lifecycle
+evidence, display status, and cleanup evidence for the same active nonterminal
+route. Runtime/Router writes
+`.flowpilot/runs/<run-id>/startup/startup_mechanical_audit.json` and cannot
+make the PM release decision. The PM is the only startup release owner, writing
+`.flowpilot/runs/<run-id>/startup/pm_startup_intake_decision.json` and setting
+`work_beyond_startup_allowed: true` only from the current clean mechanical
+audit; otherwise route-local files are treated as shadow routes that must be
+quarantined or superseded. The human-like reviewer is reserved for substantive
+quality review after real artifacts or worker results exist.
 
 Each formal FlowPilot invocation creates a fresh target-project run directory
 under `.flowpilot/runs/<run-id>/`. Top-level `.flowpilot/current.json` and

@@ -29,8 +29,9 @@ Risk intent brief:
   that do not block the next work, or it advances gates without reconciling the
   current scope.
 - Model-critical state: Router scheduler rows, Controller rows, daemon tick,
-  barriers, receipts, postconditions, startup prep cards/ACKs, Reviewer fact
-  review, PM startup-intake ACK semantics, and durable ledger file integrity.
+  barriers, receipts, postconditions, startup prep cards/ACKs, runtime
+  mechanical startup audit, PM startup-intake ACK semantics, and durable ledger
+  file integrity.
 - Adversarial branches: hidden dependency metadata in Controller rows, retry
   duplicate side effects, PM startup intake before startup cleanup, route work
   before PM startup intake, daemon enqueue past a real barrier, missing table-local
@@ -58,9 +59,10 @@ Risk intent brief:
   action is a true dependency wall; barriers stop enqueueing; startup banner,
   manual-resume, and display/status are parallel obligations; startup
   background-agent lease open is only a local dependency; done receipts need
-  required Router-visible postconditions before reconciliation; startup review
-  uses current-scope reconciliation; startup external actions are daemon-owned
-  after the minimal run shell exists; the Controller action ledger carries a
+  required Router-visible postconditions before reconciliation; startup
+  mechanical audit and PM intake release use current-scope reconciliation;
+  startup external actions are daemon-owned after the minimal run shell exists;
+  the Controller action ledger carries a
   compact top-to-bottom table prompt; ledger writes are atomic and leave both
   table files parseable after every daemon/controller write; Router scheduler
   ledger remains Router-single-writer; daemon-scheduled startup receipts must
@@ -1275,7 +1277,7 @@ def scheduler_failures(state: State) -> list[str]:
             or state.route_work_started
         )
     ):
-        failures.append("startup review, PM startup intake, or route work started before Controller core loaded")
+        failures.append("startup mechanical audit, PM startup intake, or route work started before Controller core loaded")
     if state.pm_startup_intake_second_global_join_required:
         failures.append("PM startup intake ACK required redundant all-startup ACK join")
     if state.route_work_started and not state.pm_startup_intake_ack_recorded:
@@ -1362,7 +1364,7 @@ class TwoTableAsyncSchedulerStep:
     reads: Router scheduler table, Controller action table, Controller
     receipts, startup ACK ledger, current-scope reconciliation state
     writes: Router scheduler rows, Controller action rows, reconciliation
-    states, barrier waits, startup review permission, PM startup intake decision
+    states, barrier waits, startup mechanical audit permission, PM startup intake decision
     idempotency: daemon-enqueued rows are keyed by Router row id and stable
     action id so retries do not duplicate side effects
     """

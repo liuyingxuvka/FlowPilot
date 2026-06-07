@@ -51,6 +51,17 @@ LEGACY_FIELD_TOKENS = frozenset(
         "create_heartbeat_automation",
         "startup_background_agent_bindings",
         "background_role_agents_bound",
+        "startup_activation",
+        "startup_preflight_review",
+        "pm_start_gate",
+        "foreground_patrol",
+        "startup_reviewer",
+        "reviewer_live_review_source",
+        "reviewer_must_not_use_chat_history",
+        "pm_approves_startup_activation",
+        "startup_activation_approved",
+        "reviewer_reports_startup_facts",
+        "pm_startup_activation",
     }
 )
 

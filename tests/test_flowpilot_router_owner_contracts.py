@@ -15,11 +15,25 @@ import flowpilot_router as router  # noqa: E402
 import flowpilot_router_action_factory_dispatch as action_factory_dispatch  # noqa: E402
 import flowpilot_router_action_factory_envelope as action_factory_envelope  # noqa: E402
 import flowpilot_router_action_handlers_basic as action_handlers_basic  # noqa: E402
+import flowpilot_router_action_handlers_role_binding as action_handlers_role_binding  # noqa: E402
+import flowpilot_router_action_handlers_role_misc as action_handlers_role_misc  # noqa: E402
+import flowpilot_router_action_handlers_resume as action_handlers_resume  # noqa: E402
 import flowpilot_router_action_handlers_roles as action_handlers_roles  # noqa: E402
 import flowpilot_router_artifact_validation as artifact_validation  # noqa: E402
 import flowpilot_router_card_delivery as card_delivery  # noqa: E402
 import flowpilot_router_child_skill_capability as child_skill_capability  # noqa: E402
+import flowpilot_router_controller_runtime as controller_runtime  # noqa: E402
+import flowpilot_router_controller_runtime_apply as controller_runtime_apply  # noqa: E402
+import flowpilot_router_controller_runtime_loop as controller_runtime_loop  # noqa: E402
+import flowpilot_router_controller_runtime_next as controller_runtime_next  # noqa: E402
 import flowpilot_router_controller_ledger as controller_ledger  # noqa: E402
+import flowpilot_router_lifecycle_requests_blockers as lifecycle_request_blockers  # noqa: E402
+import flowpilot_router_lifecycle_requests_fence as lifecycle_request_fence  # noqa: E402
+import flowpilot_router_lifecycle_requests_reconciliation as lifecycle_request_reconciliation  # noqa: E402
+import flowpilot_router_lifecycle_requests_records as lifecycle_request_records  # noqa: E402
+import flowpilot_router_lifecycle_support as lifecycle_support  # noqa: E402
+import flowpilot_router_startup_support as startup_support  # noqa: E402
+import flowpilot_router_system_cards_delivery_single as system_cards_delivery_single  # noqa: E402
 import packet_runtime  # noqa: E402
 
 
@@ -34,6 +48,79 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
         action_factory_envelope._bind_router(router)
         artifact_validation._bind_router(router)
         child_skill_capability._bind_router(router)
+        lifecycle_request_blockers._bind_router(router)
+        lifecycle_request_fence._bind_router(router)
+        lifecycle_request_reconciliation._bind_router(router)
+        lifecycle_request_records._bind_router(router)
+        lifecycle_support._bind_router(router)
+        startup_support._bind_router(router)
+        system_cards_delivery_single._bind_router(router)
+
+    def test_controller_runtime_facade_binds_loop_owner(self) -> None:
+        controller_runtime._bind_router(router)
+        controller_runtime_loop._bind_router(router)
+        self.assertIs(controller_runtime._bound_router(), router)
+        self.assertIs(controller_runtime_loop._bound_router(), router)
+        self.assertIs(controller_runtime_apply._bound_router(), router)
+        self.assertIs(controller_runtime_next._bound_router(), router)
+        self.assertIs(controller_runtime.next_action, controller_runtime_loop.next_action)
+        self.assertIs(controller_runtime_loop.next_action, controller_runtime_next.next_action)
+        self.assertIs(controller_runtime_loop.apply_action, controller_runtime_apply.apply_action)
+        self.assertIs(controller_runtime_loop.run_until_wait, controller_runtime_apply.run_until_wait)
+
+    def test_router_facade_next_mail_action_targets_next_owner(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-next-mail-owner-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            run_state = {
+                "run_id": "run-test",
+                "flags": {
+                    "startup_mechanical_audit_written": True,
+                    "startup_display_status_written": True,
+                },
+                "history": [],
+                "pending_action": None,
+                "delivered_cards": [],
+                "delivered_mail": [],
+            }
+            action = router._next_mail_action(project_root, run_state, run_root)
+
+        self.assertIsNotNone(action)
+        self.assertEqual(action["action_type"], "check_packet_ledger")
+        self.assertIs(controller_runtime_next._bound_router(), router)
+
+    def test_action_factory_and_dispatch_gate_external_contracts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-action-factory-owner-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            run_state = {
+                "run_id": "run-test",
+                "flags": {},
+                "history": [],
+                "pending_action": None,
+                "delivered_cards": [],
+                "delivered_mail": [],
+            }
+            action = action_factory_envelope.make_action(
+                action_type="deliver_system_card",
+                actor="controller",
+                label="pm_core_card_delivered",
+                summary="Deliver the PM core system card.",
+                card_id="pm.core",
+                to_role="project_manager",
+            )
+            gated = action_factory_dispatch._apply_dispatch_recipient_gate(
+                project_root,
+                run_state,
+                run_root,
+                action,
+            )
+
+        self.assertEqual(gated["action_type"], "deliver_system_card")
+        self.assertTrue(gated["dispatch_recipient_gate"]["passed"])
+        self.assertEqual(gated["dispatch_recipient_gate"]["target_roles"], ["project_manager"])
 
     def test_card_delivery_and_controller_ledger_external_contracts(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-card-ledger-owner-") as tmp:
@@ -126,7 +213,7 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
                     "status": "assigned",
                 },
             )
-            repair_outcome = action_handlers_roles._apply_controller_repair_work_packet(
+            repair_outcome = action_handlers_role_misc._apply_controller_repair_work_packet(
                 router,
                 project_root,
                 run_root,
@@ -144,7 +231,7 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
         self.assertEqual(updated_transaction["status"], "awaiting_recheck")
         self.assertEqual(updated_transaction["controller_repair_work_packet_result"]["controller_action_id"], "action-1")
         with self.assertRaisesRegex(router.RouterError, "cannot grant gate approval"):
-            action_handlers_roles._apply_controller_repair_work_packet(
+            action_handlers_role_misc._apply_controller_repair_work_packet(
                 router,
                 Path("."),
                 Path(".flowpilot/runs/run-test"),
@@ -152,6 +239,207 @@ class FlowPilotRouterOwnerContractTests(unittest.TestCase):
                 {"controller_may_approve_gate": True},
                 None,
             )
+
+    def test_role_binding_child_module_records_current_agent(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-role-binding-owner-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            prompt_path = run_root / "runtime_kit" / "cards" / "roles" / "project_manager.md"
+            prompt_path.parent.mkdir(parents=True)
+            prompt_path.write_text("Project manager role prompt.", encoding="utf-8")
+            run_state = {
+                "run_id": "run-test",
+                "flags": {},
+                "startup_answers": {"background_collaboration_authorized": True},
+            }
+            payload = {
+                "runtime_role_assistance_capability_status": "available",
+                "current_role_agent_binding": {
+                    "role_key": "project_manager",
+                    "agent_id": "live-agent-current-project_manager",
+                    "model_policy": router.ROLE_BINDING_MODEL_POLICY,
+                    "reasoning_effort_policy": router.ROLE_BINDING_REASONING_EFFORT_POLICY,
+                    "binding_open_result": "opened_for_current_packet",
+                    "opened_for_run_id": "run-test",
+                    "host_liveness_status": "active",
+                    "liveness_decision": "confirmed_existing_agent",
+                },
+            }
+
+            result = action_handlers_role_binding._write_current_role_agent_binding(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                "project_manager",
+                payload,
+            )
+
+        self.assertEqual(result["role_key"], "project_manager")
+        self.assertTrue(run_state["flags"]["current_role_agent_bound_project_manager"])
+        self.assertTrue(run_state["flags"]["background_collaboration_authorized"])
+        self.assertEqual(result["agent_id"], "live-agent-current-project_manager")
+
+    def test_resume_action_handler_child_module_direct_contracts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-resume-action-handler-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            run_state = {
+                "schema_version": "flowpilot.run_state.v1",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
+                "flags": {},
+                "events": [],
+                "history": [],
+                "pending_action": None,
+                "startup_answers": {"background_collaboration_authorized": True},
+            }
+
+            load_outcome = action_handlers_resume._apply_load_resume_state(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                {},
+                None,
+            )
+            resume_record = json.loads((run_root / "continuation" / "resume_reentry.json").read_text(encoding="utf-8"))
+
+            self.assertEqual(load_outcome.result_extra, {})
+            self.assertTrue(run_state["flags"]["resume_state_loaded"])
+            self.assertTrue(resume_record["controller_only"])
+
+            original_rehydrate = router._write_resume_role_rehydration_report
+            original_recover = router._write_role_recovery_report
+            try:
+                def fake_rehydrate(project_root_arg, run_root_arg, run_state_arg, payload_arg):
+                    write_json(run_root_arg / "continuation" / "rehydrate_marker.json", {"payload": payload_arg})
+                    run_state_arg["flags"]["resume_roles_restored"] = True
+
+                def fake_recover(project_root_arg, run_root_arg, run_state_arg, payload_arg):
+                    write_json(run_root_arg / "continuation" / "recover_marker.json", {"payload": payload_arg})
+                    run_state_arg["flags"]["role_recovery_report_written"] = True
+
+                router._write_resume_role_rehydration_report = fake_rehydrate
+                router._write_role_recovery_report = fake_recover
+
+                rehydrate_outcome = action_handlers_resume._apply_rehydrate_role_bindings(
+                    router,
+                    project_root,
+                    run_root,
+                    run_state,
+                    {},
+                    {"rehydrated_role_bindings": []},
+                )
+                run_state["flags"]["role_recovery_state_loaded"] = True
+                recover_outcome = action_handlers_resume._apply_recover_role_bindings(
+                    router,
+                    project_root,
+                    run_root,
+                    run_state,
+                    {},
+                    {"recovered_role_bindings": []},
+                )
+            finally:
+                router._write_resume_role_rehydration_report = original_rehydrate
+                router._write_role_recovery_report = original_recover
+
+            self.assertEqual(rehydrate_outcome.result_extra, {})
+            self.assertEqual(recover_outcome.result_extra, {})
+            self.assertTrue((run_root / "continuation" / "rehydrate_marker.json").exists())
+            self.assertTrue((run_root / "continuation" / "recover_marker.json").exists())
+
+    def test_lifecycle_startup_owner_helpers_execute_direct_contracts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-owner-lifecycle-contracts-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            run_state = {
+                "schema_version": "flowpilot.run_state.v1",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
+                "flags": {},
+                "events": [],
+                "history": [],
+                "pending_action": None,
+                "daemon_mode_enabled": True,
+            }
+
+            terminal_fence = lifecycle_request_fence._write_terminal_lifecycle_fence(
+                project_root,
+                run_root,
+                dict(run_state),
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+            )
+            clear_blocker = lifecycle_request_reconciliation._clear_active_control_blocker_for_terminal_lifecycle(
+                project_root,
+                run_root,
+                dict(run_state),
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+                cleared_at="2026-05-21T00:00:00Z",
+            )
+            lifecycle_state = dict(run_state)
+            lifecycle_request_records._write_run_lifecycle_request(
+                project_root,
+                run_root,
+                lifecycle_state,
+                event="user_requests_run_stop",
+                payload={"requested_by": "user", "reason": "contract test"},
+            )
+            dead_end_state = dict(run_state)
+            lifecycle_request_records._write_protocol_dead_end_lifecycle(
+                project_root,
+                run_root,
+                dead_end_state,
+                dead_end_path=run_root / "protocol_dead_end.json",
+                reason="contract test",
+            )
+            exception_blocker = lifecycle_request_blockers._try_write_control_blocker_for_exception(
+                project_root,
+                source="contract_test",
+                error_message="contract test exception",
+                event="contract_test_event",
+                action_type="contract_test_action",
+                payload={},
+            )
+            lifecycle_support._write_manual_resume_binding(
+                project_root,
+                run_root,
+                dict(run_state),
+                {"recorded_by": "contract_test"},
+            )
+            startup_state, startup_run_root = startup_support._ensure_startup_run_state(
+                project_root,
+                {
+                    "run_id": "run-start",
+                    "run_root": ".flowpilot/runs/run-start",
+                    "startup_answers": {"background_collaboration_authorized": True},
+                },
+            )
+            with self.assertRaisesRegex(router.RouterError, "manifest check"):
+                system_cards_delivery_single._commit_system_card_delivery_artifact(
+                    project_root,
+                    {
+                        "run_id": "run-test",
+                        "flags": {},
+                        "delivered_cards": [],
+                        "manifest_check_requested": False,
+                    },
+                    run_root,
+                    {"card_id": "pm.core", "to_role": "project_manager"},
+                )
+
+            self.assertEqual(terminal_fence["status"], "stopped_by_user")
+            self.assertIsNone(clear_blocker)
+            lifecycle_record = json.loads((run_root / "lifecycle" / "run_lifecycle.json").read_text(encoding="utf-8"))
+            self.assertEqual(lifecycle_record["status"], "protocol_dead_end")
+            self.assertTrue(exception_blocker is None or isinstance(exception_blocker, dict))
+            self.assertTrue(router._continuation_binding_path(run_root).exists())
+            self.assertEqual(startup_state["run_id"], "run-start")
+            self.assertEqual(startup_run_root.name, "run-start")
 
     def test_artifact_validation_and_child_skill_capability_external_contracts(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-artifact-owner-") as tmp:

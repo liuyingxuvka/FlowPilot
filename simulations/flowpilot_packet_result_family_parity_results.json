@@ -140,7 +140,7 @@
     },
     {
       "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
       "covered_obligations": [
         "packet_result_family.material_scan.durable_event_fold",
         "packet_result_family.material_scan.partial_wait",
@@ -160,7 +160,7 @@
     },
     {
       "assertion_scope": "external_contract",
-      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
       "covered_obligations": [
         "packet_result_family.material_scan.durable_event_fold",
         "packet_result_family.material_scan.partial_wait",

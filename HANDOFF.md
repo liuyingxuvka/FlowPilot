@@ -119,6 +119,15 @@ operator judges model/process/state risks; Runtime/Router owns fields, hashes,
 paths, packet/result/current-run ids, role-agent binding, output-contract shape,
 and ledger absorption.
 
+The current executable-node trunk invariant is: PM node context package ->
+pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer.
+This is not optional and not historical residue. Runtime blocks worker packet
+release until the current node generation has an accepted pre-work FlowGuard
+gate, and any pre-work block returns to PM repair before a fresh pre-work
+FlowGuard pass can release worker execution again. The focused owning model is
+`simulations/flowpilot_prework_flowguard_gate_model.py`; the total
+Model-Test Alignment family is named `current-node trunk invariant`.
+
 As of the new-only FlowPilot contract, the active maintenance baseline is
 recorded in `docs/flowpilot_maintenance_convergence_20260527.md` and the
 current new-only surface-removal change. Completed OpenSpec changes were archived,

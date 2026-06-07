@@ -5,7 +5,7 @@
   "route_id": "<route-id>",
   "node_id": "<node-id-or-null>",
   "gate_id": "<gate-id>",
-  "approval_scope": "<startup_pm_gate|material_sufficiency|product_architecture|child_skill_gate|process_model|product_model|human_review|parent_backward_review|route_mutation|pm_runway|final_ledger|lifecycle|completion>",
+  "approval_scope": "<pm_startup_intake_release|material_sufficiency|product_architecture|child_skill_gate|process_model|product_model|human_review|parent_backward_review|route_mutation|pm_runway|final_ledger|lifecycle|completion>",
   "approver_role": "<project_manager|human_like_reviewer|flowguard_operator>",
   "required_approver": "<project_manager|human_like_reviewer|flowguard_operator>",
   "decided_at": "<iso-8601-timestamp-or-null>",

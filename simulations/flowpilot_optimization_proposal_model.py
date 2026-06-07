@@ -64,8 +64,8 @@ class State:
     router_owned_controller_receipt: bool = False
     controller_role_confirmed: bool = False
     controller_policy_hash_recorded: bool = False
-    startup_reviewer_fact_check_kept: bool = False
-    startup_reviewer_external_facts_checked: bool = False
+    startup_runtime_mechanical_audit_kept: bool = False
+    startup_runtime_display_status_checked: bool = False
 
     controller_envelope_only: bool = False
     controller_read_sealed_body: bool = False
@@ -153,8 +153,8 @@ def _full_strength_base(**changes: object) -> State:
             child_skill_gate_evidence_obligations_kept=True,
             controller_core_delivered=True,
             controller_role_confirmed=True,
-            startup_reviewer_fact_check_kept=True,
-            startup_reviewer_external_facts_checked=True,
+            startup_runtime_mechanical_audit_kept=True,
+            startup_runtime_display_status_checked=True,
             controller_envelope_only=True,
             sealed_body_boundary_kept=True,
             all_required_gates_passed=True,
@@ -344,10 +344,10 @@ def invariant_failures(state: State) -> list[str]:
         state.controller_core_delivered
         and state.controller_role_confirmed
         and state.controller_policy_hash_recorded
-        and state.startup_reviewer_fact_check_kept
-        and state.startup_reviewer_external_facts_checked
+        and state.startup_runtime_mechanical_audit_kept
+        and state.startup_runtime_display_status_checked
     ):
-        failures.append("router-owned controller receipt lacked core delivery, policy hash, role confirmation, or startup reviewer fact check")
+        failures.append("router-owned controller receipt lacked core delivery, policy hash, role confirmation, or startup runtime mechanical audit")
     if not (state.router_owned_controller_receipt or state.pm_reset_message_used):
         failures.append("Controller role confirmation had neither PM reset nor router-owned receipt authority")
 
@@ -482,10 +482,10 @@ def hazard_states() -> dict[str, State]:
             pm_reset_message_used=False,
             controller_policy_hash_recorded=False,
         ),
-        "router_reset_without_startup_fact_review": replace(
+        "router_reset_without_startup_runtime_audit": replace(
             safe,
             router_owned_controller_receipt=True,
-            startup_reviewer_fact_check_kept=False,
+            startup_runtime_mechanical_audit_kept=False,
         ),
         "card_bundle_cross_role": replace(safe, same_role_card_bundle_used=True, cross_role_bundle_used=True),
         "card_bundle_missing_per_card_ledger": replace(safe, same_role_card_bundle_used=True, per_card_ledger_entries_kept=False),

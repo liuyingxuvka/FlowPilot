@@ -153,7 +153,7 @@
         "host_capability_probe_result",
         "automated_or_manual_resume_mode",
         "if_automated_then_stable_manual_resume_ready",
-        "if_manual_resume_then_current_foreground_patrol_ready",
+        "if_manual_resume_then_current_lifecycle_guard_ready",
         "unattended_recovery_claim_allowed_flag",
         "blocker_or_repair_reason_when_setup_fails"
       ],

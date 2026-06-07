@@ -158,7 +158,7 @@ def apply_bootloader_action(router: ModuleType, project_root: Path, action_type:
             write_json(run_root / 'mailbox' / 'outbox' / 'user_intake.json', user_intake)
             result_extra['user_intake_source'] = 'startup_intake_ui'
             result_extra['controller_may_read_body'] = False
-            result_extra['reviewer_live_review_source'] = 'startup_intake_record'
+            result_extra['startup_intake_authority_source'] = 'startup_intake_record'
             router._finish_bootloader_action(project_root, state, pending, flag=flag, label=str(pending['label']), action_type=action_type, result_extra=result_extra)
             result = {'ok': True, 'applied': action_type, 'postcondition': flag}
             result.update(result_extra)

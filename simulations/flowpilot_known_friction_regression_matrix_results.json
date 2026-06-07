@@ -337,7 +337,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:3056cc47b575b33b7dee3b08c6c77961d70dcabf6905aa0f95cb09ea3277b595"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -403,7 +403,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:3056cc47b575b33b7dee3b08c6c77961d70dcabf6905aa0f95cb09ea3277b595"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -507,7 +507,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:3056cc47b575b33b7dee3b08c6c77961d70dcabf6905aa0f95cb09ea3277b595"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -560,7 +560,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:3056cc47b575b33b7dee3b08c6c77961d70dcabf6905aa0f95cb09ea3277b595"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -811,7 +811,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:3056cc47b575b33b7dee3b08c6c77961d70dcabf6905aa0f95cb09ea3277b595"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -917,7 +917,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:3056cc47b575b33b7dee3b08c6c77961d70dcabf6905aa0f95cb09ea3277b595"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -1601,7 +1601,7 @@
       },
       {
         "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
         "covered_obligations": [
           "packet_result_family.material_scan.durable_event_fold",
           "packet_result_family.material_scan.partial_wait",
@@ -1621,7 +1621,7 @@
       },
       {
         "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
         "covered_obligations": [
           "packet_result_family.material_scan.durable_event_fold",
           "packet_result_family.material_scan.partial_wait",
@@ -3727,7 +3727,7 @@
       "priority": "P0",
       "replay_fixture": "known_friction.ack_only_card_resolved_role_output_pending",
       "runtime_surface": "card ACK return ledger + Router ACK/return preconsumption",
-      "runtime_test": "tests.router_runtime.ack_return.AckReturnRuntimeTests.test_record_external_event_preconsumes_valid_card_ack_before_blocking",
+      "runtime_test": "tests.router_runtime.ack_return.AckReturnRuntimeTests.test_router_daemon_tick_consumes_card_ack_without_manual_next",
       "source_class": "ack_completion_conflation",
       "trigger_state": "Controller/Router return ledger has a valid ACK while the semantic role-output obligation remains pending."
     },

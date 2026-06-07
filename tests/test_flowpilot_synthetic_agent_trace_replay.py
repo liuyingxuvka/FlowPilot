@@ -476,6 +476,7 @@ class FlowPilotSyntheticExceptionTraceReplayTests(FlowPilotRouterRuntimeTestBase
 
         ambiguous_root = self.make_project()
         ambiguous_run_root = self.boot_to_controller(ambiguous_root)
+        self.ensure_current_role_agent_for_role(ambiguous_root, "worker")
         (ambiguous_run_root / "role_binding_memory" / "worker.json").unlink()
         router.record_external_event(ambiguous_root, "manual_resume_requested")
         action = self.next_after_display_sync(ambiguous_root)

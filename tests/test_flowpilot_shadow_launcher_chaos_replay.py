@@ -271,6 +271,23 @@ class FlowPilotShadowLauncherChaosReplayTests(FlowPilotRouterRuntimeTestBase):
                 {"event_envelope_ref": {"path": envelope_path, "hash": "0" * 64}},
             )
 
+    def test_malformed_fake_ai_package_generator_rejects_finite_bad_classes(self) -> None:
+        root = self.make_project()
+        self.boot_to_controller(root)
+
+        rejectors = {
+            "missing_runtime_envelope": self._reject_missing_runtime_envelope,
+            "wrong_event_schema": self._reject_wrong_event_schema,
+            "controller_visible_body_leak": self._reject_controller_visible_body_leak,
+            "wrong_author_role": self._reject_wrong_author_role,
+            "stale_hash_or_path": self._reject_stale_hash_or_path,
+        }
+        self.assertEqual(set(rejectors), set(self.required_malformed_package_classes()))
+
+        for package_class in self.required_malformed_package_classes():
+            with self.subTest(package_class=package_class):
+                rejectors[package_class](root)
+
     def test_bounded_soak_repeats_startup_recovery_and_cleanup_without_residue(self) -> None:
         cycle_results: list[dict[str, str]] = []
         for cycle in range(2):

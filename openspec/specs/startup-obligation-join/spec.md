@@ -42,48 +42,48 @@ startup-scope card ACKs have returned.
 - **THEN** Router MUST keep the existing pending-card-return blocking behavior
   before issuing unrelated formal work that could cross the ACK boundary
 
-### Requirement: Reviewer startup review waits for startup prep ACK join
+### Requirement: Startup runtime mechanical audit waits for startup prep ACK join
 
-FlowPilot SHALL check startup prep pending card returns before Reviewer begins
-live startup fact review.
+FlowPilot SHALL check startup prep pending card returns before Runtime/Router
+writes startup mechanical audit and before PM receives startup intake release.
 
-#### Scenario: Reviewer startup fact card waits for prep ACK join
+#### Scenario: Runtime startup audit waits for prep ACK join
 
 - **WHEN** a startup prep card ACK remains pending
-- **AND** Router would otherwise deliver `reviewer.startup_fact_check`
+- **AND** Router would otherwise write startup mechanical audit or release PM startup intake
 - **THEN** Router MUST return the ordinary pending-card-return wait/remediation
   for the missing prep ACK
-- **AND** Router MUST NOT deliver `reviewer.startup_fact_check` until the prep
-  ACK join is clean
+- **AND** Router MUST NOT write startup mechanical audit or release PM startup
+  intake until the prep ACK join is clean
 
-#### Scenario: Reviewer startup report waits for prep ACK join
+#### Scenario: PM startup intake release waits for prep ACK join
 
-- **WHEN** Reviewer submits `reviewer_reports_startup_facts`
+- **WHEN** PM submits `pm_releases_startup_intake`
 - **AND** at least one startup prep card ACK remains pending
 - **THEN** Router MUST reject or defer the report through the existing
   pending-card-return blocker path
 - **AND** Router MUST return the ordinary pending-card-return wait/remediation
   for the missing ACK
-- **AND** `startup_fact_reported` MUST remain false
+- **AND** `startup_intake_released` MUST remain false
 
-### Requirement: PM startup activation uses existing same-role ACK blocking
+### Requirement: PM startup intake release uses existing same-role ACK blocking
 
 FlowPilot SHALL NOT add a separate all-startup ACK join before PM startup
-activation. PM activation decisions SHALL use the ordinary same-role card ACK
-dependency for `pm.startup_activation`.
+intake release. PM startup intake release decisions SHALL use the ordinary
+same-role card ACK dependency for `pm.startup_intake_release`.
 
-#### Scenario: PM activation waits for its own card ACK
+#### Scenario: PM startup intake release waits for its own card ACK
 
-- **WHEN** PM submits `pm_approves_startup_activation`
-- **AND** the PM startup activation card ACK remains pending
+- **WHEN** PM submits `pm_releases_startup_intake`
+- **AND** the PM startup intake release card ACK remains pending
 - **THEN** Router MUST block through the existing same-role pending-card-return
   path
-- **AND** `startup_activation_approved` MUST remain false
+- **AND** `startup_intake_released` MUST remain false
 
-#### Scenario: Startup activation opens after reviewer report and PM card ACK
+#### Scenario: Startup intake release opens after runtime audit and PM card ACK
 
-- **WHEN** reviewer startup facts are complete
-- **AND** PM has ACKed `pm.startup_activation`
-- **AND** PM submits a valid startup activation approval
-- **THEN** Router MAY set `startup_activation_approved`
-- **AND** route/material work MAY begin only after that activation opens startup
+- **WHEN** startup runtime mechanical audit is complete
+- **AND** PM has ACKed `pm.startup_intake_release`
+- **AND** PM submits a valid startup intake release approval
+- **THEN** Router MAY set `startup_intake_released`
+- **AND** route/material work MAY begin only after that release opens startup

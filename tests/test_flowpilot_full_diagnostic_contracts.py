@@ -195,10 +195,10 @@ import flowpilot_router_startup_bootloader_progress as startup_bootloader_progre
 import flowpilot_router_startup_bootloader_state as startup_bootloader_state  # noqa: E402
 import flowpilot_router_startup_closure as startup_closure  # noqa: E402
 import flowpilot_router_startup_display as startup_display  # noqa: E402
-import flowpilot_router_startup_fact_boundary as startup_fact_boundary  # noqa: E402
-import flowpilot_router_startup_fact_boundary_audit as startup_fact_boundary_audit  # noqa: E402
-import flowpilot_router_startup_fact_boundary_checks as startup_fact_boundary_checks  # noqa: E402
-import flowpilot_router_startup_fact_boundary_controller as startup_fact_boundary_controller  # noqa: E402
+import flowpilot_router_startup_mechanical_boundary as startup_mechanical_boundary  # noqa: E402
+import flowpilot_router_startup_mechanical_boundary_audit as startup_mechanical_boundary_audit  # noqa: E402
+import flowpilot_router_startup_mechanical_boundary_checks as startup_mechanical_boundary_checks  # noqa: E402
+import flowpilot_router_startup_mechanical_boundary_controller as startup_mechanical_boundary_controller  # noqa: E402
 import flowpilot_router_startup_flow as startup_flow  # noqa: E402
 import flowpilot_router_startup_intake as startup_intake  # noqa: E402
 import flowpilot_router_startup_intake_flowguard_capability as startup_intake_flowguard_capability  # noqa: E402
@@ -314,7 +314,7 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             startup_bootloader,
             startup_closure,
             startup_display,
-            startup_fact_boundary,
+            startup_mechanical_boundary,
             startup_flow,
             startup_intake,
             startup_role_recovery,
@@ -1038,6 +1038,24 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
             controller_standby_policy._foreground_standby_policy("terminal")["controller_stop_allowed"]
         )
 
+    def test_event_wait_repair_external_contracts(self) -> None:
+        digest = event_identity._stable_identity_hash(router, {"event": "worker_current_node_result_returned"})
+        run_state = {"events": [{"event": "worker_current_node_result_returned"}], "flags": {}}
+        model_gate_state._sync_model_gate_flags(run_state, "flowguard_operator_submits_product_behavior_model")
+        event_contract = protocol_external_events.external_event_contract(
+            "flowguard_operator_submits_product_behavior_model"
+        )
+
+        self.assertEqual(
+            digest,
+            event_identity_scopes._stable_identity_hash(router, {"event": "worker_current_node_result_returned"}),
+        )
+        self.assertEqual(event_intake.role_list("project_manager, worker"), {"project_manager", "worker"})
+        self.assertIn("flowpilot_router_events_repair_policy", events_repair.owner_child_module_names())
+        self.assertTrue(expected_waits._run_state_has_event(run_state, "worker_current_node_result_returned"))
+        self.assertTrue(run_state["flags"]["product_behavior_model_submitted"])
+        self.assertEqual(event_contract["flag"], "product_behavior_model_submitted")
+
     def test_facade_export_manifest_external_contracts(self) -> None:
         action_exports = manifest_actions.owner_exports_actions()
         controller_exports = manifest_controller.owner_exports_controller()
@@ -1129,6 +1147,176 @@ class FlowPilotFullDiagnosticContractTests(unittest.TestCase):
         self.assertTrue(any(key[0] == "flowpilot_router_pm_role_followup" for key in terminal_exports))
         self.assertEqual(proxy.__name__, "parse_args")
         self.assertEqual(proxy.__module__, router.__name__)
+
+    def test_lifecycle_startup_system_card_external_contracts(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-lifecycle-startup-contracts-") as tmp:
+            project_root = Path(tmp)
+            run_root = project_root / ".flowpilot" / "runs" / "run-test"
+            run_root.mkdir(parents=True)
+            run_state = {
+                "schema_version": "flowpilot.run_state.v1",
+                "run_id": "run-test",
+                "run_root": ".flowpilot/runs/run-test",
+                "flags": {},
+                "events": [],
+                "history": [],
+                "pending_action": None,
+                "daemon_mode_enabled": True,
+            }
+            now = "2026-05-21T00:00:00Z"
+            clear_blocker = lifecycle_requests._clear_active_control_blocker_for_terminal_lifecycle(
+                project_root,
+                run_root,
+                dict(run_state),
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+                cleared_at=now,
+            )
+            terminal_fence = lifecycle_requests._write_terminal_lifecycle_fence(
+                project_root,
+                run_root,
+                dict(run_state),
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+            )
+            lifecycle_state = dict(run_state)
+            lifecycle_requests._write_run_lifecycle_request(
+                project_root,
+                run_root,
+                lifecycle_state,
+                event="user_requests_run_stop",
+                payload={"requested_by": "user", "reason": "contract test"},
+            )
+            dead_end_state = dict(run_state)
+            lifecycle_requests._write_protocol_dead_end_lifecycle(
+                project_root,
+                run_root,
+                dead_end_state,
+                dead_end_path=run_root / "protocol_dead_end.json",
+                reason="contract test",
+            )
+            exception_blocker = lifecycle_requests._try_write_control_blocker_for_exception(
+                project_root,
+                source="contract_test",
+                error_message="contract test exception",
+                event="contract_test_event",
+                action_type="contract_test_action",
+                payload={},
+            )
+            repair_clear = lifecycle_request_terminal_quarantine.clear_active_repair_transaction_for_terminal_lifecycle(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+                cleared_at=now,
+            )
+            material_quarantine = lifecycle_request_terminal_quarantine.quarantine_material_progress_for_terminal_lifecycle(
+                router,
+                project_root,
+                run_root,
+                run_state,
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+                reconciled_at=now,
+            )
+            duplicate_quarantine = lifecycle_request_terminal_quarantine.quarantine_duplicate_role_events_for_terminal_lifecycle(
+                run_state,
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+                reconciled_at=now,
+            )
+            packet_quarantine = lifecycle_request_terminal_quarantine.quarantine_packet_result_authority_for_terminal_lifecycle(
+                router,
+                project_root,
+                run_root,
+                mode="stopped_by_user",
+                event="user_requests_run_stop",
+                reconciled_at=now,
+            )
+            intake_contract = startup_intake._startup_intake_result_payload_contract(
+                router,
+                project_root,
+                {"run_id": "run-test", "run_root": ".flowpilot/runs/run-test"},
+            )
+            lifecycle_support._write_manual_resume_binding(
+                project_root,
+                run_root,
+                dict(run_state),
+                {"recorded_by": "contract_test"},
+            )
+            manual_binding_exists = router._continuation_binding_path(run_root).exists()
+            startup_state, startup_run_root = startup_support._ensure_startup_run_state(
+                project_root,
+                {
+                    "run_id": "run-start",
+                    "run_root": ".flowpilot/runs/run-start",
+                    "startup_answers": {"background_collaboration_authorized": True},
+                },
+            )
+            with self.assertRaisesRegex(router.RouterError, "manifest check"):
+                system_cards_delivery._commit_system_card_delivery_artifact(
+                    project_root,
+                    {
+                        "run_id": "run-test",
+                        "flags": {},
+                        "delivered_cards": [],
+                        "manifest_check_requested": False,
+                    },
+                    run_root,
+                    {"card_id": "pm.core", "to_role": "project_manager"},
+                )
+
+        self.assertIs(
+            lifecycle_requests._write_terminal_lifecycle_fence,
+            lifecycle_request_fence._write_terminal_lifecycle_fence,
+        )
+        self.assertIs(
+            lifecycle_requests._clear_active_control_blocker_for_terminal_lifecycle,
+            lifecycle_request_reconciliation._clear_active_control_blocker_for_terminal_lifecycle,
+        )
+        self.assertIs(
+            lifecycle_requests._write_run_lifecycle_request,
+            lifecycle_request_records._write_run_lifecycle_request,
+        )
+        self.assertIs(
+            lifecycle_requests._write_protocol_dead_end_lifecycle,
+            lifecycle_request_records._write_protocol_dead_end_lifecycle,
+        )
+        self.assertIs(
+            lifecycle_requests._try_write_control_blocker_for_exception,
+            lifecycle_request_blockers._try_write_control_blocker_for_exception,
+        )
+        self.assertIsNone(clear_blocker)
+        self.assertEqual(terminal_fence["status"], "stopped_by_user")
+        self.assertEqual(lifecycle_state["status"], "stopped_by_user")
+        self.assertEqual(dead_end_state["status"], "protocol_dead_end")
+        self.assertIsNone(exception_blocker)
+        self.assertIsNone(repair_clear)
+        self.assertIsNone(material_quarantine)
+        self.assertIsNone(duplicate_quarantine)
+        self.assertIsNone(packet_quarantine)
+        self.assertEqual(lifecycle_support._lifecycle_record_path(run_root).name, "run_lifecycle.json")
+        self.assertTrue(manual_binding_exists)
+        self.assertIs(startup_bootloader._next_boot_action, startup_bootloader_progress._next_boot_action)
+        self.assertEqual(
+            startup_bootloader._next_boot_action(router, None, {"flags": {}})["action_type"],
+            "load_router",
+        )
+        self.assertEqual(len(startup_display._display_text_hash(router, "display")), 64)
+        self.assertFalse(
+            startup_mechanical_boundary._controller_boundary_constraints(router)["controller_may_read_sealed_bodies"]
+        )
+        self.assertEqual(startup_flow.owner_module_name(), "flowpilot_router_startup_flow")
+        self.assertEqual(intake_contract["payload_key"], "startup_intake_result")
+        self.assertIn("flowpilot_router_startup_role_context", startup_role_recovery.owner_child_module_names())
+        self.assertEqual(startup_state["run_id"], "run-start")
+        self.assertEqual(startup_run_root.name, "run-start")
+        self.assertIs(
+            system_cards_delivery._commit_system_card_delivery_artifact,
+            system_cards_delivery_single._commit_system_card_delivery_artifact,
+        )
 
     def test_startup_intake_flowguard_capability_child_preserves_boundary(self) -> None:
         self.assertIs(

@@ -19,8 +19,8 @@
     ".flowpilot/runs/<run-id>/pm_child_skill_selection.json",
     ".flowpilot/runs/<run-id>/routes/route-001/flow.json",
     ".flowpilot/runs/<run-id>/routes/route-001/flow.md",
-    ".flowpilot/runs/<run-id>/startup_review/latest.json",
-    ".flowpilot/runs/<run-id>/startup_pm_gate/latest.json",
+    ".flowpilot/runs/<run-id>/startup/startup_mechanical_audit.json",
+    ".flowpilot/runs/<run-id>/startup/pm_startup_intake_decision.json",
     ".flowpilot/task-models/<route-model>/results.json"
   ],
   "id": "node-001-start",
@@ -56,8 +56,9 @@
     "candidate_route_tree_generated",
     "root_route_model_checked",
     "capability_evidence_synced",
-    "startup_preflight_reviewer_fact_report_written",
-    "pm_start_gate_opened",
+    "startup_runtime_mechanical_audit_written",
+    "pm_startup_intake_node_package_decision_recorded",
+    "pm_startup_intake_released_to_route",
     "work_beyond_startup_allowed_by_pm"
   ],
   "status": "pending",

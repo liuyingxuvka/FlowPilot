@@ -37,7 +37,7 @@ def source_obligations() -> tuple[ModelObligation, ...]:
         _source_obligation(
             "startup.run_isolation_and_activation",
             obligation_type="scenario",
-            description="Source-audited startup activation failure boundary through recorded external events.",
+            description="Source-audited startup boundary that rejects legacy reviewer/PM startup role gate events.",
             required_test_kinds=(FAILURE,),
         ),
         _source_obligation(
@@ -340,6 +340,12 @@ def source_obligations() -> tuple[ModelObligation, ...]:
             obligation_type="contract",
             description="Leaf source-audited startup intake FlowGuard capability boundary owns finite route classification, import snapshot, and portable capability snapshot writes.",
             required_test_kinds=(EDGE,),
+        ),
+        _source_obligation(
+            "runtime_owner.lifecycle_startup_direct_helper_boundary",
+            obligation_type="contract",
+            description="Leaf source-audited lifecycle/startup direct helper boundary owns terminal lifecycle writes, startup run-state repair, manual resume binding, and system card commit effects.",
+            required_test_kinds=(NEGATIVE,),
         ),
         _source_obligation(
             "packet_runtime.owner_helper_contracts",

@@ -315,7 +315,7 @@ KNOWN_FRICTION_ROWS: tuple[dict[str, Any], ...] = (
         "model_obligation": "ack.return_wait_preconsumption",
         "model_check": "python simulations/run_flowpilot_card_envelope_checks.py",
         "runtime_surface": "card ACK return ledger + Router ACK/return preconsumption",
-        "runtime_test": "tests.router_runtime.ack_return.AckReturnRuntimeTests.test_record_external_event_preconsumes_valid_card_ack_before_blocking",
+        "runtime_test": "tests.router_runtime.ack_return.AckReturnRuntimeTests.test_router_daemon_tick_consumes_card_ack_without_manual_next",
         "replay_fixture": "known_friction.ack_only_card_resolved_role_output_pending",
         "child_evidence_ids": [
             "packet/card/ack",

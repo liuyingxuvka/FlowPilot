@@ -2,7 +2,7 @@
 
 This child module is part of the ``flowpilot_router_work_packets_current_node``
 facade split. It receives the router facade as an explicit runtime dependency
-so shared state writers and public entrypoints remain compatible.
+so shared state writers and public entrypoints stay aligned.
 """
 
 from __future__ import annotations

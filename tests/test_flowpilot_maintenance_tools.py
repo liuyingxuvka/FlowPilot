@@ -201,8 +201,8 @@ class FlowPilotMaintenanceToolTests(unittest.TestCase):
     def test_startup_templates_do_not_offer_fallback_modes(self) -> None:
         paths = [
             ROOT / "templates" / "flowpilot" / "state.template.json",
-            ROOT / "templates" / "flowpilot" / "startup_review.template.json",
-            ROOT / "templates" / "flowpilot" / "startup_pm_gate.template.json",
+            ROOT / "templates" / "flowpilot" / "startup_mechanical_audit.template.json",
+            ROOT / "templates" / "flowpilot" / "pm_startup_intake_decision.template.json",
             ROOT / "templates" / "flowpilot" / "standard_scenario_pack.template.json",
             ROOT / "templates" / "flowpilot" / "capabilities.template.json",
         ]

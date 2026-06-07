@@ -40,7 +40,7 @@ HAZARD_EXPECTED_FAILURES = {
     "background_requested_without_ack": "startup answers accepted without background_collaboration_authorized=true",
     "host_background_unavailable_continues": "FlowPilot continued after host background collaboration was unavailable",
     "chat_opens_cockpit": "Cockpit opened despite UI chat display choice",
-    "reviewer_uses_chat": "reviewer startup pass relied on chat instead of UI record/receipt/envelope",
+    "runtime_mechanical_audit_uses_chat": "runtime startup release relied on chat instead of UI record/receipt/envelope",
     "ui_confirm_requires_old_chat": "UI-confirmed startup still required old chat answers",
 }
 
@@ -64,8 +64,9 @@ def _state_id(state: model.State) -> str:
         f"background_ack={state.background_collaboration_authorized},legacy={state.legacy_startup_option_key_seen}|"
         f"run={state.run_shell_created}|request_ref={state.user_request_ref_recorded}|"
         f"pm_packet={state.pm_intake_packet_created},{state.pm_is_only_body_reader}|"
-        f"reviewer={state.reviewer_checked_ui_record},{state.reviewer_checked_ui_receipt},{state.reviewer_checked_envelope_hash},"
-        f"chat={state.reviewer_used_chat_history},pass={state.reviewer_startup_passed}|"
+        f"runtime_audit={state.runtime_checked_startup_intake_record},"
+        f"{state.runtime_checked_startup_receipt},{state.runtime_checked_startup_envelope_hash},"
+        f"chat={state.runtime_mechanical_audit_used_chat_history},release={state.startup_runtime_released}|"
         f"host=background_requested={state.background_collaboration_requested},"
         f"background_available={state.host_background_collaboration_available},{state.cockpit_opened},"
         f"chat_display_required={state.chat_display_requirement_recorded}|"

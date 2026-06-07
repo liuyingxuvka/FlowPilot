@@ -53,6 +53,7 @@ class FlowPilotSyntheticAgentCoverageMatrixTests(unittest.TestCase):
             "startup",
             "packet/card/ack",
             "route mutation",
+            "current-node trunk invariant",
             "terminal/closure/resume",
             "role/output contracts",
             "router loop/daemon",

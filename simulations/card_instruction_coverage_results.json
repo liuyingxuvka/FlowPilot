@@ -1,8 +1,8 @@
 {
   "actual_card_graph": {
-    "active_card_count": 56,
-    "card_count": 63,
-    "checked_count": 63,
+    "active_card_count": 54,
+    "card_count": 61,
+    "checked_count": 61,
     "external_card_flag_errors": [],
     "failures": [],
     "labels": [
@@ -50,7 +50,6 @@
       "card_instruction_checked:pm.role_work_request",
       "card_instruction_checked:pm.root_contract",
       "card_instruction_checked:pm.route_skeleton",
-      "card_instruction_checked:pm.startup_activation",
       "card_instruction_checked:pm.startup_intake",
       "card_instruction_checked:reviewer.child_skill_gate_manifest_review",
       "card_instruction_checked:reviewer.core",
@@ -63,7 +62,6 @@
       "card_instruction_checked:reviewer.research_direct_source_check",
       "card_instruction_checked:reviewer.root_contract_challenge",
       "card_instruction_checked:reviewer.route_challenge",
-      "card_instruction_checked:reviewer.startup_fact_check",
       "card_instruction_checked:reviewer.strict_gate_obligation_review",
       "card_instruction_checked:reviewer.worker_result_review",
       "card_instruction_checked:startup_banner",
@@ -86,7 +84,7 @@
       "stale_controller_ack_guidance": false
     },
     "router_sequence_manifest_errors": [],
-    "state_count": 65,
+    "state_count": 63,
     "status": "complete"
   },
   "hazard_checks": {

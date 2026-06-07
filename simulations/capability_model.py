@@ -261,22 +261,22 @@ class State:
     role_bindings_opened_after_route_allocation: bool = False
     historical_agent_ids_compared: bool = False
     reused_historical_agent_ids: bool = False
-    startup_preflight_review_report_written: bool = False
-    startup_preflight_review_blocking_findings: bool = False
-    startup_reviewer_fact_evidence_checked: bool = False
-    startup_reviewer_checked_run_isolation: bool = False
-    startup_reviewer_checked_prior_work_boundary: bool = False
-    startup_reviewer_checked_live_agent_freshness: bool = False
-    startup_reviewer_checked_no_historical_agent_reuse: bool = False
-    startup_reviewer_checked_capability_resolution: bool = False
+    startup_runtime_mechanical_audit_written: bool = False
+    startup_runtime_mechanical_blocking_findings: bool = False
+    startup_runtime_mechanical_evidence_checked: bool = False
+    startup_runtime_checked_run_identity: bool = False
+    startup_runtime_checked_prior_work_boundary: bool = False
+    startup_runtime_checked_role_binding_freshness: bool = False
+    startup_runtime_checked_no_historical_agent_reuse: bool = False
+    startup_runtime_checked_capability_resolution: bool = False
     startup_pm_checked_manual_resume_binding: bool = False
     startup_pm_capability_resolution_recorded: bool = False
     manual_resume_binding_bound_to_current_run: bool = False
     manual_resume_binding_name_only_checked: bool = False
     pm_returned_startup_blockers: bool = False
     startup_worker_remediation_completed: bool = False
-    pm_first_round_startup_entry_audit_done: bool = False
-    pm_start_gate_opened: bool = False
+    pm_startup_intake_node_package_decision_recorded: bool = False
+    pm_startup_intake_released_to_route: bool = False
     work_beyond_startup_allowed: bool = False
     terminal_lifecycle_frontier_written: bool = False
     lifecycle_reconciliation_done: bool = False
@@ -1021,17 +1021,17 @@ def _continuation_lifecycle_valid(state: State) -> bool:
     )
 
 
-def _startup_pm_gate_ready(state: State) -> bool:
+def _startup_intake_release_ready(state: State) -> bool:
     return (
-        state.startup_preflight_review_report_written
-        and not state.startup_preflight_review_blocking_findings
-        and state.startup_reviewer_fact_evidence_checked
+        state.startup_runtime_mechanical_audit_written
+        and not state.startup_runtime_mechanical_blocking_findings
+        and state.startup_runtime_mechanical_evidence_checked
         and _run_isolation_ready(state)
-        and state.startup_reviewer_checked_run_isolation
-        and state.startup_reviewer_checked_prior_work_boundary
-        and state.startup_reviewer_checked_live_agent_freshness
-        and state.startup_reviewer_checked_no_historical_agent_reuse
-        and state.startup_reviewer_checked_capability_resolution
+        and state.startup_runtime_checked_run_identity
+        and state.startup_runtime_checked_prior_work_boundary
+        and state.startup_runtime_checked_role_binding_freshness
+        and state.startup_runtime_checked_no_historical_agent_reuse
+        and state.startup_runtime_checked_capability_resolution
         and (
             state.manual_resume_boundary_recorded
             or (
@@ -1040,9 +1040,9 @@ def _startup_pm_gate_ready(state: State) -> bool:
                 and not state.manual_resume_binding_name_only_checked
             )
         )
-        and state.pm_first_round_startup_entry_audit_done
+        and state.pm_startup_intake_node_package_decision_recorded
         and state.startup_pm_capability_resolution_recorded
-        and state.pm_start_gate_opened
+        and state.pm_startup_intake_released_to_route
     )
 
 
@@ -1161,7 +1161,7 @@ def _route_scaffold_ready(state: State) -> bool:
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
         and _runtime_role_binding_startup_resolved(state)
-        and _startup_pm_gate_ready(state)
+        and _startup_intake_release_ready(state)
         and state.work_beyond_startup_allowed
     )
 
@@ -1223,7 +1223,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
         and _runtime_role_binding_startup_resolved(state)
-        and _startup_pm_gate_ready(state)
+        and _startup_intake_release_ready(state)
         and state.work_beyond_startup_allowed
     )
 
@@ -1284,7 +1284,7 @@ def _route_scaffold_lifecycle_valid(state: State) -> bool:
         and state.capability_user_flow_diagram_refreshed
         and state.capability_user_flow_diagram_emitted
         and _runtime_role_binding_startup_resolved(state)
-        and _startup_pm_gate_ready(state)
+        and _startup_intake_release_ready(state)
         and state.work_beyond_startup_allowed
     )
 
@@ -1796,17 +1796,17 @@ class CapabilityRouterStep:
         "role_bindings_opened_after_route_allocation",
         "historical_agent_ids_compared",
         "reused_historical_agent_ids",
-        "startup_preflight_review_report_written",
-        "startup_preflight_review_blocking_findings",
-        "startup_reviewer_fact_evidence_checked",
-        "startup_reviewer_checked_run_isolation",
-        "startup_reviewer_checked_prior_work_boundary",
-        "startup_reviewer_checked_live_agent_freshness",
-        "startup_reviewer_checked_no_historical_agent_reuse",
+        "startup_runtime_mechanical_audit_written",
+        "startup_runtime_mechanical_blocking_findings",
+        "startup_runtime_mechanical_evidence_checked",
+        "startup_runtime_checked_run_identity",
+        "startup_runtime_checked_prior_work_boundary",
+        "startup_runtime_checked_role_binding_freshness",
+        "startup_runtime_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
-        "pm_first_round_startup_entry_audit_done",
-        "pm_start_gate_opened",
+        "pm_startup_intake_node_package_decision_recorded",
+        "pm_startup_intake_released_to_route",
         "work_beyond_startup_allowed",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
@@ -2165,17 +2165,17 @@ class CapabilityRouterStep:
         "role_bindings_opened_after_route_allocation",
         "historical_agent_ids_compared",
         "reused_historical_agent_ids",
-        "startup_preflight_review_report_written",
-        "startup_preflight_review_blocking_findings",
-        "startup_reviewer_fact_evidence_checked",
-        "startup_reviewer_checked_run_isolation",
-        "startup_reviewer_checked_prior_work_boundary",
-        "startup_reviewer_checked_live_agent_freshness",
-        "startup_reviewer_checked_no_historical_agent_reuse",
+        "startup_runtime_mechanical_audit_written",
+        "startup_runtime_mechanical_blocking_findings",
+        "startup_runtime_mechanical_evidence_checked",
+        "startup_runtime_checked_run_identity",
+        "startup_runtime_checked_prior_work_boundary",
+        "startup_runtime_checked_role_binding_freshness",
+        "startup_runtime_checked_no_historical_agent_reuse",
         "pm_returned_startup_blockers",
         "startup_worker_remediation_completed",
-        "pm_first_round_startup_entry_audit_done",
-        "pm_start_gate_opened",
+        "pm_startup_intake_node_package_decision_recorded",
+        "pm_startup_intake_released_to_route",
         "work_beyond_startup_allowed",
         "terminal_lifecycle_frontier_written",
         "lifecycle_reconciliation_done",
@@ -2672,40 +2672,40 @@ def dependency_plan_before_route_or_implementation(
         )
     if work_beyond_startup_started and not state.work_beyond_startup_allowed:
         return InvariantResult.fail(
-            "capability work beyond startup started before PM allowed work from a factual reviewer report"
+            "capability work beyond startup started before PM released startup intake from the runtime mechanical audit"
         )
-    if state.startup_preflight_review_report_written and not state.startup_reviewer_fact_evidence_checked:
+    if state.startup_runtime_mechanical_audit_written and not state.startup_runtime_mechanical_evidence_checked:
         return InvariantResult.fail(
-            "capability startup reviewer report was written without independent fact evidence checks"
+            "capability startup runtime mechanical audit was written without checking current sealed intake, paths, hashes, display status, and current run evidence"
         )
-    if state.startup_preflight_review_report_written and not (
-        state.startup_reviewer_checked_run_isolation
-        and state.startup_reviewer_checked_prior_work_boundary
+    if state.startup_runtime_mechanical_audit_written and not (
+        state.startup_runtime_checked_run_identity
+        and state.startup_runtime_checked_prior_work_boundary
     ):
         return InvariantResult.fail(
-            "capability startup reviewer report was written without checking current run isolation and prior-work import boundary"
+            "capability startup runtime mechanical audit was written without checking current run identity and prior-work import boundary"
         )
     if (
-        state.startup_preflight_review_report_written
+        state.startup_runtime_mechanical_audit_written
         and state.runtime_role_bindings_opened
         and not (
-            state.startup_reviewer_checked_live_agent_freshness
-            and state.startup_reviewer_checked_no_historical_agent_reuse
+            state.startup_runtime_checked_role_binding_freshness
+            and state.startup_runtime_checked_no_historical_agent_reuse
         )
     ):
         return InvariantResult.fail(
-            "capability startup reviewer report counted live role bindings without checking current-task freshness and historical id reuse"
+            "capability startup runtime mechanical audit counted live role bindings without checking requested-responsibility freshness and historical id reuse"
         )
-    if state.pm_start_gate_opened and not (
-        state.startup_preflight_review_report_written
-        and not state.startup_preflight_review_blocking_findings
-        and state.startup_reviewer_fact_evidence_checked
+    if state.pm_startup_intake_released_to_route and not (
+        state.startup_runtime_mechanical_audit_written
+        and not state.startup_runtime_mechanical_blocking_findings
+        and state.startup_runtime_mechanical_evidence_checked
         and _run_isolation_ready(state)
-        and state.startup_reviewer_checked_run_isolation
-        and state.startup_reviewer_checked_prior_work_boundary
-        and state.startup_reviewer_checked_live_agent_freshness
-        and state.startup_reviewer_checked_no_historical_agent_reuse
-        and state.startup_reviewer_checked_capability_resolution
+        and state.startup_runtime_checked_run_identity
+        and state.startup_runtime_checked_prior_work_boundary
+        and state.startup_runtime_checked_role_binding_freshness
+        and state.startup_runtime_checked_no_historical_agent_reuse
+        and state.startup_runtime_checked_capability_resolution
         and (
             state.manual_resume_boundary_recorded
             or (
@@ -2714,27 +2714,27 @@ def dependency_plan_before_route_or_implementation(
                 and not state.manual_resume_binding_name_only_checked
             )
         )
-        and state.pm_first_round_startup_entry_audit_done
+        and state.pm_startup_intake_node_package_decision_recorded
         and state.startup_pm_capability_resolution_recorded
     ):
         return InvariantResult.fail(
-            "PM start gate opened before a clean factual reviewer startup report and independent PM gate audit"
+            "PM released startup intake to capability work before a clean runtime mechanical audit and PM node/work-package decision"
         )
-    if state.pm_start_gate_opened and state.pm_returned_startup_blockers:
+    if state.pm_startup_intake_released_to_route and state.pm_returned_startup_blockers:
         return InvariantResult.fail(
-            "PM start gate opened while startup blockers were still assigned for worker remediation"
+            "PM released startup intake while startup mechanical blockers were still assigned for worker remediation"
         )
     if (
         state.startup_worker_remediation_completed
-        and state.pm_start_gate_opened
+        and state.pm_startup_intake_released_to_route
         and not (
-            state.startup_preflight_review_report_written
-            and not state.startup_preflight_review_blocking_findings
-            and state.startup_reviewer_fact_evidence_checked
+            state.startup_runtime_mechanical_audit_written
+            and not state.startup_runtime_mechanical_blocking_findings
+            and state.startup_runtime_mechanical_evidence_checked
         )
     ):
         return InvariantResult.fail(
-            "startup worker remediation was not rechecked by reviewer before PM gate opening"
+            "startup worker remediation was not rechecked by runtime mechanics before PM startup intake release"
         )
     if state.work_beyond_startup_allowed and not _startup_questions_complete(state):
         return InvariantResult.fail(
@@ -2752,9 +2752,9 @@ def dependency_plan_before_route_or_implementation(
         return InvariantResult.fail(
             "PM allowed capability work while role-binding evidence reused historical agent ids"
         )
-    if state.work_beyond_startup_allowed and not _startup_pm_gate_ready(state):
+    if state.work_beyond_startup_allowed and not _startup_intake_release_ready(state):
         return InvariantResult.fail(
-            "capability work was allowed before reviewer fact report and PM-owned start-gate opening"
+            "capability work was allowed before runtime mechanical audit and PM-owned startup intake release"
         )
     if state.manual_resume_binding_configured and (
         not state.manual_resume_binding_bound_to_current_run or state.manual_resume_binding_name_only_checked
@@ -3292,8 +3292,8 @@ def startup_continuation_gates_work_beyond_startup(state: State, trace) -> Invar
     if state.router_daemon_started and state.router_daemon_tick_seconds != 1:
         return InvariantResult.fail("persistent Router daemon did not use a fixed one-second tick")
     startup_or_capability_work_started = (
-        state.startup_preflight_review_report_written
-        or state.pm_start_gate_opened
+        state.startup_runtime_mechanical_audit_written
+        or state.pm_startup_intake_released_to_route
         or state.work_beyond_startup_allowed
         or state.meta_route_checked
         or state.capability_route_checked
@@ -3303,15 +3303,15 @@ def startup_continuation_gates_work_beyond_startup(state: State, trace) -> Invar
     )
     if startup_or_capability_work_started and not _continuation_ready(state):
         return InvariantResult.fail(
-            "startup review or capability work started before continuation was bound to manual resume binding or manual resume"
+            "startup mechanical audit or capability work started before continuation was bound to manual resume binding or manual resume"
         )
     if startup_or_capability_work_started and state.manual_resume_binding_supported and not _manual_resume_binding_configured(state):
         return InvariantResult.fail(
-            "startup review or capability work started before current manual resume binding was fully configured"
+            "startup mechanical audit or capability work started before current manual resume binding was fully configured"
         )
     if startup_or_capability_work_started and state.manual_resume_boundary_recorded and state.manual_resume_binding_configured:
         return InvariantResult.fail(
-            "startup review or capability work started after manual-resume startup that still created manual resume binding"
+            "startup mechanical audit or capability work started after manual-resume startup that still created manual resume binding"
         )
     return InvariantResult.pass_()
 
@@ -3849,7 +3849,7 @@ def actor_authority_gates_require_correct_role(
         or state.final_product_function_model_flowguard_operator_product_scope_approved
         or state.final_human_review_reviewer_approved
         or state.final_route_wide_gate_ledger_pm_completion_approved
-        or state.pm_start_gate_opened
+        or state.pm_startup_intake_released_to_route
     )
     if any_role_approval and not state.independent_approval_protocol_recorded:
         return InvariantResult.fail(
@@ -4258,7 +4258,7 @@ INVARIANTS = (
     ),
     Invariant(
         name="startup_continuation_gates_work_beyond_startup",
-        description="Startup loads Controller core before Controller-ledger obligations, then establishes manual resume binding or manual-resume continuation before startup review and capability work.",
+        description="Startup loads Controller core before Controller-ledger obligations, then establishes manual resume binding or manual-resume continuation before runtime mechanical audit and capability work.",
         predicate=startup_continuation_gates_work_beyond_startup,
     ),
     Invariant(

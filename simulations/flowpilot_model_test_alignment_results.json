@@ -5,6 +5,7 @@
     "packet/card/ack",
     "packet result family",
     "route mutation",
+    "current-node trunk invariant",
     "terminal/closure/resume",
     "role/output contracts",
     "router loop/daemon",
@@ -14,150 +15,24 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": false,
+  "full_coverage_ok": true,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_startup_closure|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "add_code_boundary_observation"
-        ],
-        "maturation_signal_type": "missing_code_boundary_observation",
-        "message": "flowpilot_router_startup_closure has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_startup_closure",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_closure.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_startup_closure",
-        "surface_owner": "flowpilot_router_startup_closure"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
-        "kind": "public_facade",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_router_work_packets_parallel",
-        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_work_packets_parallel",
-        "surface_owner": "flowpilot_router_work_packets_parallel"
-      }
-    ],
-    "actionable_summary": [
-      {
-        "dedupe_key": "flowpilot_router_startup_closure|upgrade_to_external_contract_test|internal_only_test",
-        "finding_count": 1,
-        "gap_codes": [
-          "internal_only_test"
-        ],
-        "message": "flowpilot_router_startup_closure has tests or mentions but no source-level external contract binding",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_startup_closure.py"
-        ],
-        "primary_code": "internal_only_test",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_ids": [
-          "asset:flowpilot_router_startup_closure"
-        ],
-        "surface_owner": "flowpilot_router_startup_closure"
-      },
-      {
-        "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_work_packets_parallel"
-        ],
-        "surface_owner": "flowpilot_router_work_packets_parallel"
-      }
-    ],
-    "covered_surface_count": 932,
-    "deferred_structure_split_count": 1,
+    "actionable_findings": [],
+    "actionable_summary": [],
+    "covered_surface_count": 942,
+    "deferred_structure_split_count": 0,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
     "explicitly_skipped_structure_split_surfaces": [],
-    "findings": [
-      {
-        "code": "internal_only_test",
-        "dedupe_key": "flowpilot_router_startup_closure|upgrade_to_external_contract_test|internal_only_test",
-        "kind": "owner_module",
-        "maturation_actions": [
-          "add_code_boundary_observation"
-        ],
-        "maturation_signal_type": "missing_code_boundary_observation",
-        "message": "flowpilot_router_startup_closure has tests or mentions but no source-level external contract binding",
-        "name": "flowpilot_router_startup_closure",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_closure.py",
-        "priority_score": 17,
-        "release_relevance": "runtime_contract",
-        "repair_type": "upgrade_to_external_contract_test",
-        "severity": "high",
-        "surface_id": "asset:flowpilot_router_startup_closure",
-        "surface_owner": "flowpilot_router_startup_closure"
-      },
-      {
-        "code": "needs_structure_split",
-        "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
-        "kind": "public_facade",
-        "maturation_actions": [
-          "split_child_model"
-        ],
-        "maturation_signal_type": "duplicate_primary_edge_path",
-        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-        "name": "flowpilot_router_work_packets_parallel",
-        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_id": "asset:flowpilot_router_work_packets_parallel",
-        "surface_owner": "flowpilot_router_work_packets_parallel"
-      }
-    ],
-    "full_coverage_ok": false,
-    "gap_counts": {
-      "internal_only_test": 1,
-      "needs_structure_split": 1
-    },
-    "gap_counts_by_release_relevance": {
-      "runtime_contract": 2
-    },
-    "gap_counts_by_repair_type": {
-      "defer_structure_split": 1,
-      "upgrade_to_external_contract_test": 1
-    },
-    "gap_counts_by_severity": {
-      "high": 1,
-      "medium": 1
-    },
-    "gap_surface_count": 2,
+    "findings": [],
+    "full_coverage_ok": true,
+    "gap_counts": {},
+    "gap_counts_by_release_relevance": {},
+    "gap_counts_by_repair_type": {},
+    "gap_counts_by_severity": {},
+    "gap_surface_count": 0,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -336,7 +211,7 @@
       }
     ],
     "ok": true,
-    "release_convergence_ok": false,
+    "release_convergence_ok": true,
     "result_type": "flowpilot_full_model_test_code_diagnostic",
     "singleton_authority_coverage": {
       "authority_matrix_count": 8,
@@ -349,12 +224,12 @@
       "result_ok": true,
       "result_path": "simulations/flowpilot_singleton_identity_results.json"
     },
-    "surface_count": 934,
+    "surface_count": 942,
     "surface_counts": {
-      "model_check_runner": 140,
+      "model_check_runner": 142,
       "model_check_runner_helper": 19,
-      "owner_module": 278,
-      "public_facade": 112,
+      "owner_module": 282,
+      "public_facade": 114,
       "script_entrypoint": 20,
       "test_tier": 15,
       "test_tier_command": 350
@@ -1338,7 +1213,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 487,
+        "line_count": 481,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_event_idempotency_checks",
@@ -1371,6 +1246,50 @@
         "split_threshold": 650,
         "surface_id": "model-check:run_flowpilot_fake_project_rehearsal_checks",
         "surface_owner": "model-check:run_flowpilot_fake_project_rehearsal_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 221,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_field_contract_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_field_contract_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_field_contract_checks",
+        "surface_owner": "model-check:run_flowpilot_field_contract_checks"
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_main": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "model_check_runner",
+        "line_count": 462,
+        "max_severity": "none",
+        "model_binding": "model_check_runner_contract",
+        "name": "run_flowpilot_field_mesh_checks",
+        "parse_error": "",
+        "path": "simulations/run_flowpilot_field_mesh_checks.py",
+        "release_relevance": "validation_gate",
+        "repair_types": [],
+        "split_threshold": 650,
+        "surface_id": "model-check:run_flowpilot_field_mesh_checks",
+        "surface_owner": "model-check:run_flowpilot_field_mesh_checks"
       },
       {
         "covered": true,
@@ -2108,7 +2027,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 376,
+        "line_count": 380,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_prompt_boundary_checks",
@@ -2812,7 +2731,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 336,
+        "line_count": 194,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_startup_control_checks",
@@ -2834,7 +2753,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 253,
+        "line_count": 254,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_startup_intake_ui_checks",
@@ -2856,7 +2775,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 231,
+        "line_count": 210,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_startup_optimization_checks",
@@ -3076,7 +2995,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 338,
+        "line_count": 340,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_two_table_async_scheduler_checks",
@@ -3274,7 +3193,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 279,
+        "line_count": 280,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_prompt_isolation_checks",
@@ -3406,7 +3325,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 116,
+        "line_count": 117,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_startup_pm_review_checks",
@@ -3449,7 +3368,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 646,
+        "line_count": 643,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3593,7 +3512,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 166,
+        "line_count": 173,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3785,7 +3704,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 325,
+        "line_count": 326,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3809,7 +3728,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 352,
+        "line_count": 351,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -3833,7 +3752,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner_helper",
-        "line_count": 579,
+        "line_count": 576,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "model_check_runner_implementation_contract",
@@ -4656,20 +4575,68 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 306,
+        "line_count": 174,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_action_handlers_roles",
+        "name": "flowpilot_router_action_handlers_resume",
         "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
         "release_relevance": "runtime_contract",
         "repair_types": [],
         "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_action_handlers_roles",
-        "surface_owner": "flowpilot_router_action_handlers_roles",
-        "top_level_class_count": 1,
-        "top_level_function_count": 9
+        "surface_id": "asset:flowpilot_router_action_handlers_resume",
+        "surface_owner": "flowpilot_router_action_handlers_resume",
+        "top_level_class_count": 0,
+        "top_level_function_count": 4
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 259,
+        "local_import_count": 1,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_action_handlers_role_binding",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_binding.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_action_handlers_role_binding",
+        "surface_owner": "flowpilot_router_action_handlers_role_binding",
+        "top_level_class_count": 0,
+        "top_level_function_count": 4
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 104,
+        "local_import_count": 1,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_action_handlers_role_misc",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_misc.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_action_handlers_role_misc",
+        "surface_owner": "flowpilot_router_action_handlers_role_misc",
+        "top_level_class_count": 0,
+        "top_level_function_count": 4
       },
       {
         "covered": true,
@@ -4913,7 +4880,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 264,
+        "line_count": 267,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -5297,8 +5264,8 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 413,
-        "local_import_count": 16,
+        "line_count": 55,
+        "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_controller_runtime",
@@ -5310,7 +5277,55 @@
         "surface_id": "asset:flowpilot_router_controller_runtime",
         "surface_owner": "flowpilot_router_controller_runtime",
         "top_level_class_count": 0,
-        "top_level_function_count": 10
+        "top_level_function_count": 2
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 242,
+        "local_import_count": 5,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_runtime_apply",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_controller_runtime_apply",
+        "surface_owner": "flowpilot_router_controller_runtime_apply",
+        "top_level_class_count": 0,
+        "top_level_function_count": 7
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 237,
+        "local_import_count": 4,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_runtime_next",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_next.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_controller_runtime_next",
+        "surface_owner": "flowpilot_router_controller_runtime_next",
+        "top_level_class_count": 0,
+        "top_level_function_count": 5
       },
       {
         "covered": true,
@@ -5369,7 +5384,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 182,
+        "line_count": 180,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -5831,7 +5846,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 320,
+        "line_count": 312,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -5919,7 +5934,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 287,
+        "line_count": 285,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -5943,7 +5958,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 224,
+        "line_count": 215,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -5956,7 +5971,7 @@
         "surface_id": "asset:flowpilot_router_event_identity_scopes",
         "surface_owner": "flowpilot_router_event_identity_scopes",
         "top_level_class_count": 0,
-        "top_level_function_count": 19
+        "top_level_function_count": 18
       },
       {
         "covered": true,
@@ -5991,7 +6006,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 236,
+        "line_count": 227,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6063,7 +6078,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 145,
+        "line_count": 147,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7048,7 +7063,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 172,
+        "line_count": 165,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7233,7 +7248,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 61,
+        "line_count": 44,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7538,7 +7553,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 253,
+        "line_count": 239,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7634,7 +7649,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 94,
+        "line_count": 89,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7706,7 +7721,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 120,
+        "line_count": 110,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7754,7 +7769,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 350,
+        "line_count": 331,
         "local_import_count": 18,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7767,7 +7782,7 @@
         "surface_id": "asset:flowpilot_router_role_output_bridge",
         "surface_owner": "flowpilot_router_role_output_bridge",
         "top_level_class_count": 0,
-        "top_level_function_count": 17
+        "top_level_function_count": 15
       },
       {
         "covered": true,
@@ -7778,7 +7793,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 431,
+        "line_count": 343,
         "local_import_count": 5,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7791,7 +7806,7 @@
         "surface_id": "asset:flowpilot_router_role_output_bridge_events",
         "surface_owner": "flowpilot_router_role_output_bridge_events",
         "top_level_class_count": 0,
-        "top_level_function_count": 11
+        "top_level_function_count": 9
       },
       {
         "covered": true,
@@ -7802,7 +7817,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 332,
+        "line_count": 330,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8018,7 +8033,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 150,
+        "line_count": 156,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8162,7 +8177,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 349,
+        "line_count": 360,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8175,7 +8190,7 @@
         "surface_id": "asset:flowpilot_router_runtime_state",
         "surface_owner": "flowpilot_router_runtime_state",
         "top_level_class_count": 0,
-        "top_level_function_count": 37
+        "top_level_function_count": 38
       },
       {
         "covered": true,
@@ -8364,7 +8379,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 201,
+        "line_count": 200,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8388,7 +8403,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 181,
+        "line_count": 183,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8428,27 +8443,23 @@
         "top_level_function_count": 7
       },
       {
-        "covered": false,
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "internal_only_test"
-        ],
+        "gap_codes": [],
         "has_code": true,
-        "has_external_contract": false,
+        "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
         "line_count": 219,
         "local_import_count": 8,
-        "max_severity": "high",
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_startup_closure",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_startup_closure.py",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "upgrade_to_external_contract_test"
-        ],
+        "repair_types": [],
         "split_threshold": 450,
         "surface_id": "asset:flowpilot_router_startup_closure",
         "surface_owner": "flowpilot_router_startup_closure",
@@ -8502,95 +8513,6 @@
         "surface_owner": "flowpilot_router_startup_display",
         "top_level_class_count": 0,
         "top_level_function_count": 23
-      },
-      {
-        "completed_split_paths": [
-          "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_checks.py",
-          "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_controller.py",
-          "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_audit.py",
-          "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_reports.py"
-        ],
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
-        "line_count": 111,
-        "local_import_count": 12,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_startup_fact_boundary",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary.py",
-        "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "monitor_startup_fact_boundary_child_contracts",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "safe_split_class": "stateful_runtime_flow",
-        "split_reason": "startup_fact_check_controller_audit_and_report_helpers_extracted",
-        "split_status": "completed_split",
-        "split_threshold": 450,
-        "structure_split_status": "deferred",
-        "surface_id": "asset:flowpilot_router_startup_fact_boundary",
-        "surface_owner": "flowpilot_router_startup_fact_boundary",
-        "top_level_class_count": 0,
-        "top_level_function_count": 2
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
-        "line_count": 133,
-        "local_import_count": 8,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_startup_fact_boundary_audit",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_audit.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_startup_fact_boundary_audit",
-        "surface_owner": "flowpilot_router_startup_fact_boundary_audit",
-        "top_level_class_count": 0,
-        "top_level_function_count": 6
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "owner_module",
-        "line_count": 216,
-        "local_import_count": 8,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_startup_fact_boundary_reports",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_reports.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 450,
-        "surface_id": "asset:flowpilot_router_startup_fact_boundary_reports",
-        "surface_owner": "flowpilot_router_startup_fact_boundary_reports",
-        "top_level_class_count": 0,
-        "top_level_function_count": 6
       },
       {
         "covered": true,
@@ -8705,6 +8627,94 @@
         "top_level_function_count": 7
       },
       {
+        "completed_split_paths": [
+          "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_checks.py",
+          "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_controller.py",
+          "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_audit.py"
+        ],
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 101,
+        "local_import_count": 11,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_startup_mechanical_boundary",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary.py",
+        "peer_safety_status": "claimed_by_finish_flowpilot_structure_debt",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "monitor_startup_mechanical_audit_child_contracts",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "safe_split_class": "stateful_runtime_flow",
+        "split_reason": "startup_mechanical_check_controller_and_audit_helpers_extracted",
+        "split_status": "completed_split",
+        "split_threshold": 450,
+        "structure_split_status": "deferred",
+        "surface_id": "asset:flowpilot_router_startup_mechanical_boundary",
+        "surface_owner": "flowpilot_router_startup_mechanical_boundary",
+        "top_level_class_count": 0,
+        "top_level_function_count": 2
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 134,
+        "local_import_count": 8,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_startup_mechanical_boundary_audit",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_audit.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_startup_mechanical_boundary_audit",
+        "surface_owner": "flowpilot_router_startup_mechanical_boundary_audit",
+        "top_level_class_count": 0,
+        "top_level_function_count": 6
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "owner_module",
+        "line_count": 141,
+        "local_import_count": 8,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_startup_mechanical_boundary_checks",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_checks.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 450,
+        "surface_id": "asset:flowpilot_router_startup_mechanical_boundary_checks",
+        "surface_owner": "flowpilot_router_startup_mechanical_boundary_checks",
+        "top_level_class_count": 0,
+        "top_level_function_count": 6
+      },
+      {
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -8737,7 +8747,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 195,
+        "line_count": 201,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8761,7 +8771,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 195,
+        "line_count": 196,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8833,7 +8843,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 209,
+        "line_count": 211,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8881,7 +8891,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 173,
+        "line_count": 178,
         "local_import_count": 16,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -8968,7 +8978,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 271,
+        "line_count": 259,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9057,7 +9067,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 318,
+        "line_count": 374,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9070,7 +9080,7 @@
         "surface_id": "asset:flowpilot_router_system_cards_selection_next",
         "surface_owner": "flowpilot_router_system_cards_selection_next",
         "top_level_class_count": 0,
-        "top_level_function_count": 4
+        "top_level_function_count": 6
       },
       {
         "covered": true,
@@ -9081,7 +9091,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 98,
+        "line_count": 94,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -9585,7 +9595,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 295,
+        "line_count": 291,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "runtime_cli_architecture",
@@ -10248,7 +10258,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 407,
+        "line_count": 406,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10320,7 +10330,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 301,
+        "line_count": 298,
         "local_import_count": 10,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10440,7 +10450,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 377,
+        "line_count": 381,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10488,7 +10498,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 151,
+        "line_count": 150,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "packet_runtime_architecture",
@@ -10856,7 +10866,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 358,
+        "line_count": 333,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -10996,7 +11006,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 112,
+        "line_count": 106,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": null,
@@ -11103,7 +11113,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 295,
+        "line_count": 296,
         "local_import_count": 4,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -11160,6 +11170,30 @@
         "top_level_function_count": 0
       },
       {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "public_facade",
+        "line_count": 24,
+        "local_import_count": 3,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_action_handlers_roles",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_action_handlers_roles",
+        "surface_owner": "flowpilot_router_action_handlers_roles",
+        "top_level_class_count": 0,
+        "top_level_function_count": 0
+      },
+      {
         "completed_split_paths": [
           "skills/flowpilot/assets/flowpilot_router_action_providers_common.py",
           "skills/flowpilot/assets/flowpilot_router_action_providers_lifecycle.py",
@@ -11210,7 +11244,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 138,
+        "line_count": 141,
         "local_import_count": 2,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -11223,7 +11257,7 @@
         "surface_id": "asset:flowpilot_router_card_returns_pre_review",
         "surface_owner": "flowpilot_router_card_returns_pre_review",
         "top_level_class_count": 0,
-        "top_level_function_count": 6
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -11377,6 +11411,30 @@
         "surface_owner": "flowpilot_router_controller_repair_mail_delivery",
         "top_level_class_count": 0,
         "top_level_function_count": 11
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "public_facade",
+        "line_count": 54,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_controller_runtime_loop",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_loop.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_controller_runtime_loop",
+        "surface_owner": "flowpilot_router_controller_runtime_loop",
+        "top_level_class_count": 0,
+        "top_level_function_count": 2
       },
       {
         "covered": true,
@@ -11547,7 +11605,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 296,
+        "line_count": 300,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -11758,7 +11816,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 175,
+        "line_count": 177,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12514,7 +12572,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 279,
+        "line_count": 278,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -13090,54 +13148,6 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 194,
-        "local_import_count": 8,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_startup_fact_boundary_checks",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_checks.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 320,
-        "surface_id": "asset:flowpilot_router_startup_fact_boundary_checks",
-        "surface_owner": "flowpilot_router_startup_fact_boundary_checks",
-        "top_level_class_count": 0,
-        "top_level_function_count": 8
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "public_facade",
-        "line_count": 224,
-        "local_import_count": 8,
-        "max_severity": "none",
-        "model_binding": "router_runtime_architecture",
-        "name": "flowpilot_router_startup_fact_boundary_controller",
-        "parse_error": "",
-        "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_controller.py",
-        "release_relevance": "runtime_contract",
-        "repair_types": [],
-        "split_threshold": 320,
-        "surface_id": "asset:flowpilot_router_startup_fact_boundary_controller",
-        "surface_owner": "flowpilot_router_startup_fact_boundary_controller",
-        "top_level_class_count": 0,
-        "top_level_function_count": 13
-      },
-      {
-        "covered": true,
-        "evidence_status": "passed",
-        "gap_codes": [],
-        "has_code": true,
-        "has_external_contract": true,
-        "has_model": true,
-        "has_test": true,
-        "kind": "public_facade",
         "line_count": 296,
         "local_import_count": 9,
         "max_severity": "none",
@@ -13176,6 +13186,30 @@
         "surface_owner": "flowpilot_router_startup_intake_validation",
         "top_level_class_count": 0,
         "top_level_function_count": 10
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "public_facade",
+        "line_count": 225,
+        "local_import_count": 8,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_startup_mechanical_boundary_controller",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_controller.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_startup_mechanical_boundary_controller",
+        "surface_owner": "flowpilot_router_startup_mechanical_boundary_controller",
+        "top_level_class_count": 0,
+        "top_level_function_count": 13
       },
       {
         "completed_split_paths": [
@@ -13226,7 +13260,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 209,
+        "line_count": 248,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -13239,7 +13273,7 @@
         "surface_id": "asset:flowpilot_router_startup_role_context",
         "surface_owner": "flowpilot_router_startup_role_context",
         "top_level_class_count": 0,
-        "top_level_function_count": 17
+        "top_level_function_count": 18
       },
       {
         "covered": true,
@@ -13525,7 +13559,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 191,
+        "line_count": 197,
         "local_import_count": 9,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -13613,44 +13647,52 @@
         "top_level_function_count": 11
       },
       {
-        "covered": false,
-        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
+        "covered": true,
         "evidence_status": "passed",
-        "gap_codes": [
-          "needs_structure_split"
-        ],
+        "gap_codes": [],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 324,
-        "local_import_count": 7,
-        "max_severity": "medium",
+        "line_count": 180,
+        "local_import_count": 8,
+        "max_severity": "none",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_work_packets_parallel",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
-        "peer_safety_status": "do_not_edit_without_claim",
-        "recent_owner_context": [
-          "bd83ae52",
-          "435292eb",
-          "c874e8b3"
-        ],
-        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [
-          "defer_structure_split"
-        ],
-        "safe_split_class": "public_facade",
-        "split_reason": "line_threshold_exceeded | external_contract_pinned",
-        "split_status": "deferred_split",
+        "repair_types": [],
         "split_threshold": 320,
-        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_work_packets_parallel",
         "surface_owner": "flowpilot_router_work_packets_parallel",
         "top_level_class_count": 0,
-        "top_level_function_count": 17
+        "top_level_function_count": 11
+      },
+      {
+        "covered": true,
+        "evidence_status": "passed",
+        "gap_codes": [],
+        "has_code": true,
+        "has_external_contract": true,
+        "has_model": true,
+        "has_test": true,
+        "kind": "public_facade",
+        "line_count": 260,
+        "local_import_count": 2,
+        "max_severity": "none",
+        "model_binding": "router_runtime_architecture",
+        "name": "flowpilot_router_work_packets_parallel_reconciliation",
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel_reconciliation.py",
+        "release_relevance": "runtime_contract",
+        "repair_types": [],
+        "split_threshold": 320,
+        "surface_id": "asset:flowpilot_router_work_packets_parallel_reconciliation",
+        "surface_owner": "flowpilot_router_work_packets_parallel_reconciliation",
+        "top_level_class_count": 0,
+        "top_level_function_count": 7
       },
       {
         "covered": true,
@@ -14291,7 +14333,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 594,
+        "line_count": 592,
         "max_severity": "none",
         "model_binding": "defect_governance_cli",
         "name": "flowpilot_defects",
@@ -14313,7 +14355,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "script_entrypoint",
-        "line_count": 241,
+        "line_count": 214,
         "max_severity": "none",
         "model_binding": "lifecycle_cli",
         "name": "flowpilot_lifecycle",
@@ -17314,18 +17356,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": null,
-              "meta_status": null,
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "failed",
               "name": "router_packet_result_family",
               "ok": false,
-              "progress_seen": false,
+              "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "missing_meta",
-                "missing_exit"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "router_packet_result_family",
@@ -18619,10 +18658,10 @@
           "-k",
           "startup_async",
           "-k",
-          "startup_reviewer_event_uses_current_scope_reconciliation",
+          "startup_rejects_legacy_reviewer_event_before_pm_work",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_reconciliation -k startup_missing_router -k startup_obligations -k startup_bootloader -k startup_async -k startup_reviewer_event_uses_current_scope_reconciliation tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_reconciliation -k startup_missing_router -k startup_obligations -k startup_bootloader -k startup_async -k startup_rejects_legacy_reviewer_event_before_pm_work tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18653,20 +18692,20 @@
           "unittest",
           "-v",
           "-k",
-          "reviewer_startup",
+          "startup_rejects_legacy_reviewer_event",
           "-k",
           "startup_pre_review",
           "-k",
           "pm_startup",
           "-k",
-          "startup_activation",
+          "startup_current_path_releases_user_intake",
           "-k",
           "startup_review_join",
           "-k",
           "pm_can_approve_startup_findings",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k reviewer_startup -k startup_pre_review -k pm_startup -k startup_activation -k startup_review_join -k pm_can_approve_startup_findings tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_rejects_legacy_reviewer_event -k startup_pre_review -k pm_startup -k startup_current_path_releases_user_intake -k startup_review_join -k pm_can_approve_startup_findings tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -18679,13 +18718,13 @@
         "long_running": false,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
-        "name": "router_startup_bootstrap_review",
+        "name": "router_startup_bootstrap_runtime_release",
         "path": "scripts/run_test_tier.py",
         "release_only": false,
         "release_relevance": "release_gate",
         "repair_types": [],
         "split_threshold": 999,
-        "surface_id": "tier-command:all:router_startup_bootstrap_review",
+        "surface_id": "tier-command:all:router_startup_bootstrap_runtime_release",
         "surface_owner": "test-tier:all",
         "tier": "all"
       },
@@ -22452,17 +22491,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "running",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_capability_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "exit_zero_won_meta_update_race"
-              ],
-              "status": "passed"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "capability_full",
@@ -22592,17 +22629,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "passed",
-              "exit_code": 0,
-              "meta_status": "running",
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "completed",
               "name": "run_meta_checks",
-              "ok": true,
+              "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "exit_zero_won_meta_update_race"
-              ],
-              "status": "passed"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "meta_full",
@@ -23495,18 +23530,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": null,
-              "meta_status": null,
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "failed",
               "name": "router_packet_result_family",
               "ok": false,
-              "progress_seen": false,
+              "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "missing_meta",
-                "missing_exit"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "router_packet_result_family",
@@ -24722,10 +24754,10 @@
           "-k",
           "startup_async",
           "-k",
-          "startup_reviewer_event_uses_current_scope_reconciliation",
+          "startup_rejects_legacy_reviewer_event_before_pm_work",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_reconciliation -k startup_missing_router -k startup_obligations -k startup_bootloader -k startup_async -k startup_reviewer_event_uses_current_scope_reconciliation tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_reconciliation -k startup_missing_router -k startup_obligations -k startup_bootloader -k startup_async -k startup_rejects_legacy_reviewer_event_before_pm_work tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -24756,20 +24788,20 @@
           "unittest",
           "-v",
           "-k",
-          "reviewer_startup",
+          "startup_rejects_legacy_reviewer_event",
           "-k",
           "startup_pre_review",
           "-k",
           "pm_startup",
           "-k",
-          "startup_activation",
+          "startup_current_path_releases_user_intake",
           "-k",
           "startup_review_join",
           "-k",
           "pm_can_approve_startup_findings",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k reviewer_startup -k startup_pre_review -k pm_startup -k startup_activation -k startup_review_join -k pm_can_approve_startup_findings tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_rejects_legacy_reviewer_event -k startup_pre_review -k pm_startup -k startup_current_path_releases_user_intake -k startup_review_join -k pm_can_approve_startup_findings tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -24782,13 +24814,13 @@
         "long_running": false,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
-        "name": "router_startup_bootstrap_review",
+        "name": "router_startup_bootstrap_runtime_release",
         "path": "scripts/run_test_tier.py",
         "release_only": false,
         "release_relevance": "release_gate",
         "repair_types": [],
         "split_threshold": 999,
-        "surface_id": "tier-command:router-startup:router_startup_bootstrap_review",
+        "surface_id": "tier-command:router-startup:router_startup_bootstrap_runtime_release",
         "surface_owner": "test-tier:router-startup",
         "tier": "router-startup"
       },
@@ -26923,18 +26955,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\router_packet_result_family.out.txt"
               },
-              "execution_status": "incomplete",
-              "exit_code": null,
-              "meta_status": null,
+              "execution_status": "failed",
+              "exit_code": 1,
+              "meta_status": "failed",
               "name": "router_packet_result_family",
               "ok": false,
-              "progress_seen": false,
+              "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "missing_meta",
-                "missing_exit"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "failed"
             },
             {
               "artifact_name": "router_packet_result_family",
@@ -28228,10 +28257,10 @@
           "-k",
           "startup_async",
           "-k",
-          "startup_reviewer_event_uses_current_scope_reconciliation",
+          "startup_rejects_legacy_reviewer_event_before_pm_work",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_reconciliation -k startup_missing_router -k startup_obligations -k startup_bootloader -k startup_async -k startup_reviewer_event_uses_current_scope_reconciliation tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_reconciliation -k startup_missing_router -k startup_obligations -k startup_bootloader -k startup_async -k startup_rejects_legacy_reviewer_event_before_pm_work tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -28262,20 +28291,20 @@
           "unittest",
           "-v",
           "-k",
-          "reviewer_startup",
+          "startup_rejects_legacy_reviewer_event",
           "-k",
           "startup_pre_review",
           "-k",
           "pm_startup",
           "-k",
-          "startup_activation",
+          "startup_current_path_releases_user_intake",
           "-k",
           "startup_review_join",
           "-k",
           "pm_can_approve_startup_findings",
           "tests.router_runtime.startup_bootstrap"
         ],
-        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k reviewer_startup -k startup_pre_review -k pm_startup -k startup_activation -k startup_review_join -k pm_can_approve_startup_findings tests.router_runtime.startup_bootstrap",
+        "command_text": "C:\\Users\\liu_y\\AppData\\Local\\Microsoft\\WindowsApps\\PythonSoftwareFoundation.Python.3.12_qbz5n2kfra8p0\\python.exe -m unittest -v -k startup_rejects_legacy_reviewer_event -k startup_pre_review -k pm_startup -k startup_current_path_releases_user_intake -k startup_review_join -k pm_can_approve_startup_findings tests.router_runtime.startup_bootstrap",
         "covered": true,
         "evidence_status": "passed",
         "gap_codes": [],
@@ -28288,13 +28317,13 @@
         "long_running": false,
         "max_severity": "none",
         "model_binding": "test_tiering_model",
-        "name": "router_startup_bootstrap_review",
+        "name": "router_startup_bootstrap_runtime_release",
         "path": "scripts/run_test_tier.py",
         "release_only": false,
         "release_relevance": "release_gate",
         "repair_types": [],
         "split_threshold": 999,
-        "surface_id": "tier-command:router:router_startup_bootstrap_review",
+        "surface_id": "tier-command:router:router_startup_bootstrap_runtime_release",
         "surface_owner": "test-tier:router",
         "tier": "router"
       },
@@ -28550,10 +28579,8 @@
         "tier": "router"
       }
     ],
-    "unresolved_non_deferred_gap_count": 1,
-    "unresolved_non_deferred_gap_counts": {
-      "internal_only_test": 1
-    }
+    "unresolved_non_deferred_gap_count": 0,
+    "unresolved_non_deferred_gap_counts": {}
   },
   "known_bad_ok": true,
   "known_bad_sanity_checks": [
@@ -28592,6 +28619,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_missing_evidence",
         "obligation_families": [],
         "obligations": [
@@ -28739,6 +28768,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_stale_evidence",
         "obligation_families": [],
         "obligations": [
@@ -28947,6 +28978,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_progress_only",
         "obligation_families": [],
         "obligations": [
@@ -29149,6 +29182,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_overclaim",
         "obligation_families": [],
         "obligations": [
@@ -29295,6 +29330,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_orphan",
         "obligation_families": [],
         "obligations": [
@@ -29489,6 +29526,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_duplicate",
         "obligation_families": [],
         "obligations": [
@@ -29648,6 +29687,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "known_bad_runtime_path_missing",
         "obligation_families": [],
         "obligations": [
@@ -29940,7 +29981,7 @@
       },
       {
         "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
         "covered_obligations": [
           "packet_result_family.material_scan.durable_event_fold",
           "packet_result_family.material_scan.partial_wait",
@@ -29960,7 +30001,7 @@
       },
       {
         "assertion_scope": "external_contract",
-        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+        "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
         "covered_obligations": [
           "packet_result_family.material_scan.durable_event_fold",
           "packet_result_family.material_scan.partial_wait",
@@ -31870,6 +31911,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "startup",
         "obligation_families": [],
         "obligations": [
@@ -31902,7 +31945,7 @@
           {
             "allow_shared_evidence": false,
             "allow_shared_implementation": false,
-            "description": "Startup creates prompt-isolated current-run state and requires reviewer facts plus PM approval before work beyond startup.",
+            "description": "Startup creates prompt-isolated current-run state, rejects legacy reviewer/PM startup role gates, and continues through the current Runtime/Router packet path.",
             "error_paths": [],
             "exact_external_contract": false,
             "external_inputs": [],
@@ -32205,7 +32248,7 @@
               "startup.run_isolation_and_activation"
             ],
             "evidence_current": true,
-            "evidence_id": "startup.failure.activation_requires_reviewer",
+            "evidence_id": "startup.failure.legacy_role_gates_unsupported",
             "evidence_role": "primary",
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
@@ -32216,7 +32259,7 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "failure_path",
-            "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+            "test_name": "test_startup_old_role_gate_events_are_unsupported"
           }
         ]
       },
@@ -32248,7 +32291,7 @@
             "gaps": [],
             "model_obligation_id": "startup.run_isolation_and_activation",
             "status": "locked",
-            "test_evidence_id": "startup.failure.activation_requires_reviewer"
+            "test_evidence_id": "startup.failure.legacy_role_gates_unsupported"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -32359,6 +32402,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "packet_card_ack",
         "obligation_families": [],
         "obligations": [
@@ -32952,7 +32997,7 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "edge_path",
-            "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+            "test_name": "test_router_daemon_tick_consumes_card_ack_without_manual_next"
           },
           {
             "assertion_scope": "external_contract",
@@ -32976,7 +33021,7 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "failure_path",
-            "test_name": "test_record_external_event_does_not_preconsume_incomplete_bundle_ack"
+            "test_name": "test_router_daemon_incomplete_bundle_ack_waits_without_advancing"
           },
           {
             "assertion_scope": "external_contract",
@@ -33299,6 +33344,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "packet_result_family",
         "obligation_families": [],
         "obligations": [
@@ -33675,7 +33722,7 @@
               "compared_flowguard_obligation": "packet_result_family.material_scan.partial_member_wait",
               "family": "packet result family",
               "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
-              "source_test_command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+              "source_test_command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
               "source_test_evidence_id": "packet_result_family.edge.material_scan_partial",
               "source_test_path": "tests/router_runtime/packets.py"
             },
@@ -34206,7 +34253,7 @@
                   "compared_flowguard_obligation": "packet_result_family.material_scan.partial_member_wait",
                   "family": "packet result family",
                   "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
-                  "source_test_command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+                  "source_test_command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
                   "source_test_evidence_id": "packet_result_family.edge.material_scan_partial",
                   "source_test_path": "tests/router_runtime/packets.py"
                 },
@@ -34686,7 +34733,7 @@
           {
             "assertion_scope": "external_contract",
             "closure_evidence_role": "",
-            "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+            "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
             "covered_code_contracts": [
               "runtime_path.packet_result_family.packet_result_family_material_scan_partial_member_wait"
             ],
@@ -34705,7 +34752,7 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "edge_path",
-            "test_name": "test_material_scan_partial_batch_status_names_missing_role"
+            "test_name": "test_material_scan_full_batch_wait_current_work_names_all_missing_roles"
           },
           {
             "assertion_scope": "external_contract",
@@ -35117,6 +35164,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "route_mutation",
         "obligation_families": [],
         "obligations": [
@@ -35517,6 +35566,300 @@
       }
     },
     {
+      "coverage_boundary": "Current-node trunk alignment names the PM node context package -> pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer invariant. It binds the focused pre-work FlowGuard model to high-standard runtime tests, but it does not replace semantic review of the worker output.",
+      "decision": "model_test_alignment_green",
+      "family": "current-node trunk invariant",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_prework_flowguard_gate_checks.py"
+      ],
+      "model_id": "current_node_trunk_invariant",
+      "ok": true,
+      "plan": {
+        "allow_orphan_code_contracts": false,
+        "allow_orphan_tests": false,
+        "boundary_contracts": [],
+        "boundary_observations": [],
+        "code_contracts": [
+          {
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          }
+        ],
+        "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
+        "model_id": "current_node_trunk_invariant",
+        "obligation_families": [],
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Every executable node follows the named trunk invariant: PM node context package -> pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer. Pre-work FlowGuard blocks return to PM repair and require a fresh current-generation pre-work pass before worker release.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "required_test_kinds": [
+              "happy_path",
+              "failure_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          }
+        ],
+        "require_proof_artifacts": false,
+        "require_runtime_path_evidence": true,
+        "runtime_node_contracts": [
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "current_node_trunk_invariant.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.current_node_trunk_invariant",
+            "child_model_id": "current_node_trunk_invariant",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "exact": true,
+            "input_case": "current_node_trunk_invariant.external_contract_input",
+            "leaf_model_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "metadata": {
+              "compared_flowguard_model": "current_node_trunk_invariant",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+              "compared_flowguard_obligation": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+              "family": "current-node trunk invariant",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+              "source_test_evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+              "source_test_path": "tests/test_flowpilot_high_standard_control_flow.py"
+            },
+            "model_id": "current_node_trunk_invariant",
+            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+            "node_id": "current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.current_node_trunk_invariant.00.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 0,
+            "state_case": "current_node_trunk_invariant.current_model_state"
+          }
+        ],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [
+          {
+            "current": true,
+            "metadata": {
+              "family": "current-node trunk invariant",
+              "model_id": "current_node_trunk_invariant",
+              "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+              "progress_lines": [
+                "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer obligation=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.happy.context_follows_all_packets progress=compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_all_packets with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+              ]
+            },
+            "observations": [
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.current_node_trunk_invariant",
+                "child_model_id": "current_node_trunk_invariant",
+                "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+                "evidence_current": true,
+                "evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+                "gateway_id": "",
+                "input_case": "current_node_trunk_invariant.external_contract_input",
+                "leaf_model_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "metadata": {
+                  "compared_flowguard_model": "current_node_trunk_invariant",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+                  "compared_flowguard_obligation": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                  "family": "current-node trunk invariant",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+                  "source_test_evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+                  "source_test_path": "tests/test_flowpilot_high_standard_control_flow.py"
+                },
+                "model_id": "current_node_trunk_invariant",
+                "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+                "node_id": "current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "observation_id": "runtime_path.current_node_trunk_invariant.00.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+                "observed_error_path": "",
+                "observed_next_state": "current_node_trunk_invariant.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_all_packets with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "current_node_trunk_invariant:runtime-path-current",
+                "sequence_index": 0,
+                "state_case": "current_node_trunk_invariant.current_model_state"
+              }
+            ],
+            "result_status": "passed",
+            "run_id": "current_node_trunk_invariant:runtime-path-current",
+            "source_evidence_id": "runtime_path.current_node_trunk_invariant"
+          }
+        ],
+        "similarity_handoff": null,
+        "test_evidence": [
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+            "covered_code_contracts": [
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "covered_obligations": [
+              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_high_standard_control_flow.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_node_context_package_follows_flowguard_worker_and_reviewer_packets"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_task_requires_prework_flowguard_gate",
+            "covered_code_contracts": [
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "covered_obligations": [
+              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "current_node_trunk.failure.worker_blocked_before_prework",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_high_standard_control_flow.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "failure_path",
+            "test_name": "test_node_task_requires_prework_flowguard_gate"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+            "covered_code_contracts": [
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "covered_obligations": [
+              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "current_node_trunk.negative.prework_block_requires_fresh_pass",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_high_standard_control_flow.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework"
+          }
+        ]
+      },
+      "report": {
+        "binding_rows": [
+          {
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "gaps": [],
+            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "status": "locked",
+            "test_evidence_id": "current_node_trunk.happy.context_follows_all_packets"
+          },
+          {
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "gaps": [],
+            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "status": "locked",
+            "test_evidence_id": "current_node_trunk.failure.worker_blocked_before_prework"
+          },
+          {
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "gaps": [],
+            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "status": "locked",
+            "test_evidence_id": "current_node_trunk.negative.prework_block_requires_fresh_pass"
+          }
+        ],
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "current_node_trunk_invariant",
+        "ok": true,
+        "summary": "OK: model=current_node_trunk_invariant decision=model_test_alignment_green findings=0"
+      },
+      "runtime_path_summary": {
+        "progress_line_count": 1,
+        "progress_lines": [
+          "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer obligation=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.happy.context_follows_all_packets progress=compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_all_packets with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+        ],
+        "required": true,
+        "runtime_node_contract_count": 1,
+        "runtime_observation_count": 1,
+        "runtime_path_run_count": 1
+      }
+    },
+    {
       "coverage_boundary": "Terminal, closure, and resume alignment covers runtime tests for ledger closure and re-entry. It is not a production replay adapter.",
       "decision": "model_test_alignment_green",
       "family": "terminal/closure/resume",
@@ -35588,6 +35931,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "terminal_closure_resume",
         "obligation_families": [],
         "obligations": [
@@ -36201,6 +36546,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "role_output_contracts",
         "obligation_families": [],
         "obligations": [
@@ -37005,6 +37352,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "router_loop_daemon",
         "obligation_families": [],
         "obligations": [
@@ -38771,7 +39120,7 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "happy_path",
-            "test_name": "test_router_cli_boundary_runs_fake_role_output_through_public_commands"
+            "test_name": "test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state"
           },
           {
             "assertion_scope": "external_contract",
@@ -38843,7 +39192,7 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "happy_path",
-            "test_name": "test_canary_duplicate_heartbeat_resume_is_idempotent"
+            "test_name": "test_canary_duplicate_manual_resume_is_idempotent"
           },
           {
             "assertion_scope": "external_contract",
@@ -39731,6 +40080,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "repair_transactions",
         "obligation_families": [],
         "obligations": [
@@ -40751,6 +41102,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "test_tiering_slow_contracts",
         "obligation_families": [],
         "obligations": [
@@ -41366,6 +41719,8 @@
           }
         ],
         "family_evidence": [],
+        "field_lifecycle_projections": [],
+        "field_lifecycle_reports": [],
         "model_id": "meta_capability_parents",
         "obligation_families": [],
         "obligations": [
@@ -41909,8 +42264,8 @@
       }
     }
   ],
-  "plan_count": 10,
-  "release_convergence_ok": false,
+  "plan_count": 11,
+  "release_convergence_ok": true,
   "result_type": "flowpilot_model_test_alignment",
   "similarity_convergence": {
     "architecture_reduction": {
@@ -44534,7 +44889,7 @@
           "gaps": [],
           "model_obligation_id": "startup.run_isolation_and_activation",
           "status": "locked",
-          "test_evidence_id": "source.startup.activation"
+          "test_evidence_id": "source.startup.legacy_role_gates_unsupported"
         },
         {
           "code_contract_id": "flowpilot_new.start_run",
@@ -44820,20 +45175,33 @@
         },
         {
           "code_contract_id": "router.record_external_event",
-          "gaps": [],
+          "gaps": [
+            "missing_code_contract_test_evidence"
+          ],
           "model_obligation_id": "ack.return_wait_preconsumption",
-          "status": "locked",
-          "test_evidence_id": "source.ack.edge"
+          "status": "blocked",
+          "test_evidence_id": ""
         },
         {
           "code_contract_id": "card.open_card",
-          "gaps": [],
+          "gaps": [
+            "missing_code_contract_test_evidence"
+          ],
           "model_obligation_id": "ack.return_wait_preconsumption",
-          "status": "locked",
-          "test_evidence_id": "source.ack.edge"
+          "status": "blocked",
+          "test_evidence_id": ""
         },
         {
           "code_contract_id": "card.submit_card_ack",
+          "gaps": [
+            "missing_code_contract_test_evidence"
+          ],
+          "model_obligation_id": "ack.return_wait_preconsumption",
+          "status": "blocked",
+          "test_evidence_id": ""
+        },
+        {
+          "code_contract_id": "daemon.run_router_daemon",
           "gaps": [],
           "model_obligation_id": "ack.return_wait_preconsumption",
           "status": "locked",
@@ -44950,6 +45318,27 @@
           "model_obligation_id": "resume.current_run_reentry",
           "status": "locked",
           "test_evidence_id": "source.resume.loads"
+        },
+        {
+          "code_contract_id": "action_handlers_resume.load_resume_state",
+          "gaps": [],
+          "model_obligation_id": "resume.current_run_reentry",
+          "status": "locked",
+          "test_evidence_id": "source.resume.action_handlers_direct"
+        },
+        {
+          "code_contract_id": "action_handlers_resume.rehydrate_role_bindings",
+          "gaps": [],
+          "model_obligation_id": "resume.current_run_reentry",
+          "status": "locked",
+          "test_evidence_id": "source.resume.action_handlers_direct"
+        },
+        {
+          "code_contract_id": "action_handlers_resume.role_recovery",
+          "gaps": [],
+          "model_obligation_id": "resume.current_run_reentry",
+          "status": "locked",
+          "test_evidence_id": "source.resume.action_handlers_direct"
         },
         {
           "code_contract_id": "role_output.prepare_output_session",
@@ -45619,6 +46008,27 @@
           "test_evidence_id": "source.runtime_owner.startup_catalog_happy"
         },
         {
+          "code_contract_id": "controller_runtime.bind_router",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
+          "status": "locked",
+          "test_evidence_id": "source.router_owner.controller_runtime_facade"
+        },
+        {
+          "code_contract_id": "controller_runtime_loop.bind_router",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
+          "status": "locked",
+          "test_evidence_id": "source.router_owner.controller_runtime_facade"
+        },
+        {
+          "code_contract_id": "startup_closure.terminal_closure_reconciliation_status",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
+          "status": "locked",
+          "test_evidence_id": "source.full_diagnostic.role_prompt_proof_terminal_work_packet"
+        },
+        {
           "code_contract_id": "action_factory_dispatch.apply_dispatch_recipient_gate",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
@@ -45647,11 +46057,18 @@
           "test_evidence_id": "source.router_owner.action_handlers_negative"
         },
         {
-          "code_contract_id": "action_handlers_roles.controller_repair_work_packet",
+          "code_contract_id": "action_handlers_role_misc.controller_repair_work_packet",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
           "status": "locked",
           "test_evidence_id": "source.router_owner.action_handlers_negative"
+        },
+        {
+          "code_contract_id": "action_handlers_role_binding.write_current_role_agent_binding",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
+          "status": "locked",
+          "test_evidence_id": "source.router_owner.role_binding_direct"
         },
         {
           "code_contract_id": "artifact_validation.validate_artifact",
@@ -45843,20 +46260,6 @@
           "test_evidence_id": "source.full_diagnostic.facade_export_manifest"
         },
         {
-          "code_contract_id": "lifecycle_requests.write_terminal_fence",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
-          "code_contract_id": "lifecycle_requests.clear_terminal_blocker",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
           "code_contract_id": "lifecycle_terminal_quarantine.clear_repair_transaction",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
@@ -45885,27 +46288,6 @@
           "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
         },
         {
-          "code_contract_id": "lifecycle_requests.write_run_lifecycle",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
-          "code_contract_id": "lifecycle_requests.write_protocol_dead_end",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
-          "code_contract_id": "lifecycle_requests.exception_blocker_fallback",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
           "code_contract_id": "lifecycle_support.lifecycle_record_path",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
@@ -45920,13 +46302,6 @@
           "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
         },
         {
-          "code_contract_id": "lifecycle_support.write_manual_resume_binding",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
           "code_contract_id": "startup_display.display_text_hash",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
@@ -45934,7 +46309,7 @@
           "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
         },
         {
-          "code_contract_id": "startup_fact_boundary.controller_boundary_constraints",
+          "code_contract_id": "startup_mechanical_boundary.controller_boundary_constraints",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
           "status": "locked",
@@ -45956,20 +46331,6 @@
         },
         {
           "code_contract_id": "startup_role_recovery.owner_child_module_names",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
-          "code_contract_id": "startup_support.ensure_startup_run_state",
-          "gaps": [],
-          "model_obligation_id": "runtime_owner.router_owner_external_contracts",
-          "status": "locked",
-          "test_evidence_id": "source.full_diagnostic.lifecycle_startup_system_card"
-        },
-        {
-          "code_contract_id": "system_cards_delivery.commit_system_card_delivery",
           "gaps": [],
           "model_obligation_id": "runtime_owner.router_owner_external_contracts",
           "status": "locked",
@@ -46284,6 +46645,62 @@
           "test_evidence_id": "source.startup_intake.flowguard_capability_child"
         },
         {
+          "code_contract_id": "lifecycle_requests.write_terminal_fence",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.clear_terminal_blocker",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.write_run_lifecycle",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.write_protocol_dead_end",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "lifecycle_requests.exception_blocker_fallback",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "lifecycle_support.write_manual_resume_binding",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "startup_support.ensure_startup_run_state",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
+          "code_contract_id": "system_cards_delivery.commit_system_card_delivery",
+          "gaps": [],
+          "model_obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "status": "locked",
+          "test_evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers"
+        },
+        {
           "code_contract_id": "packet_contracts.normalize_output_contract",
           "gaps": [],
           "model_obligation_id": "packet_runtime.owner_helper_contracts",
@@ -46431,7 +46848,7 @@
           "test_evidence_id": "source.full_diagnostic.packet_control_plane_reviewer"
         },
         {
-          "code_contract_id": "packet_review.reviewer_result_apply",
+          "code_contract_id": "packet_review.runtime_result_envelope_check_apply",
           "gaps": [],
           "model_obligation_id": "packet_control_plane.model_state_contract",
           "status": "locked",
@@ -46728,7 +47145,7 @@
           "implements_obligations": [
             "startup.questions.pause_before_work"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -46752,7 +47169,7 @@
             "startup.questions.pause_before_work",
             "resume.current_run_reentry"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -46781,7 +47198,7 @@
             "resume.current_run_reentry",
             "router_loop.packet_result_review_loop"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -46803,7 +47220,7 @@
             "startup.questions.pause_before_work",
             "resume.current_run_reentry"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_next.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -46811,6 +47228,44 @@
           "state_writes": [],
           "surface_type": "function",
           "symbol": "next_action"
+        },
+        {
+          "code_contract_id": "controller_runtime.bind_router",
+          "error_paths": [],
+          "external_inputs": [
+            "router"
+          ],
+          "external_outputs": [],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_bind_router"
+        },
+        {
+          "code_contract_id": "controller_runtime_loop.bind_router",
+          "error_paths": [],
+          "external_inputs": [
+            "router"
+          ],
+          "external_outputs": [],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_loop.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_bind_router"
         },
         {
           "code_contract_id": "flowpilot_new.start_run",
@@ -48126,6 +48581,30 @@
           "symbol": "validate_final_user_report_record"
         },
         {
+          "code_contract_id": "startup_closure.terminal_closure_reconciliation_status",
+          "error_paths": [],
+          "external_inputs": [
+            "router",
+            "project_root",
+            "run_root",
+            "run_state"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_startup_closure.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_terminal_closure_reconciliation_status"
+        },
+        {
           "code_contract_id": "runtime_closure.route_display_refresh_record",
           "error_paths": [],
           "external_inputs": [
@@ -48182,7 +48661,8 @@
             "return"
           ],
           "implements_obligations": [
-            "daemon.lock_status_queue_contract"
+            "daemon.lock_status_queue_contract",
+            "ack.return_wait_preconsumption"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_daemon_runtime.py",
           "required": true,
@@ -48867,7 +49347,7 @@
           "symbol": "_apply_relay_only_system_card"
         },
         {
-          "code_contract_id": "action_handlers_roles.controller_repair_work_packet",
+          "code_contract_id": "action_handlers_role_misc.controller_repair_work_packet",
           "error_paths": [],
           "external_inputs": [
             "router",
@@ -48883,7 +49363,7 @@
           "implements_obligations": [
             "runtime_owner.router_owner_external_contracts"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_misc.py",
           "required": true,
           "role": "owner",
           "side_effects": [
@@ -48893,6 +49373,114 @@
           "state_writes": [],
           "surface_type": "function",
           "symbol": "_apply_controller_repair_work_packet"
+        },
+        {
+          "code_contract_id": "action_handlers_role_binding.write_current_role_agent_binding",
+          "error_paths": [],
+          "external_inputs": [
+            "router",
+            "project_root",
+            "run_root",
+            "run_state",
+            "role",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_binding.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_write_current_role_agent_binding"
+        },
+        {
+          "code_contract_id": "action_handlers_resume.load_resume_state",
+          "error_paths": [],
+          "external_inputs": [
+            "router",
+            "project_root",
+            "run_root",
+            "run_state",
+            "pending",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "resume.current_run_reentry"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_apply_load_resume_state"
+        },
+        {
+          "code_contract_id": "action_handlers_resume.rehydrate_role_bindings",
+          "error_paths": [],
+          "external_inputs": [
+            "router",
+            "project_root",
+            "run_root",
+            "run_state",
+            "pending",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "resume.current_run_reentry"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_apply_rehydrate_role_bindings"
+        },
+        {
+          "code_contract_id": "action_handlers_resume.role_recovery",
+          "error_paths": [],
+          "external_inputs": [
+            "router",
+            "project_root",
+            "run_root",
+            "run_state",
+            "pending",
+            "payload"
+          ],
+          "external_outputs": [
+            "return"
+          ],
+          "implements_obligations": [
+            "resume.current_run_reentry"
+          ],
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+          "required": true,
+          "role": "owner",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": [],
+          "surface_type": "function",
+          "symbol": "_apply_recover_role_bindings"
         },
         {
           "code_contract_id": "artifact_validation.validate_artifact",
@@ -49954,7 +50542,7 @@
             "return"
           ],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_fence.py",
           "required": true,
@@ -49982,7 +50570,7 @@
             "return"
           ],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_reconciliation.py",
           "required": true,
@@ -50117,7 +50705,7 @@
           ],
           "external_outputs": [],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
           "required": true,
@@ -50142,7 +50730,7 @@
           ],
           "external_outputs": [],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_records.py",
           "required": true,
@@ -50170,7 +50758,7 @@
             "return"
           ],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_requests_blockers.py",
           "required": true,
@@ -50238,7 +50826,7 @@
           ],
           "external_outputs": [],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_lifecycle_support.py",
           "required": true,
@@ -50274,7 +50862,7 @@
           "symbol": "_display_text_hash"
         },
         {
-          "code_contract_id": "startup_fact_boundary.controller_boundary_constraints",
+          "code_contract_id": "startup_mechanical_boundary.controller_boundary_constraints",
           "error_paths": [],
           "external_inputs": [
             "router"
@@ -50285,7 +50873,7 @@
           "implements_obligations": [
             "runtime_owner.router_owner_external_contracts"
           ],
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_controller.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_controller.py",
           "required": true,
           "role": "owner",
           "side_effects": [],
@@ -50432,7 +51020,7 @@
             "return"
           ],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_startup_support.py",
           "required": true,
@@ -50459,13 +51047,12 @@
             "return"
           ],
           "implements_obligations": [
-            "runtime_owner.router_owner_external_contracts"
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
           ],
           "path": "skills/flowpilot/assets/flowpilot_router_system_cards_delivery_single.py",
           "required": true,
           "role": "owner",
           "side_effects": [
-            "update",
             "write_json"
           ],
           "state_reads": [],
@@ -51096,7 +51683,7 @@
           "symbol": "RouterDirectDispatch.apply"
         },
         {
-          "code_contract_id": "packet_review.reviewer_result_apply",
+          "code_contract_id": "packet_review.runtime_result_envelope_check_apply",
           "error_paths": [],
           "external_inputs": [
             "input_obj",
@@ -51113,7 +51700,7 @@
           "state_reads": [],
           "state_writes": [],
           "surface_type": "function",
-          "symbol": "ReviewerResultEnvelopeCheck.apply"
+          "symbol": "RuntimeResultEnvelopeCheck.apply"
         },
         {
           "code_contract_id": "packet_runtime_reviewer.validate_for_reviewer",
@@ -52289,6 +52876,8 @@
         }
       ],
       "family_evidence": [],
+      "field_lifecycle_projections": [],
+      "field_lifecycle_reports": [],
       "model_id": "model_test_code_source_contracts",
       "obligation_families": [],
       "obligations": [
@@ -52319,7 +52908,7 @@
         {
           "allow_shared_evidence": false,
           "allow_shared_implementation": true,
-          "description": "Source-audited startup activation failure boundary through recorded external events.",
+          "description": "Source-audited startup boundary that rejects legacy reviewer/PM startup role gate events.",
           "error_paths": [],
           "exact_external_contract": false,
           "external_inputs": [],
@@ -53467,6 +54056,29 @@
         {
           "allow_shared_evidence": false,
           "allow_shared_implementation": true,
+          "description": "Leaf source-audited lifecycle/startup direct helper boundary owns terminal lifecycle writes, startup run-state repair, manual resume binding, and system card commit effects.",
+          "error_paths": [],
+          "exact_external_contract": false,
+          "external_inputs": [],
+          "external_outputs": [],
+          "model_miss_origin": false,
+          "obligation_id": "runtime_owner.lifecycle_startup_direct_helper_boundary",
+          "obligation_type": "contract",
+          "required": true,
+          "required_closure_evidence_roles": [],
+          "required_runtime_node_ids": [],
+          "required_test_kinds": [
+            "negative_path"
+          ],
+          "requires_same_class_test_evidence": false,
+          "risk_level": "high",
+          "side_effects": [],
+          "state_reads": [],
+          "state_writes": []
+        },
+        {
+          "allow_shared_evidence": false,
+          "allow_shared_implementation": true,
           "description": "Source-audited packet runtime owner helpers preserve schema, path, hash, contract, and audit boundaries.",
           "error_paths": [],
           "exact_external_contract": false,
@@ -53788,7 +54400,7 @@
             "startup.run_isolation_and_activation"
           ],
           "evidence_current": true,
-          "evidence_id": "source.startup.activation",
+          "evidence_id": "source.startup.legacy_role_gates_unsupported",
           "evidence_role": "primary",
           "evidence_target_id": "",
           "overclaims_model_confidence": false,
@@ -53799,7 +54411,7 @@
           "reuse_ticket": null,
           "stale_reasons": [],
           "test_kind": "failure_path",
-          "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+          "test_name": "test_startup_old_role_gate_events_are_unsupported"
         },
         {
           "assertion_scope": "external_contract",
@@ -54378,9 +54990,7 @@
           "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_router_runtime_ack_return",
           "covered_code_contracts": [
-            "router.record_external_event",
-            "card.open_card",
-            "card.submit_card_ack"
+            "daemon.run_router_daemon"
           ],
           "covered_obligations": [
             "ack.return_wait_preconsumption"
@@ -54397,7 +55007,7 @@
           "reuse_ticket": null,
           "stale_reasons": [],
           "test_kind": "edge_path",
-          "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+          "test_name": "test_router_daemon_tick_consumes_card_ack_without_manual_next"
         },
         {
           "assertion_scope": "external_contract",
@@ -54620,6 +55230,32 @@
           "stale_reasons": [],
           "test_kind": "failure_path",
           "test_name": "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_resume_action_handler_child_module_direct_contracts",
+          "covered_code_contracts": [
+            "action_handlers_resume.load_resume_state",
+            "action_handlers_resume.rehydrate_role_bindings",
+            "action_handlers_resume.role_recovery"
+          ],
+          "covered_obligations": [
+            "resume.current_run_reentry"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.resume.action_handlers_direct",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "proof_artifact": null,
+          "result_reused": false,
+          "result_status": "passed",
+          "reuse_ticket": null,
+          "stale_reasons": [],
+          "test_kind": "edge_path",
+          "test_name": "test_resume_action_handler_child_module_direct_contracts"
         },
         {
           "assertion_scope": "external_contract",
@@ -55418,7 +56054,7 @@
           "covered_code_contracts": [
             "action_handlers_basic.check_packet_ledger",
             "action_handlers_basic.relay_only_system_card",
-            "action_handlers_roles.controller_repair_work_packet"
+            "action_handlers_role_misc.controller_repair_work_packet"
           ],
           "covered_obligations": [
             "runtime_owner.router_owner_external_contracts"
@@ -55736,25 +56372,17 @@
           "closure_evidence_role": "",
           "command": "python -m unittest tests.test_flowpilot_full_diagnostic_contracts.FlowPilotFullDiagnosticContractTests.test_lifecycle_startup_system_card_external_contracts",
           "covered_code_contracts": [
-            "lifecycle_requests.write_terminal_fence",
-            "lifecycle_requests.clear_terminal_blocker",
             "lifecycle_terminal_quarantine.clear_repair_transaction",
             "lifecycle_terminal_quarantine.material_progress_flags",
             "lifecycle_terminal_quarantine.duplicate_role_events",
             "lifecycle_terminal_quarantine.packet_result_authority",
-            "lifecycle_requests.write_run_lifecycle",
-            "lifecycle_requests.write_protocol_dead_end",
-            "lifecycle_requests.exception_blocker_fallback",
             "lifecycle_support.lifecycle_record_path",
             "startup_bootloader.next_boot_action",
-            "lifecycle_support.write_manual_resume_binding",
             "startup_display.display_text_hash",
-            "startup_fact_boundary.controller_boundary_constraints",
+            "startup_mechanical_boundary.controller_boundary_constraints",
             "startup_flow.owner_module_name",
             "startup_intake.result_payload_contract",
-            "startup_role_recovery.owner_child_module_names",
-            "startup_support.ensure_startup_run_state",
-            "system_cards_delivery.commit_system_card_delivery"
+            "startup_role_recovery.owner_child_module_names"
           ],
           "covered_obligations": [
             "runtime_owner.router_owner_external_contracts"
@@ -55772,6 +56400,86 @@
           "stale_reasons": [],
           "test_kind": "negative_path",
           "test_name": "test_lifecycle_startup_system_card_external_contracts"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_controller_runtime_facade_binds_loop_owner",
+          "covered_code_contracts": [
+            "controller_runtime.bind_router",
+            "controller_runtime_loop.bind_router"
+          ],
+          "covered_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.router_owner.controller_runtime_facade",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "proof_artifact": null,
+          "result_reused": false,
+          "result_status": "passed",
+          "reuse_ticket": null,
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_controller_runtime_facade_binds_loop_owner"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_role_binding_child_module_records_current_agent",
+          "covered_code_contracts": [
+            "action_handlers_role_binding.write_current_role_agent_binding"
+          ],
+          "covered_obligations": [
+            "runtime_owner.router_owner_external_contracts"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.router_owner.role_binding_direct",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "proof_artifact": null,
+          "result_reused": false,
+          "result_status": "passed",
+          "reuse_ticket": null,
+          "stale_reasons": [],
+          "test_kind": "happy_path",
+          "test_name": "test_role_binding_child_module_records_current_agent"
+        },
+        {
+          "assertion_scope": "external_contract",
+          "closure_evidence_role": "",
+          "command": "python -m unittest tests.test_flowpilot_router_owner_contracts.FlowPilotRouterOwnerContractTests.test_lifecycle_startup_owner_helpers_execute_direct_contracts",
+          "covered_code_contracts": [
+            "lifecycle_requests.write_terminal_fence",
+            "lifecycle_requests.clear_terminal_blocker",
+            "lifecycle_requests.write_run_lifecycle",
+            "lifecycle_requests.write_protocol_dead_end",
+            "lifecycle_requests.exception_blocker_fallback",
+            "lifecycle_support.write_manual_resume_binding",
+            "startup_support.ensure_startup_run_state",
+            "system_cards_delivery.commit_system_card_delivery"
+          ],
+          "covered_obligations": [
+            "runtime_owner.lifecycle_startup_direct_helper_boundary"
+          ],
+          "evidence_current": true,
+          "evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers",
+          "evidence_role": "primary",
+          "evidence_target_id": "",
+          "overclaims_model_confidence": false,
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "proof_artifact": null,
+          "result_reused": false,
+          "result_status": "passed",
+          "reuse_ticket": null,
+          "stale_reasons": [],
+          "test_kind": "negative_path",
+          "test_name": "test_lifecycle_startup_owner_helpers_execute_direct_contracts"
         },
         {
           "assertion_scope": "external_contract",
@@ -55838,6 +56546,7 @@
             "route_artifacts_evidence.write_pm_review_block_repair",
             "route_completion_support.resume_waits_for_pm_decision",
             "self_interrogation.self_interrogation_issue",
+            "startup_closure.terminal_closure_reconciliation_status",
             "terminal_closure.terminal_closure_suite_is_closed",
             "terminal_recovery.recover_terminal_status",
             "terminal_summary.terminal_summary_action",
@@ -55971,7 +56680,7 @@
             "packet_issue_resume.pm_issue_apply",
             "packet_relay.runtime_write_apply",
             "packet_dispatch.router_direct_dispatch_apply",
-            "packet_review.reviewer_result_apply",
+            "packet_review.runtime_result_envelope_check_apply",
             "packet_runtime_reviewer.validate_for_reviewer"
           ],
           "covered_obligations": [
@@ -56682,8 +57391,8 @@
             "bool",
             "dict",
             "len",
-            "next_action",
             "range",
+            "runtime_next.next_action",
             "str"
           ],
           "code_contract_id": "router.run_until_wait",
@@ -56694,7 +57403,7 @@
             "project_root"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -56727,6 +57436,7 @@
             "project_root",
             "range",
             "result",
+            "runtime_next",
             "start_new",
             "str"
           ],
@@ -56766,7 +57476,7 @@
             "project_root"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -56827,7 +57537,7 @@
             "project_root"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_apply.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -56867,17 +57577,26 @@
           "calls": [
             "RouterError",
             "_daemon_scheduled_bootloader_action",
+            "_next_control_blocker_action",
             "_router_daemon_can_continue_after_enqueued_action",
             "_startup_daemon_controls_bootstrap",
             "_startup_daemon_schedule_bootloader_action",
+            "_try_write_control_blocker_for_exception",
+            "_write_control_blocker",
             "bootstrap.get",
             "compute_bootloader_action",
             "compute_controller_action",
+            "existing_blocker.get",
+            "getattr",
             "isinstance",
             "load_bootstrap_state",
             "load_run_state",
+            "project_relative",
             "project_root.resolve",
-            "schedule.get"
+            "read_json",
+            "run_state_path",
+            "schedule.get",
+            "str"
           ],
           "code_contract_id": "router.next_action",
           "found": true,
@@ -56886,7 +57605,7 @@
             "project_root"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_next.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -56899,12 +57618,16 @@
           "side_effects": [],
           "state_reads": [
             "Any",
+            "PacketRuntimeError",
             "Path",
             "RouterError",
             "_daemon_scheduled_bootloader_action",
+            "_next_control_blocker_action",
             "_router_daemon_can_continue_after_enqueued_action",
             "_startup_daemon_controls_bootstrap",
             "_startup_daemon_schedule_bootloader_action",
+            "_try_write_control_blocker_for_exception",
+            "_write_control_blocker",
             "action",
             "bool",
             "boot_action",
@@ -56912,16 +57635,25 @@
             "compute_bootloader_action",
             "compute_controller_action",
             "dict",
+            "exc",
+            "existing_blocker",
             "get",
+            "getattr",
             "isinstance",
             "load_bootstrap_state",
             "load_run_state",
+            "message",
             "new_invocation",
+            "packet_runtime",
             "pending",
+            "project_relative",
             "project_root",
+            "read_json",
+            "refreshed_state",
             "resolve",
             "run_root",
             "run_state",
+            "run_state_path",
             "schedule",
             "str"
           ],
@@ -56929,13 +57661,112 @@
             "action",
             "boot_action",
             "bootstrap",
+            "existing_blocker",
+            "message",
             "pending",
             "project_root",
+            "refreshed_state",
             "run_root",
             "run_state",
             "schedule"
           ],
           "symbol": "next_action"
+        },
+        {
+          "calls": [
+            "current.get",
+            "globals",
+            "items",
+            "name.endswith",
+            "name.startswith",
+            "runtime_loop._bind_router",
+            "set",
+            "vars"
+          ],
+          "code_contract_id": "controller_runtime.bind_router",
+          "found": true,
+          "parameters": [
+            "router"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": false,
+          "side_effects": [],
+          "state_reads": [
+            "ModuleType",
+            "_BOUND_ROUTER",
+            "_bind_router",
+            "current",
+            "endswith",
+            "get",
+            "globals",
+            "items",
+            "local_names",
+            "name",
+            "router",
+            "runtime_loop",
+            "set",
+            "startswith",
+            "value",
+            "vars"
+          ],
+          "state_writes": [
+            "_BOUND_ROUTER",
+            "current",
+            "local_names"
+          ],
+          "symbol": "_bind_router"
+        },
+        {
+          "calls": [
+            "current.get",
+            "globals",
+            "items",
+            "name.endswith",
+            "name.startswith",
+            "runtime_apply._bind_router",
+            "runtime_next._bind_router",
+            "set",
+            "vars"
+          ],
+          "code_contract_id": "controller_runtime_loop.bind_router",
+          "found": true,
+          "parameters": [
+            "router"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_controller_runtime_loop.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": false,
+          "side_effects": [],
+          "state_reads": [
+            "ModuleType",
+            "_BOUND_ROUTER",
+            "_bind_router",
+            "current",
+            "endswith",
+            "get",
+            "globals",
+            "items",
+            "local_names",
+            "name",
+            "router",
+            "runtime_apply",
+            "runtime_next",
+            "set",
+            "startswith",
+            "value",
+            "vars"
+          ],
+          "state_writes": [
+            "_BOUND_ROUTER",
+            "current",
+            "local_names"
+          ],
+          "symbol": "_bind_router"
         },
         {
           "calls": [
@@ -57220,7 +58051,6 @@
         },
         {
           "calls": [
-            "Path",
             "_runtime_state",
             "assignment.get",
             "get",
@@ -57260,8 +58090,8 @@
           "state_reads": [
             "Any",
             "BlackBoxRuntimeError",
+            "ENTRYPOINT_PATH",
             "Path",
-            "__file__",
             "_runtime_state",
             "agent_id",
             "assign_packet",
@@ -59604,7 +60434,6 @@
             "router._route_draft_identity_scope",
             "router._route_mutation_identity_scope",
             "router._stable_identity_hash",
-            "router._startup_repair_identity_scope",
             "scope.get",
             "str",
             "tuple"
@@ -59651,7 +60480,6 @@
             "_route_draft_identity_scope",
             "_route_mutation_identity_scope",
             "_stable_identity_hash",
-            "_startup_repair_identity_scope",
             "dedupe_key",
             "dict",
             "event",
@@ -60639,6 +61467,64 @@
             "issues"
           ],
           "symbol": "validate_final_user_report_record"
+        },
+        {
+          "calls": [
+            "_bind_router",
+            "bool",
+            "families.items",
+            "family_status.get",
+            "router._continuation_quarantine_reconciliation_status",
+            "router._defect_ledger_reconciliation_status",
+            "router._role_memory_reconciliation_status"
+          ],
+          "code_contract_id": "startup_closure.terminal_closure_reconciliation_status",
+          "found": true,
+          "parameters": [
+            "project_root",
+            "router",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_startup_closure.py",
+          "raised_errors": [],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "Any",
+            "ModuleType",
+            "Path",
+            "_bind_router",
+            "_continuation_quarantine_reconciliation_status",
+            "_defect_ledger_reconciliation_status",
+            "_role_memory_reconciliation_status",
+            "bool",
+            "defect_status",
+            "dict",
+            "dirty",
+            "families",
+            "family_status",
+            "get",
+            "items",
+            "name",
+            "project_root",
+            "quarantine_status",
+            "role_memory_status",
+            "router",
+            "run_root",
+            "run_state",
+            "str"
+          ],
+          "state_writes": [
+            "defect_status",
+            "dirty",
+            "families",
+            "quarantine_status",
+            "role_memory_status"
+          ],
+          "symbol": "_terminal_closure_reconciliation_status"
         },
         {
           "calls": [
@@ -62718,7 +63604,7 @@
             "str",
             "transaction.get"
           ],
-          "code_contract_id": "action_handlers_roles.controller_repair_work_packet",
+          "code_contract_id": "action_handlers_role_misc.controller_repair_work_packet",
           "found": true,
           "parameters": [
             "payload",
@@ -62729,7 +63615,7 @@
             "run_state"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_roles.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_misc.py",
           "raised_errors": [
             "RouterError"
           ],
@@ -62775,6 +63661,383 @@
             "updated_at"
           ],
           "symbol": "_apply_controller_repair_work_packet"
+        },
+        {
+          "calls": [
+            "_normalize_current_role_agent_binding",
+            "enumerate",
+            "existing.get",
+            "exists",
+            "int",
+            "isinstance",
+            "item.get",
+            "join",
+            "memory_root.mkdir",
+            "preserved_slots.append",
+            "role_order.get",
+            "router.RouterError",
+            "router._append_role_io_protocol_injections",
+            "router._latest_resume_tick_id",
+            "router._role_memory_path",
+            "router.project_relative",
+            "router.read_json_if_exists",
+            "router.utc_now",
+            "router.write_json",
+            "run_state.get",
+            "run_state.setdefault",
+            "slot.get",
+            "slots.sort",
+            "startup_answers.get",
+            "str",
+            "unsupported_roles.append"
+          ],
+          "code_contract_id": "action_handlers_role_binding.write_current_role_agent_binding",
+          "found": true,
+          "parameters": [
+            "payload",
+            "project_root",
+            "role",
+            "router",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_role_binding.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [],
+          "returns_value": true,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "Any",
+            "ModuleType",
+            "Path",
+            "RUNTIME_ROLE_KEYS",
+            "RouterError",
+            "_append_role_io_protocol_injections",
+            "_latest_resume_tick_id",
+            "_normalize_current_role_agent_binding",
+            "_role_memory_path",
+            "agent_id",
+            "append",
+            "binding_open_result",
+            "core_prompt_hash",
+            "core_prompt_path",
+            "dict",
+            "enumerate",
+            "existing",
+            "existing_slots",
+            "exists",
+            "flags",
+            "generation",
+            "get",
+            "host_liveness_status",
+            "index",
+            "int",
+            "isinstance",
+            "item",
+            "join",
+            "ledger",
+            "list",
+            "liveness_decision",
+            "memory",
+            "memory_path",
+            "memory_root",
+            "mkdir",
+            "payload",
+            "preserved_slots",
+            "project_relative",
+            "project_root",
+            "read_json_if_exists",
+            "receipts",
+            "record",
+            "role",
+            "role_binding_path",
+            "role_key",
+            "role_order",
+            "router",
+            "run_id",
+            "run_root",
+            "run_state",
+            "setdefault",
+            "slot",
+            "slot_role",
+            "slots",
+            "sort",
+            "startup_answers",
+            "str",
+            "unsupported_roles",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "background_collaboration_authorized",
+            "existing",
+            "existing_slots",
+            "generation",
+            "ledger",
+            "memory",
+            "memory_path",
+            "memory_root",
+            "preserved_slots",
+            "receipts",
+            "record",
+            "role_binding_epoch",
+            "role_binding_generation",
+            "role_binding_path",
+            "role_order",
+            "slot_role",
+            "slots",
+            "startup_answers",
+            "unsupported_roles"
+          ],
+          "symbol": "_write_current_role_agent_binding"
+        },
+        {
+          "calls": [
+            "ActionHandlerOutcome",
+            "bool",
+            "exists",
+            "get",
+            "glob",
+            "len",
+            "path.exists",
+            "recovery_report.get",
+            "required_paths.items",
+            "router._continuation_binding_path",
+            "router._continuation_quarantine_path",
+            "router._controller_action_ledger_path",
+            "router._current_resume_role_keys",
+            "router._derive_resume_next_recipient_from_packet_ledger",
+            "router._display_plan_path",
+            "router._display_plan_sync_payload",
+            "router._latest_resume_tick_id",
+            "router._latest_role_recovery_transaction",
+            "router._pm_prior_path_context_path",
+            "router._reclaim_role_recovery_postcondition_from_report",
+            "router._role_recovery_ready_context",
+            "router._route_history_index_path",
+            "router._router_daemon_lock_path",
+            "router._router_daemon_resume_recovery_summary",
+            "router._router_daemon_status_path",
+            "router._write_continuation_quarantine",
+            "router.project_relative",
+            "router.run_state_path",
+            "router.utc_now",
+            "router.write_json",
+            "sorted"
+          ],
+          "code_contract_id": "action_handlers_resume.load_resume_state",
+          "found": true,
+          "parameters": [
+            "payload",
+            "pending",
+            "project_root",
+            "router",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+          "raised_errors": [],
+          "return_values": [
+            "ActionHandlerOutcome"
+          ],
+          "returns_value": true,
+          "side_effects": [
+            "write_json"
+          ],
+          "state_reads": [
+            "ActionHandlerOutcome",
+            "Any",
+            "ModuleType",
+            "Path",
+            "RESUME_EVIDENCE_SCHEMA",
+            "ROLE_RECOVERY_TRANSACTION_SCHEMA",
+            "_continuation_binding_path",
+            "_continuation_quarantine_path",
+            "_controller_action_ledger_path",
+            "_current_resume_role_keys",
+            "_derive_resume_next_recipient_from_packet_ledger",
+            "_display_plan_path",
+            "_display_plan_sync_payload",
+            "_latest_resume_tick_id",
+            "_latest_role_recovery_transaction",
+            "_pm_prior_path_context_path",
+            "_reclaim_role_recovery_postcondition_from_report",
+            "_role_recovery_ready_context",
+            "_route_history_index_path",
+            "_router_daemon_lock_path",
+            "_router_daemon_resume_recovery_summary",
+            "_router_daemon_status_path",
+            "_write_continuation_quarantine",
+            "ambiguous_state",
+            "ambiguous_state_blocks_controller_execution",
+            "bool",
+            "continuation_quarantine",
+            "controller_action_ledger_exists",
+            "controller_action_ledger_rescanned",
+            "current_resume_role_keys",
+            "current_role_memory_files",
+            "daemon_recovery",
+            "decision",
+            "dict",
+            "display_payload",
+            "display_plan_exists",
+            "exists",
+            "flags",
+            "get",
+            "glob",
+            "items",
+            "len",
+            "missing",
+            "name",
+            "native_plan_projection",
+            "path",
+            "pm_resume_decision_required",
+            "project_relative",
+            "project_root",
+            "projection_hash",
+            "recovery_report",
+            "report",
+            "report_relpath",
+            "required_paths",
+            "resume_next",
+            "resume_record",
+            "role_binding_memory_files",
+            "role_recovery_context",
+            "roles_ready_from_recovery",
+            "router",
+            "router_daemon_status_exists",
+            "run_id",
+            "run_root",
+            "run_state",
+            "run_state_path",
+            "sorted",
+            "stem",
+            "str",
+            "utc_now",
+            "write_json"
+          ],
+          "state_writes": [
+            "ambiguous_state",
+            "continuation_quarantine",
+            "current_resume_role_keys",
+            "current_role_memory_files",
+            "daemon_recovery",
+            "display_payload",
+            "missing",
+            "pm_resume_decision_required",
+            "recovery_report",
+            "required_paths",
+            "resume_next",
+            "resume_record",
+            "resume_roles_restored",
+            "resume_state_ambiguous",
+            "resume_state_loaded",
+            "role_binding_memory_files",
+            "role_recovery_context",
+            "role_recovery_state_loaded",
+            "roles_ready_from_recovery"
+          ],
+          "symbol": "_apply_load_resume_state"
+        },
+        {
+          "calls": [
+            "ActionHandlerOutcome",
+            "get",
+            "router.RouterError",
+            "router._write_resume_role_rehydration_report"
+          ],
+          "code_contract_id": "action_handlers_resume.rehydrate_role_bindings",
+          "found": true,
+          "parameters": [
+            "payload",
+            "pending",
+            "project_root",
+            "router",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "ActionHandlerOutcome"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "ActionHandlerOutcome",
+            "Any",
+            "ModuleType",
+            "Path",
+            "RouterError",
+            "_write_resume_role_rehydration_report",
+            "dict",
+            "flags",
+            "get",
+            "payload",
+            "project_root",
+            "router",
+            "run_root",
+            "run_state",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "_apply_rehydrate_role_bindings"
+        },
+        {
+          "calls": [
+            "ActionHandlerOutcome",
+            "get",
+            "router.RouterError",
+            "router._write_role_recovery_report"
+          ],
+          "code_contract_id": "action_handlers_resume.role_recovery",
+          "found": true,
+          "parameters": [
+            "payload",
+            "pending",
+            "project_root",
+            "router",
+            "run_root",
+            "run_state"
+          ],
+          "parse_error": "",
+          "path": "skills/flowpilot/assets/flowpilot_router_action_handlers_resume.py",
+          "raised_errors": [
+            "RouterError"
+          ],
+          "return_values": [
+            "ActionHandlerOutcome"
+          ],
+          "returns_value": true,
+          "side_effects": [],
+          "state_reads": [
+            "ActionHandlerOutcome",
+            "Any",
+            "ModuleType",
+            "Path",
+            "RouterError",
+            "_write_role_recovery_report",
+            "dict",
+            "flags",
+            "get",
+            "payload",
+            "project_root",
+            "router",
+            "run_root",
+            "run_state",
+            "str"
+          ],
+          "state_writes": [],
+          "symbol": "_apply_recover_role_bindings"
         },
         {
           "calls": [
@@ -64451,7 +65714,6 @@
         },
         {
           "calls": [
-            "RouterError",
             "_bind_router",
             "_formal_router_daemon_ready",
             "_pending_action_postcondition",
@@ -64499,9 +65761,7 @@
           ],
           "parse_error": "",
           "path": "skills/flowpilot/assets/flowpilot_router_controller_scheduler_receipts_bootloader.py",
-          "raised_errors": [
-            "RouterError"
-          ],
+          "raised_errors": [],
           "return_values": [
             "result"
           ],
@@ -64515,7 +65775,6 @@
             "Any",
             "ModuleType",
             "Path",
-            "RouterError",
             "_apply_startup_intake_result_to_bootstrap",
             "_bind_router",
             "_boot_action_meta",
@@ -66424,13 +67683,13 @@
             "_bind_router",
             "role_output_runtime.controller_boundary_constraints"
           ],
-          "code_contract_id": "startup_fact_boundary.controller_boundary_constraints",
+          "code_contract_id": "startup_mechanical_boundary.controller_boundary_constraints",
           "found": true,
           "parameters": [
             "router"
           ],
           "parse_error": "",
-          "path": "skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_controller.py",
+          "path": "skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_controller.py",
           "raised_errors": [],
           "return_values": [
             "controller_boundary_constraints"
@@ -66690,9 +67949,12 @@
             "_ensure_daemon_runtime_state",
             "_write_initial_continuation_binding",
             "bootstrap_state.get",
+            "dict",
             "exists",
+            "isinstance",
             "new_run_state",
             "path.exists",
+            "project_relative",
             "read_json",
             "run_state.get",
             "run_state.setdefault",
@@ -66731,6 +67993,7 @@
             "_create_empty_execution_frontier",
             "_ensure_daemon_runtime_state",
             "_write_initial_continuation_binding",
+            "bootstrap_answers",
             "bootstrap_state",
             "default",
             "dict",
@@ -66740,9 +68003,11 @@
             "flag",
             "flags",
             "get",
+            "isinstance",
             "items",
             "new_run_state",
             "path",
+            "project_relative",
             "project_root",
             "read_json",
             "run_id",
@@ -66759,11 +68024,15 @@
             "write_json"
           ],
           "state_writes": [
+            "bootstrap_answers",
             "path",
             "run_id",
             "run_root",
             "run_root_rel",
             "run_state",
+            "startup_answers",
+            "startup_answers_path",
+            "startup_answers_recorded",
             "startup_lifecycle"
           ],
           "symbol": "_ensure_startup_run_state"
@@ -66783,7 +68052,6 @@
             "card_ledger.setdefault",
             "card_runtime.stable_json_hash",
             "delivery.get",
-            "delivery.update",
             "int",
             "isinstance",
             "ledger.setdefault",
@@ -66816,7 +68084,6 @@
           "return_values": [],
           "returns_value": true,
           "side_effects": [
-            "update",
             "write_json"
           ],
           "state_reads": [
@@ -66879,7 +68146,6 @@
             "stable_json_hash",
             "str",
             "to_role",
-            "update",
             "utc_now",
             "write_json"
           ],
@@ -68500,7 +69766,7 @@
             "isinstance",
             "replace"
           ],
-          "code_contract_id": "packet_review.reviewer_result_apply",
+          "code_contract_id": "packet_review.runtime_result_envelope_check_apply",
           "found": true,
           "parameters": [
             "input_obj",
@@ -68563,7 +69829,7 @@
             "result_body_open_events",
             "result_body_open_ledger_records"
           ],
-          "symbol": "ReviewerResultEnvelopeCheck.apply"
+          "symbol": "RuntimeResultEnvelopeCheck.apply"
         },
         {
           "calls": [
@@ -68783,10 +70049,6 @@
             "router._write_research_package",
             "router._write_role_work_result_returned",
             "router._write_route_draft",
-            "router._write_startup_activation",
-            "router._write_startup_fact_report",
-            "router._write_startup_protocol_dead_end",
-            "router._write_startup_repair_request",
             "router._write_terminal_backward_replay",
             "router._write_terminal_closure_suite",
             "router._write_worker_research_report",
@@ -68933,10 +70195,6 @@
             "_write_route_draft",
             "_write_route_process_issue_report",
             "_write_route_process_pass_report",
-            "_write_startup_activation",
-            "_write_startup_fact_report",
-            "_write_startup_protocol_dead_end",
-            "_write_startup_repair_request",
             "_write_terminal_backward_replay",
             "_write_terminal_closure_suite",
             "_write_worker_research_report",
@@ -69889,6 +71147,7 @@
             "entry",
             "get",
             "mail_id",
+            "object",
             "str"
           ],
           "state_writes": [],
@@ -71811,49 +73070,33 @@
           "test_name": "test_startup_daemon_defers_banner_and_queues_next_boot_row"
         },
         {
-          "assert_count": 40,
+          "assert_count": 6,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "router.record_external_event"
           ],
           "calls": [
-            "as_posix",
             "exists",
             "get",
-            "hashlib.sha256",
-            "hexdigest",
-            "proof_path.exists",
-            "read_bytes",
+            "old_events.items",
             "read_json",
-            "read_text",
             "router.record_external_event",
             "router.run_state_path",
-            "run_root.relative_to",
-            "self.assertEqual",
             "self.assertFalse",
-            "self.assertIn",
-            "self.assertNotIn",
             "self.assertRaises",
-            "self.assertRaisesRegex",
-            "self.assertTrue",
             "self.boot_to_controller",
-            "self.deliver_expected_card",
-            "self.deliver_initial_pm_cards_and_user_intake",
-            "self.deliver_startup_fact_check_card",
-            "self.deliver_user_intake_mail",
-            "self.handle_pending_control_blocker",
+            "self.deliver_startup_runtime_prompt_cards",
+            "self.legacy_startup_fact_report_body",
             "self.make_project",
-            "self.material_scan_payload",
-            "self.pm_control_blocker_decision_body",
             "self.role_decision_envelope",
             "self.role_report_envelope",
-            "self.startup_fact_report_body"
+            "self.subTest"
           ],
-          "evidence_id": "source.startup.activation",
+          "evidence_id": "source.startup.legacy_role_gates_unsupported",
           "found": true,
           "parse_error": "",
           "path": "tests/router_runtime/startup_bootstrap.py",
-          "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+          "test_name": "test_startup_old_role_gate_events_are_unsupported"
         },
         {
           "assert_count": 13,
@@ -72499,35 +73742,35 @@
           "assert_count": 5,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
-            "card.open_card",
-            "card.submit_card_ack",
-            "router.record_external_event"
+            "daemon.run_router_daemon"
           ],
           "calls": [
             "action.get",
-            "card_runtime.open_card",
-            "card_runtime.submit_card_ack",
+            "after.get",
+            "get",
             "isinstance",
-            "item.get",
-            "len",
             "read_json",
-            "router.record_external_event",
+            "router.apply_action",
+            "router.run_router_daemon",
             "router.run_state_path",
             "self.assertEqual",
             "self.assertIn",
+            "self.assertNotEqual",
             "self.assertTrue",
             "self.boot_to_controller",
-            "self.deliver_startup_fact_check_card_without_ack",
             "self.make_project",
-            "self.role_report_envelope",
-            "self.startup_fact_report_body",
+            "self.next_after_display_sync",
+            "self.payload_for_action",
+            "self.release_startup_daemon_for_explicit_daemon_test",
+            "self.submit_system_card_ack_without_router_next",
+            "set",
             "str"
           ],
           "evidence_id": "source.ack.edge",
           "found": true,
           "parse_error": "",
           "path": "tests/router_runtime/ack_return.py",
-          "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+          "test_name": "test_router_daemon_tick_consumes_card_ack_without_manual_next"
         },
         {
           "assert_count": 15,
@@ -72731,7 +73974,7 @@
           "test_name": "test_terminal_source_entry_child_projects_requirement_trace_defaults"
         },
         {
-          "assert_count": 74,
+          "assert_count": 77,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "router.apply_action",
@@ -72742,8 +73985,8 @@
             "action.get",
             "exists",
             "len",
-            "list",
             "next",
+            "payload.pop",
             "read_json",
             "receipt_phase_by_role.items",
             "router.apply_action",
@@ -72759,11 +74002,14 @@
             "self.assertTrue",
             "self.assert_payload_contract_mentions",
             "self.boot_to_controller",
-            "self.complete_startup_activation",
+            "self.complete_startup_runtime_entry",
             "self.deliver_expected_card",
             "self.make_project",
+            "self.next_after_display_sync",
+            "self.payload_for_action",
             "self.resume_role_agent_payload",
             "set",
+            "str",
             "update"
           ],
           "evidence_id": "source.resume.loads",
@@ -72788,6 +74034,7 @@
             "self.assertTrue",
             "self.boot_to_controller",
             "self.deliver_expected_card",
+            "self.ensure_current_role_agent_for_role",
             "self.make_project",
             "self.next_after_display_sync",
             "self.prior_path_context_review",
@@ -72800,6 +74047,34 @@
           "parse_error": "",
           "path": "tests/router_runtime/resume.py",
           "test_name": "test_resume_ambiguous_state_blocks_continue_without_recovery_evidence"
+        },
+        {
+          "assert_count": 7,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "action_handlers_resume.load_resume_state",
+            "action_handlers_resume.rehydrate_role_bindings",
+            "action_handlers_resume.role_recovery"
+          ],
+          "calls": [
+            "Path",
+            "action_handlers_resume._apply_load_resume_state",
+            "action_handlers_resume._apply_recover_role_bindings",
+            "action_handlers_resume._apply_rehydrate_role_bindings",
+            "exists",
+            "json.loads",
+            "read_text",
+            "run_root.mkdir",
+            "self.assertEqual",
+            "self.assertTrue",
+            "tempfile.TemporaryDirectory",
+            "write_json"
+          ],
+          "evidence_id": "source.resume.action_handlers_direct",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "test_name": "test_resume_action_handler_child_module_direct_contracts"
         },
         {
           "assert_count": 5,
@@ -73491,7 +74766,7 @@
           "test_name": "test_dispatch_gate_helpers_belong_to_owner_module"
         },
         {
-          "assert_count": 16,
+          "assert_count": 3,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "action_factory_dispatch.apply_dispatch_recipient_gate",
@@ -73500,15 +74775,9 @@
           "calls": [
             "Path",
             "action_factory_dispatch._apply_dispatch_recipient_gate",
-            "action_factory_dispatch._dispatch_gate_action_is_ack_only_prompt",
-            "action_factory_dispatch._dispatch_gate_action_work_class",
-            "action_factory_dispatch._dispatch_gate_output_events_for_card_id",
-            "action_factory_envelope.append_history",
             "action_factory_envelope.make_action",
             "run_root.mkdir",
             "self.assertEqual",
-            "self.assertFalse",
-            "self.assertIn",
             "self.assertTrue",
             "tempfile.TemporaryDirectory"
           ],
@@ -73578,13 +74847,13 @@
           "called_code_contracts": [
             "action_handlers_basic.check_packet_ledger",
             "action_handlers_basic.relay_only_system_card",
-            "action_handlers_roles.controller_repair_work_packet"
+            "action_handlers_role_misc.controller_repair_work_packet"
           ],
           "calls": [
             "Path",
             "action_handlers_basic._apply_check_packet_ledger",
             "action_handlers_basic._apply_relay_only_system_card",
-            "action_handlers_roles._apply_controller_repair_work_packet",
+            "action_handlers_role_misc._apply_controller_repair_work_packet",
             "json.loads",
             "router._repair_transaction_path",
             "self.assertEqual",
@@ -73873,7 +75142,7 @@
           "test_name": "test_foreground_controller_standby_state_policy_classifier"
         },
         {
-          "assert_count": 56,
+          "assert_count": 6,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "event_identity.stable_identity_hash",
@@ -73884,24 +75153,16 @@
             "protocol_external_events.external_event_contract"
           ],
           "calls": [
-            "event_identity._record_event_from_role_matches",
             "event_identity._stable_identity_hash",
+            "event_identity_scopes._stable_identity_hash",
             "event_intake.role_list",
-            "event_intake.system_card_delivery_flag",
             "events_repair.owner_child_module_names",
             "expected_waits._run_state_has_event",
-            "external_event_registry.external_event_phase",
-            "external_event_registry.external_events_for_phase",
-            "gate_registry.gate_outcome_pass_clears_events",
-            "len",
             "model_gate_state._sync_model_gate_flags",
             "protocol_external_events.external_event_contract",
             "self.assertEqual",
             "self.assertIn",
-            "self.assertIs",
-            "self.assertTrue",
-            "set",
-            "sorted"
+            "self.assertTrue"
           ],
           "evidence_id": "source.full_diagnostic.event_wait_repair",
           "found": true,
@@ -73946,34 +75207,25 @@
           "test_name": "test_facade_export_manifest_external_contracts"
         },
         {
-          "assert_count": 65,
+          "assert_count": 27,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
-            "lifecycle_requests.clear_terminal_blocker",
-            "lifecycle_requests.exception_blocker_fallback",
-            "lifecycle_requests.write_protocol_dead_end",
-            "lifecycle_requests.write_run_lifecycle",
-            "lifecycle_requests.write_terminal_fence",
             "lifecycle_support.lifecycle_record_path",
-            "lifecycle_support.write_manual_resume_binding",
             "lifecycle_terminal_quarantine.clear_repair_transaction",
             "lifecycle_terminal_quarantine.duplicate_role_events",
             "lifecycle_terminal_quarantine.material_progress_flags",
             "lifecycle_terminal_quarantine.packet_result_authority",
             "startup_bootloader.next_boot_action",
             "startup_display.display_text_hash",
-            "startup_fact_boundary.controller_boundary_constraints",
             "startup_flow.owner_module_name",
             "startup_intake.result_payload_contract",
-            "startup_role_recovery.owner_child_module_names",
-            "startup_support.ensure_startup_run_state",
-            "system_cards_delivery.commit_system_card_delivery"
+            "startup_mechanical_boundary.controller_boundary_constraints",
+            "startup_role_recovery.owner_child_module_names"
           ],
           "calls": [
             "Path",
-            "dead_end_root.mkdir",
+            "dict",
             "exists",
-            "fence_root.mkdir",
             "len",
             "lifecycle_request_terminal_quarantine.clear_active_repair_transaction_for_terminal_lifecycle",
             "lifecycle_request_terminal_quarantine.quarantine_duplicate_role_events_for_terminal_lifecycle",
@@ -73984,33 +75236,22 @@
             "lifecycle_requests._write_protocol_dead_end_lifecycle",
             "lifecycle_requests._write_run_lifecycle_request",
             "lifecycle_requests._write_terminal_lifecycle_fence",
-            "lifecycle_requests.owner_child_module_names",
             "lifecycle_support._lifecycle_record_path",
-            "lifecycle_support._reset_resume_cycle_for_wakeup",
             "lifecycle_support._write_manual_resume_binding",
-            "manual_resume_binding.get",
-            "record_root.mkdir",
             "router._continuation_binding_path",
-            "router._repair_transaction_path",
-            "router.read_json",
-            "router.read_json_if_exists",
-            "router.write_json",
             "run_root.mkdir",
             "self.assertEqual",
             "self.assertFalse",
             "self.assertIn",
             "self.assertIs",
             "self.assertIsNone",
-            "self.assertIsNotNone",
             "self.assertRaisesRegex",
             "self.assertTrue",
-            "set",
             "startup_bootloader._next_boot_action",
             "startup_display._display_text_hash",
-            "startup_display._user_dialog_display_gate",
-            "startup_fact_boundary._controller_boundary_constraints",
             "startup_flow.owner_module_name",
-            "startup_intake_ui._startup_intake_result_payload_contract",
+            "startup_intake._startup_intake_result_payload_contract",
+            "startup_mechanical_boundary._controller_boundary_constraints",
             "startup_role_recovery.owner_child_module_names",
             "startup_support._ensure_startup_run_state",
             "system_cards_delivery._commit_system_card_delivery_artifact",
@@ -74023,13 +75264,101 @@
           "test_name": "test_lifecycle_startup_system_card_external_contracts"
         },
         {
-          "assert_count": 11,
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "controller_runtime.bind_router",
+            "controller_runtime_loop.bind_router"
+          ],
+          "calls": [
+            "controller_runtime._bind_router",
+            "controller_runtime._bound_router",
+            "controller_runtime_apply._bound_router",
+            "controller_runtime_loop._bind_router",
+            "controller_runtime_loop._bound_router",
+            "controller_runtime_next._bound_router",
+            "self.assertIs"
+          ],
+          "evidence_id": "source.router_owner.controller_runtime_facade",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "test_name": "test_controller_runtime_facade_binds_loop_owner"
+        },
+        {
+          "assert_count": 4,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "action_handlers_role_binding.write_current_role_agent_binding"
+          ],
+          "calls": [
+            "Path",
+            "action_handlers_role_binding._write_current_role_agent_binding",
+            "prompt_path.parent.mkdir",
+            "prompt_path.write_text",
+            "self.assertEqual",
+            "self.assertTrue",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.router_owner.role_binding_direct",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "test_name": "test_role_binding_child_module_records_current_agent"
+        },
+        {
+          "assert_count": 8,
+          "assertion_scope": "external_contract",
+          "called_code_contracts": [
+            "lifecycle_requests.clear_terminal_blocker",
+            "lifecycle_requests.exception_blocker_fallback",
+            "lifecycle_requests.write_protocol_dead_end",
+            "lifecycle_requests.write_run_lifecycle",
+            "lifecycle_requests.write_terminal_fence",
+            "lifecycle_support.write_manual_resume_binding",
+            "startup_support.ensure_startup_run_state",
+            "system_cards_delivery.commit_system_card_delivery"
+          ],
+          "calls": [
+            "Path",
+            "dict",
+            "exists",
+            "isinstance",
+            "json.loads",
+            "lifecycle_request_blockers._try_write_control_blocker_for_exception",
+            "lifecycle_request_fence._write_terminal_lifecycle_fence",
+            "lifecycle_request_reconciliation._clear_active_control_blocker_for_terminal_lifecycle",
+            "lifecycle_request_records._write_protocol_dead_end_lifecycle",
+            "lifecycle_request_records._write_run_lifecycle_request",
+            "lifecycle_support._write_manual_resume_binding",
+            "read_text",
+            "router._continuation_binding_path",
+            "run_root.mkdir",
+            "self.assertEqual",
+            "self.assertIsNone",
+            "self.assertRaisesRegex",
+            "self.assertTrue",
+            "startup_support._ensure_startup_run_state",
+            "system_cards_delivery_single._commit_system_card_delivery_artifact",
+            "tempfile.TemporaryDirectory"
+          ],
+          "evidence_id": "source.owner_contracts.lifecycle_startup_direct_helpers",
+          "found": true,
+          "parse_error": "",
+          "path": "tests/test_flowpilot_router_owner_contracts.py",
+          "test_name": "test_lifecycle_startup_owner_helpers_execute_direct_contracts"
+        },
+        {
+          "assert_count": 6,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "router.record_external_event"
           ],
           "calls": [
             "append",
+            "isinstance",
+            "item.get",
+            "next",
             "packet_ledger.setdefault",
             "read_json",
             "router.record_external_event",
@@ -74037,14 +75366,13 @@
             "router.save_run_state",
             "router.write_json",
             "self.assertEqual",
-            "self.assertFalse",
             "self.assertIn",
             "self.assertIsNone",
             "self.assertTrue",
             "self.boot_to_controller",
             "self.make_project",
             "self.rel",
-            "state.setdefault"
+            "transaction_path.parent.mkdir"
           ],
           "evidence_id": "source.terminal.terminal_lifecycle_quarantine",
           "found": true,
@@ -74082,7 +75410,7 @@
           "test_name": "test_startup_intake_flowguard_capability_child_preserves_boundary"
         },
         {
-          "assert_count": 68,
+          "assert_count": 73,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "internal_actions.action_is_router_internal_mechanical",
@@ -74095,6 +75423,7 @@
             "route_artifacts_evidence.write_pm_review_block_repair",
             "route_completion_support.resume_waits_for_pm_decision",
             "self_interrogation.self_interrogation_issue",
+            "startup_closure.terminal_closure_reconciliation_status",
             "terminal_closure.terminal_closure_suite_is_closed",
             "terminal_recovery.recover_terminal_status",
             "terminal_summary.terminal_summary_action",
@@ -74129,6 +75458,7 @@
             "self_interrogation._require_clean_self_interrogation",
             "self_interrogation._self_interrogation_issue",
             "set",
+            "startup_closure._terminal_closure_reconciliation_status",
             "tempfile.TemporaryDirectory",
             "terminal_closure._terminal_closure_suite_is_closed",
             "terminal_recovery._recover_terminal_status_from_run_authorities",
@@ -74256,7 +75586,7 @@
             "packet_invariants.controller_handoff_body_leak_never_advances",
             "packet_issue_resume.pm_issue_apply",
             "packet_relay.runtime_write_apply",
-            "packet_review.reviewer_result_apply",
+            "packet_review.runtime_result_envelope_check_apply",
             "packet_runtime_reviewer.validate_for_reviewer"
           ],
           "calls": [
@@ -74280,7 +75610,7 @@
             "packet_relay.ControllerEnvelopeOnlyHandoff",
             "packet_relay.ControllerReminderCheck",
             "packet_relay.PacketRuntimeWrite",
-            "packet_review_pm.ReviewerResultEnvelopeCheck",
+            "packet_review_pm.RuntimeResultEnvelopeCheck",
             "packet_runtime.packet_paths",
             "packet_runtime_reviewer.validate_for_reviewer",
             "relative_to",
@@ -74434,7 +75764,7 @@
           "test_name": "test_coarse_owner_bind_router_is_idempotent_without_overwriting_owner_locals"
         },
         {
-          "assert_count": 7,
+          "assert_count": 3,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "runtime_state_persistence.merge_stale_run_state_save"
@@ -74442,13 +75772,13 @@
           "calls": [
             "Path",
             "_base_state",
-            "append",
+            "any",
             "persistence._attach_run_state_load_metadata",
             "persistence._merge_stale_run_state_save",
-            "self.assertIn",
+            "self.assertFalse",
             "self.assertIsNone",
-            "self.assertNotIn",
-            "self.assertTrue"
+            "startswith",
+            "str"
           ],
           "evidence_id": "source.runtime_state.stale_save_merge_child",
           "found": true,
@@ -74457,7 +75787,7 @@
           "test_name": "test_child_merge_preserves_foreground_clear_without_metadata_leak"
         },
         {
-          "assert_count": 10,
+          "assert_count": 7,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "runtime_state_persistence.load_run_state_from_run_root",
@@ -74469,18 +75799,18 @@
             "_dummy_router",
             "_read_json",
             "_write_json",
-            "append",
-            "persistence._merge_stale_run_state_save",
+            "any",
+            "loaded.get",
             "persistence.load_run_state_from_run_root",
             "persistence.save_run_state",
-            "router.run_state_path",
+            "run_root.mkdir",
             "run_root.resolve",
-            "runtime_state.load_run_state_from_run_root",
             "self.assertEqual",
-            "self.assertIn",
-            "self.assertIsNone",
-            "self.assertNotIn",
+            "self.assertFalse",
+            "self.assertIsNotNone",
             "self.assertTrue",
+            "startswith",
+            "str",
             "tempfile.TemporaryDirectory"
           ],
           "evidence_id": "source.runtime_state.load_save_persistence_child",
@@ -74680,7 +76010,7 @@
           "test_name": "test_packet_runtime_owner_modules_expose_direct_external_contracts"
         },
         {
-          "assert_count": 8,
+          "assert_count": 5,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "role_output_cli.parse_args",
@@ -74692,13 +76022,10 @@
             "role_output_runtime_cli.parse_args",
             "role_output_runtime_contracts.build_output_skeleton",
             "role_output_runtime_envelopes.runtime_envelope_for_body",
-            "role_output_runtime_envelopes.submit_output",
-            "role_output_runtime_envelopes.validate_envelope_runtime_receipt",
             "role_output_runtime_schema.controller_boundary_constraints",
             "self.assertEqual",
             "self.assertFalse",
-            "self.assertIsNotNone",
-            "self.assertTrue",
+            "self.assertIsNone",
             "self.make_project",
             "str"
           ],
@@ -74890,6 +76217,7 @@
             "router.record_external_event",
             "router.run_state_path",
             "self.activate_route",
+            "self.active_agent_id_for_role",
             "self.active_holder_lease_for_packet",
             "self.assertEqual",
             "self.assertFalse",

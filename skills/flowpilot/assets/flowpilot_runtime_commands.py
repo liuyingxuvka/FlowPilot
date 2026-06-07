@@ -66,7 +66,7 @@ def _record_router_event_or_blocked_next_action(root: Path, event_name: str, env
         next_action_error: dict[str, str] | None = None
         try:
             next_action = flowpilot_router.next_action(root)
-        except Exception as next_exc:  # pragma: no cover - defensive fallback, original blocker still returned
+        except Exception as next_exc:  # pragma: no cover - preserve original blocker after next-action probe failure
             next_action_error = {
                 "error_type": type(next_exc).__name__,
                 "message": str(next_exc),

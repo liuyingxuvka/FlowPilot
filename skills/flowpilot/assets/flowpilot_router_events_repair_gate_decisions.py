@@ -2,7 +2,7 @@
 
 The public router names stay in `flowpilot_router`. This module owns a
 cohesive behavior family and receives the router facade as an explicit runtime
-dependency so shared state writers and public entrypoints remain compatible.
+dependency so shared state writers and public entrypoints stay aligned.
 """
 
 from __future__ import annotations

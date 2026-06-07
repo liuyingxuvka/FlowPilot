@@ -28,7 +28,6 @@ ROUTER_PUBLIC_ENTRYPOINTS = (
         release_required=True,
     ),
 )
-
 ROUTER_STRUCTURE_PARTITIONS = (
     StructurePartitionItem(
         "route_state_root",
@@ -153,7 +152,7 @@ ROUTER_STRUCTURE_PARTITIONS = (
         item_type="function_cluster",
         owner_module_id="startup_closure_mechanical_audit_boundary",
         old_path="flowpilot_router_startup_flow closure and old fact-boundary helpers",
-        new_path="flowpilot_router_startup_closure + flowpilot_router_startup_fact_boundary mechanical audit helpers",
+        new_path="flowpilot_router_startup_closure + flowpilot_router_startup_mechanical_boundary mechanical audit helpers",
     ),
     StructurePartitionItem(
         "router_protocol_catalog",
@@ -605,7 +604,7 @@ ROUTER_STRUCTURE_MODULES = (
     ),
     ModuleStructureEvidence(
         "startup_closure_mechanical_boundary",
-        path="skills/flowpilot/assets/flowpilot_router_startup_fact_boundary_audit.py",
+        path="skills/flowpilot/assets/flowpilot_router_startup_mechanical_boundary_audit.py",
         owns_functions=("_write_startup_mechanical_audit", "_next_startup_mechanical_audit_action"),
         owns_state=("startup_mechanical_audit", "startup_mechanical_boundary"),
         owns_side_effects=("startup_mechanical_audit_write",),

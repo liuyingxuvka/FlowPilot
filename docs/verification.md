@@ -76,7 +76,7 @@ Expected:
   role-appropriate action guidance.
 - command refinement checks preserve the original multi-command startup
   baseline and permit only the safe internal `run-until-wait` startup fold;
-  higher-risk card, relay, startup fact-card, and role-output folds remain
+  higher-risk card, relay, startup mechanical-audit card, and role-output folds remain
   rejected until they have dedicated conformance replay.
 - event contract checks reject internal Router actions, unknown strings, direct
   ACK/check-in events, false-prerequisite waits, success-only material repair
@@ -165,23 +165,25 @@ Expected:
 - startup PM-review simulation passes.
 - card instruction coverage simulation passes.
 
-## Startup PM Review Check
+## Startup Runtime Intake Release Check
 
 For an active target project after route, state, frontier, role-binding memory,
-continuation, and visible-plan evidence have been written, the human-like
-reviewer must personally check the real startup facts and write
-`.flowpilot/runs/<run-id>/startup_review/latest.json`.
+continuation, and visible-plan evidence have been written, Runtime/Router must
+check the real startup mechanical facts and write
+`.flowpilot/runs/<run-id>/startup/startup_mechanical_audit.json` plus its proof.
 
-The reviewer report is not approval. It must check user authorization versus
-actual state, route/state/frontier consistency, requested old-route or old-asset
-cleanup, heartbeat or manual-resume evidence, runtime role-binding evidence,
-and shadow or residual route state. If the report has blockers, the
-PM sends remediation back to authorized workers through a packet and requires another
-reviewer report.
+The mechanical audit is not PM approval. It must check startup intake authority,
+no chat-history startup-intake substitution, user authorization versus actual
+state, route/state/frontier consistency, requested old-route or old-asset
+cleanup, manual-resume lifecycle evidence, runtime role-binding evidence,
+display status, and shadow or residual route state. If the audit has blockers,
+PM sends remediation back to authorized workers through a packet and requires a
+fresh mechanical audit.
 
-After the project manager opens `pm_start_gate` from the current clean reviewer
-report, PM writes `.flowpilot/runs/<run-id>/startup_pm_gate/latest.json` and updates state
-plus frontier with `work_beyond_startup_allowed: true`.
+After the project manager releases startup intake from the current clean
+mechanical audit, PM writes
+`.flowpilot/runs/<run-id>/startup/pm_startup_intake_decision.json` and updates
+state plus frontier with `work_beyond_startup_allowed: true`.
 
 Expected:
 
@@ -200,14 +202,15 @@ Expected:
 - startup role-binding evidence records either current-run live bindings for
   runtime-required roles after a user decision or explicit user-authorized
   fallback continuity;
-- `startup_activation.startup_preflight_review` records a clean report-only
-  reviewer audit;
-- `startup_activation.pm_start_gate` records the project manager's open
-  decision based on that report;
-- `startup_activation` in state and frontier records the hard gate and sets
-  `work_beyond_startup_allowed: true`.
+- `startup_runtime_intake_release.startup_mechanical_audit` records a clean
+  runtime mechanical audit;
+- `startup_runtime_intake_release.pm_startup_intake_release` records the
+  project manager's release decision based on that audit;
+- `startup_runtime_intake_release` in state and frontier records the hard gate
+  and sets `work_beyond_startup_allowed: true`.
 
-If the reviewer report is blocked or PM has not opened startup, FlowPilot must
+If the mechanical audit is blocked or PM has not released startup intake,
+FlowPilot must
 not run child skills, image generation, implementation, route chunks, or
 completion work. A route-local file without matching canonical
 state/frontier/role-binding/continuation evidence is a shadow route, not a

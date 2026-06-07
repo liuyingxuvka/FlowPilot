@@ -7,7 +7,7 @@ from tests.router_runtime.common import FlowPilotRouterRuntimeTestBase
 class ClosureRuntimeTests(FlowPilotRouterRuntimeTestBase):
     def test_flowguard_operator_role_work_writes_authorized_lifecycle_index(self) -> None:
         root = self.make_project()
-        self.prepare_current_node_result_for_review(root, packet_id="node-packet-FlowGuard operator-lifecycle")
+        self.prepare_current_node_result_for_review(root, packet_id="node-packet-flowguard-operator-lifecycle")
         run_root = self.run_root_for(root)
         router.record_external_event(root, "current_node_reviewer_blocks_result")
         self.deliver_expected_card(root, "pm.model_miss_triage")

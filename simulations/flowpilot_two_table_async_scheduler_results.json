@@ -1,5 +1,5 @@
 {
-  "checked_at": "2026-06-06T17:54:52.918907+00:00",
+  "checked_at": "2026-06-06T22:52:33.990308+00:00",
   "flowguard_explorer": {
     "dead_branch_count": 0,
     "exception_branch_count": 0,
@@ -19,7 +19,7 @@
           "Controller-ledger startup obligation was exposed before Controller core loaded",
           "PM startup intake started before startup current-scope reconciliation was clean",
           "PM startup intake started before startup parallel obligations were reconciled",
-          "startup review, PM startup intake, or route work started before Controller core loaded"
+          "startup mechanical audit, PM startup intake, or route work started before Controller core loaded"
         ],
         "state": {
           "agent_dependent_work_enqueued": false,
@@ -146,7 +146,7 @@
         "failures": [
           "PM startup intake started before startup current-scope reconciliation was clean",
           "PM startup intake started before startup parallel obligations were reconciled",
-          "startup review, PM startup intake, or route work started before Controller core loaded"
+          "startup mechanical audit, PM startup intake, or route work started before Controller core loaded"
         ],
         "state": {
           "agent_dependent_work_enqueued": false,

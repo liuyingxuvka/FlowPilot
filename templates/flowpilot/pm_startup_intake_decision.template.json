@@ -1,0 +1,71 @@
+{
+  "decision_type": "pm_startup_intake_release_decision",
+  "run_id": "<run-id>",
+  "run_root": ".flowpilot/runs/<run-id>",
+  "route_id": "<route-id>",
+  "decided_at": "<iso-8601-timestamp>",
+  "decision_owner": "project_manager",
+  "decision": "<release_to_route|return_to_worker|blocked>",
+  "based_on_startup_mechanical_audit_path": ".flowpilot/runs/<run-id>/startup/startup_mechanical_audit.json",
+  "requires_startup_mechanical_audit": true,
+  "requires_independent_adversarial_validation": true,
+  "completion_report_only_allowed": false,
+  "independent_validation_evidence_path": "<path-or-null>",
+  "pm_decision_surface_audit": {
+    "current_run_state_frontier_checked": false,
+    "startup_mechanical_audit_checked_as_pointer": false,
+    "runtime_mechanical_sources_verified": false,
+    "blocked_findings_and_remediation_state_checked": false,
+    "background_collaboration_decision_matches_actual_state_checked": false,
+    "continuation_lifecycle_evidence_checked": false,
+    "startup_runtime_capability_resolution_checked": false,
+    "runtime_probe_evidence_checked_for_each_capability_gap": false,
+    "manual_resume_binding_checked": false,
+    "same_name_manual_resume_substitution_rejected": false,
+    "old_route_cleanup_or_prior_import_boundary_checked": false,
+    "node_package_decision_recorded": false,
+    "adversarial_hypotheses_tested": [],
+    "concrete_evidence_references": [],
+    "residual_blindspots": []
+  },
+  "requires_run_isolation_review": true,
+  "old_control_state_reuse_blocks_startup": true,
+  "requires_current_task_current_role_binding_report_when_background_collaboration_allowed": true,
+  "reused_historical_agent_ids_block_startup": true,
+  "capability_gap_policy": {
+    "worker_claim_only_substitution_forbidden": true,
+    "runtime_mechanical_probe_required": true,
+    "pm_records_final_resolution": true,
+    "ambiguous_capability_status_blocks_startup": true,
+    "chat_substitution_for_missing_cockpit_blocks_cockpit_completion": true
+  },
+  "capability_resolution_decision": {
+    "background_collaboration": {
+      "requested": "<allow|blocked|unknown>",
+      "resolved": "<background-agents|blocked|unknown>",
+      "gap_reason": "<none|host_unavailable|host_damaged|blocked|unknown>",
+      "runtime_verified_gap_path": "<path-or-null>",
+      "pm_gap_resolution_recorded": false
+    },
+    "manual_resume_continuation": {
+      "requested": "<allow|manual|unknown>",
+      "resolved": "<manual-resume|manual-resume-user-selected|blocked|unknown>",
+      "gap_reason": "<none|host_unavailable|host_damaged|blocked|unknown>",
+      "runtime_verified_gap_path": "<path-or-null>",
+      "manual_resume_automation_id": "<automation-id-or-null>",
+      "pm_gap_resolution_recorded": false
+    },
+    "display_surface": {
+      "requested": "<cockpit|chat|unknown>",
+      "resolved": "<cockpit|chat-user-selected|blocked|unknown>",
+      "gap_reason": "<none|missing_cockpit|damaged_cockpit|blocked|unknown>",
+      "runtime_verified_gap_path": "<path-or-null>",
+      "pm_gap_resolution_recorded": false
+    }
+  },
+  "worker_remediation_required": false,
+  "remediation_items": [],
+  "work_beyond_startup_allowed": false,
+  "released_at": "<iso-8601-timestamp-or-null>",
+  "notes": "<pm-interpretation-of-mechanical-audit-and-node-package-decision>"
+}

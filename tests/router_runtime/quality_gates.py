@@ -352,8 +352,6 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
 
         pass_only: dict[str, list[str]] = {}
         for required_flag, event_names in groups.items():
-            if required_flag == "reviewer_startup_fact_check_card_delivered":
-                continue
             classes = {
                 "non_pass" if any(marker in event_name for marker in non_pass_markers)
                 else "pass" if any(marker in event_name for marker in pass_markers)

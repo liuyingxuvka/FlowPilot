@@ -52,6 +52,41 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
     def read_json(self, path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
 
+    def test_role_output_owner_modules_expose_direct_external_contracts(self) -> None:
+        root = self.make_project()
+
+        skeleton = role_output_runtime_contracts.build_output_skeleton(
+            root,
+            output_type="pm_resume_decision",
+            role="project_manager",
+        )
+        args = role_output_runtime_cli.parse_args(
+            [
+                "--root",
+                str(root),
+                "prepare-output",
+                "--output-type",
+                "pm_resume_decision",
+                "--role",
+                "project_manager",
+                "--agent-id",
+                "agent-pm",
+            ]
+        )
+        constraints = role_output_runtime_schema.controller_boundary_constraints()
+        envelope = role_output_runtime_envelopes.runtime_envelope_for_body(
+            root,
+            output_type="pm_resume_decision",
+            body_path="missing.json",
+            body_hash="missing",
+        )
+
+        self.assertEqual(skeleton["run_id"], "run-test")
+        self.assertEqual(args.command, "prepare-output")
+        self.assertEqual(args.output_type, "pm_resume_decision")
+        self.assertFalse(constraints["controller_may_read_sealed_bodies"])
+        self.assertIsNone(envelope)
+
     def test_missing_project_contract_registry_is_rejected_without_package_fallback(self) -> None:
         root = Path(tempfile.mkdtemp(prefix="flowpilot-role-output-missing-registry-"))
         try:

@@ -71,8 +71,9 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
     rehydration_report = read_json(rehydration_path)
     if rehydration_report.get("required_role_bindings_ready") is not True:
         raise RouterError("PM resume decision requires runtime-required role bindings ready")
-    if rehydration_report.get("pm_memory_rehydrated") is not True:
-        raise RouterError("PM resume decision requires project_manager memory rehydration")
+    pm_current_agent_id = _active_agent_id_for_role(run_root, "project_manager")
+    if not pm_current_agent_id:
+        raise RouterError("PM resume decision requires current project_manager role binding")
     decision = str(payload.get("decision") or "continue_current_packet_loop")
     if decision not in PM_RESUME_DECISION_ALLOWED_VALUES:
         raise RouterError(f"unsupported PM resume decision: {decision}")
@@ -122,6 +123,11 @@ def _write_pm_resume_decision(project_root: Path, run_root: Path, run_state: dic
                 "current_run_memory_complete": bool(rehydration_report.get("current_run_memory_complete")),
                 "pm_memory_rehydrated": bool(rehydration_report.get("pm_memory_rehydrated")),
                 "missing_memory_role_keys": rehydration_report.get("missing_memory_role_keys") or [],
+            },
+            "pm_current_role_binding": {
+                "role_key": "project_manager",
+                "agent_id": pm_current_agent_id,
+                "source": "role_binding_ledger",
             },
             "prior_path_context_review": prior_review,
             "controller_reminder": {

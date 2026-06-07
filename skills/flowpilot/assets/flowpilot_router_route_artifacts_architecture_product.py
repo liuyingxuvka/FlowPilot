@@ -102,7 +102,6 @@ def _write_product_function_architecture(project_root: Path, run_root: Path, run
         "updated_at": utc_now(),
         "source_paths": {
             "startup_answers": project_relative(project_root, run_root / "startup_answers.json"),
-            "startup_activation": project_relative(project_root, run_root / "startup" / "startup_activation.json"),
             "display_surface": project_relative(project_root, run_root / "display" / "display_surface.json"),
             "pm_material_understanding": project_relative(project_root, material_understanding_path),
         },

@@ -124,6 +124,10 @@
     "applies_when_packet_type_is_user_intake": true,
     "body_visibility_exception": "external_user_input_controller_visible",
     "controller_bootstrap_scope_only": true,
-    "pm_must_request_startup_reviewer_gate_before_opening_start_gate": true
+    "startup_runtime_release_required": true,
+    "startup_runtime_release_status": "router_held_until_mechanical_audit_and_display_status",
+    "startup_intake_authority_source": "startup_intake_record",
+    "router_must_not_use_chat_history_for_startup_intake": true,
+    "pm_must_receive_user_intake_after_runtime_release": true
   }
 }

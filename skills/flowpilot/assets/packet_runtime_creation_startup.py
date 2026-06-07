@@ -265,8 +265,8 @@ def create_user_intake_packet(
         "controller_may_bootstrap_required_background_collaboration": True,
         "controller_may_read_user_intake_body": resolved_body_visibility == USER_INTAKE_BODY_VISIBILITY,
         "controller_must_not_make_pm_route_or_gate_decision": True,
-        "pm_must_request_startup_reviewer_gate_before_opening_start_gate": True,
-        "startup_gate_status": "not_open_until_pm_decision_after_reviewer_audit",
+        "startup_runtime_release_required": True,
+        "startup_runtime_release_status": "router_held_until_mechanical_audit_and_display_status",
         "router_owned_startup_material": router_owned_startup_material,
     }
     if startup_intake_ref is not None:
@@ -274,8 +274,8 @@ def create_user_intake_packet(
             {
                 "startup_intake_ref": startup_intake_ref,
                 "controller_may_read_user_intake_body": False,
-                "reviewer_live_review_source": "startup_intake_record",
-                "reviewer_must_not_use_chat_history": True,
+                "router_mechanical_audit_source": "startup_intake_record",
+                "controller_must_not_use_chat_history_for_startup_intake": True,
             }
         )
     return create_packet(

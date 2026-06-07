@@ -347,7 +347,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="manual_resume_binding_capability_recorded",
-            action="after Controller core loads, record host-kind continuation evidence and confirm real manual resume binding setup is supported before startup review or capability work",
+            action="after Controller core loads, record host-kind continuation evidence and confirm real manual resume binding setup is supported before runtime mechanical audit or capability work",
             continuation_probe_done=True,
             continuation_host_kind_recorded=True,
             continuation_evidence_written=True,
@@ -369,7 +369,7 @@ def apply_startup_phase(self, state: State) -> Iterable[FunctionResult]:
         yield _step(
             state,
             label="manual_resume_binding_configured",
-            action="create one-second manual resume binding as a stable launcher bound to the current run before startup review or capability work",
+            action="create one-second manual resume binding as a stable launcher bound to the current run before runtime mechanical audit or capability work",
             manual_resume_binding_configured=True,
             manual_resume_binding_interval_seconds=1,
             stable_manual_resume_launcher_recorded=True,

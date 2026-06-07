@@ -31,11 +31,11 @@ user-level:
 - `routes/*/nodes/*/node_acceptance_plan.json`
 - `routes/*/nodes/*/parent_backward_replay.json`
 - `manual_resume/latest.json`
-- `foreground_patrol/latest.json`
+- `startup/startup_mechanical_audit.json`
+- `startup/startup_mechanical_audit.json.proof.json`
+- `startup/pm_startup_intake_decision.json`
 - `lifecycle/latest.json`
 - `lifecycle/events.jsonl`
-- `startup_review/latest.json`
-- `startup_pm_gate/latest.json`
 - `research/*/research_package.json`
 - `research/*/worker_report.json`
 - `research/*/reviewer_report.json`
@@ -67,11 +67,11 @@ Markdown files are English summaries for review.
 - terminal closure suite path;
 - final route-wide gate ledger path;
 - status;
-- latest manual-resume tick and foreground patrol receipt;
+- latest manual-resume lifecycle receipt;
 - last checkpoint;
 - next node;
 - next action;
-- startup activation hard-gate status.
+- startup runtime intake release hard-gate status.
 - packet control-plane status: active packet id, holder, PM decision path,
   router direct-dispatch path, worker result path, review decision path, and
   next legal controller relay action.
@@ -166,15 +166,18 @@ receipts, not as source sufficiency by themselves.
 exists. They may summarize its counts, but Controller-generated summaries
 remain indexes only and cannot replace PM/reviewer/runtime source evidence.
 
-`startup_activation` is the route-start transaction record. A formal route
-cannot enter child-skill execution, image generation, implementation, or route
-chunks until this block and the matching frontier block show:
+`startup_runtime_intake_release` is the route-start transaction record. A
+formal route cannot enter child-skill execution, image generation,
+implementation, or route chunks until this block and the matching frontier
+block show:
 
 - `hard_gate_required: true`;
-- `startup_questions` records the explicit user answer for background-collaboration
+- `startup_intake` records the explicit user answer for background-collaboration
   permission plus fixed manual-continuation and chat-display defaults;
-- `startup_questions.dialog_stopped_for_user_answers: true`;
-- `startup_questions.banner_emitted_after_answers: true`;
+- `startup_intake.dialog_stopped_for_user_answers: true`;
+- `startup_intake.banner_emitted_after_answers: true`;
+- `startup_intake.startup_intake_authority_source: startup_intake_record`;
+- `startup_intake.router_must_not_use_chat_history_for_startup_intake: true`;
 - `.flowpilot/current.json` points at the same run and `.flowpilot/index.json`
   catalogs it;
 - canonical route files, current-run `state.json`, and
@@ -188,21 +191,20 @@ chunks until this block and the matching frontier block show:
 - role-binding startup records current-run live background or parallel-agent
   bindings for every runtime-required role after the startup authorization
   decision;
-- `continuation_ready: true` with current-run manual-resume binding and
-  foreground patrol evidence. Automated heartbeat continuation is not a
-  supported current path;
-- `startup_preflight_review` records the human-like reviewer's factual startup
-  audit, including user authorization versus actual state, route/state/frontier
-  consistency, old-route or old-asset cleanup when requested, manual-resume
-  binding evidence, current background role-binding evidence, and shadow or
+- `continuation_ready: true` with current-run manual-resume lifecycle evidence.
+  Automated heartbeat continuation is not a supported current path;
+- `startup_mechanical_audit` records Runtime/Router mechanical checks over the
+  current sealed intake, path/hash evidence, display status, run/route/frontier
+  consistency, role-binding freshness, prior-work boundary, and shadow or
   residual route state;
-- `pm_start_gate` records the project manager's decision from the current
-  reviewer report. The reviewer cannot open this gate. If the report has
-  blockers, PM sends remediation back to workers and requires a recheck;
+- `pm_startup_intake_release` records the project manager's node/work-package
+  decision from the current mechanical audit. Runtime/Router cannot make the
+  PM decision. If the audit has blockers, PM sends remediation back to workers
+  and requires a fresh mechanical audit before release;
 - `work_beyond_startup_allowed: true`;
 - `shadow_route_detected: false`.
 
-`startup_activation.startup_questions` is the pre-banner gate:
+`startup_runtime_intake_release.startup_intake` is the pre-banner gate:
 
 - `required: true`;
 - `status`: `pending`, `answered`, or `blocked`;
@@ -225,49 +227,55 @@ chunks until this block and the matching frontier block show:
 If any answer is absent, ambiguous, or `pause`, startup remains
 `startup_pending_user_answers` and no banner, route work, child skill,
 imagegen, implementation, unsupported-path execution, role-binding startup, or
-manual-resume claim may proceed. If the questions were asked
-but the assistant did not stop and wait for the user's reply, the answer
-evidence is invalid and the PM must not open startup.
+manual-resume claim may proceed. If the questions were asked but the assistant
+did not stop and wait for the user's reply, the answer evidence is invalid and
+PM must not release startup intake.
 
-`startup_activation.startup_preflight_review` is written by the human-like
-reviewer after direct factual checks. It is not an approval object and no
-runtime startup-check script writes it. It must include:
+`startup_runtime_intake_release.startup_mechanical_audit` is written by
+Runtime/Router after current mechanical checks. It is not a PM decision object
+and no human-like reviewer owns startup release. It must include:
 
 - `required: true`;
-- `reviewer_role: human_like_reviewer`;
-- `reviewer_decision_authority: report_only_no_start_approval`;
-- `report_path`;
-- `report_status`: `pending`, `ready_for_pm`, or
+- `check_owner: flowpilot_router`;
+- `decision_authority: mechanical_only_no_pm_approval`;
+- `audit_path`;
+- `proof_path`;
+- `audit_status`: `pending`, `ready_for_pm`, or
   `requires_worker_remediation`;
 - `blocking_findings`;
-- scope flags for user authorization, route consistency, cleanup boundary,
-  manual-resume binding evidence, role-binding decisions, user
-  background-collaboration decision versus actual role-binding state, current
-  binding coverage, and shadow/residual state;
+- scope flags for startup intake record authority, no-chat-history intake,
+  path/hash checks, display status, user authorization, route consistency,
+  cleanup boundary, manual-resume lifecycle evidence, role-binding decisions,
+  user background-collaboration decision versus actual role-binding state,
+  current binding coverage, and shadow/residual state;
 - current runtime role bindings must be active, rehydrated, or explicitly
   blocked before work proceeds.
 
-`startup_activation.pm_start_gate` is written by the project manager after
-reading the reviewer report. It must include:
+`startup_runtime_intake_release.pm_startup_intake_release` is written by the
+project manager after reading the mechanical audit. It must include:
 
 - `required: true`;
 - `decision_owner: project_manager`;
-- `decision`: `pending`, `open`, `return_to_worker`, or `blocked`;
-- `based_on_review_report_path`;
+- `decision`: `pending`, `release_to_route`, `return_to_worker`, or `blocked`;
+- `based_on_startup_mechanical_audit_path`;
 - `decision_path`;
+- `node_package_decision_recorded`;
+- `startup_runtime_release_status`;
 - `worker_remediation_required`;
-- `opened_at` only when the current clean reviewer report supports opening.
+- `released_at` only when the current clean mechanical audit supports release.
 
-`work_beyond_startup_allowed` can become true only after a clean reviewer
-report and a PM-owned open decision. Worker remediation invalidates the prior
-review report and must be rechecked before PM opens the gate.
+`work_beyond_startup_allowed` can become true only after a clean runtime
+mechanical audit and a PM-owned startup-intake release decision. Worker
+remediation invalidates the prior audit and must be rechecked before PM
+releases startup intake.
 
 A route-local file, generated concept, screenshot, or implementation artifact
 without matching canonical state/frontier/role-binding/continuation evidence is
 a shadow route. Shadow routes are invalid startup evidence and must be
 quarantined or superseded before work continues.
 
-`startup_activation.role_binding_startup` records this decision:
+`startup_runtime_intake_release.startup_runtime_role_binding` records this
+decision:
 
 - `required_by_default: true`;
 - `decision`: `background_agents_bound`, `manual_resume_rehydrated`, or
@@ -520,8 +528,7 @@ The frontier records:
   route/frontier versions, and staleness after route mutation;
 - debug FlowGuard Mermaid metadata, which defaults to disabled and on-request
   only;
-- host continuation decision: manual-resume, foreground-patrol, blocked, or
-  unknown;
+- host continuation decision: manual-resume, blocked, or unknown;
 - latest PM completion runway, including current gate, downstream steps,
   hard-stop conditions, checkpoint cadence, plan replacement status, and any
   PM stop signal;
@@ -564,12 +571,11 @@ The frontier records:
   role lists, and latest project-manager decision, including the PM repair
   strategy interrogation evidence path when a review failure mutates the route;
 - route mutation status;
-- current manual-resume launcher metadata and foreground patrol lifecycle
-  evidence;
+- current manual-resume launcher metadata and lifecycle evidence;
 - controlled-stop and completion notice metadata: whether the current route is
   complete, whether a resume notice must be shown on controlled nonterminal
   stop, and the exact manual resume prompt;
-- startup activation guard metadata matching `state.json`;
+- startup runtime intake release metadata matching `state.json`;
 - update timestamp.
 
 If the route structure changes, FlowPilot writes a new route version, reruns
@@ -710,18 +716,19 @@ current child-skill gate is approved by its assigned role with independent
 validation evidence, or blocked/waived with evidence from the responsible role.
 
 Before any child-skill, imagegen, implementation, or formal route chunk starts,
-the human-like reviewer personally checks `.flowpilot/current.json`,
-`.flowpilot/index.json`, current-run `state.json`, `execution_frontier.json`,
-`routes/<active-route>/flow.json`, `role_binding_ledger.json`, all role memory packets,
-continuation evidence, current manual-resume and foreground patrol evidence,
-requested cleanup evidence, and prior-work import boundary when continuing.
-The reviewer then writes
-`startup_review/latest.json` inside the current run as a factual report.
+Runtime/Router checks `.flowpilot/current.json`, `.flowpilot/index.json`,
+current-run `state.json`, `execution_frontier.json`,
+`routes/<active-route>/flow.json`, `role_binding_ledger.json`, all role memory
+packets, startup intake path/hash evidence, display status, continuation
+evidence, current manual-resume lifecycle evidence, requested cleanup evidence,
+and prior-work import boundary when continuing. Runtime/Router then writes
+`startup/startup_mechanical_audit.json` and its proof inside the current run.
 
-The PM reads the current factual report. If it has blockers, PM returns the
-work to workers and requires a new review after remediation. If it is clean,
-PM writes `startup_pm_gate/latest.json` inside the current run and updates state plus frontier so
-downstream work can check `work_beyond_startup_allowed`.
+The PM reads the current mechanical audit. If it has blockers, PM returns the
+work to workers and requires a fresh audit after remediation. If it is clean,
+PM writes `startup/pm_startup_intake_decision.json` inside the current run and
+updates state plus frontier so downstream work can check
+`work_beyond_startup_allowed`.
 
 ## Adversarial Approval Evidence
 
@@ -738,7 +745,7 @@ Each approval evidence object includes:
   `flowguard_operator`, or `flowguard_operator`;
 - `approval_scope`: route, material, product architecture, child-skill gate,
   process model, product model, human review, parent backward review,
-  startup PM gate, repair, final ledger, lifecycle, or completion;
+  startup intake release, repair, final ledger, lifecycle, or completion;
 - `completion_report_only: false`;
 - `report_inputs_used_as_pointers`: completion reports, worker reports,
   screenshots, smoke logs, PM summaries, or model snippets consulted only as
@@ -850,7 +857,7 @@ It records:
   paths checked;
 - standard scenario and residual-risk replay status;
 - terminal human backward replay pass status and repair/restart freshness;
-- foreground patrol stop and manual-resume no-automation evidence;
+- manual-resume no-automation evidence;
 - role memory and role binding archive status;
 - FlowPilot skill improvement report path and written status;
 - controlled-stop/completion notice status;
@@ -986,7 +993,7 @@ must cite this observation.
 `lifecycle/latest.json` is the unified inventory snapshot for pause, restart,
 and terminal cleanup. It records the status seen across:
 
-- current FlowPilot foreground patrol and manual-resume binding records;
+- current FlowPilot manual-resume binding records;
 - `.flowpilot/current.json`;
 - `.flowpilot/runs/<run-id>/state.json`;
 - `.flowpilot/runs/<run-id>/execution_frontier.json`;

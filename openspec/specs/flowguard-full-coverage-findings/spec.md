@@ -45,7 +45,7 @@ evidence.
 - **AND** the packet status is `packet-body-opened-by-recipient` or
   `result-body-opened-by-recipient`
 - **THEN** the live projection SHALL not report
-  `startup_activation_user_intake_not_controller_relayed`.
+  `startup_intake_release_user_intake_not_controller_relayed`.
 
 ### Requirement: Inventory Distinguishes Artifact Choices From Skipped Evidence
 

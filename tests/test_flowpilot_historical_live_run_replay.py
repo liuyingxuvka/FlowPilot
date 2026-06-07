@@ -243,7 +243,7 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse(progress["ok"])
         self.assertIn("missing_exit", progress["reasons"])
 
-    def test_host_role_lifecycle_resume_requires_full_rehydrate_evidence(self) -> None:
+    def test_host_role_lifecycle_resume_requires_current_target_rehydrate_evidence(self) -> None:
         root = self.make_project()
         run_root = self.boot_to_controller(root)
         self.complete_startup_runtime_entry(root)
@@ -257,6 +257,7 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
 
         action = router.next_action(root)
         self.assertEqual(action["action_type"], "rehydrate_role_bindings")
+        target_roles = action["role_keys"]
         missing_payload = self.resume_role_agent_payload(root, action)
         missing_payload["rehydrated_role_bindings"] = missing_payload["rehydrated_role_bindings"][:-1]
         with self.assertRaisesRegex(router.RouterError, "missing rehydrated live role binding records"):
@@ -279,7 +280,7 @@ class FlowPilotHistoricalLiveRunReplayTests(FlowPilotRouterRuntimeTestBase):
         router.apply_action(root, "rehydrate_role_bindings", valid_payload)
         rehydration = read_json(run_root / "continuation" / "role_binding_recovery_report.json")
         self.assertTrue(rehydration["required_role_bindings_ready"])
-        self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], list(router.RUNTIME_ROLE_KEYS))
+        self.assertEqual(rehydration["liveness_preflight"]["roles_checked"], target_roles)
         self.assertFalse(rehydration["liveness_preflight"]["wait_agent_timeout_treated_as_active"])
 
     def test_relay_lifecycle_and_semantic_contract_packages_block_overclaims(self) -> None:

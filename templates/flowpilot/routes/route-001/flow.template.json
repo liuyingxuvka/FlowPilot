@@ -106,8 +106,9 @@
         "candidate_route_tree_generated",
         "root_route_model_checked",
         "capability_evidence_synced",
-        "startup_preflight_reviewer_fact_report_written",
-        "pm_start_gate_opened",
+        "startup_runtime_mechanical_audit_written",
+        "pm_startup_intake_node_package_decision_recorded",
+        "pm_startup_intake_released_to_route",
         "work_beyond_startup_allowed_by_pm"
       ],
       "status": "pending",

@@ -2,48 +2,16 @@
   "coverage_boundary": "Matrix rows prove declared control-flow, runtime, model-test, and background-artifact coverage ownership. Synthetic or fixture rows do not prove live AI semantic quality or live completion.",
   "findings": [],
   "full_diagnostic": {
-    "actionable_summary": [
-      {
-        "dedupe_key": "flowpilot_router_work_packets_parallel|defer_structure_split|needs_structure_split",
-        "finding_count": 1,
-        "gap_codes": [
-          "needs_structure_split"
-        ],
-        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-        "paths": [
-          "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py"
-        ],
-        "primary_code": "needs_structure_split",
-        "priority_score": 29,
-        "release_relevance": "runtime_contract",
-        "repair_type": "defer_structure_split",
-        "severity": "medium",
-        "surface_ids": [
-          "asset:flowpilot_router_work_packets_parallel"
-        ],
-        "surface_owner": "flowpilot_router_work_packets_parallel"
-      }
-    ],
+    "actionable_summary": [],
     "blocking_actionable_findings": [],
-    "deferred_structure_split_findings": [
-      {
-        "code": "full_diagnostic_actionable_finding",
-        "message": "flowpilot_router_work_packets_parallel has 324 lines, above the 320 line diagnostic threshold",
-        "path": "skills/flowpilot/assets/flowpilot_router_work_packets_parallel.py",
-        "repair_type": "defer_structure_split",
-        "source_code": "needs_structure_split",
-        "surface_id": "asset:flowpilot_router_work_packets_parallel"
-      }
-    ],
-    "full_coverage_ok": false,
-    "gap_counts": {
-      "needs_structure_split": 1
-    },
+    "deferred_structure_split_findings": [],
+    "full_coverage_ok": true,
+    "gap_counts": {},
     "ok": true,
     "release_convergence_ok": true
   },
   "ok": true,
-  "required_cell_count": 87,
+  "required_cell_count": 90,
   "required_cells": [
     {
       "branch_kind": "happy_path",
@@ -206,6 +174,24 @@
       "family": "route mutation",
       "model_id": "route_mutation",
       "obligation_id": "route_mutation.sibling_replacement_stales_old_evidence"
+    },
+    {
+      "branch_kind": "happy_path",
+      "family": "current-node trunk invariant",
+      "model_id": "current_node_trunk_invariant",
+      "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+    },
+    {
+      "branch_kind": "failure_path",
+      "family": "current-node trunk invariant",
+      "model_id": "current_node_trunk_invariant",
+      "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+    },
+    {
+      "branch_kind": "negative_path",
+      "family": "current-node trunk invariant",
+      "model_id": "current_node_trunk_invariant",
+      "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
     },
     {
       "branch_kind": "happy_path",
@@ -569,7 +555,7 @@
     }
   ],
   "result_type": "flowpilot_synthetic_agent_coverage_matrix",
-  "row_count": 112,
+  "row_count": 115,
   "rows": [
     {
       "branch_kind": "happy_path",
@@ -662,7 +648,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "startup.failure.activation_requires_reviewer",
+      "evidence_id": "startup.failure.legacy_role_gates_unsupported",
       "evidence_owner": "startup_bootstrap",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -681,7 +667,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_startup_activation_requires_reviewer_facts_before_work"
+      "test_name": "test_startup_old_role_gate_events_are_unsupported"
     },
     {
       "branch_kind": "happy_path",
@@ -821,7 +807,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_record_external_event_preconsumes_valid_card_ack_before_blocking"
+      "test_name": "test_router_daemon_tick_consumes_card_ack_without_manual_next"
     },
     {
       "branch_kind": "failure_path",
@@ -849,7 +835,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_record_external_event_does_not_preconsume_incomplete_bundle_ack"
+      "test_name": "test_router_daemon_incomplete_bundle_ack_waits_without_advancing"
     },
     {
       "branch_kind": "happy_path",
@@ -909,7 +895,7 @@
     },
     {
       "branch_kind": "edge_path",
-      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+      "command": "python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
       "coverage_boundary": "ordinary_test_evidence",
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
@@ -933,7 +919,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_material_scan_partial_batch_status_names_missing_role"
+      "test_name": "test_material_scan_full_batch_wait_current_work_names_all_missing_roles"
     },
     {
       "branch_kind": "negative_path",
@@ -1326,6 +1312,90 @@
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
       "test_name": "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof"
+    },
+    {
+      "branch_kind": "happy_path",
+      "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+      "evidence_owner": "test_flowpilot_high_standard_control_flow",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "current-node trunk invariant",
+      "live_completion_allowed": false,
+      "model_id": "current_node_trunk_invariant",
+      "non_replayable_reason": "",
+      "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+      "obligation_type": "invariant",
+      "path": "tests/test_flowpilot_high_standard_control_flow.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_node_context_package_follows_flowguard_worker_and_reviewer_packets"
+    },
+    {
+      "branch_kind": "failure_path",
+      "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_task_requires_prework_flowguard_gate",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "current_node_trunk.failure.worker_blocked_before_prework",
+      "evidence_owner": "test_flowpilot_high_standard_control_flow",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "current-node trunk invariant",
+      "live_completion_allowed": false,
+      "model_id": "current_node_trunk_invariant",
+      "non_replayable_reason": "",
+      "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+      "obligation_type": "invariant",
+      "path": "tests/test_flowpilot_high_standard_control_flow.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_node_task_requires_prework_flowguard_gate"
+    },
+    {
+      "branch_kind": "negative_path",
+      "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+      "coverage_boundary": "ordinary_test_evidence",
+      "coverage_kind": "ordinary_runtime",
+      "covered_failure_mode": "ordinary_model_test_alignment",
+      "evidence_current": true,
+      "evidence_id": "current_node_trunk.negative.prework_block_requires_fresh_pass",
+      "evidence_owner": "test_flowpilot_high_standard_control_flow",
+      "evidence_role": "primary",
+      "evidence_status": "passed",
+      "family": "current-node trunk invariant",
+      "live_completion_allowed": false,
+      "model_id": "current_node_trunk_invariant",
+      "non_replayable_reason": "",
+      "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+      "obligation_type": "invariant",
+      "path": "tests/test_flowpilot_high_standard_control_flow.py",
+      "recovery_loop": "",
+      "risk_tier": "ordinary",
+      "source": "flowguard_model_test_alignment_plan",
+      "story_level": "local",
+      "story_steps": [],
+      "synthetic_replay_required": false,
+      "synthetic_replay_status": "not_required",
+      "terminal_expectation": "",
+      "test_name": "test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework"
     },
     {
       "branch_kind": "happy_path",
@@ -1801,7 +1871,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_router_cli_boundary_runs_fake_role_output_through_public_commands"
+      "test_name": "test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state"
     },
     {
       "branch_kind": "edge_path",
@@ -1885,7 +1955,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_canary_duplicate_heartbeat_resume_is_idempotent"
+      "test_name": "test_canary_duplicate_manual_resume_is_idempotent"
     },
     {
       "branch_kind": "failure_path",
@@ -2594,7 +2664,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "repair_transactions.negative.empty_followup_wait_fallback",
+      "evidence_id": "repair_transactions.negative.empty_followup_wait_requires_pm_decision",
       "evidence_owner": "control_blockers",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -2613,7 +2683,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision"
+      "test_name": "test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision"
     },
     {
       "branch_kind": "negative_path",
@@ -2622,7 +2692,7 @@
       "coverage_kind": "ordinary_runtime",
       "covered_failure_mode": "ordinary_model_test_alignment",
       "evidence_current": true,
-      "evidence_id": "repair_transactions.negative.empty_followup_wait_fallback",
+      "evidence_id": "repair_transactions.negative.empty_followup_wait_requires_pm_decision",
       "evidence_owner": "control_blockers",
       "evidence_role": "primary",
       "evidence_status": "passed",
@@ -2641,7 +2711,7 @@
       "synthetic_replay_required": false,
       "synthetic_replay_status": "not_required",
       "terminal_expectation": "",
-      "test_name": "test_delivered_control_blocker_with_empty_repair_transaction_falls_back_to_pm_repair_decision"
+      "test_name": "test_delivered_control_blocker_with_empty_repair_transaction_requires_pm_repair_decision"
     },
     {
       "branch_kind": "edge_path",
@@ -3714,11 +3784,12 @@
   "rows_by_coverage_kind": {
     "background_artifact": 3,
     "fixture_trace": 1,
-    "ordinary_runtime": 87,
+    "ordinary_runtime": 90,
     "synthetic_trace": 21
   },
   "rows_by_family": {
     "control blockers": 6,
+    "current-node trunk invariant": 3,
     "foreground controller": 1,
     "material modeling": 2,
     "meta/capability parents": 5,

@@ -37,7 +37,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "startup.run_isolation_and_activation",
                 obligation_type="scenario",
-                description="Startup creates prompt-isolated current-run state and requires reviewer facts plus PM approval before work beyond startup.",
+                description="Startup creates prompt-isolated current-run state, rejects legacy reviewer/PM startup role gates, and continues through the current Runtime/Router packet path.",
                 required_test_kinds=(HAPPY, FAILURE),
             ),
         ),
@@ -67,8 +67,8 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 covers=("startup.questions.pause_before_work",),
             ),
             _evidence(
-                "startup.failure.activation_requires_reviewer",
-                test_name="test_startup_activation_requires_reviewer_facts_before_work",
+                "startup.failure.legacy_role_gates_unsupported",
+                test_name="test_startup_old_role_gate_events_are_unsupported",
                 path="tests/router_runtime/startup_bootstrap.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_startup_daemon",
                 test_kind=FAILURE,
@@ -140,7 +140,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "ack.edge.preconsume_valid_ack",
-                test_name="test_record_external_event_preconsumes_valid_card_ack_before_blocking",
+                test_name="test_router_daemon_tick_consumes_card_ack_without_manual_next",
                 path="tests/router_runtime/ack_return.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_ack_return",
                 test_kind=EDGE,
@@ -148,7 +148,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "ack.failure.incomplete_bundle",
-                test_name="test_record_external_event_does_not_preconsume_incomplete_bundle_ack",
+                test_name="test_router_daemon_incomplete_bundle_ack_waits_without_advancing",
                 path="tests/router_runtime/ack_return.py",
                 command="python -m unittest tests.test_flowpilot_router_runtime_ack_return",
                 test_kind=FAILURE,
@@ -252,9 +252,9 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "packet_result_family.edge.material_scan_partial",
-                test_name="test_material_scan_partial_batch_status_names_missing_role",
+                test_name="test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
                 path="tests/router_runtime/packets.py",
-                command="python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_partial_batch_status_names_missing_role",
+                command="python -m unittest tests.router_runtime.packets.PacketsRuntimeTests.test_material_scan_full_batch_wait_current_work_names_all_missing_roles",
                 test_kind=EDGE,
                 covers=("packet_result_family.material_scan.partial_member_wait",),
             ),
@@ -389,6 +389,50 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.router_runtime.route_mutation_sibling_replacement.RouteMutationSiblingReplacementRuntimeTests.test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof",
                 test_kind=NEGATIVE,
                 covers=("route_mutation.sibling_replacement_stales_old_evidence",),
+            ),
+        ),
+    )
+
+    current_node_trunk = ModelTestAlignmentPlan(
+        model_id="current_node_trunk_invariant",
+        obligations=(
+            _obligation(
+                "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                obligation_type="invariant",
+                description=(
+                    "Every executable node follows the named trunk invariant: "
+                    "PM node context package -> pre-work FlowGuard -> Worker -> "
+                    "post-result FlowGuard -> independent Reviewer. Pre-work "
+                    "FlowGuard blocks return to PM repair and require a fresh "
+                    "current-generation pre-work pass before worker release."
+                ),
+                required_test_kinds=(HAPPY, FAILURE, NEGATIVE),
+            ),
+        ),
+        test_evidence=(
+            _evidence(
+                "current_node_trunk.happy.context_follows_all_packets",
+                test_name="test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+                test_kind=HAPPY,
+                covers=("current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",),
+            ),
+            _evidence(
+                "current_node_trunk.failure.worker_blocked_before_prework",
+                test_name="test_node_task_requires_prework_flowguard_gate",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_task_requires_prework_flowguard_gate",
+                test_kind=FAILURE,
+                covers=("current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",),
+            ),
+            _evidence(
+                "current_node_trunk.negative.prework_block_requires_fresh_pass",
+                test_name="test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+                test_kind=NEGATIVE,
+                covers=("current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",),
             ),
         ),
     )
@@ -664,7 +708,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             ),
             _evidence(
                 "router_loop.real_router.happy.cli_boundary",
-                test_name="test_router_cli_boundary_runs_fake_role_output_through_public_commands",
+                test_name="test_real_router_full_fake_ai_package_rehearsal_reaches_terminal_standard_state",
                 path="tests/test_flowpilot_real_router_dry_run_rehearsal.py",
                 command="python -m pytest tests/test_flowpilot_real_router_dry_run_rehearsal.py",
                 test_kind=HAPPY,
@@ -1107,6 +1151,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
     route_mutation = _with_runtime_path(route_mutation, "route mutation")
+    current_node_trunk = _with_runtime_path(current_node_trunk, "current-node trunk invariant")
     terminal_closure_resume = _with_runtime_path(terminal_closure_resume, "terminal/closure/resume")
     role_output = _with_runtime_path(role_output, "role/output contracts")
     router_loop_daemon = _with_runtime_path(router_loop_daemon, "router loop/daemon")
@@ -1148,6 +1193,18 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             route_mutation,
             model_checks=("python simulations/run_flowpilot_route_mutation_activation_checks.py",),
             coverage_boundary="Route-mutation alignment covers activation preconditions, sibling replacement, stale evidence, and route-sign projection for ordinary tests.",
+        ),
+        _plan_entry(
+            "current-node trunk invariant",
+            current_node_trunk,
+            model_checks=("python simulations/run_flowpilot_prework_flowguard_gate_checks.py",),
+            coverage_boundary=(
+                "Current-node trunk alignment names the PM node context package -> "
+                "pre-work FlowGuard -> Worker -> post-result FlowGuard -> "
+                "independent Reviewer invariant. It binds the focused pre-work "
+                "FlowGuard model to high-standard runtime tests, but it does not "
+                "replace semantic review of the worker output."
+            ),
         ),
         _plan_entry(
             "terminal/closure/resume",

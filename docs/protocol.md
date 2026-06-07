@@ -187,33 +187,33 @@ branches, staged process behavior, and any task-local behavior models.
     before the node can advance. Generated files or display packets alone do
     not satisfy this gate.
 37. Run only the Runtime startup entry before PM first-round work. There is no
-    Reviewer startup fact gate, PM startup activation gate, third startup
-    opener, or runtime startup-check script. Runtime writes the mechanical
+    human-review startup gate, separate PM activation object, third startup
+    opener, or startup-check script. Runtime writes the mechanical
     audit, sealed input, display status, current-run audit, and any structured
     stop/block reason; PM then opens the delivered `user_intake` packet and
     decides the first material/intake action.
 
-    The human-like reviewer report must verify matching active route,
-    canonical current-run state, execution frontier, current role ledger,
-    current role memory, `.flowpilot/current.json`,
-    `.flowpilot/index.json`, the run manifest, prior-work import packet when
-    continuing, the explicit startup acknowledgement, stop-and-wait evidence,
-    banner-after-answers evidence, current-role binding freshness,
-    continuation readiness, and Runtime startup mechanical records in state and
-    frontier. Startup no longer has a Reviewer startup fact gate or a PM
-    startup activation gate. It must also verify old top-level control state is absent,
-    unsupported-only, or quarantined and is not being used as current state. It
-    must also check user authorization against actual state,
-    old-route and old-asset cleanup when a clean start was requested, the real
-    current manual-resume evidence, residual route state, and shadow-route
-    evidence. It must bind the background-collaboration acknowledgement to
-    actual role-binding state: every runtime-required binding must be opened,
-    reused, replaced, or leased for this FlowPilot task after that user
-    acknowledgement and after current route allocation. None of its `agent_id`
-    values may come from prior route ledgers or older role-memory packets. If
-    role bindings are unavailable or damaged, Runtime blocks role work and PM
-    chooses repair, reissue, stop, or protocol dead-end; Reviewer does not turn
-    missing role mechanics into a quality pass or a single-agent limitation.
+    The startup mechanical audit must verify matching active route, canonical
+    current-run state, execution frontier, current role ledger, current role
+    memory, `.flowpilot/current.json`, `.flowpilot/index.json`, the run
+    manifest, prior-work import packet when continuing, current sealed
+    `startup_intake_record`, startup-intake authority source, no-chat-history
+    intake rule, path/hash evidence, banner-after-answers evidence,
+    current-role binding freshness, continuation readiness, display status, and
+    Runtime startup mechanical records in state and frontier. The audit
+    must also verify old top-level control state is absent, unsupported-only, or
+    quarantined and is not being used as current state. It must also check user
+    authorization against actual state, old-route and old-asset cleanup when a
+    clean start was requested, the real current manual-resume evidence,
+    residual route state, and shadow-route evidence. It must bind the
+    background-collaboration acknowledgement to actual role-binding state:
+    every runtime-required binding must be opened, reused, replaced, or leased
+    for this FlowPilot task after that user acknowledgement and after current
+    route allocation. None of its `agent_id` values may come from prior route
+    ledgers or older role-memory packets. If role bindings are unavailable or
+    damaged, Runtime blocks role work and PM chooses repair, reissue, stop, or
+    protocol dead-end; Reviewer does not turn missing role mechanics into a
+    quality pass or a single-agent limitation.
 
     It must bind foreground continuation to actual current-run state: lifecycle
     guard, packet/lease ledger, role binding ledger, active blockers, status
@@ -221,9 +221,9 @@ branches, staged process behavior, and any task-local behavior models.
     reports, and heartbeat records are not current authority.
 
     It must bind the display-surface answer to actual display state: if the
-    user requested Cockpit and Cockpit is missing or damaged, the reviewer must
-    directly probe and report that fact before PM records chat route signs as a
-    display limitation. That display limitation is only a route-display limitation; it does
+    user requested Cockpit and Cockpit is missing or damaged, Runtime/Router
+    must directly probe and report that fact before PM records chat route signs
+    as a display limitation. That display limitation is only a route-display limitation; it does
     not satisfy a product requirement to build or repair the Cockpit UI. The
     display status is current, PM may absorb it as context for the first
     material/intake decision. Reviewer does not approve startup and does not
