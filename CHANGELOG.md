@@ -2,6 +2,18 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.7 - 2026-06-08
+
+### Changed
+
+- Refreshed the public README startup intake screenshot so the GitHub product
+  preview matches the polished WPF startup UI with the compact project request
+  field, neutral border treatment, smaller controls, and `Start FlowPilot`
+  action.
+- Updated visible README version text for the source-package release while
+  keeping the runtime behavior unchanged from the current `v0.10.6` contract
+  line.
+
 ## 0.10.6 - 2026-06-08
 
 ### Changed

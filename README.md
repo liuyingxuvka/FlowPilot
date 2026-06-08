@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.6</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.7</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -28,7 +28,7 @@ The practical goal is simple: make it harder for a long AI run to drift, skip ga
 ## Product Preview
 
 <p align="center">
-  <img src="./assets/readme-screenshots/startup-intake.png" alt="FlowPilot expanded desktop startup intake window with the background collaboration toggle above the work request field and no visible scrollbar" width="760" />
+  <img src="./assets/readme-screenshots/startup-intake.png" alt="FlowPilot desktop startup intake window with the background collaboration toggle above the project request field and no visible scrollbar" width="760" />
 </p>
 
 The startup intake UI captures the user's work request and whether FlowPilot may use host-supported background collaboration for isolated role work. Manual continuation and chat route signs are fixed startup defaults. The request body is sealed into the PM intake packet; the Controller sees only envelope and hash metadata.
@@ -37,16 +37,16 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.6` |
+| Source version | `v0.10.7` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
 | First concrete host | Codex-compatible skill runtime |
 | Required core dependency | real `flowguard` Python package |
-| Current UI surface | Windows WPF startup intake dialog for work request and background collaboration; chat route signs after startup |
+| Current UI surface | Windows WPF startup intake dialog for project request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.6` hardens the strict current packet/result contract chain across runtime, FlowGuard models, and fake-AI rehearsal. Current roles receive the fields they must submit through one declared contract path, terminal backward replay stays on the current closure route, and old generic `decision`/fallback shapes remain rejected instead of translated.
+`v0.10.7` refreshes the public startup intake preview so the GitHub page matches the polished native WPF UI. The runtime contract remains the strict `v0.10.6` current packet/result chain: current roles receive the fields they must submit through one declared contract path, terminal backward replay stays on the current closure route, and old generic `decision`/fallback shapes remain rejected instead of translated.
 
 ## What FlowPilot Is
 
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.6`
+**Source version:** `v0.10.7`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -271,7 +271,7 @@ FlowPilot 是一个显式 opt-in 的 Codex skill 和本地 runtime，用于较�
 ## 产品预览
 
 <p align="center">
-  <img src="./assets/readme-screenshots/startup-intake.png" alt="FlowPilot expanded desktop startup intake window with the background collaboration toggle above the work request field and no visible scrollbar" width="760" />
+  <img src="./assets/readme-screenshots/startup-intake.png" alt="FlowPilot desktop startup intake window with the background collaboration toggle above the project request field and no visible scrollbar" width="760" />
 </p>
 
 Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 支持的后台协作写入文件。Manual continuation 和 chat route signs 是固定 startup defaults。请求正文封存在 PM intake packet 里；Controller 只看到 envelope 和 hash 元数据。
@@ -280,16 +280,16 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.6` |
+| Source version | `v0.10.7` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
 | 首个具体 host | Codex-compatible skill runtime |
 | 必需核心依赖 | 真实 `flowguard` Python package |
-| 当前 UI surface | Windows WPF startup intake dialog，用于 work request 和 background collaboration；startup 后使用 chat route signs |
+| 当前 UI surface | Windows WPF startup intake dialog，用于 project request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.6` 加固了 runtime、FlowGuard 模型和虚假 AI 演练之间的严格当前 packet/result contract 链路。当前角色需要提交的字段只通过一个声明好的 contract 路径下发，terminal backward replay 继续留在当前 closure 路线里，旧的通用 `decision` / fallback 形状仍然被拒绝，而不是被翻译成新格式。
+`v0.10.7` 刷新了公开 startup intake 预览图，让 GitHub 页面和优化后的原生 WPF UI 保持一致。runtime contract 仍然沿用严格的 `v0.10.6` current packet/result 链路：当前角色需要提交的字段只通过一个声明好的 contract 路径下发，terminal backward replay 继续留在当前 closure 路线里，旧的通用 `decision` / fallback 形状仍然被拒绝，而不是被翻译成新格式。
 
 ## 它是什么
 
