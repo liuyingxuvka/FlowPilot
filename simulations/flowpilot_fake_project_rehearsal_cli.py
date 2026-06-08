@@ -367,6 +367,26 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
                 "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
                 "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
                 "reviewer_starting_points": ["worker result", "node context package", "FlowGuard reports", "validation evidence"],
+                "high_standard_requirement_ids": ["hsr-001"],
+                "low_quality_success_risks": ["existence-only evidence", "generic pass without hard-part proof"],
+                "semantic_downgrade_risks": ["accepted node does not prove user-visible completion"],
+                "work_packet_projection": ["copy hard requirements, risk probes, and test obligations into Worker, FlowGuard, Reviewer, and PM disposition packets"],
+                "final_user_intent_checks": ["node evidence advances the sealed startup request"],
+                "structure_hygiene_expectation": ["no compatibility branch, fallback parser, or stale artifact may be introduced"],
+                "direct_evidence_closure_rules": ["report-only closure is not sufficient for covered hard requirements"],
+                "test_obligation_matrix": {
+                    "pre_worker": [
+                        {
+                            "obligation_id": f"test-{node_id or 'active'}-001",
+                            "source": "node_acceptance_plan",
+                            "required_test_kind": "targeted_current_validation",
+                            "owner_role": "worker",
+                            "expected_evidence": "current validation evidence",
+                            "freshness_rule": "after worker result for the current node",
+                            "pm_disposition": "pending",
+                        }
+                    ]
+                },
             },
         }
     )
@@ -380,7 +400,10 @@ def _high_standard_contract_body() -> str:
                     "requirement_id": "hsr-001",
                     "classification": "hard_current",
                     "summary": "Complete the fake project to a high standard.",
+                    "source_user_intent": "sealed_startup_intake",
+                    "evidence_rule": "Direct current evidence or explicit waiver required.",
                     "closure_blocking": True,
+                    "report_only_closure_allowed": False,
                 }
             ],
         },
@@ -439,6 +462,24 @@ def _generic_current_result_body(packet: dict[str, Any]) -> str:
     )
 
 
+def _packet_result_contract_body(packet: dict[str, Any]) -> str:
+    if str(ASSETS) not in sys.path:
+        sys.path.insert(0, str(ASSETS))
+    from flowpilot_core_runtime import packet_result_contracts
+
+    family_id = packet_result_contracts.packet_result_family_id(packet)
+    payload = packet_result_contracts.minimal_valid_shape_for_family(family_id)
+    packet_id = str(packet.get("packet_id") or "")
+    packet_kind = str(packet.get("packet_kind") or "task")
+    route_scope = str(packet.get("route_scope") or "")
+    summary_subject = f"{packet_kind} result for {packet_id}"
+    if route_scope:
+        summary_subject += f" in {route_scope}"
+    if "pm_visible_summary" in payload:
+        payload["pm_visible_summary"] = [f"Fake AI submitted current-contract {summary_subject}."]
+    return json.dumps(payload, sort_keys=True)
+
+
 def current_contract_body_for_packet(
     packet: dict[str, Any],
     *,
@@ -457,12 +498,20 @@ def current_contract_body_for_packet(
         return _route_plan_body()
     if packet_kind == "task" and route_scope == "node_acceptance_plan":
         return _node_acceptance_plan_body(packet)
+    if packet_kind in {"flowguard_check", "review"}:
+        return _packet_result_contract_body(packet)
     if packet_kind == "pm_disposition":
         return json.dumps(
             {
                 "decision": pm_disposition_decision,
                 "reason": f"fake PM disposition {pm_disposition_decision}",
-                "pm_visible_summary": [f"PM recorded {pm_disposition_decision} disposition for {packet_id}."],
+                "covered_requirement_ids": ["hsr-001"] if pm_disposition_decision == "accept" else [],
+                "reviewer_absorption": "PM absorbed current Reviewer challenge fields.",
+                "flowguard_absorption": "PM absorbed current FlowGuard boundary and missing-test fields.",
+                "residual_risk_disposition": "No unresolved residual risk remains for this fake node.",
+                "semantic_downgrade_disposition": "No semantic downgrade remains for this fake node.",
+                "validation_evidence_ids": ["fake-current-validation"],
+                "waived_requirement_ids": [],
             },
             sort_keys=True,
         )

@@ -491,6 +491,7 @@
       ],
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
+        "pm_visible_summary",
         "reviewed_by_role",
         "passed",
         "direct_evidence_paths_checked",
@@ -537,6 +538,7 @@
       "hash_key": "report_hash",
       "router_event_mode": "router_supplied",
       "explicit_array_fields": [
+        "pm_visible_summary",
         "direct_evidence_paths_checked",
         "findings",
         "blockers",
@@ -560,6 +562,7 @@
       ],
       "expected_return_envelope": "role_output_envelope",
       "required_body_fields": [
+        "pm_visible_summary",
         "reviewed_by_role",
         "passed",
         "modeled_boundary",
@@ -593,6 +596,7 @@
       "hash_key": "report_hash",
       "router_event_mode": "router_supplied",
       "explicit_array_fields": [
+        "pm_visible_summary",
         "commands_run",
         "counterexamples_or_absence",
         "hard_invariants",
@@ -786,6 +790,7 @@
         "human_like_reviewer"
       ],
       "required_body_fields": [
+        "pm_visible_summary",
         "reviewed_by_role",
         "passed",
         "direct_evidence_paths_checked",
@@ -1255,9 +1260,11 @@
         "independent_challenge.pass_or_block",
         "independent_challenge.reroute_request",
         "independent_challenge.challenge_waivers",
+        "findings",
         "blockers",
         "residual_risks",
         "pm_suggestion_items",
+        "repair_restart_policy",
         "contract_self_check"
       ],
       "required_body_values": {
@@ -1281,15 +1288,19 @@
       "router_event_mode": "fixed",
       "router_event": "reviewer_final_backward_replay_passed",
       "explicit_array_fields": [
+        "pm_visible_summary",
         "segment_reviews",
         "direct_evidence_paths_checked",
+        "findings",
         "blockers",
         "residual_risks",
         "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
         "independent_challenge.failure_hypotheses",
         "independent_challenge.challenge_actions",
         "independent_challenge.blocking_findings",
         "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
         "independent_challenge.challenge_waivers"
       ]
     }

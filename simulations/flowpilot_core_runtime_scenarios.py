@@ -77,6 +77,70 @@ def _role_result_body(summary: str, **fields: object) -> str:
     return json.dumps(payload)
 
 
+def _flowguard_result_body(summary: str, **fields: object) -> str:
+    payload: dict[str, object] = {
+        "pm_visible_summary": [summary],
+        "reviewed_by_role": "flowguard_operator",
+        "passed": True,
+        "modeled_boundary": "Current packet and current result only.",
+        "commands_run": ["python simulations/run_flowpilot_model_test_alignment_checks.py"],
+        "counterexamples_or_absence": ["No counterexample in the current modeled boundary."],
+        "hard_invariants": ["Current packet-result contracts use only current fields."],
+        "skipped_checks": [],
+        "model_obligations": ["Current FlowGuard packet report fields are present."],
+        "ordinary_test_evidence": ["Scenario runtime regression."],
+        "missing_test_kinds": [],
+        "conformance_boundary": "Runtime checks mechanics only.",
+        "confidence_boundary": "Scoped to this current packet.",
+        "residual_blindspots": [],
+        "background_artifact_completion": [],
+        "pm_suggestion_items": [],
+        "contract_self_check": {
+            "all_required_fields_present": True,
+            "exact_field_names_used": True,
+            "empty_required_arrays_explicit": True,
+            "runtime_mechanical_validation_passed": True,
+            "semantic_sufficiency_reviewed_by_runtime": False,
+        },
+    }
+    payload.update(fields)
+    return json.dumps(payload)
+
+
+def _review_result_body(summary: str, **fields: object) -> str:
+    passed = bool(fields.pop("passed", True))
+    payload: dict[str, object] = {
+        "pm_visible_summary": [summary],
+        "reviewed_by_role": "human_like_reviewer",
+        "passed": passed,
+        "direct_evidence_paths_checked": ["current result body"],
+        "independent_challenge": {
+            "scope_restatement": "Review the current packet result against current acceptance criteria.",
+            "explicit_and_implicit_commitments": ["current contract fields", "quality sufficient for next gate"],
+            "failure_hypotheses": ["The result may satisfy fields without satisfying the task."],
+            "challenge_actions": ["Checked current evidence and challenged the strongest likely failure."],
+            "blocking_findings": [],
+            "non_blocking_findings": [],
+            "pass_or_block": "pass" if passed else "block",
+            "reroute_request": [],
+            "challenge_waivers": [],
+        },
+        "findings": [],
+        "blockers": [],
+        "residual_risks": [],
+        "pm_suggestion_items": [],
+        "contract_self_check": {
+            "all_required_fields_present": True,
+            "exact_field_names_used": True,
+            "empty_required_arrays_explicit": True,
+            "runtime_mechanical_validation_passed": True,
+            "semantic_sufficiency_reviewed_by_runtime": False,
+        },
+    }
+    payload.update(fields)
+    return json.dumps(payload)
+
+
 def _complete_open_packet(ledger: dict[str, Any], packet_id: str, *, agent_id: str, body: str) -> str:
     packet = ledger["packets"][packet_id]
     lease_id = runtime.lease_agent(
@@ -111,14 +175,14 @@ def _complete_happy_path(ledger: dict[str, Any], packet_id: str, worker: str) ->
         ledger,
         flowguard_packet,
         agent_id="flowguard-a",
-        body=_role_result_body("FlowGuard runtime evidence passed."),
+        body=_flowguard_result_body("FlowGuard runtime evidence passed."),
     )
     review_packet = _open_packet_by_kind(ledger, "review")
     _complete_open_packet(
         ledger,
         review_packet,
         agent_id="reviewer-a",
-        body=_role_result_body("Reviewer accepted the runtime result."),
+        body=_review_result_body("Reviewer accepted the runtime result."),
     )
     return result_id
 
@@ -127,7 +191,48 @@ def _route_plan_body(nodes: list[dict[str, Any]]) -> str:
     return json.dumps({"schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION, "decision": "pass", "nodes": nodes})
 
 
+def _accept_high_standard_gates_for_scenario(ledger: dict[str, Any]) -> None:
+    ledger["high_standard_contract"] = {
+        "status": "accepted",
+        "requirements": [
+            {
+                "requirement_id": "hsr-001",
+                "classification": "hard_current",
+                "summary": "Complete the current route with direct evidence.",
+                "source_user_intent": "sealed_startup_intake",
+                "evidence_rule": "Direct current evidence or explicit waiver required.",
+                "closure_blocking": True,
+                "report_only_closure_allowed": False,
+            }
+        ],
+    }
+    ledger["preplanning_discovery"] = {
+        "status": "accepted",
+        "material_sources": ["sealed_startup_intake"],
+    }
+    ledger["skill_standard_contract"] = {
+        "status": "accepted",
+        "obligations": [
+            {
+                "obligation_id": "skill-std-001",
+                "skill": "flowguard-development-process-flow",
+                "classification": "required",
+                "role_use": "flowguard_operator",
+                "use_context": "node_validation",
+                "evidence_required": "current-run FlowGuard evidence",
+                "closure_blocking": True,
+            }
+        ],
+    }
+
+
 def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> str:
+    result_id = f"{node_id}-result"
+    review_id = f"{node_id}-review"
+    prework_order_id = f"{node_id}-prework-flowguard"
+    flowguard_order_id = f"{node_id}-flowguard"
+    validation_id = f"{node_id}-validation"
+    disposition_id = f"{node_id}-pm-disposition"
     packet_id = runtime.issue_task_packet(
         ledger,
         "worker",
@@ -137,25 +242,25 @@ def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> 
         route_scope="node",
     )
     ledger["packets"][packet_id]["status"] = "accepted"
-    ledger["packets"][packet_id]["accepted_result_id"] = "node-result"
-    ledger["results"]["node-result"] = {"result_id": "node-result", "review_id": "review-1"}
-    ledger["reviews"]["review-1"] = {"review_id": "review-1", "decision": "accept"}
+    ledger["packets"][packet_id]["accepted_result_id"] = result_id
+    ledger["results"][result_id] = {"result_id": result_id, "review_id": review_id}
+    ledger["reviews"][review_id] = {"review_id": review_id, "decision": "accept"}
     ledger["route_nodes"][node_id]["packet_ids"].append(packet_id)
     ledger["route_nodes"][node_id]["status"] = "accepted"
-    ledger["route_nodes"][node_id]["accepted_result_id"] = "node-result"
-    ledger["route_nodes"][node_id]["pm_disposition_id"] = "pm-disposition"
-    ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = "prework-flowguard-1"
+    ledger["route_nodes"][node_id]["accepted_result_id"] = result_id
+    ledger["route_nodes"][node_id]["pm_disposition_id"] = disposition_id
+    ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = prework_order_id
     ledger["route_nodes"][node_id]["prework_flowguard_repair_generation"] = 0
-    ledger["route_nodes"][node_id]["flowguard_order_ids"] = ["flowguard-1"]
-    ledger["route_nodes"][node_id]["review_ids"] = ["review-1"]
-    ledger["route_nodes"][node_id]["validation_evidence_ids"] = ["runtime-validation"]
-    ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
-        "order_id": "prework-flowguard-1",
+    ledger["route_nodes"][node_id]["flowguard_order_ids"] = [flowguard_order_id]
+    ledger["route_nodes"][node_id]["review_ids"] = [review_id]
+    ledger["route_nodes"][node_id]["validation_evidence_ids"] = [validation_id]
+    ledger["flowguard_work_orders"][prework_order_id] = {
+        "order_id": prework_order_id,
         "status": "complete",
         "decision": "pass",
     }
-    ledger["flowguard_work_orders"]["flowguard-1"] = {
-        "order_id": "flowguard-1",
+    ledger["flowguard_work_orders"][flowguard_order_id] = {
+        "order_id": flowguard_order_id,
         "subject_id": packet_id,
         "modeled_target": "development_process",
         "status": "complete",
@@ -165,8 +270,45 @@ def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> 
     }
     ledger["execution_frontier"]["active_node_id"] = ""
     ledger["execution_frontier"]["status"] = "ready_for_final_closure"
-    runtime.record_validation_evidence(ledger, "runtime-validation", subject_packet_id=packet_id)
+    runtime.record_validation_evidence(ledger, validation_id, subject_packet_id=packet_id)
+    ledger["latest_validation_evidence_id"] = validation_id
+    ledger.setdefault("pm_dispositions", {})[disposition_id] = {
+        "disposition_id": disposition_id,
+        "node_id": node_id,
+        "result_id": result_id,
+        "decision": "accept",
+        "covered_requirement_ids": ["hsr-001"],
+        "validation_evidence_ids": [validation_id],
+        "waived_requirement_ids": [],
+        "reviewer_absorption": "current reviewer evidence absorbed",
+        "flowguard_absorption": "current FlowGuard evidence absorbed",
+        "residual_risk_disposition": "no residual risk remains",
+        "semantic_downgrade_disposition": "no semantic downgrade remains",
+        "route_version": ledger.get("active_route_version"),
+    }
     return packet_id
+
+
+def _mark_high_standard_node_context_accepted(ledger: dict[str, Any], node_id: str) -> None:
+    plan_id = f"{node_id}-acceptance-plan"
+    context_id = f"{node_id}-context-package"
+    ledger.setdefault("node_acceptance_plans", {})[plan_id] = {
+        "plan_id": plan_id,
+        "node_id": node_id,
+        "status": "accepted",
+        "repair_generation": int(ledger["route_nodes"][node_id].get("repair_generation", 0)),
+    }
+    ledger.setdefault("node_context_packages", {})[context_id] = {
+        "context_package_id": context_id,
+        "node_id": node_id,
+        "status": "accepted",
+        "repair_generation": int(ledger["route_nodes"][node_id].get("repair_generation", 0)),
+    }
+    ledger["route_nodes"][node_id]["node_acceptance_plan_id"] = plan_id
+    ledger["route_nodes"][node_id]["node_context_package_id"] = context_id
+    ledger["route_nodes"][node_id]["node_context_package_repair_generation"] = int(
+        ledger["route_nodes"][node_id].get("repair_generation", 0)
+    )
 
 
 def replacement_worker_success() -> dict[str, Any]:
@@ -277,7 +419,7 @@ def route_deliverable_blocks_terminal_closure() -> dict[str, Any]:
         }
         runtime.materialize_route_from_planning_result(ledger, "planning-result")
         _mark_node_ready_for_final_closure(ledger, "node-001")
-        closure = runtime.attempt_final_closure(ledger, "runtime-validation")
+        closure = runtime.attempt_final_closure(ledger, str(ledger.get("latest_validation_evidence_id") or ""))
         blocked = (
             closure["decision"] == "blocked"
             and "route_deliverable:node-001:product-json:failed" in closure["blockers"]
@@ -290,6 +432,73 @@ def route_deliverable_blocks_terminal_closure() -> dict[str, Any]:
             expected=True,
             details={"blockers": closure["blockers"]},
         )
+
+
+def terminal_backward_replay_block_does_not_replan() -> dict[str, Any]:
+    ledger = runtime.new_ledger(
+        "Ship the clean black-box FlowPilot runtime",
+        "Terminal closure must go through terminal backward replay, not a new route plan.",
+    )
+    ledger["startup_intake"] = {
+        "status": "confirmed",
+        "startup_answers": {"background_collaboration_authorized": True},
+    }
+    ledger["recursive_route_execution_required"] = True
+    ledger["high_standard_control_flow_required"] = True
+    runtime.create_route(ledger, "Runtime implementation route", ["implementation", "validation", "closure"])
+    _accept_high_standard_gates_for_scenario(ledger)
+    ledger["results"]["planning-result"] = {
+        "result_id": "planning-result",
+        "body": _route_plan_body(
+            [
+                {
+                    "node_id": "node-001",
+                    "title": "Implementation",
+                    "acceptance_criteria": ["Implementation accepted."],
+                    "high_standard_requirement_ids": ["hsr-001"],
+                    "skill_standard_obligation_ids": ["skill-std-001"],
+                },
+                {
+                    "node_id": "node-002",
+                    "title": "Validation",
+                    "acceptance_criteria": ["Validation accepted."],
+                    "high_standard_requirement_ids": ["hsr-001"],
+                    "skill_standard_obligation_ids": ["skill-std-001"],
+                },
+                {
+                    "node_id": "node-003",
+                    "title": "Closure",
+                    "acceptance_criteria": ["Closure evidence accepted."],
+                    "high_standard_requirement_ids": ["hsr-001"],
+                    "skill_standard_obligation_ids": ["skill-std-001"],
+                },
+            ]
+        ),
+    }
+    runtime.materialize_route_from_planning_result(ledger, "planning-result")
+    for node_id in ("node-001", "node-002", "node-003"):
+        _mark_node_ready_for_final_closure(ledger, node_id)
+        _mark_high_standard_node_context_accepted(ledger, node_id)
+    ledger["execution_frontier"]["completed_nodes"] = ["node-001", "node-002", "node-003"]
+    closure = runtime.attempt_final_closure(ledger, str(ledger.get("latest_validation_evidence_id") or ""))
+    action = runtime.router_next_action(ledger)
+    accepted = (
+        closure["decision"] == "blocked"
+        and closure["blockers"] == ["missing_terminal_backward_replay"]
+        and action.action_type == "issue_terminal_backward_replay_packet"
+        and action.responsibility == "reviewer"
+        and not any(
+            packet["status"] == "open" and packet["envelope"].get("route_scope") == "planning"
+            for packet in ledger["packets"].values()
+        )
+    )
+    return _scenario_result(
+        "terminal_backward_replay_block_does_not_replan",
+        ledger,
+        accepted=accepted,
+        expected=True,
+        details={"closure": closure, "next_action": action.to_json()},
+    )
 
 
 def self_review_blocks() -> dict[str, Any]:
@@ -537,6 +746,7 @@ SCENARIOS: dict[str, ScenarioFn] = {
     "wrong_flowguard_target_blocks": wrong_flowguard_target_blocks,
     "strict_route_plan_rejects_numbered_text": strict_route_plan_rejects_numbered_text,
     "route_deliverable_blocks_terminal_closure": route_deliverable_blocks_terminal_closure,
+    "terminal_backward_replay_block_does_not_replan": terminal_backward_replay_block_does_not_replan,
     "self_review_blocks": self_review_blocks,
     "stale_route_output_blocks": stale_route_output_blocks,
     "stale_evidence_blocks": stale_evidence_blocks,

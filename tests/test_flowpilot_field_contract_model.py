@@ -204,6 +204,7 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             "flowguard_check.node_prework_flowguard",
             "flowguard_check.post_result",
             "review.any_current_subject",
+            "review.terminal_backward_replay",
             "pm_repair_decision.pm_repair_decision",
             "pm_disposition.node_pm_disposition",
         ):

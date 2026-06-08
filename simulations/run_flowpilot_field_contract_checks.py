@@ -208,9 +208,19 @@ def _source_alignment_report() -> dict[str, object]:
     new_entrypoint_test_path = REPO_ROOT / "tests" / "test_flowpilot_new_entrypoint.py"
     fake_e2e_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py"
     fake_cli_path = REPO_ROOT / "simulations" / "flowpilot_fake_project_rehearsal_cli.py"
+    contract_index_path = (
+        REPO_ROOT
+        / "skills"
+        / "flowpilot"
+        / "assets"
+        / "runtime_kit"
+        / "contracts"
+        / "contract_index.json"
+    )
 
     runtime_text = runtime_path.read_text(encoding="utf-8")
     contract_module_text = contract_module_path.read_text(encoding="utf-8")
+    contract_index_text = contract_index_path.read_text(encoding="utf-8")
     test_text = (
         core_test_path.read_text(encoding="utf-8")
         + "\n"
@@ -263,6 +273,8 @@ def _source_alignment_report() -> dict[str, object]:
             "test_repair_packet_handoff_contract_carries_formal_blocker_identity",
             "test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker",
             "test_staged_effect_same_family_rejects_different_formal_blocker_identity",
+            "test_flowguard_packet_rejects_generic_decision_summary_result",
+            "test_review_packet_rejects_generic_decision_summary_result",
         )
         if name not in test_text
     ]
@@ -321,6 +333,23 @@ def _source_alignment_report() -> dict[str, object]:
         if token not in source
     ]
     formal_repair_identity_source_ok = not missing_repair_identity_markers
+    role_report_contract_alignment_ok = all(
+        token in source
+        for token, source in (
+            ("REVIEW_REPORT_REQUIRED_FIELDS", contract_module_text),
+            ("FLOWGUARD_REPORT_REQUIRED_FIELDS", contract_module_text),
+            ("explicit_array_fields_for_family", contract_module_text),
+            ('"decision", "outcome", "status"', contract_module_text),
+            ("_payload_path_missing", runtime_text),
+            ("_missing_or_wrong_explicit_array_fields", runtime_text),
+            ('packet_kind in {"flowguard_check", "review"}', runtime_text),
+            ('"pm_visible_summary"', contract_index_text),
+            ('"independent_challenge"', contract_index_text),
+            ('"missing_test_kinds"', contract_index_text),
+            ("flowguard_result_body", test_text),
+            ("review_result_body", test_text),
+        )
+    )
     missing_fake_contract_terms = [
         term
         for term in (
@@ -329,6 +358,9 @@ def _source_alignment_report() -> dict[str, object]:
             '"obligations"',
             '"node_context_package"',
             '"pm_visible_summary"',
+            '"modeled_boundary"',
+            '"independent_challenge"',
+            '"missing_test_kinds"',
         )
         if term not in fake_text
     ]
@@ -340,6 +372,7 @@ def _source_alignment_report() -> dict[str, object]:
             and shared_contract_source_ok
             and current_handoff_source_ok
             and formal_repair_identity_source_ok
+            and role_report_contract_alignment_ok
             and not missing_negative_tests
             and not missing_fake_contract_terms
         ),
@@ -354,6 +387,7 @@ def _source_alignment_report() -> dict[str, object]:
         "shared_contract_source_ok": shared_contract_source_ok,
         "current_handoff_source_ok": current_handoff_source_ok,
         "formal_repair_identity_source_ok": formal_repair_identity_source_ok,
+        "role_report_contract_alignment_ok": role_report_contract_alignment_ok,
         "missing_repair_identity_markers": missing_repair_identity_markers,
         "missing_negative_tests": missing_negative_tests,
         "missing_fake_contract_terms": missing_fake_contract_terms,

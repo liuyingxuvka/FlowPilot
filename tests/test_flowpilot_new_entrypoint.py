@@ -32,6 +32,70 @@ def role_result_body(summary: str, **fields: object) -> str:
     return json.dumps(payload)
 
 
+def flowguard_result_body(summary: str, **fields: object) -> str:
+    payload: dict[str, object] = {
+        "pm_visible_summary": [summary],
+        "reviewed_by_role": "flowguard_operator",
+        "passed": True,
+        "modeled_boundary": "Current packet and current result only.",
+        "commands_run": ["python simulations/run_flowpilot_model_test_alignment_checks.py"],
+        "counterexamples_or_absence": ["No counterexample in the current modeled boundary."],
+        "hard_invariants": ["Current packet-result contracts use only current fields."],
+        "skipped_checks": [],
+        "model_obligations": ["Current FlowGuard packet report fields are present."],
+        "ordinary_test_evidence": ["Targeted new-entrypoint regression."],
+        "missing_test_kinds": [],
+        "conformance_boundary": "Runtime checks mechanics only.",
+        "confidence_boundary": "Scoped to this current packet.",
+        "residual_blindspots": [],
+        "background_artifact_completion": [],
+        "pm_suggestion_items": [],
+        "contract_self_check": {
+            "all_required_fields_present": True,
+            "exact_field_names_used": True,
+            "empty_required_arrays_explicit": True,
+            "runtime_mechanical_validation_passed": True,
+            "semantic_sufficiency_reviewed_by_runtime": False,
+        },
+    }
+    payload.update(fields)
+    return json.dumps(payload)
+
+
+def review_result_body(summary: str, **fields: object) -> str:
+    passed = bool(fields.pop("passed", True))
+    payload: dict[str, object] = {
+        "pm_visible_summary": [summary],
+        "reviewed_by_role": "human_like_reviewer",
+        "passed": passed,
+        "direct_evidence_paths_checked": ["current result body"],
+        "independent_challenge": {
+            "scope_restatement": "Review the current packet result against current acceptance criteria.",
+            "explicit_and_implicit_commitments": ["current contract fields", "quality sufficient for next gate"],
+            "failure_hypotheses": ["The result may satisfy fields without satisfying the task."],
+            "challenge_actions": ["Checked current evidence and challenged the strongest likely failure."],
+            "blocking_findings": [],
+            "non_blocking_findings": [],
+            "pass_or_block": "pass" if passed else "block",
+            "reroute_request": [],
+            "challenge_waivers": [],
+        },
+        "findings": [],
+        "blockers": [],
+        "residual_risks": [],
+        "pm_suggestion_items": [],
+        "contract_self_check": {
+            "all_required_fields_present": True,
+            "exact_field_names_used": True,
+            "empty_required_arrays_explicit": True,
+            "runtime_mechanical_validation_passed": True,
+            "semantic_sufficiency_reviewed_by_runtime": False,
+        },
+    }
+    payload.update(fields)
+    return json.dumps(payload)
+
+
 def high_standard_contract_body() -> str:
     return json.dumps(
         {
@@ -40,7 +104,10 @@ def high_standard_contract_body() -> str:
                     "requirement_id": "hsr-001",
                     "classification": "hard_current",
                     "summary": "Complete the requested outcome.",
+                    "source_user_intent": "sealed_startup_intake",
+                    "evidence_rule": "Direct current evidence or explicit waiver required.",
                     "closure_blocking": True,
+                    "report_only_closure_allowed": False,
                 }
             ]
         }
@@ -308,15 +375,27 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 if packet["envelope"].get("packet_kind") == "review"
             ]
             self.assertTrue(review_packets)
+            ordinary_review_packets = [
+                packet
+                for packet in review_packets
+                if packet["envelope"].get("route_scope") != "terminal_backward_replay"
+            ]
             self.assertTrue(
                 all(
                     any(
                         read.get("purpose") == "matching_flowguard_result_for_review"
                         for read in packet["envelope"].get("authorized_result_reads", [])
                     )
-                    for packet in review_packets
+                    for packet in ordinary_review_packets
                 )
             )
+            terminal_reviews = [
+                packet
+                for packet in review_packets
+                if packet["envelope"].get("route_scope") == "terminal_backward_replay"
+            ]
+            self.assertEqual(len(terminal_reviews), 1)
+            self.assertTrue(ledger["terminal_backward_replays"])
             for expected_scope in (
                 "high_standard_contract",
                 "discovery",
@@ -325,6 +404,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 "node_acceptance_plan",
                 "node",
                 "node_pm_disposition",
+                "terminal_backward_replay",
             ):
                 self.assertIn(expected_scope, route_scopes)
             for expected_kind in ("flowguard_check", "review", "pm_disposition"):
@@ -370,6 +450,9 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     "task.high_standard_contract",
                     "task.skill_standard",
                     "task.node_acceptance_plan",
+                    "flowguard_check.post_result",
+                    "review.any_current_subject",
+                    "review.terminal_backward_replay",
                     "pm_disposition.node_pm_disposition",
                 }.issubset(families),
                 blocks,
@@ -379,8 +462,27 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertIn("overall_contract", high_standard["forbidden_fields_seen"])
             self.assertIn("contract_rows", high_standard["forbidden_fields_seen"])
             disposition = next(block for block in blocks if block["contract_family_id"] == "pm_disposition.node_pm_disposition")
-            self.assertEqual(disposition["missing_required_fields"], ["reason"])
+            self.assertEqual(
+                set(disposition["missing_required_fields"]),
+                {
+                    "reason",
+                    "covered_requirement_ids",
+                    "reviewer_absorption",
+                    "flowguard_absorption",
+                    "residual_risk_disposition",
+                    "semantic_downgrade_disposition",
+                    "validation_evidence_ids",
+                    "waived_requirement_ids",
+                },
+            )
             self.assertEqual(disposition["forbidden_fields_seen"], ["summary"])
+            flowguard_block = next(block for block in blocks if block["contract_family_id"] == "flowguard_check.post_result")
+            self.assertIn("passed", flowguard_block["missing_required_fields"])
+            self.assertIn("decision", flowguard_block["forbidden_fields_seen"])
+            review_block = next(block for block in blocks if block["contract_family_id"] == "review.any_current_subject")
+            self.assertIn("passed", review_block["missing_required_fields"])
+            self.assertIn("independent_challenge", review_block["missing_required_fields"])
+            self.assertIn("decision", review_block["forbidden_fields_seen"])
             shell = run_shell.load_run_shell(root, run_id="run-e2e-contract-chaos")
             ledger = run_shell.load_run_ledger(shell)
             self.assertTrue(
@@ -482,10 +584,9 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=flowguard_lease,
                 packet_id=flowguard_packet,
-                body=role_result_body(
+                body=flowguard_result_body(
                     "FlowGuard identified a blocker that needs a user decision.",
-                    decision="block",
-                    blocking=True,
+                    passed=False,
                     blocker_class="needs_user",
                     recommended_resolution="needs user decision",
                 ),
@@ -597,7 +698,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=flowguard_lease,
                 packet_id=flowguard_packet,
-                body=role_result_body("FlowGuard result"),
+                body=flowguard_result_body("FlowGuard result"),
             )
 
             ledger = run_shell.load_run_ledger(shell)
@@ -635,7 +736,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 packet_id=flowguard_packet,
                 responsibility="flowguard_operator",
                 agent_id="flowguard-agent",
-                body=role_result_body("FlowGuard result"),
+                body=flowguard_result_body("FlowGuard result"),
             )
             ledger = run_shell.load_run_ledger(shell)
             review_packet = self._open_packet_by_kind(ledger, "review")
@@ -670,7 +771,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 root,
                 lease_id=reviewer_lease,
                 packet_id=review_packet,
-                body=role_result_body("Reviewer accepted the FlowGuard-backed result."),
+                body=review_result_body("Reviewer accepted the FlowGuard-backed result."),
             )
             after_review = flowpilot_new.status(root)["status"]
             self.assertFalse(

@@ -54,7 +54,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T16:18:58.219296+00:00",
+        "created_at": "2026-06-08T09:56:34.037840+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -86,7 +86,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-06-07T16:18:58.221811+00:00",
+        "created_at": "2026-06-08T09:56:34.041868+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -139,10 +139,10 @@
           "final_route_wide_gate_ledger_unresolved",
           "route_deliverable:node-001:product-json:failed"
         ],
-        "created_at": "2026-06-07T16:18:58.234988+00:00",
+        "created_at": "2026-06-08T09:56:34.090226+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
-        "validation_evidence_id": "runtime-validation"
+        "validation_evidence_id": "node-001-validation"
       },
       "details": {
         "blockers": [
@@ -154,11 +154,55 @@
       "expected_acceptance": true,
       "name": "route_deliverable_blocks_terminal_closure",
       "next_action": {
-        "action_type": "issue_task_packet",
+        "action_type": "repair_packet",
         "modeled_target": "",
-        "reason": "active route has no task packets",
-        "responsibility": "worker",
-        "subject_id": ""
+        "reason": "final closure blockers require current-route repair before new work",
+        "responsibility": "",
+        "subject_id": "final_closure"
+      },
+      "ok": true
+    },
+    {
+      "accepted": true,
+      "closure": {
+        "active_route_version": 1,
+        "backward_chain": [],
+        "blockers": [
+          "missing_terminal_backward_replay"
+        ],
+        "created_at": "2026-06-08T09:56:34.096774+00:00",
+        "decision": "blocked",
+        "required_flowguard_target": "development_process",
+        "validation_evidence_id": "node-003-validation"
+      },
+      "details": {
+        "closure": {
+          "active_route_version": 1,
+          "backward_chain": [],
+          "blockers": [
+            "missing_terminal_backward_replay"
+          ],
+          "created_at": "2026-06-08T09:56:34.096774+00:00",
+          "decision": "blocked",
+          "required_flowguard_target": "development_process",
+          "validation_evidence_id": "node-003-validation"
+        },
+        "next_action": {
+          "action_type": "issue_terminal_backward_replay_packet",
+          "modeled_target": "",
+          "reason": "terminal backward replay is required before final closure",
+          "responsibility": "reviewer",
+          "subject_id": "node-003-validation"
+        }
+      },
+      "expected_acceptance": true,
+      "name": "terminal_backward_replay_block_does_not_replan",
+      "next_action": {
+        "action_type": "issue_terminal_backward_replay_packet",
+        "modeled_target": "",
+        "reason": "terminal backward replay is required before final closure",
+        "responsibility": "reviewer",
+        "subject_id": "node-003-validation"
       },
       "ok": true
     },
@@ -309,7 +353,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T16:18:58.245125+00:00",
+        "created_at": "2026-06-08T09:56:34.113441+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -335,7 +379,7 @@
           },
           {
             "accepted_result_id": "result-0002",
-            "body_hash": "7301f64fc14026f4ad545c57059d3a4b447d376e364d7cb5fedeaf2314ba0d8f",
+            "body_hash": "45cbb4dea8a0f644dcd5ccf057c7b63d86190a55aeae3ec3fb71a36707855017",
             "node_context_package_id": "",
             "objective": "Run FlowGuard evidence for packet-0001",
             "packet_id": "packet-0002",
@@ -351,7 +395,7 @@
           },
           {
             "accepted_result_id": "result-0003",
-            "body_hash": "dc4914724f2546a59245d018e5808e37053a94f2868523fd61ed5ca52b6784e8",
+            "body_hash": "8c42631c0551bbf51198260e84727814cab547da9862b785b4a98d2f1f4e0c76",
             "node_context_package_id": "",
             "objective": "Review result and FlowGuard evidence for packet-0001",
             "packet_id": "packet-0003",
@@ -450,7 +494,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T16:18:58.251132+00:00",
+        "created_at": "2026-06-08T09:56:34.130068+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -509,7 +553,7 @@
             "next_action:repair_accepted_packet",
             "next_action_current_target:packet-0001:noncurrent_packet_status:accepted"
           ],
-          "checked_at": "2026-06-07T16:18:58.252131+00:00",
+          "checked_at": "2026-06-08T09:56:34.130068+00:00",
           "closure_decision": "complete",
           "controller_stop_allowed": false,
           "guard_decision": "repair_assignment_race",
@@ -582,7 +626,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-07T16:18:58.256666+00:00",
+        "created_at": "2026-06-08T09:56:34.140170+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -621,7 +665,7 @@
         "duty": {
           "action": "recover_or_reissue",
           "controller_stop_allowed": false,
-          "created_at": "2026-06-07T16:18:58.257665+00:00",
+          "created_at": "2026-06-08T09:56:34.143187+00:00",
           "final_return_preflight": {
             "accepted_packet_lease_health": {
               "finding_count": 0,
@@ -637,7 +681,7 @@
               "lifecycle_guard_disallows_stop",
               "next_action:wait_for_result"
             ],
-            "checked_at": "2026-06-07T16:18:58.257665+00:00",
+            "checked_at": "2026-06-08T09:56:34.143187+00:00",
             "closure_decision": "not_attempted",
             "controller_stop_allowed": false,
             "guard_decision": "reissue_or_replace_lease",
@@ -681,7 +725,7 @@
             "subject_id": "packet-0001",
             "wait_recovery": {
               "decision_override": "reissue_or_replace_lease",
-              "last_liveness_checked_at": "2026-06-07T16:18:58.257665+00:00",
+              "last_liveness_checked_at": "2026-06-08T09:56:34.142174+00:00",
               "last_liveness_elapsed_seconds": 0,
               "last_liveness_status": "not_found",
               "last_progress_elapsed_seconds": null,
@@ -763,7 +807,7 @@
     "rows": [
       {
         "details": {
-          "case_count": 14
+          "case_count": 15
         },
         "evidence": [
           "simulations/run_flowpilot_core_runtime_checks.py"

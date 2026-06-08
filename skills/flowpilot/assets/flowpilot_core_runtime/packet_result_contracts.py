@@ -13,6 +13,130 @@ from typing import Any, Mapping
 ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
 NODE_PREWORK_FLOWGUARD_SCOPE = "node_prework_flowguard"
 
+REVIEW_REPORT_REQUIRED_FIELDS = (
+    "pm_visible_summary",
+    "reviewed_by_role",
+    "passed",
+    "direct_evidence_paths_checked",
+    "independent_challenge",
+    "findings",
+    "blockers",
+    "residual_risks",
+    "pm_suggestion_items",
+    "contract_self_check",
+)
+REVIEW_REPORT_REQUIRED_CHILD_FIELDS = (
+    "independent_challenge.scope_restatement",
+    "independent_challenge.explicit_and_implicit_commitments",
+    "independent_challenge.failure_hypotheses",
+    "independent_challenge.challenge_actions",
+    "independent_challenge.blocking_findings",
+    "independent_challenge.non_blocking_findings",
+    "independent_challenge.pass_or_block",
+    "independent_challenge.reroute_request",
+    "independent_challenge.challenge_waivers",
+)
+REVIEW_REPORT_EXPLICIT_ARRAY_FIELDS = (
+    "pm_visible_summary",
+    "direct_evidence_paths_checked",
+    "findings",
+    "blockers",
+    "residual_risks",
+    "pm_suggestion_items",
+    "independent_challenge.explicit_and_implicit_commitments",
+    "independent_challenge.failure_hypotheses",
+    "independent_challenge.challenge_actions",
+    "independent_challenge.blocking_findings",
+    "independent_challenge.non_blocking_findings",
+    "independent_challenge.reroute_request",
+    "independent_challenge.challenge_waivers",
+)
+FLOWGUARD_REPORT_REQUIRED_FIELDS = (
+    "pm_visible_summary",
+    "reviewed_by_role",
+    "passed",
+    "modeled_boundary",
+    "commands_run",
+    "counterexamples_or_absence",
+    "hard_invariants",
+    "skipped_checks",
+    "model_obligations",
+    "ordinary_test_evidence",
+    "missing_test_kinds",
+    "conformance_boundary",
+    "confidence_boundary",
+    "residual_blindspots",
+    "background_artifact_completion",
+    "pm_suggestion_items",
+    "contract_self_check",
+)
+FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS = (
+    "pm_visible_summary",
+    "commands_run",
+    "counterexamples_or_absence",
+    "hard_invariants",
+    "skipped_checks",
+    "model_obligations",
+    "ordinary_test_evidence",
+    "missing_test_kinds",
+    "residual_blindspots",
+    "background_artifact_completion",
+    "pm_suggestion_items",
+)
+FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS = (
+    "pm_visible_summary",
+    "commands_run",
+    "hard_invariants",
+    "model_obligations",
+    "ordinary_test_evidence",
+)
+REVIEW_REPORT_NON_EMPTY_ARRAY_FIELDS = (
+    "pm_visible_summary",
+    "direct_evidence_paths_checked",
+    "independent_challenge.explicit_and_implicit_commitments",
+    "independent_challenge.failure_hypotheses",
+    "independent_challenge.challenge_actions",
+)
+TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS = (
+    *REVIEW_REPORT_REQUIRED_FIELDS,
+    "segment_reviews",
+    "repair_restart_policy",
+)
+TERMINAL_BACKWARD_REPLAY_REQUIRED_CHILD_FIELDS = (
+    *REVIEW_REPORT_REQUIRED_CHILD_FIELDS,
+    "segment_reviews[].segment_id",
+    "segment_reviews[].segment_kind",
+    "segment_reviews[].reviewed_by_role",
+    "segment_reviews[].passed",
+    "segment_reviews[].pm_segment_decision",
+    "segment_reviews[].direct_evidence_paths_checked",
+)
+TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS = (
+    *REVIEW_REPORT_EXPLICIT_ARRAY_FIELDS,
+    "segment_reviews",
+    "segment_reviews[].direct_evidence_paths_checked",
+)
+TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS = (
+    *REVIEW_REPORT_NON_EMPTY_ARRAY_FIELDS,
+    "segment_reviews",
+)
+PM_DISPOSITION_REQUIRED_FIELDS = (
+    "decision",
+    "reason",
+    "covered_requirement_ids",
+    "reviewer_absorption",
+    "flowguard_absorption",
+    "residual_risk_disposition",
+    "semantic_downgrade_disposition",
+    "validation_evidence_ids",
+    "waived_requirement_ids",
+)
+PM_DISPOSITION_EXPLICIT_ARRAY_FIELDS = (
+    "covered_requirement_ids",
+    "validation_evidence_ids",
+    "waived_requirement_ids",
+)
+
 
 PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
     {
@@ -26,7 +150,10 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "requirements[].requirement_id",
             "requirements[].classification",
             "requirements[].summary",
+            "requirements[].source_user_intent",
+            "requirements[].evidence_rule",
             "requirements[].closure_blocking",
+            "requirements[].report_only_closure_allowed",
         ),
         "forbidden_fields": ("decision", "pm_visible_summary", "overall_contract", "contract_rows"),
         "fake_ai_success_fields": ("requirements",),
@@ -105,6 +232,14 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "node_context_package.known_risks",
             "node_context_package.flowguard_targets",
             "node_context_package.reviewer_starting_points",
+            "node_context_package.high_standard_requirement_ids",
+            "node_context_package.low_quality_success_risks",
+            "node_context_package.semantic_downgrade_risks",
+            "node_context_package.work_packet_projection",
+            "node_context_package.final_user_intent_checks",
+            "node_context_package.structure_hygiene_expectation",
+            "node_context_package.direct_evidence_closure_rules",
+            "node_context_package.test_obligation_matrix.pre_worker[]",
         ),
         "forbidden_fields": (),
         "fake_ai_success_fields": (
@@ -126,7 +261,16 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "validator": "_strict_packet_outcome_contract_violation",
         "required_fields": ("decision", "pm_visible_summary"),
         "required_child_fields": (),
-        "forbidden_fields": ("outcome", "status", "passed", "verdict", "result", "pass_or_block", "validation_status"),
+        "forbidden_fields": (
+            "outcome",
+            "status",
+            "passed",
+            "verdict",
+            "result",
+            "pass_or_block",
+            "validation_status",
+            "flowguard_report",
+        ),
         "fake_ai_success_fields": ("decision", "pm_visible_summary"),
         "unlocks": "node_result_flowguard_review",
     },
@@ -148,10 +292,12 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "route_scope": NODE_PREWORK_FLOWGUARD_SCOPE,
         "owner": "flowpilot_core_runtime",
         "validator": "_current_result_submission_contract_violation",
-        "required_fields": ("decision", "pm_visible_summary"),
+        "required_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
         "required_child_fields": (),
-        "forbidden_fields": ("api_fallback_manual_block_eval", "fallback_manual_block_eval"),
-        "fake_ai_success_fields": ("decision", "pm_visible_summary"),
+        "explicit_array_fields": FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS,
+        "non_empty_array_fields": FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS,
+        "forbidden_fields": ("decision", "api_fallback_manual_block_eval", "fallback_manual_block_eval"),
+        "fake_ai_success_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
         "unlocks": "worker_packet_release",
     },
     {
@@ -160,10 +306,12 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "route_scope": "<subject_route_scope>",
         "owner": "flowpilot_core_runtime",
         "validator": "_current_result_submission_contract_violation",
-        "required_fields": ("decision", "pm_visible_summary"),
+        "required_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
         "required_child_fields": (),
-        "forbidden_fields": ("api_fallback_manual_block_eval", "fallback_manual_block_eval"),
-        "fake_ai_success_fields": ("decision", "pm_visible_summary"),
+        "explicit_array_fields": FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS,
+        "non_empty_array_fields": FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS,
+        "forbidden_fields": ("decision", "api_fallback_manual_block_eval", "fallback_manual_block_eval"),
+        "fake_ai_success_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
         "unlocks": "review_packet_release",
     },
     {
@@ -172,11 +320,27 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "route_scope": "<subject_route_scope>",
         "owner": "flowpilot_core_runtime",
         "validator": "_current_result_submission_contract_violation",
-        "required_fields": ("decision", "pm_visible_summary"),
-        "required_child_fields": (),
-        "forbidden_fields": ("outcome", "status", "passed", "verdict", "result", "pass_or_block", "validation_status"),
-        "fake_ai_success_fields": ("decision", "pm_visible_summary"),
+        "required_fields": REVIEW_REPORT_REQUIRED_FIELDS,
+        "required_child_fields": REVIEW_REPORT_REQUIRED_CHILD_FIELDS,
+        "explicit_array_fields": REVIEW_REPORT_EXPLICIT_ARRAY_FIELDS,
+        "non_empty_array_fields": REVIEW_REPORT_NON_EMPTY_ARRAY_FIELDS,
+        "forbidden_fields": ("decision", "outcome", "status", "verdict", "result", "validation_status"),
+        "fake_ai_success_fields": REVIEW_REPORT_REQUIRED_FIELDS,
         "unlocks": "system_validation",
+    },
+    {
+        "family_id": "review.terminal_backward_replay",
+        "packet_kind": "review",
+        "route_scope": "terminal_backward_replay",
+        "owner": "flowpilot_core_runtime",
+        "validator": "_terminal_backward_replay_result_violation",
+        "required_fields": TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS,
+        "required_child_fields": TERMINAL_BACKWARD_REPLAY_REQUIRED_CHILD_FIELDS,
+        "explicit_array_fields": TERMINAL_BACKWARD_REPLAY_EXPLICIT_ARRAY_FIELDS,
+        "non_empty_array_fields": TERMINAL_BACKWARD_REPLAY_NON_EMPTY_ARRAY_FIELDS,
+        "forbidden_fields": ("decision", "outcome", "status", "verdict", "result", "validation_status"),
+        "fake_ai_success_fields": TERMINAL_BACKWARD_REPLAY_REQUIRED_FIELDS,
+        "unlocks": "terminal_backward_replay_closure_confirmation",
     },
     {
         "family_id": "pm_repair_decision.pm_repair_decision",
@@ -203,10 +367,11 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "route_scope": "node_pm_disposition",
         "owner": "flowpilot_core_runtime",
         "validator": "_decision_from_pm_body",
-        "required_fields": ("decision", "reason"),
+        "required_fields": PM_DISPOSITION_REQUIRED_FIELDS,
         "required_child_fields": (),
+        "explicit_array_fields": PM_DISPOSITION_EXPLICIT_ARRAY_FIELDS,
         "forbidden_fields": ("summary", "pm_disposition_summary"),
-        "fake_ai_success_fields": ("decision", "reason", "pm_visible_summary"),
+        "fake_ai_success_fields": PM_DISPOSITION_REQUIRED_FIELDS,
         "unlocks": "node_frontier_disposition_or_staged_route_gate",
     },
 )
@@ -233,6 +398,8 @@ def packet_result_family_id(envelope: Mapping[str, Any]) -> str:
         return "flowguard_check.node_prework_flowguard"
     if packet_kind == "flowguard_check":
         return "flowguard_check.post_result"
+    if packet_kind == "review" and route_scope == "terminal_backward_replay":
+        return "review.terminal_backward_replay"
     if packet_kind == "review":
         return "review.any_current_subject"
     if packet_kind == "pm_repair_decision":
@@ -258,6 +425,31 @@ def forbidden_fields_for_family(family_id: str) -> tuple[str, ...]:
     if not row:
         return ()
     return tuple(str(field) for field in row["forbidden_fields"])
+
+
+def required_child_fields_for_family(family_id: str) -> tuple[str, ...]:
+    row = contract_for_family(family_id)
+    if not row:
+        return ()
+    return tuple(
+        str(field)
+        for field in row.get("required_child_fields", ())
+        if " when " not in str(field)
+    )
+
+
+def explicit_array_fields_for_family(family_id: str) -> tuple[str, ...]:
+    row = contract_for_family(family_id)
+    if not row:
+        return ()
+    return tuple(str(field) for field in row.get("explicit_array_fields", ()))
+
+
+def non_empty_array_fields_for_family(family_id: str) -> tuple[str, ...]:
+    row = contract_for_family(family_id)
+    if not row:
+        return ()
+    return tuple(str(field) for field in row.get("non_empty_array_fields", ()))
 
 
 def fake_ai_success_fields_for_family(family_id: str) -> tuple[str, ...]:
@@ -328,7 +520,10 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
                     "requirement_id": "hsr-001",
                     "classification": "hard_current",
                     "summary": "Concrete requirement summary.",
+                    "source_user_intent": "Current sealed startup request.",
+                    "evidence_rule": "Direct current evidence or explicit waiver required.",
                     "closure_blocking": True,
+                    "report_only_closure_allowed": False,
                 }
             ]
         }
@@ -369,10 +564,110 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
                 "known_risks": ["risk"],
                 "flowguard_targets": ["development_process"],
                 "reviewer_starting_points": ["result"],
+                "high_standard_requirement_ids": ["hsr-001"],
+                "low_quality_success_risks": ["thin-success risk"],
+                "semantic_downgrade_risks": ["semantic downgrade risk"],
+                "work_packet_projection": ["copy hsr-001 into Worker, FlowGuard, Reviewer, and PM disposition packets"],
+                "final_user_intent_checks": ["current node advances the user's real outcome"],
+                "structure_hygiene_expectation": ["no fallback or compatibility branch may be added"],
+                "direct_evidence_closure_rules": ["report-only closure is not sufficient"],
+                "test_obligation_matrix": {
+                    "pre_worker": [
+                        {
+                            "obligation_id": "test-obligation-001",
+                            "source": "node_acceptance_plan",
+                            "required_test_kind": "targeted_current_validation",
+                            "owner_role": "worker",
+                            "expected_evidence": "current validation evidence",
+                            "freshness_rule": "after current node work",
+                            "pm_disposition": "pending",
+                        }
+                    ]
+                },
             },
         }
     if family_id == "pm_repair_decision.pm_repair_decision":
         return {"decision": "repair_current_scope", "reason": "Concrete PM repair reason."}
     if family_id == "pm_disposition.node_pm_disposition":
-        return {"decision": "accept", "reason": "Concrete PM disposition reason."}
+        return {
+            "decision": "accept",
+            "reason": "Concrete PM disposition reason.",
+            "covered_requirement_ids": ["hsr-001"],
+            "reviewer_absorption": "Reviewer findings absorbed into PM node disposition.",
+            "flowguard_absorption": "FlowGuard boundary and missing-test report absorbed into PM node disposition.",
+            "residual_risk_disposition": "No unresolved residual risk remains for this node.",
+            "semantic_downgrade_disposition": "No semantic downgrade remains for this node.",
+            "validation_evidence_ids": ["validation-current-node"],
+            "waived_requirement_ids": [],
+        }
+    if family_id.startswith("flowguard_check."):
+        return {
+            "pm_visible_summary": ["FlowGuard operator report is mechanically complete."],
+            "reviewed_by_role": "flowguard_operator",
+            "passed": True,
+            "modeled_boundary": "Current packet, current node, and current evidence only.",
+            "commands_run": ["python simulations/run_flowpilot_model_test_alignment_checks.py"],
+            "counterexamples_or_absence": ["No counterexample in the current modeled boundary."],
+            "hard_invariants": ["No stale evidence, fallback, or old packet shape accepted."],
+            "skipped_checks": [],
+            "model_obligations": ["Current packet-result contract fields match current role report contract."],
+            "ordinary_test_evidence": ["Targeted runtime and fake-AI regression evidence."],
+            "missing_test_kinds": [],
+            "conformance_boundary": "Runtime validates mechanics; semantic adequacy remains FlowGuard-owned.",
+            "confidence_boundary": "Scoped to the current packet-result family.",
+            "residual_blindspots": [],
+            "background_artifact_completion": [],
+            "pm_suggestion_items": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+                "runtime_mechanical_validation_passed": True,
+                "semantic_sufficiency_reviewed_by_runtime": False,
+            },
+        }
+    if family_id == "review.any_current_subject":
+        return {
+            "pm_visible_summary": ["Reviewer report is mechanically complete."],
+            "reviewed_by_role": "human_like_reviewer",
+            "passed": True,
+            "direct_evidence_paths_checked": ["current result body"],
+            "independent_challenge": {
+                "scope_restatement": "Review the current packet result against current acceptance criteria.",
+                "explicit_and_implicit_commitments": ["current contract fields", "quality sufficient for next gate"],
+                "failure_hypotheses": ["The result may satisfy fields without satisfying the task."],
+                "challenge_actions": ["Checked current evidence and challenged the strongest likely failure."],
+                "blocking_findings": [],
+                "non_blocking_findings": [],
+                "pass_or_block": "pass",
+                "reroute_request": [],
+                "challenge_waivers": [],
+            },
+            "findings": [],
+            "blockers": [],
+            "residual_risks": [],
+            "pm_suggestion_items": [],
+            "contract_self_check": {
+                "all_required_fields_present": True,
+                "exact_field_names_used": True,
+                "empty_required_arrays_explicit": True,
+                "runtime_mechanical_validation_passed": True,
+                "semantic_sufficiency_reviewed_by_runtime": False,
+            },
+        }
+    if family_id == "review.terminal_backward_replay":
+        payload = minimal_valid_shape_for_family("review.any_current_subject")
+        payload["pm_visible_summary"] = ["Terminal backward replay report is mechanically complete."]
+        payload["segment_reviews"] = [
+            {
+                "segment_id": "delivered-product",
+                "segment_kind": "delivered_product",
+                "reviewed_by_role": "human_like_reviewer",
+                "passed": True,
+                "pm_segment_decision": "continue",
+                "direct_evidence_paths_checked": ["final deliverable"],
+            }
+        ]
+        payload["repair_restart_policy"] = "Any terminal replay repair invalidates terminal closure and requires replay restart from the delivered product unless PM records a narrower impacted-ancestor reason."
+        return payload
     return {"decision": "pass", "pm_visible_summary": ["Role-authored summary for PM."]}

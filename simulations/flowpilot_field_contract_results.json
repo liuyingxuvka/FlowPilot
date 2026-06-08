@@ -901,6 +901,36 @@
       "validator": "_record_review_from_packet_result"
     },
     {
+      "field": "packet_result_contract.review.required_fields",
+      "layer": "middle",
+      "logical_field": "review_packet_result_required_fields",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "same_fields_as_reviewer_review_report_contract",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "review_report_can_enter_quality_gate",
+      "validator": "_json_payload_contract_check"
+    },
+    {
+      "field": "packet_result.review.independent_challenge",
+      "layer": "leaf",
+      "logical_field": "review_packet_result_independent_challenge",
+      "owner": "human_like_reviewer",
+      "required_value": "current_nested_challenge_object",
+      "status": "reviewer_quality_owned",
+      "unlocks": "reviewer_quality_review_after_runtime_mechanics",
+      "validator": "_json_payload_contract_check"
+    },
+    {
+      "field": "packet_result.review.passed",
+      "layer": "leaf",
+      "logical_field": "review_packet_result_passed",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "boolean_passed_current_report_outcome",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "review_pass_or_block_outcome",
+      "validator": "_strict_packet_outcome_contract_violation"
+    },
+    {
       "field": "flowguard_process_review.target_result_id",
       "layer": "leaf",
       "logical_field": "flowguard_target_result_id",
@@ -919,6 +949,36 @@
       "status": "flowguard_process_owned",
       "unlocks": "pm_process_disposition",
       "validator": "_record_flowguard_from_packet_result"
+    },
+    {
+      "field": "packet_result_contract.flowguard_check.required_fields",
+      "layer": "middle",
+      "logical_field": "flowguard_packet_result_required_fields",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "same_fields_as_flowguard_operator_model_report_contract",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_report_can_enter_process_gate",
+      "validator": "_json_payload_contract_check"
+    },
+    {
+      "field": "packet_result.flowguard_check.passed",
+      "layer": "leaf",
+      "logical_field": "flowguard_packet_result_passed",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "boolean_passed_current_report_outcome",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_pass_or_block_outcome",
+      "validator": "_strict_packet_outcome_contract_violation"
+    },
+    {
+      "field": "packet_result.flowguard_check.missing_test_kinds",
+      "layer": "leaf",
+      "logical_field": "flowguard_packet_result_missing_test_kinds",
+      "owner": "flowguard_operator",
+      "required_value": "explicit_array",
+      "status": "flowguard_process_owned",
+      "unlocks": "pm_process_disposition_with_test_gap_visibility",
+      "validator": "_json_payload_contract_check"
     },
     {
       "field": "system_card_delivery.target_agent_id",
@@ -956,6 +1016,27 @@
       "no_reviewer_mechanical_field_check": true,
       "source": "active_blocker.blocker_id",
       "terminal_disposition": "active_blocker.status"
+    },
+    {
+      "chain_id": "role_report_packet_result_contract_chain",
+      "field_sequence": [
+        "contract_index.reviewer_review_report.required_body_fields",
+        "packet_result_contract.review.required_fields",
+        "packet_result_contract.review.required_child_fields",
+        "packet_result_contract.review.explicit_array_fields",
+        "contract_index.flowguard_operator_model_report.required_body_fields",
+        "packet_result_contract.flowguard_check.required_fields",
+        "packet_result_contract.flowguard_check.explicit_array_fields",
+        "runtime._json_payload_contract_check",
+        "runtime._strict_packet_outcome_contract_violation",
+        "fake_e2e.current_report_success_body"
+      ],
+      "human_quality_gate": "_record_review_from_packet_result",
+      "mechanical_gate": "_json_payload_contract_check",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "role_output_contract.required_body_fields",
+      "terminal_disposition": "packet_result.status"
     }
   ],
   "field_statuses": {
@@ -1621,7 +1702,10 @@
         "requirements[].requirement_id",
         "requirements[].classification",
         "requirements[].summary",
-        "requirements[].closure_blocking"
+        "requirements[].source_user_intent",
+        "requirements[].evidence_rule",
+        "requirements[].closure_blocking",
+        "requirements[].report_only_closure_allowed"
       ],
       "required_fields": [
         "requirements"
@@ -1732,7 +1816,15 @@
         "node_context_package.inspection_targets",
         "node_context_package.known_risks",
         "node_context_package.flowguard_targets",
-        "node_context_package.reviewer_starting_points"
+        "node_context_package.reviewer_starting_points",
+        "node_context_package.high_standard_requirement_ids",
+        "node_context_package.low_quality_success_risks",
+        "node_context_package.semantic_downgrade_risks",
+        "node_context_package.work_packet_projection",
+        "node_context_package.final_user_intent_checks",
+        "node_context_package.structure_hygiene_expectation",
+        "node_context_package.direct_evidence_closure_rules",
+        "node_context_package.test_obligation_matrix.pre_worker[]"
       ],
       "required_fields": [
         "decision",
@@ -1755,7 +1847,8 @@
         "verdict",
         "result",
         "pass_or_block",
-        "validation_status"
+        "validation_status",
+        "flowguard_report"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
@@ -1797,72 +1890,307 @@
       "validator": "_strict_packet_outcome_contract_violation"
     },
     {
+      "explicit_array_fields": [
+        "pm_visible_summary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "residual_blindspots",
+        "background_artifact_completion",
+        "pm_suggestion_items"
+      ],
       "fake_ai_success_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "modeled_boundary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "conformance_boundary",
+        "confidence_boundary",
+        "residual_blindspots",
+        "background_artifact_completion",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "family_id": "flowguard_check.node_prework_flowguard",
       "forbidden_fields": [
+        "decision",
         "api_fallback_manual_block_eval",
         "fallback_manual_block_eval"
+      ],
+      "non_empty_array_fields": [
+        "pm_visible_summary",
+        "commands_run",
+        "hard_invariants",
+        "model_obligations",
+        "ordinary_test_evidence"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "flowguard_check",
       "required_child_fields": [],
       "required_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "modeled_boundary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "conformance_boundary",
+        "confidence_boundary",
+        "residual_blindspots",
+        "background_artifact_completion",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "route_scope": "node_prework_flowguard",
       "unlocks": "worker_packet_release",
       "validator": "_current_result_submission_contract_violation"
     },
     {
+      "explicit_array_fields": [
+        "pm_visible_summary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "residual_blindspots",
+        "background_artifact_completion",
+        "pm_suggestion_items"
+      ],
       "fake_ai_success_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "modeled_boundary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "conformance_boundary",
+        "confidence_boundary",
+        "residual_blindspots",
+        "background_artifact_completion",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "family_id": "flowguard_check.post_result",
       "forbidden_fields": [
+        "decision",
         "api_fallback_manual_block_eval",
         "fallback_manual_block_eval"
+      ],
+      "non_empty_array_fields": [
+        "pm_visible_summary",
+        "commands_run",
+        "hard_invariants",
+        "model_obligations",
+        "ordinary_test_evidence"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "flowguard_check",
       "required_child_fields": [],
       "required_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "modeled_boundary",
+        "commands_run",
+        "counterexamples_or_absence",
+        "hard_invariants",
+        "skipped_checks",
+        "model_obligations",
+        "ordinary_test_evidence",
+        "missing_test_kinds",
+        "conformance_boundary",
+        "confidence_boundary",
+        "residual_blindspots",
+        "background_artifact_completion",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "route_scope": "<subject_route_scope>",
       "unlocks": "review_packet_release",
       "validator": "_current_result_submission_contract_violation"
     },
     {
+      "explicit_array_fields": [
+        "pm_visible_summary",
+        "direct_evidence_paths_checked",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers"
+      ],
       "fake_ai_success_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "direct_evidence_paths_checked",
+        "independent_challenge",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "family_id": "review.any_current_subject",
       "forbidden_fields": [
+        "decision",
         "outcome",
         "status",
-        "passed",
         "verdict",
         "result",
-        "pass_or_block",
         "validation_status"
+      ],
+      "non_empty_array_fields": [
+        "pm_visible_summary",
+        "direct_evidence_paths_checked",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions"
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "review",
-      "required_child_fields": [],
+      "required_child_fields": [
+        "independent_challenge.scope_restatement",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.pass_or_block",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers"
+      ],
       "required_fields": [
-        "decision",
-        "pm_visible_summary"
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "direct_evidence_paths_checked",
+        "independent_challenge",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "contract_self_check"
       ],
       "route_scope": "<subject_route_scope>",
       "unlocks": "system_validation",
       "validator": "_current_result_submission_contract_violation"
+    },
+    {
+      "explicit_array_fields": [
+        "pm_visible_summary",
+        "direct_evidence_paths_checked",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers",
+        "segment_reviews",
+        "segment_reviews[].direct_evidence_paths_checked"
+      ],
+      "fake_ai_success_fields": [
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "direct_evidence_paths_checked",
+        "independent_challenge",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "contract_self_check",
+        "segment_reviews",
+        "repair_restart_policy"
+      ],
+      "family_id": "review.terminal_backward_replay",
+      "forbidden_fields": [
+        "decision",
+        "outcome",
+        "status",
+        "verdict",
+        "result",
+        "validation_status"
+      ],
+      "non_empty_array_fields": [
+        "pm_visible_summary",
+        "direct_evidence_paths_checked",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "segment_reviews"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "review",
+      "required_child_fields": [
+        "independent_challenge.scope_restatement",
+        "independent_challenge.explicit_and_implicit_commitments",
+        "independent_challenge.failure_hypotheses",
+        "independent_challenge.challenge_actions",
+        "independent_challenge.blocking_findings",
+        "independent_challenge.non_blocking_findings",
+        "independent_challenge.pass_or_block",
+        "independent_challenge.reroute_request",
+        "independent_challenge.challenge_waivers",
+        "segment_reviews[].segment_id",
+        "segment_reviews[].segment_kind",
+        "segment_reviews[].reviewed_by_role",
+        "segment_reviews[].passed",
+        "segment_reviews[].pm_segment_decision",
+        "segment_reviews[].direct_evidence_paths_checked"
+      ],
+      "required_fields": [
+        "pm_visible_summary",
+        "reviewed_by_role",
+        "passed",
+        "direct_evidence_paths_checked",
+        "independent_challenge",
+        "findings",
+        "blockers",
+        "residual_risks",
+        "pm_suggestion_items",
+        "contract_self_check",
+        "segment_reviews",
+        "repair_restart_policy"
+      ],
+      "route_scope": "terminal_backward_replay",
+      "unlocks": "terminal_backward_replay_closure_confirmation",
+      "validator": "_terminal_backward_replay_result_violation"
     },
     {
       "fake_ai_success_fields": [
@@ -1897,10 +2225,21 @@
       "validator": "_parse_pm_repair_decision_body"
     },
     {
+      "explicit_array_fields": [
+        "covered_requirement_ids",
+        "validation_evidence_ids",
+        "waived_requirement_ids"
+      ],
       "fake_ai_success_fields": [
         "decision",
         "reason",
-        "pm_visible_summary"
+        "covered_requirement_ids",
+        "reviewer_absorption",
+        "flowguard_absorption",
+        "residual_risk_disposition",
+        "semantic_downgrade_disposition",
+        "validation_evidence_ids",
+        "waived_requirement_ids"
       ],
       "family_id": "pm_disposition.node_pm_disposition",
       "forbidden_fields": [
@@ -1912,7 +2251,14 @@
       "required_child_fields": [],
       "required_fields": [
         "decision",
-        "reason"
+        "reason",
+        "covered_requirement_ids",
+        "reviewer_absorption",
+        "flowguard_absorption",
+        "residual_risk_disposition",
+        "semantic_downgrade_disposition",
+        "validation_evidence_ids",
+        "waived_requirement_ids"
       ],
       "route_scope": "node_pm_disposition",
       "unlocks": "node_frontier_disposition_or_staged_route_gate",
@@ -1969,8 +2315,9 @@
     "missing_repair_identity_markers": [],
     "missing_validators": [],
     "ok": true,
-    "packet_result_contract_count": 12,
+    "packet_result_contract_count": 13,
     "private_runtime_contract_tables": [],
+    "role_report_contract_alignment_ok": true,
     "runtime_path": "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
     "shared_contract_source_ok": true,
     "test_paths": [

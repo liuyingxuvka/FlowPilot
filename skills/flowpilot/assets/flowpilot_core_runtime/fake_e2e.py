@@ -11,6 +11,12 @@ from . import cockpit, host, router, run_shell, runtime
 
 StartRun = Callable[..., dict[str, Any]]
 
+CURRENT_REPORT_FAKE_SUCCESS_FIELD_MARKERS = (
+    "modeled_boundary",
+    "independent_challenge",
+    "missing_test_kinds",
+)
+
 
 def _route_plan_body() -> str:
     return json.dumps(
@@ -59,24 +65,21 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
     kind = envelope.get("packet_kind", "task")
     scope = envelope.get("route_scope", "")
     if kind == "task" and scope == "high_standard_contract":
-        return json.dumps(
+        payload = runtime._packet_result_minimal_valid_shape(packet)
+        payload["requirements"][0]["summary"] = "Deliver the requested FlowPilot work to a high standard."
+        payload["requirements"][0]["source_user_intent"] = "sealed_startup_intake"
+        payload["requirements"].append(
             {
-                "requirements": [
-                    {
-                        "requirement_id": "hsr-001",
-                        "classification": "hard_current",
-                        "summary": "Deliver the requested FlowPilot work to a high standard.",
-                        "closure_blocking": True,
-                    },
-                    {
-                        "requirement_id": "hsr-002",
-                        "classification": "high_standard_current",
-                        "summary": "Every node must have current evidence and review.",
-                        "closure_blocking": True,
-                    },
-                ]
+                "requirement_id": "hsr-002",
+                "classification": "high_standard_current",
+                "summary": "Every node must have current evidence and review.",
+                "source_user_intent": "sealed_startup_intake",
+                "evidence_rule": "Direct current node evidence, FlowGuard evidence, Reviewer challenge, and PM absorption required.",
+                "closure_blocking": True,
+                "report_only_closure_allowed": False,
             }
         )
+        return json.dumps(payload)
     if kind == "task" and scope == "discovery":
         return json.dumps(
             {
@@ -129,6 +132,26 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
                     "known_risks": ["existence-only evidence", "stale generation", "review without active inspection"],
                     "flowguard_targets": ["development-process route", "model-test alignment where applicable"],
                     "reviewer_starting_points": ["worker result", "node context package", "FlowGuard reports", "validation evidence"],
+                    "high_standard_requirement_ids": ["hsr-001", "hsr-002"],
+                    "low_quality_success_risks": ["existence-only evidence", "generic pass without hard-part proof"],
+                    "semantic_downgrade_risks": ["accepted node does not prove user-visible completion"],
+                    "work_packet_projection": ["copy hard requirements, risk probes, and test obligations into Worker, FlowGuard, Reviewer, and PM disposition packets"],
+                    "final_user_intent_checks": ["node evidence advances the sealed startup request"],
+                    "structure_hygiene_expectation": ["no compatibility branch, fallback parser, or stale artifact may be introduced"],
+                    "direct_evidence_closure_rules": ["report-only closure is not sufficient for covered hard requirements"],
+                    "test_obligation_matrix": {
+                        "pre_worker": [
+                            {
+                                "obligation_id": f"test-{node_id or 'active'}-001",
+                                "source": "node_acceptance_plan",
+                                "required_test_kind": "targeted_current_validation",
+                                "owner_role": "worker",
+                                "expected_evidence": "current validation evidence",
+                                "freshness_rule": "after worker result for the current node",
+                                "pm_disposition": "pending",
+                            }
+                        ]
+                    },
                 },
             }
         )
@@ -141,8 +164,40 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
                 "composition_checked": True,
             }
         )
+    family_id = runtime._packet_result_family_id(packet)
+    if family_id == "review.terminal_backward_replay":
+        payload = runtime._packet_result_minimal_valid_shape(packet)
+        try:
+            packet_body = json.loads(packet.get("body") or "{}")
+        except json.JSONDecodeError:
+            packet_body = {}
+        segment_targets = packet_body.get("segment_targets") if isinstance(packet_body, dict) else []
+        if isinstance(segment_targets, list) and segment_targets:
+            payload["segment_reviews"] = [
+                {
+                    "segment_id": str(target.get("segment_id") or f"segment-{index}"),
+                    "segment_kind": str(target.get("segment_kind") or "route_segment"),
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": True,
+                    "pm_segment_decision": "continue",
+                    "direct_evidence_paths_checked": [str(target.get("summary") or target.get("segment_id") or "current segment")],
+                }
+                for index, target in enumerate(segment_targets, start=1)
+                if isinstance(target, dict)
+            ]
+        return json.dumps(payload, sort_keys=True)
+    if family_id.startswith("flowguard_check.") or family_id == "review.any_current_subject":
+        return json.dumps(runtime._packet_result_minimal_valid_shape(packet), sort_keys=True)
     if kind == "pm_disposition":
-        return json.dumps({"decision": "accept", "reason": "fake PM accepts current node"})
+        payload = runtime._packet_result_minimal_valid_shape(packet)
+        try:
+            packet_body = json.loads(packet.get("body") or "{}")
+        except json.JSONDecodeError:
+            packet_body = {}
+        if isinstance(packet_body, dict) and isinstance(packet_body.get("minimal_valid_shape"), dict):
+            payload = dict(packet_body["minimal_valid_shape"])
+        payload["reason"] = "fake PM accepts current node after absorbing current evidence"
+        return json.dumps(payload, sort_keys=True)
     return json.dumps(
         {
             "decision": "pass",
@@ -183,6 +238,17 @@ def _fault_body_for_packet(packet: dict[str, Any]) -> str:
             {
                 "decision": "accept",
                 "summary": "old PM disposition summary must be rejected as a reason alias",
+            },
+            sort_keys=True,
+        )
+    if family_id.startswith("flowguard_check.") or family_id in {
+        "review.any_current_subject",
+        "review.terminal_backward_replay",
+    }:
+        return json.dumps(
+            {
+                "decision": "pass",
+                "pm_visible_summary": ["old generic result body must be rejected for this packet family"],
             },
             sort_keys=True,
         )
@@ -244,6 +310,10 @@ def run_fake_e2e(
             "task.high_standard_contract",
             "task.skill_standard",
             "task.node_acceptance_plan",
+            "flowguard_check.node_prework_flowguard",
+            "flowguard_check.post_result",
+            "review.any_current_subject",
+            "review.terminal_backward_replay",
             "pm_disposition.node_pm_disposition",
         } and family_id not in injected_fault_families
         if should_fault:

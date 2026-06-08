@@ -29,6 +29,7 @@ from flowpilot_core_runtime_scenarios import (
     stale_evidence_blocks,
     stale_route_output_blocks,
     strict_route_plan_rejects_numbered_text,
+    terminal_backward_replay_block_does_not_replan,
     wrong_flowguard_target_blocks,
 )
 

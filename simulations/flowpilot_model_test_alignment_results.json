@@ -795,7 +795,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 154,
+        "line_count": 155,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_core_runtime_checks",
@@ -1257,7 +1257,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 415,
+        "line_count": 449,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_field_contract_checks",
@@ -73176,7 +73176,7 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 24,
+          "assert_count": 26,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "fake_e2e.run_fake_e2e",
@@ -73317,6 +73317,7 @@
           ],
           "calls": [
             "Path",
+            "flowguard_result_body",
             "flowpilot_new.ack",
             "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
@@ -73327,7 +73328,6 @@
             "json.loads",
             "len",
             "next",
-            "role_result_body",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "self._lease_packet",
@@ -73355,6 +73355,7 @@
           ],
           "calls": [
             "Path",
+            "flowguard_result_body",
             "flowpilot_new.ack",
             "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
@@ -73365,7 +73366,6 @@
             "json.loads",
             "len",
             "next",
-            "role_result_body",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "self._lease_packet",
@@ -73397,6 +73397,7 @@
           ],
           "calls": [
             "Path",
+            "flowguard_result_body",
             "flowpilot_new.ack",
             "flowpilot_new.dispatch_current_role",
             "flowpilot_new.start_run",
@@ -73407,7 +73408,7 @@
             "iter",
             "len",
             "next",
-            "role_result_body",
+            "review_result_body",
             "run_shell.load_run_ledger",
             "run_shell.load_run_shell",
             "self._complete_open_packet",

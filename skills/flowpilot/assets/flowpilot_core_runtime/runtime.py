@@ -63,14 +63,22 @@ PREPLANNING_GATE_SCOPES = {
     "skill_standard",
 }
 NODE_PREWORK_FLOWGUARD_SCOPE = "node_prework_flowguard"
+TERMINAL_BACKWARD_REPLAY_SCOPE = "terminal_backward_replay"
 NODE_CONTEXT_PACKAGE_REQUIRED_LIST_FIELDS = {
     "acceptance_criteria",
+    "direct_evidence_closure_rules",
     "relevant_references",
     "evidence_targets",
+    "final_user_intent_checks",
     "inspection_targets",
     "known_risks",
     "flowguard_targets",
+    "high_standard_requirement_ids",
+    "low_quality_success_risks",
     "reviewer_starting_points",
+    "semantic_downgrade_risks",
+    "structure_hygiene_expectation",
+    "work_packet_projection",
 }
 STAGED_EFFECT_SCHEMA_VERSION = "black_box_flowpilot.staged_effect.v1"
 STAGED_EFFECT_KINDS = {
@@ -94,6 +102,7 @@ EVENT_FAMILY_BY_TYPE = {
     "node_prework_flowguard_accepted": "flowguard",
     "repair_scope_replaced": "route",
     "parent_backward_replay_accepted": "route",
+    "terminal_backward_replay_accepted": "closure",
     "final_requirement_evidence_matrix_built": "closure",
     "pm_disposition_recorded": "route",
     "final_route_wide_gate_ledger_built": "closure",
@@ -230,6 +239,7 @@ ROUTER_INTERNAL_ACTION_TYPES = {
     "issue_node_acceptance_plan_packet",
     "issue_node_task_packet",
     "issue_parent_backward_replay_packet",
+    "issue_terminal_backward_replay_packet",
     "issue_flowguard_packet",
     "issue_review_packet",
     "issue_pm_repair_decision_packet",
@@ -396,6 +406,7 @@ def new_ledger(
         "node_acceptance_plans": {},
         "node_context_packages": {},
         "parent_backward_replays": {},
+        "terminal_backward_replays": {},
         "final_requirement_evidence_matrix": None,
         "pm_dispositions": {},
         "node_closures": {},
@@ -803,7 +814,10 @@ def _ensure_high_standard_contract_packet(ledger: dict[str, Any]) -> str:
                             "requirement_id": "hsr-001",
                             "classification": "hard_current",
                             "summary": "Current run must complete the user's actual requested outcome.",
+                            "source_user_intent": "sealed_startup_intake",
+                            "evidence_rule": "Direct current evidence or explicit waiver required; report-only closure is not sufficient.",
                             "closure_blocking": True,
+                            "report_only_closure_allowed": False,
                         }
                     ]
                 },
@@ -1162,6 +1176,12 @@ def _normalize_context_items(value: Any, field_name: str) -> list[Any]:
     return normalized
 
 
+def _optional_string_items(value: Any) -> list[str]:
+    if not isinstance(value, list):
+        return []
+    return [str(item).strip() for item in value if str(item).strip()]
+
+
 def _node_context_package_from_pm_result(
     ledger: dict[str, Any],
     node: Mapping[str, Any],
@@ -1187,6 +1207,34 @@ def _node_context_package_from_pm_result(
         missing.append("purpose")
     if missing:
         raise BlackBoxRuntimeError(f"node context package missing required fields: {', '.join(sorted(missing))}")
+    raw_test_matrix = raw_package.get("test_obligation_matrix")
+    if not isinstance(raw_test_matrix, Mapping):
+        raise BlackBoxRuntimeError("node context package missing required field: test_obligation_matrix")
+    pre_worker = raw_test_matrix.get("pre_worker")
+    if not isinstance(pre_worker, list) or not pre_worker:
+        raise BlackBoxRuntimeError("node context package missing required field: test_obligation_matrix.pre_worker")
+    normalized_pre_worker: list[dict[str, Any]] = []
+    for index, row in enumerate(pre_worker, start=1):
+        if not isinstance(row, Mapping):
+            raise BlackBoxRuntimeError(f"node context package test_obligation_matrix.pre_worker[{index}] must be an object")
+        missing_row_fields: list[str] = []
+        for field in (
+            "obligation_id",
+            "source",
+            "required_test_kind",
+            "owner_role",
+            "expected_evidence",
+            "freshness_rule",
+            "pm_disposition",
+        ):
+            if not str(row.get(field) or "").strip():
+                missing_row_fields.append(f"test_obligation_matrix.pre_worker[{index}].{field}")
+        if missing_row_fields:
+            raise BlackBoxRuntimeError(
+                "node context package test obligation row is missing required field(s): "
+                + ", ".join(missing_row_fields)
+            )
+        normalized_pre_worker.append(json.loads(json.dumps(dict(row), sort_keys=True)))
 
     node_id = str(node.get("node_id") or "")
     package_id = context_package_id or _next_id(ledger, "node_context")
@@ -1206,6 +1254,19 @@ def _node_context_package_from_pm_result(
         "known_risks": _normalize_context_items(raw_package.get("known_risks"), "known_risks"),
         "flowguard_targets": _normalize_context_items(raw_package.get("flowguard_targets"), "flowguard_targets"),
         "reviewer_starting_points": _normalize_context_items(raw_package.get("reviewer_starting_points"), "reviewer_starting_points"),
+        "high_standard_requirement_ids": _normalize_context_items(raw_package.get("high_standard_requirement_ids"), "high_standard_requirement_ids"),
+        "low_quality_success_risks": _normalize_context_items(raw_package.get("low_quality_success_risks"), "low_quality_success_risks"),
+        "semantic_downgrade_risks": _normalize_context_items(raw_package.get("semantic_downgrade_risks"), "semantic_downgrade_risks"),
+        "work_packet_projection": _normalize_context_items(raw_package.get("work_packet_projection"), "work_packet_projection"),
+        "final_user_intent_checks": _normalize_context_items(raw_package.get("final_user_intent_checks"), "final_user_intent_checks"),
+        "structure_hygiene_expectation": _normalize_context_items(raw_package.get("structure_hygiene_expectation"), "structure_hygiene_expectation"),
+        "direct_evidence_closure_rules": _normalize_context_items(raw_package.get("direct_evidence_closure_rules"), "direct_evidence_closure_rules"),
+        "test_obligation_matrix": {
+            "pre_worker": normalized_pre_worker,
+            "post_worker": json.loads(json.dumps(raw_test_matrix.get("post_worker", []), sort_keys=True))
+            if isinstance(raw_test_matrix.get("post_worker", []), list)
+            else [],
+        },
         "source_packet_id": str(subject_packet.get("packet_id") or ""),
         "source_result_id": result_id,
         "source_package_path": "node_context_package",
@@ -1485,6 +1546,14 @@ def ensure_node_acceptance_plan_packet(ledger: dict[str, Any], node_id: str) -> 
                     "known_risks",
                     "flowguard_targets",
                     "reviewer_starting_points",
+                    "high_standard_requirement_ids",
+                    "low_quality_success_risks",
+                    "semantic_downgrade_risks",
+                    "work_packet_projection",
+                    "final_user_intent_checks",
+                    "structure_hygiene_expectation",
+                    "direct_evidence_closure_rules",
+                    "test_obligation_matrix.pre_worker",
                 ],
             },
             indent=2,
@@ -1513,6 +1582,138 @@ def _parent_backward_replay_accepted(ledger: Mapping[str, Any], node_id: str) ->
         return False
     replay = ledger.get("parent_backward_replays", {}).get(replay_id, {})
     return isinstance(replay, dict) and replay.get("status") == "accepted" and replay.get("node_id") == node_id
+
+
+def _terminal_backward_replay_accepted(ledger: Mapping[str, Any]) -> bool:
+    replay_id = str(ledger.get("terminal_backward_replay_id") or "")
+    if not replay_id:
+        return False
+    replay = ledger.get("terminal_backward_replays", {}).get(replay_id, {})
+    return (
+        isinstance(replay, Mapping)
+        and replay.get("status") == "accepted"
+        and replay.get("source_generation") == ledger.get("source_generation")
+    )
+
+
+def _terminal_backward_replay_segment_targets(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
+    targets: list[dict[str, Any]] = [
+        {
+            "segment_id": "delivered-product",
+            "segment_kind": "delivered_product",
+            "summary": "Inspect the delivered product or final artifact first.",
+        },
+        {
+            "segment_id": "root-acceptance",
+            "segment_kind": "root_acceptance",
+            "summary": "Compare the delivered product against the frozen root acceptance contract.",
+        },
+    ]
+    for node in ledger.get("route_nodes", {}).values():
+        if not isinstance(node, Mapping) or node.get("status") == "superseded":
+            continue
+        node_id = str(node.get("node_id") or "")
+        if not node_id:
+            continue
+        targets.append(
+            {
+                "segment_id": node_id,
+                "segment_kind": "route_node",
+                "summary": str(node.get("title") or node_id),
+                "node_status": str(node.get("status") or ""),
+                "node_acceptance_plan_id": str(node.get("node_acceptance_plan_id") or ""),
+                "pm_disposition_id": str(node.get("pm_disposition_id") or ""),
+            }
+        )
+    return targets
+
+
+def _final_gate_ledgers_clean_for_terminal_replay(ledger: dict[str, Any]) -> bool:
+    if recursive_route_required(ledger):
+        build_final_route_wide_gate_ledger(ledger)
+    if high_standard_flow_required(ledger) or recursive_route_required(ledger):
+        build_final_requirement_evidence_matrix(ledger)
+    route_wide = ledger.get("final_route_wide_gate_ledger")
+    matrix = ledger.get("final_requirement_evidence_matrix")
+    if recursive_route_required(ledger):
+        if not isinstance(route_wide, Mapping) or int(route_wide.get("unresolved_count", 0)) != 0:
+            return False
+    if high_standard_flow_required(ledger) or recursive_route_required(ledger):
+        if not isinstance(matrix, Mapping) or int(matrix.get("unresolved_count", 0)) != 0:
+            return False
+    return True
+
+
+def _terminal_backward_replay_next_action(ledger: dict[str, Any]) -> RuntimeAction | None:
+    if not recursive_route_required(ledger) or not ledger.get("route_nodes"):
+        return None
+    if not high_standard_flow_required(ledger) or _terminal_backward_replay_accepted(ledger):
+        return None
+    frontier = ledger.get("execution_frontier") or {}
+    if frontier.get("active_node_id") or frontier.get("status") != "ready_for_final_closure":
+        return None
+    if not _final_gate_ledgers_clean_for_terminal_replay(ledger):
+        return None
+    return RuntimeAction(
+        "issue_terminal_backward_replay_packet",
+        "terminal backward replay is required before final closure",
+        str(ledger.get("latest_validation_evidence_id") or ""),
+        "reviewer",
+    )
+
+
+def ensure_terminal_backward_replay_packet(ledger: dict[str, Any], validation_evidence_id: str = "") -> str:
+    if _terminal_backward_replay_accepted(ledger):
+        return ""
+    existing = _find_live_scope_packet(
+        ledger,
+        TERMINAL_BACKWARD_REPLAY_SCOPE,
+        packet_kind="review",
+    )
+    if existing:
+        return str(existing["packet_id"])
+    if not _final_gate_ledgers_clean_for_terminal_replay(ledger):
+        raise BlackBoxRuntimeError("terminal backward replay requires clean final route-wide and requirement ledgers")
+    family_id = "review.terminal_backward_replay"
+    return issue_task_packet(
+        ledger,
+        "reviewer",
+        "Run terminal human backward replay before final closure",
+        json.dumps(
+            {
+                "schema_version": "black_box_flowpilot.terminal_backward_replay_packet.v1",
+                "route_version": ledger.get("active_route_version"),
+                "validation_evidence_id": validation_evidence_id or str(ledger.get("latest_validation_evidence_id") or ""),
+                "final_route_wide_gate_ledger_status": _copy_jsonable(ledger.get("final_route_wide_gate_ledger") or {}),
+                "final_requirement_evidence_matrix_status": _copy_jsonable(ledger.get("final_requirement_evidence_matrix") or {}),
+                "segment_targets": _terminal_backward_replay_segment_targets(ledger),
+                "contract_family_id": family_id,
+                "required_result_body_fields": list(packet_result_contracts.required_fields_for_family(family_id)),
+                "required_child_fields": list(packet_result_contracts.required_child_fields_for_family(family_id)),
+                "explicit_array_fields": list(packet_result_contracts.explicit_array_fields_for_family(family_id)),
+                "non_empty_array_fields": list(packet_result_contracts.non_empty_array_fields_for_family(family_id)),
+                "forbidden_fields": list(packet_result_contracts.forbidden_fields_for_family(family_id)),
+                "minimal_valid_shape": packet_result_contracts.minimal_valid_shape_for_family(family_id),
+                "instruction": (
+                    "Start from the delivered product, then replay root acceptance and every effective route node. "
+                    "Submit the terminal backward replay report with concrete segment_reviews. "
+                    "Do not pass from reports alone, accepted node ids alone, old UI evidence, or a completion summary."
+                ),
+            },
+            indent=2,
+            sort_keys=True,
+        ),
+        packet_kind="review",
+        required_flowguard_target="",
+        subject_id=str(ledger.get("latest_validation_evidence_id") or validation_evidence_id or "final-closure"),
+        route_scope=TERMINAL_BACKWARD_REPLAY_SCOPE,
+        acceptance_criteria=[
+            "Terminal replay starts from the delivered product.",
+            "Root acceptance and every effective node are checked backward.",
+            "Every segment has a reviewer pass and PM segment decision continue.",
+            "Any repair invalidates terminal closure and requires replay restart unless PM records a narrower impacted-ancestor reason.",
+        ],
+    )
 
 
 def ensure_parent_backward_replay_packet(ledger: dict[str, Any], node_id: str) -> str:
@@ -1561,6 +1762,8 @@ def record_pm_disposition(
     disposition_id = _next_id(ledger, "pm_disposition")
     if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
         raise BlackBoxRuntimeError("PM disposition requires an explicit allowed decision")
+    result = ledger.get("results", {}).get(result_id, {})
+    payload = _parse_json_object(str(result.get("body", ""))) if isinstance(result, Mapping) else {}
     normalized = decision
     ledger.setdefault("pm_dispositions", {})[disposition_id] = {
         "disposition_id": disposition_id,
@@ -1568,6 +1771,13 @@ def record_pm_disposition(
         "result_id": result_id,
         "decision": normalized,
         "reason": reason,
+        "covered_requirement_ids": _optional_string_items(payload.get("covered_requirement_ids")),
+        "validation_evidence_ids": _optional_string_items(payload.get("validation_evidence_ids")),
+        "waived_requirement_ids": _optional_string_items(payload.get("waived_requirement_ids")),
+        "reviewer_absorption": str(payload.get("reviewer_absorption") or ""),
+        "flowguard_absorption": str(payload.get("flowguard_absorption") or ""),
+        "residual_risk_disposition": str(payload.get("residual_risk_disposition") or ""),
+        "semantic_downgrade_disposition": str(payload.get("semantic_downgrade_disposition") or ""),
         "route_version": ledger.get("active_route_version"),
         "created_at": now_iso(),
     }
@@ -1627,14 +1837,37 @@ def _evaluate_route_deliverable_checks(ledger: Mapping[str, Any], node: Mapping[
             "summary": "",
             "evidence": [],
         }
-        if not check_id or kind not in {"path_exists", "path_glob_exists", "json_parse"}:
+        if not check_id or kind not in {
+            "path_exists",
+            "path_absent",
+            "path_glob_exists",
+            "path_glob_absent",
+            "json_parse",
+            "json_path_exists",
+            "json_field_equals",
+            "text_contains",
+            "text_forbids",
+            "fresh_after_event",
+        }:
             result["reason"] = "invalid_deliverable_check_contract"
             result["summary"] = f"Node {node_id} deliverable check contract is invalid"
             results.append(result)
             continue
-        if kind == "path_glob_exists":
+        if kind in {"path_glob_exists", "path_glob_absent"}:
             pattern = str(check.get("pattern") or check.get("path") or "").strip()
             matches, reason = _route_deliverable_glob_matches(ledger, pattern)
+            if kind == "path_glob_absent":
+                if matches:
+                    result["reason"] = "forbidden_match"
+                    result["summary"] = f"Node {node_id} forbidden deliverable glob matched {len(matches)} path(s)"
+                    result["evidence"] = [f"path:{item}" for item in matches]
+                else:
+                    result["status"] = "passed"
+                    result["reason"] = "absent"
+                    result["summary"] = f"Node {node_id} forbidden deliverable glob is absent"
+                result["pattern"] = pattern
+                results.append(result)
+                continue
             if matches:
                 result["status"] = "passed"
                 result["reason"] = "matched"
@@ -1654,7 +1887,15 @@ def _evaluate_route_deliverable_checks(ledger: Mapping[str, Any], node: Mapping[
             continue
         result["path"] = resolved.as_posix()
         result["evidence"] = [f"path:{resolved.as_posix()}"]
-        if kind == "path_exists":
+        if kind == "path_absent":
+            if resolved.exists():
+                result["reason"] = "forbidden_path_exists"
+                result["summary"] = f"Node {node_id} forbidden deliverable path exists"
+            else:
+                result["status"] = "passed"
+                result["reason"] = "absent"
+                result["summary"] = f"Node {node_id} forbidden deliverable path is absent"
+        elif kind == "path_exists":
             if resolved.exists():
                 result["status"] = "passed"
                 result["reason"] = "exists"
@@ -1676,8 +1917,142 @@ def _evaluate_route_deliverable_checks(ledger: Mapping[str, Any], node: Mapping[
                     result["status"] = "passed"
                     result["reason"] = "json_parse_passed"
                     result["summary"] = f"Node {node_id} JSON deliverable is parseable"
+        elif kind in {"json_path_exists", "json_field_equals"}:
+            json_path = str(check.get("json_path") or "").strip()
+            if not json_path:
+                result["reason"] = "missing_json_path"
+                result["summary"] = f"Node {node_id} JSON deliverable check is missing json_path"
+            elif not resolved.exists():
+                result["reason"] = "missing"
+                result["summary"] = f"Node {node_id} JSON deliverable path is missing"
+            else:
+                try:
+                    parsed = json.loads(resolved.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError, UnicodeDecodeError):
+                    result["reason"] = "json_parse_failed"
+                    result["summary"] = f"Node {node_id} JSON deliverable is not parseable"
+                else:
+                    exists, value = _json_path_lookup(parsed, json_path)
+                    result["json_path"] = json_path
+                    if kind == "json_path_exists":
+                        if exists:
+                            result["status"] = "passed"
+                            result["reason"] = "json_path_exists"
+                            result["summary"] = f"Node {node_id} JSON path exists"
+                        else:
+                            result["reason"] = "json_path_missing"
+                            result["summary"] = f"Node {node_id} JSON path is missing"
+                    else:
+                        if "expected_value" not in check:
+                            result["reason"] = "missing_expected_value"
+                            result["summary"] = f"Node {node_id} JSON equality check is missing expected_value"
+                        elif exists and value == check.get("expected_value"):
+                            result["status"] = "passed"
+                            result["reason"] = "json_field_equals"
+                            result["summary"] = f"Node {node_id} JSON value matches"
+                        else:
+                            result["reason"] = "json_field_mismatch" if exists else "json_path_missing"
+                            result["summary"] = f"Node {node_id} JSON value does not match"
+                            result["evidence"].append(f"json_path:{json_path}")
+        elif kind in {"text_contains", "text_forbids"}:
+            text = str(check.get("text") or "")
+            if not text:
+                result["reason"] = "missing_text"
+                result["summary"] = f"Node {node_id} text deliverable check is missing text"
+            elif not resolved.exists():
+                result["reason"] = "missing"
+                result["summary"] = f"Node {node_id} text deliverable path is missing"
+            else:
+                try:
+                    content = resolved.read_text(encoding="utf-8")
+                except (OSError, UnicodeDecodeError):
+                    result["reason"] = "text_read_failed"
+                    result["summary"] = f"Node {node_id} text deliverable is not readable"
+                else:
+                    found = text in content
+                    if kind == "text_contains" and found:
+                        result["status"] = "passed"
+                        result["reason"] = "text_found"
+                        result["summary"] = f"Node {node_id} required text is present"
+                    elif kind == "text_forbids" and not found:
+                        result["status"] = "passed"
+                        result["reason"] = "text_absent"
+                        result["summary"] = f"Node {node_id} forbidden text is absent"
+                    else:
+                        result["reason"] = "text_missing" if kind == "text_contains" else "forbidden_text_found"
+                        result["summary"] = (
+                            f"Node {node_id} required text is missing"
+                            if kind == "text_contains"
+                            else f"Node {node_id} forbidden text is present"
+                        )
+        elif kind == "fresh_after_event":
+            event_type = str(check.get("event_type") or "").strip()
+            event_at = _latest_event_created_at(ledger, event_type)
+            if not event_type:
+                result["reason"] = "missing_event_type"
+                result["summary"] = f"Node {node_id} freshness check is missing event_type"
+            elif not event_at:
+                result["reason"] = "event_missing"
+                result["summary"] = f"Node {node_id} freshness event is missing"
+            elif not resolved.exists():
+                result["reason"] = "missing"
+                result["summary"] = f"Node {node_id} freshness deliverable path is missing"
+            else:
+                mtime = datetime.fromtimestamp(resolved.stat().st_mtime, tz=timezone.utc)
+                if mtime > event_at:
+                    result["status"] = "passed"
+                    result["reason"] = "fresh"
+                    result["summary"] = f"Node {node_id} deliverable is fresh after event"
+                    result["evidence"].append(f"event_type:{event_type}")
+                else:
+                    result["reason"] = "stale"
+                    result["summary"] = f"Node {node_id} deliverable is stale before event"
+                    result["evidence"].append(f"event_type:{event_type}")
         results.append(result)
     return results
+
+
+def _json_path_lookup(value: Any, json_path: str) -> tuple[bool, Any]:
+    current = value
+    for raw_part in json_path.split("."):
+        part = raw_part.strip()
+        if not part:
+            return False, None
+        if "[" in part and part.endswith("]"):
+            key, _, raw_index = part[:-1].partition("[")
+            if key:
+                if not isinstance(current, Mapping) or key not in current:
+                    return False, None
+                current = current[key]
+            try:
+                index = int(raw_index)
+            except ValueError:
+                return False, None
+            if not isinstance(current, list) or index < 0 or index >= len(current):
+                return False, None
+            current = current[index]
+            continue
+        if not isinstance(current, Mapping) or part not in current:
+            return False, None
+        current = current[part]
+    return True, current
+
+
+def _latest_event_created_at(ledger: Mapping[str, Any], event_type: str) -> datetime | None:
+    if not event_type:
+        return None
+    for event in reversed(list(ledger.get("events", []))):
+        if not isinstance(event, Mapping) or event.get("event_type") != event_type:
+            continue
+        raw_created = str(event.get("created_at") or "")
+        try:
+            parsed = datetime.fromisoformat(raw_created.replace("Z", "+00:00"))
+        except ValueError:
+            return None
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    return None
 
 
 def _route_deliverable_project_root(ledger: Mapping[str, Any]) -> Path:
@@ -1725,6 +2100,48 @@ def _path_is_within_root(path: Path, root: Path) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _pm_disposition_for_node(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> Mapping[str, Any]:
+    disposition_id = str(node.get("pm_disposition_id") or "")
+    disposition = ledger.get("pm_dispositions", {}).get(disposition_id, {}) if disposition_id else {}
+    return disposition if isinstance(disposition, Mapping) else {}
+
+
+def _node_has_passing_deliverable_evidence(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> bool:
+    checks = _evaluate_route_deliverable_checks(ledger, node)
+    required = [check for check in checks if check.get("required") is not False]
+    return bool(required) and all(check.get("status") == "passed" for check in required)
+
+
+def _node_closes_high_standard_requirement(
+    ledger: Mapping[str, Any],
+    node: Mapping[str, Any],
+    requirement: Mapping[str, Any],
+) -> bool:
+    requirement_id = str(requirement.get("requirement_id") or "")
+    if not requirement_id:
+        return False
+    if requirement_id not in [str(item) for item in node.get("high_standard_requirement_ids") or []]:
+        return False
+    disposition = _pm_disposition_for_node(ledger, node)
+    waived_ids = [str(item) for item in disposition.get("waived_requirement_ids") or []]
+    if node.get("status") == "waived":
+        return requirement_id in waived_ids
+    if node.get("status") != "accepted":
+        return False
+    covered_ids = [str(item) for item in disposition.get("covered_requirement_ids") or []]
+    if requirement_id in waived_ids:
+        return True
+    if requirement_id not in covered_ids:
+        return False
+    if bool(requirement.get("report_only_closure_allowed")):
+        return True
+    if _node_has_passing_deliverable_evidence(ledger, node):
+        return True
+    if node.get("validation_evidence_ids") or disposition.get("validation_evidence_ids"):
+        return True
+    return False
 
 
 def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]:
@@ -1836,15 +2253,18 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             covered_nodes = [
                 str(node.get("node_id", ""))
                 for node in ledger.get("route_nodes", {}).values()
-                if requirement_id in list(node.get("high_standard_requirement_ids") or [])
-                and node.get("status") in {"accepted", "waived"}
+                if _node_closes_high_standard_requirement(ledger, node, requirement)
             ]
             add_row(
                 requirement_id,
                 "high_standard_requirement",
                 "covered" if covered_nodes else "missing",
                 covered_nodes,
-                str(requirement.get("summary") or requirement_id),
+                (
+                    str(requirement.get("summary") or requirement_id)
+                    + " | evidence_rule="
+                    + str(requirement.get("evidence_rule") or "")
+                ),
             )
         for obligation in _required_skill_obligations(ledger):
             obligation_id = str(obligation.get("obligation_id") or "unknown")
@@ -2076,17 +2496,53 @@ def _strict_deliverable_checks(raw_node: Mapping[str, Any], node_id: str) -> lis
             raise BlackBoxRuntimeError(
                 f"strict route plan schema violation: {node_id}.deliverable_checks[{index}] missing check_id"
             )
-        if kind not in {"path_exists", "path_glob_exists", "json_parse"}:
+        if kind not in {
+            "path_exists",
+            "path_absent",
+            "path_glob_exists",
+            "path_glob_absent",
+            "json_parse",
+            "json_path_exists",
+            "json_field_equals",
+            "text_contains",
+            "text_forbids",
+            "fresh_after_event",
+        }:
             raise BlackBoxRuntimeError(
                 f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] has unsupported kind"
             )
-        if kind in {"path_exists", "json_parse"} and not str(check.get("path") or "").strip():
+        if kind in {
+            "path_exists",
+            "path_absent",
+            "json_parse",
+            "json_path_exists",
+            "json_field_equals",
+            "text_contains",
+            "text_forbids",
+            "fresh_after_event",
+        } and not str(check.get("path") or "").strip():
             raise BlackBoxRuntimeError(
                 f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing path"
             )
-        if kind == "path_glob_exists" and not str(check.get("pattern") or check.get("path") or "").strip():
+        if kind in {"path_glob_exists", "path_glob_absent"} and not str(check.get("pattern") or check.get("path") or "").strip():
             raise BlackBoxRuntimeError(
                 f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing pattern"
+            )
+        if kind in {"json_path_exists", "json_field_equals"} and not str(check.get("json_path") or "").strip():
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing json_path"
+            )
+        if kind == "json_field_equals" and "expected_value" not in check:
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing expected_value"
+            )
+        if kind in {"text_contains", "text_forbids"} and not str(check.get("text") or "").strip():
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing text"
+            )
+        if kind == "fresh_after_event" and not str(check.get("event_type") or "").strip():
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.deliverable_checks[{check_id}] missing event_type"
             )
         normalized.append(json.loads(json.dumps(check, sort_keys=True)))
     return normalized
@@ -2180,6 +2636,14 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
             subject_packet_id=subject_packet_id,
         )
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    family_id = "pm_disposition.node_pm_disposition"
+    minimal_valid_shape = packet_result_contracts.minimal_valid_shape_for_family(family_id)
+    node_requirement_ids = [str(item) for item in node.get("high_standard_requirement_ids") or [] if str(item)]
+    if node_requirement_ids:
+        minimal_valid_shape["covered_requirement_ids"] = node_requirement_ids
+    node_validation_ids = [str(item) for item in node.get("validation_evidence_ids") or [] if str(item)]
+    if node_validation_ids:
+        minimal_valid_shape["validation_evidence_ids"] = node_validation_ids
     return issue_task_packet(
         ledger,
         "pm",
@@ -2189,17 +2653,19 @@ def _ensure_pm_disposition_packet_for_node(ledger: dict[str, Any], node_id: str,
                 "schema_version": "black_box_flowpilot.pm_disposition_packet.v1",
                 "route_node_id": node_id,
                 "subject_packet_id": subject_packet_id,
-                "contract_family_id": "pm_disposition.node_pm_disposition",
-                "required_result_body_fields": ["decision", "reason"],
-                "forbidden_fields": ["summary", "pm_disposition_summary"],
-                "minimal_valid_shape": {
-                    "decision": "accept",
-                    "reason": "Concrete PM disposition reason.",
-                },
+                "contract_family_id": family_id,
+                "required_result_body_fields": list(packet_result_contracts.required_fields_for_family(family_id)),
+                "explicit_array_fields": list(packet_result_contracts.explicit_array_fields_for_family(family_id)),
+                "forbidden_fields": list(packet_result_contracts.forbidden_fields_for_family(family_id)),
+                "node_high_standard_requirement_ids": node_requirement_ids,
+                "node_validation_evidence_ids": node_validation_ids,
+                "minimal_valid_shape": minimal_valid_shape,
                 "instruction": (
                     "Return exactly one structured JSON object for the PM disposition. "
                     "Default valid decision is accept; other valid decisions are repair_current_scope, redesign_route, block, or stop. "
-                    "Use top-level reason; do not use summary or pm_disposition_summary."
+                    "Use top-level reason; do not use summary or pm_disposition_summary. "
+                    "Absorb current Reviewer and FlowGuard findings, requirement coverage, residual risks, "
+                    "semantic downgrade risk, validation evidence, and any explicit waivers before accepting."
                 ),
             },
             indent=2,
@@ -2291,9 +2757,8 @@ def _normalize_outcome_token(value: Any) -> str:
 
 
 def _payload_outcome_token(payload: Mapping[str, Any], packet_kind: str) -> str:
-    flowguard_report = payload.get("flowguard_report")
-    if isinstance(flowguard_report, Mapping) and flowguard_report.get("ok") is False:
-        return "block"
+    if packet_kind in {"flowguard_check", "review"} and isinstance(payload.get("passed"), bool):
+        return "pass" if payload.get("passed") is True else "block"
     return _normalize_outcome_token(payload.get("decision"))
 
 def _default_blocker_class(packet_kind: str, owner_role: str, token: str) -> str:
@@ -4630,8 +5095,13 @@ def _pm_visible_summary_from_body(body: str) -> list[str]:
 
 def _structured_required_repairs_from_payload(payload: Mapping[str, Any]) -> list[str]:
     repairs: list[str] = []
-    raw_findings = payload.get("blocking_findings")
-    if isinstance(raw_findings, list):
+    raw_findings_sources: list[Any] = [payload.get("blocking_findings")]
+    independent_challenge = payload.get("independent_challenge")
+    if isinstance(independent_challenge, Mapping):
+        raw_findings_sources.append(independent_challenge.get("blocking_findings"))
+    for raw_findings in raw_findings_sources:
+        if not isinstance(raw_findings, list):
+            continue
         for finding in raw_findings:
             if not isinstance(finding, Mapping):
                 continue
@@ -4940,6 +5410,7 @@ def _build_current_handoff_contract(
             "output_contract": _copy_jsonable(envelope.get("output_contract") or {}),
             "required_result_body_fields": list(required_fields),
             "required_child_fields": [str(field) for field in family_row.get("required_child_fields", ())],
+            "explicit_array_fields": [str(field) for field in family_row.get("explicit_array_fields", ())],
             "forbidden_result_body_fields": list(packet_result_contracts.forbidden_fields_for_family(family_id)),
             "minimal_valid_shape": packet_result_contracts.minimal_valid_shape_for_family(family_id),
             "branch_valid_shapes": packet_result_contracts.branch_valid_shapes_for_family(family_id),
@@ -5619,6 +6090,18 @@ def _packet_result_required_fields(packet: Mapping[str, Any]) -> tuple[str, ...]
     return packet_result_contracts.required_fields_for_family(_packet_result_family_id(packet))
 
 
+def _packet_result_required_child_fields(packet: Mapping[str, Any]) -> tuple[str, ...]:
+    return packet_result_contracts.required_child_fields_for_family(_packet_result_family_id(packet))
+
+
+def _packet_result_explicit_array_fields(packet: Mapping[str, Any]) -> tuple[str, ...]:
+    return packet_result_contracts.explicit_array_fields_for_family(_packet_result_family_id(packet))
+
+
+def _packet_result_non_empty_array_fields(packet: Mapping[str, Any]) -> tuple[str, ...]:
+    return packet_result_contracts.non_empty_array_fields_for_family(_packet_result_family_id(packet))
+
+
 def _packet_result_forbidden_fields(packet: Mapping[str, Any]) -> tuple[str, ...]:
     return packet_result_contracts.forbidden_fields_for_family(_packet_result_family_id(packet))
 
@@ -5678,6 +6161,126 @@ def _top_level_forbidden_fields(payload: Mapping[str, Any], forbidden_fields: tu
     return tuple(field for field in forbidden_fields if field in payload)
 
 
+def _payload_path_value(payload: Mapping[str, Any], field_path: str) -> tuple[bool, Any]:
+    current: Any = payload
+    for part in field_path.split("."):
+        if not isinstance(current, Mapping) or part not in current:
+            return False, None
+        current = current[part]
+    return True, current
+
+
+def _payload_path_values(payload: Mapping[str, Any], field_path: str) -> tuple[bool, list[Any]]:
+    parts = field_path.split(".")
+
+    def visit(current: Any, index: int) -> list[Any] | None:
+        if index >= len(parts):
+            return [current]
+        part = parts[index]
+        if part.endswith("[]"):
+            key = part[:-2]
+            if not isinstance(current, Mapping) or key not in current:
+                return None
+            value = current[key]
+            if not isinstance(value, list) or not value:
+                return None
+            values: list[Any] = []
+            for item in value:
+                nested = visit(item, index + 1)
+                if nested is None:
+                    return None
+                values.extend(nested)
+            return values
+        if not isinstance(current, Mapping) or part not in current:
+            return None
+        return visit(current[part], index + 1)
+
+    values = visit(payload, 0)
+    if values is None:
+        return False, []
+    return True, values
+
+
+def _payload_path_missing(payload: Any, field_path: str) -> bool:
+    parts = field_path.split(".")
+
+    def visit(current: Any, index: int) -> bool:
+        if index >= len(parts):
+            return current is None or current == ""
+        part = parts[index]
+        if part.endswith("[]"):
+            key = part[:-2]
+            if not isinstance(current, Mapping) or key not in current:
+                return True
+            value = current[key]
+            if not isinstance(value, list) or not value:
+                return True
+            return any(visit(item, index + 1) for item in value)
+        if not isinstance(current, Mapping) or part not in current:
+            return True
+        return visit(current[part], index + 1)
+
+    return visit(payload, 0)
+
+
+def _missing_child_fields(payload: Mapping[str, Any], required_child_fields: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(field for field in required_child_fields if _payload_path_missing(payload, field))
+
+
+def _missing_or_wrong_explicit_array_fields(
+    payload: Mapping[str, Any],
+    explicit_array_fields: tuple[str, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    missing: list[str] = []
+    wrong_type: list[str] = []
+    for field in explicit_array_fields:
+        if "[]" in field:
+            exists, values = _payload_path_values(payload, field)
+            if not exists:
+                missing.append(field)
+                continue
+            if any(not isinstance(value, list) for value in values):
+                wrong_type.append(field)
+            continue
+        exists, value = _payload_path_value(payload, field)
+        if not exists:
+            missing.append(field)
+            continue
+        if not isinstance(value, list):
+            wrong_type.append(field)
+    return tuple(missing), tuple(wrong_type)
+
+
+def _missing_or_wrong_non_empty_array_fields(
+    payload: Mapping[str, Any],
+    non_empty_array_fields: tuple[str, ...],
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    missing_or_empty: list[str] = []
+    wrong_type: list[str] = []
+    for field in non_empty_array_fields:
+        if "[]" in field:
+            exists, values = _payload_path_values(payload, field)
+            if not exists:
+                missing_or_empty.append(field)
+                continue
+            if any(not isinstance(value, list) for value in values):
+                wrong_type.append(field)
+                continue
+            if any(not value for value in values):
+                missing_or_empty.append(field)
+            continue
+        exists, value = _payload_path_value(payload, field)
+        if not exists:
+            missing_or_empty.append(field)
+            continue
+        if not isinstance(value, list):
+            wrong_type.append(field)
+            continue
+        if not value:
+            missing_or_empty.append(field)
+    return tuple(missing_or_empty), tuple(wrong_type)
+
+
 def _json_payload_contract_check(packet: Mapping[str, Any], result: Mapping[str, Any]) -> tuple[dict[str, Any] | None, PacketResultContractCheck | None]:
     payload = _strict_json_object_from_body(str(result.get("body", "")))
     if not payload:
@@ -5688,16 +6291,29 @@ def _json_payload_contract_check(packet: Mapping[str, Any], result: Mapping[str,
         )
     forbidden = _top_level_forbidden_fields(payload, _packet_result_forbidden_fields(packet))
     missing = _top_level_missing_fields(payload, _packet_result_required_fields(packet))
-    if forbidden or missing:
+    missing_child = _missing_child_fields(payload, _packet_result_required_child_fields(packet))
+    missing_arrays, wrong_array_types = _missing_or_wrong_explicit_array_fields(
+        payload,
+        _packet_result_explicit_array_fields(packet),
+    )
+    missing_non_empty_arrays, wrong_non_empty_array_types = _missing_or_wrong_non_empty_array_fields(
+        payload,
+        _packet_result_non_empty_array_fields(packet),
+    )
+    all_missing = tuple(dict.fromkeys((*missing, *missing_child, *missing_arrays, *missing_non_empty_arrays)))
+    all_wrong_array_types = tuple(dict.fromkeys((*wrong_array_types, *wrong_non_empty_array_types)))
+    if forbidden or all_missing or all_wrong_array_types:
         pieces: list[str] = []
-        if missing:
-            pieces.append("missing required field(s): " + ", ".join(missing))
+        if all_missing:
+            pieces.append("missing required field(s): " + ", ".join(all_missing))
+        if all_wrong_array_types:
+            pieces.append("explicit array field(s) must be arrays: " + ", ".join(all_wrong_array_types))
         if forbidden:
             pieces.append("forbidden field(s): " + ", ".join(forbidden))
         return payload, _contract_block(
             packet,
             "; ".join(pieces),
-            missing_required_fields=missing,
+            missing_required_fields=(*all_missing, *all_wrong_array_types),
             forbidden_fields_seen=forbidden,
         )
     return payload, None
@@ -5710,6 +6326,16 @@ def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result:
     assert payload is not None
     if not payload:
         return _contract_block(packet, "packet result requires a current strict JSON object")
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    packet_kind = str(envelope.get("packet_kind", "task"))
+    if packet_kind in {"flowguard_check", "review"}:
+        if not isinstance(payload.get("passed"), bool):
+            return _contract_block(
+                packet,
+                "formal review/FlowGuard report requires boolean passed",
+                missing_required_fields=("passed",),
+            )
+        return _contract_pass(packet)
     if "decision" not in payload:
         alias_keys = sorted(key for key in _OUTCOME_ALIAS_KEYS if key in payload)
         if alias_keys:
@@ -5723,6 +6349,61 @@ def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result:
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision not in (_PASSING_OUTCOME_DECISIONS | _BLOCKING_OUTCOME_DECISIONS):
         return _contract_block(packet, "packet result decision must be an explicit allowed pass/block decision")
+    return _contract_pass(packet)
+
+
+def _terminal_backward_replay_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
+    if payload.get("reviewed_by_role") != "human_like_reviewer":
+        return _contract_block(
+            packet,
+            "terminal backward replay must be reviewed by human_like_reviewer",
+            missing_required_fields=("reviewed_by_role",),
+        )
+    if payload.get("passed") is not True:
+        return _contract_block(
+            packet,
+            "terminal backward replay cannot close unless top-level passed is true",
+            missing_required_fields=("passed",),
+        )
+    segment_reviews = payload.get("segment_reviews")
+    if not isinstance(segment_reviews, list) or not segment_reviews:
+        return _contract_block(
+            packet,
+            "terminal backward replay requires non-empty segment_reviews",
+            missing_required_fields=("segment_reviews",),
+        )
+    for index, segment in enumerate(segment_reviews, start=1):
+        if not isinstance(segment, Mapping):
+            return _contract_block(packet, f"terminal backward replay segment_reviews[{index}] must be an object")
+        missing: list[str] = []
+        for field in ("segment_id", "segment_kind", "reviewed_by_role", "passed", "pm_segment_decision", "direct_evidence_paths_checked"):
+            value = segment.get(field)
+            if field not in segment or value is None or value == "":
+                missing.append(f"segment_reviews[{index}].{field}")
+        if segment.get("reviewed_by_role") != "human_like_reviewer":
+            missing.append(f"segment_reviews[{index}].reviewed_by_role")
+        if segment.get("passed") is not True:
+            missing.append(f"segment_reviews[{index}].passed")
+        if segment.get("pm_segment_decision") != "continue":
+            missing.append(f"segment_reviews[{index}].pm_segment_decision")
+        if not isinstance(segment.get("direct_evidence_paths_checked"), list) or not segment.get("direct_evidence_paths_checked"):
+            missing.append(f"segment_reviews[{index}].direct_evidence_paths_checked")
+        if missing:
+            return _contract_block(
+                packet,
+                "terminal backward replay segment is missing required current pass evidence: " + ", ".join(missing),
+                missing_required_fields=tuple(dict.fromkeys(missing)),
+            )
+    if not str(payload.get("repair_restart_policy") or "").strip():
+        return _contract_block(
+            packet,
+            "terminal backward replay requires repair_restart_policy",
+            missing_required_fields=("repair_restart_policy",),
+        )
     return _contract_pass(packet)
 
 
@@ -5759,11 +6440,29 @@ def _high_standard_contract_result_violation(packet: Mapping[str, Any], result: 
                 f"high_standard_contract requirements[{index}] requires summary",
                 missing_required_fields=(f"requirements[{index}].summary",),
             )
+        if not str(row.get("source_user_intent") or "").strip():
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires source_user_intent",
+                missing_required_fields=(f"requirements[{index}].source_user_intent",),
+            )
+        if not str(row.get("evidence_rule") or "").strip():
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires evidence_rule",
+                missing_required_fields=(f"requirements[{index}].evidence_rule",),
+            )
         if not isinstance(row.get("closure_blocking"), bool):
             return _contract_block(
                 packet,
                 f"high_standard_contract requirements[{index}] requires boolean closure_blocking",
                 missing_required_fields=(f"requirements[{index}].closure_blocking",),
+            )
+        if not isinstance(row.get("report_only_closure_allowed"), bool):
+            return _contract_block(
+                packet,
+                f"high_standard_contract requirements[{index}] requires boolean report_only_closure_allowed",
+                missing_required_fields=(f"requirements[{index}].report_only_closure_allowed",),
             )
     return _contract_pass(packet)
 
@@ -5938,6 +6637,18 @@ def _pm_disposition_result_violation(packet: Mapping[str, Any], result: Mapping[
     decision = _normalize_outcome_token(payload.get("decision"))
     if decision not in {"accept", "repair_current_scope", "redesign_route", "block", "stop"}:
         return _contract_block(packet, "PM disposition requires an explicit allowed decision")
+    for field in (
+        "reviewer_absorption",
+        "flowguard_absorption",
+        "residual_risk_disposition",
+        "semantic_downgrade_disposition",
+    ):
+        if not str(payload.get(field) or "").strip():
+            return _contract_block(
+                packet,
+                f"PM disposition requires non-empty {field}",
+                missing_required_fields=(field,),
+            )
     return _contract_pass(packet)
 
 
@@ -5956,6 +6667,8 @@ def _current_result_submission_contract_violation(
         return _pm_repair_decision_result_violation(packet, result)
     if packet_kind == "pm_disposition":
         return _pm_disposition_result_violation(packet, result)
+    if packet_kind == "review" and route_scope == TERMINAL_BACKWARD_REPLAY_SCOPE:
+        return _terminal_backward_replay_result_violation(packet, result)
     outcome_violation = _strict_packet_outcome_contract_violation(packet, result)
     if not outcome_violation.ok:
         return outcome_violation
@@ -5993,6 +6706,10 @@ def _current_result_submission_contract_violation(
             for field in NODE_CONTEXT_PACKAGE_REQUIRED_LIST_FIELDS | {"purpose"}:
                 if field in text:
                     missing.append(f"node_context_package.{field}")
+            if "test_obligation_matrix" in text:
+                missing.append("node_context_package.test_obligation_matrix")
+            if "pre_worker" in text:
+                missing.append("node_context_package.test_obligation_matrix.pre_worker")
             return _contract_block(packet, text, missing_required_fields=tuple(missing))
         _attach_staged_effect(
             result,  # type: ignore[arg-type]
@@ -6124,6 +6841,7 @@ def _apply_valid_packet_result(
     lease: dict[str, Any],
 ) -> None:
     packet_kind = packet["envelope"].get("packet_kind", "task")
+    route_scope = str(packet["envelope"].get("route_scope") or "")
     contract_check = _current_result_submission_contract_violation(ledger, packet, result)
     if not contract_check.ok:
         _block_result_and_reissue_current_packet_family(
@@ -6164,6 +6882,20 @@ def _apply_valid_packet_result(
     outcome = _parse_packet_outcome(packet, result)
     outcome_id = _record_packet_outcome(ledger, packet, result, outcome)
     result["semantic_decision"] = outcome["decision"]
+    if packet_kind == "review" and route_scope == TERMINAL_BACKWARD_REPLAY_SCOPE:
+        if outcome["blocking"]:
+            result["status"] = "review_blocked"
+            result["accepted"] = False
+            packet["status"] = "review_blocked"
+            close_lease(ledger, lease["lease_id"], "terminal_backward_replay_blocked")
+            _record_semantic_blocker(ledger, packet, result, outcome_id)
+            return
+        _accept_packet_result(ledger, packet, result, lease, reason="terminal_backward_replay_submitted")
+        _record_terminal_backward_replay_closure(ledger, packet, result)
+        evidence_id = str(ledger.get("latest_validation_evidence_id") or packet["envelope"].get("subject_id") or "")
+        if evidence_id:
+            attempt_final_closure(ledger, evidence_id)
+        return
     if outcome["blocking"]:
         if packet_kind == "task":
             result["status"] = "semantic_blocked"
@@ -6484,21 +7216,35 @@ def _parse_high_standard_requirements(body: str) -> list[dict[str, Any]]:
         requirement_id = str(row.get("requirement_id") or "").strip()
         classification = str(row.get("classification") or "").strip()
         summary = str(row.get("summary") or "").strip()
+        source_user_intent = str(row.get("source_user_intent") or "").strip()
+        evidence_rule = str(row.get("evidence_rule") or "").strip()
         if not requirement_id:
             raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires requirement_id")
         if not classification:
             raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires classification")
         if not summary:
             raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires summary")
+        if not source_user_intent:
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires source_user_intent")
+        if not evidence_rule:
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires evidence_rule")
         if not isinstance(row.get("closure_blocking"), bool):
             raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires boolean closure_blocking")
+        if not isinstance(row.get("report_only_closure_allowed"), bool):
+            raise BlackBoxRuntimeError(f"high_standard_contract requirements[{index}] requires boolean report_only_closure_allowed")
         normalized.append(
             {
                 "requirement_id": requirement_id,
                 "classification": classification,
                 "summary": summary,
+                "source_user_intent": source_user_intent,
+                "evidence_rule": evidence_rule,
                 "closure_blocking": bool(row["closure_blocking"]),
-                "evidence_rule": str(row.get("evidence_rule") or ""),
+                "report_only_closure_allowed": bool(row["report_only_closure_allowed"]),
+                "forbidden_scope": str(row.get("forbidden_scope") or ""),
+                "done_signal": str(row.get("done_signal") or ""),
+                "quality_floor": str(row.get("quality_floor") or ""),
+                "waiver_policy": str(row.get("waiver_policy") or ""),
             }
         )
     return normalized
@@ -6667,6 +7413,38 @@ def _record_parent_backward_replay_closure(
     node["parent_backward_replay_id"] = replay_id
     node["status"] = "awaiting_pm_disposition"
     _event(ledger, "parent_backward_replay_accepted", node_id=node_id, replay_id=replay_id)
+    return replay_id
+
+
+def _record_terminal_backward_replay_closure(
+    ledger: dict[str, Any],
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> str:
+    payload = _parse_json_object(str(result.get("body", "")))
+    replay_id = _next_id(ledger, "terminal_replay")
+    segment_reviews = payload.get("segment_reviews") if isinstance(payload.get("segment_reviews"), list) else []
+    ledger.setdefault("terminal_backward_replays", {})[replay_id] = {
+        "replay_id": replay_id,
+        "status": "accepted",
+        "source_packet_id": str(packet.get("packet_id") or ""),
+        "source_result_id": str(result.get("result_id") or ""),
+        "route_version": ledger.get("active_route_version"),
+        "source_generation": ledger.get("source_generation"),
+        "segment_count": len(segment_reviews),
+        "segment_ids": [str(row.get("segment_id") or "") for row in segment_reviews if isinstance(row, Mapping)],
+        "repair_restart_policy": str(payload.get("repair_restart_policy") or ""),
+        "created_at": now_iso(),
+    }
+    ledger["terminal_backward_replay_id"] = replay_id
+    ledger["closure_confirmed_by_backward_replay"] = True
+    _event(
+        ledger,
+        "terminal_backward_replay_accepted",
+        replay_id=replay_id,
+        source_packet_id=str(packet.get("packet_id") or ""),
+        source_result_id=str(result.get("result_id") or ""),
+    )
     return replay_id
 
 
@@ -7830,6 +8608,8 @@ def _apply_router_internal_action(ledger: dict[str, Any], action: RuntimeAction)
         result["packet_id"] = ensure_next_node_task_packet(ledger)
     elif action_type == "issue_parent_backward_replay_packet":
         result["packet_id"] = ensure_parent_backward_replay_packet(ledger, action.subject_id)
+    elif action_type == "issue_terminal_backward_replay_packet":
+        result["packet_id"] = ensure_terminal_backward_replay_packet(ledger, action.subject_id)
     elif action_type == "issue_flowguard_packet":
         subject_packet = _require(ledger["packets"], action.subject_id, "packet")
         result_ids = subject_packet.get("result_ids") or []
@@ -8838,8 +9618,10 @@ def _closure_blockers(
     blockers: list[str] = []
     if not ledger.get("goal"):
         blockers.append("missing_goal")
-    if ledger.get("completion_claims") and not ledger.get("closure_confirmed_by_backward_replay"):
+    if ledger.get("completion_claims") and not _terminal_backward_replay_accepted(ledger):
         blockers.append("completion_report_only_not_sufficient")
+    if high_standard_flow_required(ledger) and not _terminal_backward_replay_accepted(ledger):
+        blockers.append("missing_terminal_backward_replay")
     if ledger.get("open_resources"):
         blockers.append("unresolved_resources")
     if ledger.get("residual_risks"):
@@ -8993,6 +9775,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     closure = ledger.get("closure") or {}
     if closure.get("decision") == "complete":
         return RuntimeAction("terminal_complete", "final backward chain is complete")
+    terminal_replay_action = _terminal_backward_replay_next_action(ledger)
+    if terminal_replay_action is not None:
+        return terminal_replay_action
     if recursive_route_required(ledger) and ledger.get("route_nodes"):
         frontier = ledger.get("execution_frontier") or {}
         if (
@@ -9000,8 +9785,34 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             and frontier.get("status") == "ready_for_final_closure"
             and closure.get("decision") != "blocked"
         ):
+            if high_standard_flow_required(ledger) and not _terminal_backward_replay_accepted(ledger):
+                if _final_gate_ledgers_clean_for_terminal_replay(ledger):
+                    return RuntimeAction(
+                        "issue_terminal_backward_replay_packet",
+                        "terminal backward replay is required before final closure",
+                        str(ledger.get("latest_validation_evidence_id") or ""),
+                        "reviewer",
+                    )
             return RuntimeAction("close_project", "all route nodes are resolved; final route-wide closure is required")
     if not active_packets:
+        if recursive_route_required(ledger) and ledger.get("route_nodes"):
+            frontier = ledger.get("execution_frontier") or {}
+            if not frontier.get("active_node_id") and frontier.get("status") == "ready_for_final_closure":
+                if high_standard_flow_required(ledger) and not _terminal_backward_replay_accepted(ledger):
+                    if _final_gate_ledgers_clean_for_terminal_replay(ledger):
+                        return RuntimeAction(
+                            "issue_terminal_backward_replay_packet",
+                            "terminal backward replay is required before final closure",
+                            str(ledger.get("latest_validation_evidence_id") or ""),
+                            "reviewer",
+                        )
+                if closure.get("decision") == "blocked":
+                    return RuntimeAction(
+                        "repair_packet",
+                        "final closure blockers require current-route repair before new work",
+                        "final_closure",
+                    )
+                return RuntimeAction("close_project", "all route nodes are resolved; final route-wide closure is required")
         if high_standard_flow_required(ledger) and not preplanning_gates_accepted(ledger):
             return RuntimeAction("issue_preplanning_gate_packet", "preplanning high-standard gates are required", responsibility="pm")
         return RuntimeAction("issue_task_packet", "active route has no task packets", responsibility="worker")
@@ -9123,6 +9934,14 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
             and not (ledger.get("closure") or {}).get("decision") == "complete"
             and (ledger.get("closure") or {}).get("decision") != "blocked"
         ):
+            if high_standard_flow_required(ledger) and not _terminal_backward_replay_accepted(ledger):
+                if _final_gate_ledgers_clean_for_terminal_replay(ledger):
+                    return RuntimeAction(
+                        "issue_terminal_backward_replay_packet",
+                        "terminal backward replay is required before final closure",
+                        str(ledger.get("latest_validation_evidence_id") or ""),
+                        "reviewer",
+                    )
             return RuntimeAction("close_project", "all route nodes are resolved; final route-wide closure is required")
 
     closure = ledger.get("closure") or {}

@@ -511,6 +511,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
             role="human_like_reviewer",
             agent_id="agent-reviewer-quality",
             body={
+                "pm_visible_summary": ["Reviewer checked the declared generic quality-pack rows."],
                 "passed": True,
                 "review_summary": "Reviewer checked the declared generic quality-pack rows.",
                 "direct_evidence_paths_checked": [],
@@ -557,6 +558,7 @@ class FlowPilotRoleOutputRuntimeTests(unittest.TestCase):
                 role="human_like_reviewer",
                 agent_id="agent-reviewer-quality-2",
                 body={
+                    "pm_visible_summary": ["Missing declared quality pack rows should fail."],
                     "passed": True,
                     "review_summary": "Missing declared quality pack rows should fail.",
                     "direct_evidence_paths_checked": [],
