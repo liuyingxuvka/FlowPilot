@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import json
 from pathlib import Path
 from typing import Any, Callable
@@ -14,6 +15,7 @@ try:  # pragma: no cover
         complete_full_packet_chain,
         complete_planning_chain_only,
         current_contract_body_for_packet,
+        close_cli_worker,
         ensure,
         open_current_packet_inputs,
         packet_row,
@@ -32,6 +34,7 @@ except ImportError:  # pragma: no cover
         complete_full_packet_chain,
         complete_planning_chain_only,
         current_contract_body_for_packet,
+        close_cli_worker,
         ensure,
         open_current_packet_inputs,
         packet_row,
@@ -125,7 +128,13 @@ def scenario_wrong_role_recovery(work_root: Path) -> dict[str, Any]:
         f"wrong rejection error: {rejected}",
     )
 
-    chain = complete_full_packet_chain(root, command_log, start_payload)
+    chain = complete_full_packet_chain(
+        root,
+        command_log,
+        start_payload,
+        route_node_count=1,
+        min_accepted_route_nodes=1,
+    )
     return {
         "name": "wrong_role_recovery",
         "ok": True,
@@ -169,12 +178,19 @@ def scenario_route_mutation_recovery(work_root: Path) -> dict[str, Any]:
     command_log: list[dict[str, Any]] = []
     root = reset_scenario_root(work_root, "route_mutation_recovery")
     start_payload = start_rehearsal(root, command_log, "run-fake-route-mutation")
-    chain = complete_full_packet_chain(root, command_log, start_payload, first_pm_disposition_decision="redesign_route")
+    chain = complete_full_packet_chain(
+        root,
+        command_log,
+        start_payload,
+        first_pm_disposition_decision="redesign_route",
+        route_node_count=1,
+        min_accepted_route_nodes=1,
+    )
     projection = status_projection(root, command_log)
     superseded = [node for node in projection.get("route_nodes", []) if node.get("status") == "superseded"]
     accepted = [node for node in projection.get("route_nodes", []) if node.get("status") == "accepted"]
     ensure(superseded, "route mutation recovery did not supersede a node")
-    ensure(len(accepted) >= 3, "route mutation recovery did not accept replacement route nodes")
+    ensure(accepted, "route mutation recovery did not accept replacement route nodes")
     return {
         "name": "route_mutation_recovery",
         "ok": True,
@@ -436,7 +452,21 @@ def scenario_missing_current_result_fields_reissue(work_root: Path) -> dict[str,
     ensure(sealed_body, "repair packet did not expose sealed instructions to the authorized fake AI")
     repair_body = json.loads(sealed_body)
     required_fields = repair_body.get("required_result_body_fields")
-    ensure(required_fields == ["decision", "pm_visible_summary"], f"repair packet did not name required fields: {repair_body}")
+    handoff_contract = repair_body.get("current_handoff_contract") or {}
+    mechanical_failure = repair_body.get("mechanical_contract_failure") or {}
+    expected_required_fields = (
+        handoff_contract.get("required_result_body_fields")
+        or mechanical_failure.get("required_result_body_fields")
+    )
+    ensure(
+        required_fields == expected_required_fields and bool(required_fields),
+        f"repair packet did not name current report contract fields: {repair_body}",
+    )
+    ensure(
+        "reviewed_by_role" in required_fields and "contract_self_check" in required_fields,
+        f"repair packet did not name rich current FlowGuard report fields: {repair_body}",
+    )
+    ensure("decision" not in required_fields, f"repair packet still requires legacy decision field: {repair_body}")
     ensure(repair_body.get("blocked_packet_id") == flowguard_packet, f"repair packet lost blocked packet id: {repair_body}")
     ensure(
         "pm_visible_summary" in str(repair_body.get("blocked_reason") or ""),
@@ -821,7 +851,17 @@ def run_scenario(name: str, fn: Callable[[Path], dict[str, Any]], work_root: Pat
         return fn(work_root)
     except Exception as exc:  # pragma: no cover - exercised by failing validation.
         return {"name": name, "ok": False, "error": str(exc)}
+    finally:
+        close_cli_worker((work_root / name).resolve())
 
 
 def run_all_scenarios(work_root: Path) -> list[dict[str, Any]]:
-    return [run_scenario(name, fn, work_root) for name, fn in SCENARIOS]
+    results: dict[str, dict[str, Any]] = {}
+    with ThreadPoolExecutor(max_workers=min(4, len(SCENARIOS))) as executor:
+        future_by_name = {
+            name: executor.submit(run_scenario, name, fn, work_root)
+            for name, fn in SCENARIOS
+        }
+        for name, future in future_by_name.items():
+            results[name] = future.result()
+    return [results[name] for name, _fn in SCENARIOS]

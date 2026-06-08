@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import atexit
 import json
+import queue
 import shutil
 import subprocess
 import sys
-import tempfile
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -91,46 +93,157 @@ def parse_json(stdout: str) -> dict[str, Any] | None:
     return payload if isinstance(payload, dict) else None
 
 
-def _run_command_with_output_files(command: list[str]) -> subprocess.CompletedProcess[str]:
-    with tempfile.TemporaryDirectory(prefix="flowpilot_cli_capture_") as tmp:
-        stdout_path = Path(tmp) / "stdout.txt"
-        stderr_path = Path(tmp) / "stderr.txt"
-        with stdout_path.open("w+", encoding="utf-8") as stdout_handle, stderr_path.open("w+", encoding="utf-8") as stderr_handle:
-            process = subprocess.Popen(
-                command,
-                cwd=REPO_ROOT,
-                text=True,
-                stdout=stdout_handle,
-                stderr=stderr_handle,
-            )
-            deadline = time.monotonic() + CLI_TIMEOUT_SECONDS
-            while process.poll() is None:
-                if time.monotonic() >= deadline:
-                    process.kill()
-                    try:
-                        process.wait(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        pass
-                    raise subprocess.TimeoutExpired(command, CLI_TIMEOUT_SECONDS)
-                time.sleep(0.05)
-            stdout_handle.flush()
-            stderr_handle.flush()
-            stdout_handle.seek(0)
-            stderr_handle.seek(0)
-            stdout = stdout_handle.read()
-            stderr = stderr_handle.read()
-        return subprocess.CompletedProcess(
-            args=command,
-            returncode=int(process.returncode),
-            stdout=stdout,
-            stderr=stderr,
+_CLI_WORKER_SCRIPT = r"""
+import contextlib
+import io
+import json
+import sys
+
+assets_root = {assets_root!r}
+if assets_root not in sys.path:
+    sys.path.insert(0, assets_root)
+
+from flowpilot_new_cli import main
+
+for line in sys.stdin:
+    request = json.loads(line)
+    argv = ["--root", request["root"]]
+    if request.get("json_mode"):
+        argv.append("--json")
+    argv.extend(request["args"])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+        try:
+            returncode = int(main(argv) or 0)
+        except SystemExit as exc:
+            code = exc.code
+            returncode = int(code) if isinstance(code, int) else 1
+        except BaseException as exc:
+            returncode = 1
+            stderr.write(repr(exc))
+    sys.stdout.write(json.dumps({{"returncode": returncode, "stdout": stdout.getvalue(), "stderr": stderr.getvalue()}}, sort_keys=True) + "\n")
+    sys.stdout.flush()
+""".format(assets_root=str(ASSETS))
+
+
+class PublicCliWorker:
+    def __init__(self, root: Path) -> None:
+        self.root = root.resolve()
+        self.process = subprocess.Popen(
+            [sys.executable, "-B", "-c", _CLI_WORKER_SCRIPT],
+            cwd=REPO_ROOT,
+            text=True,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
+        self._responses: queue.Queue[dict[str, Any] | None] = queue.Queue()
+        self._lock = threading.Lock()
+        self._reader = threading.Thread(target=self._read_responses, daemon=True)
+        self._reader.start()
+
+    def _read_responses(self) -> None:
+        assert self.process.stdout is not None
+        for line in self.process.stdout:
+            try:
+                payload = json.loads(line)
+                self._responses.put(payload if isinstance(payload, dict) else None)
+            except json.JSONDecodeError:
+                self._responses.put({"returncode": 1, "stdout": "", "stderr": line})
+        self._responses.put(None)
+
+    def run(self, args: tuple[str, ...], *, json_mode: bool) -> subprocess.CompletedProcess[str]:
+        if self.process.poll() is not None:
+            raise subprocess.TimeoutExpired([sys.executable, "-B", str(ENTRYPOINT), *args], 0)
+        assert self.process.stdin is not None
+        with self._lock:
+            self.process.stdin.write(
+                json.dumps(
+                    {
+                        "root": str(self.root),
+                        "json_mode": json_mode,
+                        "args": list(args),
+                    },
+                    sort_keys=True,
+                )
+                + "\n"
+            )
+            self.process.stdin.flush()
+            try:
+                response = self._responses.get(timeout=CLI_TIMEOUT_SECONDS)
+            except queue.Empty as exc:
+                self.close(kill=True)
+                raise subprocess.TimeoutExpired([sys.executable, "-B", str(ENTRYPOINT), *args], CLI_TIMEOUT_SECONDS) from exc
+        if response is None:
+            raise subprocess.TimeoutExpired([sys.executable, "-B", str(ENTRYPOINT), *args], 0)
+        return subprocess.CompletedProcess(
+            args=[sys.executable, "-B", str(ENTRYPOINT), "--root", str(self.root), *(("--json",) if json_mode else ()), *args],
+            returncode=int(response.get("returncode", 1)),
+            stdout=str(response.get("stdout") or ""),
+            stderr=str(response.get("stderr") or ""),
+        )
+
+    def close(self, *, kill: bool = False) -> None:
+        if self.process.poll() is None:
+            if kill:
+                self.process.kill()
+            else:
+                try:
+                    if self.process.stdin is not None:
+                        self.process.stdin.close()
+                    self.process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+        try:
+            self.process.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            pass
+        for stream in (self.process.stdin, self.process.stdout, self.process.stderr):
+            if stream is not None and not stream.closed:
+                stream.close()
+
+
+_CLI_WORKERS: dict[str, PublicCliWorker] = {}
+_CLI_WORKERS_LOCK = threading.Lock()
+
+
+def _cli_worker_for_root(root: Path) -> PublicCliWorker:
+    key = str(root.resolve())
+    with _CLI_WORKERS_LOCK:
+        worker = _CLI_WORKERS.get(key)
+        if worker is None or worker.process.poll() is not None:
+            worker = PublicCliWorker(root)
+            _CLI_WORKERS[key] = worker
+        return worker
+
+
+def close_cli_worker(root: Path) -> None:
+    key = str(root.resolve())
+    with _CLI_WORKERS_LOCK:
+        worker = _CLI_WORKERS.pop(key, None)
+    if worker is not None:
+        worker.close()
+
+
+def close_all_cli_workers() -> None:
+    with _CLI_WORKERS_LOCK:
+        workers = list(_CLI_WORKERS.values())
+        _CLI_WORKERS.clear()
+    for worker in workers:
+        worker.close()
+
+
+atexit.register(close_all_cli_workers)
+
+
+def _run_public_cli(root: Path, args: tuple[str, ...], *, json_mode: bool) -> subprocess.CompletedProcess[str]:
+    return _cli_worker_for_root(root).run(args, json_mode=json_mode)
 
 
 def run_cli(root: Path, command_log: list[dict[str, Any]], *args: str, expect_ok: bool = True) -> dict[str, Any]:
-    command = [sys.executable, "-B", str(ENTRYPOINT), "--root", str(root), "--json", *args]
     try:
-        completed = _run_command_with_output_files(command)
+        completed = _run_public_cli(root, args, json_mode=True)
     except subprocess.TimeoutExpired as exc:
         stdout = exc.stdout if isinstance(exc.stdout, str) else ""
         stderr = exc.stderr if isinstance(exc.stderr, str) else ""
@@ -166,9 +279,8 @@ def run_cli(root: Path, command_log: list[dict[str, Any]], *args: str, expect_ok
 
 
 def run_raw_cli(root: Path, command_log: list[dict[str, Any]], *args: str) -> subprocess.CompletedProcess[str]:
-    command = [sys.executable, "-B", str(ENTRYPOINT), "--root", str(root), *args]
     try:
-        completed = _run_command_with_output_files(command)
+        completed = _run_public_cli(root, args, json_mode=False)
     except subprocess.TimeoutExpired as exc:
         stdout = exc.stdout if isinstance(exc.stdout, str) else ""
         stderr = exc.stderr if isinstance(exc.stderr, str) else ""
@@ -253,12 +365,25 @@ def open_current_packet_inputs(
     *,
     lease_id: str,
     packet: dict[str, Any],
-) -> None:
+) -> dict[str, Any]:
     packet_id = str(packet.get("packet_id") or "")
     ensure(packet_id, f"cannot open packet inputs without packet_id: {packet}")
     opened_packet = run_cli(root, command_log, "open-packet", "--lease-id", lease_id, "--packet-id", packet_id)
     if opened_packet.get("authorized_input_materials_delivered") is False:
         raise RehearsalFailure(f"open-packet did not deliver authorized input materials for {packet_id}")
+    opened_projection = opened_packet.get("packet")
+    ensure(isinstance(opened_projection, dict), f"open-packet did not return packet projection for {packet_id}")
+    handoff_contract = opened_projection.get("current_handoff_contract")
+    if isinstance(handoff_contract, dict):
+        if not opened_projection.get("route_scope"):
+            opened_projection["route_scope"] = str(handoff_contract.get("route_scope") or "")
+        manifest = handoff_contract.get("input_material_manifest")
+        if isinstance(manifest, dict):
+            if not opened_projection.get("route_node_id"):
+                opened_projection["route_node_id"] = str(manifest.get("route_node_id") or "")
+            if not opened_projection.get("target_result_id"):
+                opened_projection["target_result_id"] = str(manifest.get("target_result_id") or "")
+    return opened_projection
 
 
 def reset_scenario_root(work_root: Path, name: str) -> Path:
@@ -301,43 +426,45 @@ def assert_public_projection_is_sealed(projection: dict[str, Any]) -> None:
         ensure(packet.get("sealed_body_hidden") is True, f"packet body is not marked hidden: {packet}")
 
 
-def _route_plan_body() -> str:
+def _route_plan_body(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> str:
+    node_templates = [
+        {
+            "node_id": "node-001",
+            "title": "Implement fake calculator CLI behavior",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "acceptance_criteria": [
+                "The fake calculator behavior is implemented in the bounded scenario.",
+                "Worker evidence names current files and command results.",
+            ],
+        },
+        {
+            "node_id": "node-002",
+            "title": "Validate fake project evidence",
+            "responsibility": "worker",
+            "modeled_target": "model_test_alignment",
+            "acceptance_criteria": [
+                "FlowGuard and ordinary validation evidence are current.",
+                "Evidence can be challenged by an independent reviewer.",
+            ],
+        },
+        {
+            "node_id": "node-003",
+            "title": "Assemble final closure package",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "acceptance_criteria": [
+                "The final route-wide ledger accounts for all effective nodes.",
+                "The public status remains body-free at terminal completion.",
+            ],
+        },
+    ]
+    ensure(1 <= node_count <= len(node_templates), f"unsupported fake route node count: {node_count}")
     return json.dumps(
         {
             "decision": "pass",
             "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
-            "nodes": [
-                {
-                    "node_id": "node-001",
-                    "title": "Implement fake calculator CLI behavior",
-                    "responsibility": "worker",
-                    "modeled_target": "development_process",
-                    "acceptance_criteria": [
-                        "The fake calculator behavior is implemented in the bounded scenario.",
-                        "Worker evidence names current files and command results.",
-                    ],
-                },
-                {
-                    "node_id": "node-002",
-                    "title": "Validate fake project evidence",
-                    "responsibility": "worker",
-                    "modeled_target": "model_test_alignment",
-                    "acceptance_criteria": [
-                        "FlowGuard and ordinary validation evidence are current.",
-                        "Evidence can be challenged by an independent reviewer.",
-                    ],
-                },
-                {
-                    "node_id": "node-003",
-                    "title": "Assemble final closure package",
-                    "responsibility": "worker",
-                    "modeled_target": "development_process",
-                    "acceptance_criteria": [
-                        "The final route-wide ledger accounts for all effective nodes.",
-                        "The public status remains body-free at terminal completion.",
-                    ],
-                },
-            ],
+            "nodes": node_templates[:node_count],
         },
         sort_keys=True,
     )
@@ -484,6 +611,7 @@ def current_contract_body_for_packet(
     packet: dict[str, Any],
     *,
     pm_disposition_decision: str = "accept",
+    route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
 ) -> str:
     packet_kind = str(packet.get("packet_kind") or "")
     route_scope = str(packet.get("route_scope") or "")
@@ -495,7 +623,7 @@ def current_contract_body_for_packet(
     if packet_kind == "task" and route_scope == "skill_standard":
         return _skill_standard_body()
     if packet_kind == "task" and route_scope == "planning":
-        return _route_plan_body()
+        return _route_plan_body(node_count=route_node_count)
     if packet_kind == "task" and route_scope == "node_acceptance_plan":
         return _node_acceptance_plan_body(packet)
     if packet_kind in {"flowguard_check", "review"}:
@@ -524,6 +652,8 @@ def complete_full_packet_chain(
     current_payload: dict[str, Any],
     *,
     first_pm_disposition_decision: str = "accept",
+    route_node_count: int = MIN_ACCEPTED_ROUTE_NODES,
+    min_accepted_route_nodes: int = MIN_ACCEPTED_ROUTE_NODES,
 ) -> dict[str, Any]:
     completed_packets: list[dict[str, str]] = []
     pm_disposition_count = 0
@@ -540,34 +670,35 @@ def complete_full_packet_chain(
         packet_id = str(action.get("subject_id", ""))
         ensure(packet_id, f"missing packet id at step {step_index}")
 
-        projection = status_projection(root, command_log)
-        packet = packet_row(projection, packet_id)
+        lease_payload = resolve_and_lease_packet(
+            root,
+            command_log,
+            packet_id=packet_id,
+            responsibility=responsibility,
+            agent_id=f"fake-current-{step_index}",
+        )
+        lease_id = str(lease_payload.get("lease_id", ""))
+        ensure(lease_id, f"missing lease id for {packet_id}")
+        ensure(lease_payload["next_action"]["action_type"] == "wait_for_ack", f"expected wait_for_ack: {lease_payload}")
+
+        ack_payload = run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
+        ensure(ack_payload["next_action"]["action_type"] == "wait_for_result", f"expected wait_for_result: {ack_payload}")
+        packet = open_current_packet_inputs(root, command_log, lease_id=lease_id, packet={"packet_id": packet_id})
         packet_kind = str(packet.get("packet_kind", ""))
         ensure(packet_kind, f"missing packet kind for {packet_id}: {packet}")
         ensure(
             packet_kind != "task" or packet.get("route_scope") != "planning" or responsibility == "pm",
             f"planning task packet must be PM-owned: {packet}",
         )
-
-        lease_payload = resolve_and_lease_packet(
-            root,
-            command_log,
-            packet_id=packet_id,
-            responsibility=responsibility,
-            agent_id=f"fake-{packet_kind}-{step_index}",
-        )
-        lease_id = str(lease_payload.get("lease_id", ""))
-        ensure(lease_id, f"missing lease id for {packet_kind}")
-        ensure(lease_payload["next_action"]["action_type"] == "wait_for_ack", f"expected wait_for_ack: {lease_payload}")
-
-        ack_payload = run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
-        ensure(ack_payload["next_action"]["action_type"] == "wait_for_result", f"expected wait_for_result: {ack_payload}")
-        open_current_packet_inputs(root, command_log, lease_id=lease_id, packet=packet)
         decision = "accept"
         if packet_kind == "pm_disposition":
             pm_disposition_count += 1
             decision = first_pm_disposition_decision if pm_disposition_count == 1 else "accept"
-        body = current_contract_body_for_packet(packet, pm_disposition_decision=decision)
+        body = current_contract_body_for_packet(
+            packet,
+            pm_disposition_decision=decision,
+            route_node_count=route_node_count,
+        )
 
         current_payload = run_cli(
             root,
@@ -603,8 +734,8 @@ def complete_full_packet_chain(
     packet_kinds = [packet.get("packet_kind") for packet in projection.get("packets", [])]
     route_nodes = projection.get("route_nodes", [])
     accepted_nodes = [node for node in route_nodes if node.get("status") == "accepted"]
-    ensure(len(accepted_nodes) >= MIN_ACCEPTED_ROUTE_NODES, f"recursive route did not accept enough nodes: {route_nodes}")
-    ensure(packet_kinds.count("pm_disposition") >= MIN_ACCEPTED_ROUTE_NODES, f"PM dispositions missing from chain: {packet_kinds}")
+    ensure(len(accepted_nodes) >= min_accepted_route_nodes, f"recursive route did not accept enough nodes: {route_nodes}")
+    ensure(packet_kinds.count("pm_disposition") >= min_accepted_route_nodes, f"PM dispositions missing from chain: {packet_kinds}")
     ensure(all(packet.get("status") == "accepted" for packet in projection.get("packets", [])), "not all packets are accepted")
     ensure(not [lease for lease in projection.get("leases", []) if lease.get("status") == "active"], "terminal status has active leases")
     ensure(all(lease.get("ack_received") for lease in projection.get("leases", [])), "a terminal lease is missing ACK")
@@ -639,22 +770,20 @@ def complete_planning_chain_only(
         ensure(action.get("action_type") == "dispatch_current_role", f"expected planning role dispatch action: {action}")
         responsibility = str(action.get("responsibility", ""))
         packet_id = str(action.get("subject_id", ""))
-        projection = status_projection(root, command_log)
-        packet = packet_row(projection, packet_id)
-        packet_kind = str(packet.get("packet_kind", ""))
-        route_scope = str(packet.get("route_scope", ""))
-        ensure(packet_kind in {"task", "flowguard_check", "review"}, f"wrong planning packet kind: {packet}")
-        ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
         lease_payload = resolve_and_lease_packet(
             root,
             command_log,
             packet_id=packet_id,
             responsibility=responsibility,
-            agent_id=f"fake-planning-{packet_kind}-{step_index}",
+            agent_id=f"fake-planning-{step_index}",
         )
         lease_id = str(lease_payload["lease_id"])
         run_cli(root, command_log, "ack", "--lease-id", lease_id, "--packet-id", packet_id)
-        open_current_packet_inputs(root, command_log, lease_id=lease_id, packet=packet)
+        packet = open_current_packet_inputs(root, command_log, lease_id=lease_id, packet={"packet_id": packet_id})
+        packet_kind = str(packet.get("packet_kind", ""))
+        route_scope = str(packet.get("route_scope", ""))
+        ensure(packet_kind in {"task", "flowguard_check", "review"}, f"wrong planning packet kind: {packet}")
+        ensure(responsibility == packet.get("responsibility"), f"wrong planning responsibility: {action}")
         body = current_contract_body_for_packet(packet)
         current_payload = run_cli(
             root,

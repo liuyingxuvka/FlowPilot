@@ -130,6 +130,7 @@ class FlowPilotFakeProjectRehearsalTests(unittest.TestCase):
                     "ok": True,
                     "authorized_input_materials_delivered": True,
                     "authorized_input_materials": [{"result_id": "result-authorized"}],
+                    "packet": {"packet_id": "packet-001", "packet_kind": "task", "route_scope": "high_standard_contract"},
                 }
             raise AssertionError(f"unexpected CLI command: {args}")
 

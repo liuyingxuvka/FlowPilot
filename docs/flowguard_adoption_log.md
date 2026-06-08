@@ -20220,6 +20220,45 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-current-contract-terminal-replay-and-fake-ai-coverage-20260608
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: strict current FlowPilot maintenance with no old FlowPilot compatibility or fallback surfaces; fake-AI rehearsal exposed terminal replay and stale reissue-test gaps.
+- Status: completed_validated_installed_synced_local_commit_pending
+- FlowGuard package/schema: 0.41.8 / 1.0
+
+### Findings
+- Runtime now sends a clean high-standard final-closure block to the current terminal backward replay packet instead of falling through to planning or replanning.
+- Reviewer and FlowGuard packet families use current rich report fields; old decision-only result bodies are forbidden where the current family does not allow them.
+- The fake-AI missing-current-fields scenario now checks the current handoff contract fields and rejects legacy `decision` requirements.
+- Final requirement evidence and route deliverable checks stay inside the current closure surfaces; there is no separate fallback checker.
+- Fake-project rehearsal now uses a reusable public CLI worker, and the official all-scenario run completed in one pass with 14/14 scenarios passed.
+
+### Commands
+- `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_role_output_runtime.py tests/test_flowpilot_output_contracts.py tests/test_flowpilot_fake_project_rehearsal.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_reviewer_active_challenge.py -q` -> 154 passed, 58 subtests passed.
+- `python simulations/run_flowpilot_core_runtime_checks.py --json-out simulations/flowpilot_core_runtime_results.json` -> passed.
+- `python simulations/run_flowpilot_field_contract_checks.py` -> passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> passed.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` -> passed.
+- `python simulations/run_flowpilot_planning_quality_checks.py --json-out simulations/flowpilot_planning_quality_results.json` -> passed.
+- `python simulations/run_flowpilot_reviewer_active_challenge_checks.py --json-out simulations/flowpilot_reviewer_active_challenge_results.json` -> passed.
+- `python simulations/run_flowpilot_packet_result_family_parity_checks.py --json-out simulations/flowpilot_packet_result_family_parity_results.json` -> passed.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --scenario missing_current_result_fields_reissue --json-out tmp/flowguard_background/fake_missing_fields_after_fix_2.json --work-root tmp/flowpilot_fake_project_rehearsal_missing_fields_after_fix_2` -> passed.
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations/flowpilot_fake_project_rehearsal_results.json --work-root tmp/flowpilot_fake_project_rehearsal_all_final_worker` -> passed, 14 scenarios.
+- `python -m pytest tests/test_flowpilot_fake_project_rehearsal.py -q` -> 5 passed, 9 subtests passed.
+- `openspec validate unify-flowpilot-packet-result-contract-feedback --strict` -> passed.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> passed.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json --skip-self-check`, `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` -> passed.
+
+### Friction Points
+- The original one-process fake-project report was too slow when each CLI step spawned a new process under concurrent live FlowPilot load; the reusable public CLI worker made the final all-scenario run complete successfully.
+- The fake-AI missing-fields scenario had an old assertion for `decision` plus `pm_visible_summary`; the runtime reissue packet was already using current rich FlowGuard fields.
+- Install sync and install audit must run sequentially; parallel execution can observe a temporary digest mismatch.
+
+### Skipped Steps
+- No release, tag, deploy, remote push, OpenSpec archive, legacy alias, fallback shape translation, old six-role path, heartbeat path, or public old-router wrapper was performed.
+
+
 ## flowpilot-current-contract-chain - Current-only contract chain hardening
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -20243,6 +20282,7 @@ to identify unsupported historical-layer branches that should be deleted.
 - python -m unittest -v tests.test_flowpilot_core_runtime
 - python -m unittest -v tests.test_flowpilot_field_contract_model
 - python -m unittest -v tests.test_flowpilot_fake_project_rehearsal
+- python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out simulations/flowpilot_fake_project_rehearsal_results.json --work-root tmp/flowpilot_fake_project_rehearsal_current_contract
 - python simulations/run_flowpilot_field_contract_checks.py
 - python simulations/run_flowpilot_model_test_alignment_checks.py
 - python simulations/run_flowpilot_core_runtime_checks.py
@@ -20262,6 +20302,7 @@ to identify unsupported historical-layer branches that should be deleted.
 - Reviewer, FlowGuard operator, PM disposition, final ledger, and terminal backward replay now use the current contract chain with no legacy downgrade path.
 - Empty or generic rich fields are negative evidence; `decision` plus `pm_visible_summary` alone is not enough for current Reviewer or FlowGuard results.
 - Terminal backward replay is required before high-standard final closure.
+- Public fake-project rehearsal now runs all 14 declared scenarios to completion through the current public CLI command surface.
 - The local installed FlowPilot digest matches the source digest after sync.
 
 ### Counterexamples
@@ -20270,15 +20311,15 @@ to identify unsupported historical-layer branches that should be deleted.
 - Missing PM absorption and missing terminal backward replay block completion.
 
 ### Friction Points
-- The full public fake-project multi-scenario rehearsal did not complete within the practical time limit. It reached the normal full path and then timed out in recovery-style scenarios, so it was not counted as a passed full-suite result.
+- The first full public fake-project multi-scenario rehearsal exposed two rehearsal-harness problems: opened packet projections needed current contract scope normalization, and one-subprocess-per-command made recovery scenarios too slow. Both were repaired without adding an old-format parser or product fallback path.
 
 ### Skipped Steps
 - No compatibility parser, old wrapper, or fallback result shape was added.
-- The timed-out public fake-project full-suite output is audit evidence only, not completion evidence.
 
 ### Risk Evidence Summary
 - Core unit/model/install checks passed.
-- Public fake-project CLI smoke passed, but full public long-run coverage remains a performance and completion-confidence follow-up.
+- Public fake-project CLI smoke passed.
+- Full public fake-project rehearsal passed with `ok=true`, `scenario_count=14`, and routine gate `ok=true`.
 
 ### Next Actions
 - Keep future FlowPilot route changes on the single current contract path; do not reintroduce old result aliases or downgrade parsing.
