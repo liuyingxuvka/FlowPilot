@@ -1235,7 +1235,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 214,
+        "line_count": 217,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_fake_project_rehearsal_checks",

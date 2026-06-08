@@ -2,6 +2,31 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.6 - 2026-06-08
+
+### Changed
+
+- Integrated the parallel current-contract maintenance work into one release
+  line: runtime contract checks, FlowGuard field/model alignment, fake-AI
+  rehearsal, topology evidence, and install validation now describe the same
+  strict current FlowPilot path.
+- Refreshed the fake-project rehearsal so all 14 declared scenarios run
+  through the public current CLI surface while still rejecting old generic
+  result shapes instead of translating them.
+- Kept terminal backward replay on the current final-closure route, so a
+  terminal block issues the current reviewer replay packet instead of falling
+  back into planning or replanning.
+
+### Fixed
+
+- Removed the stale fake-AI missing-fields assertion that expected old
+  `decision`-style repair requirements; the scenario now checks the current
+  handoff contract fields and confirms `decision` is not required where the
+  current family forbids it.
+- Refreshed Model-Test Alignment, FieldContract, topology, and install evidence
+  after the three parallel maintenance threads converged on the same
+  no-fallback contract chain.
+
 ## 0.10.5 - 2026-06-07
 
 ### Breaking

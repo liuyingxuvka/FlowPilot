@@ -3,6 +3,45 @@
 This human-readable log summarizes FlowGuard adoption records for major protocol changes.
 Machine-readable entries live in `.flowguard/adoption_log.jsonl`.
 
+## 2026-06-08 FlowPilot v0.10.6 Current-Contract Convergence Release
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User asked to confirm that three parallel AI maintenance
+  threads had converged without fallback or compatibility surfaces, then publish
+  the integrated result to GitHub with a new release version.
+- Status: completed_validated_release_target_pending_github_publish
+- Release version: `v0.10.6`
+- Skill decision: predictive KB preflight, GitHub release discipline,
+  FlowGuard DevelopmentProcessFlow, Model-Test Alignment, and install/topology
+  checks.
+- FlowGuard schema/package: `1.0` / `0.41.8`
+
+### Findings
+
+- The three local commits after `v0.10.5` are on one `main` history line:
+  current contract chain hardening, fake-AI rehearsal coverage, and topology
+  refresh.
+- Legacy/fallback wording in touched runtime/model/test surfaces is used for
+  forbidden-path declarations and negative tests, not as an accepted runtime
+  translation path.
+- The release remains source-package only; no binary asset or companion skill
+  package is part of this release.
+
+### Commands
+
+- `git fetch --tags origin` -> remote and tag references refreshed.
+- `python -c "import flowguard, importlib.metadata as m; print(flowguard.SCHEMA_VERSION); print(m.version('flowguard')); print(flowguard.__file__)"` -> schema `1.0`, package `0.41.8`.
+- `python -m flowguard project-audit --root .` -> pass.
+- `python simulations/run_release_tooling_checks.py` -> pass.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` -> pass.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` -> pass.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json --skip-self-check`,
+  `python scripts/audit_local_install_sync.py --json`, and
+  `python scripts/install_flowpilot.py --check --json` -> pass.
+- `python scripts/check_install.py --json` -> pass after serial rerun.
+- `python scripts/check_public_release.py --json --skip-validation --skip-url-check` -> pass.
+- `python -m pytest tests/test_flowpilot_fake_project_rehearsal.py -q` -> 5 passed, 9 subtests passed.
+
 ## 2026-06-07 FlowPilot Packet Result Contract Source Of Truth
 
 - Project: FlowGuardProjectAutopilot_20260430
