@@ -64,6 +64,15 @@ PREPLANNING_GATE_SCOPES = {
 }
 NODE_PREWORK_FLOWGUARD_SCOPE = "node_prework_flowguard"
 TERMINAL_BACKWARD_REPLAY_SCOPE = "terminal_backward_replay"
+ROUTE_NODE_KINDS = {"parent", "module", "leaf", "repair"}
+NON_WORKER_DISPATCH_NODE_KINDS = {"parent", "module"}
+ROUTE_DECOMPOSITION_REVIEW_CRITERIA = (
+    "Each executable leaf has one small outcome, clear proof, clear dependency boundary, and clear failure boundary.",
+    "Broad stage names such as research, design, implement, integrate, or validate are parent/module candidates when they hide multiple ordered work packages.",
+    "Sibling leaves do not overlap scope or depend on a Worker choosing missing child ordering.",
+    "Worker replanning, hidden subtasks, or worker-invented acceptance boundaries are route decomposition failures.",
+    "Reviewer is the semantic decomposition quality gate and may block planning before route materialization.",
+)
 NODE_CONTEXT_PACKAGE_REQUIRED_LIST_FIELDS = {
     "acceptance_criteria",
     "direct_evidence_closure_rules",
@@ -238,6 +247,7 @@ ROUTER_INTERNAL_ACTION_TYPES = {
     "issue_preplanning_gate_packet",
     "materialize_route_nodes",
     "issue_node_acceptance_plan_packet",
+    "issue_node_prework_flowguard_packet",
     "issue_node_task_packet",
     "issue_parent_backward_replay_packet",
     "issue_terminal_backward_replay_packet",
@@ -929,11 +939,18 @@ def _ensure_planning_packet(ledger: dict[str, Any]) -> str:
     body = json.dumps(
         {
             "schema_version": "black_box_flowpilot.pm_startup_packet.v1",
-            "instruction": "Open the sealed startup body through the current-run packet boundary and plan the project route.",
+            "instruction": (
+                "Open the sealed startup body through the current-run packet boundary and plan the project route. "
+                "Use one canonical executable route tree. Do not add broad per-node explanation fields just to satisfy the prompt; "
+                "use the existing strict route fields plus acceptance criteria, outputs, and checks. The route will not materialize "
+                "until FlowGuard Operator and Reviewer can see that every executable leaf is small, single-purpose, non-overlapping, "
+                "and worker-ready without Worker replanning."
+            ),
             "startup_intake_ref": _startup_body_ref_from_ledger(ledger),
             "high_standard_contract_id": (ledger.get("high_standard_contract") or {}).get("contract_id", ""),
             "discovery_id": (ledger.get("preplanning_discovery") or {}).get("discovery_id", ""),
             "skill_standard_contract_id": (ledger.get("skill_standard_contract") or {}).get("contract_id", ""),
+            "route_decomposition_review_criteria": list(ROUTE_DECOMPOSITION_REVIEW_CRITERIA),
             "old_runtime_authority": "forbidden",
         },
         indent=2,
@@ -949,6 +966,8 @@ def _ensure_planning_packet(ledger: dict[str, Any]) -> str:
         route_scope="planning",
         acceptance_criteria=[
             "PM route plan uses the accepted high-standard contract and discovery records.",
+            "PM route plan is decomposed into small worker-ready leaves or parent/module nodes with ordered children.",
+            "Reviewer may block planning before materialization if leaves are broad, overlapping, or require Worker replanning.",
             "PM route plan is reviewed and then materialized into route nodes.",
             "Project closure is blocked until every effective route node is accepted.",
         ],
@@ -1062,6 +1081,9 @@ def ensure_next_node_task_packet(ledger: dict[str, Any]) -> str:
     if not node_id:
         raise BlackBoxRuntimeError("execution frontier has no active node")
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
+    if blocker:
+        raise BlackBoxRuntimeError(blocker)
     if node.get("status") in {"accepted", "superseded", "waived"}:
         raise BlackBoxRuntimeError(f"route node is not executable: {node_id}")
     if high_standard_flow_required(ledger) and not _node_acceptance_plan_accepted(ledger, node_id):
@@ -1370,6 +1392,80 @@ def _node_prework_flowguard_accepted(ledger: Mapping[str, Any], node_id: str) ->
     return isinstance(order, Mapping) and order.get("status") == "complete" and order.get("decision") == "pass"
 
 
+def _route_node_kind(node: Mapping[str, Any]) -> str:
+    return str(node.get("node_kind") or "leaf").strip()
+
+
+def _route_node_child_ids(node: Mapping[str, Any]) -> list[str]:
+    return [str(item).strip() for item in node.get("child_node_ids") or [] if str(item).strip()]
+
+
+def _node_worker_dispatch_blocker(ledger: Mapping[str, Any], node_id: str, node: Mapping[str, Any]) -> str:
+    kind = _route_node_kind(node)
+    child_ids = _route_node_child_ids(node)
+    if kind in {"leaf", "repair"} and child_ids:
+        return f"route node shape conflict: {kind} node {node_id} has child_node_ids and cannot be a worker leaf"
+    if kind in NON_WORKER_DISPATCH_NODE_KINDS:
+        return f"route node {node_id} is a {kind} scope and cannot receive a worker task packet"
+    if child_ids:
+        return f"route node {node_id} has child_node_ids and cannot receive a worker task packet"
+    return ""
+
+
+def _route_node_all_children_resolved(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> bool:
+    child_ids = _route_node_child_ids(node)
+    if not child_ids:
+        return False
+    for child_id in child_ids:
+        child = ledger.get("route_nodes", {}).get(child_id)
+        if not isinstance(child, Mapping):
+            return False
+        if child.get("status") not in {"accepted", "waived", "superseded"}:
+            return False
+    return True
+
+
+def _first_unresolved_child_node_id(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> str:
+    for child_id in _route_node_child_ids(node):
+        child = ledger.get("route_nodes", {}).get(child_id)
+        if not isinstance(child, Mapping):
+            raise BlackBoxRuntimeError(f"route node child reference is missing: {child_id}")
+        if child.get("status") not in {"accepted", "waived", "superseded"}:
+            return child_id
+    return ""
+
+
+def _enter_nonworker_route_scope(ledger: dict[str, Any], node_id: str, *, reason: str) -> bool:
+    node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
+    if not blocker:
+        return False
+    if _route_node_kind(node) in {"leaf", "repair"} and _route_node_child_ids(node):
+        raise BlackBoxRuntimeError(blocker)
+    child_id = _first_unresolved_child_node_id(ledger, node)
+    if child_id:
+        node["status"] = "awaiting_children"
+        frontier = ledger.setdefault("execution_frontier", {})
+        frontier["active_node_id"] = child_id
+        frontier["status"] = "node_execution"
+        frontier["blocked_reason"] = reason
+        frontier["updated_at"] = now_iso()
+        _event(ledger, "execution_frontier_updated", status="node_execution", active_node_id=child_id)
+        if high_standard_flow_required(ledger):
+            ensure_node_acceptance_plan_packet(ledger, child_id)
+        else:
+            ensure_node_prework_flowguard_packet(ledger, child_id)
+        return True
+    if _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
+        node["status"] = "awaiting_parent_backward_replay"
+        _frontier_update(ledger, node_id, "awaiting_parent_backward_replay", reason)
+        ensure_parent_backward_replay_packet(ledger, node_id)
+        return True
+    node["status"] = "awaiting_pm_disposition"
+    _frontier_update(ledger, node_id, "awaiting_pm_disposition", reason)
+    return True
+
+
 def _open_or_live_node_prework_flowguard_packet(ledger: Mapping[str, Any], node_id: str) -> dict[str, Any] | None:
     node = ledger.get("route_nodes", {}).get(node_id, {})
     repair_generation = int(node.get("repair_generation", 0)) if isinstance(node, Mapping) else 0
@@ -1405,6 +1501,9 @@ def _flowguard_route_candidates() -> list[dict[str, str]]:
 
 def ensure_node_prework_flowguard_packet(ledger: dict[str, Any], node_id: str) -> str:
     node = _require(ledger.setdefault("route_nodes", {}), node_id, "route node")
+    blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
+    if blocker:
+        raise BlackBoxRuntimeError(blocker)
     if node.get("status") in {"accepted", "superseded", "waived"}:
         raise BlackBoxRuntimeError(f"route node is not executable: {node_id}")
     if high_standard_flow_required(ledger) and not _node_acceptance_plan_accepted(ledger, node_id):
@@ -2144,6 +2243,11 @@ def _node_closes_high_standard_requirement(
         return True
     if requirement_id not in covered_ids:
         return False
+    if _node_worker_dispatch_blocker(ledger, str(node.get("node_id") or ""), node) and _parent_backward_replay_accepted(
+        ledger,
+        str(node.get("node_id") or ""),
+    ):
+        return True
     if bool(requirement.get("report_only_closure_allowed")):
         return True
     if _node_has_passing_deliverable_evidence(ledger, node):
@@ -2165,7 +2269,10 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
             unresolved.append(f"incomplete_node:{node_id}")
         if high_standard_flow_required(ledger) and not _node_context_package_current(ledger, node_id):
             unresolved.append(f"node_context_package_missing:{node_id}")
-        if not _node_prework_flowguard_accepted(ledger, node_id):
+        dispatch_blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
+        if dispatch_blocker and _route_node_kind(node) in {"leaf", "repair"}:
+            unresolved.append(f"route_node_shape_conflict:{node_id}")
+        if not dispatch_blocker and not _node_prework_flowguard_accepted(ledger, node_id):
             unresolved.append(f"node_prework_flowguard_missing:{node_id}")
         if node.get("stale_evidence"):
             stale.append(node_id)
@@ -2295,6 +2402,8 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
         if node.get("status") == "superseded":
             continue
         node_id = str(node.get("node_id", ""))
+        dispatch_blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
+        worker_dispatch_node = not dispatch_blocker
         add_row(
             f"{node_id}:node-status",
             "route_node",
@@ -2328,13 +2437,22 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
                     [replay_id] if replay_id else [],
                     f"Parent/module node {node_id} has backward replay or waiver",
                 )
-        add_row(
-            f"{node_id}:prework-flowguard",
-            "prework_flowguard",
-            "covered" if _node_prework_flowguard_accepted(ledger, node_id) else "missing",
-            [str(node.get("prework_flowguard_order_id", ""))] if node.get("prework_flowguard_order_id") else [],
-            f"Node {node_id} has accepted pre-work FlowGuard gate",
-        )
+        if dispatch_blocker and _route_node_kind(node) in {"leaf", "repair"}:
+            add_row(
+                f"{node_id}:route-shape",
+                "route_shape",
+                "missing",
+                [],
+                f"Node {node_id} is declared dispatchable but still has child_node_ids",
+            )
+        if worker_dispatch_node:
+            add_row(
+                f"{node_id}:prework-flowguard",
+                "prework_flowguard",
+                "covered" if _node_prework_flowguard_accepted(ledger, node_id) else "missing",
+                [str(node.get("prework_flowguard_order_id", ""))] if node.get("prework_flowguard_order_id") else [],
+                f"Node {node_id} has accepted pre-work FlowGuard gate",
+            )
         add_row(
             f"{node_id}:pm-disposition",
             "pm_disposition",
@@ -2342,27 +2460,28 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             [str(node.get("pm_disposition_id", ""))] if node.get("pm_disposition_id") else [],
             f"Node {node_id} has PM disposition",
         )
-        add_row(
-            f"{node_id}:flowguard",
-            "flowguard",
-            "covered" if node.get("flowguard_order_ids") else "missing",
-            [str(item) for item in node.get("flowguard_order_ids") or []],
-            f"Node {node_id} has FlowGuard evidence",
-        )
-        add_row(
-            f"{node_id}:review",
-            "review",
-            "covered" if node.get("review_ids") else "missing",
-            [str(item) for item in node.get("review_ids") or []],
-            f"Node {node_id} has independent review evidence",
-        )
-        add_row(
-            f"{node_id}:validation",
-            "validation",
-            "covered" if node.get("validation_evidence_ids") else "missing",
-            [str(item) for item in node.get("validation_evidence_ids") or []],
-            f"Node {node_id} has validation evidence",
-        )
+        if worker_dispatch_node:
+            add_row(
+                f"{node_id}:flowguard",
+                "flowguard",
+                "covered" if node.get("flowguard_order_ids") else "missing",
+                [str(item) for item in node.get("flowguard_order_ids") or []],
+                f"Node {node_id} has FlowGuard evidence",
+            )
+            add_row(
+                f"{node_id}:review",
+                "review",
+                "covered" if node.get("review_ids") else "missing",
+                [str(item) for item in node.get("review_ids") or []],
+                f"Node {node_id} has independent review evidence",
+            )
+            add_row(
+                f"{node_id}:validation",
+                "validation",
+                "covered" if node.get("validation_evidence_ids") else "missing",
+                [str(item) for item in node.get("validation_evidence_ids") or []],
+                f"Node {node_id} has validation evidence",
+            )
         if node.get("required_outputs") and not node.get("deliverable_checks"):
             add_row(
                 f"{node_id}:deliverable-checks",
@@ -2436,11 +2555,16 @@ def _normalize_strict_route_plan_nodes(route_plan: Mapping[str, Any]) -> list[di
         if node_id in seen_ids:
             raise BlackBoxRuntimeError(f"strict route plan schema violation: duplicate node_id {node_id}")
         seen_ids.add(node_id)
+        node_kind = _strict_optional_string(raw_node, "node_kind", "leaf")
+        if node_kind not in ROUTE_NODE_KINDS:
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.node_kind must be one of {', '.join(sorted(ROUTE_NODE_KINDS))}"
+            )
         normalized.append(
             {
                 "node_id": node_id,
                 "title": title,
-                "node_kind": _strict_optional_string(raw_node, "node_kind", "leaf"),
+                "node_kind": node_kind,
                 "parent_node_id": _strict_optional_string(raw_node, "parent_node_id", ""),
                 "child_node_ids": _strict_string_list(raw_node, "child_node_ids", node_id),
                 "responsibility": _strict_optional_string(raw_node, "responsibility", ""),
@@ -2453,6 +2577,30 @@ def _normalize_strict_route_plan_nodes(route_plan: Mapping[str, Any]) -> list[di
                 "skill_standard_obligation_ids": _strict_string_list(raw_node, "skill_standard_obligation_ids", node_id),
             }
         )
+    known_ids = {str(node["node_id"]) for node in normalized}
+    by_id = {str(node["node_id"]): node for node in normalized}
+    for node in normalized:
+        node_id = str(node["node_id"])
+        parent_id = str(node.get("parent_node_id") or "")
+        child_ids = [str(item) for item in node.get("child_node_ids") or []]
+        kind = str(node.get("node_kind") or "leaf")
+        if parent_id and parent_id not in known_ids:
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: {node_id}.parent_node_id references unknown node {parent_id}")
+        missing_children = [child_id for child_id in child_ids if child_id not in known_ids]
+        if missing_children:
+            raise BlackBoxRuntimeError(
+                f"strict route plan schema violation: {node_id}.child_node_ids reference unknown node(s): {', '.join(missing_children)}"
+            )
+        if kind in NON_WORKER_DISPATCH_NODE_KINDS and not child_ids:
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: {kind} node {node_id} requires child_node_ids")
+        if kind in {"leaf", "repair"} and child_ids:
+            raise BlackBoxRuntimeError(f"strict route plan schema violation: {kind} node {node_id} must not have child_node_ids")
+        for child_id in child_ids:
+            child_parent = str(by_id[child_id].get("parent_node_id") or "")
+            if child_parent and child_parent != node_id:
+                raise BlackBoxRuntimeError(
+                    f"strict route plan schema violation: child node {child_id} parent_node_id must match {node_id}"
+                )
     return normalized
 
 
@@ -4126,11 +4274,15 @@ def _redesign_route_from_pm_decision(
     _event(ledger, "execution_frontier_updated", status=ledger["execution_frontier"]["status"], active_node_id=first_node_id)
     if first_node_id:
         before_packets = set(ledger.get("packets", {}))
+        opened_node_id = first_node_id
         if high_standard_flow_required(ledger):
             ensure_node_acceptance_plan_packet(ledger, first_node_id)
         else:
-            ensure_node_prework_flowguard_packet(ledger, first_node_id)
-        fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=first_node_id, before_ids=before_packets)
+            if _enter_nonworker_route_scope(ledger, first_node_id, reason="nonworker_route_scope_after_route_redesign"):
+                opened_node_id = str((ledger.get("execution_frontier") or {}).get("active_node_id") or first_node_id)
+            else:
+                ensure_node_prework_flowguard_packet(ledger, first_node_id)
+        fresh_packet_id = _latest_open_packet_for_repair(ledger, route_node_id=opened_node_id, before_ids=before_packets)
         if not fresh_packet_id:
             raise BlackBoxRuntimeError("redesign_route did not create a fresh executable packet")
         _bind_packet_repair_blocker_identity(ledger, fresh_packet_id, str(blocker["blocker_id"]))
@@ -4236,6 +4388,8 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
     next_node = ""
     for candidate in node_order:
         node = ledger.get("route_nodes", {}).get(candidate, {})
+        if node.get("status") == "awaiting_children" and not _route_node_all_children_resolved(ledger, node):
+            continue
         if node.get("status") not in {"accepted", "superseded", "waived"}:
             next_node = candidate
             break
@@ -4246,6 +4400,8 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
     ledger["execution_frontier"] = frontier
     _event(ledger, "execution_frontier_updated", status=frontier["status"], active_node_id=next_node)
     if next_node:
+        if _enter_nonworker_route_scope(ledger, next_node, reason="nonworker_route_scope_after_child_acceptance"):
+            return
         if high_standard_flow_required(ledger):
             ensure_node_acceptance_plan_packet(ledger, next_node)
         else:
@@ -4439,6 +4595,8 @@ def _replace_route_node_for_repair(
     if high_standard_flow_required(ledger):
         ensure_node_acceptance_plan_packet(ledger, replacement_id)
     else:
+        if _enter_nonworker_route_scope(ledger, replacement_id, reason="nonworker_route_scope_after_route_repair"):
+            return replacement_id
         ensure_node_prework_flowguard_packet(ledger, replacement_id)
     return replacement_id
 
@@ -7188,6 +7346,9 @@ def _apply_valid_packet_result(
                 recheck_role=str(packet["envelope"]["responsibility"]),
                 outcome_id=outcome_id,
             )
+            node_id = str(packet["envelope"].get("route_node_id") or "")
+            if node_id and _enter_nonworker_route_scope(ledger, node_id, reason="nonworker_route_scope_after_prework"):
+                return
             ensure_next_node_task_packet(ledger)
             return
         _clear_semantic_blockers_for_pass(
@@ -7297,6 +7458,8 @@ def _apply_closure_side_effect_for_subject(
             subject_packet,
             system_closure_id=system_closure_id,
         )
+        if _enter_nonworker_route_scope(ledger, node_id, reason="nonworker_route_scope_after_node_acceptance_plan"):
+            return
         ensure_node_prework_flowguard_packet(ledger, node_id)
         return
     if high_standard_flow_required(ledger) and route_scope == "parent_backward_replay" and node_id:
@@ -7313,6 +7476,8 @@ def _apply_closure_side_effect_for_subject(
         if high_standard_flow_required(ledger) and active_node:
             ensure_node_acceptance_plan_packet(ledger, active_node)
         elif active_node:
+            if _enter_nonworker_route_scope(ledger, active_node, reason="nonworker_route_scope_after_planning"):
+                return
             ensure_node_prework_flowguard_packet(ledger, active_node)
         return
     if recursive_route_required(ledger) and node_id:
@@ -7795,6 +7960,15 @@ def _ensure_flowguard_packet_for_task_result(
             ),
         },
     }
+    if str(packet["envelope"].get("route_scope") or "") == "planning":
+        body_payload["route_process_focus"] = {
+            "worker_decision_leakage_check_required": True,
+            "route_decomposition_review_criteria": list(ROUTE_DECOMPOSITION_REVIEW_CRITERIA),
+            "instruction": (
+                "For this planning result, check whether the proposed route can traverse from first executable leaf "
+                "to closure without letting a Worker invent subtasks, child order, dependency boundaries, or acceptance boundaries."
+            ),
+        }
     if repair_blocker_id:
         body_payload["recheck_for_blocker_id"] = repair_blocker_id
         body_payload["generator_inputs"] = {
@@ -8020,6 +8194,21 @@ def _ensure_review_packet_for_task_result(
             "package as the review boundary."
         ),
     }
+    if str(subject_packet["envelope"].get("route_scope") or "") == "planning":
+        body_payload["route_decomposition_quality_gate"] = {
+            "reviewer_is_semantic_gate": True,
+            "route_decomposition_review_criteria": list(ROUTE_DECOMPOSITION_REVIEW_CRITERIA),
+            "block_if": [
+                "a proposed executable leaf is a broad stage rather than one bounded worker outcome",
+                "sibling leaves overlap or leave unclear ownership",
+                "the Worker would need to create subtasks, order child work, or define acceptance boundaries",
+                "a parent/module route scope can reach Worker dispatch directly",
+            ],
+            "recommended_resolution_rule": (
+                "If blocking, return one concrete PM-actionable split recommendation. Reviewer may suggest child nodes, "
+                "but PM owns the revised route plan."
+            ),
+        }
     if repair_blocker_id:
         body_payload["recheck_for_blocker_id"] = repair_blocker_id
         body_payload["subject_context"] = {
@@ -10147,14 +10336,6 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                     "pm",
                     "development_process",
                 )
-            if not _node_prework_flowguard_accepted(ledger, node_id):
-                return RuntimeAction(
-                    "issue_node_prework_flowguard_packet",
-                    "frontier node requires pre-work FlowGuard before worker execution",
-                    node_id,
-                    "flowguard_operator",
-                    node.get("modeled_target", REQUIRED_FLOWGUARD_TARGET),
-                )
             if high_standard_flow_required(ledger) and node.get("status") == "awaiting_parent_backward_replay":
                 return RuntimeAction(
                     "issue_parent_backward_replay_packet",
@@ -10162,6 +10343,35 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
                     node_id,
                     "reviewer",
                     "development_process",
+                )
+            blocker = _node_worker_dispatch_blocker(ledger, node_id, node) if isinstance(node, Mapping) else ""
+            if blocker:
+                child_id = _first_unresolved_child_node_id(ledger, node) if isinstance(node, Mapping) else ""
+                if child_id:
+                    return RuntimeAction(
+                        "issue_node_acceptance_plan_packet",
+                        "parent/module route scope must enter child before worker execution",
+                        child_id,
+                        "pm",
+                        "development_process",
+                    )
+                if high_standard_flow_required(ledger) and _node_requires_parent_backward_replay(node) and not _parent_backward_replay_accepted(ledger, node_id):
+                    return RuntimeAction(
+                        "issue_parent_backward_replay_packet",
+                        "parent/module node requires backward replay before PM disposition",
+                        node_id,
+                        "reviewer",
+                        "development_process",
+                    )
+                if node.get("status") == "awaiting_pm_disposition":
+                    return RuntimeAction("issue_pm_disposition_packet", "node awaits PM disposition", node_id, "pm")
+            if not _node_prework_flowguard_accepted(ledger, node_id):
+                return RuntimeAction(
+                    "issue_node_prework_flowguard_packet",
+                    "frontier node requires pre-work FlowGuard before worker execution",
+                    node_id,
+                    "flowguard_operator",
+                    node.get("modeled_target", REQUIRED_FLOWGUARD_TARGET),
                 )
             if node.get("status") == "awaiting_pm_disposition":
                 return RuntimeAction("issue_pm_disposition_packet", "node awaits PM disposition", node_id, "pm")

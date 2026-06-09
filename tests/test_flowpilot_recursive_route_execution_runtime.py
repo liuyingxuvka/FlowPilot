@@ -15,6 +15,7 @@ if str(ASSETS) not in sys.path:
 
 runtime = importlib.import_module("flowpilot_core_runtime.runtime")
 host = importlib.import_module("flowpilot_core_runtime.host")
+packet_result_contracts = importlib.import_module("flowpilot_core_runtime.packet_result_contracts")
 
 
 def _recursive_ledger() -> tuple[dict, str]:
@@ -52,6 +53,35 @@ def _open_packets(ledger: dict, kind: str | None = None, scope: str | None = Non
 def _pass_body(summary: str, **extra: object) -> str:
     payload: dict[str, object] = {"decision": "pass", "pm_visible_summary": [summary]}
     payload.update(extra)
+    return json.dumps(payload)
+
+
+def _flowguard_pass_body(summary: str, **extra: object) -> str:
+    payload = packet_result_contracts.minimal_valid_shape_for_family("flowguard_check.post_result")
+    payload["pm_visible_summary"] = [summary]
+    payload.update(extra)
+    return json.dumps(payload)
+
+
+def _review_pass_body(summary: str, **extra: object) -> str:
+    payload = packet_result_contracts.minimal_valid_shape_for_family("review.any_current_subject")
+    payload["pm_visible_summary"] = [summary]
+    payload.update(extra)
+    return json.dumps(payload)
+
+
+def _role_pass_body(kind: str, summary: str, **extra: object) -> str:
+    if kind == "flowguard_check":
+        return _flowguard_pass_body(summary, **extra)
+    if kind == "review":
+        return _review_pass_body(summary, **extra)
+    return _pass_body(summary, **extra)
+
+
+def _pm_disposition_body(decision: str, reason: str) -> str:
+    payload = packet_result_contracts.minimal_valid_shape_for_family("pm_disposition.node_pm_disposition")
+    payload["decision"] = decision
+    payload["reason"] = reason
     return json.dumps(payload)
 
 
@@ -111,7 +141,7 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
     _complete_open_packet(ledger, pm_packet, _route_plan_body())
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
-        _complete_open_packet(ledger, packet_id, _pass_body(f"{kind} accepted foundation planning."))
+        _complete_open_packet(ledger, packet_id, _role_pass_body(kind, f"{kind} accepted foundation planning."))
 
 
 def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
@@ -121,7 +151,7 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
         _complete_open_packet(
             ledger,
             prework_packet,
-            _pass_body(
+            _flowguard_pass_body(
                 f"Prework FlowGuard accepted {node_id}.",
                 selected_routes=["flowguard-development-process-flow"],
             ),
@@ -130,16 +160,16 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
     _complete_open_packet(ledger, task_packet, _pass_body(f"Worker completed {node_id}.", node_id=node_id))
     for kind in ("flowguard_check", "review"):
         packet_id = _open_packets(ledger, kind)[0]
-        _complete_open_packet(ledger, packet_id, _pass_body(f"{kind} accepted {node_id}."))
+        _complete_open_packet(ledger, packet_id, _role_pass_body(kind, f"{kind} accepted {node_id}."))
     pm_packet = _open_packets(ledger, "pm_disposition")[0]
-    _complete_open_packet(ledger, pm_packet, json.dumps({"decision": disposition, "reason": f"{disposition} {node_id}"}))
+    _complete_open_packet(ledger, pm_packet, _pm_disposition_body(disposition, f"{disposition} {node_id}"))
     if disposition == "redesign_route":
         for kind in ("flowguard_check", "review"):
             packet_id = _open_packets(ledger, kind)[0]
             _complete_open_packet(
                 ledger,
                 packet_id,
-                _pass_body(f"PM disposition gate {kind} accepted {node_id}."),
+                _role_pass_body(kind, f"PM disposition gate {kind} accepted {node_id}."),
             )
     return node_id
 

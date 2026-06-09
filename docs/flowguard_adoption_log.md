@@ -20259,6 +20259,130 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-v0.10.8-release - Route decomposition gate public release
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: publish the optimized FlowPilot source package to GitHub with a new release version
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-09
+- Ended: 2026-06-09
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_recursive_decomposition_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+
+### Commands
+- `python -m flowguard project-audit --root .`
+- `openspec validate enforce-route-decomposition-review-gate --strict --json`
+- `openspec validate harden-single-route-depth-gates --strict --json`
+- `python -m pytest tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_recursive_decomposition.py tests/test_flowpilot_recursive_route_execution_runtime.py tests/test_flowpilot_cli_entrypoints.py tests/test_flowpilot_installer_dependencies.py -q`
+- `python simulations/run_flowpilot_recursive_decomposition_checks.py`
+- `python simulations/run_flowpilot_planning_quality_checks.py`
+- `python simulations/run_flowpilot_route_replanning_policy_checks.py`
+- `python simulations/run_flowpilot_model_test_alignment_checks.py`
+- `python simulations/run_flowpilot_project_topology_orientation_checks.py`
+- `python scripts/flowguard_project_topology.py build`
+- `python scripts/flowguard_project_topology.py check`
+- `python scripts/install_flowpilot.py --check --json`
+- `python scripts/audit_local_install_sync.py --json`
+- `python scripts/check_public_release.py --json`
+
+### Findings
+- FlowGuard package and project manifest are aligned at package version `0.43.0` and schema `1.0`.
+- Planning quality is now gated semantically: PM owns the executable route tree, FlowGuard checks worker-decision leakage, and Reviewer blocks broad or overlapping leaves before materialization.
+- Public release scope remains source package only; no binary assets or companion skill repositories are published.
+- Local installed FlowPilot is source-fresh against `skills/flowpilot`.
+
+### Counterexamples
+- Recursive decomposition hazards detect coarse leaves, fixed-depth routes, parent dispatch, missing parent review, stale frontier, and over-split operational steps.
+- Planning-quality hazards detect overmerged implementation nodes, route bloat, missing product mapping, missing low-quality-success checks, and reviewer hard-blindspot passes.
+- Topology hazards detect stale topology, topology-as-validation misuse, missing layers, and route mutation from topology alone.
+
+### Friction Points
+- Topology build and check must run sequentially; running them in parallel can make the checker read stale source timestamps.
+
+### Skipped Steps
+- No Windows binary packaging was run because the repository contract for this release is source package only.
+
+### Risk Evidence Summary
+- Public release preflight found no tracked private paths or secret-shaped tracked content.
+- Branch protection is checked through GitHub before final release confirmation.
+
+### Next Actions
+- After the release commit and tag are pushed, verify that README version, `VERSION`, git tag, and GitHub Release all agree on `v0.10.8`.
+
+
+## flowpilot-route-decomposition-review-gate - Reviewer-gated route decomposition quality
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User required the simplified new FlowPilot to produce deeper, smaller work nodes without adding broad per-node field debt.
+- Status: completed
+- Skill decision: predictive-kb-preflight + OpenSpec apply/propose route + FlowGuard DevelopmentProcessFlow + FlowGuard Model-Test Alignment
+- Started: 2026-06-09T18:28:09Z
+- Ended: 2026-06-09T18:50:21Z
+- Commands OK: True
+
+### Model Files
+- openspec/changes/enforce-route-decomposition-review-gate
+- simulations/flowpilot_recursive_decomposition_model.py
+- simulations/flowpilot_planning_quality_model.py
+- simulations/flowpilot_route_replanning_policy_model.py
+- simulations/flowpilot_model_test_alignment_common.py
+- docs/flowguard_project_topology.json
+
+### Commands
+- OK: `openspec validate enforce-route-decomposition-review-gate --strict --json`
+- OK: `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> 1.0
+- OK: `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> 0.43.0
+- OK: `python -m flowguard project-audit --root .`
+- OK: `python -m pytest tests/test_flowpilot_high_standard_control_flow.py -q` -> 39 passed, 4 subtests passed
+- OK: `python -m pytest tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_recursive_decomposition.py -q` -> 24 passed, 128 subtests passed
+- OK: `python -m pytest tests/test_flowpilot_recursive_route_execution_runtime.py -q` -> 13 passed
+- OK: `python simulations/run_flowpilot_recursive_decomposition_checks.py`
+- OK: `python simulations/run_flowpilot_planning_quality_checks.py`
+- OK: `python simulations/run_flowpilot_route_replanning_policy_checks.py`
+- OK: `python simulations/run_flowpilot_model_test_alignment_checks.py`
+- OK: `python scripts/flowguard_project_topology.py build`
+- OK: `python scripts/flowguard_project_topology.py check`
+- OK: `python simulations/run_flowpilot_project_topology_orientation_checks.py`
+- OK: `python -m pytest tests/test_flowpilot_cli_entrypoints.py tests/test_flowpilot_installer_dependencies.py -q` -> 8 passed
+- OK: `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- OK: `python scripts/install_flowpilot.py --check --json`
+- OK: `python scripts/audit_local_install_sync.py --json`
+- OK: `python -m pytest tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_recursive_decomposition.py tests/test_flowpilot_recursive_route_execution_runtime.py tests/test_flowpilot_cli_entrypoints.py tests/test_flowpilot_installer_dependencies.py -q` -> 84 passed, 132 subtests passed
+
+### Findings
+- PM planning packets now carry route decomposition review criteria before materialization, without adding new route-node schema fields.
+- FlowGuard Operator planning checks now receive a worker-decision-leakage focus for route-process viability.
+- Reviewer planning checks now receive an explicit semantic route-decomposition gate and PM-actionable split recommendation rule.
+- PM/Reviewer/FlowGuard cards now say broad stage labels should become parent/module scopes when they hide ordered child work, and that Worker replanning is not an acceptable substitute for route depth.
+- Node-entry broad-leaf detection remains a fallback safety gate before Worker dispatch, not the primary planning path.
+- Existing direct dependency tests were aligned with the current policy that `autonomous-concept-ui-redesign` composes UI helper skills; `frontend-design` and `design-iterator` are no longer direct FlowPilot optional dependencies.
+
+### Counterexamples
+- Broad planning leaf was mechanically valid but Reviewer-blocked before materialization.
+- PM current-scope repair could submit a deeper parent-plus-leaf route, and only the repaired reviewed plan materialized.
+- Worker-decision leakage, fixed two-layer complex routes, skipped Reviewer depth checks, and route replanning policy hazards remained detected in FlowGuard model checks.
+
+### Friction Points
+- The old installer dependency test still expected removed direct optional UI helper dependencies; repository evidence showed the manifest was current and the test was stale.
+- The route template and older model vocabulary still mention readiness gates, but the runtime repair keeps new route-node schema unchanged and treats leaf granularity as a semantic gate plus node-entry package check.
+
+### Skipped Steps
+- No new broad route-node fields were added.
+- No second PM-authored display plan was added.
+- No legacy route compatibility path, fallback parser, old-router path, remote push, public release, tag, deploy, or local git commit was performed.
+
+### Risk Evidence Summary
+- Evidence supports local source behavior, OpenSpec validity, FlowGuard model checks, targeted tests, topology freshness, and installed local FlowPilot skill synchronization. It does not claim remote publication or commit-level isolation from parallel AI edits.
+
+### Next Actions
+- Commit or stage the local git changes only after an orchestrator/human decides how to group this work with the existing parallel workspace changes.
+
+
 ## flowpilot-field-lifecycle-currentness-projection-20260609 - FlowPilot field lifecycle currentness projection hardening
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -21990,6 +22114,71 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowpilot-single-route-depth-gates-20260609 - FlowPilot single-route depth gates
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user wanted deeper FlowPilot work-package lifecycle coverage without over-repair, schema debt, or PM-authored dual route/display plans.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: predictive_kb_preflight + OpenSpec + FlowGuard development/process/model-test alignment + install sync
+- FlowGuard schema: 1.0
+- FlowGuard package: 0.42.0
+- Commands OK: True
+
+### Model Files
+- openspec/changes/harden-single-route-depth-gates
+- docs/flowguard_project_topology.json
+- simulations/meta_thin_parent_results.json
+- simulations/meta_layered_full_results.json
+- simulations/capability_thin_parent_results.json
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - ok, schema 1.0
+- `python -m pytest tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_recursive_route_execution_runtime.py tests/test_flowpilot_recursive_decomposition.py tests/test_flowpilot_card_instruction_coverage.py -q` - ok, 74 passed and 132 subtests passed
+- `openspec validate "harden-single-route-depth-gates" --type change --strict --json` - ok
+- `python simulations/run_flowpilot_recursive_route_execution_checks.py` - ok
+- `python simulations/run_flowpilot_recursive_decomposition_checks.py` - ok
+- `python simulations/run_flowpilot_route_display_checks.py` - ok
+- `python simulations/run_flowpilot_route_replanning_policy_checks.py` - ok
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` - ok, alignment_ok true and full_coverage_ok true
+- `python simulations/run_card_instruction_coverage_checks.py` - ok
+- `python simulations/run_capability_checks.py` - ok, release_confidence current_with_layered_full_parent
+- `python simulations/run_meta_checks.py --full` - ok, release_confidence current_with_layered_full_parent
+- `python scripts/flowguard_project_topology.py --root . build` - ok
+- `python scripts/flowguard_project_topology.py --root . check` - ok
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok, installed FlowPilot digest refreshed to source digest
+- `python scripts/audit_local_install_sync.py --json` - ok, repo_owned_skill_fresh:flowpilot true
+- `python scripts/install_flowpilot.py --check --json` - ok
+- `python scripts/check_install.py --json` - ok, 894 checks
+
+### Findings
+- PM route guidance now has one canonical executable route tree; `display_plan` is only a Router-derived projection/cache.
+- Runtime rejects invalid route shape, blocks Worker and prework dispatch for parent/module or child-bearing nodes, enters children first, and requires parent backward replay before parent disposition.
+- Reviewer and FlowGuard Operator cards now block broad leaves, parent/module Worker dispatch, and Worker replanning leaves using existing verdict fields instead of new top-level schema fields.
+- Final route-wide closure treats parent/module nodes as orchestration scopes requiring parent replay and PM disposition, not Worker leaf evidence.
+
+### Counterexamples
+- PM-authored dual route and display authority.
+- Parent or module node receives a Worker packet.
+- Child-bearing leaf passes strict route plan validation.
+- Parent disposition occurs before child completion or parent backward replay.
+- Final closure counts parent/module nodes as Worker leaf evidence.
+
+### Friction Points
+- The initial broader plan risked adding fields, but existing `node_kind` and `child_node_ids` were sufficient once runtime dispatch had a mechanical gate.
+- Some recursive-route test helpers used stale minimal result bodies and had to be updated to current packet result contract shapes.
+- Generated topology and thin-parent result files changed because the required validation rebuilds refreshed evidence.
+
+### Skipped Steps
+- No new top-level schema fields, PM-authored human display plan, legacy alias, fallback translator, old-router path, release, tag, deploy, remote push, or local git commit was performed.
+
+### Risk Evidence Summary
+- Evidence supports local source, local git working tree, FlowGuard/OpenSpec route-depth model, core tests, topology, and installed local FlowPilot skill synchronization.
+- This record does not claim remote GitHub push, public release publication, or archived OpenSpec completion.
+
+### Next Actions
+- Commit the local Git version after final human or orchestrator diff review, especially because the workspace may have parallel AI work.
 
 
 ## flowpilot-current-handoff-contract-v0.10.5 - Current packet handoff contract closure
@@ -25540,6 +25729,45 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard package version recorded: 0.42.0
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-09T18:28:09+00:00
+- Ended: 2026-06-09T18:28:09+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.43.0
 - FlowGuard schema version recorded: 1.0
 - Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
 

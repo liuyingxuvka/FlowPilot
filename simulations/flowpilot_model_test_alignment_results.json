@@ -5,6 +5,7 @@
     "packet/card/ack",
     "packet result family",
     "route mutation",
+    "field lifecycle currentness",
     "current-node trunk invariant",
     "terminal/closure/resume",
     "role/output contracts",
@@ -1257,7 +1258,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 455,
+        "line_count": 472,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_field_contract_checks",
@@ -36001,6 +36002,1051 @@
       }
     },
     {
+      "coverage_boundary": "Field lifecycle currentness alignment covers packet/result/frontier transition semantics and derived active-packet projections. It is current-contract only and does not accept legacy packet shapes.",
+      "decision": "model_test_alignment_green",
+      "family": "field lifecycle currentness",
+      "finding_count": 0,
+      "finding_counts": {},
+      "model_checks": [
+        "python simulations/run_flowpilot_field_mesh_checks.py",
+        "python simulations/run_flowpilot_field_contract_checks.py"
+      ],
+      "model_id": "field_lifecycle_currentness",
+      "ok": true,
+      "plan": {
+        "allow_orphan_code_contracts": false,
+        "allow_orphan_tests": false,
+        "boundary_contracts": [],
+        "boundary_observations": [],
+        "code_contracts": [
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "lease_id",
+              "packet_id",
+              "body"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.packet_terminal_monotonic"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "result_submitted_event"
+            ],
+            "state_reads": [
+              "packet.status",
+              "lease.status",
+              "packet.accepted_result_id"
+            ],
+            "state_writes": [
+              "results",
+              "packet.result_ids",
+              "packet.status"
+            ],
+            "surface_type": "function",
+            "symbol": "submit_result"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_audit_append",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "lease_id",
+              "packet_id",
+              "body"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.result_history_append_only"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "result_submitted_event"
+            ],
+            "state_reads": [
+              "packet.result_ids"
+            ],
+            "state_writes": [
+              "results",
+              "packet.result_ids"
+            ],
+            "surface_type": "function",
+            "symbol": "submit_result"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accept_packet_result_commit",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "packet",
+              "result",
+              "lease"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.accepted_result_pointer_single_commit"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "lease_closed"
+            ],
+            "state_reads": [
+              "result.status"
+            ],
+            "state_writes": [
+              "packet.accepted_result_id",
+              "packet.status",
+              "result.status"
+            ],
+            "surface_type": "function",
+            "symbol": "_accept_packet_result"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "node_id"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.pending_route_mutation_disposition"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "execution_frontier_updated"
+            ],
+            "state_reads": [
+              "execution_frontier.pending_route_mutation",
+              "route_nodes.status"
+            ],
+            "state_writes": [
+              "execution_frontier.pending_route_mutation",
+              "route_mutations"
+            ],
+            "surface_type": "function",
+            "symbol": "_advance_frontier_after_node_acceptance"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.current_packets_for_routing",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.active_packets_derive_from_currentness"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "derived_projection"
+            ],
+            "state_reads": [
+              "packets",
+              "route_nodes",
+              "active_route_version"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_current_packets_for_routing"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "derived_projection"
+            ],
+            "state_reads": [
+              "packets",
+              "route_nodes",
+              "active_route_version",
+              "packet.accepted_result_id"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_accepted_packets_for_closure_evidence"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "derived_projection"
+            ],
+            "state_reads": [
+              "packets",
+              "route_nodes",
+              "active_route_version",
+              "packet.accepted_result_id"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_accepted_result_packets_for_active_route"
+          }
+        ],
+        "family_evidence": [],
+        "field_lifecycle_projections": [
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
+            "error_paths": [
+              "noncurrent_packet",
+              "duplicate_after_packet_accepted"
+            ],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "packet.status",
+            "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "projection_id": "field_lifecycle_currentness.packet_status_terminal_monotonic",
+            "rationale": "Late results may be recorded as audit history but cannot reactivate terminal packet status.",
+            "required_test_kinds": [
+              "negative_path",
+              "replay"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "result_recorded"
+            ],
+            "state_reads": [
+              "packet.status",
+              "packet.accepted_result_id",
+              "lease.status"
+            ],
+            "state_writes": [
+              "results",
+              "packet.result_ids",
+              "packet.status"
+            ],
+            "transition_cell_id": ""
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_audit_append",
+            "error_paths": [],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "packet.result_ids",
+            "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "projection_id": "field_lifecycle_currentness.packet_result_history_append_only",
+            "rationale": "Result history remains append-only audit evidence even when the packet is noncurrent.",
+            "required_test_kinds": [
+              "happy_path",
+              "replay"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "result_recorded"
+            ],
+            "state_reads": [
+              "packet.result_ids"
+            ],
+            "state_writes": [
+              "packet.result_ids",
+              "results"
+            ],
+            "transition_cell_id": ""
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accept_packet_result_commit",
+            "error_paths": [
+              "duplicate_after_packet_accepted"
+            ],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "packet.accepted_result_id",
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "projection_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "rationale": "Accepted result pointer has one runtime commit point and is not reassigned by duplicates.",
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "lease_closed"
+            ],
+            "state_reads": [
+              "packet.accepted_result_id",
+              "result.status"
+            ],
+            "state_writes": [
+              "packet.accepted_result_id",
+              "packet.status",
+              "result.status"
+            ],
+            "transition_cell_id": ""
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+            "error_paths": [],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "execution_frontier.pending_route_mutation",
+            "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "projection_id": "field_lifecycle_currentness.pending_route_mutation_until_commit",
+            "rationale": "Pending route mutation must clear or terminally disposition after replacement node acceptance.",
+            "required_test_kinds": [
+              "edge_path",
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "execution_frontier_updated"
+            ],
+            "state_reads": [
+              "execution_frontier.pending_route_mutation",
+              "route_nodes.status"
+            ],
+            "state_writes": [
+              "execution_frontier.pending_route_mutation",
+              "route_mutations"
+            ],
+            "transition_cell_id": ""
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.current_packets_for_routing",
+            "error_paths": [
+              "stale_route_version",
+              "noncurrent_route_node"
+            ],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "active_packets",
+            "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "projection_id": "field_lifecycle_currentness.active_packets_derived_projection",
+            "rationale": "Router and compact active-packet views must use the single Router currentness predicate.",
+            "required_test_kinds": [
+              "negative_path",
+              "replay"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "status_projection",
+              "router_next_action"
+            ],
+            "state_reads": [
+              "packets",
+              "route_nodes",
+              "active_route_version"
+            ],
+            "state_writes": [],
+            "transition_cell_id": ""
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+            "error_paths": [
+              "accepted_packet_lost_from_closure",
+              "superseded_node_evidence_reused"
+            ],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "closure_accepted_packets",
+            "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "projection_id": "field_lifecycle_currentness.closure_accepted_packets_derived_projection",
+            "rationale": "Final closure uses accepted packet-result evidence without reactivating those packets for routing.",
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "final_closure",
+              "backward_chain"
+            ],
+            "state_reads": [
+              "packets",
+              "route_nodes",
+              "active_route_version",
+              "packet.accepted_result_id"
+            ],
+            "state_writes": [],
+            "transition_cell_id": ""
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
+            "error_paths": [
+              "stale_accepted_lease_not_detected",
+              "stale_route_evidence_reused"
+            ],
+            "evidence_refs": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "field_id": "accepted_result_packets",
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "projection_id": "field_lifecycle_currentness.accepted_result_packets_derived_projection",
+            "rationale": "Accepted-result packet health checks must inspect active-route accepted-result authority without treating it as router-current work.",
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "risk_level": "high",
+            "side_effects": [
+              "accepted_packet_lease_health",
+              "final_return_preflight"
+            ],
+            "state_reads": [
+              "packets",
+              "route_nodes",
+              "active_route_version",
+              "packet.accepted_result_id"
+            ],
+            "state_writes": [],
+            "transition_cell_id": ""
+          }
+        ],
+        "field_lifecycle_reports": [
+          {
+            "confidence": "full",
+            "decision": "field_lifecycle_full",
+            "findings": [],
+            "mesh_id": "flowpilot_currentness_field_lifecycle",
+            "ok": true,
+            "projections": [],
+            "summary": "All discovered fields are accounted and behavior-bearing fields are projected."
+          }
+        ],
+        "model_id": "field_lifecycle_currentness",
+        "obligation_families": [],
+        "obligations": [
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Packet terminal currentness states are absorbing for current authority when late results arrive.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "negative_path",
+              "replay"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Packet result history appends late results as audit evidence without making them current authority.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "happy_path",
+              "replay"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Accepted result pointers are written by the runtime acceptance commit point and are not reassigned by duplicate output.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Pending route mutation state clears or terminally dispositions after replacement frontier commit.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "edge_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Derived active-packet views share the Router currentness predicate for route version, node status, and packet terminal status.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "negative_path",
+              "replay"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Final closure derives accepted packet evidence from current active-route accepted results, not from router-active packets.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Accepted packet health checks derive active-route accepted-result targets separately from router-active packets.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [],
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          }
+        ],
+        "payload_contracts": [],
+        "payload_evidence": [],
+        "require_proof_artifacts": false,
+        "require_runtime_path_evidence": false,
+        "runtime_node_contracts": [],
+        "runtime_node_observations": [],
+        "runtime_path_runs": [],
+        "similarity_handoff": null,
+        "test_evidence": [
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_late_result_preserves_noncurrent_packet_statuses",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.packet_terminal_monotonic"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.late_terminal_statuses",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_lifecycle_guard.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_late_result_preserves_noncurrent_packet_statuses"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_result_history_appends_on_open_packet",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.submit_result_audit_append"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.result_history_append_only"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.happy.current_result_history_append",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_lifecycle_guard.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_current_result_history_appends_on_open_packet"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_fake_host_late_result_appends_audit_without_reactivation",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
+              "field_lifecycle_currentness.runtime.submit_result_audit_append"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.packet_terminal_monotonic",
+              "field_lifecycle_currentness.result_history_append_only"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.replay.fake_host_late_result_audit",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_lifecycle_guard.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "replay",
+            "test_name": "test_fake_host_late_result_appends_audit_without_reactivation"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accept_packet_result_writes_single_pointer_on_current_commit",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.accept_packet_result_commit"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.accepted_result_pointer_single_commit"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.happy.accept_pointer_commit",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_lifecycle_guard.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_accept_packet_result_writes_single_pointer_on_current_commit"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_duplicate_after_accepted_preserves_accepted_result_pointer",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.accept_packet_result_commit"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.accepted_result_pointer_single_commit"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.accepted_pointer_duplicate",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_lifecycle_guard.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_duplicate_after_accepted_preserves_accepted_result_pointer"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pending_route_mutation_clears_after_replacement_node_acceptance",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.pending_route_mutation_disposition"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.edge.pending_route_mutation_commit",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_pending_route_mutation_clears_after_replacement_node_acceptance"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_unmatched_pending_route_mutation_survives_unrelated_node_acceptance",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.pending_route_mutation_disposition"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.unmatched_pending_route_mutation_kept",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_unmatched_pending_route_mutation_survives_unrelated_node_acceptance"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.current_packets_for_routing"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.active_packets_derive_from_currentness"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.active_projection_currentness",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
+              "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+              "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_closure_accepted_evidence_projection_keeps_accepted_node_packets"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_excludes_superseded_node_packets",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.closure_superseded_projection",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_closure_accepted_evidence_projection_excludes_superseded_node_packets"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_blocks_stale_active_accepted_packet_lease",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.accepted_result_health_stale_lease",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_preflight_blocks_stale_active_accepted_packet_lease"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_quarantined_packet_projection_replay_uses_currentness_predicate",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.current_packets_for_routing"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.active_packets_derive_from_currentness"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.replay.quarantined_projection_currentness",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "replay",
+            "test_name": "test_quarantined_packet_projection_replay_uses_currentness_predicate"
+          }
+        ]
+      },
+      "report": {
+        "binding_rows": [
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.late_terminal_statuses"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.replay.fake_host_late_result_audit"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_audit_append",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.current_result_history_append"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_audit_append",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.replay.fake_host_late_result_audit"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accept_packet_result_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.accept_pointer_commit"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accept_packet_result_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.accepted_pointer_duplicate"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.edge.pending_route_mutation_commit"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.unmatched_pending_route_mutation_kept"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.current_packets_for_routing",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.active_projection_currentness"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.current_packets_for_routing",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.replay.quarantined_projection_currentness"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.closure_superseded_projection"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.accepted_result_health_stale_lease"
+          }
+        ],
+        "decision": "model_test_alignment_green",
+        "findings": [],
+        "model_id": "field_lifecycle_currentness",
+        "ok": true,
+        "summary": "OK: model=field_lifecycle_currentness decision=model_test_alignment_green findings=0"
+      },
+      "runtime_path_summary": {
+        "progress_line_count": 0,
+        "progress_lines": [],
+        "required": false,
+        "runtime_node_contract_count": 0,
+        "runtime_observation_count": 0,
+        "runtime_path_run_count": 0
+      }
+    },
+    {
       "coverage_boundary": "Current-node trunk alignment names the PM node context package -> pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer invariant. It binds the focused pre-work FlowGuard model to high-standard runtime tests, but it does not replace semantic review of the worker output.",
       "decision": "model_test_alignment_green",
       "family": "current-node trunk invariant",
@@ -42873,7 +43919,7 @@
       }
     }
   ],
-  "plan_count": 11,
+  "plan_count": 12,
   "release_convergence_ok": true,
   "result_type": "flowpilot_model_test_alignment",
   "similarity_convergence": {

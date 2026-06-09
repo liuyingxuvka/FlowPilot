@@ -388,6 +388,33 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("controller is status-only", controller_text)
         self.assertIn("do not interpret flowguard reports", controller_text)
         self.assertIn("approve gates", controller_text)
+
+    def test_route_depth_cards_use_single_canonical_tree_and_derived_display_projection(self) -> None:
+        def normalized(card_id: str) -> str:
+            return " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+
+        route_card = normalized("pm.route_skeleton")
+        controller_card = normalized("controller.core")
+        flowguard_card = normalized("flowguard_operator.route_process_check")
+        reviewer_card = normalized("reviewer.route_challenge")
+        node_plan_card = normalized("reviewer.node_acceptance_plan_review")
+        controller_text = controller_card
+
+        self.assertIn("one canonical executable route tree", route_card)
+        self.assertIn("router-derived", route_card)
+        self.assertIn("not separate pm route authority", route_card)
+        self.assertIn("route decomposition quality is semantic, not field count", route_card)
+        self.assertIn("do not add broad per-node explanation fields", route_card)
+        self.assertIn("canonical executable route tree and current frontier", controller_card)
+        self.assertIn("pm authored one canonical executable route tree", flowguard_card)
+        self.assertIn("parent backward review after all child nodes complete", flowguard_card)
+        self.assertIn("worker-decision leakage", flowguard_card)
+        self.assertIn("not one tree for execution plus a second pm-maintained display plan", reviewer_card)
+        self.assertIn("reviewer is the semantic decomposition quality gate", reviewer_card)
+        self.assertIn("concrete pm-actionable split recommendation", reviewer_card)
+        self.assertIn("worker replanning is not an acceptable substitute for route depth", reviewer_card)
+        self.assertIn("must not override the canonical route node shape", node_plan_card)
+        self.assertIn("fallback safety gate", node_plan_card)
         self.assertIn("mutate routes", controller_text)
         self.assertIn("read sealed flowguard report bodies", controller_text)
 

@@ -132,30 +132,39 @@ Route requirements:
   behavior model report already exists, the route receives a role-owned
   product-model review pass, and FlowGuard operator returns
   `process_viability_verdict: "pass"`;
-- large nodes expanded horizontally;
-- each large node owns concrete checklist items;
+- large stage names expanded into parent/module scopes when they hide multiple
+  ordered work packages. "Research", "design", "implement", "integrate",
+  "validate", or "final report" are usually not final leaves for complex work;
+- each large node owns concrete checklist items, or is split until those items
+  become ordered child leaves with one bounded worker outcome each;
 - each separate node must close a distinct risk, produce distinct evidence,
   enforce a role boundary, enable real parallelism, isolate failure recovery,
   or represent a user-visible milestone;
-- include a concise PM-authored visible route summary suitable for
-  `display_plan.json`; it may be high level, but it must name the route nodes
-  that Controller is allowed to show in the host visible plan;
+- route decomposition quality is semantic, not field count. Use the current
+  strict route fields plus existing `acceptance_criteria`, `required_outputs`,
+  `deliverable_checks`, `validation_checks`, and requirement/skill ids when
+  they are needed. Do not add broad per-node explanation fields just to satisfy
+  the prompt;
+- author exactly one canonical executable route tree. PM must not maintain a
+  second display-only route plan. `display_plan.json` is a Router-derived
+  projection/cache from the canonical route tree and current frontier, not
+  separate PM route authority;
 - recursive decomposition is allowed and expected when the work is complex.
-  Do not stop at a fixed two-layer shape. Build a `full_route_tree` that can
-  use any needed depth, then expose only a shallow `display_plan` for the
-  chat-visible route sign. Default chat `display_depth` is 1 so the root is
-  omitted and all first-level route modules remain visible. Cockpit/UI should
-  use the full route tree with expandable children rather than the chat
-  projection;
+  Do not stop at a fixed two-layer shape. Build one canonical route tree that
+  can use any needed depth. Router may expose a shallow display projection for
+  the chat-visible route sign; that projection must not add, merge, remove, or
+  reorder executable route nodes. Default chat `display_depth` is 1 so the root
+  is omitted and all first-level route modules remain visible. Cockpit/UI
+  should use expandable children from the canonical route tree rather than a
+  PM-authored second plan;
 - split every complex parent/module node until each executable leaf is a
   concrete worker-ready task with clear input, output, evidence, dependencies,
   failure boundary, and proof. Parent/module nodes are composition and review
   boundaries, not worker packets;
 - arrange the FlowGuard operator process-model execution model as a single serial line. Parent
   A precedes parent B, children A1/A2/A3 are ordered inside A, and deeper
-  children are ordered the same way. Do not use parallel graph branches as the
-  canonical process route unless PM records a non-execution display-only
-  projection;
+  children are ordered the same way. Do not use parallel graph branches or a
+  display projection as the executable process route;
 - before entering any non-leaf node, plan that local subtree with the same
   pattern: PM local product goal, FlowGuard operator product-model local product model, PM
   decision, Reviewer product challenge, FlowGuard operator serial child-route model,
@@ -175,21 +184,25 @@ Route requirements:
   must review the capability's product fit before FlowGuard operator process-model checks the
   updated process route, and the changed route must then return to the normal
   reviewer route challenge;
-- each node must include `node_kind` (`parent`, `module`, `leaf`, or `repair`),
-  `parent_node_id`, `depth`, `child_node_ids`, `user_visible`, and for leaves a
-  `leaf_readiness_gate`. A leaf may be dispatched only when
-  `leaf_readiness_gate.status` is `pass`;
-- record a `decomposition_review` that attacks both under-decomposition
-  (worker leaf too broad or vague) and over-decomposition (extra nodes that add
-  no evidence, failure isolation, role boundary, parallelism, or user-visible
-  milestone);
+- each node should use the existing strict route shape: `node_id`, `title`,
+  optional `node_kind`, `parent_node_id`, `child_node_ids`, responsibility,
+  modeled target, acceptance criteria, outputs, and checks. Parent/module
+  nodes must have children; executable leaves must not have children. Leaf
+  readiness is judged by PM, FlowGuard Operator, and Reviewer at planning time
+  and then rechecked at node entry through the node acceptance package;
+- in the route plan result or PM planning notes, explicitly attack both
+  under-decomposition (worker leaf too broad or vague) and over-decomposition
+  (extra nodes that add no evidence, failure isolation, role boundary,
+  parallelism, or user-visible milestone). This is a review obligation, not a
+  requirement to add new route-node fields;
 - record how hard low-quality-success risks were kept inside existing route
   structure where possible. If a risk required new route structure, state why
   the existing route nodes could not own the proof of depth;
-- record route-memory / PMK entries for the decomposition policy, visible
-  projection, current active path policy, hidden leaf progress policy, and why
-  each parent/module exists. Later route mutations must update this route
-  memory instead of relying on chat;
+- if route-memory / PMK entries are already part of the current run, keep them
+  aligned with the decomposition policy, visible projection, current active
+  path policy, hidden leaf progress policy, and why each parent/module exists.
+  Do not create a separate PM-authored route plan or extra field mesh merely
+  for display;
 - for route mutations, list impacted requirement ids, impacted nodes, stale
   evidence, superseded requirement relationships, and required rerun models or
   checks. Old evidence must not close a changed or superseded requirement;

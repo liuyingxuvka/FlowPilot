@@ -37,11 +37,11 @@ function architecture, approved child-skill gate manifest, and latest
 route-memory prior path context. The plan must state:
 
 - active route id, route version, and node id;
-- requirement traceability for this node: copy the active route node's
-  `covers_requirement_ids`, `covers_scenario_ids`, and
-  `source_product_capability_ids`; every node requirement, experiment,
-  work-packet projection, and selected child-skill binding must state which
-  requirement ids it covers;
+- requirement traceability for this node: preserve the active route node's
+  requirement or skill ids when present, and otherwise bind the node through
+  existing acceptance criteria, outputs, checks, and references. Do not invent
+  broad new route-node fields at node entry; if traceability is not reviewable
+  with the current route shape, block for PM route deepening or route mutation;
 - prior path context files read and how completed, superseded, stale, blocked,
   or experimental history affects this node;
 - concrete node requirements and proof obligations;
@@ -118,15 +118,21 @@ route-memory prior path context. The plan must state:
   children, this plan must mark the node as not worker-dispatchable and route
   execution into the child subtree or parent backward replay instead of issuing
   a worker packet for the parent;
+- this plan is context for executing the canonical route node; it must not
+  override `node_kind`, `parent_node_id`, or `child_node_ids`. If those fields
+  show the node is not worker-dispatchable, deepen or mutate the route rather
+  than writing a worker-ready plan;
 - for a leaf or repair node, include a `leaf_readiness_gate` with `status`,
   `single_outcome`, `worker_executable_without_replanning`, `proof_defined`,
   `dependency_boundary_defined`, `failure_isolation_defined`, and
   `over_decomposition_checked`. Use `status: "pass"` only when the node can be
   completed by a worker from the packet without PM replanning;
-- at node entry, re-ask whether this apparent leaf is still too broad. If it
-  is too broad, split it into children through route mutation before worker
-  dispatch. If it is over-split, merge or waive the extra structure with a PM
-  complexity reason before dispatch;
+- at node entry, re-ask whether this apparent leaf is still too broad. This is
+  a fallback safety gate, not the primary planning path. If it is too broad,
+  do not ask the Worker to split it; split it into children through PM route
+  mutation or current-scope replanning before worker dispatch. If it is
+  over-split, merge or waive the extra structure with a PM complexity reason
+  before dispatch;
 - when a leaf is promoted to parent/module, mark old leaf approvals stale,
   attach the new ordered children, and require the local FlowGuard operator product-model
   model, PM model decision, Reviewer product challenge, FlowGuard operator process-model

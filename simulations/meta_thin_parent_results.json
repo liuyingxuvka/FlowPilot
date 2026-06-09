@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-09T13:23:52.744546+00:00",
+  "created_at": "2026-06-09T14:20:32.058367+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -8,18 +8,18 @@
     "state_count": 10
   },
   "layered_full_regression": {
-    "current": false,
+    "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-07T10:28:34.576646+00:00",
+      "created_at": "2026-06-09T14:20:28.985383+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "proof_file": "simulations/meta_layered_full_results.proof.json",
-      "reason": "input fingerprint changed",
+      "reason": "valid proof",
       "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/meta_layered_full_results.json",
       "state_count": 12,
-      "valid": false
+      "valid": true
     }
   },
   "loop": {
@@ -35,7 +35,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",

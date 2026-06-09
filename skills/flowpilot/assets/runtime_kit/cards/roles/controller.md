@@ -178,9 +178,10 @@ Allowed actions:
   controller/audit metadata to the user-visible body. Generated files, host
   plan replacement, or display packet paths alone are not visible chat
   evidence;
-- replace the host visible plan only from the router-provided
-  `display_plan.json` projection. If no PM display plan exists yet, clear any
-  pre-FlowPilot assistant plan to the router's waiting-for-PM placeholder.
+- replace the host visible plan only from the router-provided display
+  projection/cache derived from the canonical executable route tree and current
+  frontier. If no route-derived projection exists yet, clear any pre-FlowPilot
+  assistant plan to the router's waiting-for-PM placeholder.
 - when the runtime has issued a current packet lease, wait on the
   packet-id-specific `current runtime next-action notice` instead of asking the
   holder to chat through every mechanical retry. The notice is

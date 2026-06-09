@@ -76,11 +76,20 @@ Check:
 - if the active node has children, the plan blocks direct worker packet
   dispatch and routes execution into child subtree entry or parent backward
   replay;
+- the node acceptance plan is execution context only. It must not override the
+  canonical route node shape from `node_kind`, `parent_node_id`, or
+  `child_node_ids`; if the shape is wrong, block for route deepening or route
+  mutation instead of approving a worker packet;
 - if the active node is a leaf or repair node, the plan contains a
   `leaf_readiness_gate` with `status: "pass"` only when the node has one clear
   worker outcome, can be executed without PM replanning, has defined proof,
   dependency boundaries, failure isolation, and has been checked for both
   under-decomposition and over-decomposition;
+- if the apparent leaf is still broad at node entry, treat this as a fallback
+  safety gate and route-quality failure before Worker dispatch. Block for PM
+  route deepening or route mutation; do not pass a plan that relies on the
+  Worker to split the node, invent child tasks, choose ordering, or define
+  acceptance boundaries;
 - every inherited gate obligation has a required role and evidence path;
 - every inherited child-skill standard relevant to the node is listed in
   `skill_standard_projection` with source skill, source path, category,

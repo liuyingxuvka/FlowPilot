@@ -2,6 +2,28 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.8 - 2026-06-09
+
+### Changed
+
+- Added a planning-time route decomposition quality gate: PM must produce one
+  executable route tree with small worker-ready leaves, FlowGuard checks for
+  worker-decision leakage, and Reviewer blocks broad or overlapping leaves
+  before route materialization.
+- Hardened recursive route depth and parent/module traversal so broad parent
+  nodes do not dispatch directly to workers and route replay keeps current
+  branch evidence tied to the active route.
+- Integrated the latest current-contract maintenance work for FlowGuard
+  evidence consistency and field lifecycle currentness into the same release
+  line.
+
+### Fixed
+
+- Updated prompt-card and regression coverage so route decomposition quality is
+  judged semantically instead of by adding broad per-node fields.
+- Refreshed FlowGuard topology, local install sync, public release checks, and
+  targeted model/test evidence for the new planning and review gates.
+
 ## 0.10.7 - 2026-06-08
 
 ### Changed

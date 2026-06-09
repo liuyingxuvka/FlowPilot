@@ -392,6 +392,129 @@ def _complete_active_node_packet_loop(ledger: dict) -> str:
 
 
 class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
+    def test_pm_planning_packet_carries_route_decomposition_quality_gate(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+
+        packet_id = _open_packets(ledger, scope="planning")[0]
+        packet = ledger["packets"][packet_id]
+        body = json.loads(packet["body"])
+        criteria = " ".join(packet["envelope"]["acceptance_criteria"]).lower()
+
+        self.assertIn("route_decomposition_review_criteria", body)
+        self.assertIn("worker-ready without worker replanning", body["instruction"].lower())
+        self.assertIn("small worker-ready leaves", criteria)
+        self.assertIn("reviewer may block planning before materialization", criteria)
+        self.assertNotIn("why_this_node_exists", body["instruction"])
+
+    def test_reviewer_under_decomposition_block_keeps_planning_unmaterialized_and_replans(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        planning_packet = _open_packets(ledger, scope="planning")[0]
+
+        _complete_open_packet(
+            ledger,
+            planning_packet,
+            _route_plan_body(
+                [
+                    {
+                        "node_id": "node-plan",
+                        "title": "Research, implement, and validate the feature",
+                        "acceptance_criteria": ["The feature is researched, implemented, and validated."],
+                    }
+                ]
+            ),
+        )
+        flowguard_packet = _open_packets(ledger, kind="flowguard_check")[0]
+        flowguard_body = json.loads(ledger["packets"][flowguard_packet]["body"])
+        self.assertTrue(flowguard_body["route_process_focus"]["worker_decision_leakage_check_required"])
+        _complete_open_packet(
+            ledger,
+            flowguard_packet,
+            _flowguard_pass_body("FlowGuard reported that Reviewer still must judge route depth."),
+        )
+
+        review_packet = _open_packets(ledger, kind="review")[0]
+        review_body = json.loads(ledger["packets"][review_packet]["body"])
+        self.assertTrue(review_body["route_decomposition_quality_gate"]["reviewer_is_semantic_gate"])
+        _complete_open_packet(
+            ledger,
+            review_packet,
+            _review_block_body(
+                "Reviewer blocked the broad planning leaf.",
+                blocker_class="route_decomposition",
+                recommended_resolution=(
+                    "PM must split node-plan into a parent module with separate research, implementation, "
+                    "and validation leaves before materialization."
+                ),
+            ),
+        )
+
+        self.assertFalse(ledger["route_nodes"])
+        self.assertEqual(ledger["packets"][planning_packet]["status"], "review_blocked")
+        active = [row for row in ledger["active_blockers"].values() if row["status"] == "active"]
+        self.assertEqual(len(active), 1)
+        self.assertEqual(active[0]["required_recheck_role"], "reviewer")
+
+        pm_repair_packet = _open_packets(ledger, kind="pm_repair_decision")[0]
+        _complete_open_packet(
+            ledger,
+            pm_repair_packet,
+            _pass_body(
+                "PM chose current-scope route replanning.",
+                decision="repair_current_scope",
+                reason="Reviewer found the planning leaf too broad for one worker packet.",
+            ),
+        )
+        repair_packets = [
+            packet_id
+            for packet_id, packet in ledger["packets"].items()
+            if packet.get("repair_blocker_id") == active[0]["blocker_id"]
+            and packet["status"] == "open"
+            and packet["envelope"].get("route_scope") == "planning"
+        ]
+        self.assertEqual(len(repair_packets), 1)
+
+        _complete_open_packet(
+            ledger,
+            repair_packets[0],
+            _route_plan_body(
+                [
+                    {
+                        "node_id": "node-parent",
+                        "title": "Feature delivery module",
+                        "node_kind": "parent",
+                        "acceptance_criteria": ["Child leaves close research, implementation, and validation."],
+                        "child_node_ids": ["node-research", "node-implement", "node-validate"],
+                    },
+                    {
+                        "node_id": "node-research",
+                        "title": "Confirm requirements and constraints",
+                        "parent_node_id": "node-parent",
+                        "acceptance_criteria": ["Current requirements and constraints are recorded."],
+                    },
+                    {
+                        "node_id": "node-implement",
+                        "title": "Apply the scoped implementation change",
+                        "parent_node_id": "node-parent",
+                        "acceptance_criteria": ["Scoped implementation is complete."],
+                    },
+                    {
+                        "node_id": "node-validate",
+                        "title": "Run targeted validation and report evidence",
+                        "parent_node_id": "node-parent",
+                        "acceptance_criteria": ["Validation evidence is current and accepted."],
+                    },
+                ]
+            ),
+        )
+        _complete_open_packet(ledger, _open_packets(ledger, kind="flowguard_check")[0], _flowguard_pass_body())
+        _complete_open_packet(ledger, _open_packets(ledger, kind="review")[0], _review_pass_body())
+
+        self.assertNotIn("node-plan", ledger["route_nodes"])
+        self.assertEqual(set(ledger["route_nodes"]), {"node-parent", "node-research", "node-implement", "node-validate"})
+        self.assertEqual(ledger["route_nodes"]["node-parent"]["child_node_ids"], ["node-research", "node-implement", "node-validate"])
+
     def test_reviewer_pass_auto_closes_without_closure_flowguard_operator_packet(self) -> None:
         ledger = _ledger()
         packet_id = _open_packets(ledger, scope="high_standard_contract")[0]
@@ -1584,39 +1707,100 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         ledger = _ledger()
         _complete_preplanning(ledger)
         planning_result = "planning-result"
+        parent_nodes = [
+            {
+                "node_id": "parent-001",
+                "title": "Parent feature",
+                "node_kind": "parent",
+                "child_node_ids": ["node-001"],
+                "acceptance_criteria": ["Parent composes child evidence"],
+                "high_standard_requirement_ids": ["hsr-001"],
+                "skill_standard_obligation_ids": ["skill-std-001"],
+            },
+            {
+                "node_id": "node-001",
+                "title": "Child implementation",
+                "node_kind": "leaf",
+                "parent_node_id": "parent-001",
+                "acceptance_criteria": ["Child proves the implementation slice"],
+                "high_standard_requirement_ids": ["hsr-001"],
+                "skill_standard_obligation_ids": ["skill-std-001"],
+            },
+        ]
         ledger["results"][planning_result] = {
             "result_id": planning_result,
-            "body": _route_plan_body(
-                [
-                    {
-                        "node_id": "parent-001",
-                        "title": "Parent feature",
-                        "node_kind": "parent",
-                        "child_node_ids": ["node-001"],
-                        "acceptance_criteria": ["Parent composes child evidence"],
-                        "high_standard_requirement_ids": ["hsr-001"],
-                        "skill_standard_obligation_ids": ["skill-std-001"],
-                    }
-                ]
-            ),
+            "body": _route_plan_body(parent_nodes),
         }
         runtime.materialize_route_from_planning_result(ledger, planning_result)
         runtime.ensure_node_acceptance_plan_packet(ledger, "parent-001")
-        _complete_node_acceptance_plan(ledger)
-        node_id = _complete_active_node_packet_loop(ledger)
 
-        self.assertEqual(node_id, "parent-001")
-        self.assertEqual(_open_packets(ledger, scope="parent_backward_replay"), [_open_packets(ledger, scope="parent_backward_replay")[0]])
+        _complete_node_acceptance_plan(ledger)
+
+        self.assertEqual(ledger["route_nodes"]["parent-001"]["status"], "awaiting_children")
+        self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-001")
+        self.assertFalse(_open_packets(ledger, scope="node"))
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "cannot receive a worker task packet"):
+            runtime.ensure_next_node_task_packet(ledger | {"execution_frontier": {**ledger["execution_frontier"], "active_node_id": "parent-001"}})
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "cannot receive a worker task packet"):
+            runtime.ensure_node_prework_flowguard_packet(ledger, "parent-001")
+
+        _complete_node_acceptance_plan(ledger)
+        child_id = _complete_active_node_packet_loop(ledger)
+        self.assertEqual(child_id, "node-001")
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="pm_disposition")[0],
+            _pm_disposition_body("PM accepted child evidence."),
+        )
+
+        self.assertEqual(ledger["execution_frontier"]["active_node_id"], "parent-001")
+        self.assertEqual(ledger["route_nodes"]["parent-001"]["status"], "awaiting_parent_backward_replay")
+        parent_replay_packets = _open_packets(ledger, scope="parent_backward_replay")
+        self.assertEqual(parent_replay_packets, [parent_replay_packets[0]])
         self.assertFalse(_open_packets(ledger, kind="pm_disposition"))
 
         _complete_task_chain(
             ledger,
-            _open_packets(ledger, scope="parent_backward_replay")[0],
-            _pass_body("PM accepted the parent backward replay.", route_node_id=node_id, composition_checked=True),
+            parent_replay_packets[0],
+            _pass_body("Reviewer accepted the parent backward replay.", route_node_id="parent-001", composition_checked=True),
         )
 
-        self.assertTrue(ledger["route_nodes"][node_id]["parent_backward_replay_id"])
+        self.assertTrue(ledger["route_nodes"]["parent-001"]["parent_backward_replay_id"])
         self.assertTrue(_open_packets(ledger, kind="pm_disposition"))
+        _complete_open_packet(
+            ledger,
+            _open_packets(ledger, kind="pm_disposition")[0],
+            _pm_disposition_body("PM accepted parent composition."),
+        )
+        self.assertEqual(ledger["route_nodes"]["parent-001"]["status"], "accepted")
+
+    def test_leaf_with_child_node_ids_is_rejected_by_strict_route_plan(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        ledger["results"]["planning-result"] = {
+            "result_id": "planning-result",
+            "body": _route_plan_body(
+                [
+                    {
+                        "node_id": "node-001",
+                        "title": "Invalid leaf",
+                        "node_kind": "leaf",
+                        "child_node_ids": ["node-002"],
+                        "acceptance_criteria": ["Invalid leaf should be rejected"],
+                    },
+                    {
+                        "node_id": "node-002",
+                        "title": "Child",
+                        "node_kind": "leaf",
+                        "parent_node_id": "node-001",
+                        "acceptance_criteria": ["Child exists only to expose the shape conflict"],
+                    },
+                ]
+            ),
+        }
+
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "leaf node node-001 must not have child_node_ids"):
+            runtime.materialize_route_from_planning_result(ledger, "planning-result")
 
 
 if __name__ == "__main__":

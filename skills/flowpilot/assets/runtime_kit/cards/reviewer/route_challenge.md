@@ -51,27 +51,46 @@ Check:
 - the selected planning profile does not create a light/simple FlowPilot mode.
   Formal FlowPilot use must keep the full protocol; if PM treats a small task
   as a reason to waive core gates, block the route;
-- every route node lists `covers_requirement_ids`, `covers_scenario_ids`,
-  `source_product_capability_ids`, `why_this_node_exists`, `why_not_merged`,
-  and `why_not_split`, and those requirement ids exist in the frozen root
-  contract or PM-imported product trace registry;
 - route nodes and checklists are not over-simplified, overmerged, or too coarse
-  to produce stage-level acceptance artifacts;
+  to produce concrete acceptance artifacts. Do not block merely because PM did
+  not add broad explanatory route-node fields. Instead, inspect whether the
+  existing route shape, acceptance criteria, outputs, checks, and requirement
+  or skill ids make the scope reviewable;
 - the route is not artificially capped at two levels. Complex parent/module
   nodes must be recursively decomposed until every executable leaf is
   worker-ready without replanning, and the route must still provide a shallow
   user-visible projection for display;
-- every leaf has a `leaf_readiness_gate` and every parent/module has children,
+- PM authored one canonical executable route tree, not one tree for execution
+  plus a second PM-maintained display plan. Treat `display_plan.json` and chat
+  route signs as Router-derived projection/cache only;
+- Reviewer is the semantic decomposition quality gate for route planning.
+  Every executable leaf must have one small outcome, no `child_node_ids`,
+  clear proof, clear dependency boundary, clear failure boundary, and no hidden
+  child-ordering decision. Every parent/module must have children,
   parent/module acceptance intent, and a parent backward review path. Block if
-  a parent/module can receive a worker packet directly or if a leaf is too
-  broad for one bounded packet; this is the required under-decomposition
-  check;
+  a parent/module can receive a worker packet directly, if a leaf carries
+  children, or if a leaf is too broad for one bounded packet; this is the
+  required under-decomposition check;
+- broad stage labels such as research, design, implement, integrate, validate,
+  or final report are not automatically bad, but if they hide multiple
+  ordered deliverables, role handoffs, evidence families, or acceptance
+  boundaries, block and require PM to turn that stage into a parent/module with
+  ordered child leaves;
 - every non-leaf entry has the local product/process/reviewer loop represented
   before child execution. Block if the route jumps straight from parent entry
   to worker dispatch without local modeling and PM decision;
 - leaf promotion is allowed and required when PM discovers an apparent leaf is
   too broad at entry. Block if stale approvals remain valid after a promoted
   leaf becomes a parent/module;
+- worker replanning is not an acceptable substitute for route depth. If the
+  Worker packet would need to split the work, invent subtasks, or decide child
+  ordering, block the route and require PM to deepen the canonical route tree
+  first;
+- when blocking for under-decomposition, include one concrete PM-actionable
+  split recommendation in `recommended_resolution`: name the broad leaf, the
+  child leaves or parent/module shape you expect, and why the old leaf could
+  not be completed by one bounded worker packet. PM owns the repaired route;
+  you are not the route author;
 - the route does not disguise a planning/root/parent node-entry gap as a
   repair node before any executable child work or reviewed work evidence
   exists. In that situation, require route replanning, ordinary node expansion,

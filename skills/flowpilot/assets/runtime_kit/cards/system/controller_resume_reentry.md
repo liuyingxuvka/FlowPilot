@@ -65,9 +65,9 @@ Do not read `packet_body.md`, `result_body.md`, old route files, old screenshots
 old icons, old concept assets, or chat history as route authority.
 
 Before any resume decision is requested, restore the host visible plan from the
-current run `display_plan.json`. If it is missing, show only the waiting-for-PM
-placeholder provided by the router; do not restore a previous ordinary Codex
-plan from chat history.
+current run's Router-derived route display projection/cache. If it is missing,
+show only the waiting-for-PM placeholder provided by the router; do not restore
+a previous ordinary Codex plan from chat history.
 
 Before declaring a role binding alive, perform the runtime-requested liveness
 preflight for the currently awaited role. A bounded `wait_agent` timeout is

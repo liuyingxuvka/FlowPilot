@@ -474,11 +474,17 @@ findings, blockers, or evidence details in chat. Do not use plain top-level
 `decision_path`/`decision_hash`, `report_path`/`report_hash`, or
 `result_body_path`/`result_body_hash` chat handoffs for outputs.
 
-PM is the only role that may author real visible route-plan content. When PM
+PM is the only role that may author real executable route-plan content. When PM
 drafts a route, resumes a runway, mutates a route, or writes the current-node
-plan, PM must provide enough route or display-plan structure for Controller to
-replace the host visible plan from `.flowpilot/runs/<run-id>/display_plan.json`.
-Controller may project that file to the UI, but may not invent route items.
+plan, PM must provide one canonical route tree with enough structure for Router
+to derive the host visible projection from the canonical tree and frontier.
+Controller may project that runtime file to the UI, but may not invent route
+items or treat display text as route authority.
+If Reviewer blocks route decomposition, absorb the concrete split suggestion
+but submit PM's own repaired canonical route through the existing current-scope
+repair path. Do not satisfy a route-depth block by adding broad explanation
+fields, creating a second display-only plan, or asking a Worker to decompose a
+broad leaf after dispatch.
 
 Every PM decision body must include:
 

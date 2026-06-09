@@ -57,10 +57,16 @@ model:
 - the full route tree may have arbitrary depth when needed, and the visible
   user route projection is explicitly shallow instead of being the execution
   source of truth;
+- PM authored one canonical executable route tree. `display_plan.json` or any
+  chat route sign is only a Router-derived projection/cache and must not be
+  treated as a second route plan;
 - Router-visible traversal can distinguish parent/module nodes from
-  dispatchable leaves, dispatch only leaf/repair nodes with
-  `leaf_readiness_gate.status: "pass"`, and trigger parent backward review
-  after all child nodes complete;
+  dispatchable leaves, dispatch only leaf/repair nodes with no `child_node_ids`
+  and with enough existing acceptance criteria, outputs, and checks to be
+  worker-ready, enter every unresolved child before a parent/module worker
+  dispatch could occur, and trigger parent backward review after all child
+  nodes complete, implemented as parent backward replay. Do not require a large
+  new route-node field mesh to make this judgement;
 - each non-leaf node has a local entry loop before child execution: PM local
   product goal, FlowGuard operator local product model, PM decision, Reviewer product
   challenge, FlowGuard operator serial child-route model, PM decision, Reviewer route
@@ -68,6 +74,15 @@ model:
 - each leaf is small enough for one bounded worker packet. If a leaf hides
   multiple ordered work packages, require promotion to parent/module and deeper
   child decomposition before dispatch;
+- simulate at least one route traversal from first executable node through
+  final closure: parent/module entry, child node sequence, child skill
+  projection, parent backward replay, PM parent disposition, and terminal
+  closure gate. Block if the route can only pass by dispatching a parent/module
+  or by letting a Worker replan a broad leaf;
+- explicitly check worker-decision leakage. If the route only works because a
+  Worker must invent subtasks, choose child order, define dependency
+  boundaries, or decide acceptance boundaries, return repair-required process
+  evidence and recommend PM route deepening before any Worker dispatch;
 - parent completion and final completion include backward coverage review, and
   any omission first checks whether the process model missed a class of work,
   upgrades the model when needed, searches same-class omissions, adds

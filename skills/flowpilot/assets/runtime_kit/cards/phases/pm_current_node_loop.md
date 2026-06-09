@@ -129,6 +129,6 @@ Any packet, completion, repair, or mutation decision must include
 stale evidence, prior blocks, and experiments were considered.
 
 When writing the current-node plan, include the PM-owned checklist that should
-replace the host visible current-node section. Controller may only sync this
-projection from `display_plan.json`; it may not add or simplify checklist
-items itself.
+feed the host visible current-node section. Controller may only sync a
+Router-derived display projection/cache from the canonical route tree and
+frontier; it may not add, simplify, or treat display text as route authority.

@@ -52,8 +52,10 @@ class FlowPilotInstallerDependencyTests(unittest.TestCase):
         )
         self.assertIn("flowguard", policy["required_python_packages"])
         self.assertIn("model-first-function-flow", policy["required_codex_skills"])
-        self.assertIn("frontend-design", policy["optional"])
-        self.assertIn("design-iterator", policy["optional_codex_skills"])
+        self.assertEqual(policy["optional"], ["autonomous-concept-ui-redesign"])
+        self.assertIn("autonomous-concept-ui-redesign", policy["optional_codex_skills"])
+        self.assertNotIn("frontend-design", policy["optional"])
+        self.assertNotIn("design-iterator", policy["optional_codex_skills"])
         self.assertIn("--install-flowguard", policy["policy"])
         self.assertIn("--include-optional", policy["policy"])
 
