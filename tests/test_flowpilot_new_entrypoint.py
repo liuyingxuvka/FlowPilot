@@ -50,6 +50,12 @@ def flowguard_result_body(summary: str, **fields: object) -> str:
         "residual_blindspots": [],
         "background_artifact_completion": [],
         "pm_suggestion_items": [],
+        "evidence_consistency": {
+            "self_check_passed": True,
+            "child_reports_all_passed": True,
+            "blocking_child_reports": [],
+            "hard_evidence_decision": "pass",
+        },
         "contract_self_check": {
             "all_required_fields_present": True,
             "exact_field_names_used": True,
@@ -491,6 +497,33 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                     for packet in ledger["packets"].values()
                 )
             )
+
+    def test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            result = flowpilot_new.run_fake_e2e(
+                root,
+                run_id="run-e2e-flowguard-consistency-chaos",
+                startup_text="Build and validate a toy command with FlowGuard consistency chaos.",
+                inject_consistency_faults=True,
+            )
+
+            self.assertTrue(result["ok"], result)
+            self.assertEqual(result["closure"]["decision"], "complete")
+            self.assertIn(
+                "flowguard_check.post_result",
+                set(result["injected_consistency_fault_families"]),
+            )
+            blocks = [
+                block
+                for block in result["mechanical_contract_blocks"]
+                if block["contract_family_id"] in {
+                    "flowguard_check.node_prework_flowguard",
+                    "flowguard_check.post_result",
+                }
+                and "evidence_consistency" in block["quarantine_reason"]
+            ]
+            self.assertTrue(blocks, result["mechanical_contract_blocks"])
 
     def test_ack_only_and_pm_only_result_do_not_reach_terminal_closure(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

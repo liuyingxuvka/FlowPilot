@@ -83,6 +83,12 @@ def flowguard_result_body(summary: str, **fields: object) -> str:
         "residual_blindspots": [],
         "background_artifact_completion": [],
         "pm_suggestion_items": [],
+        "evidence_consistency": {
+            "self_check_passed": True,
+            "child_reports_all_passed": True,
+            "blocking_child_reports": [],
+            "hard_evidence_decision": "pass",
+        },
         "contract_self_check": {
             "all_required_fields_present": True,
             "exact_field_names_used": True,
@@ -1517,6 +1523,131 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(result["status"], "mechanical_contract_blocked")
         self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
         self.assertIn("commands_run", result["missing_required_fields"])
+
+    def test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="fg-self-check-failed",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        body = json.loads(flowguard_result_body("FlowGuard report contradicts its self-check."))
+        body["contract_self_check"]["all_required_fields_present"] = False
+        body["evidence_consistency"]["self_check_passed"] = False
+
+        result_id = runtime.submit_result(ledger, flowguard_lease, flowguard_packet, json.dumps(body))
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
+        self.assertIn("contract_self_check.all_required_fields_present", result["missing_required_fields"])
+        self.assertFalse(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "review"
+            ]
+        )
+        self.assertFalse(
+            [
+                order
+                for order in ledger.get("flowguard_work_orders", {}).values()
+                if order.get("decision") == "pass"
+            ]
+        )
+
+    def test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="fg-child-blocked",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        body = json.loads(flowguard_result_body("FlowGuard report has blocked child evidence."))
+        body["evidence_consistency"] = {
+            "self_check_passed": True,
+            "child_reports_all_passed": False,
+            "blocking_child_reports": [
+                {
+                    "report_path": "evidence/flowguard/packet-0071/model_test_alignment_report.json",
+                    "decision": "missing_code_contract",
+                }
+            ],
+            "hard_evidence_decision": "missing_code_contract",
+        }
+
+        result_id = runtime.submit_result(ledger, flowguard_lease, flowguard_packet, json.dumps(body))
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["contract_family_id"], "flowguard_check.post_result")
+        self.assertIn("evidence_consistency.child_reports_all_passed", result["missing_required_fields"])
+        self.assertIn("evidence_consistency.hard_evidence_decision", result["missing_required_fields"])
+        self.assertFalse(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "review"
+            ]
+        )
+        self.assertFalse(
+            [
+                order
+                for order in ledger.get("flowguard_work_orders", {}).values()
+                if order.get("decision") == "pass"
+            ]
+        )
+
+    def test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.submit_result(ledger, worker, packet_id, role_result_body("Worker submitted current runtime evidence."))
+        flowguard_packet = runtime_runner._open_packet_by_kind(ledger, "flowguard_check")
+        flowguard_lease = runtime.lease_agent(
+            ledger,
+            "flowguard_operator",
+            agent_id="fg-current-block",
+            packet_id=flowguard_packet,
+        )
+        runtime.assign_packet(ledger, flowguard_packet, flowguard_lease)
+        runtime.ack_lease(ledger, flowguard_lease, flowguard_packet)
+        open_required_result_reads(ledger, flowguard_packet, flowguard_lease)
+        body = json.loads(flowguard_result_body("FlowGuard blocks on current hard evidence."))
+        body["passed"] = False
+        body["blocking"] = True
+        body["evidence_consistency"] = {
+            "self_check_passed": True,
+            "child_reports_all_passed": False,
+            "blocking_child_reports": [{"report_path": "current-child-report.json", "decision": "blocked"}],
+            "hard_evidence_decision": "blocked",
+        }
+
+        result_id = runtime.submit_result(ledger, flowguard_lease, flowguard_packet, json.dumps(body))
+        result = ledger["results"][result_id]
+
+        self.assertEqual(result["status"], "flowguard_blocked")
+        self.assertFalse(result["accepted"])
+        self.assertFalse(
+            [
+                packet
+                for packet in ledger["packets"].values()
+                if packet["envelope"]["packet_kind"] == "review"
+            ]
+        )
 
     def test_review_packet_rejects_generic_decision_summary_result(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()

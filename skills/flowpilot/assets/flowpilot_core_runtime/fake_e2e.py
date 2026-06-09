@@ -15,6 +15,7 @@ CURRENT_REPORT_FAKE_SUCCESS_FIELD_MARKERS = (
     "modeled_boundary",
     "independent_challenge",
     "missing_test_kinds",
+    "evidence_consistency",
 )
 
 
@@ -255,6 +256,29 @@ def _fault_body_for_packet(packet: dict[str, Any]) -> str:
     return _body_for_packet(packet)
 
 
+def _consistency_fault_body_for_packet(packet: dict[str, Any]) -> str:
+    family_id = runtime._packet_result_family_id(packet)
+    if family_id.startswith("flowguard_check."):
+        payload = runtime._packet_result_minimal_valid_shape(packet)
+        payload["pm_visible_summary"] = [
+            "current-shaped FlowGuard result must be rejected because hard child evidence blocks."
+        ]
+        payload["passed"] = True
+        payload["evidence_consistency"] = {
+            "self_check_passed": True,
+            "child_reports_all_passed": False,
+            "blocking_child_reports": [
+                {
+                    "report_path": "evidence/flowguard/current/model_test_alignment_report.json",
+                    "decision": "missing_code_contract",
+                }
+            ],
+            "hard_evidence_decision": "missing_code_contract",
+        }
+        return json.dumps(payload, sort_keys=True)
+    return _fault_body_for_packet(packet)
+
+
 def run_fake_e2e(
     root: Path,
     *,
@@ -262,6 +286,7 @@ def run_fake_e2e(
     startup_text: str,
     start_run: StartRun,
     inject_contract_faults: bool = False,
+    inject_consistency_faults: bool = False,
 ) -> dict[str, Any]:
     start_result = start_run(
         root,
@@ -292,6 +317,7 @@ def run_fake_e2e(
     completed_packets: list[dict[str, str]] = []
     folded_boundaries: list[dict[str, Any]] = []
     injected_fault_families: set[str] = set()
+    injected_consistency_fault_families: set[str] = set()
     mechanical_contract_blocks: list[dict[str, Any]] = []
     for index in range(80):
         boundary = runtime.run_until_wait(ledger)
@@ -316,7 +342,15 @@ def run_fake_e2e(
             "review.terminal_backward_replay",
             "pm_disposition.node_pm_disposition",
         } and family_id not in injected_fault_families
-        if should_fault:
+        should_consistency_fault = (
+            inject_consistency_faults
+            and family_id in {"flowguard_check.node_prework_flowguard", "flowguard_check.post_result"}
+            and family_id not in injected_consistency_fault_families
+        )
+        if should_consistency_fault:
+            body = _consistency_fault_body_for_packet(packet)
+            injected_consistency_fault_families.add(family_id)
+        elif should_fault:
             body = _fault_body_for_packet(packet)
             injected_fault_families.add(family_id)
         else:
@@ -335,6 +369,7 @@ def run_fake_e2e(
                     "contract_family_id": str(result.get("contract_family_id") or ""),
                     "missing_required_fields": list(result.get("missing_required_fields") or []),
                     "forbidden_fields_seen": list(result.get("forbidden_fields_seen") or []),
+                    "quarantine_reason": str(result.get("quarantine_reason") or ""),
                 }
             )
         completed_packets.append({"packet_id": packet_id, "packet_kind": kind, "lease_id": lease_id, "result_id": result_id})
@@ -349,6 +384,8 @@ def run_fake_e2e(
         "run": shell.to_json(),
         "completed_packets": completed_packets,
         "mechanical_contract_blocks": mechanical_contract_blocks,
+        "injected_fault_families": sorted(injected_fault_families),
+        "injected_consistency_fault_families": sorted(injected_consistency_fault_families),
         "folded_boundaries": folded_boundaries,
         "accepted_node_ids": [
             node_id for node_id, node in ledger.get("route_nodes", {}).items() if node.get("status") == "accepted"

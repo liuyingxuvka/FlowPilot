@@ -176,6 +176,7 @@ _BUILTIN_OUTPUT_TYPE_SPECS: dict[str, OutputTypeSpec] = {
             "counterexamples_or_absence",
             "hard_invariants",
             "skipped_checks",
+            "evidence_consistency.blocking_child_reports",
             "pm_suggestion_items",
         ),
     ),

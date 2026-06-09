@@ -95,6 +95,13 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("control_blocker.target_role_repair_instruction", fields)
         self.assertIn("reviewer_quality_review.decision", fields)
         self.assertIn("flowguard_process_review.target_result_id", fields)
+        self.assertIn("packet_result.flowguard_check.evidence_consistency.self_check_passed", fields)
+        self.assertIn("packet_result.flowguard_check.evidence_consistency.child_reports_all_passed", fields)
+        self.assertIn("packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]", fields)
+        self.assertIn("packet_result.flowguard_check.evidence_consistency.hard_evidence_decision", fields)
+        self.assertIn("flowguard_work_order.decision", fields)
+        self.assertIn("review_packet.matching_flowguard_result_id", fields)
+        self.assertIn("flowguard_evidence_consistency_hard_evidence_decision", logical_fields)
         self.assertIn("current_packet_id", logical_fields)
         self.assertIn("repair_blocker_id", logical_fields)
         self.assertIn("handoff_blocker_id", logical_fields)
@@ -217,6 +224,11 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("selected_skills", contracts["task.skill_standard"]["forbidden_fields"])
         self.assertIn("node_context_package", contracts["task.node_acceptance_plan"]["required_fields"])
         self.assertIn("pm_visible_summary", contracts["flowguard_check.post_result"]["required_fields"])
+        self.assertIn("evidence_consistency", contracts["flowguard_check.post_result"]["required_fields"])
+        self.assertIn(
+            "evidence_consistency.child_reports_all_passed",
+            contracts["flowguard_check.post_result"]["required_child_fields"],
+        )
         self.assertIn("authority", contracts["pm_repair_decision.pm_repair_decision"]["forbidden_fields"])
         self.assertIn(
             "route_plan.nodes[].title when decision=redesign_route",
@@ -228,6 +240,19 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("decision=redesign_route", branch_shapes)
         self.assertIn("route_plan", branch_shapes["decision=redesign_route"])
         self.assertIn("summary", contracts["pm_disposition.node_pm_disposition"]["forbidden_fields"])
+
+    def test_field_lifecycle_chains_cover_flowguard_evidence_consistency(self) -> None:
+        chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}
+        chain = chains["flowguard_evidence_consistency_to_reviewer_handoff_chain"]
+
+        self.assertEqual(chain["mechanical_gate"], "_flowguard_evidence_consistency_violation")
+        self.assertTrue(chain["no_prose_authority"])
+        self.assertTrue(chain["no_reviewer_mechanical_field_check"])
+        self.assertIn(
+            "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
+            chain["field_sequence"],
+        )
+        self.assertIn("review_packet.matching_flowguard_result_id", chain["field_sequence"])
 
     def test_field_contract_model_blocks_old_field_translation_and_fixed_role_gates(self) -> None:
         hazards = runner._check_hazards()

@@ -1257,7 +1257,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 449,
+        "line_count": 455,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_field_contract_checks",
@@ -4198,7 +4198,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 219,
+        "line_count": 221,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": null,
@@ -10594,7 +10594,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 395,
+        "line_count": 402,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -10866,7 +10866,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 333,
+        "line_count": 334,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "role_output_runtime_architecture",
@@ -33161,6 +33161,57 @@
         "boundary_observations": [],
         "code_contracts": [
           {
+            "code_contract_id": "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+            "error_paths": [],
+            "external_inputs": [
+              "packet",
+              "result"
+            ],
+            "external_outputs": [
+              "contract_check"
+            ],
+            "implements_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "flowguard_result_body"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_flowguard_evidence_consistency_violation"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_review_handoff",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "subject_packet_id"
+            ],
+            "external_outputs": [
+              "review_packet_id"
+            ],
+            "implements_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "flowguard_work_orders",
+              "flowguard_result"
+            ],
+            "state_writes": [
+              "review_packet"
+            ],
+            "surface_type": "function",
+            "symbol": "_ensure_review_packet_for_task_result"
+          },
+          {
             "code_contract_id": "runtime_path.packet_result_family.packet_result_family_material_scan_durable_event_fold",
             "error_paths": [],
             "external_inputs": [],
@@ -33354,6 +33405,23 @@
             "external_outputs": [],
             "implements_obligations": [
               "packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
             ],
             "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
             "required": true,
@@ -33664,6 +33732,33 @@
             ],
             "required_test_kinds": [
               "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": true,
+            "allow_shared_implementation": true,
+            "description": "FlowGuard top-level passed status, contract self-check, and child hard evidence consistency must agree before a FlowGuard work order can pass or release a Reviewer packet.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "obligation_type": "mechanical_consistency_contract",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "packet_result_family:packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path",
+              "replay"
             ],
             "requires_same_class_test_evidence": false,
             "risk_level": "high",
@@ -34192,6 +34287,49 @@
             "requires_gateway_binding": false,
             "sequence_index": 11,
             "state_case": "packet_result_family.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "packet_result_family.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.packet_result_family",
+            "child_model_id": "packet_result_family",
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "exact": true,
+            "input_case": "packet_result_family.external_contract_input",
+            "leaf_model_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "metadata": {
+              "compared_flowguard_model": "packet_result_family",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/packet result family/packet_result_family",
+              "compared_flowguard_obligation": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+              "family": "packet result family",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_rejects_generic_decision_summary_result -q",
+              "source_test_evidence_id": "packet_result_family.happy.flowguard_consistency_pass",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "packet_result_family",
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "model_path": "FlowPilot model-test alignment/packet result family/packet_result_family",
+            "node_id": "packet_result_family:packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.packet_result_family.12.packet_result_family_flowguard_evidence_consistency_before_reviewer"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 12,
+            "state_case": "packet_result_family.current_model_state"
           }
         ],
         "runtime_node_observations": [],
@@ -34214,7 +34352,8 @@
                 "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.current_node.recipient_and_sealed_boundary run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.current_node.recipient_and_sealed_boundary obligation=packet_result_family.current_node.recipient_and_sealed_boundary code_contract=runtime_path.packet_result_family.packet_result_family_current_node_recipient_and_sealed_boundary boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.negative.current_node_wrong_recipient progress=compares FlowPilot code/test evidence packet_result_family.negative.current_node_wrong_recipient with FlowGuard model packet_result_family obligation packet_result_family.current_node.recipient_and_sealed_boundary",
                 "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.durable_event_fold run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.durable_event_fold obligation=packet_result_family.pm_role_work.durable_event_fold code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_durable_event_fold boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.happy.pm_role_work_full progress=compares FlowPilot code/test evidence packet_result_family.happy.pm_role_work_full with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.durable_event_fold",
                 "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.partial_member_wait run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.partial_member_wait obligation=packet_result_family.pm_role_work.partial_member_wait code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_partial_member_wait boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.edge.pm_role_work_partial progress=compares FlowPilot code/test evidence packet_result_family.edge.pm_role_work_partial with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.partial_member_wait",
-                "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.recipient_and_sealed_boundary run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.recipient_and_sealed_boundary obligation=packet_result_family.pm_role_work.recipient_and_sealed_boundary code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_recipient_and_sealed_boundary boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.negative.pm_role_work_wrong_recipient progress=compares FlowPilot code/test evidence packet_result_family.negative.pm_role_work_wrong_recipient with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+                "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.recipient_and_sealed_boundary run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.recipient_and_sealed_boundary obligation=packet_result_family.pm_role_work.recipient_and_sealed_boundary code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_recipient_and_sealed_boundary boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.negative.pm_role_work_wrong_recipient progress=compares FlowPilot code/test evidence packet_result_family.negative.pm_role_work_wrong_recipient with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.recipient_and_sealed_boundary",
+                "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.flowguard_evidence_consistency_before_reviewer run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.flowguard_evidence_consistency_before_reviewer obligation=packet_result_family.flowguard_evidence_consistency_before_reviewer code_contract=runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.happy.flowguard_consistency_pass progress=compares FlowPilot code/test evidence packet_result_family.happy.flowguard_consistency_pass with FlowGuard model packet_result_family obligation packet_result_family.flowguard_evidence_consistency_before_reviewer"
               ]
             },
             "observations": [
@@ -34721,6 +34860,48 @@
                 "run_id": "packet_result_family:runtime-path-current",
                 "sequence_index": 11,
                 "state_case": "packet_result_family.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.packet_result_family",
+                "child_model_id": "packet_result_family",
+                "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+                "evidence_current": true,
+                "evidence_id": "packet_result_family.happy.flowguard_consistency_pass",
+                "gateway_id": "",
+                "input_case": "packet_result_family.external_contract_input",
+                "leaf_model_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                "metadata": {
+                  "compared_flowguard_model": "packet_result_family",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/packet result family/packet_result_family",
+                  "compared_flowguard_obligation": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                  "family": "packet result family",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_rejects_generic_decision_summary_result -q",
+                  "source_test_evidence_id": "packet_result_family.happy.flowguard_consistency_pass",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "packet_result_family",
+                "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                "model_path": "FlowPilot model-test alignment/packet result family/packet_result_family",
+                "node_id": "packet_result_family:packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                "observation_id": "runtime_path.packet_result_family.12.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+                "observed_error_path": "",
+                "observed_next_state": "packet_result_family.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence packet_result_family.happy.flowguard_consistency_pass with FlowGuard model packet_result_family obligation packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "packet_result_family:runtime-path-current",
+                "sequence_index": 12,
+                "state_case": "packet_result_family.current_model_state"
               }
             ],
             "result_status": "passed",
@@ -35017,6 +35198,135 @@
             "stale_reasons": [],
             "test_kind": "negative_path",
             "test_name": "test_strict_pm_role_work_result_rejects_wrong_next_recipient"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_rejects_generic_decision_summary_result -q",
+            "covered_code_contracts": [
+              "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+              "packet_result_family.runtime.flowguard_review_handoff",
+              "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer"
+            ],
+            "covered_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet_result_family.happy.flowguard_consistency_pass",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_review_packet_rejects_generic_decision_summary_result"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer -q",
+            "covered_code_contracts": [
+              "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+              "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer"
+            ],
+            "covered_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet_result_family.negative.flowguard_failed_self_check",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer -q",
+            "covered_code_contracts": [
+              "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+              "packet_result_family.runtime.flowguard_review_handoff",
+              "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer"
+            ],
+            "covered_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet_result_family.negative.flowguard_blocked_child_evidence",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer -q",
+            "covered_code_contracts": [
+              "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+              "packet_result_family.runtime.flowguard_review_handoff",
+              "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer"
+            ],
+            "covered_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet_result_family.replay.flowguard_consistent_block",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "replay",
+            "test_name": "test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes -q",
+            "covered_code_contracts": [
+              "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+              "packet_result_family.runtime.flowguard_review_handoff",
+              "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer"
+            ],
+            "covered_obligations": [
+              "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "packet_result_family.replay.fake_e2e_flowguard_consistency_chaos",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_new_entrypoint.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "replay",
+            "test_name": "test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes"
           }
         ]
       },
@@ -35105,6 +35415,104 @@
             "model_obligation_id": "packet_result_family.pm_role_work.recipient_and_sealed_boundary",
             "status": "locked",
             "test_evidence_id": "packet_result_family.negative.pm_role_work_wrong_recipient"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.happy.flowguard_consistency_pass"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.negative.flowguard_failed_self_check"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.negative.flowguard_blocked_child_evidence"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.replay.flowguard_consistent_block"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.replay.fake_e2e_flowguard_consistency_chaos"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_review_handoff",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.happy.flowguard_consistency_pass"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_review_handoff",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.negative.flowguard_blocked_child_evidence"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_review_handoff",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.replay.flowguard_consistent_block"
+          },
+          {
+            "code_contract_id": "packet_result_family.runtime.flowguard_review_handoff",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.replay.fake_e2e_flowguard_consistency_chaos"
+          },
+          {
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.happy.flowguard_consistency_pass"
+          },
+          {
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.negative.flowguard_failed_self_check"
+          },
+          {
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.negative.flowguard_blocked_child_evidence"
+          },
+          {
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.replay.flowguard_consistent_block"
+          },
+          {
+            "code_contract_id": "runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer",
+            "gaps": [],
+            "model_obligation_id": "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+            "status": "locked",
+            "test_evidence_id": "packet_result_family.replay.fake_e2e_flowguard_consistency_chaos"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -35114,7 +35522,7 @@
         "summary": "OK: model=packet_result_family decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 12,
+        "progress_line_count": 13,
         "progress_lines": [
           "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.material_scan.durable_event_fold run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.material_scan.durable_event_fold obligation=packet_result_family.material_scan.durable_event_fold code_contract=runtime_path.packet_result_family.packet_result_family_material_scan_durable_event_fold boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.happy.material_scan_full progress=compares FlowPilot code/test evidence packet_result_family.happy.material_scan_full with FlowGuard model packet_result_family obligation packet_result_family.material_scan.durable_event_fold",
           "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.material_scan.partial_member_wait run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.material_scan.partial_member_wait obligation=packet_result_family.material_scan.partial_member_wait code_contract=runtime_path.packet_result_family.packet_result_family_material_scan_partial_member_wait boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.edge.material_scan_partial progress=compares FlowPilot code/test evidence packet_result_family.edge.material_scan_partial with FlowGuard model packet_result_family obligation packet_result_family.material_scan.partial_member_wait",
@@ -35127,11 +35535,12 @@
           "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.current_node.recipient_and_sealed_boundary run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.current_node.recipient_and_sealed_boundary obligation=packet_result_family.current_node.recipient_and_sealed_boundary code_contract=runtime_path.packet_result_family.packet_result_family_current_node_recipient_and_sealed_boundary boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.negative.current_node_wrong_recipient progress=compares FlowPilot code/test evidence packet_result_family.negative.current_node_wrong_recipient with FlowGuard model packet_result_family obligation packet_result_family.current_node.recipient_and_sealed_boundary",
           "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.durable_event_fold run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.durable_event_fold obligation=packet_result_family.pm_role_work.durable_event_fold code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_durable_event_fold boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.happy.pm_role_work_full progress=compares FlowPilot code/test evidence packet_result_family.happy.pm_role_work_full with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.durable_event_fold",
           "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.partial_member_wait run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.partial_member_wait obligation=packet_result_family.pm_role_work.partial_member_wait code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_partial_member_wait boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.edge.pm_role_work_partial progress=compares FlowPilot code/test evidence packet_result_family.edge.pm_role_work_partial with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.partial_member_wait",
-          "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.recipient_and_sealed_boundary run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.recipient_and_sealed_boundary obligation=packet_result_family.pm_role_work.recipient_and_sealed_boundary code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_recipient_and_sealed_boundary boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.negative.pm_role_work_wrong_recipient progress=compares FlowPilot code/test evidence packet_result_family.negative.pm_role_work_wrong_recipient with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.recipient_and_sealed_boundary"
+          "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.pm_role_work.recipient_and_sealed_boundary run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.pm_role_work.recipient_and_sealed_boundary obligation=packet_result_family.pm_role_work.recipient_and_sealed_boundary code_contract=runtime_path.packet_result_family.packet_result_family_pm_role_work_recipient_and_sealed_boundary boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.negative.pm_role_work_wrong_recipient progress=compares FlowPilot code/test evidence packet_result_family.negative.pm_role_work_wrong_recipient with FlowGuard model packet_result_family obligation packet_result_family.pm_role_work.recipient_and_sealed_boundary",
+          "flowguard.runtime_path model=packet_result_family node=packet_result_family:packet_result_family.flowguard_evidence_consistency_before_reviewer run=packet_result_family:runtime-path-current status=passed model_path=FlowPilot model-test alignment/packet result family/packet_result_family child_model=packet_result_family leaf_model=packet_result_family.flowguard_evidence_consistency_before_reviewer obligation=packet_result_family.flowguard_evidence_consistency_before_reviewer code_contract=runtime_path.packet_result_family.packet_result_family_flowguard_evidence_consistency_before_reviewer boundary=flowpilot.runtime_path.packet_result_family input_case=packet_result_family.external_contract_input state_case=packet_result_family.current_model_state evidence=packet_result_family.happy.flowguard_consistency_pass progress=compares FlowPilot code/test evidence packet_result_family.happy.flowguard_consistency_pass with FlowGuard model packet_result_family obligation packet_result_family.flowguard_evidence_consistency_before_reviewer"
         ],
         "required": true,
-        "runtime_node_contract_count": 12,
-        "runtime_observation_count": 12,
+        "runtime_node_contract_count": 13,
+        "runtime_observation_count": 13,
         "runtime_path_run_count": 1
       }
     },
@@ -57932,6 +58341,7 @@
           "code_contract_id": "flowpilot_new.run_fake_e2e",
           "found": true,
           "parameters": [
+            "inject_consistency_faults",
             "inject_contract_faults",
             "root",
             "run_id",
@@ -57951,6 +58361,7 @@
             "bool",
             "dict",
             "fake_e2e",
+            "inject_consistency_faults",
             "inject_contract_faults",
             "root",
             "run_fake_e2e",
@@ -57965,6 +58376,7 @@
         {
           "calls": [
             "_body_for_packet",
+            "_consistency_fault_body_for_packet",
             "_fault_body_for_packet",
             "action_json.get",
             "cockpit.render_status",
@@ -57974,6 +58386,7 @@
             "get",
             "host.lease_responsibility",
             "host.submit_host_result",
+            "injected_consistency_fault_families.add",
             "injected_fault_families.add",
             "isinstance",
             "items",
@@ -57996,6 +58409,7 @@
             "runtime.run_until_wait",
             "set",
             "shell.to_json",
+            "sorted",
             "start_run",
             "str",
             "to_json"
@@ -58003,6 +58417,7 @@
           "code_contract_id": "fake_e2e.run_fake_e2e",
           "found": true,
           "parameters": [
+            "inject_consistency_faults",
             "inject_contract_faults",
             "root",
             "run_id",
@@ -58025,6 +58440,7 @@
             "Path",
             "StartRun",
             "_body_for_packet",
+            "_consistency_fault_body_for_packet",
             "_fault_body_for_packet",
             "_packet_result_family_id",
             "ack_lease",
@@ -58050,7 +58466,9 @@
             "get",
             "host",
             "index",
+            "inject_consistency_faults",
             "inject_contract_faults",
+            "injected_consistency_fault_families",
             "injected_fault_families",
             "isinstance",
             "items",
@@ -58086,7 +58504,9 @@
             "save_run_ledger",
             "set",
             "shell",
+            "should_consistency_fault",
             "should_fault",
+            "sorted",
             "start_result",
             "start_run",
             "startup_text",
@@ -58104,6 +58524,7 @@
             "completed_packets",
             "family_id",
             "folded_boundaries",
+            "injected_consistency_fault_families",
             "injected_fault_families",
             "kind",
             "lease_id",
@@ -58115,6 +58536,7 @@
             "result",
             "result_id",
             "shell",
+            "should_consistency_fault",
             "should_fault",
             "start_result"
           ],

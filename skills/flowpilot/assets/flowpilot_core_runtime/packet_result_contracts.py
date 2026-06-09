@@ -68,7 +68,14 @@ FLOWGUARD_REPORT_REQUIRED_FIELDS = (
     "residual_blindspots",
     "background_artifact_completion",
     "pm_suggestion_items",
+    "evidence_consistency",
     "contract_self_check",
+)
+FLOWGUARD_REPORT_REQUIRED_CHILD_FIELDS = (
+    "evidence_consistency.self_check_passed",
+    "evidence_consistency.child_reports_all_passed",
+    "evidence_consistency.blocking_child_reports",
+    "evidence_consistency.hard_evidence_decision",
 )
 FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS = (
     "pm_visible_summary",
@@ -82,6 +89,7 @@ FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS = (
     "residual_blindspots",
     "background_artifact_completion",
     "pm_suggestion_items",
+    "evidence_consistency.blocking_child_reports",
 )
 FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS = (
     "pm_visible_summary",
@@ -293,7 +301,7 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "owner": "flowpilot_core_runtime",
         "validator": "_current_result_submission_contract_violation",
         "required_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
-        "required_child_fields": (),
+        "required_child_fields": FLOWGUARD_REPORT_REQUIRED_CHILD_FIELDS,
         "explicit_array_fields": FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS,
         "non_empty_array_fields": FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS,
         "forbidden_fields": ("decision", "api_fallback_manual_block_eval", "fallback_manual_block_eval"),
@@ -307,7 +315,7 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "owner": "flowpilot_core_runtime",
         "validator": "_current_result_submission_contract_violation",
         "required_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
-        "required_child_fields": (),
+        "required_child_fields": FLOWGUARD_REPORT_REQUIRED_CHILD_FIELDS,
         "explicit_array_fields": FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS,
         "non_empty_array_fields": FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS,
         "forbidden_fields": ("decision", "api_fallback_manual_block_eval", "fallback_manual_block_eval"),
@@ -618,6 +626,12 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             "residual_blindspots": [],
             "background_artifact_completion": [],
             "pm_suggestion_items": [],
+            "evidence_consistency": {
+                "self_check_passed": True,
+                "child_reports_all_passed": True,
+                "blocking_child_reports": [],
+                "hard_evidence_decision": "pass",
+            },
             "contract_self_check": {
                 "all_required_fields_present": True,
                 "exact_field_names_used": True,

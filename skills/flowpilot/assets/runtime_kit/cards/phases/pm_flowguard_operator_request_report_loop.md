@@ -104,10 +104,18 @@ The FlowGuard operator report body must include these fields exactly:
   "residual_blindspots": [],
   "background_artifact_completion": [],
   "pm_suggestion_items": [],
+  "evidence_consistency": {
+    "self_check_passed": true,
+    "child_reports_all_passed": true,
+    "blocking_child_reports": [],
+    "hard_evidence_decision": "pass"
+  },
   "contract_self_check": {
     "all_required_fields_present": true,
     "exact_field_names_used": true,
-    "empty_required_arrays_explicit": true
+    "empty_required_arrays_explicit": true,
+    "runtime_mechanical_validation_passed": true,
+    "semantic_sufficiency_reviewed_by_runtime": false
   }
 }
 ```
@@ -121,6 +129,12 @@ the report cites any long or background test, `background_artifact_completion`
 must list the log root, stdout, stderr, combined, exit, and meta paths, exit
 code, latest update time, completion status, and whether a valid proof was
 reused. Progress lines alone are not completion evidence.
+
+If any child FlowGuard/model-test/development-process report says blocked,
+missing code contract, revalidation required, stale, failed, or not ok, the
+report's top-level `passed` must be false and `evidence_consistency` must name
+the blocking child report. Do not send `passed: true` when hard evidence inside
+the report says blocked.
 
 The FlowGuard operator report supports PM decisions; it cannot approve completion, waive
 reviewer gates, or claim no risk beyond its model boundary.

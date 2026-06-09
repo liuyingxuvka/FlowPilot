@@ -32,6 +32,7 @@ OBL_BREAK_GLASS = "info_flow.break_glass.bounded_reintegrated_repair"
 OBL_ROUTE_MUTATION = "info_flow.route_mutation.blocker_acceptance_replay_scope"
 OBL_ROLE_ASSIGNMENT = "info_flow.role_assignment.current_packet_binding"
 OBL_CLOSURE_STOP = "info_flow.closure.unresolved_gap_stop_boundary"
+OBL_FLOWGUARD_EVIDENCE_CONSISTENCY = "info_flow.flowguard.evidence_consistency_before_reviewer"
 
 
 def _obligations() -> tuple[Any, ...]:
@@ -164,6 +165,18 @@ def _obligations() -> tuple[Any, ...]:
                 "Closure cannot pass with unresolved information gaps; user or "
                 "protocol stop preserves unresolved work and quarantines stale "
                 "control-plane artifacts."
+            ),
+            required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+            allow_shared_evidence=True,
+            allow_shared_implementation=True,
+        ),
+        _obligation(
+            OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,
+            obligation_type="mechanical_consistency_contract",
+            description=(
+                "FlowGuard child hard evidence and contract self-check status "
+                "must project into the FlowGuard result outcome and work-order "
+                "decision before Reviewer can consume a matching FlowGuard report."
             ),
             required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
             allow_shared_evidence=True,

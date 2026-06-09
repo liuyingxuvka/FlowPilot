@@ -435,6 +435,55 @@
         "model_obligation_id": "info_flow.closure.unresolved_gap_stop_boundary",
         "status": "locked",
         "test_evidence_id": "info_flow.test.terminal_quarantine_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.flowguard_evidence_consistency_gate",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_self_check_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.flowguard_evidence_consistency_gate",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_pass_to_reviewer"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.flowguard_evidence_consistency_gate",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_child_block_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.flowguard_evidence_consistency_gate",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_legal_block_replay"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_pass_to_reviewer"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_child_block_negative"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+        "gaps": [],
+        "model_obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "status": "locked",
+        "test_evidence_id": "info_flow.test.flowguard_consistency_legal_block_replay"
       }
     ],
     "decision": "model_test_alignment_green",
@@ -456,10 +505,10 @@
       "semantic proof that every private helper branch is correct"
     ]
   },
-  "code_contract_count": 28,
+  "code_contract_count": 30,
   "code_symbol_ok": true,
   "code_symbol_report": {
-    "contract_count": 28,
+    "contract_count": 30,
     "evidence": [
       {
         "calls": [
@@ -1293,6 +1342,164 @@
           "section"
         ],
         "symbol": "_formal_repair_identity_blockers"
+      },
+      {
+        "calls": [
+          "_contract_block",
+          "_contract_pass",
+          "_json_payload_contract_check",
+          "_normalize_outcome_token",
+          "bool",
+          "consistency.get",
+          "contract_self_check.get",
+          "isinstance",
+          "payload.get",
+          "tuple"
+        ],
+        "code_contract_id": "info_flow.runtime.flowguard_evidence_consistency_gate",
+        "found": true,
+        "parameters": [
+          "packet",
+          "result"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [
+          "_contract_block",
+          "_contract_pass",
+          "contract_error"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "Mapping",
+          "PacketResultContractCheck",
+          "_FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS",
+          "_FLOWGUARD_HARD_EVIDENCE_PASS_DECISIONS",
+          "_FLOWGUARD_SELF_CHECK_TRUE_FIELDS",
+          "_contract_block",
+          "_contract_pass",
+          "_json_payload_contract_check",
+          "_normalize_outcome_token",
+          "blocking_child_reports",
+          "bool",
+          "child_reports_all_passed",
+          "consistency",
+          "contract_error",
+          "contract_self_check",
+          "failed_self_check_fields",
+          "field",
+          "get",
+          "hard_evidence_blocks",
+          "hard_evidence_decision",
+          "isinstance",
+          "list",
+          "packet",
+          "payload",
+          "result",
+          "str",
+          "top_level_passed",
+          "tuple"
+        ],
+        "state_writes": [
+          "blocking_child_reports",
+          "child_reports_all_passed",
+          "consistency",
+          "contract_error",
+          "contract_self_check",
+          "failed_self_check_fields",
+          "hard_evidence_blocks",
+          "hard_evidence_decision",
+          "payload",
+          "top_level_passed"
+        ],
+        "symbol": "_flowguard_evidence_consistency_violation"
+      },
+      {
+        "calls": [
+          "_authorized_read_for_result",
+          "_find_packet",
+          "_flowguard_evidence_reads_for_review",
+          "_optional_node_context_reference",
+          "_require",
+          "get",
+          "issue_task_packet",
+          "json.dumps",
+          "list",
+          "node_context.get",
+          "str",
+          "subject_packet.get"
+        ],
+        "code_contract_id": "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+        "found": true,
+        "parameters": [
+          "force_new",
+          "ledger",
+          "recheck_reason",
+          "repair_blocker_id",
+          "subject_id"
+        ],
+        "parse_error": "",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "raised_errors": [],
+        "return_values": [
+          "packet_id",
+          "str"
+        ],
+        "returns_value": true,
+        "side_effects": [],
+        "state_reads": [
+          "Any",
+          "_authorized_read_for_result",
+          "_find_packet",
+          "_flowguard_evidence_reads_for_review",
+          "_optional_node_context_reference",
+          "_require",
+          "body_payload",
+          "bool",
+          "dict",
+          "dumps",
+          "envelope",
+          "existing",
+          "flowguard_manifest",
+          "flowguard_reads",
+          "force_new",
+          "get",
+          "issue_task_packet",
+          "item",
+          "json",
+          "ledger",
+          "list",
+          "node_context",
+          "node_id",
+          "packet_id",
+          "packets",
+          "recheck_reason",
+          "repair_blocker_id",
+          "result_ids",
+          "str",
+          "subject_id",
+          "subject_packet",
+          "target_result_id"
+        ],
+        "state_writes": [
+          "body_payload",
+          "existing",
+          "flowguard_manifest",
+          "flowguard_reads",
+          "node_context",
+          "node_id",
+          "packet_id",
+          "recheck_for_blocker_id",
+          "recheck_reason",
+          "result_ids",
+          "subject_context",
+          "subject_packet",
+          "target_result_id"
+        ],
+        "symbol": "_ensure_review_packet_for_task_result"
       },
       {
         "calls": [
@@ -2579,7 +2786,7 @@
   "findings": [],
   "marker_ok": true,
   "model_id": "flowpilot_information_flow_alignment",
-  "obligation_count": 11,
+  "obligation_count": 12,
   "ok": true,
   "plan": {
     "allow_orphan_code_contracts": false,
@@ -2950,6 +3157,57 @@
         "state_writes": [],
         "surface_type": "function",
         "symbol": "_formal_repair_identity_blockers"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.flowguard_evidence_consistency_gate",
+        "error_paths": [],
+        "external_inputs": [
+          "packet",
+          "result"
+        ],
+        "external_outputs": [
+          "contract_check"
+        ],
+        "implements_obligations": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "flowguard_result_body"
+        ],
+        "state_writes": [],
+        "surface_type": "function",
+        "symbol": "_flowguard_evidence_consistency_violation"
+      },
+      {
+        "code_contract_id": "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+        "error_paths": [],
+        "external_inputs": [
+          "ledger",
+          "subject_packet_id"
+        ],
+        "external_outputs": [
+          "review_packet_id"
+        ],
+        "implements_obligations": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "required": true,
+        "role": "owner",
+        "side_effects": [],
+        "state_reads": [
+          "flowguard_work_orders",
+          "flowguard_result"
+        ],
+        "state_writes": [
+          "review_packet"
+        ],
+        "surface_type": "function",
+        "symbol": "_ensure_review_packet_for_task_result"
       },
       {
         "code_contract_id": "info_flow.new_runtime.resume_entrypoint",
@@ -3668,8 +3926,35 @@
         "side_effects": [],
         "state_reads": [],
         "state_writes": []
+      },
+      {
+        "allow_shared_evidence": true,
+        "allow_shared_implementation": true,
+        "description": "FlowGuard child hard evidence and contract self-check status must project into the FlowGuard result outcome and work-order decision before Reviewer can consume a matching FlowGuard report.",
+        "error_paths": [],
+        "exact_external_contract": false,
+        "external_inputs": [],
+        "external_outputs": [],
+        "model_miss_origin": false,
+        "obligation_id": "info_flow.flowguard.evidence_consistency_before_reviewer",
+        "obligation_type": "mechanical_consistency_contract",
+        "required": true,
+        "required_closure_evidence_roles": [],
+        "required_runtime_node_ids": [],
+        "required_test_kinds": [
+          "happy_path",
+          "negative_path",
+          "replay"
+        ],
+        "requires_same_class_test_evidence": false,
+        "risk_level": "high",
+        "side_effects": [],
+        "state_reads": [],
+        "state_writes": []
       }
     ],
+    "payload_contracts": [],
+    "payload_evidence": [],
     "require_proof_artifacts": false,
     "require_runtime_path_evidence": false,
     "runtime_node_contracts": [],
@@ -3955,6 +4240,105 @@
         "stale_reasons": [],
         "test_kind": "happy_path",
         "test_name": "test_repair_packet_handoff_contract_carries_formal_blocker_identity"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.flowguard_evidence_consistency_gate"
+        ],
+        "covered_obligations": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.flowguard_consistency_self_check_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_rejects_generic_decision_summary_result -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.flowguard_evidence_consistency_gate",
+          "info_flow.runtime.review_packet_requires_matching_flowguard_report"
+        ],
+        "covered_obligations": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.flowguard_consistency_pass_to_reviewer",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "happy_path",
+        "test_name": "test_review_packet_rejects_generic_decision_summary_result"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.flowguard_evidence_consistency_gate",
+          "info_flow.runtime.review_packet_requires_matching_flowguard_report"
+        ],
+        "covered_obligations": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.flowguard_consistency_child_block_negative",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "negative_path",
+        "test_name": "test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer"
+      },
+      {
+        "assertion_scope": "external_contract",
+        "closure_evidence_role": "",
+        "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer -q",
+        "covered_code_contracts": [
+          "info_flow.runtime.flowguard_evidence_consistency_gate",
+          "info_flow.runtime.review_packet_requires_matching_flowguard_report"
+        ],
+        "covered_obligations": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "evidence_current": true,
+        "evidence_id": "info_flow.test.flowguard_consistency_legal_block_replay",
+        "evidence_role": "primary",
+        "evidence_target_id": "",
+        "overclaims_model_confidence": false,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "proof_artifact": null,
+        "result_reused": false,
+        "result_status": "passed",
+        "reuse_ticket": null,
+        "stale_reasons": [],
+        "test_kind": "replay",
+        "test_name": "test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer"
       },
       {
         "assertion_scope": "external_contract",
@@ -4456,7 +4840,7 @@
   },
   "result_type": "flowpilot_information_flow_alignment",
   "source_marker_report": {
-    "check_count": 18,
+    "check_count": 23,
     "checks": [
       {
         "covers": [
@@ -4586,6 +4970,51 @@
       },
       {
         "covers": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "requirement_id": "runtime.flowguard_evidence_consistency_gate"
+      },
+      {
+        "covers": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "requirement_id": "test.flowguard_evidence_consistency_gate"
+      },
+      {
+        "covers": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+        "requirement_id": "fake.flowguard_evidence_consistency_chaos"
+      },
+      {
+        "covers": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+        "requirement_id": "card.flowguard_operator_evidence_consistency"
+      },
+      {
+        "covers": [
+          "info_flow.flowguard.evidence_consistency_before_reviewer"
+        ],
+        "missing_markers": [],
+        "ok": true,
+        "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md",
+        "requirement_id": "card.pm_flowguard_request_evidence_consistency"
+      },
+      {
+        "covers": [
           "info_flow.resume.current_authority_context",
           "info_flow.role_assignment.current_packet_binding"
         ],
@@ -4636,7 +5065,7 @@
     "findings": [],
     "ok": true
   },
-  "test_evidence_count": 31,
+  "test_evidence_count": 35,
   "underlying_model_ok": true,
   "underlying_model_reports": {
     "blocker_repair_information_flow": {

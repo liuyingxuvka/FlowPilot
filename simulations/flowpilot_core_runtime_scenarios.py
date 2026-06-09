@@ -102,6 +102,12 @@ def _flowguard_result_body(summary: str, **fields: object) -> str:
             "runtime_mechanical_validation_passed": True,
             "semantic_sufficiency_reviewed_by_runtime": False,
         },
+        "evidence_consistency": {
+            "self_check_passed": True,
+            "child_reports_all_passed": True,
+            "blocking_child_reports": [],
+            "hard_evidence_decision": "pass",
+        },
     }
     payload.update(fields)
     return json.dumps(payload)

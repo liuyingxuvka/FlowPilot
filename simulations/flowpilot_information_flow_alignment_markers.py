@@ -11,6 +11,7 @@ from flowpilot_information_flow_alignment_obligations import (
     OBL_BLOCKER_PAYLOAD,
     OBL_BREAK_GLASS,
     OBL_CLOSURE_STOP,
+    OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,
     OBL_FORMAL_REPAIR_IDENTITY,
     OBL_RECHECK_FOLLOWUP,
     OBL_REOPEN_HISTORY,
@@ -177,6 +178,60 @@ MARKER_REQUIREMENTS: tuple[Mapping[str, Any], ...] = (
             '"blocker_id": str(envelope.get("repair_blocker_id")',
         ),
         "covers": (OBL_FORMAL_REPAIR_IDENTITY,),
+    },
+    {
+        "requirement_id": "runtime.flowguard_evidence_consistency_gate",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+        "markers": (
+            "def _flowguard_evidence_consistency_violation",
+            "evidence_consistency.child_reports_all_passed",
+            "blocking_child_reports",
+            "hard_evidence_decision",
+            "FlowGuard result cannot pass while evidence_consistency reports blocked child evidence",
+        ),
+        "covers": (OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+    },
+    {
+        "requirement_id": "test.flowguard_evidence_consistency_gate",
+        "path": "tests/test_flowpilot_core_runtime.py",
+        "markers": (
+            "test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer",
+            "test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+            "test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer",
+        ),
+        "covers": (OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+    },
+    {
+        "requirement_id": "fake.flowguard_evidence_consistency_chaos",
+        "path": "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+        "markers": (
+            "inject_consistency_faults",
+            "_consistency_fault_body_for_packet",
+            "missing_code_contract",
+        ),
+        "covers": (OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+    },
+    {
+        "requirement_id": "card.flowguard_operator_evidence_consistency",
+        "path": "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+        "markers": (
+            "evidence_consistency",
+            "child_reports_all_passed",
+            "hard_evidence_decision",
+            "evidence consistency, or confidence boundary",
+        ),
+        "covers": (OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+    },
+    {
+        "requirement_id": "card.pm_flowguard_request_evidence_consistency",
+        "path": "skills/flowpilot/assets/runtime_kit/cards/phases/pm_flowguard_operator_request_report_loop.md",
+        "markers": (
+            "evidence_consistency",
+            "child_reports_all_passed",
+            "blocking_child_reports",
+            "Do not send `passed: true`",
+        ),
+        "covers": (OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
     },
     {
         "requirement_id": "test.lifecycle_resume_no_role_prewarm",

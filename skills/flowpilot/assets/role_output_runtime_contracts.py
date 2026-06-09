@@ -51,6 +51,13 @@ def _default_for_required_field(
         return run_root.name
     if field_path == "contract_self_check":
         return _contract_self_check(bool(spec.explicit_array_fields))
+    if field_path == "evidence_consistency":
+        return {
+            "self_check_passed": False,
+            "child_reports_all_passed": False,
+            "blocking_child_reports": [],
+            "hard_evidence_decision": _required_placeholder("evidence_consistency.hard_evidence_decision"),
+        }
     if field_path == "prior_path_context_review":
         return _prior_path_context(project_root, run_root)
     if field_path == "repair_transaction":

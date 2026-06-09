@@ -338,15 +338,20 @@ def _source_alignment_report() -> dict[str, object]:
         for token, source in (
             ("REVIEW_REPORT_REQUIRED_FIELDS", contract_module_text),
             ("FLOWGUARD_REPORT_REQUIRED_FIELDS", contract_module_text),
+            ("FLOWGUARD_REPORT_REQUIRED_CHILD_FIELDS", contract_module_text),
             ("explicit_array_fields_for_family", contract_module_text),
             ('"decision", "outcome", "status"', contract_module_text),
             ("_payload_path_missing", runtime_text),
             ("_missing_or_wrong_explicit_array_fields", runtime_text),
             ('packet_kind in {"flowguard_check", "review"}', runtime_text),
+            ("_flowguard_evidence_consistency_violation", runtime_text),
             ('"pm_visible_summary"', contract_index_text),
             ('"independent_challenge"', contract_index_text),
             ('"missing_test_kinds"', contract_index_text),
+            ('"evidence_consistency"', contract_index_text),
             ("flowguard_result_body", test_text),
+            ("test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer", test_text),
+            ("test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer", test_text),
             ("review_result_body", test_text),
         )
     )
@@ -361,6 +366,7 @@ def _source_alignment_report() -> dict[str, object]:
             '"modeled_boundary"',
             '"independent_challenge"',
             '"missing_test_kinds"',
+            '"evidence_consistency"',
         )
         if term not in fake_text
     ]

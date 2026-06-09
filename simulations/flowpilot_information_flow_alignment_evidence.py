@@ -9,6 +9,7 @@ from flowpilot_information_flow_alignment_obligations import (
     OBL_BLOCKER_PAYLOAD,
     OBL_BREAK_GLASS,
     OBL_CLOSURE_STOP,
+    OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,
     OBL_FORMAL_REPAIR_IDENTITY,
     OBL_RECHECK_FOLLOWUP,
     OBL_REOPEN_HISTORY,
@@ -177,6 +178,63 @@ def _test_evidence() -> tuple[Any, ...]:
                 "info_flow.runtime.apply_pm_repair_decision",
                 "info_flow.runtime.issue_current_scope_repair_packet",
                 "info_flow.runtime.packet_repair_blocker_id",
+            ),
+        ),
+        _evidence(
+            "info_flow.test.flowguard_consistency_self_check_negative",
+            test_name="test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer -q"
+            ),
+            test_kind=NEGATIVE,
+            covers=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+            code_contracts=("info_flow.runtime.flowguard_evidence_consistency_gate",),
+        ),
+        _evidence(
+            "info_flow.test.flowguard_consistency_pass_to_reviewer",
+            test_name="test_review_packet_rejects_generic_decision_summary_result",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_review_packet_rejects_generic_decision_summary_result -q"
+            ),
+            test_kind=HAPPY,
+            covers=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+            code_contracts=(
+                "info_flow.runtime.flowguard_evidence_consistency_gate",
+                "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+            ),
+        ),
+        _evidence(
+            "info_flow.test.flowguard_consistency_child_block_negative",
+            test_name="test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer -q"
+            ),
+            test_kind=NEGATIVE,
+            covers=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+            code_contracts=(
+                "info_flow.runtime.flowguard_evidence_consistency_gate",
+                "info_flow.runtime.review_packet_requires_matching_flowguard_report",
+            ),
+        ),
+        _evidence(
+            "info_flow.test.flowguard_consistency_legal_block_replay",
+            test_name="test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer",
+            path="tests/test_flowpilot_core_runtime.py",
+            command=(
+                "python -m pytest tests/test_flowpilot_core_runtime.py "
+                "-k test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer -q"
+            ),
+            test_kind=REPLAY,
+            covers=(OBL_FLOWGUARD_EVIDENCE_CONSISTENCY,),
+            code_contracts=(
+                "info_flow.runtime.flowguard_evidence_consistency_gate",
+                "info_flow.runtime.review_packet_requires_matching_flowguard_report",
             ),
         ),
         _evidence(

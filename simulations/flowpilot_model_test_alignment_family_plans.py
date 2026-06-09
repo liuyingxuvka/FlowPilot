@@ -240,6 +240,39 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 description="PM role-work result envelopes reject wrong next_recipient values at the result boundary.",
                 required_test_kinds=(NEGATIVE,),
             ),
+            _obligation(
+                "packet_result_family.flowguard_evidence_consistency_before_reviewer",
+                obligation_type="mechanical_consistency_contract",
+                description=(
+                    "FlowGuard top-level passed status, contract self-check, "
+                    "and child hard evidence consistency must agree before a "
+                    "FlowGuard work order can pass or release a Reviewer packet."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE, REPLAY),
+                allow_shared_evidence=True,
+                allow_shared_implementation=True,
+            ),
+        ),
+        code_contracts=(
+            _contract(
+                "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_flowguard_evidence_consistency_violation",
+                implements=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                external_inputs=("packet", "result"),
+                external_outputs=("contract_check",),
+                state_reads=("flowguard_result_body",),
+            ),
+            _contract(
+                "packet_result_family.runtime.flowguard_review_handoff",
+                path="skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+                symbol="_ensure_review_packet_for_task_result",
+                implements=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                external_inputs=("ledger", "subject_packet_id"),
+                external_outputs=("review_packet_id",),
+                state_reads=("flowguard_work_orders", "flowguard_result"),
+                state_writes=("review_packet",),
+            ),
         ),
         test_evidence=(
             _evidence(
@@ -337,6 +370,63 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.router_runtime.pm_role_work.PmRoleWorkRuntimeTests.test_strict_pm_role_work_result_rejects_wrong_next_recipient",
                 test_kind=NEGATIVE,
                 covers=("packet_result_family.pm_role_work.recipient_and_sealed_boundary",),
+            ),
+            _evidence(
+                "packet_result_family.happy.flowguard_consistency_pass",
+                test_name="test_review_packet_rejects_generic_decision_summary_result",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_review_packet_rejects_generic_decision_summary_result -q",
+                test_kind=HAPPY,
+                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_failed_self_check",
+                test_name="test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                code_contracts=("packet_result_family.runtime.flowguard_evidence_consistency_gate",),
+            ),
+            _evidence(
+                "packet_result_family.negative.flowguard_blocked_child_evidence",
+                test_name="test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer -q",
+                test_kind=NEGATIVE,
+                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.flowguard_consistent_block",
+                test_name="test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_flowguard_packet_block_with_consistent_evidence_does_not_issue_reviewer -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
+            ),
+            _evidence(
+                "packet_result_family.replay.fake_e2e_flowguard_consistency_chaos",
+                test_name="test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes",
+                path="tests/test_flowpilot_new_entrypoint.py",
+                command="python -m pytest tests/test_flowpilot_new_entrypoint.py -k test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes -q",
+                test_kind=REPLAY,
+                covers=("packet_result_family.flowguard_evidence_consistency_before_reviewer",),
+                code_contracts=(
+                    "packet_result_family.runtime.flowguard_evidence_consistency_gate",
+                    "packet_result_family.runtime.flowguard_review_handoff",
+                ),
             ),
         ),
     )

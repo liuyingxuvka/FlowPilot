@@ -965,10 +965,70 @@
       "layer": "leaf",
       "logical_field": "flowguard_packet_result_passed",
       "owner": "flowpilot_core_runtime",
-      "required_value": "boolean_passed_current_report_outcome",
+      "required_value": "boolean_passed_current_report_outcome_consistent_with_hard_evidence",
       "status": "mechanical_runtime_owned",
       "unlocks": "flowguard_pass_or_block_outcome",
-      "validator": "_strict_packet_outcome_contract_violation"
+      "validator": "_flowguard_evidence_consistency_violation"
+    },
+    {
+      "field": "packet_result.flowguard_check.evidence_consistency.self_check_passed",
+      "layer": "leaf",
+      "logical_field": "flowguard_evidence_consistency_self_check_passed",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "true_when_flowguard_result_can_be_accepted",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_pass_or_block_outcome",
+      "validator": "_flowguard_evidence_consistency_violation"
+    },
+    {
+      "field": "packet_result.flowguard_check.evidence_consistency.child_reports_all_passed",
+      "layer": "leaf",
+      "logical_field": "flowguard_evidence_consistency_child_reports_all_passed",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "boolean_hard_child_report_status",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "review_packet_release_only_when_true_for_pass",
+      "validator": "_flowguard_evidence_consistency_violation"
+    },
+    {
+      "field": "packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]",
+      "layer": "leaf",
+      "logical_field": "flowguard_evidence_consistency_blocking_child_reports",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "explicit_array_of_blocking_child_reports",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_block_or_reissue_before_reviewer",
+      "validator": "_flowguard_evidence_consistency_violation"
+    },
+    {
+      "field": "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
+      "layer": "leaf",
+      "logical_field": "flowguard_evidence_consistency_hard_evidence_decision",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "pass_only_when_child_hard_evidence_allows_pass",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "flowguard_pass_or_block_outcome",
+      "validator": "_flowguard_evidence_consistency_violation"
+    },
+    {
+      "field": "flowguard_work_order.decision",
+      "layer": "middle",
+      "logical_field": "flowguard_work_order_decision",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "derived_after_evidence_consistency_gate",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "matching_flowguard_report_for_review",
+      "validator": "_record_flowguard_from_packet_result"
+    },
+    {
+      "field": "review_packet.matching_flowguard_result_id",
+      "layer": "middle",
+      "logical_field": "review_packet_matching_flowguard_result_id",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "accepted_consistent_flowguard_pass_result_id",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "reviewer_quality_gate",
+      "validator": "_has_matching_flowguard_report"
     },
     {
       "field": "packet_result.flowguard_check.missing_test_kinds",
@@ -1036,6 +1096,24 @@
       "no_prose_authority": true,
       "no_reviewer_mechanical_field_check": true,
       "source": "role_output_contract.required_body_fields",
+      "terminal_disposition": "packet_result.status"
+    },
+    {
+      "chain_id": "flowguard_evidence_consistency_to_reviewer_handoff_chain",
+      "field_sequence": [
+        "packet_result.flowguard_check.evidence_consistency.self_check_passed",
+        "packet_result.flowguard_check.evidence_consistency.child_reports_all_passed",
+        "packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]",
+        "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
+        "packet_result.flowguard_check.passed",
+        "flowguard_work_order.decision",
+        "review_packet.matching_flowguard_result_id"
+      ],
+      "human_quality_gate": "_record_review_from_packet_result",
+      "mechanical_gate": "_flowguard_evidence_consistency_violation",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "child_flowguard_or_model_test_report.hard_status",
       "terminal_disposition": "packet_result.status"
     }
   ],
@@ -1901,7 +1979,8 @@
         "missing_test_kinds",
         "residual_blindspots",
         "background_artifact_completion",
-        "pm_suggestion_items"
+        "pm_suggestion_items",
+        "evidence_consistency.blocking_child_reports"
       ],
       "fake_ai_success_fields": [
         "pm_visible_summary",
@@ -1920,6 +1999,7 @@
         "residual_blindspots",
         "background_artifact_completion",
         "pm_suggestion_items",
+        "evidence_consistency",
         "contract_self_check"
       ],
       "family_id": "flowguard_check.node_prework_flowguard",
@@ -1937,7 +2017,12 @@
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "flowguard_check",
-      "required_child_fields": [],
+      "required_child_fields": [
+        "evidence_consistency.self_check_passed",
+        "evidence_consistency.child_reports_all_passed",
+        "evidence_consistency.blocking_child_reports",
+        "evidence_consistency.hard_evidence_decision"
+      ],
       "required_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
@@ -1955,6 +2040,7 @@
         "residual_blindspots",
         "background_artifact_completion",
         "pm_suggestion_items",
+        "evidence_consistency",
         "contract_self_check"
       ],
       "route_scope": "node_prework_flowguard",
@@ -1973,7 +2059,8 @@
         "missing_test_kinds",
         "residual_blindspots",
         "background_artifact_completion",
-        "pm_suggestion_items"
+        "pm_suggestion_items",
+        "evidence_consistency.blocking_child_reports"
       ],
       "fake_ai_success_fields": [
         "pm_visible_summary",
@@ -1992,6 +2079,7 @@
         "residual_blindspots",
         "background_artifact_completion",
         "pm_suggestion_items",
+        "evidence_consistency",
         "contract_self_check"
       ],
       "family_id": "flowguard_check.post_result",
@@ -2009,7 +2097,12 @@
       ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "flowguard_check",
-      "required_child_fields": [],
+      "required_child_fields": [
+        "evidence_consistency.self_check_passed",
+        "evidence_consistency.child_reports_all_passed",
+        "evidence_consistency.blocking_child_reports",
+        "evidence_consistency.hard_evidence_decision"
+      ],
       "required_fields": [
         "pm_visible_summary",
         "reviewed_by_role",
@@ -2027,6 +2120,7 @@
         "residual_blindspots",
         "background_artifact_completion",
         "pm_suggestion_items",
+        "evidence_consistency",
         "contract_self_check"
       ],
       "route_scope": "<subject_route_scope>",

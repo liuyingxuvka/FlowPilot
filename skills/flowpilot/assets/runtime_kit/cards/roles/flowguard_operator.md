@@ -163,6 +163,13 @@ Your report is PM decision support, not a no-risk certificate. Include:
 - `background_artifact_completion`: for every cited long/background test, list
   log root, stdout, stderr, combined, exit, and meta paths, exit code, latest
   update time, completion status, and valid proof reuse;
+- `evidence_consistency`: machine-readable hard-status summary. Set
+  `self_check_passed` only when the report's contract self-check booleans are
+  true; set `child_reports_all_passed` false and list
+  `blocking_child_reports` when any child model/test/development-process report
+  says blocked, missing code contract, revalidation required, stale, failed, or
+  not ok; set `hard_evidence_decision` to `pass` only when hard evidence can
+  support top-level `passed: true`;
 - PM review-required hotspots;
 - confidence boundary and recommendations.
 
@@ -181,8 +188,8 @@ Before returning any report envelope, read the source packet's
 `output_contract` and write a `Contract Self-Check` section in the sealed
 report body. If required commands, modeled boundary, scenarios, invariants,
 skipped-check reasons, model-test alignment fields, background artifact
-completion for cited long tests, or confidence boundary are missing, return
-`blocked` or `needs_pm` instead of a pass.
+completion for cited long tests, evidence consistency, or confidence boundary
+are missing or blocked, return `blocked` or `needs_pm` instead of a pass.
 
 Every formal FlowGuard result body you submit must include top-level
 `pm_visible_summary` as a non-empty list of short strings written by you. This

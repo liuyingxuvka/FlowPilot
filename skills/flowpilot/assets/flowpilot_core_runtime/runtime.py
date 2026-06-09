@@ -6352,6 +6352,119 @@ def _strict_packet_outcome_contract_violation(packet: Mapping[str, Any], result:
     return _contract_pass(packet)
 
 
+_FLOWGUARD_SELF_CHECK_TRUE_FIELDS = (
+    "all_required_fields_present",
+    "exact_field_names_used",
+    "empty_required_arrays_explicit",
+    "runtime_mechanical_validation_passed",
+)
+_FLOWGUARD_HARD_EVIDENCE_PASS_DECISIONS = {"pass", "passed", "ok", "clear", "clean"}
+_FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS = {
+    "block",
+    "blocked",
+    "fail",
+    "failed",
+    "failure",
+    "missing_code_contract",
+    "revalidation_required",
+    "not_ok",
+    "stale",
+}
+
+
+def _flowguard_evidence_consistency_violation(
+    packet: Mapping[str, Any],
+    result: Mapping[str, Any],
+) -> PacketResultContractCheck:
+    payload, contract_error = _json_payload_contract_check(packet, result)
+    if contract_error:
+        return contract_error
+    assert payload is not None
+    if payload.get("reviewed_by_role") != "flowguard_operator":
+        return _contract_block(
+            packet,
+            "FlowGuard result must be reviewed_by_role=flowguard_operator",
+            missing_required_fields=("reviewed_by_role",),
+        )
+    contract_self_check = payload.get("contract_self_check")
+    if not isinstance(contract_self_check, Mapping):
+        return _contract_block(
+            packet,
+            "FlowGuard result requires object contract_self_check",
+            missing_required_fields=("contract_self_check",),
+        )
+    failed_self_check_fields = tuple(
+        f"contract_self_check.{field}"
+        for field in _FLOWGUARD_SELF_CHECK_TRUE_FIELDS
+        if contract_self_check.get(field) is not True
+    )
+    if failed_self_check_fields:
+        return _contract_block(
+            packet,
+            "FlowGuard result self-check failed; mechanical report fields must be repaired before acceptance",
+            missing_required_fields=failed_self_check_fields,
+        )
+
+    consistency = payload.get("evidence_consistency")
+    if not isinstance(consistency, Mapping):
+        return _contract_block(
+            packet,
+            "FlowGuard result requires object evidence_consistency",
+            missing_required_fields=("evidence_consistency",),
+        )
+    if consistency.get("self_check_passed") is not True:
+        return _contract_block(
+            packet,
+            "FlowGuard evidence_consistency.self_check_passed must be true before acceptance",
+            missing_required_fields=("evidence_consistency.self_check_passed",),
+        )
+    child_reports_all_passed = consistency.get("child_reports_all_passed")
+    if not isinstance(child_reports_all_passed, bool):
+        return _contract_block(
+            packet,
+            "FlowGuard evidence_consistency.child_reports_all_passed must be a boolean",
+            missing_required_fields=("evidence_consistency.child_reports_all_passed",),
+        )
+    blocking_child_reports = consistency.get("blocking_child_reports")
+    if not isinstance(blocking_child_reports, list):
+        return _contract_block(
+            packet,
+            "FlowGuard evidence_consistency.blocking_child_reports must be an array",
+            missing_required_fields=("evidence_consistency.blocking_child_reports",),
+        )
+    hard_evidence_decision = _normalize_outcome_token(consistency.get("hard_evidence_decision"))
+    if not hard_evidence_decision:
+        return _contract_block(
+            packet,
+            "FlowGuard evidence_consistency.hard_evidence_decision is required",
+            missing_required_fields=("evidence_consistency.hard_evidence_decision",),
+        )
+
+    top_level_passed = payload.get("passed") is True
+    hard_evidence_blocks = (
+        hard_evidence_decision in _FLOWGUARD_HARD_EVIDENCE_BLOCK_DECISIONS
+        or not child_reports_all_passed
+        or bool(blocking_child_reports)
+    )
+    if top_level_passed and hard_evidence_blocks:
+        return _contract_block(
+            packet,
+            "FlowGuard result cannot pass while evidence_consistency reports blocked child evidence",
+            missing_required_fields=(
+                "evidence_consistency.child_reports_all_passed",
+                "evidence_consistency.blocking_child_reports",
+                "evidence_consistency.hard_evidence_decision",
+            ),
+        )
+    if top_level_passed and hard_evidence_decision not in _FLOWGUARD_HARD_EVIDENCE_PASS_DECISIONS:
+        return _contract_block(
+            packet,
+            "FlowGuard passed=true requires evidence_consistency.hard_evidence_decision=pass",
+            missing_required_fields=("evidence_consistency.hard_evidence_decision",),
+        )
+    return _contract_pass(packet)
+
+
 def _terminal_backward_replay_result_violation(packet: Mapping[str, Any], result: Mapping[str, Any]) -> PacketResultContractCheck:
     payload, contract_error = _json_payload_contract_check(packet, result)
     if contract_error:
@@ -6675,6 +6788,10 @@ def _current_result_submission_contract_violation(
     summary_violation = _pm_visible_summary_contract_violation(packet, result)
     if not summary_violation.ok:
         return summary_violation
+    if packet_kind == "flowguard_check":
+        consistency_violation = _flowguard_evidence_consistency_violation(packet, result)
+        if not consistency_violation.ok:
+            return consistency_violation
     if packet_kind == "task" and route_scope == "discovery":
         return _discovery_result_violation(packet, result)
     if packet_kind == "task" and route_scope == "skill_standard":

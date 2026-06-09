@@ -97,6 +97,7 @@ def run_fake_e2e(
     run_id: str | None = None,
     startup_text: str,
     inject_contract_faults: bool = False,
+    inject_consistency_faults: bool = False,
 ) -> dict[str, Any]:
     return fake_e2e.run_fake_e2e(
         root,
@@ -104,6 +105,7 @@ def run_fake_e2e(
         startup_text=startup_text,
         start_run=start_run,
         inject_contract_faults=inject_contract_faults,
+        inject_consistency_faults=inject_consistency_faults,
     )
 
 

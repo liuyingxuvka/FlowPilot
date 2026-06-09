@@ -79,6 +79,30 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         )
         self.assertEqual(report["findings"], [])
 
+    def test_packet_result_family_covers_flowguard_evidence_consistency_gate(self) -> None:
+        entries = alignment_runner.build_alignment_plan_entries()
+        packet_entry = next(entry for entry in entries if entry["family"] == "packet result family")
+        obligations = {item.obligation_id for item in packet_entry["plan"].obligations}
+        contracts = {item.code_contract_id: item for item in packet_entry["plan"].code_contracts}
+        evidence = {item.evidence_id: item for item in packet_entry["plan"].test_evidence}
+
+        obligation = "packet_result_family.flowguard_evidence_consistency_before_reviewer"
+        self.assertIn(obligation, obligations)
+        self.assertIn("packet_result_family.runtime.flowguard_evidence_consistency_gate", contracts)
+        self.assertIn("packet_result_family.runtime.flowguard_review_handoff", contracts)
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_blocked_child_evidence"].test_name,
+            "test_flowguard_packet_rejects_blocked_child_evidence_without_reviewer",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.negative.flowguard_failed_self_check"].test_name,
+            "test_flowguard_packet_rejects_failed_contract_self_check_without_reviewer",
+        )
+        self.assertEqual(
+            evidence["packet_result_family.replay.fake_e2e_flowguard_consistency_chaos"].test_name,
+            "test_fake_end_to_end_flowguard_consistency_chaos_reissues_and_finishes",
+        )
+
     def test_full_diagnostic_inventory_reports_current_gap_classes(self) -> None:
         report = alignment_runner.build_report()
         diagnostic = report["full_model_test_code_diagnostic"]
