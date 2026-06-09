@@ -85,7 +85,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `terminal/closure/resume` (closure): 3 obligations, 5 test evidence rows
 - `role/output contracts` (other): 3 obligations, 5 test evidence rows
 - `router loop/daemon` (route): 14 obligations, 31 test evidence rows
-- `repair transactions` (other): 6 obligations, 7 test evidence rows
+- `repair transactions` (other): 7 obligations, 8 test evidence rows
 - `test tiering/slow-test contracts` (other): 3 obligations, 5 test evidence rows
 - `meta/capability parents` (other): 3 obligations, 5 test evidence rows
 

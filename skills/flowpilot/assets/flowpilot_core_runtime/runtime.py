@@ -105,6 +105,7 @@ EVENT_FAMILY_BY_TYPE = {
     "terminal_backward_replay_accepted": "closure",
     "final_requirement_evidence_matrix_built": "closure",
     "pm_disposition_recorded": "route",
+    "semantic_blocker_superseded_by_route_mutation": "repair",
     "final_route_wide_gate_ledger_built": "closure",
     "source_generation_changed": "route",
     "contract_frozen": "route",
@@ -659,6 +660,14 @@ def create_route(ledger: dict[str, Any], summary: str, steps: list[str]) -> str:
             packet["old_route_disposition"] = "quarantined"
             if old_version is not None:
                 mutation["affected_packets"].append(packet["packet_id"])
+    if old_version is not None:
+        _supersede_repair_open_blockers_for_route_mutation(
+            ledger,
+            affected_packets=mutation["affected_packets"],
+            mutation_id=str(mutation["mutation_id"]),
+            disposition_id="",
+            replacement_node_id="",
+        )
 
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
     return route_id
@@ -3242,6 +3251,45 @@ def _mark_blocker_repair_packet_open(
     _retire_older_same_family_blockers(ledger, blocker)
 
 
+def _supersede_repair_open_blockers_for_route_mutation(
+    ledger: dict[str, Any],
+    *,
+    affected_packets: list[str],
+    mutation_id: str,
+    disposition_id: str,
+    replacement_node_id: str,
+) -> None:
+    affected = {str(packet_id) for packet_id in affected_packets if packet_id}
+    if not affected:
+        return
+    for blocker in ledger.setdefault("active_blockers", {}).values():
+        if not isinstance(blocker, dict):
+            continue
+        if blocker.get("status") != "repair_packet_open":
+            continue
+        repair_packet_id = str(blocker.get("repair_packet_id") or "")
+        if repair_packet_id not in affected:
+            continue
+        blocker["status"] = "superseded_by_route_mutation"
+        blocker["superseded_by_route_mutation_id"] = mutation_id
+        blocker["superseded_by_route_mutation_disposition_id"] = disposition_id
+        blocker["superseded_repair_packet_id"] = repair_packet_id
+        blocker["superseded_replacement_node_id"] = replacement_node_id
+        blocker["superseded_at"] = now_iso()
+        packet = ledger.get("packets", {}).get(repair_packet_id)
+        if isinstance(packet, dict) and packet.get("active_blocker_id") == blocker.get("blocker_id"):
+            packet["active_blocker_id"] = ""
+        _event(
+            ledger,
+            "semantic_blocker_superseded_by_route_mutation",
+            blocker_id=str(blocker.get("blocker_id") or ""),
+            repair_packet_id=repair_packet_id,
+            mutation_id=mutation_id,
+            disposition_id=disposition_id,
+            replacement_node_id=replacement_node_id,
+        )
+
+
 def _record_semantic_blocker(
     ledger: dict[str, Any],
     packet: Mapping[str, Any],
@@ -3922,6 +3970,7 @@ def _redesign_route_from_pm_decision(
         for node_id, node in ledger.get("route_nodes", {}).items()
         if isinstance(node, Mapping) and int(node.get("route_version") or 0) == old_version
     ]
+    affected_packets: list[str] = []
     for packet in ledger.get("packets", {}).values():
         if not isinstance(packet, dict):
             continue
@@ -3932,6 +3981,7 @@ def _redesign_route_from_pm_decision(
             continue
         packet["status"] = "quarantined_after_route_mutation"
         packet["old_route_disposition"] = "quarantined"
+        affected_packets.append(str(packet.get("packet_id") or ""))
     for node_id in old_node_ids:
         node = ledger.get("route_nodes", {}).get(node_id)
         if isinstance(node, dict):
@@ -4019,7 +4069,7 @@ def _redesign_route_from_pm_decision(
             "disposition_id": decision_id,
             "superseded_node_ids": old_node_ids,
             "replacement_node_id": first_node_id,
-            "affected_packets": [],
+            "affected_packets": affected_packets,
             "requires_replay_or_rebinding": True,
             "created_at": now_iso(),
         },
@@ -4027,6 +4077,13 @@ def _redesign_route_from_pm_decision(
         "updated_at": now_iso(),
     }
     ledger.setdefault("route_mutations", []).append(ledger["execution_frontier"]["pending_route_mutation"])
+    _supersede_repair_open_blockers_for_route_mutation(
+        ledger,
+        affected_packets=affected_packets,
+        mutation_id=str(ledger["execution_frontier"]["pending_route_mutation"]["mutation_id"]),
+        disposition_id=decision_id,
+        replacement_node_id=first_node_id,
+    )
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
     _event(ledger, "execution_frontier_updated", status=ledger["execution_frontier"]["status"], active_node_id=first_node_id)
     if first_node_id:
@@ -4293,6 +4350,13 @@ def _replace_route_node_for_repair(
         "created_at": now_iso(),
     }
     ledger.setdefault("route_mutations", []).append(mutation)
+    _supersede_repair_open_blockers_for_route_mutation(
+        ledger,
+        affected_packets=affected_packets,
+        mutation_id=str(mutation["mutation_id"]),
+        disposition_id=disposition_id,
+        replacement_node_id=replacement_id,
+    )
     ledger["execution_frontier"] = {
         "active_route_version": new_version,
         "active_node_id": replacement_id,

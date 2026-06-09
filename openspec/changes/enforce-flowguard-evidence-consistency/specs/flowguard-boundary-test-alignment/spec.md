@@ -28,3 +28,9 @@ evidence before claiming packet-result or Reviewer-handoff coverage.
   are current
 - **THEN** model-test alignment MUST NOT claim the FlowGuard evidence
   consistency miss is closed.
+
+#### Scenario: Repair-open blocker route mutation has runtime evidence
+- **WHEN** model-test alignment audits repair transaction coverage
+- **THEN** it MUST include an obligation and ordinary runtime test evidence for
+  route mutation disposing a repair-open blocker whose repair packet was
+  quarantined.

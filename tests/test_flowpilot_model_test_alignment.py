@@ -679,6 +679,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         self.assertIn("repair_transactions.material_rework_requires_fresh_producer", obligations)
         self.assertIn("repair_transactions.multiround_fake_ai_no_producer_recovery", obligations)
         self.assertIn("repair_transactions.pm_decision_flag_atomicity", obligations)
+        self.assertIn("repair_transactions.route_mutation_supersedes_open_repair_blocker", obligations)
         item = evidence["repair_transactions.negative.material_role_reissue_no_producer"]
         self.assertEqual(item.test_name, "test_pm_material_repair_rejects_role_reissue_without_fresh_packet_producer")
         self.assertEqual(item.path, "tests/router_runtime/material_modeling.py")
@@ -700,6 +701,12 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
             "test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
         )
         self.assertEqual(real_router_item.path, "tests/test_flowpilot_real_router_dry_run_rehearsal.py")
+        route_mutation_item = evidence["repair_transactions.edge.route_mutation_supersedes_repair_open_blocker"]
+        self.assertEqual(
+            route_mutation_item.test_name,
+            "test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet",
+        )
+        self.assertEqual(route_mutation_item.path, "tests/test_flowpilot_core_runtime.py")
 
     def test_main_writes_json_only_when_requested(self) -> None:
         with tempfile.TemporaryDirectory(prefix="flowpilot-alignment-runner-") as tmp_name:

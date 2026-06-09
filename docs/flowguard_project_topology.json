@@ -12735,7 +12735,7 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780995663.3262515,
+  "generated_at_epoch": 1780997288.6221633,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 11,
@@ -12921,12 +12921,13 @@
         "python simulations/run_flowpilot_repair_transaction_checks.py"
       ],
       "model_id": "repair_transactions",
-      "obligation_count": 6,
+      "obligation_count": 7,
       "ok": true,
-      "test_evidence_count": 7,
+      "test_evidence_count": 8,
       "test_paths": [
         "tests/router_runtime/control_blockers.py",
         "tests/router_runtime/material_modeling.py",
+        "tests/test_flowpilot_core_runtime.py",
         "tests/test_flowpilot_e2e_synthetic_chaos_replay.py",
         "tests/test_flowpilot_real_router_dry_run_rehearsal.py"
       ]
@@ -18596,7 +18597,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780859417807514900,
+      "mtime_ns": 1780996813702411500,
       "path": "simulations/flowpilot_blocker_repair_information_flow_results.json",
       "size": 9571
     },
@@ -19178,9 +19179,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780995500996062600,
+      "mtime_ns": 1780997146772246100,
       "path": "simulations/flowpilot_information_flow_alignment_results.json",
-      "size": 174249
+      "size": 174505
     },
     {
       "exists": true,
@@ -19280,9 +19281,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780995504816710400,
+      "mtime_ns": 1780996945190940300,
       "path": "simulations/flowpilot_model_test_alignment_results.json",
-      "size": 3272581
+      "size": 3284214
     },
     {
       "exists": true,
@@ -24068,9 +24069,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780994682650233200,
+      "mtime_ns": 1780996802154183600,
       "path": "tests/test_flowpilot_core_runtime.py",
-      "size": 121602
+      "size": 125037
     },
     {
       "exists": true,

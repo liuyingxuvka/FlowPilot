@@ -40520,6 +40520,23 @@
             "state_writes": [],
             "surface_type": "diagnostic_runtime_path_binding",
             "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "repair_transactions.route_mutation_supersedes_open_repair_blocker"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
           }
         ],
         "family_evidence": [],
@@ -40607,7 +40624,7 @@
           {
             "allow_shared_evidence": false,
             "allow_shared_implementation": false,
-            "description": "An empty delivered repair transaction falls back to the PM repair-decision wait instead of being counted as executable repair work.",
+            "description": "An empty delivered repair transaction returns to the PM repair-decision wait instead of being counted as executable repair work.",
             "error_paths": [],
             "exact_external_contract": false,
             "external_inputs": [],
@@ -40673,6 +40690,31 @@
             "required_test_kinds": [
               "happy_path",
               "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Route mutation that quarantines an open repair packet records a terminal disposition on the prior repair-open blocker instead of leaving it active for final closure.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker"
+            ],
+            "required_test_kinds": [
+              "edge_path"
             ],
             "requires_same_class_test_evidence": false,
             "risk_level": "high",
@@ -40943,6 +40985,49 @@
             "requires_gateway_binding": false,
             "sequence_index": 5,
             "state_case": "repair_transactions.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "repair_transactions.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.repair_transactions",
+            "child_model_id": "repair_transactions",
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker",
+            "exact": true,
+            "input_case": "repair_transactions.external_contract_input",
+            "leaf_model_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+            "metadata": {
+              "compared_flowguard_model": "repair_transactions",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+              "compared_flowguard_obligation": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+              "family": "repair transactions",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet -q",
+              "source_test_evidence_id": "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "repair_transactions",
+            "model_obligation_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+            "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+            "node_id": "repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.repair_transactions.06.repair_transactions_route_mutation_supersedes_open_repair_blocker"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 6,
+            "state_case": "repair_transactions.current_model_state"
           }
         ],
         "runtime_node_observations": [],
@@ -40959,7 +41044,8 @@
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.unsupported_event_replay_rejected run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.unsupported_event_replay_rejected obligation=repair_transactions.unsupported_event_replay_rejected code_contract=runtime_path.repair_transactions.repair_transactions_unsupported_event_replay_rejected boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.unsupported_event_replay_plan_kind progress=compares FlowPilot code/test evidence repair_transactions.negative.unsupported_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.unsupported_event_replay_rejected",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.empty_transaction_returns_to_pm_repair run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.empty_transaction_returns_to_pm_repair obligation=repair_transactions.empty_transaction_returns_to_pm_repair code_contract=runtime_path.repair_transactions.repair_transactions_empty_transaction_returns_to_pm_repair boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.empty_followup_wait_requires_pm_decision progress=compares FlowPilot code/test evidence repair_transactions.negative.empty_followup_wait_requires_pm_decision with FlowGuard model repair_transactions obligation repair_transactions.empty_transaction_returns_to_pm_repair",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.pm_decision_flag_atomicity run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.pm_decision_flag_atomicity obligation=repair_transactions.pm_decision_flag_atomicity code_contract=runtime_path.repair_transactions.repair_transactions_pm_decision_flag_atomicity boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.pm_decision_side_effect_atomicity progress=compares FlowPilot code/test evidence repair_transactions.edge.pm_decision_side_effect_atomicity with FlowGuard model repair_transactions obligation repair_transactions.pm_decision_flag_atomicity",
-                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery"
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery",
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.route_mutation_supersedes_open_repair_blocker obligation=repair_transactions.route_mutation_supersedes_open_repair_blocker code_contract=runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.route_mutation_supersedes_repair_open_blocker progress=compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker"
               ]
             },
             "observations": [
@@ -41214,6 +41300,48 @@
                 "run_id": "repair_transactions:runtime-path-current",
                 "sequence_index": 5,
                 "state_case": "repair_transactions.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.repair_transactions",
+                "child_model_id": "repair_transactions",
+                "code_contract_id": "runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker",
+                "evidence_current": true,
+                "evidence_id": "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker",
+                "gateway_id": "",
+                "input_case": "repair_transactions.external_contract_input",
+                "leaf_model_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                "metadata": {
+                  "compared_flowguard_model": "repair_transactions",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                  "compared_flowguard_obligation": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                  "family": "repair transactions",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet -q",
+                  "source_test_evidence_id": "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "repair_transactions",
+                "model_obligation_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                "node_id": "repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                "observation_id": "runtime_path.repair_transactions.06.repair_transactions_route_mutation_supersedes_open_repair_blocker",
+                "observed_error_path": "",
+                "observed_next_state": "repair_transactions.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "repair_transactions:runtime-path-current",
+                "sequence_index": 6,
+                "state_case": "repair_transactions.current_model_state"
               }
             ],
             "result_status": "passed",
@@ -41392,6 +41520,30 @@
             "stale_reasons": [],
             "test_kind": "negative_path",
             "test_name": "test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_core_runtime.py -k test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet -q",
+            "covered_code_contracts": [
+              "runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker"
+            ],
+            "covered_obligations": [
+              "repair_transactions.route_mutation_supersedes_open_repair_blocker"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet"
           }
         ]
       },
@@ -41452,6 +41604,13 @@
             "model_obligation_id": "repair_transactions.multiround_fake_ai_no_producer_recovery",
             "status": "locked",
             "test_evidence_id": "repair_transactions.real_router.producer_proof_recovery"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -41461,18 +41620,19 @@
         "summary": "OK: model=repair_transactions decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 6,
+        "progress_line_count": 7,
         "progress_lines": [
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.executable_plan_required run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.executable_plan_required obligation=repair_transactions.executable_plan_required code_contract=runtime_path.repair_transactions.repair_transactions_executable_plan_required boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.happy.material_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.happy.material_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.executable_plan_required",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.material_rework_requires_fresh_producer run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.material_rework_requires_fresh_producer obligation=repair_transactions.material_rework_requires_fresh_producer code_contract=runtime_path.repair_transactions.repair_transactions_material_rework_requires_fresh_producer boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.material_role_reissue_no_producer progress=compares FlowPilot code/test evidence repair_transactions.negative.material_role_reissue_no_producer with FlowGuard model repair_transactions obligation repair_transactions.material_rework_requires_fresh_producer",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.unsupported_event_replay_rejected run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.unsupported_event_replay_rejected obligation=repair_transactions.unsupported_event_replay_rejected code_contract=runtime_path.repair_transactions.repair_transactions_unsupported_event_replay_rejected boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.unsupported_event_replay_plan_kind progress=compares FlowPilot code/test evidence repair_transactions.negative.unsupported_event_replay_plan_kind with FlowGuard model repair_transactions obligation repair_transactions.unsupported_event_replay_rejected",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.empty_transaction_returns_to_pm_repair run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.empty_transaction_returns_to_pm_repair obligation=repair_transactions.empty_transaction_returns_to_pm_repair code_contract=runtime_path.repair_transactions.repair_transactions_empty_transaction_returns_to_pm_repair boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.empty_followup_wait_requires_pm_decision progress=compares FlowPilot code/test evidence repair_transactions.negative.empty_followup_wait_requires_pm_decision with FlowGuard model repair_transactions obligation repair_transactions.empty_transaction_returns_to_pm_repair",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.pm_decision_flag_atomicity run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.pm_decision_flag_atomicity obligation=repair_transactions.pm_decision_flag_atomicity code_contract=runtime_path.repair_transactions.repair_transactions_pm_decision_flag_atomicity boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.pm_decision_side_effect_atomicity progress=compares FlowPilot code/test evidence repair_transactions.edge.pm_decision_side_effect_atomicity with FlowGuard model repair_transactions obligation repair_transactions.pm_decision_flag_atomicity",
-          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery"
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery",
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.route_mutation_supersedes_open_repair_blocker obligation=repair_transactions.route_mutation_supersedes_open_repair_blocker code_contract=runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.route_mutation_supersedes_repair_open_blocker progress=compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker"
         ],
         "required": true,
-        "runtime_node_contract_count": 6,
-        "runtime_observation_count": 6,
+        "runtime_node_contract_count": 7,
+        "runtime_observation_count": 7,
         "runtime_path_run_count": 1
       }
     },

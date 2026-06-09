@@ -34,3 +34,19 @@ evidence status MUST agree.
 - **THEN** runtime MUST use the current packet/result block or reissue path
 - **AND** runtime MUST NOT translate the result through old decision/summary
   formats or other compatibility fallback.
+
+### Requirement: Route mutation dispositions superseded repair-open blockers
+FlowPilot SHALL give any repair-open blocker a terminal route-mutation
+disposition when its open repair packet is quarantined by a current route
+mutation.
+
+#### Scenario: Route mutation quarantines open repair packet
+- **WHEN** a current route mutation quarantines a packet referenced by
+  `active_blockers[].repair_packet_id`
+- **AND** the blocker status is `repair_packet_open`
+- **THEN** runtime MUST set the blocker status to
+  `superseded_by_route_mutation`
+- **AND** runtime MUST record the route mutation id, disposition id when
+  available, replacement node id when available, and superseded repair packet id
+- **AND** final return preflight MUST NOT treat that blocker as an active
+  current-target blocker.

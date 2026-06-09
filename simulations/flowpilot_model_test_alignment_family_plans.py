@@ -1026,7 +1026,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             _obligation(
                 "repair_transactions.empty_transaction_returns_to_pm_repair",
                 obligation_type="contract",
-                description="An empty delivered repair transaction falls back to the PM repair-decision wait instead of being counted as executable repair work.",
+                description="An empty delivered repair transaction returns to the PM repair-decision wait instead of being counted as executable repair work.",
                 required_test_kinds=(NEGATIVE,),
             ),
             _obligation(
@@ -1040,6 +1040,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 obligation_type="scenario",
                 description="Prepared fake AI replay rejects a no-producer PM repair and then accepts a corrected packet reissue with current producer evidence.",
                 required_test_kinds=(HAPPY, NEGATIVE),
+            ),
+            _obligation(
+                "repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                obligation_type="hazard",
+                description="Route mutation that quarantines an open repair packet records a terminal disposition on the prior repair-open blocker instead of leaving it active for final closure.",
+                required_test_kinds=(EDGE,),
             ),
         ),
         test_evidence=(
@@ -1101,6 +1107,14 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 command="python -m unittest tests.test_flowpilot_real_router_dry_run_rehearsal.FlowPilotRealRouterDryRunRehearsalTests.test_real_router_repair_rehearsal_rejects_no_producer_then_accepts_packet_reissue",
                 test_kind=NEGATIVE,
                 covers=("repair_transactions.multiround_fake_ai_no_producer_recovery",),
+            ),
+            _evidence(
+                "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker",
+                test_name="test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet",
+                path="tests/test_flowpilot_core_runtime.py",
+                command="python -m pytest tests/test_flowpilot_core_runtime.py -k test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet -q",
+                test_kind=EDGE,
+                covers=("repair_transactions.route_mutation_supersedes_open_repair_blocker",),
             ),
         ),
     )

@@ -72,6 +72,12 @@ The ownership split remains unchanged:
    Additional synthetic cases should cover failed self-check, missing/unreadable
    child report, and old generic decision output.
 
+6. **Route mutation owns superseded repair-open blocker disposition.** When a
+   route mutation quarantines an open repair packet, the mutation path records
+   the prior repair-open blocker as `superseded_by_route_mutation`. Final
+   closure does not infer or repair this later; it consumes the explicit current
+   route-mutation disposition.
+
 ## Risks / Trade-offs
 
 - **Risk: over-adding fields.** Mitigation: require one compact derived status

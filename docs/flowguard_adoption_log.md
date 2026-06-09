@@ -20259,6 +20259,63 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-route-mutation-repair-blocker-disposition-20260609 - Route mutation repair blocker disposition
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: active FlowPilot runs exposed a stale `repair_packet_open` blocker whose repair packet had already been quarantined by a current route mutation; no fallback or legacy compatibility path was allowed.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: predictive_kb_preflight + openspec_apply_change + flowguard_model_miss_review + flowguard_model_test_alignment + flowguard_development_process_flow
+- Recorded: 2026-06-09T09:36:23Z
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `simulations/flowpilot_blocker_repair_information_flow_results.json`
+- `simulations/flowpilot_information_flow_alignment_results.json`
+- `simulations/flowpilot_model_test_alignment_results.json`
+- `docs/flowguard_project_topology.json`
+
+### Commands
+- `python -m pytest tests/test_flowpilot_core_runtime.py -q` - passed, 75 tests and 35 subtests.
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json` - passed, 144 traces.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - passed.
+- `python -m pytest tests/test_flowpilot_model_test_alignment.py -q` - passed, 19 tests and 423 subtests.
+- `openspec validate enforce-flowguard-evidence-consistency --strict` - passed.
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` - schema 1.0.
+- `python -m flowguard project-audit --root .` - passed with package 0.42.0.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py --json-out simulations/flowpilot_information_flow_alignment_results.json` - passed.
+- `python -m pytest tests/test_flowpilot_core_runtime.py tests/test_flowpilot_new_entrypoint.py tests/test_flowpilot_high_standard_control_flow.py tests/test_flowpilot_information_flow_alignment.py tests/test_flowpilot_model_test_alignment.py tests/test_flowpilot_field_contract_model.py -q` - passed, 173 tests and 472 subtests.
+- `python scripts/flowguard_project_topology.py build` and `python scripts/flowguard_project_topology.py check` - passed after sequential rerun.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - passed.
+- `python scripts/audit_local_install_sync.py --json` - passed.
+- `python scripts/check_install.py --json` - passed.
+- `git diff --check` - passed; CRLF warnings only.
+
+### Findings
+- Route mutation now records `semantic_blocker_superseded_by_route_mutation` and gives current `repair_packet_open` blockers a terminal `superseded_by_route_mutation` disposition when their repair packet is quarantined.
+- The repaired path has one owner and one commit point: the current route mutation that quarantines the packet.
+- FlowGuard model-test alignment now has explicit obligation and pytest evidence for `route_mutation_supersedes_open_repair_blocker`.
+- The active Xuanzhi run's stale blocker was reconciled through the new current-contract disposition, and ProjectRadar was advanced to its next current FlowGuard packet dispatch.
+
+### Counterexamples
+- `superseded_repair_blocker_left_open`
+- `route_mutation_quarantines_repair_packet_but_final_preflight_still_targets_old_blocker`
+
+### Friction Points
+- A parallel topology check raced the topology build timestamp once; rerunning the check after build passed.
+- The live run status layout uses `.flowpilot/current.json` and `ledger.json`, not a top-level `state.json`.
+- Active live runs can progress while validation is happening; final status needs to be re-read after dispatch or reconciliation.
+
+### Skipped Steps
+- No legacy alias, fallback translator, old-router path, heartbeat path, six-role compatibility route, release, tag, deploy, or remote push was performed.
+
+### Risk Evidence Summary
+- Evidence supports local runtime repair, FlowGuard/OpenSpec model updates, current-contract live-run reconciliation, install synchronization, and local git commit readiness. It does not claim remote GitHub push or public release publication.
+
+### Next Actions
+- Create the local Git commit for this repair and report both active FlowPilot runs' current wait states.
+
+
 ## flowpilot-current-contract-terminal-replay-and-fake-ai-coverage-20260608
 
 - Project: FlowGuardProjectAutopilot_20260430

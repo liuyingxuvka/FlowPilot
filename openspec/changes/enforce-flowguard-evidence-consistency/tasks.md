@@ -11,6 +11,7 @@
 - [x] 2.2 Reject `flowguard_check` results whose top-level `passed` conflicts with contract self-check booleans.
 - [x] 2.3 Reject `flowguard_check` results whose top-level `passed` conflicts with machine-readable blocked child evidence status.
 - [x] 2.4 Ensure rejected inconsistent FlowGuard results do not record a passed work order or issue a Reviewer packet.
+- [x] 2.5 Ensure route mutation that quarantines an open repair packet records a terminal disposition on the prior repair-open blocker.
 
 ## 3. Regression Coverage
 
@@ -18,6 +19,7 @@
 - [x] 3.2 Add fake AI chaos coverage for current-shaped contradictory FlowGuard results.
 - [x] 3.3 Add synthetic or historical replay coverage for the observed blocked-child-report failure family.
 - [x] 3.4 Preserve old-shape rejection tests and no-fallback negative coverage.
+- [x] 3.5 Add runtime and model-test-alignment coverage for superseded repair-open blockers after route mutation.
 
 ## 4. Validation And Active-Run Recovery
 

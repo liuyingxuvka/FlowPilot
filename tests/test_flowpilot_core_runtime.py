@@ -1185,6 +1185,86 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             preflight["blockers"],
         )
 
+    def test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        route_version = ledger["active_route_version"]
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "route_version": route_version,
+            "title": "Node One",
+            "status": "running",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+            "child_node_ids": [],
+        }
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Repair node work",
+            "NODE_PACKET",
+            route_node_id="node-1",
+            route_scope="node",
+            repair_blocker_id="blocker-old-repair",
+        )
+        blocker_id = "blocker-old-repair"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "repair_packet_open",
+            "outcome_id": "outcome-old-repair",
+            "packet_id": packet_id,
+            "packet_kind": "task",
+            "subject_packet_id": packet_id,
+            "repair_target_packet_id": packet_id,
+            "repair_packet_id": packet_id,
+            "target_result_id": "",
+            "result_id": "",
+            "owner_role": "worker",
+            "required_recheck_role": "worker",
+            "gate_kind": "task",
+            "blocker_class": "local_artifact",
+            "recommended_resolution": "repair",
+            "route_version": route_version,
+            "route_node_id": "node-1",
+            "route_scope": "node",
+            "repair_generation": 0,
+            "stale_evidence_ids": [],
+            "created_at": runtime.now_iso(),
+            "pm_repair_packet_id": "",
+            "pm_repair_decision_id": "pm_repair_decision-new",
+            "cleared_by_outcome_id": "",
+        }
+        ledger["packets"][packet_id]["active_blocker_id"] = blocker_id
+
+        replacement_id = runtime._replace_route_node_for_repair(
+            ledger,
+            "node-1",
+            disposition_id="pm_repair_decision-new",
+            reason="Replace stale repair route.",
+        )
+        preflight = runtime.final_return_preflight(ledger)
+
+        blocker = ledger["active_blockers"][blocker_id]
+        mutation = ledger["route_mutations"][-1]
+        self.assertEqual(ledger["packets"][packet_id]["status"], "quarantined_after_route_mutation")
+        self.assertEqual(ledger["packets"][packet_id]["active_blocker_id"], "")
+        self.assertEqual(blocker["status"], "superseded_by_route_mutation")
+        self.assertEqual(blocker["superseded_repair_packet_id"], packet_id)
+        self.assertEqual(blocker["superseded_by_route_mutation_id"], mutation["mutation_id"])
+        self.assertEqual(blocker["superseded_by_route_mutation_disposition_id"], "pm_repair_decision-new")
+        self.assertEqual(blocker["superseded_replacement_node_id"], replacement_id)
+        self.assertFalse(
+            [
+                item
+                for item in preflight["blockers"]
+                if item.startswith(f"active_blocker_current_target:{blocker_id}:")
+            ],
+            preflight["blockers"],
+        )
+
     def test_foreground_recovery_missing_packet_responsibility_hard_blocks(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         runtime.create_route(ledger, "Route", ["Do work"])

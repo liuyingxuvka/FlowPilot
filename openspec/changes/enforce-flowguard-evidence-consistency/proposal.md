@@ -18,6 +18,8 @@ operator or Reviewer boundary, so scoped green tests gave false confidence.
   order decision, and Reviewer handoff.
 - Extend fake AI and historical/synthetic replay tests with current-shaped
   contradictory FlowGuard results that must fail before Reviewer dispatch.
+- Dispose repair-open blockers when route mutation quarantines their repair
+  packets, and bind that repair transaction hazard to runtime evidence.
 - Keep old generic decision/summary, fallback prose, and compatibility paths
   rejected; this change introduces no legacy acceptance path.
 
