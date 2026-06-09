@@ -42,6 +42,11 @@ FIELD_LIFECYCLE_STATES = {
     "pm_decision_owned": "PM-owned disposition or repair decision field.",
     "reviewer_quality_owned": "Reviewer-owned semantic quality field.",
     "flowguard_process_owned": "FlowGuard-operator-owned process/model/state field.",
+    "terminal_monotonic": "Runtime-owned state field whose terminal values cannot be reactivated by later input.",
+    "append_only_audit": "Runtime-owned history field that may append audit evidence without changing current authority.",
+    "single_authority_pointer": "Runtime-owned pointer field with one writer and one commit point.",
+    "pending_until_commit": "Runtime-owned pending field that must clear or terminally dispose after commit/block.",
+    "derived_projection": "Display or summary field derived from an authority predicate, not independently authoritative.",
     "retired": "Removed from current runtime and manifest surfaces.",
     "forbidden_legacy": "Old field, event, output type, or card that current runtime must reject.",
 }

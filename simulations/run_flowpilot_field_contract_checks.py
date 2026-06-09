@@ -206,6 +206,7 @@ def _source_alignment_report() -> dict[str, object]:
     high_standard_test_path = REPO_ROOT / "tests" / "test_flowpilot_high_standard_control_flow.py"
     fake_project_test_path = REPO_ROOT / "tests" / "test_flowpilot_fake_project_rehearsal.py"
     new_entrypoint_test_path = REPO_ROOT / "tests" / "test_flowpilot_new_entrypoint.py"
+    lifecycle_guard_test_path = REPO_ROOT / "tests" / "test_flowpilot_lifecycle_guard.py"
     fake_e2e_path = REPO_ROOT / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py"
     fake_cli_path = REPO_ROOT / "simulations" / "flowpilot_fake_project_rehearsal_cli.py"
     contract_index_path = (
@@ -229,6 +230,8 @@ def _source_alignment_report() -> dict[str, object]:
         + fake_project_test_path.read_text(encoding="utf-8")
         + "\n"
         + new_entrypoint_test_path.read_text(encoding="utf-8")
+        + "\n"
+        + lifecycle_guard_test_path.read_text(encoding="utf-8")
     )
     fake_text = fake_e2e_path.read_text(encoding="utf-8") + "\n" + fake_cli_path.read_text(encoding="utf-8")
 
@@ -275,6 +278,14 @@ def _source_alignment_report() -> dict[str, object]:
             "test_staged_effect_same_family_rejects_different_formal_blocker_identity",
             "test_flowguard_packet_rejects_generic_decision_summary_result",
             "test_review_packet_rejects_generic_decision_summary_result",
+            "test_late_result_preserves_noncurrent_packet_statuses",
+            "test_fake_host_late_result_appends_audit_without_reactivation",
+            "test_duplicate_after_accepted_preserves_accepted_result_pointer",
+            "test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure",
+            "test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+            "test_closure_accepted_evidence_projection_excludes_superseded_node_packets",
+            "test_final_preflight_blocks_stale_active_accepted_packet_lease",
+            "test_pending_route_mutation_clears_after_replacement_node_acceptance",
         )
         if name not in test_text
     ]
@@ -384,7 +395,13 @@ def _source_alignment_report() -> dict[str, object]:
         ),
         "runtime_path": runtime_path.as_posix(),
         "contract_module_path": contract_module_path.as_posix(),
-        "test_paths": [core_test_path.as_posix(), high_standard_test_path.as_posix()],
+        "test_paths": [
+            core_test_path.as_posix(),
+            high_standard_test_path.as_posix(),
+            fake_project_test_path.as_posix(),
+            new_entrypoint_test_path.as_posix(),
+            lifecycle_guard_test_path.as_posix(),
+        ],
         "fake_paths": [fake_e2e_path.as_posix(), fake_cli_path.as_posix()],
         "packet_result_contract_count": model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT,
         "missing_validators": missing_validators,

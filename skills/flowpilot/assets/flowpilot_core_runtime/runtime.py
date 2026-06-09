@@ -2914,6 +2914,44 @@ def _packet_requires_current_acceptance(ledger: Mapping[str, Any], packet: Mappi
     return True
 
 
+def _current_packets_for_routing(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [
+        packet
+        for packet in ledger.get("packets", {}).values()
+        if isinstance(packet, Mapping) and not _packet_is_noncurrent_for_routing(ledger, packet)
+    ]
+
+
+def _accepted_result_packets_for_active_route(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    active_route = ledger.get("active_route_version")
+    if active_route is None:
+        return []
+    accepted_result_packets: list[Mapping[str, Any]] = []
+    for packet in ledger.get("packets", {}).values():
+        if not isinstance(packet, Mapping):
+            continue
+        if not packet.get("accepted_result_id"):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if envelope.get("route_version") != active_route:
+            continue
+        route_node_id = _packet_route_node_id(packet)
+        if route_node_id:
+            node = ledger.get("route_nodes", {}).get(route_node_id)
+            if not isinstance(node, Mapping) or node.get("status") not in {"accepted", "waived"}:
+                continue
+        accepted_result_packets.append(packet)
+    return accepted_result_packets
+
+
+def _accepted_packets_for_closure_evidence(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
+    return [
+        packet
+        for packet in _accepted_result_packets_for_active_route(ledger)
+        if packet.get("status") == "accepted"
+    ]
+
+
 def _coerce_nonnegative_int(value: Any) -> int:
     try:
         coerced = int(value)
@@ -4203,6 +4241,7 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
             break
     frontier["active_node_id"] = next_node
     frontier["status"] = "node_execution" if next_node else "ready_for_final_closure"
+    _retire_pending_route_mutation_after_frontier_commit(ledger, frontier, node_id)
     frontier["updated_at"] = now_iso()
     ledger["execution_frontier"] = frontier
     _event(ledger, "execution_frontier_updated", status=frontier["status"], active_node_id=next_node)
@@ -4214,6 +4253,31 @@ def _advance_frontier_after_node_acceptance(ledger: dict[str, Any], node_id: str
     else:
         build_final_route_wide_gate_ledger(ledger)
         attempt_final_closure(ledger, str(ledger.get("latest_validation_evidence_id") or "route-wide-validation"))
+
+
+def _retire_pending_route_mutation_after_frontier_commit(
+    ledger: dict[str, Any],
+    frontier: dict[str, Any],
+    committed_node_id: str,
+) -> None:
+    pending = frontier.get("pending_route_mutation")
+    if not isinstance(pending, dict):
+        return
+    replacement_node_id = str(pending.get("replacement_node_id") or pending.get("candidate_node_id") or "")
+    if replacement_node_id and replacement_node_id != committed_node_id:
+        return
+    mutation_id = str(pending.get("mutation_id") or "")
+    terminal = {
+        **pending,
+        "status": "committed",
+        "committed_node_id": committed_node_id,
+        "committed_at": now_iso(),
+    }
+    for row in ledger.get("route_mutations", []):
+        if isinstance(row, dict) and str(row.get("mutation_id") or "") == mutation_id:
+            row.update(terminal)
+            break
+    frontier["pending_route_mutation"] = None
 
 
 def _frontier_update(ledger: dict[str, Any], node_id: str, status: str, blocked_reason: str) -> None:
@@ -5823,7 +5887,7 @@ def open_result_body_for_role(
         raise BlackBoxRuntimeError("lease responsibility does not match packet")
     if not lease.get("ack_received"):
         raise BlackBoxRuntimeError("lease must ACK before opening sealed result body")
-    if packet.get("accepted_result_id") or packet.get("status") in {"accepted", "quarantined_after_route_mutation"}:
+    if packet.get("accepted_result_id") or _packet_is_noncurrent_for_routing(ledger, packet):
         raise BlackBoxRuntimeError("accepted or stale packet cannot open result body")
     authorized = None
     responsibility = str(lease.get("responsibility") or "")
@@ -5897,7 +5961,7 @@ def open_authorized_input_materials_for_role(
         raise BlackBoxRuntimeError("lease responsibility does not match packet")
     if not lease.get("ack_received"):
         raise BlackBoxRuntimeError("lease must ACK before opening authorized input materials")
-    if packet.get("accepted_result_id") or packet.get("status") in {"accepted", "quarantined_after_route_mutation"}:
+    if packet.get("accepted_result_id") or _packet_is_noncurrent_for_routing(ledger, packet):
         raise BlackBoxRuntimeError("accepted or stale packet cannot open authorized input materials")
     responsibility = str(lease.get("responsibility") or "")
     materials: list[dict[str, Any]] = []
@@ -6073,7 +6137,11 @@ def submit_result(
     ledger["results"][result_id] = result
     result["quarantined"] = bool(set(blockers).intersection(_STALE_RESULT_BLOCKERS))
     packet["result_ids"].append(result_id)
-    if not blockers:
+    packet_status = str(packet.get("status") or "")
+    if packet_status in _NONCURRENT_PACKET_STATUSES:
+        if packet_status == "quarantined_after_route_mutation" or "quarantined_packet" in blockers:
+            packet["latest_quarantined_result_id"] = result_id
+    elif not blockers:
         packet["status"] = "result_submitted"
     elif packet.get("status") == "quarantined_after_route_mutation" or "quarantined_packet" in blockers:
         packet["status"] = "quarantined_after_route_mutation"
@@ -7667,7 +7735,7 @@ def _find_packet(
             continue
         if target_result_id and envelope.get("target_result_id", "") != target_result_id:
             continue
-        if packet.get("status") in {"quarantined_after_route_mutation", "superseded_after_repair"}:
+        if _packet_is_noncurrent_for_routing(ledger, packet):
             continue
         if reusable_statuses is not None and packet.get("status") not in reusable_statuses:
             continue
@@ -8055,6 +8123,8 @@ def _result_mechanical_blockers(
         blockers.append("wrong_lease_for_packet")
     if packet.get("status") == "quarantined_after_route_mutation":
         blockers.append("quarantined_packet")
+    elif packet.get("status") in _NONCURRENT_PACKET_STATUSES:
+        blockers.append("noncurrent_packet")
     if packet["envelope"]["route_version"] != ledger.get("active_route_version"):
         blockers.append("stale_route_version")
     if output_type != packet["envelope"]["required_output_type"] or not valid_shape:
@@ -9089,11 +9159,7 @@ def _accepted_packet_repair_needed(ledger: Mapping[str, Any], packet: Mapping[st
 
 def accepted_packet_lease_health(ledger: Mapping[str, Any]) -> dict[str, Any]:
     findings: list[dict[str, Any]] = []
-    for packet in ledger.get("packets", {}).values():
-        if not isinstance(packet, Mapping) or not packet.get("accepted_result_id"):
-            continue
-        if packet.get("status") in {"quarantined_after_route_mutation", "superseded_after_repair"}:
-            continue
+    for packet in _accepted_result_packets_for_active_route(ledger):
         details = _accepted_packet_repair_details(ledger, packet)
         active_lease_ids = _active_packet_lease_ids(ledger, str(packet.get("packet_id") or ""))
         original_lease_id = str(details.get("original_lease_id") or "")
@@ -9836,13 +9902,8 @@ def _closure_blockers(
     if active_route is None:
         blockers.append("missing_active_route")
 
-    active_packets = [
-        packet
-        for packet in ledger.get("packets", {}).values()
-        if packet["envelope"]["route_version"] == active_route
-        and packet.get("status") not in {"quarantined_after_route_mutation", "superseded_after_repair"}
-    ]
-    accepted_packets = [packet for packet in active_packets if packet.get("accepted_result_id")]
+    active_packets = [] if active_route is None else _current_packets_for_routing(ledger)
+    accepted_packets = _accepted_packets_for_closure_evidence(ledger)
     if not accepted_packets:
         blockers.append("missing_accepted_packet_result")
     for packet in active_packets:
@@ -9941,11 +10002,7 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
         return RuntimeAction("wait_for_resume", "PM stopped a semantic blocker for user decision", blocker_id)
 
     active_route = ledger["active_route_version"]
-    active_packets = [
-        packet
-        for packet in ledger.get("packets", {}).values()
-        if packet["envelope"]["route_version"] == active_route and not _packet_is_noncurrent_for_routing(ledger, packet)
-    ]
+    active_packets = _current_packets_for_routing(ledger)
     for finding in accepted_packet_lease_health(ledger).get("findings", []):
         if isinstance(finding, Mapping) and finding.get("packet_id"):
             return RuntimeAction(
@@ -10067,7 +10124,7 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     for blocker in _active_semantic_blockers(ledger):
         packet_id = str(blocker.get("pm_repair_packet_id") or "")
         packet = ledger.get("packets", {}).get(packet_id)
-        if not isinstance(packet, Mapping) or packet.get("status") in {"accepted", "quarantined_after_route_mutation"}:
+        if not isinstance(packet, Mapping) or _packet_is_noncurrent_for_routing(ledger, packet):
             return RuntimeAction(
                 "issue_pm_repair_decision_packet",
                 "semantic blocker requires PM repair decision",
@@ -10341,10 +10398,14 @@ def render_compact_console(ledger: Mapping[str, Any]) -> dict[str, Any]:
     packets = list(full.get("packets", []))
     leases = list(full.get("leases", []))
     active_leases = [lease for lease in leases if isinstance(lease, Mapping) and lease.get("status") == "active"]
+    active_packet_ids = {
+        str(packet.get("packet_id") or "")
+        for packet in _current_packets_for_routing(ledger)
+    }
     active_packets = [
         packet
         for packet in packets
-        if isinstance(packet, Mapping) and packet.get("status") not in {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
+        if isinstance(packet, Mapping) and str(packet.get("packet_id") or "") in active_packet_ids
     ]
     foreground = full.get("foreground_duty") if isinstance(full.get("foreground_duty"), Mapping) else {}
     compact_foreground = {

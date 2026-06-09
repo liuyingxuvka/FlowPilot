@@ -20259,6 +20259,79 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-field-lifecycle-currentness-projection-20260609 - FlowPilot field lifecycle currentness projection hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user required strict current FlowPilot maintenance with no compatibility/fallback surfaces after live and fake-agent evidence showed field inventory without consumer-specific currentness projection bindings.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: predictive KB preflight + OpenSpec apply change + FlowGuard FieldLifecycleMesh + Model-Test Alignment + DevelopmentProcessFlow
+- Recorded: 2026-06-09T13:26:49Z
+- FlowGuard package/schema: 0.42.0 / 1.0
+
+### Model Files
+- `simulations/flowpilot_field_mesh_model.py`
+- `simulations/flowpilot_field_contract_model.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `simulations/run_flowpilot_field_contract_checks.py`
+- `docs/flowguard_project_topology.json`
+- `simulations/meta_thin_parent_results.json`
+- `simulations/capability_thin_parent_results.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `tests/test_flowpilot_core_runtime.py`
+- `tests/test_flowpilot_lifecycle_guard.py`
+- `tests/test_flowpilot_field_contract_model.py`
+- `openspec/changes/harden-field-lifecycle-currentness`
+
+### Findings
+- FieldLifecycleMesh now includes transition lifecycle states for terminal monotonic fields, append-only audit history, single-authority pointers, pending-until-commit fields, and derived projections.
+- Field contracts now bind packet/result/frontier currentness fields plus `active_packets`, `accepted_result_packets`, and `closure_accepted_packets` to concrete runtime validators.
+- Runtime separates router-current packets from accepted-result health and final-closure accepted-evidence projections, so closure and lease health no longer share a hidden broad active-list assumption.
+- Late results append audit evidence without reactivating accepted, quarantined, superseded, or otherwise noncurrent packets.
+- Pending route mutation state is terminally disposed after matching frontier commit.
+
+### Counterexamples Closed
+- Late result reactivates an accepted, quarantined, or superseded packet.
+- Derived active-packet projection includes noncurrent route-node or stale-route-version packets.
+- Final closure treats router-current projection as accepted evidence.
+- Accepted-result health skips a regressed accepted packet.
+- Pending route mutation remains current after frontier commit.
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"` -> OK, schema `1.0`
+- `python -c "import importlib.metadata as m; print(m.version('flowguard'))"` -> OK, package `0.42.0`
+- `python -m flowguard project-audit --root .` -> OK
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out tmp/model_test_alignment_currentness_test.json` -> OK
+- `python -m unittest tests.test_flowpilot_core_runtime tests.test_flowpilot_lifecycle_guard tests.test_flowpilot_field_contract_model` -> OK, 112 tests
+- `python simulations/run_flowpilot_lifecycle_guard_checks.py --json-out tmp/lifecycle_guard_currentness_test.json` -> OK
+- `python simulations/run_flowpilot_field_mesh_checks.py --json-out tmp/field_mesh_currentness_test.json` -> OK
+- `python simulations/run_flowpilot_field_contract_checks.py --json-out tmp/field_contract_currentness_test.json` -> OK
+- `python simulations/run_flowpilot_fake_project_rehearsal_checks.py --json-out tmp/fake_project_rehearsal_currentness_test.json` -> OK
+- `python simulations/run_meta_checks.py` -> OK, logged under `tmp/flowguard_background/run_meta_checks.*`
+- `python simulations/run_capability_checks.py` -> OK, logged under `tmp/flowguard_background/run_capability_checks.*`
+- `python scripts/flowguard_project_topology.py build` -> OK
+- `python scripts/flowguard_project_topology.py check` -> OK
+- `openspec validate harden-field-lifecycle-currentness --strict` -> OK
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` -> OK
+- `python scripts/audit_local_install_sync.py --json` -> OK
+- `python scripts/install_flowpilot.py --check --json` -> OK
+- `python scripts/check_install.py` -> OK
+- `git diff --check` -> OK, CRLF warnings only
+
+### Friction Points
+- The prior field model covered field names and validators but did not force each consumer projection to bind to its own authority. This repair makes `active_packets`, `accepted_result_packets`, and `closure_accepted_packets` separate current-contract derived views.
+- A pure routing projection would hide accepted-lease health regressions, so accepted-result health now uses an active-route accepted-result projection instead of the router-current work queue.
+- Generated thin-parent result artifacts changed only timestamps; topology changed generated time plus source file sizes and mtimes after rebuild.
+
+### Skipped Steps
+- No legacy alias, old field translator, wrapper normalization, heartbeat path, six-role compatibility path, fallback parser, public old-router wrapper, release, tag, deploy, or remote push was performed.
+
+### Risk Evidence Summary
+- Evidence supports local current-contract runtime/model/test/install synchronization for the field currentness family.
+- This record does not claim remote GitHub publication, public release tagging, or live-run recovery beyond this codebase validation.
+
+
 ## flowpilot-route-mutation-repair-blocker-disposition-20260609 - Route mutation repair blocker disposition
 
 - Project: FlowGuardProjectAutopilot_20260430

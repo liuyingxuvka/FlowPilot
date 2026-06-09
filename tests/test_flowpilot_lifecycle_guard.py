@@ -586,6 +586,189 @@ class FlowPilotLifecycleGuardTests(unittest.TestCase):
         self.assertIn("quarantined_packet", result["mechanical_blockers"])
         self.assertIn("stale_route_version", result["mechanical_blockers"])
 
+    def test_late_result_preserves_noncurrent_packet_statuses(self) -> None:
+        for terminal_status in ("accepted", "quarantined_after_route_mutation", "superseded_after_repair"):
+            with self.subTest(terminal_status=terminal_status):
+                ledger = runtime.new_ledger("Build", "Finish")
+                ledger["startup_intake"] = {
+                    "sealed": True,
+                    "startup_answers": {
+                        runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+                    },
+                }
+                runtime.create_route(ledger, "route", ["one"])
+                packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
+                lease_id = host.lease_responsibility(
+                    ledger,
+                    "worker",
+                    host_kind="fake",
+                    agent_id="fake-worker",
+                    packet_id=packet_id,
+                    scope="test",
+                )
+                runtime.assign_packet(ledger, packet_id, lease_id)
+                runtime.ack_lease(ledger, lease_id, packet_id)
+                packet = ledger["packets"][packet_id]
+                packet["status"] = terminal_status
+                if terminal_status == "accepted":
+                    ledger["results"]["result-existing"] = {
+                        "result_id": "result-existing",
+                        "packet_id": packet_id,
+                        "producer_lease_id": lease_id,
+                        "status": "accepted",
+                        "accepted": True,
+                    }
+                    packet["accepted_result_id"] = "result-existing"
+
+                before_result_ids = list(packet["result_ids"])
+                result_id = host.submit_host_result(
+                    ledger,
+                    lease_id,
+                    packet_id,
+                    role_result_body(f"late {terminal_status}"),
+                )
+                result = ledger["results"][result_id]
+
+                self.assertEqual(packet["status"], terminal_status)
+                self.assertEqual(packet["result_ids"], before_result_ids + [result_id])
+                self.assertTrue(result["non_authoritative"])
+                if terminal_status == "quarantined_after_route_mutation":
+                    self.assertIn("quarantined_packet", result["mechanical_blockers"])
+                    self.assertEqual(packet["latest_quarantined_result_id"], result_id)
+                else:
+                    self.assertIn("noncurrent_packet", result["mechanical_blockers"])
+
+    def test_fake_host_late_result_appends_audit_without_reactivation(self) -> None:
+        ledger = runtime.new_ledger("Build", "Finish")
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
+        runtime.create_route(ledger, "route", ["one"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
+        lease_id = host.lease_responsibility(
+            ledger,
+            "worker",
+            host_kind="fake",
+            agent_id="fake-worker",
+            packet_id=packet_id,
+            scope="test",
+        )
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        packet = ledger["packets"][packet_id]
+        packet["status"] = "superseded_after_repair"
+
+        result_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("late fake host"))
+
+        self.assertEqual(packet["status"], "superseded_after_repair")
+        self.assertEqual(packet["result_ids"], [result_id])
+        self.assertEqual(ledger["results"][result_id]["status"], "blocked")
+        self.assertIn("noncurrent_packet", ledger["results"][result_id]["mechanical_blockers"])
+
+    def test_current_result_history_appends_on_open_packet(self) -> None:
+        ledger = runtime.new_ledger("Build", "Finish")
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
+        runtime.create_route(ledger, "route", ["one"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
+        lease_id = host.lease_responsibility(
+            ledger,
+            "worker",
+            host_kind="fake",
+            agent_id="fake-worker",
+            packet_id=packet_id,
+            scope="test",
+        )
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("current"))
+
+        packet = ledger["packets"][packet_id]
+        self.assertEqual(packet["result_ids"], [result_id])
+        self.assertEqual(packet["status"], "result_submitted")
+        self.assertFalse(ledger["results"][result_id]["non_authoritative"])
+
+    def test_accept_packet_result_writes_single_pointer_on_current_commit(self) -> None:
+        ledger = runtime.new_ledger("Build", "Finish")
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
+        runtime.create_route(ledger, "route", ["one"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
+        lease_id = host.lease_responsibility(
+            ledger,
+            "worker",
+            host_kind="fake",
+            agent_id="fake-worker",
+            packet_id=packet_id,
+            scope="test",
+        )
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        packet = ledger["packets"][packet_id]
+        result = {
+            "result_id": "result-current-commit",
+            "packet_id": packet_id,
+            "producer_lease_id": lease_id,
+            "status": "mechanically_valid",
+            "accepted": False,
+        }
+        ledger["results"][result["result_id"]] = result
+        packet["result_ids"].append(result["result_id"])
+
+        runtime._accept_packet_result(ledger, packet, result, ledger["leases"][lease_id], reason="unit_accept")
+
+        self.assertEqual(packet["status"], "accepted")
+        self.assertEqual(packet["accepted_result_id"], result["result_id"])
+        self.assertEqual(result["status"], "accepted")
+        self.assertTrue(result["accepted"])
+
+    def test_duplicate_after_accepted_preserves_accepted_result_pointer(self) -> None:
+        ledger = runtime.new_ledger("Build", "Finish")
+        ledger["startup_intake"] = {
+            "sealed": True,
+            "startup_answers": {
+                runtime.BACKGROUND_COLLABORATION_ACK_FIELD: True,
+            },
+        }
+        runtime.create_route(ledger, "route", ["one"])
+        packet_id = runtime.issue_task_packet(ledger, "worker", "Do work", "sealed body")
+        lease_id = host.lease_responsibility(
+            ledger,
+            "worker",
+            host_kind="fake",
+            agent_id="fake-worker",
+            packet_id=packet_id,
+            scope="test",
+        )
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        first_result_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("first"))
+        packet = ledger["packets"][packet_id]
+        packet["status"] = "accepted"
+        packet["accepted_result_id"] = first_result_id
+        ledger["results"][first_result_id]["status"] = "accepted"
+        ledger["results"][first_result_id]["accepted"] = True
+
+        duplicate_id = host.submit_host_result(ledger, lease_id, packet_id, role_result_body("duplicate"))
+
+        self.assertEqual(packet["status"], "accepted")
+        self.assertEqual(packet["accepted_result_id"], first_result_id)
+        self.assertIn(duplicate_id, packet["result_ids"])
+        self.assertIn("duplicate_after_packet_accepted", ledger["results"][duplicate_id]["mechanical_blockers"])
+        self.assertIn("noncurrent_packet", ledger["results"][duplicate_id]["mechanical_blockers"])
+
     def test_flowguard_lifecycle_model_is_green_and_catches_hazards(self) -> None:
         result = lifecycle_runner.run_checks()
         self.assertTrue(result["ok"], result)

@@ -12735,7 +12735,7 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1780997288.6221633,
+  "generated_at_epoch": 1781011449.534524,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 11,
@@ -18561,7 +18561,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780855004844763700,
+      "mtime_ns": 1781011432681051600,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20666
     },
@@ -19095,9 +19095,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780994844858567600,
+      "mtime_ns": 1781010923681070200,
       "path": "simulations/flowpilot_field_contract_model.py",
-      "size": 68622
+      "size": 75033
     },
     {
       "exists": true,
@@ -19107,9 +19107,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780766075469457800,
+      "mtime_ns": 1781008318617883700,
       "path": "simulations/flowpilot_field_mesh_model.py",
-      "size": 8102
+      "size": 8682
     },
     {
       "exists": true,
@@ -20181,7 +20181,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780862636386449300,
+      "mtime_ns": 1781011432745558000,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26210
     },
@@ -20517,9 +20517,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780994881842808300,
+      "mtime_ns": 1781010997891247600,
       "path": "simulations/run_flowpilot_field_contract_checks.py",
-      "size": 20721
+      "size": 21730
     },
     {
       "exists": true,
@@ -24069,9 +24069,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1780996802154183600,
+      "mtime_ns": 1781010683520010800,
       "path": "tests/test_flowpilot_core_runtime.py",
-      "size": 125037
+      "size": 132699
     },
     {
       "exists": true,

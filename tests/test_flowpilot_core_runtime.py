@@ -581,6 +581,161 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertNotIn("SEALED_RESULT_BODY", rendered)
         self.assertIn("body_free", compact["body_policy"])
 
+    def test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        ledger["route_nodes"]["node-001"] = {"node_id": "node-001", "status": "accepted"}
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Do work",
+            "SEALED_TASK_BODY",
+            route_node_id="node-001",
+            route_scope="node",
+        )
+        ledger["packets"][packet_id]["status"] = "result_blocked"
+        runtime.record_validation_evidence(ledger, "unit-validation")
+
+        self.assertTrue(runtime._packet_is_noncurrent_for_routing(ledger, ledger["packets"][packet_id]))
+        compact = runtime.render_compact_console(ledger)
+        closure = runtime.attempt_final_closure(ledger, "unit-validation")
+
+        self.assertNotIn(packet_id, {packet["packet_id"] for packet in compact["active_packets"]})
+        self.assertNotIn(f"packet_not_accepted:{packet_id}", closure["blockers"])
+
+    def test_closure_accepted_evidence_projection_keeps_accepted_node_packets(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        ledger["route_nodes"]["node-001"] = {"node_id": "node-001", "status": "active", "packet_ids": []}
+        ledger["execution_frontier"] = {
+            "active_node_id": "node-001",
+            "status": "node_active",
+            "route_version": ledger["active_route_version"],
+            "pending_route_mutation": None,
+        }
+        runtime_runner._mark_node_ready_for_final_closure(ledger, "node-001")
+        validation_id = ledger["latest_validation_evidence_id"]
+
+        self.assertEqual(runtime._current_packets_for_routing(ledger), [])
+        accepted_packets = runtime._accepted_packets_for_closure_evidence(ledger)
+        closure = runtime.attempt_final_closure(ledger, validation_id)
+
+        self.assertEqual([packet["packet_id"] for packet in accepted_packets], ledger["route_nodes"]["node-001"]["packet_ids"])
+        self.assertNotIn("missing_accepted_packet_result", closure["blockers"])
+        self.assertEqual(closure["decision"], "complete")
+
+    def test_closure_accepted_evidence_projection_excludes_superseded_node_packets(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        ledger["route_nodes"]["node-001"] = {"node_id": "node-001", "status": "active", "packet_ids": []}
+        ledger["execution_frontier"] = {
+            "active_node_id": "node-001",
+            "status": "node_active",
+            "route_version": ledger["active_route_version"],
+            "pending_route_mutation": None,
+        }
+        runtime_runner._mark_node_ready_for_final_closure(ledger, "node-001")
+        validation_id = ledger["latest_validation_evidence_id"]
+        ledger["route_nodes"]["node-001"]["status"] = "superseded"
+
+        accepted_packets = runtime._accepted_packets_for_closure_evidence(ledger)
+        closure = runtime.attempt_final_closure(ledger, validation_id)
+
+        self.assertEqual(accepted_packets, [])
+        self.assertIn("missing_accepted_packet_result", closure["blockers"])
+
+    def test_quarantined_packet_projection_replay_uses_currentness_predicate(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        runtime.create_route(ledger, "Replacement route", ["Replacement node"])
+
+        result_id = runtime.submit_result(ledger, worker, packet_id, role_result_body("Late result"))
+        runtime.record_validation_evidence(ledger, "unit-validation")
+        compact = runtime.render_compact_console(ledger)
+        closure = runtime.attempt_final_closure(ledger, "unit-validation")
+
+        self.assertEqual(ledger["packets"][packet_id]["status"], "quarantined_after_route_mutation")
+        self.assertEqual(ledger["packets"][packet_id]["latest_quarantined_result_id"], result_id)
+        self.assertNotIn(packet_id, {packet["packet_id"] for packet in compact["active_packets"]})
+        self.assertNotIn(f"packet_not_accepted:{packet_id}", closure["blockers"])
+
+    def test_pending_route_mutation_clears_after_replacement_node_acceptance(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        mutation = {
+            "mutation_id": "mutation-001",
+            "old_route_version": 1,
+            "new_route_version": 2,
+            "replacement_node_id": "node-001",
+            "created_at": runtime.now_iso(),
+        }
+        ledger["active_route_version"] = 2
+        ledger["routes"]["2"] = {
+            "route_version": 2,
+            "route_id": "route-v2",
+            "status": "active",
+            "node_order": ["node-001", "node-002"],
+        }
+        ledger["route_nodes"] = {
+            "node-001": {"node_id": "node-001", "status": "accepted"},
+            "node-002": {"node_id": "node-002", "status": "running"},
+        }
+        ledger["execution_frontier"] = {
+            "active_route_version": 2,
+            "active_node_id": "node-001",
+            "completed_nodes": [],
+            "status": "node_execution",
+            "pending_route_mutation": dict(mutation),
+            "updated_at": runtime.now_iso(),
+        }
+        ledger["route_mutations"] = [dict(mutation)]
+
+        runtime._advance_frontier_after_node_acceptance(ledger, "node-001")
+
+        self.assertIsNone(ledger["execution_frontier"]["pending_route_mutation"])
+        self.assertEqual(ledger["route_mutations"][0]["status"], "committed")
+        self.assertEqual(ledger["route_mutations"][0]["committed_node_id"], "node-001")
+        self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-002")
+
+    def test_unmatched_pending_route_mutation_survives_unrelated_node_acceptance(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        mutation = {
+            "mutation_id": "mutation-001",
+            "old_route_version": 1,
+            "new_route_version": 2,
+            "replacement_node_id": "node-replacement",
+            "created_at": runtime.now_iso(),
+        }
+        ledger["active_route_version"] = 2
+        ledger["routes"]["2"] = {
+            "route_version": 2,
+            "route_id": "route-v2",
+            "status": "active",
+            "node_order": ["node-001", "node-002", "node-replacement"],
+        }
+        ledger["route_nodes"] = {
+            "node-001": {"node_id": "node-001", "status": "accepted"},
+            "node-002": {"node_id": "node-002", "status": "running"},
+            "node-replacement": {"node_id": "node-replacement", "status": "running"},
+        }
+        ledger["execution_frontier"] = {
+            "active_route_version": 2,
+            "active_node_id": "node-001",
+            "completed_nodes": [],
+            "status": "node_execution",
+            "pending_route_mutation": dict(mutation),
+            "updated_at": runtime.now_iso(),
+        }
+        ledger["route_mutations"] = [dict(mutation)]
+
+        runtime._advance_frontier_after_node_acceptance(ledger, "node-001")
+
+        self.assertEqual(ledger["execution_frontier"]["pending_route_mutation"]["mutation_id"], "mutation-001")
+        self.assertNotIn("status", ledger["route_mutations"][0])
+        self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-002")
+
     def test_recover_or_reissue_payload_names_concrete_command(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
         runtime.ack_lease(ledger, worker, packet_id)

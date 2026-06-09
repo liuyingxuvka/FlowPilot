@@ -100,7 +100,10 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("packet_result.flowguard_check.evidence_consistency.blocking_child_reports[]", fields)
         self.assertIn("packet_result.flowguard_check.evidence_consistency.hard_evidence_decision", fields)
         self.assertIn("flowguard_work_order.decision", fields)
-        self.assertIn("review_packet.matching_flowguard_result_id", fields)
+        self.assertIn("flowguard_evidence_manifest.entries[].flowguard_result_id", fields)
+        self.assertIn("active_packets", fields)
+        self.assertIn("accepted_result_packets", fields)
+        self.assertIn("closure_accepted_packets", fields)
         self.assertIn("flowguard_evidence_consistency_hard_evidence_decision", logical_fields)
         self.assertIn("current_packet_id", logical_fields)
         self.assertIn("repair_blocker_id", logical_fields)
@@ -169,6 +172,21 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
                 "review_packet.repair_blocker_id",
             ),
         )
+
+    def test_field_lifecycle_chains_separate_routing_and_closure_packet_projections(self) -> None:
+        chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}
+
+        routing_chain = chains["derived_active_packet_projection_chain"]
+        closure_chain = chains["derived_closure_accepted_packet_projection_chain"]
+
+        self.assertIn("_current_packets_for_routing", routing_chain["field_sequence"])
+        self.assertIn("render_compact_console.active_packets", routing_chain["field_sequence"])
+        self.assertNotIn("attempt_final_closure.active_packets", routing_chain["field_sequence"])
+        self.assertEqual(closure_chain["mechanical_gate"], "_accepted_packets_for_closure_evidence")
+        self.assertIn("_accepted_result_packets_for_active_route", closure_chain["field_sequence"])
+        self.assertIn("_accepted_packets_for_closure_evidence", closure_chain["field_sequence"])
+        self.assertIn("accepted_packet_lease_health.accepted_result_packets", closure_chain["field_sequence"])
+        self.assertIn("attempt_final_closure.accepted_packets", closure_chain["field_sequence"])
 
     def test_field_status_catalog_marks_retired_and_forbidden_legacy(self) -> None:
         self.assertEqual(
@@ -252,7 +270,7 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
             chain["field_sequence"],
         )
-        self.assertIn("review_packet.matching_flowguard_result_id", chain["field_sequence"])
+        self.assertIn("flowguard_evidence_manifest.entries[].flowguard_result_id", chain["field_sequence"])
 
     def test_field_contract_model_blocks_old_field_translation_and_fixed_role_gates(self) -> None:
         hazards = runner._check_hazards()
