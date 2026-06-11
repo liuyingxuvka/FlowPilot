@@ -927,6 +927,58 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
+    def test_node_acceptance_plan_review_packet_marks_plan_stage_boundary(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "title": "Node One",
+            "status": "pending",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+        }
+        packet_id = runtime.ensure_node_acceptance_plan_packet(ledger, "node-1")
+        lease_id = runtime.lease_agent(ledger, "pm", agent_id="pm-node", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+        package = copy.deepcopy(
+            packet_result_contracts.minimal_valid_shape_for_family("task.node_acceptance_plan")["node_context_package"]
+        )
+        package.update(
+            {
+                "node_id": "node-1",
+                "purpose": "Provide current starting context.",
+                "acceptance_criteria": ["criterion"],
+                "relevant_references": ["reference"],
+                "evidence_targets": ["evidence"],
+                "inspection_targets": ["inspection"],
+                "known_risks": ["risk"],
+                "flowguard_targets": ["development_process"],
+                "reviewer_starting_points": ["review start"],
+            }
+        )
+
+        runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps({"node_context_package": package, "decision": "pass"}),
+        )
+
+        review_packets = [
+            packet for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "review"
+            and packet["envelope"]["subject_id"] == packet_id
+        ]
+        self.assertEqual(len(review_packets), 1)
+        review_body = json.loads(review_packets[0]["body"])
+        self.assertIn("plan-stage review", review_body["instruction"])
+        self.assertIn("Do not block solely because Worker artifacts", review_body["instruction"])
+        self.assertIn("post-result FlowGuard evidence", review_body["instruction"])
+        self.assertFalse(review_body["flowguard_evidence_manifest"]["matching_flowguard_result_reads_required"])
+        self.assertEqual(review_body["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
+
     def _assert_staged_effect_same_family_rejects_different_formal_blocker_identity(self) -> None:
         record: dict[str, object] = {}
 

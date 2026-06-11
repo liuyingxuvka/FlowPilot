@@ -97,7 +97,11 @@ When the review packet is an ordinary `node_acceptance_plan` pass branch and
 the runtime says matching FlowGuard reads are not required, do not invent a
 pre-worker FlowGuard requirement. Review the PM node plan, node context,
 acceptance criteria, decomposition depth, test obligations, and evidence
-projection directly.
+projection directly. This is a plan-stage review, so do not block solely
+because Worker artifacts, per-output artifact payloads, post-result FlowGuard
+evidence, or fresh Worker-result checker output do not exist yet. Those are
+result-stage requirements unless PM claims they already exist as evidence for
+the plan.
 
 When the review packet carries `structural_pm_flowguard_acceptance_gate`,
 verify that PM actually absorbed the current FlowGuard result before asking

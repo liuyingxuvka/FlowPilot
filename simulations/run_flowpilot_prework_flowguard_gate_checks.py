@@ -61,8 +61,12 @@ HAZARD_EXPECTED_FAILURES = {
     "worker_before_node_plan_reviewer": "worker packet issued before ordinary node plan Reviewer pass",
     "worker_context_missing": "worker packet missing PM node context package",
     "worker_replans_broad_leaf": "Worker replanned a broad leaf instead of PM route deepening",
+    "node_plan_reviewer_demands_worker_artifacts": "Node plan Reviewer required Worker artifacts before Worker dispatch",
+    "node_plan_reviewer_treats_plan_as_result_proof": "Node plan Reviewer treated PM plan as Worker-result proof",
     "post_result_flowguard_skipped": "Reviewer packet issued before post-result FlowGuard pass",
     "reviewer_not_independent": "Reviewer pass was not independent",
+    "final_reviewer_without_artifacts": "Worker result Reviewer passed without current Worker artifacts",
+    "final_reviewer_accepts_without_worker_artifacts": "Worker result Reviewer accepted without current Worker artifacts",
 }
 
 
@@ -72,9 +76,11 @@ def _state_id(state: model.State) -> str:
         f"{state.flowguard_generation},{state.pm_absorption_generation}|"
         f"decision={state.node_plan_decision}|"
         f"ordinary={state.node_context_package_accepted},"
+        f"{state.node_plan_reviewer_used_plan_stage_standard},"
         f"{state.node_plan_reviewer_passed},{state.worker_packet_issued},"
         f"{state.post_result_flowguard_passed},{state.final_reviewer_passed},"
-        f"{state.node_completed}|"
+        f"{state.final_reviewer_used_result_stage_standard},"
+        f"{state.final_reviewer_inspected_worker_artifacts},{state.node_completed}|"
         f"route={state.route_plan_staged},"
         f"{state.route_redesign_flowguard_packet_issued},"
         f"{state.flowguard_current_subject_bound},"
@@ -205,19 +211,30 @@ def _check_hazards() -> dict[str, object]:
 
 def _model_test_alignment_report() -> dict[str, object]:
     repo_root = Path(__file__).resolve().parents[1]
+    model_text = (repo_root / "simulations" / "flowpilot_prework_flowguard_gate_model.py").read_text(encoding="utf-8")
     runtime_text = (repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py").read_text(encoding="utf-8")
     test_text = (repo_root / "tests" / "test_flowpilot_high_standard_control_flow.py").read_text(encoding="utf-8")
+    core_test_text = (repo_root / "tests" / "test_flowpilot_core_runtime.py").read_text(encoding="utf-8")
     fake_text = (repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py").read_text(encoding="utf-8")
     prompt_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "flowguard_operator.md").read_text(encoding="utf-8").lower()
+    reviewer_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "human_like_reviewer.md").read_text(encoding="utf-8").lower()
+    node_review_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "reviewer" / "node_acceptance_plan_review.md").read_text(encoding="utf-8").lower()
     obligations = {
+        "node_plan_stage_model": "node_plan_reviewer_used_plan_stage_standard" in model_text,
+        "result_stage_model": "final_reviewer_used_result_stage_standard" in model_text,
         "pm_flowguard_acceptance_packet": "pm_flowguard_acceptance" in runtime_text,
         "structural_gate_status": "awaiting_pm_flowguard_acceptance" in runtime_text,
         "ordinary_node_no_prework": "test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard" in test_text,
+        "node_plan_reviewer_stage_runtime_test": "test_node_acceptance_plan_review_packet_marks_plan_stage_boundary" in core_test_text,
+        "worker_result_reviewer_stage_runtime_test": "test_worker_result_review_packet_marks_result_stage_boundary" in test_text,
         "flowguard_block_test": "test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation" in test_text,
         "pm_absorption_test": "test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer" in test_text,
         "pm_rewrite_test": "test_pm_flowguard_acceptance_rewrite_restarts_flowguard_cycle" in test_text,
         "optional_branch_rejection_test": "test_pm_flowguard_acceptance_rejects_optional_decisions" in test_text,
         "fake_ai_pm_acceptance": "pm_flowguard_acceptance.pm_flowguard_acceptance" in fake_text,
+        "fake_ai_node_plan_stage_language": "plan-stage review" in fake_text,
+        "reviewer_core_plan_stage_boundary": "plan-stage review" in reviewer_text,
+        "reviewer_node_plan_no_worker_artifacts": "do not block solely because worker artifacts" in node_review_text,
         "flowguard_subject_prompt": "current subject simulation boundary" in prompt_text,
         "route_simulation_prompt": "work dispatch" in prompt_text and "validation/check path" in prompt_text,
         "unsupported_old_prework_rejection": "node_prework_flowguard is no longer a supported current FlowPilot path" in runtime_text,
@@ -232,7 +249,10 @@ def _model_test_alignment_report() -> dict[str, object]:
             "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
             "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
             "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
+            "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
+            "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
             "tests/test_flowpilot_high_standard_control_flow.py",
+            "tests/test_flowpilot_core_runtime.py",
         ],
     }
 

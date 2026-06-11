@@ -40,6 +40,14 @@ route mutation only when the current route or node boundary cannot contain the
 required work; include why the current node cannot contain the repair.
 
 Review the PM node acceptance plan before any worker packet is registered.
+This is a plan-stage review: decide whether PM's node plan is concrete,
+bounded, decomposed deeply enough, and ready to release a Worker packet. Do
+not block solely because Worker artifacts, per-output artifact payloads,
+post-result FlowGuard evidence, or fresh Worker-result checker output do not
+exist yet. Those are result-stage requirements unless PM claims they already
+exist as evidence for the plan.
+Do not block solely because worker artifacts are absent at this plan-stage
+review.
 
 Runtime owns mechanical validation for field names, top-level package shape,
 packet kind, route scope, hashes, current-run identity, and the small

@@ -44,6 +44,9 @@ class State:
 
     node_context_package_accepted: bool = False
     node_plan_reviewer_packet_issued: bool = False
+    node_plan_reviewer_used_plan_stage_standard: bool = False
+    node_plan_reviewer_required_worker_artifacts: bool = False
+    node_plan_reviewer_treated_plan_as_result_proof: bool = False
     node_plan_reviewer_passed: bool = False
     worker_packet_issued: bool = False
     worker_context_attached: bool = False
@@ -52,6 +55,8 @@ class State:
     post_result_flowguard_passed: bool = False
     final_reviewer_packet_issued: bool = False
     final_reviewer_independent: bool = False
+    final_reviewer_used_result_stage_standard: bool = False
+    final_reviewer_inspected_worker_artifacts: bool = False
     final_reviewer_passed: bool = False
     node_completed: bool = False
 
@@ -77,6 +82,7 @@ class State:
     reviewer_before_pm_absorption: bool = False
     worker_started_before_node_plan_review: bool = False
     worker_replanned_broad_leaf: bool = False
+    final_reviewer_accepted_without_worker_artifacts: bool = False
 
 
 class Transition(NamedTuple):
@@ -177,7 +183,16 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         if not state.node_plan_reviewer_packet_issued:
             return (Transition("runtime_issues_node_plan_reviewer", replace(state, node_plan_reviewer_packet_issued=True)),)
         if not state.node_plan_reviewer_passed:
-            return (Transition("reviewer_passes_node_plan", replace(state, node_plan_reviewer_passed=True)),)
+            return (
+                Transition(
+                    "reviewer_passes_node_plan",
+                    replace(
+                        state,
+                        node_plan_reviewer_used_plan_stage_standard=True,
+                        node_plan_reviewer_passed=True,
+                    ),
+                ),
+            )
         if not state.worker_packet_issued:
             return (
                 Transition(
@@ -197,7 +212,13 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
             return (
                 Transition(
                     "reviewer_passes_independently",
-                    replace(state, final_reviewer_independent=True, final_reviewer_passed=True),
+                    replace(
+                        state,
+                        final_reviewer_independent=True,
+                        final_reviewer_used_result_stage_standard=True,
+                        final_reviewer_inspected_worker_artifacts=True,
+                        final_reviewer_passed=True,
+                    ),
                 ),
             )
         if not state.node_completed:
@@ -291,6 +312,12 @@ def invariant_failures(state: State) -> list[str]:
         failures.append("worker packet issued before ordinary node plan Reviewer pass")
     if state.worker_replanned_broad_leaf:
         failures.append("Worker replanned a broad leaf instead of PM route deepening")
+    if state.node_plan_reviewer_required_worker_artifacts:
+        failures.append("Node plan Reviewer required Worker artifacts before Worker dispatch")
+    if state.node_plan_reviewer_treated_plan_as_result_proof:
+        failures.append("Node plan Reviewer treated PM plan as Worker-result proof")
+    if state.final_reviewer_accepted_without_worker_artifacts:
+        failures.append("Worker result Reviewer accepted without current Worker artifacts")
 
     if state.node_plan_decision == "pass":
         if state.worker_packet_issued and not state.node_plan_reviewer_passed:
@@ -299,6 +326,8 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("worker packet issued without PM node context package")
         if state.worker_packet_issued and not state.worker_context_attached:
             failures.append("worker packet missing PM node context package")
+        if state.node_plan_reviewer_passed and not state.node_plan_reviewer_used_plan_stage_standard:
+            failures.append("node plan Reviewer passed without plan-stage review standard")
         if state.worker_result_submitted and not state.worker_packet_issued:
             failures.append("worker result submitted before worker packet")
         if state.post_result_flowguard_issued and not state.worker_result_submitted:
@@ -311,6 +340,10 @@ def invariant_failures(state: State) -> list[str]:
             failures.append("Reviewer passed before Reviewer packet")
         if state.final_reviewer_passed and not state.final_reviewer_independent:
             failures.append("Reviewer pass was not independent")
+        if state.final_reviewer_passed and not state.final_reviewer_used_result_stage_standard:
+            failures.append("Worker result Reviewer passed without result-stage review standard")
+        if state.final_reviewer_passed and not state.final_reviewer_inspected_worker_artifacts:
+            failures.append("Worker result Reviewer passed without current Worker artifacts")
         if state.node_completed and not state.final_reviewer_passed:
             failures.append("node completed before independent Reviewer pass")
 
@@ -411,6 +444,7 @@ def ordinary_node_success_state() -> State:
         node_plan_decision="pass",
         node_context_package_accepted=True,
         node_plan_reviewer_packet_issued=True,
+        node_plan_reviewer_used_plan_stage_standard=True,
         node_plan_reviewer_passed=True,
         worker_packet_issued=True,
         worker_context_attached=True,
@@ -419,6 +453,8 @@ def ordinary_node_success_state() -> State:
         post_result_flowguard_passed=True,
         final_reviewer_packet_issued=True,
         final_reviewer_independent=True,
+        final_reviewer_used_result_stage_standard=True,
+        final_reviewer_inspected_worker_artifacts=True,
         final_reviewer_passed=True,
         node_completed=True,
     )
@@ -441,6 +477,22 @@ def hazard_states() -> dict[str, State]:
         "worker_before_node_plan_reviewer": replace(ordinary_base, worker_started_before_node_plan_review=True),
         "worker_context_missing": replace(ordinary_base, worker_context_attached=False),
         "worker_replans_broad_leaf": replace(ordinary_base, worker_replanned_broad_leaf=True),
+        "node_plan_reviewer_demands_worker_artifacts": replace(
+            ordinary_base,
+            node_plan_reviewer_required_worker_artifacts=True,
+        ),
+        "node_plan_reviewer_treats_plan_as_result_proof": replace(
+            ordinary_base,
+            node_plan_reviewer_treated_plan_as_result_proof=True,
+        ),
         "post_result_flowguard_skipped": replace(ordinary_base, post_result_flowguard_passed=False),
         "reviewer_not_independent": replace(ordinary_base, final_reviewer_independent=False),
+        "final_reviewer_without_artifacts": replace(
+            ordinary_base,
+            final_reviewer_inspected_worker_artifacts=False,
+        ),
+        "final_reviewer_accepts_without_worker_artifacts": replace(
+            ordinary_base,
+            final_reviewer_accepted_without_worker_artifacts=True,
+        ),
     }

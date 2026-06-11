@@ -20259,6 +20259,72 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## flowpilot-node-plan-review-stage-boundary-20260611 - Node Plan Reviewer Stage Boundary
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live ProjectRadar run showed a model miss after old `node_prework_flowguard` removal: ordinary `node_acceptance_plan` review must judge PM plan readiness before Worker dispatch, while Worker-result review remains responsible for current artifacts, post-result FlowGuard, and final result evidence.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: predictive KB preflight + OpenSpec change `harden-node-plan-review-stage-boundary` + FlowGuard model miss review + development process flow + model-test alignment
+- Recorded: 2026-06-11T07:01:24Z
+- Commands OK: True
+
+### Model Files
+- `simulations/flowpilot_prework_flowguard_gate_model.py`
+- `simulations/run_flowpilot_prework_flowguard_gate_checks.py`
+- `openspec/changes/harden-node-plan-review-stage-boundary`
+- `docs/flowguard_project_topology.json`
+
+### Runtime, Prompt, And Test Files
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py`
+- `skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md`
+- `skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md`
+- `tests/test_flowpilot_core_runtime.py`
+- `tests/test_flowpilot_high_standard_control_flow.py`
+- `tests/test_flowpilot_card_instruction_coverage.py`
+
+### Findings
+- PM `node_acceptance_plan` review is now explicitly a plan-stage review using existing packet/result/staged-effect fields only.
+- Plan-stage Reviewer guidance now says not to block solely because Worker artifacts, post-result FlowGuard evidence, or Worker-result checker output do not exist yet.
+- Worker-result Reviewer guidance remains result-stage: matching FlowGuard evidence and current Worker artifacts are required before pass.
+- The model now includes same-class hazards for premature Worker-artifact demands at node-plan review and accepting Worker results without artifact evidence.
+- Old `node_prework_flowguard` remains unsupported; no compatibility shim, fallback parser, legacy alias, or old-run promotion path was added.
+
+### Counterexamples
+- `node_plan_reviewer_demands_worker_artifacts`
+- `node_plan_reviewer_treats_plan_as_result_proof`
+- `final_reviewer_without_artifacts`
+- `final_reviewer_accepts_without_worker_artifacts`
+
+### Commands
+- `openspec validate harden-node-plan-review-stage-boundary --strict` - OK
+- `python simulations/run_flowpilot_prework_flowguard_gate_checks.py --json-out tmp/prework_stage_boundary.json` - OK
+- `python -m unittest -v tests.test_flowpilot_core_runtime tests.test_flowpilot_high_standard_control_flow tests.test_flowpilot_card_instruction_coverage` - OK, 148 tests passed
+- `python simulations/run_flowpilot_model_test_alignment_checks.py` - OK
+- `python scripts/flowguard_project_topology.py build` - OK
+- `python scripts/flowguard_project_topology.py check` - OK
+- `python simulations/run_meta_checks.py` - OK, background log `tmp/flowguard_background/run_meta_checks.*`, exit 0, proof reused false
+- `python simulations/run_capability_checks.py` - OK, background log `tmp/flowguard_background/run_capability_checks.*`, exit 0, proof reused false
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - sync action OK; final install evidence came after topology rebuild
+- `python scripts/check_install.py --json` - OK
+- `python scripts/audit_local_install_sync.py --json` - OK
+- `python scripts/install_flowpilot.py --check --json` - OK
+
+### Friction Points
+- Topology build/check must run after meta and capability checks because those checks refresh `meta_thin_parent_results.json` and `capability_thin_parent_results.json`.
+- Install sync can report an initial stale installed digest before overwriting; final audit/check commands are the authoritative post-sync evidence.
+
+### Skipped Steps
+- No schema field, new packet kind, optional FlowGuard branch, legacy `node_prework_flowguard` compatibility, fallback parser, old-router alternate path, release, tag, deploy, remote push, or GitHub publication was performed.
+
+### Risk Evidence Summary
+- Evidence supports local runtime behavior, prompt/card guidance, fake-AI rehearsal language, FlowGuard same-class hazards, model-test alignment, topology freshness, meta/capability parent checks, and installed local skill synchronization.
+- This does not claim remote publication.
+
+### Next Actions
+- Commit local changes after reviewing the final git diff.
+
+
 ## flowpilot-v0.10.8-release - Route decomposition gate public release
 
 - Project: FlowGuardProjectAutopilot_20260430

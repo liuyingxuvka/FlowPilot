@@ -624,6 +624,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("runtime owns mechanical validation", reviewer_node_plan)
         self.assertIn("review the real node acceptance plan", reviewer_node_plan)
         self.assertIn("semantically safe to commit", reviewer_node_plan)
+        self.assertIn("plan-stage review", reviewer_node_plan)
+        self.assertIn("do not block solely because worker artifacts", reviewer_node_plan)
 
         flowguard_core = normalized(_card_path_by_id("flowguard_operator.core"))
         self.assertIn("current subject simulation boundary", flowguard_core)
@@ -639,6 +641,8 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         reviewer_core = normalized(_card_path_by_id("reviewer.core"))
         self.assertIn("ordinary `node_acceptance_plan` pass branch", reviewer_core)
         self.assertIn("do not invent a pre-worker flowguard requirement", reviewer_core)
+        self.assertIn("plan-stage review", reviewer_core)
+        self.assertIn("do not block solely because worker artifacts", reviewer_core)
         self.assertIn("structural_pm_flowguard_acceptance_gate", reviewer_core)
         self.assertIn("pm actually absorbed the current flowguard result", reviewer_core)
 

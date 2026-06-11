@@ -990,6 +990,41 @@ class FlowPilotHighStandardControlFlowTests(unittest.TestCase):
         self.assertEqual(review_body["node_context_package_id"], context_id)
         self.assertIn("as the review boundary", review_body["instruction"])
 
+    def test_worker_result_review_packet_marks_result_stage_boundary(self) -> None:
+        ledger = _ledger()
+        _complete_preplanning(ledger)
+        _complete_planning(ledger)
+        _complete_node_acceptance_plan(ledger)
+
+        node_id = ledger["execution_frontier"]["active_node_id"]
+        worker_packet = _open_packets(ledger, scope="node")[0]
+        worker_result_id = _complete_open_packet(
+            ledger,
+            worker_packet,
+            _pass_body("Worker completed the current node task.", node_id=node_id),
+        )
+        post_flowguard = _open_packets(ledger, kind="flowguard_check")[0]
+        flowguard_result_id = _complete_open_packet(
+            ledger,
+            post_flowguard,
+            _flowguard_pass_body("Post-result FlowGuard accepted the worker result."),
+        )
+
+        review_packet = _open_packets(ledger, kind="review")[0]
+        review = ledger["packets"][review_packet]
+        review_body = json.loads(review["body"])
+        self.assertNotIn("plan-stage review", review_body["instruction"])
+        self.assertIn("When matching FlowGuard evidence is required", review_body["instruction"])
+        self.assertTrue(review_body["flowguard_evidence_manifest"]["matching_flowguard_result_reads_required"])
+        self.assertEqual(review_body["target_result_id"], worker_result_id)
+        self.assertEqual(
+            review_body["flowguard_evidence_manifest"]["entries"][0]["flowguard_result_id"],
+            flowguard_result_id,
+        )
+        read_purposes = {entry["purpose"] for entry in review["envelope"]["authorized_result_reads"]}
+        self.assertIn("subject_result_for_review", read_purposes)
+        self.assertIn("matching_flowguard_result_for_review", read_purposes)
+
     def test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation(self) -> None:
         ledger = _ledger()
         _complete_preplanning(ledger)

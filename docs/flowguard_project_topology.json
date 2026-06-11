@@ -113,7 +113,7 @@
     "other": {
       "alignment_family_count": 6,
       "code_surface_count": 239,
-      "known_bad_count": 1295,
+      "known_bad_count": 1299,
       "model_count": 81,
       "runner_keys": [
         "capability",
@@ -12735,13 +12735,13 @@
       "path": "simulations/flowpilot_model_test_alignment_results.json"
     }
   },
-  "generated_at_epoch": 1781158191.7690573,
+  "generated_at_epoch": 1781161516.0135405,
   "generator_version": "1",
   "layer_counts": {
     "alignment_families": 12,
     "code_surfaces": 942,
     "evidence_summaries": 5,
-    "known_bad_signals": 2414,
+    "known_bad_signals": 2418,
     "models": 142,
     "test_commands": 350
   },
@@ -15886,9 +15886,13 @@
         "known_bad": [
           "hazards",
           "ok",
+          "final_reviewer_accepts_without_worker_artifacts",
+          "final_reviewer_without_artifacts",
           "flowguard_operator_route_mutation",
           "flowguard_scope_missing",
           "flowguard_validation_path_missing",
+          "node_plan_reviewer_demands_worker_artifacts",
+          "node_plan_reviewer_treats_plan_as_result_proof",
           "pm_accepts_blocked_flowguard",
           "pm_optional_flowguard",
           "post_result_flowguard_skipped",
@@ -15902,7 +15906,7 @@
           "worker_context_missing",
           "worker_replans_broad_leaf"
         ],
-        "ok": true,
+        "ok": false,
         "present": true,
         "release_convergence_ok": null,
         "state_count": 41
@@ -18576,7 +18580,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781148388114685900,
+      "mtime_ns": 1781161113214688200,
       "path": "simulations/capability_thin_parent_results.json",
       "size": 20666
     },
@@ -19500,15 +19504,15 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781145361082397200,
+      "mtime_ns": 1781160561350055900,
       "path": "simulations/flowpilot_prework_flowguard_gate_model.py",
-      "size": 20994
+      "size": 23710
     },
     {
       "exists": true,
-      "mtime_ns": 1781148279497134300,
+      "mtime_ns": 1781160614840974400,
       "path": "simulations/flowpilot_prework_flowguard_gate_results.json",
-      "size": 37607
+      "size": 55334
     },
     {
       "exists": true,
@@ -20196,7 +20200,7 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781148383935649600,
+      "mtime_ns": 1781161113232163700,
       "path": "simulations/meta_thin_parent_results.json",
       "size": 26210
     },
@@ -20718,9 +20722,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781145361096396500,
+      "mtime_ns": 1781160598219715500,
       "path": "simulations/run_flowpilot_prework_flowguard_gate_checks.py",
-      "size": 12706
+      "size": 14884
     },
     {
       "exists": true,
@@ -23778,9 +23782,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781030614349248600,
+      "mtime_ns": 1781161438175792800,
       "path": "skills/flowpilot/assets/runtime_kit/cards/reviewer/node_acceptance_plan_review.md",
-      "size": 11976
+      "size": 12466
     },
     {
       "exists": true,
@@ -23838,9 +23842,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781145180064013600,
+      "mtime_ns": 1781160827115698200,
       "path": "skills/flowpilot/assets/runtime_kit/cards/roles/human_like_reviewer.md",
-      "size": 23304
+      "size": 23598
     },
     {
       "exists": true,
@@ -24084,9 +24088,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781148163361302300,
+      "mtime_ns": 1781160885665008200,
       "path": "tests/test_flowpilot_core_runtime.py",
-      "size": 134753
+      "size": 137226
     },
     {
       "exists": true,
@@ -24102,9 +24106,9 @@
     },
     {
       "exists": true,
-      "mtime_ns": 1781144763041540800,
+      "mtime_ns": 1781160907643128800,
       "path": "tests/test_flowpilot_high_standard_control_flow.py",
-      "size": 92308
+      "size": 94063
     },
     {
       "exists": true,

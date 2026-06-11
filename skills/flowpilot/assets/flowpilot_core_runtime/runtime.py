@@ -8611,6 +8611,29 @@ def _ensure_review_packet_for_task_result(
         subject_id,
         repair_blocker_id=repair_blocker_id,
     )
+    staged_effect_kind = _staged_effect_kind_from_result(target_result)
+    is_node_plan_review = (
+        str(subject_packet["envelope"].get("packet_kind") or "") == "task"
+        and str(subject_packet["envelope"].get("route_scope") or "") == "node_acceptance_plan"
+        and staged_effect_kind == "commit_node_acceptance_plan"
+    )
+    if is_node_plan_review:
+        review_instruction = (
+            "Perform a plan-stage review of the PM node acceptance plan before Worker dispatch. "
+            "Review decomposition depth, node context, acceptance criteria, projected evidence, route fit, "
+            "and whether the staged commit_node_acceptance_plan effect is safe to commit. Do not block solely "
+            "because Worker artifacts, per-output artifact payloads, post-result FlowGuard evidence, or fresh "
+            "Worker-result checker output do not exist yet; those are result-stage requirements unless PM "
+            "claims them as already produced. Start from node_context_package as the minimum checklist and "
+            "actively inspect current route, node, and plan evidence inside the authorized scope."
+        )
+    else:
+        review_instruction = (
+            "Review the subject result independently. When matching FlowGuard evidence is required, inspect it before pass. Start from "
+            "node_context_package as the minimum checklist, then actively inspect relevant files, UI/screenshots, "
+            "logs, commands, model artifacts, and evidence paths inside the authorized scope. Do not treat the "
+            "package as the review boundary."
+        )
     body_payload = {
         "schema_version": "black_box_flowpilot.review_packet.v1",
         "subject_packet_id": subject_id,
@@ -8622,12 +8645,7 @@ def _ensure_review_packet_for_task_result(
             "matching_flowguard_result_reads_required": flowguard_required,
             "entries": flowguard_manifest,
         },
-        "instruction": (
-            "Review the subject result independently. When matching FlowGuard evidence is required, inspect it before pass. Start from "
-            "node_context_package as the minimum checklist, then actively inspect relevant files, UI/screenshots, "
-            "logs, commands, model artifacts, and evidence paths inside the authorized scope. Do not treat the "
-            "package as the review boundary."
-        ),
+        "instruction": review_instruction,
     }
     if str(subject_packet["envelope"].get("route_scope") or "") == "planning":
         body_payload["route_decomposition_quality_gate"] = {
