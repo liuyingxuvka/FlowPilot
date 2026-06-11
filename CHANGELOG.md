@@ -2,6 +2,21 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.10 - 2026-06-11
+
+### Fixed
+
+- Fixed the node acceptance plan review stage boundary so Reviewer evaluates
+  PM's node plan as a planning artifact before Worker dispatch instead of
+  demanding Worker-produced evidence too early.
+- Kept FlowGuard evidence requirements tied to the current review stage:
+  ordinary node-plan review does not require matching FlowGuard evidence, while
+  structural route redesigns still require FlowGuard simulation, PM absorption,
+  Reviewer review, and system validation before route mutation commits.
+- Refreshed fake-AI rehearsal, current-node trunk modeling, Model-Test
+  Alignment, topology, install sync, and Meta/Capability evidence for the
+  stage-boundary repair.
+
 ## 0.10.9 - 2026-06-11
 
 ### Changed

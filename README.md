@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  Source version: <strong>v0.10.9</strong> · MIT License · Codex skill source package
+  Source version: <strong>v0.10.10</strong> · MIT License · Codex skill source package
 </p>
 <!-- README HERO END -->
 
@@ -37,7 +37,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 
 | Field | Value |
 | --- | --- |
-| Source version | `v0.10.9` |
+| Source version | `v0.10.10` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | Release shape | source package only, no binary app bundle |
@@ -46,7 +46,7 @@ The startup intake UI captures the user's work request and whether FlowPilot may
 | Current UI surface | Windows WPF startup intake dialog for project request and background collaboration; chat route signs after startup |
 | Visual identity | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.9` keeps ordinary node execution lighter while making structural route changes stricter. PM now self-checks each node entry; ordinary node plans go to Reviewer before Worker dispatch, while any PM route or node topology redesign must pass FlowGuard simulation, PM FlowGuard acceptance, Reviewer review, and system validation before the route mutation can commit.
+`v0.10.10` fixes the node-plan review stage boundary on top of the `v0.10.9` route gate. PM node-entry plans are reviewed as planning artifacts before Worker dispatch, while structural route redesigns still require FlowGuard simulation, PM FlowGuard acceptance, Reviewer review, and system validation before route mutation commits.
 
 ## What FlowPilot Is
 
@@ -260,7 +260,7 @@ MIT License. See [LICENSE](LICENSE).
 
 # FlowPilot 中文说明
 
-**Source version:** `v0.10.9`
+**Source version:** `v0.10.10`
 **许可证：** MIT  
 **发布形态：** Codex skill source package，不是二进制 app bundle。
 
@@ -280,7 +280,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 
 | 字段 | 值 |
 | --- | --- |
-| Source version | `v0.10.9` |
+| Source version | `v0.10.10` |
 | Public project name | `FlowPilot` |
 | Skill slug | `flowpilot` |
 | 发布形态 | source package only，没有 binary app bundle |
@@ -289,7 +289,7 @@ Startup intake UI 把用户请求以及是否允许 FlowPilot 使用当前 host 
 | 当前 UI surface | Windows WPF startup intake dialog，用于 project request 和 background collaboration；startup 后使用 chat route signs |
 | 视觉标识 | `assets/brand/flowpilot-icon-default.png` |
 
-`v0.10.9` 让普通节点执行更轻，同时让结构性路线变更更严格。PM 进入每个节点时先自检；普通节点计划先交给 Reviewer，再放 Worker 执行；任何 PM route 或 node topology redesign 都必须先经过 FlowGuard 模拟、PM FlowGuard acceptance、Reviewer review 和 system validation，之后 route mutation 才能提交。
+`v0.10.10` 在 `v0.10.9` route gate 基础上修复了 node-plan review stage boundary。PM node-entry plan 会先作为规划 artifact 交给 Reviewer 审查，再放 Worker 执行；结构性 route redesign 仍然必须经过 FlowGuard 模拟、PM FlowGuard acceptance、Reviewer review 和 system validation，之后 route mutation 才能提交。
 
 ## 它是什么
 
