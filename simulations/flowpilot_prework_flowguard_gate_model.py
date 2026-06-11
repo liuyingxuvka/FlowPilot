@@ -1,10 +1,14 @@
-"""FlowGuard model for FlowPilot mandatory node pre-work FlowGuard gates.
+"""FlowGuard model for current-node route-change gates.
 
-This focused child model checks the executable node handoff:
-PM accepts the node design and context package, runtime issues a FlowGuard pre-work gate,
-the FlowGuard operator selects route(s) and records PM-visible artifacts,
-worker execution is released only after a current-generation pre-work pass,
-and the existing post-result FlowGuard plus independent Reviewer gates remain.
+The historical filename is retained for the existing maintenance runner, but
+the current contract no longer has a mandatory per-node pre-worker FlowGuard
+gate. This focused child model now checks the current executable-node trunk:
+
+* ordinary node entry: PM self-check -> Reviewer -> Worker -> post-result
+  FlowGuard -> independent Reviewer;
+* structural route change: PM route redesign -> FlowGuard simulation of the
+  current route/work/validation/failure lines -> PM absorption -> Reviewer ->
+  route mutation commit.
 """
 
 from __future__ import annotations
@@ -15,12 +19,12 @@ from typing import Iterable, NamedTuple
 from flowguard import FunctionResult, Invariant, InvariantResult, Workflow
 
 
-MAX_SEQUENCE_LENGTH = 24
+MAX_SEQUENCE_LENGTH = 28
 
 
 @dataclass(frozen=True)
 class Tick:
-    """One node-gate transition."""
+    """One node-entry or route-redesign transition."""
 
 
 @dataclass(frozen=True)
@@ -31,37 +35,48 @@ class Action:
 @dataclass(frozen=True)
 class State:
     status: str = "new"  # new | running | blocked | complete
-    repair_generation: int = 0
-    prework_pass_generation: int = -1
-    context_package_generation: int = -1
+    route_plan_generation: int = 0
+    flowguard_generation: int = -1
+    pm_absorption_generation: int = -1
 
-    pm_node_design_accepted: bool = False
-    pm_context_package_accepted: bool = False
-    prework_packet_issued: bool = False
-    prework_context_attached: bool = False
-    prework_routes_selected: bool = False
-    prework_artifacts_pm_visible: bool = False
-    prework_passed: bool = False
-    prework_blocked: bool = False
-    pm_repair_decision_recorded: bool = False
+    pm_self_checked_node: bool = False
+    node_plan_decision: str = ""  # pass | redesign_route
 
+    node_context_package_accepted: bool = False
+    node_plan_reviewer_packet_issued: bool = False
+    node_plan_reviewer_passed: bool = False
     worker_packet_issued: bool = False
     worker_context_attached: bool = False
     worker_result_submitted: bool = False
     post_result_flowguard_issued: bool = False
-    post_result_context_attached: bool = False
     post_result_flowguard_passed: bool = False
-    reviewer_packet_issued: bool = False
-    reviewer_context_attached: bool = False
-    reviewer_independent: bool = False
-    reviewer_passed: bool = False
+    final_reviewer_packet_issued: bool = False
+    final_reviewer_independent: bool = False
+    final_reviewer_passed: bool = False
     node_completed: bool = False
 
-    pm_made_prework_optional: bool = False
+    route_plan_staged: bool = False
+    route_redesign_flowguard_packet_issued: bool = False
+    flowguard_current_subject_bound: bool = False
+    flowguard_simulated_work_validation_failure_paths: bool = False
+    flowguard_passed: bool = False
+    flowguard_blocked: bool = False
+    pm_route_repair_recorded: bool = False
+    pm_flowguard_acceptance_packet_issued: bool = False
+    pm_absorbed_flowguard: bool = False
+    route_reviewer_packet_issued: bool = False
+    route_reviewer_passed: bool = False
+    route_mutation_committed: bool = False
+
+    pm_made_flowguard_optional: bool = False
     flowguard_operator_mutated_route: bool = False
-    worker_started_without_prework: bool = False
-    worker_started_without_context: bool = False
-    reviewer_scoped_by_pm_only: bool = False
+    flowguard_scope_missing: bool = False
+    flowguard_validation_path_missing: bool = False
+    pm_accepts_blocked_flowguard: bool = False
+    route_mutation_without_pm_absorption: bool = False
+    reviewer_before_pm_absorption: bool = False
+    worker_started_before_node_plan_review: bool = False
+    worker_replanned_broad_leaf: bool = False
 
 
 class Transition(NamedTuple):
@@ -73,39 +88,42 @@ def initial_state() -> State:
     return State()
 
 
-class NodePreworkFlowGuardStep:
-    """Model one node-gate handoff.
+class CurrentNodeRouteGateStep:
+    """Model one current node-entry or structural route-change tick.
 
     Input x State -> Set(Output x State)
-    reads: PM node design, pre-work FlowGuard gate status, repair generation,
-      worker packet status, post-result FlowGuard status, Reviewer status
-    writes: the next monotonic node-gate transition
-    idempotency: safe ticks either add required evidence or stop on blockers
+    reads: PM node self-check, node plan decision, route redesign gate,
+      FlowGuard report state, PM absorption, Reviewer state, worker state
+    writes: the next monotonic gate transition
+    idempotency: safe ticks either add the next required evidence or block
     """
 
-    name = "NodePreworkFlowGuardStep"
+    name = "CurrentNodeRouteGateStep"
     reads = (
-        "pm_node_design_accepted",
-        "pm_context_package_accepted",
-        "prework_packet_issued",
-        "prework_pass_generation",
-        "worker_packet_issued",
+        "pm_self_checked_node",
+        "node_plan_decision",
+        "route_plan_staged",
+        "flowguard_passed",
+        "pm_absorbed_flowguard",
+        "node_plan_reviewer_passed",
+        "worker_result_submitted",
         "post_result_flowguard_passed",
-        "reviewer_passed",
+        "final_reviewer_passed",
     )
     writes = (
-        "pm_node_design",
-        "pm_node_context_package",
-        "prework_flowguard_gate",
-        "pm_repair_decision",
+        "node_entry_self_check",
+        "ordinary_node_reviewer",
         "worker_packet",
         "post_result_flowguard",
         "independent_reviewer",
-        "node_completion",
+        "route_redesign_flowguard",
+        "pm_flowguard_acceptance",
+        "route_reviewer",
+        "route_mutation_commit",
     )
-    input_description = "one FlowPilot route-node gate tick"
+    input_description = "one FlowPilot current-node route gate tick"
     output_description = "one abstract runtime/role action"
-    idempotency = "safe ticks never release worker execution without current pre-work FlowGuard"
+    idempotency = "safe ticks never commit route effects without FlowGuard, PM absorption, and Reviewer"
 
     def apply(self, input_obj: Tick, state: State) -> Iterable[FunctionResult]:
         del input_obj
@@ -117,20 +135,22 @@ class NodePreworkFlowGuardStep:
             )
 
 
-def _reset_prework_after_repair(state: State) -> State:
+def _reset_redesign_after_pm_route_repair(state: State) -> State:
     return replace(
         state,
-        repair_generation=state.repair_generation + 1,
-        pm_node_design_accepted=True,
-        pm_context_package_accepted=False,
-        context_package_generation=-1,
-        prework_packet_issued=False,
-        prework_context_attached=False,
-        prework_routes_selected=False,
-        prework_artifacts_pm_visible=False,
-        prework_passed=False,
-        prework_blocked=False,
-        pm_repair_decision_recorded=True,
+        route_plan_generation=state.route_plan_generation + 1,
+        route_plan_staged=False,
+        route_redesign_flowguard_packet_issued=False,
+        flowguard_current_subject_bound=False,
+        flowguard_simulated_work_validation_failure_paths=False,
+        flowguard_passed=False,
+        flowguard_blocked=False,
+        pm_route_repair_recorded=True,
+        pm_flowguard_acceptance_packet_issued=False,
+        pm_absorbed_flowguard=False,
+        route_reviewer_packet_issued=False,
+        route_reviewer_passed=False,
+        route_mutation_committed=False,
     )
 
 
@@ -139,157 +159,190 @@ def next_safe_states(state: State) -> tuple[Transition, ...]:
         return ()
     failures = invariant_failures(state)
     if failures:
-        return (Transition("node_prework_flow_blocked_on_invariant_failure", replace(state, status="blocked")),)
+        return (Transition("current_node_route_gate_blocked_on_invariant_failure", replace(state, status="blocked")),)
     if state.status == "new":
-        return (Transition("node_prework_flow_started", replace(state, status="running")),)
-    if not state.pm_node_design_accepted:
-        return (Transition("pm_accepts_node_design", replace(state, pm_node_design_accepted=True)),)
-    if not state.pm_context_package_accepted:
+        return (Transition("current_node_flow_started", replace(state, status="running")),)
+    if not state.pm_self_checked_node:
+        return (Transition("pm_self_checks_node_entry", replace(state, pm_self_checked_node=True)),)
+
+    if not state.node_plan_decision:
         return (
-            Transition(
-                "pm_records_node_context_package",
-                replace(
-                    state,
-                    pm_context_package_accepted=True,
-                    context_package_generation=state.repair_generation,
-                ),
-            ),
+            Transition("pm_passes_ordinary_node_plan", replace(state, node_plan_decision="pass")),
+            Transition("pm_stages_route_redesign_plan", replace(state, node_plan_decision="redesign_route", route_plan_staged=True)),
         )
-    if not state.prework_packet_issued:
-        return (
-            Transition(
-                "runtime_issues_prework_flowguard_packet",
-                replace(state, prework_packet_issued=True, prework_context_attached=True),
-            ),
-        )
-    if not state.prework_routes_selected:
-        return (Transition("flowguard_operator_selects_route_mix", replace(state, prework_routes_selected=True)),)
-    if not state.prework_artifacts_pm_visible:
-        return (
-            Transition(
-                "flowguard_operator_records_pm_visible_artifacts",
-                replace(state, prework_artifacts_pm_visible=True),
-            ),
-        )
-    if not state.prework_passed and not state.prework_blocked:
-        transitions = [
-            Transition(
-                "flowguard_prework_passes_current_generation",
-                replace(
-                    state,
-                    prework_passed=True,
-                    prework_pass_generation=state.repair_generation,
-                ),
-            )
-        ]
-        if state.repair_generation == 0:
-            transitions.append(
+
+    if state.node_plan_decision == "pass":
+        if not state.node_context_package_accepted:
+            return (Transition("pm_records_node_context_package", replace(state, node_context_package_accepted=True)),)
+        if not state.node_plan_reviewer_packet_issued:
+            return (Transition("runtime_issues_node_plan_reviewer", replace(state, node_plan_reviewer_packet_issued=True)),)
+        if not state.node_plan_reviewer_passed:
+            return (Transition("reviewer_passes_node_plan", replace(state, node_plan_reviewer_passed=True)),)
+        if not state.worker_packet_issued:
+            return (
                 Transition(
-                    "flowguard_prework_blocks_node_design",
-                    replace(state, prework_blocked=True),
-                )
+                    "runtime_issues_worker_packet_after_reviewer",
+                    replace(state, worker_packet_issued=True, worker_context_attached=True),
+                ),
             )
-        return tuple(transitions)
-    if state.prework_blocked and state.repair_generation == 0:
-        return (Transition("pm_repairs_node_design_after_prework_block", _reset_prework_after_repair(state)),)
-    if not state.worker_packet_issued:
-        return (
-            Transition(
-                "runtime_issues_worker_packet_after_prework",
-                replace(state, worker_packet_issued=True, worker_context_attached=True),
-            ),
-        )
-    if not state.worker_result_submitted:
-        return (Transition("worker_submits_node_result", replace(state, worker_result_submitted=True)),)
-    if not state.post_result_flowguard_issued:
-        return (
-            Transition(
-                "runtime_issues_post_result_flowguard",
-                replace(state, post_result_flowguard_issued=True, post_result_context_attached=True),
-            ),
-        )
-    if not state.post_result_flowguard_passed:
-        return (
-            Transition(
-                "post_result_flowguard_passes",
-                replace(state, post_result_flowguard_passed=True),
-            ),
-        )
-    if not state.reviewer_packet_issued:
-        return (
-            Transition(
-                "runtime_issues_independent_reviewer_packet",
-                replace(state, reviewer_packet_issued=True, reviewer_context_attached=True),
-            ),
-        )
-    if not state.reviewer_passed:
-        return (
-            Transition(
-                "reviewer_passes_independently",
-                replace(state, reviewer_independent=True, reviewer_passed=True),
-            ),
-        )
-    if not state.node_completed:
-        return (Transition("node_completed_after_reviewer", replace(state, node_completed=True)),)
-    return (Transition("node_prework_flow_complete", replace(state, status="complete")),)
+        if not state.worker_result_submitted:
+            return (Transition("worker_submits_node_result", replace(state, worker_result_submitted=True)),)
+        if not state.post_result_flowguard_issued:
+            return (Transition("runtime_issues_post_result_flowguard", replace(state, post_result_flowguard_issued=True)),)
+        if not state.post_result_flowguard_passed:
+            return (Transition("post_result_flowguard_passes", replace(state, post_result_flowguard_passed=True)),)
+        if not state.final_reviewer_packet_issued:
+            return (Transition("runtime_issues_independent_reviewer_packet", replace(state, final_reviewer_packet_issued=True)),)
+        if not state.final_reviewer_passed:
+            return (
+                Transition(
+                    "reviewer_passes_independently",
+                    replace(state, final_reviewer_independent=True, final_reviewer_passed=True),
+                ),
+            )
+        if not state.node_completed:
+            return (Transition("node_completed_after_reviewer", replace(state, node_completed=True)),)
+        return (Transition("current_node_flow_complete", replace(state, status="complete")),)
+
+    if state.node_plan_decision == "redesign_route":
+        if not state.route_plan_staged:
+            return (Transition("pm_stages_route_redesign_plan", replace(state, route_plan_staged=True)),)
+        if not state.route_redesign_flowguard_packet_issued:
+            return (Transition("runtime_issues_route_redesign_flowguard", replace(state, route_redesign_flowguard_packet_issued=True)),)
+        if not state.flowguard_current_subject_bound or not state.flowguard_simulated_work_validation_failure_paths:
+            return (
+                Transition(
+                    "flowguard_simulates_current_route_plan",
+                    replace(
+                        state,
+                        flowguard_current_subject_bound=True,
+                        flowguard_simulated_work_validation_failure_paths=True,
+                    ),
+                ),
+            )
+        if not state.flowguard_passed and not state.flowguard_blocked:
+            transitions = [
+                Transition(
+                    "flowguard_route_redesign_passes",
+                    replace(state, flowguard_passed=True, flowguard_generation=state.route_plan_generation),
+                )
+            ]
+            if state.route_plan_generation == 0:
+                transitions.append(
+                    Transition("flowguard_route_redesign_blocks", replace(state, flowguard_blocked=True))
+                )
+            return tuple(transitions)
+        if state.flowguard_blocked and state.route_plan_generation == 0:
+            return (
+                Transition("pm_repairs_route_plan_after_flowguard_block", _reset_redesign_after_pm_route_repair(state)),
+            )
+        if not state.pm_flowguard_acceptance_packet_issued:
+            return (
+                Transition(
+                    "runtime_issues_pm_flowguard_acceptance_packet",
+                    replace(state, pm_flowguard_acceptance_packet_issued=True),
+                ),
+            )
+        if not state.pm_absorbed_flowguard:
+            if state.route_plan_generation == 0:
+                return (
+                    Transition("pm_absorbs_flowguard_report", replace(state, pm_absorbed_flowguard=True, pm_absorption_generation=state.route_plan_generation)),
+                    Transition("pm_rewrites_route_from_flowguard_advice", _reset_redesign_after_pm_route_repair(state)),
+                )
+            return (
+                Transition(
+                    "pm_absorbs_flowguard_report",
+                    replace(state, pm_absorbed_flowguard=True, pm_absorption_generation=state.route_plan_generation),
+                ),
+            )
+        if not state.route_reviewer_packet_issued:
+            return (Transition("runtime_issues_route_redesign_reviewer_packet", replace(state, route_reviewer_packet_issued=True)),)
+        if not state.route_reviewer_passed:
+            return (Transition("reviewer_passes_pm_absorption_package", replace(state, route_reviewer_passed=True)),)
+        if not state.route_mutation_committed:
+            return (Transition("route_redesign_committed_after_review", replace(state, route_mutation_committed=True)),)
+        return (Transition("route_redesign_flow_complete", replace(state, status="complete")),)
+
+    return (Transition("current_node_route_gate_blocked_on_unknown_decision", replace(state, status="blocked")),)
 
 
 def invariant_failures(state: State) -> list[str]:
     failures: list[str] = []
-    current_prework_pass = state.prework_passed and state.prework_pass_generation == state.repair_generation
-    current_context = state.pm_context_package_accepted and state.context_package_generation == state.repair_generation
-    if state.pm_made_prework_optional:
-        failures.append("PM made mandatory pre-work FlowGuard optional")
-    if state.pm_context_package_accepted and not state.pm_node_design_accepted:
-        failures.append("PM context package recorded before node design")
-    if state.pm_context_package_accepted and state.context_package_generation != state.repair_generation:
-        failures.append("PM context package is stale for repair generation")
-    if state.prework_packet_issued and not current_context:
-        failures.append("pre-work FlowGuard issued before current PM node context package")
-    if state.prework_packet_issued and not state.prework_context_attached:
-        failures.append("pre-work FlowGuard packet missing PM node context package")
-    if state.prework_packet_issued and not state.pm_node_design_accepted:
-        failures.append("pre-work FlowGuard issued before PM node design")
-    if state.prework_routes_selected and not state.prework_packet_issued:
-        failures.append("FlowGuard route mix selected before pre-work packet")
-    if state.prework_artifacts_pm_visible and not state.prework_routes_selected:
-        failures.append("PM-visible artifacts recorded before FlowGuard route selection")
-    if state.prework_passed and not state.prework_artifacts_pm_visible:
-        failures.append("pre-work FlowGuard passed before PM-visible artifacts")
-    if state.prework_blocked and state.worker_packet_issued and not state.pm_repair_decision_recorded:
-        failures.append("worker released after pre-work block without PM repair")
-    if state.worker_packet_issued and not current_prework_pass:
-        failures.append("worker packet issued before current-generation pre-work FlowGuard pass")
-    if state.worker_packet_issued and (not current_context or not state.worker_context_attached):
-        failures.append("worker packet issued without current PM node context package")
-    if state.worker_started_without_prework:
-        failures.append("worker started without pre-work FlowGuard")
-    if state.worker_started_without_context:
-        failures.append("worker started without PM node context package")
+    current_flowguard = state.flowguard_passed and state.flowguard_generation == state.route_plan_generation
+    current_pm_absorption = (
+        state.pm_absorbed_flowguard and state.pm_absorption_generation == state.route_plan_generation
+    )
+
+    if state.pm_made_flowguard_optional:
+        failures.append("PM made structural route FlowGuard optional")
     if state.flowguard_operator_mutated_route:
         failures.append("FlowGuard operator mutated route instead of reporting to PM")
-    if state.worker_result_submitted and not state.worker_packet_issued:
-        failures.append("worker result submitted before worker packet")
-    if state.post_result_flowguard_issued and not state.worker_result_submitted:
-        failures.append("post-result FlowGuard issued before worker result")
-    if state.post_result_flowguard_issued and (not current_context or not state.post_result_context_attached):
-        failures.append("post-result FlowGuard packet missing PM node context package")
-    if state.post_result_flowguard_passed and not state.post_result_flowguard_issued:
-        failures.append("post-result FlowGuard pass without packet")
-    if state.reviewer_packet_issued and not state.post_result_flowguard_passed:
-        failures.append("Reviewer packet issued before post-result FlowGuard pass")
-    if state.reviewer_packet_issued and (not current_context or not state.reviewer_context_attached):
-        failures.append("Reviewer packet missing PM node context package")
-    if state.reviewer_passed and not state.reviewer_packet_issued:
-        failures.append("Reviewer passed before Reviewer packet")
-    if state.reviewer_passed and not state.reviewer_independent:
-        failures.append("Reviewer pass was not independent")
-    if state.reviewer_scoped_by_pm_only:
-        failures.append("Reviewer was scoped only by PM rather than independent node contract review")
-    if state.node_completed and not state.reviewer_passed:
-        failures.append("node completed before independent Reviewer pass")
-    if state.status == "complete" and not state.node_completed:
-        failures.append("flow completed before node completion")
+    if state.flowguard_scope_missing:
+        failures.append("FlowGuard did not bind the current route plan as simulation subject")
+    if state.flowguard_validation_path_missing:
+        failures.append("FlowGuard did not simulate work, validation, failure, and repair paths")
+    if state.pm_accepts_blocked_flowguard:
+        failures.append("PM accepted a blocked FlowGuard route result")
+    if state.route_mutation_without_pm_absorption:
+        failures.append("route mutation committed without PM FlowGuard absorption")
+    if state.reviewer_before_pm_absorption:
+        failures.append("Reviewer inspected route effect before PM absorbed FlowGuard result")
+    if state.worker_started_before_node_plan_review:
+        failures.append("worker packet issued before ordinary node plan Reviewer pass")
+    if state.worker_replanned_broad_leaf:
+        failures.append("Worker replanned a broad leaf instead of PM route deepening")
+
+    if state.node_plan_decision == "pass":
+        if state.worker_packet_issued and not state.node_plan_reviewer_passed:
+            failures.append("worker packet issued before ordinary node plan Reviewer pass")
+        if state.worker_packet_issued and not state.node_context_package_accepted:
+            failures.append("worker packet issued without PM node context package")
+        if state.worker_packet_issued and not state.worker_context_attached:
+            failures.append("worker packet missing PM node context package")
+        if state.worker_result_submitted and not state.worker_packet_issued:
+            failures.append("worker result submitted before worker packet")
+        if state.post_result_flowguard_issued and not state.worker_result_submitted:
+            failures.append("post-result FlowGuard issued before worker result")
+        if state.post_result_flowguard_passed and not state.post_result_flowguard_issued:
+            failures.append("post-result FlowGuard pass without packet")
+        if state.final_reviewer_packet_issued and not state.post_result_flowguard_passed:
+            failures.append("Reviewer packet issued before post-result FlowGuard pass")
+        if state.final_reviewer_passed and not state.final_reviewer_packet_issued:
+            failures.append("Reviewer passed before Reviewer packet")
+        if state.final_reviewer_passed and not state.final_reviewer_independent:
+            failures.append("Reviewer pass was not independent")
+        if state.node_completed and not state.final_reviewer_passed:
+            failures.append("node completed before independent Reviewer pass")
+
+    if state.node_plan_decision == "redesign_route":
+        if state.route_redesign_flowguard_packet_issued and not state.route_plan_staged:
+            failures.append("route FlowGuard issued before PM staged route plan")
+        if state.flowguard_passed and not state.route_redesign_flowguard_packet_issued:
+            failures.append("FlowGuard route pass without packet")
+        if state.flowguard_passed and not state.flowguard_current_subject_bound:
+            failures.append("FlowGuard passed without binding current route plan")
+        if state.flowguard_passed and not state.flowguard_simulated_work_validation_failure_paths:
+            failures.append("FlowGuard passed without simulating work, validation, failure, and repair paths")
+        if state.pm_flowguard_acceptance_packet_issued and not current_flowguard:
+            failures.append("PM FlowGuard acceptance packet issued before current FlowGuard pass")
+        if state.pm_absorbed_flowguard and not state.pm_flowguard_acceptance_packet_issued:
+            failures.append("PM absorbed FlowGuard without pm_flowguard_acceptance packet")
+        if state.pm_absorbed_flowguard and not current_flowguard:
+            failures.append("PM absorbed stale or missing FlowGuard result")
+        if state.route_reviewer_packet_issued and not current_pm_absorption:
+            failures.append("Reviewer packet issued before current PM FlowGuard absorption")
+        if state.route_reviewer_passed and not state.route_reviewer_packet_issued:
+            failures.append("Reviewer passed route effect before packet")
+        if state.route_mutation_committed and not state.route_reviewer_passed:
+            failures.append("route mutation committed before Reviewer pass")
+        if state.route_mutation_committed and not current_pm_absorption:
+            failures.append("route mutation committed without current PM FlowGuard absorption")
+
+    if state.status == "complete":
+        ordinary_complete = state.node_plan_decision == "pass" and state.node_completed
+        redesign_complete = state.node_plan_decision == "redesign_route" and state.route_mutation_committed
+        if not ordinary_complete and not redesign_complete:
+            failures.append("flow completed before ordinary node or route redesign completion")
     return failures
 
 
@@ -303,11 +356,11 @@ def invariant(state: State, trace) -> InvariantResult:
 
 INVARIANTS = (
     Invariant(
-        name="flowpilot_prework_flowguard_node_gate",
+        name="flowpilot_current_node_route_change_gate",
         description=(
-            "Worker execution is released only after a current-generation "
-            "pre-work FlowGuard pass; post-result FlowGuard and independent "
-            "Reviewer gates still follow worker evidence."
+            "Ordinary node entry reaches Worker through Reviewer without "
+            "pre-worker FlowGuard; structural route changes require current "
+            "FlowGuard simulation, PM absorption, and Reviewer before commit."
         ),
         predicate=invariant,
     ),
@@ -317,7 +370,7 @@ EXTERNAL_INPUTS = (Tick(),)
 
 
 def build_workflow() -> Workflow:
-    return Workflow((NodePreworkFlowGuardStep(),), name="flowpilot_prework_flowguard_node_gate")
+    return Workflow((CurrentNodeRouteGateStep(),), name="flowpilot_current_node_route_change_gate")
 
 
 def is_terminal(state: State) -> bool:
@@ -331,55 +384,63 @@ def is_success(state: State) -> bool:
 def target_success_state() -> State:
     return State(
         status="complete",
-        repair_generation=1,
-        prework_pass_generation=1,
-        context_package_generation=1,
-        pm_node_design_accepted=True,
-        pm_context_package_accepted=True,
-        prework_packet_issued=True,
-        prework_context_attached=True,
-        prework_routes_selected=True,
-        prework_artifacts_pm_visible=True,
-        prework_passed=True,
-        prework_blocked=False,
-        pm_repair_decision_recorded=True,
+        route_plan_generation=1,
+        flowguard_generation=1,
+        pm_absorption_generation=1,
+        pm_self_checked_node=True,
+        node_plan_decision="redesign_route",
+        route_plan_staged=True,
+        route_redesign_flowguard_packet_issued=True,
+        flowguard_current_subject_bound=True,
+        flowguard_simulated_work_validation_failure_paths=True,
+        flowguard_passed=True,
+        flowguard_blocked=False,
+        pm_route_repair_recorded=True,
+        pm_flowguard_acceptance_packet_issued=True,
+        pm_absorbed_flowguard=True,
+        route_reviewer_packet_issued=True,
+        route_reviewer_passed=True,
+        route_mutation_committed=True,
+    )
+
+
+def ordinary_node_success_state() -> State:
+    return State(
+        status="complete",
+        pm_self_checked_node=True,
+        node_plan_decision="pass",
+        node_context_package_accepted=True,
+        node_plan_reviewer_packet_issued=True,
+        node_plan_reviewer_passed=True,
         worker_packet_issued=True,
         worker_context_attached=True,
         worker_result_submitted=True,
         post_result_flowguard_issued=True,
-        post_result_context_attached=True,
         post_result_flowguard_passed=True,
-        reviewer_packet_issued=True,
-        reviewer_context_attached=True,
-        reviewer_independent=True,
-        reviewer_passed=True,
+        final_reviewer_packet_issued=True,
+        final_reviewer_independent=True,
+        final_reviewer_passed=True,
         node_completed=True,
     )
 
 
 def hazard_states() -> dict[str, State]:
-    base = target_success_state()
+    route_base = target_success_state()
+    ordinary_base = ordinary_node_success_state()
     return {
-        "pm_optional_prework": replace(base, pm_made_prework_optional=True),
-        "context_before_node_design": replace(base, pm_node_design_accepted=False),
-        "stale_context_after_repair": replace(base, context_package_generation=0),
-        "prework_context_missing": replace(base, prework_context_attached=False),
-        "prework_before_node_design": replace(base, pm_node_design_accepted=False),
-        "route_mix_missing": replace(base, prework_routes_selected=False),
-        "pm_visible_artifacts_missing": replace(base, prework_artifacts_pm_visible=False),
-        "stale_prework_after_repair": replace(base, prework_pass_generation=0),
-        "worker_before_prework": replace(base, prework_passed=False),
-        "worker_context_missing": replace(base, worker_context_attached=False),
-        "prework_block_without_pm_repair": replace(
-            base,
-            prework_blocked=True,
-            pm_repair_decision_recorded=False,
-        ),
-        "flowguard_operator_route_mutation": replace(base, flowguard_operator_mutated_route=True),
-        "post_result_context_missing": replace(base, post_result_context_attached=False),
-        "post_result_flowguard_skipped": replace(base, post_result_flowguard_passed=False),
-        "reviewer_before_post_result_flowguard": replace(base, post_result_flowguard_passed=False),
-        "reviewer_context_missing": replace(base, reviewer_context_attached=False),
-        "reviewer_not_independent": replace(base, reviewer_independent=False),
-        "reviewer_pm_scoped_only": replace(base, reviewer_scoped_by_pm_only=True),
+        "pm_optional_flowguard": replace(route_base, pm_made_flowguard_optional=True),
+        "flowguard_scope_missing": replace(route_base, flowguard_scope_missing=True),
+        "flowguard_validation_path_missing": replace(route_base, flowguard_validation_path_missing=True),
+        "flowguard_operator_route_mutation": replace(route_base, flowguard_operator_mutated_route=True),
+        "pm_accepts_blocked_flowguard": replace(route_base, pm_accepts_blocked_flowguard=True),
+        "stale_flowguard_after_route_rewrite": replace(route_base, flowguard_generation=0),
+        "reviewer_before_pm_absorption": replace(route_base, reviewer_before_pm_absorption=True),
+        "route_mutation_without_pm_absorption": replace(route_base, route_mutation_without_pm_absorption=True),
+        "route_reviewer_before_pm_absorption": replace(route_base, pm_absorbed_flowguard=False, route_reviewer_packet_issued=True),
+        "route_commit_before_reviewer": replace(route_base, route_reviewer_passed=False),
+        "worker_before_node_plan_reviewer": replace(ordinary_base, worker_started_before_node_plan_review=True),
+        "worker_context_missing": replace(ordinary_base, worker_context_attached=False),
+        "worker_replans_broad_leaf": replace(ordinary_base, worker_replanned_broad_leaf=True),
+        "post_result_flowguard_skipped": replace(ordinary_base, post_result_flowguard_passed=False),
+        "reviewer_not_independent": replace(ordinary_base, final_reviewer_independent=False),
     }

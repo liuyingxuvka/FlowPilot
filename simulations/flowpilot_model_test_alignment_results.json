@@ -1258,7 +1258,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 472,
+        "line_count": 476,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_field_contract_checks",
@@ -1940,7 +1940,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 259,
+        "line_count": 285,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_prework_flowguard_gate_checks",
@@ -22494,13 +22494,13 @@
               },
               "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "completed",
+              "meta_status": "complete",
               "name": "run_capability_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [
-                "unexpected_meta_status:completed"
+                "unexpected_meta_status:complete"
               ],
               "status": "incomplete"
             },
@@ -22634,13 +22634,13 @@
               },
               "execution_status": "incomplete",
               "exit_code": 0,
-              "meta_status": "completed",
+              "meta_status": "complete",
               "name": "run_meta_checks",
               "ok": false,
               "progress_seen": true,
               "proof_scope": "full",
               "reasons": [
-                "unexpected_meta_status:completed"
+                "unexpected_meta_status:complete"
               ],
               "status": "incomplete"
             },
@@ -36228,6 +36228,125 @@
             "state_writes": [],
             "surface_type": "function",
             "symbol": "_accepted_result_packets_for_active_route"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.packet_terminal_monotonic"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.result_history_append_only"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.accepted_result_pointer_single_commit"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.pending_route_mutation_disposition"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.active_packets_derive_from_currentness"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
           }
         ],
         "family_evidence": [],
@@ -36460,7 +36579,7 @@
         "obligations": [
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Packet terminal currentness states are absorbing for current authority when late results arrive.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36471,7 +36590,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.packet_terminal_monotonic"
+            ],
             "required_test_kinds": [
               "negative_path",
               "replay"
@@ -36484,7 +36605,7 @@
           },
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Packet result history appends late results as audit evidence without making them current authority.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36495,7 +36616,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.result_history_append_only"
+            ],
             "required_test_kinds": [
               "happy_path",
               "replay"
@@ -36508,7 +36631,7 @@
           },
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Accepted result pointers are written by the runtime acceptance commit point and are not reassigned by duplicate output.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36519,7 +36642,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_pointer_single_commit"
+            ],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -36532,7 +36657,7 @@
           },
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Pending route mutation state clears or terminally dispositions after replacement frontier commit.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36543,7 +36668,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition"
+            ],
             "required_test_kinds": [
               "edge_path",
               "negative_path"
@@ -36556,7 +36683,7 @@
           },
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Derived active-packet views share the Router currentness predicate for route version, node status, and packet terminal status.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36567,7 +36694,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness"
+            ],
             "required_test_kinds": [
               "negative_path",
               "replay"
@@ -36580,7 +36709,7 @@
           },
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Final closure derives accepted packet evidence from current active-route accepted results, not from router-active packets.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36591,7 +36720,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence"
+            ],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -36604,7 +36735,7 @@
           },
           {
             "allow_shared_evidence": false,
-            "allow_shared_implementation": false,
+            "allow_shared_implementation": true,
             "description": "Accepted packet health checks derive active-route accepted-result targets separately from router-active packets.",
             "error_paths": [],
             "exact_external_contract": false,
@@ -36615,7 +36746,9 @@
             "obligation_type": "field_lifecycle",
             "required": true,
             "required_closure_evidence_roles": [],
-            "required_runtime_node_ids": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+            ],
             "required_test_kinds": [
               "happy_path",
               "negative_path"
@@ -36630,10 +36763,629 @@
         "payload_contracts": [],
         "payload_evidence": [],
         "require_proof_artifacts": false,
-        "require_runtime_path_evidence": false,
-        "runtime_node_contracts": [],
+        "require_runtime_path_evidence": true,
+        "runtime_node_contracts": [
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.packet_terminal_monotonic",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_late_result_preserves_noncurrent_packet_statuses",
+              "source_test_evidence_id": "field_lifecycle_currentness.negative.late_terminal_statuses",
+              "source_test_path": "tests/test_flowpilot_lifecycle_guard.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.packet_terminal_monotonic",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.00.field_lifecycle_currentness_packet_terminal_monotonic"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 0,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.result_history_append_only",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.result_history_append_only",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_result_history_appends_on_open_packet",
+              "source_test_evidence_id": "field_lifecycle_currentness.happy.current_result_history_append",
+              "source_test_path": "tests/test_flowpilot_lifecycle_guard.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.result_history_append_only",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.01.field_lifecycle_currentness_result_history_append_only"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 1,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accept_packet_result_writes_single_pointer_on_current_commit",
+              "source_test_evidence_id": "field_lifecycle_currentness.happy.accept_pointer_commit",
+              "source_test_path": "tests/test_flowpilot_lifecycle_guard.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.02.field_lifecycle_currentness_accepted_result_pointer_single_commit"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 2,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.pending_route_mutation_disposition",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pending_route_mutation_clears_after_replacement_node_acceptance",
+              "source_test_evidence_id": "field_lifecycle_currentness.edge.pending_route_mutation_commit",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.03.field_lifecycle_currentness_pending_route_mutation_disposition"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 3,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure",
+              "source_test_evidence_id": "field_lifecycle_currentness.negative.active_projection_currentness",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.04.field_lifecycle_currentness_active_packets_derive_from_currentness"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 4,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+              "source_test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.05.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 5,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+              "source_test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.06.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 6,
+            "state_case": "field_lifecycle_currentness.current_model_state"
+          }
+        ],
         "runtime_node_observations": [],
-        "runtime_path_runs": [],
+        "runtime_path_runs": [
+          {
+            "current": true,
+            "metadata": {
+              "family": "field lifecycle currentness",
+              "model_id": "field_lifecycle_currentness",
+              "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "progress_lines": [
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.packet_terminal_monotonic run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.packet_terminal_monotonic obligation=field_lifecycle_currentness.packet_terminal_monotonic code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.late_terminal_statuses progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.late_terminal_statuses with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.packet_terminal_monotonic",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.result_history_append_only run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.result_history_append_only obligation=field_lifecycle_currentness.result_history_append_only code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.current_result_history_append progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.current_result_history_append with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.result_history_append_only",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_pointer_single_commit run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_pointer_single_commit obligation=field_lifecycle_currentness.accepted_result_pointer_single_commit code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.accept_pointer_commit progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.accept_pointer_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_pointer_single_commit",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.pending_route_mutation_disposition obligation=field_lifecycle_currentness.pending_route_mutation_disposition code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.edge.pending_route_mutation_commit progress=compares FlowPilot code/test evidence field_lifecycle_currentness.edge.pending_route_mutation_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.pending_route_mutation_disposition",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.active_packets_derive_from_currentness obligation=field_lifecycle_currentness.active_packets_derive_from_currentness code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.active_projection_currentness progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.active_projection_currentness with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.active_packets_derive_from_currentness",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence obligation=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route obligation=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+              ]
+            },
+            "observations": [
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.negative.late_terminal_statuses",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.packet_terminal_monotonic",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_late_result_preserves_noncurrent_packet_statuses",
+                  "source_test_evidence_id": "field_lifecycle_currentness.negative.late_terminal_statuses",
+                  "source_test_path": "tests/test_flowpilot_lifecycle_guard.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.packet_terminal_monotonic",
+                "observation_id": "runtime_path.field_lifecycle_currentness.00.field_lifecycle_currentness_packet_terminal_monotonic",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.negative.late_terminal_statuses with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.packet_terminal_monotonic",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 0,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.happy.current_result_history_append",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.result_history_append_only",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.result_history_append_only",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_result_history_appends_on_open_packet",
+                  "source_test_evidence_id": "field_lifecycle_currentness.happy.current_result_history_append",
+                  "source_test_path": "tests/test_flowpilot_lifecycle_guard.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.result_history_append_only",
+                "observation_id": "runtime_path.field_lifecycle_currentness.01.field_lifecycle_currentness_result_history_append_only",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.happy.current_result_history_append with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.result_history_append_only",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 1,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.happy.accept_pointer_commit",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accept_packet_result_writes_single_pointer_on_current_commit",
+                  "source_test_evidence_id": "field_lifecycle_currentness.happy.accept_pointer_commit",
+                  "source_test_path": "tests/test_flowpilot_lifecycle_guard.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_pointer_single_commit",
+                "observation_id": "runtime_path.field_lifecycle_currentness.02.field_lifecycle_currentness_accepted_result_pointer_single_commit",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.happy.accept_pointer_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_pointer_single_commit",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 2,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.edge.pending_route_mutation_commit",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.pending_route_mutation_disposition",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pending_route_mutation_clears_after_replacement_node_acceptance",
+                  "source_test_evidence_id": "field_lifecycle_currentness.edge.pending_route_mutation_commit",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition",
+                "observation_id": "runtime_path.field_lifecycle_currentness.03.field_lifecycle_currentness_pending_route_mutation_disposition",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.edge.pending_route_mutation_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.pending_route_mutation_disposition",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 3,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.negative.active_projection_currentness",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure",
+                  "source_test_evidence_id": "field_lifecycle_currentness.negative.active_projection_currentness",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness",
+                "observation_id": "runtime_path.field_lifecycle_currentness.04.field_lifecycle_currentness_active_packets_derive_from_currentness",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.negative.active_projection_currentness with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.active_packets_derive_from_currentness",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 4,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+                  "source_test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+                "observation_id": "runtime_path.field_lifecycle_currentness.05.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 5,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+                  "source_test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+                "observation_id": "runtime_path.field_lifecycle_currentness.06.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 6,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              }
+            ],
+            "result_status": "passed",
+            "run_id": "field_lifecycle_currentness:runtime-path-current",
+            "source_evidence_id": "runtime_path.field_lifecycle_currentness"
+          }
+        ],
         "similarity_handoff": null,
         "test_evidence": [
           {
@@ -36641,7 +37393,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_late_result_preserves_noncurrent_packet_statuses",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation"
+              "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.packet_terminal_monotonic"
@@ -36665,7 +37418,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_current_result_history_appends_on_open_packet",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.submit_result_audit_append"
+              "field_lifecycle_currentness.runtime.submit_result_audit_append",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.result_history_append_only"
@@ -36690,7 +37444,9 @@
             "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_fake_host_late_result_appends_audit_without_reactivation",
             "covered_code_contracts": [
               "field_lifecycle_currentness.runtime.submit_result_terminal_packet_preservation",
-              "field_lifecycle_currentness.runtime.submit_result_audit_append"
+              "field_lifecycle_currentness.runtime.submit_result_audit_append",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.packet_terminal_monotonic",
@@ -36715,7 +37471,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_accept_packet_result_writes_single_pointer_on_current_commit",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.accept_packet_result_commit"
+              "field_lifecycle_currentness.runtime.accept_packet_result_commit",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.accepted_result_pointer_single_commit"
@@ -36739,7 +37496,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_lifecycle_guard.FlowPilotLifecycleGuardTests.test_duplicate_after_accepted_preserves_accepted_result_pointer",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.accept_packet_result_commit"
+              "field_lifecycle_currentness.runtime.accept_packet_result_commit",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.accepted_result_pointer_single_commit"
@@ -36763,7 +37521,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_pending_route_mutation_clears_after_replacement_node_acceptance",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit"
+              "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.pending_route_mutation_disposition"
@@ -36787,7 +37546,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_unmatched_pending_route_mutation_survives_unrelated_node_acceptance",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit"
+              "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.pending_route_mutation_disposition"
@@ -36811,7 +37571,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_routing_projection_excludes_noncurrent_node_packets_without_blocking_closure",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.current_packets_for_routing"
+              "field_lifecycle_currentness.runtime.current_packets_for_routing",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.active_packets_derive_from_currentness"
@@ -36836,7 +37597,9 @@
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
             "covered_code_contracts": [
               "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
-              "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence"
+              "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
@@ -36861,7 +37624,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_excludes_superseded_node_packets",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence"
+              "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence"
@@ -36885,7 +37649,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_blocks_stale_active_accepted_packet_lease",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route"
+              "field_lifecycle_currentness.runtime.accepted_result_packets_for_active_route",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
@@ -36909,7 +37674,8 @@
             "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_quarantined_packet_projection_replay_uses_currentness_predicate",
             "covered_code_contracts": [
-              "field_lifecycle_currentness.runtime.current_packets_for_routing"
+              "field_lifecycle_currentness.runtime.current_packets_for_routing",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness"
             ],
             "covered_obligations": [
               "field_lifecycle_currentness.active_packets_derive_from_currentness"
@@ -36947,6 +37713,20 @@
             "test_evidence_id": "field_lifecycle_currentness.replay.fake_host_late_result_audit"
           },
           {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.late_terminal_statuses"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.packet_terminal_monotonic",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.replay.fake_host_late_result_audit"
+          },
+          {
             "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_audit_append",
             "gaps": [],
             "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
@@ -36955,6 +37735,20 @@
           },
           {
             "code_contract_id": "field_lifecycle_currentness.runtime.submit_result_audit_append",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.replay.fake_host_late_result_audit"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.current_result_history_append"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only",
             "gaps": [],
             "model_obligation_id": "field_lifecycle_currentness.result_history_append_only",
             "status": "locked",
@@ -36975,6 +37769,20 @@
             "test_evidence_id": "field_lifecycle_currentness.negative.accepted_pointer_duplicate"
           },
           {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.accept_pointer_commit"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_pointer_single_commit",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.accepted_pointer_duplicate"
+          },
+          {
             "code_contract_id": "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
             "gaps": [],
             "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
@@ -36983,6 +37791,20 @@
           },
           {
             "code_contract_id": "field_lifecycle_currentness.runtime.frontier_pending_mutation_commit",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.unmatched_pending_route_mutation_kept"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.edge.pending_route_mutation_commit"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition",
             "gaps": [],
             "model_obligation_id": "field_lifecycle_currentness.pending_route_mutation_disposition",
             "status": "locked",
@@ -37003,6 +37825,20 @@
             "test_evidence_id": "field_lifecycle_currentness.replay.quarantined_projection_currentness"
           },
           {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.active_projection_currentness"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.active_packets_derive_from_currentness",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.replay.quarantined_projection_currentness"
+          },
+          {
             "code_contract_id": "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
             "gaps": [],
             "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
@@ -37011,6 +37847,20 @@
           },
           {
             "code_contract_id": "field_lifecycle_currentness.runtime.accepted_packets_for_closure_evidence",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.closure_superseded_projection"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence",
             "gaps": [],
             "model_obligation_id": "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
             "status": "locked",
@@ -37029,6 +37879,20 @@
             "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
             "status": "locked",
             "test_evidence_id": "field_lifecycle_currentness.negative.accepted_result_health_stale_lease"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.happy.closure_accepted_projection"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.accepted_result_health_stale_lease"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -37038,16 +37902,24 @@
         "summary": "OK: model=field_lifecycle_currentness decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 0,
-        "progress_lines": [],
-        "required": false,
-        "runtime_node_contract_count": 0,
-        "runtime_observation_count": 0,
-        "runtime_path_run_count": 0
+        "progress_line_count": 7,
+        "progress_lines": [
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.packet_terminal_monotonic run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.packet_terminal_monotonic obligation=field_lifecycle_currentness.packet_terminal_monotonic code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.late_terminal_statuses progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.late_terminal_statuses with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.packet_terminal_monotonic",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.result_history_append_only run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.result_history_append_only obligation=field_lifecycle_currentness.result_history_append_only code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.current_result_history_append progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.current_result_history_append with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.result_history_append_only",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_pointer_single_commit run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_pointer_single_commit obligation=field_lifecycle_currentness.accepted_result_pointer_single_commit code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_pointer_single_commit boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.accept_pointer_commit progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.accept_pointer_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_pointer_single_commit",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.pending_route_mutation_disposition obligation=field_lifecycle_currentness.pending_route_mutation_disposition code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.edge.pending_route_mutation_commit progress=compares FlowPilot code/test evidence field_lifecycle_currentness.edge.pending_route_mutation_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.pending_route_mutation_disposition",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.active_packets_derive_from_currentness obligation=field_lifecycle_currentness.active_packets_derive_from_currentness code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.active_projection_currentness progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.active_projection_currentness with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.active_packets_derive_from_currentness",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence obligation=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route obligation=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+        ],
+        "required": true,
+        "runtime_node_contract_count": 7,
+        "runtime_observation_count": 7,
+        "runtime_path_run_count": 1
       }
     },
     {
-      "coverage_boundary": "Current-node trunk alignment names the PM node context package -> pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer invariant. It binds the focused pre-work FlowGuard model to high-standard runtime tests, but it does not replace semantic review of the worker output.",
+      "coverage_boundary": "Current-node trunk alignment names ordinary node plan Reviewer -> Worker -> post-result FlowGuard -> independent Reviewer, plus structural route FlowGuard -> PM absorption -> Reviewer before route mutation commit. It binds the focused route-gate model to high-standard runtime tests, but it does not replace semantic review of the worker output or PM route decisions.",
       "decision": "model_test_alignment_green",
       "family": "current-node trunk invariant",
       "finding_count": 0,
@@ -37064,12 +37936,29 @@
         "boundary_observations": [],
         "code_contracts": [
           {
-            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer",
             "error_paths": [],
             "external_inputs": [],
             "external_outputs": [],
             "implements_obligations": [
-              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+              "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
             ],
             "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
             "required": true,
@@ -37090,22 +37979,47 @@
           {
             "allow_shared_evidence": false,
             "allow_shared_implementation": false,
-            "description": "Every executable node follows the named trunk invariant: PM node context package -> pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer. Pre-work FlowGuard blocks return to PM repair and require a fresh current-generation pre-work pass before worker release.",
+            "description": "Every ordinary executable node follows the current trunk invariant: PM node entry self-check -> ordinary node plan Reviewer -> Worker -> post-result FlowGuard -> independent Reviewer. Ordinary node entry does not require a pre-worker FlowGuard packet.",
             "error_paths": [],
             "exact_external_contract": false,
             "external_inputs": [],
             "external_outputs": [],
             "model_miss_origin": false,
-            "obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "obligation_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
             "obligation_type": "invariant",
             "required": true,
             "required_closure_evidence_roles": [],
             "required_runtime_node_ids": [
-              "current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+              "current_node_trunk_invariant:current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer"
             ],
             "required_test_kinds": [
               "happy_path",
-              "failure_path",
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": false,
+            "description": "Structural route changes require FlowGuard simulation, PM absorption, and Reviewer before route mutation commit. PM must rewrite and rerun FlowGuard when the FlowGuard report blocks or PM changes the route plan after the report.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "current_node_trunk_invariant:current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
+            ],
+            "required_test_kinds": [
+              "happy_path",
               "negative_path"
             ],
             "requires_same_class_test_evidence": false,
@@ -37136,31 +38050,74 @@
             ],
             "boundary_id": "flowpilot.runtime_path.current_node_trunk_invariant",
             "child_model_id": "current_node_trunk_invariant",
-            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer",
             "exact": true,
             "input_case": "current_node_trunk_invariant.external_contract_input",
-            "leaf_model_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "leaf_model_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
             "metadata": {
               "compared_flowguard_model": "current_node_trunk_invariant",
               "compared_flowguard_model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
-              "compared_flowguard_obligation": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+              "compared_flowguard_obligation": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
               "family": "current-node trunk invariant",
               "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
-              "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
-              "source_test_evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+              "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_worker_postflowguard_and_reviewer_packets",
+              "source_test_evidence_id": "current_node_trunk.happy.context_follows_worker_and_reviewer",
               "source_test_path": "tests/test_flowpilot_high_standard_control_flow.py"
             },
             "model_id": "current_node_trunk_invariant",
-            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "model_obligation_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
             "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
-            "node_id": "current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "node_id": "current_node_trunk_invariant:current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
             "ordered": true,
             "required": true,
             "required_observation_ids": [
-              "runtime_path.current_node_trunk_invariant.00.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+              "runtime_path.current_node_trunk_invariant.00.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer"
             ],
             "requires_gateway_binding": false,
             "sequence_index": 0,
+            "state_case": "current_node_trunk_invariant.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "current_node_trunk_invariant.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.current_node_trunk_invariant",
+            "child_model_id": "current_node_trunk_invariant",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer",
+            "exact": true,
+            "input_case": "current_node_trunk_invariant.external_contract_input",
+            "leaf_model_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+            "metadata": {
+              "compared_flowguard_model": "current_node_trunk_invariant",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+              "compared_flowguard_obligation": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+              "family": "current-node trunk invariant",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation",
+              "source_test_evidence_id": "current_node_trunk.negative.structural_flowguard_block",
+              "source_test_path": "tests/test_flowpilot_high_standard_control_flow.py"
+            },
+            "model_id": "current_node_trunk_invariant",
+            "model_obligation_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+            "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+            "node_id": "current_node_trunk_invariant:current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.current_node_trunk_invariant.01.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 1,
             "state_case": "current_node_trunk_invariant.current_model_state"
           }
         ],
@@ -37173,7 +38130,8 @@
               "model_id": "current_node_trunk_invariant",
               "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
               "progress_lines": [
-                "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer obligation=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.happy.context_follows_all_packets progress=compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_all_packets with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+                "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer obligation=current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.happy.context_follows_worker_and_reviewer progress=compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_worker_and_reviewer with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
+                "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.structural_route_flowguard_pm_absorption_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.structural_route_flowguard_pm_absorption_reviewer obligation=current_node_trunk.structural_route_flowguard_pm_absorption_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.negative.structural_flowguard_block progress=compares FlowPilot code/test evidence current_node_trunk.negative.structural_flowguard_block with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
               ]
             },
             "observations": [
@@ -37182,27 +38140,27 @@
                 "assertion_scope": "external_contract",
                 "boundary_id": "flowpilot.runtime_path.current_node_trunk_invariant",
                 "child_model_id": "current_node_trunk_invariant",
-                "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+                "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer",
                 "evidence_current": true,
-                "evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+                "evidence_id": "current_node_trunk.happy.context_follows_worker_and_reviewer",
                 "gateway_id": "",
                 "input_case": "current_node_trunk_invariant.external_contract_input",
-                "leaf_model_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "leaf_model_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
                 "metadata": {
                   "compared_flowguard_model": "current_node_trunk_invariant",
                   "compared_flowguard_model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
-                  "compared_flowguard_obligation": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                  "compared_flowguard_obligation": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
                   "family": "current-node trunk invariant",
                   "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
-                  "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
-                  "source_test_evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_worker_postflowguard_and_reviewer_packets",
+                  "source_test_evidence_id": "current_node_trunk.happy.context_follows_worker_and_reviewer",
                   "source_test_path": "tests/test_flowpilot_high_standard_control_flow.py"
                 },
                 "model_id": "current_node_trunk_invariant",
-                "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "model_obligation_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
                 "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
-                "node_id": "current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
-                "observation_id": "runtime_path.current_node_trunk_invariant.00.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+                "node_id": "current_node_trunk_invariant:current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
+                "observation_id": "runtime_path.current_node_trunk_invariant.00.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer",
                 "observed_error_path": "",
                 "observed_next_state": "current_node_trunk_invariant.runtime_path_evidence_bound",
                 "observed_output": "model_obligation_runtime_path_bound",
@@ -37212,11 +38170,53 @@
                 "observed_state_writes": [
                   "flowguard_runtime_path_evidence"
                 ],
-                "progress_message": "compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_all_packets with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "progress_message": "compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_worker_and_reviewer with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
                 "proof_artifact": null,
                 "result_status": "passed",
                 "run_id": "current_node_trunk_invariant:runtime-path-current",
                 "sequence_index": 0,
+                "state_case": "current_node_trunk_invariant.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.current_node_trunk_invariant",
+                "child_model_id": "current_node_trunk_invariant",
+                "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer",
+                "evidence_current": true,
+                "evidence_id": "current_node_trunk.negative.structural_flowguard_block",
+                "gateway_id": "",
+                "input_case": "current_node_trunk_invariant.external_contract_input",
+                "leaf_model_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+                "metadata": {
+                  "compared_flowguard_model": "current_node_trunk_invariant",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+                  "compared_flowguard_obligation": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+                  "family": "current-node trunk invariant",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation",
+                  "source_test_evidence_id": "current_node_trunk.negative.structural_flowguard_block",
+                  "source_test_path": "tests/test_flowpilot_high_standard_control_flow.py"
+                },
+                "model_id": "current_node_trunk_invariant",
+                "model_obligation_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+                "model_path": "FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant",
+                "node_id": "current_node_trunk_invariant:current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+                "observation_id": "runtime_path.current_node_trunk_invariant.01.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer",
+                "observed_error_path": "",
+                "observed_next_state": "current_node_trunk_invariant.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence current_node_trunk.negative.structural_flowguard_block with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "current_node_trunk_invariant:runtime-path-current",
+                "sequence_index": 1,
                 "state_case": "current_node_trunk_invariant.current_model_state"
               }
             ],
@@ -37230,15 +38230,15 @@
           {
             "assertion_scope": "external_contract",
             "closure_evidence_role": "",
-            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_worker_postflowguard_and_reviewer_packets",
             "covered_code_contracts": [
-              "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer"
             ],
             "covered_obligations": [
-              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+              "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer"
             ],
             "evidence_current": true,
-            "evidence_id": "current_node_trunk.happy.context_follows_all_packets",
+            "evidence_id": "current_node_trunk.happy.context_follows_worker_and_reviewer",
             "evidence_role": "primary",
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
@@ -37249,44 +38249,20 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "happy_path",
-            "test_name": "test_node_context_package_follows_flowguard_worker_and_reviewer_packets"
+            "test_name": "test_node_context_package_follows_worker_postflowguard_and_reviewer_packets"
           },
           {
             "assertion_scope": "external_contract",
             "closure_evidence_role": "",
-            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_task_requires_prework_flowguard_gate",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard",
             "covered_code_contracts": [
-              "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer"
             ],
             "covered_obligations": [
-              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+              "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer"
             ],
             "evidence_current": true,
-            "evidence_id": "current_node_trunk.failure.worker_blocked_before_prework",
-            "evidence_role": "primary",
-            "evidence_target_id": "",
-            "overclaims_model_confidence": false,
-            "path": "tests/test_flowpilot_high_standard_control_flow.py",
-            "proof_artifact": null,
-            "result_reused": false,
-            "result_status": "passed",
-            "reuse_ticket": null,
-            "stale_reasons": [],
-            "test_kind": "failure_path",
-            "test_name": "test_node_task_requires_prework_flowguard_gate"
-          },
-          {
-            "assertion_scope": "external_contract",
-            "closure_evidence_role": "",
-            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
-            "covered_code_contracts": [
-              "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer"
-            ],
-            "covered_obligations": [
-              "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
-            ],
-            "evidence_current": true,
-            "evidence_id": "current_node_trunk.negative.prework_block_requires_fresh_pass",
+            "evidence_id": "current_node_trunk.negative.ordinary_node_without_prework",
             "evidence_role": "primary",
             "evidence_target_id": "",
             "overclaims_model_confidence": false,
@@ -37297,32 +38273,87 @@
             "reuse_ticket": null,
             "stale_reasons": [],
             "test_kind": "negative_path",
-            "test_name": "test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework"
+            "test_name": "test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation",
+            "covered_code_contracts": [
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer"
+            ],
+            "covered_obligations": [
+              "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "current_node_trunk.negative.structural_flowguard_block",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_high_standard_control_flow.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer",
+            "covered_code_contracts": [
+              "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer"
+            ],
+            "covered_obligations": [
+              "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
+            ],
+            "evidence_current": true,
+            "evidence_id": "current_node_trunk.happy.pm_absorption_required",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_high_standard_control_flow.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer"
           }
         ]
       },
       "report": {
         "binding_rows": [
           {
-            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer",
             "gaps": [],
-            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "model_obligation_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
             "status": "locked",
-            "test_evidence_id": "current_node_trunk.happy.context_follows_all_packets"
+            "test_evidence_id": "current_node_trunk.happy.context_follows_worker_and_reviewer"
           },
           {
-            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer",
             "gaps": [],
-            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "model_obligation_id": "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
             "status": "locked",
-            "test_evidence_id": "current_node_trunk.failure.worker_blocked_before_prework"
+            "test_evidence_id": "current_node_trunk.negative.ordinary_node_without_prework"
           },
           {
-            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer",
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer",
             "gaps": [],
-            "model_obligation_id": "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+            "model_obligation_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
             "status": "locked",
-            "test_evidence_id": "current_node_trunk.negative.prework_block_requires_fresh_pass"
+            "test_evidence_id": "current_node_trunk.negative.structural_flowguard_block"
+          },
+          {
+            "code_contract_id": "runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer",
+            "gaps": [],
+            "model_obligation_id": "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+            "status": "locked",
+            "test_evidence_id": "current_node_trunk.happy.pm_absorption_required"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -37332,13 +38363,14 @@
         "summary": "OK: model=current_node_trunk_invariant decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 1,
+        "progress_line_count": 2,
         "progress_lines": [
-          "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.pm_context_prework_worker_postflowguard_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer obligation=current_node_trunk.pm_context_prework_worker_postflowguard_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_pm_context_prework_worker_postflowguard_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.happy.context_follows_all_packets progress=compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_all_packets with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
+          "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer obligation=current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_ordinary_reviewer_worker_postflowguard_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.happy.context_follows_worker_and_reviewer progress=compares FlowPilot code/test evidence current_node_trunk.happy.context_follows_worker_and_reviewer with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
+          "flowguard.runtime_path model=current_node_trunk_invariant node=current_node_trunk_invariant:current_node_trunk.structural_route_flowguard_pm_absorption_reviewer run=current_node_trunk_invariant:runtime-path-current status=passed model_path=FlowPilot model-test alignment/current-node trunk invariant/current_node_trunk_invariant child_model=current_node_trunk_invariant leaf_model=current_node_trunk.structural_route_flowguard_pm_absorption_reviewer obligation=current_node_trunk.structural_route_flowguard_pm_absorption_reviewer code_contract=runtime_path.current_node_trunk_invariant.current_node_trunk_structural_route_flowguard_pm_absorption_reviewer boundary=flowpilot.runtime_path.current_node_trunk_invariant input_case=current_node_trunk_invariant.external_contract_input state_case=current_node_trunk_invariant.current_model_state evidence=current_node_trunk.negative.structural_flowguard_block progress=compares FlowPilot code/test evidence current_node_trunk.negative.structural_flowguard_block with FlowGuard model current_node_trunk_invariant obligation current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
         ],
         "required": true,
-        "runtime_node_contract_count": 1,
-        "runtime_observation_count": 1,
+        "runtime_node_contract_count": 2,
+        "runtime_observation_count": 2,
         "runtime_path_run_count": 1
       }
     },
@@ -74842,7 +75874,7 @@
           "test_name": "test_formal_mode_rejects_headless_startup_result_as_formal_evidence"
         },
         {
-          "assert_count": 26,
+          "assert_count": 28,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "fake_e2e.run_fake_e2e",
@@ -74852,6 +75884,7 @@
             "Path",
             "all",
             "any",
+            "body.get",
             "flowpilot_new.run_fake_e2e",
             "get",
             "iter",
@@ -74868,6 +75901,7 @@
             "self.assertIn",
             "self.assertNotIn",
             "self.assertTrue",
+            "self.subTest",
             "tempfile.TemporaryDirectory",
             "values"
           ],
@@ -74935,7 +75969,7 @@
           "test_name": "test_blackbox_fake_project_rehearsal_smoke_uses_public_cli"
         },
         {
-          "assert_count": 14,
+          "assert_count": 15,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
@@ -74953,6 +75987,7 @@
             "flowpilot_new.submit_result",
             "high_standard_contract_body",
             "iter",
+            "join",
             "json.loads",
             "next",
             "run_shell.load_run_ledger",
@@ -74973,7 +76008,7 @@
           "test_name": "test_ack_only_and_pm_only_result_do_not_reach_terminal_closure"
         },
         {
-          "assert_count": 11,
+          "assert_count": 12,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.ack",
@@ -75014,7 +76049,7 @@
           "test_name": "test_flowguard_operator_is_leased_through_its_own_packet"
         },
         {
-          "assert_count": 11,
+          "assert_count": 12,
           "assertion_scope": "external_contract",
           "called_code_contracts": [
             "flowpilot_new.submit_result"

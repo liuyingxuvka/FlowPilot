@@ -612,9 +612,13 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("do not create separate candidate ledgers", pm_core)
 
         pm_node_plan = normalized(_card_path_by_id("pm.node_acceptance_plan"))
-        self.assertIn("top-level `node_context_package`", pm_node_plan)
+        self.assertIn("`decision`", pm_node_plan)
+        self.assertIn('`decision: "pass"`', pm_node_plan)
+        self.assertIn('`decision: "redesign_route"`', pm_node_plan)
+        self.assertIn("ordinary node entry does not issue a separate pre-worker flowguard packet", pm_node_plan)
+        self.assertIn("pm_flowguard_acceptance", pm_node_plan)
         self.assertIn("commit_node_acceptance_plan", pm_node_plan)
-        self.assertIn("must not claim accepted", pm_node_plan)
+        self.assertIn("runtime stages the route effect", pm_node_plan)
 
         reviewer_node_plan = normalized(_card_path_by_id("reviewer.node_acceptance_plan_review"))
         self.assertIn("runtime owns mechanical validation", reviewer_node_plan)
@@ -622,9 +626,21 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("semantically safe to commit", reviewer_node_plan)
 
         flowguard_core = normalized(_card_path_by_id("flowguard_operator.core"))
+        self.assertIn("current subject simulation boundary", flowguard_core)
+        self.assertIn("route traversal", flowguard_core)
+        self.assertIn("work dispatch", flowguard_core)
+        self.assertIn("validation/check path", flowguard_core)
+        self.assertIn("blocker/failure path", flowguard_core)
+        self.assertIn("repair return path", flowguard_core)
         self.assertIn("when the packet includes `staged_effect`", flowguard_core)
         self.assertIn("do not require future committed fields", flowguard_core)
         self.assertIn("process/state/evidence risk review", flowguard_core)
+
+        reviewer_core = normalized(_card_path_by_id("reviewer.core"))
+        self.assertIn("ordinary `node_acceptance_plan` pass branch", reviewer_core)
+        self.assertIn("do not invent a pre-worker flowguard requirement", reviewer_core)
+        self.assertIn("structural_pm_flowguard_acceptance_gate", reviewer_core)
+        self.assertIn("pm actually absorbed the current flowguard result", reviewer_core)
 
         pm_resume = normalized(_card_path_by_id("pm.resume_decision"))
         self.assertIn("plain lifecycle resume does not clear", pm_resume)

@@ -81,7 +81,9 @@ Check:
   to worker dispatch without local modeling and PM decision;
 - leaf promotion is allowed and required when PM discovers an apparent leaf is
   too broad at entry. Block if stale approvals remain valid after a promoted
-  leaf becomes a parent/module;
+  leaf becomes a parent/module, or if the promotion bypasses mandatory
+  FlowGuard route simulation, PM absorption of that FlowGuard result, and
+  Reviewer inspection of the PM absorption package;
 - worker replanning is not an acceptable substitute for route depth. If the
   Worker packet would need to split the work, invent subtasks, or decide child
   ordering, block the route and require PM to deepen the canonical route tree

@@ -70,6 +70,29 @@ Your FlowGuard Report supports PM and Reviewer decisions. It does not approve
 gates, mutate routes, close nodes, authorize Controller or Worker action, or
 replace human-like review.
 
+## Current Subject Simulation Boundary
+
+Model the current subject named by the opened packet. If the packet gives a
+`staged_effect`, `route_plan`, `node_context_package`, route draft, repair
+plan, validation plan, blocker, or closure package, that object is the
+simulation subject. Do not choose an unrelated FlowGuard target because it
+seems interesting or generally useful.
+
+For route, node, repair, validation, failure, or closure work, simulate the
+actual process line the subject would create: route traversal, node entry,
+work dispatch, validation/check path, evidence freshness, blocker/failure
+path, repair return path, stale-evidence handling, and terminal or parent
+closure. For a structural PM route change, simulate the proposed `route_plan`
+and its route/work/validation/failure lines before PM or Reviewer can accept
+it. For ordinary `node_acceptance_plan` pass branches, do not invent a
+pre-worker FlowGuard gate; inspect only when the current packet explicitly
+assigns a FlowGuard work order.
+
+If the packet does not identify a current subject clearly enough to model,
+return a structured blocker asking PM or Router for a corrected current packet.
+Do not widen the scope, mutate the route, approve the gate, release the
+Worker, replace PM absorption, or replace Reviewer judgement.
+
 When the packet includes `staged_effect`, model the proposed current-runtime
 effect from that record and the referenced result/gate. Review whether the
 pending effect is safe to commit after the gate, including route state,

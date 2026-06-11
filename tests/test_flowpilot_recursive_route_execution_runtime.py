@@ -85,6 +85,20 @@ def _pm_disposition_body(decision: str, reason: str) -> str:
     return json.dumps(payload)
 
 
+def _pm_flowguard_acceptance_body(ledger: dict) -> str:
+    gate = list(ledger["pm_decision_gates"].values())[-1]
+    order = ledger["flowguard_work_orders"][gate["flowguard_order_id"]]
+    payload = packet_result_contracts.minimal_valid_shape_for_family("pm_flowguard_acceptance.pm_flowguard_acceptance")
+    payload.update(
+        {
+            "reason": "PM absorbed the structural FlowGuard report.",
+            "flowguard_absorption": "PM accepted the current FlowGuard report before Reviewer review.",
+            "accepted_flowguard_result_id": order["proof_result_id"],
+        }
+    )
+    return json.dumps(payload)
+
+
 def _complete_open_packet(ledger: dict, packet_id: str, body: str | None = None) -> str:
     packet = ledger["packets"][packet_id]
     responsibility = packet["envelope"]["responsibility"]
@@ -146,16 +160,6 @@ def _complete_foundation_planning_chain(ledger: dict, pm_packet: str) -> None:
 
 def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
     node_id = ledger["execution_frontier"]["active_node_id"]
-    if _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard"):
-        prework_packet = _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0]
-        _complete_open_packet(
-            ledger,
-            prework_packet,
-            _flowguard_pass_body(
-                f"Prework FlowGuard accepted {node_id}.",
-                selected_routes=["flowguard-development-process-flow"],
-            ),
-        )
     task_packet = _open_packets(ledger, "task", scope="node")[0]
     _complete_open_packet(ledger, task_packet, _pass_body(f"Worker completed {node_id}.", node_id=node_id))
     for kind in ("flowguard_check", "review"):
@@ -164,13 +168,16 @@ def _complete_active_node(ledger: dict, disposition: str = "accept") -> str:
     pm_packet = _open_packets(ledger, "pm_disposition")[0]
     _complete_open_packet(ledger, pm_packet, _pm_disposition_body(disposition, f"{disposition} {node_id}"))
     if disposition == "redesign_route":
-        for kind in ("flowguard_check", "review"):
-            packet_id = _open_packets(ledger, kind)[0]
-            _complete_open_packet(
-                ledger,
-                packet_id,
-                _role_pass_body(kind, f"PM disposition gate {kind} accepted {node_id}."),
-            )
+        flowguard_packet = _open_packets(ledger, "flowguard_check")[0]
+        _complete_open_packet(
+            ledger,
+            flowguard_packet,
+            _flowguard_pass_body(f"PM disposition gate FlowGuard accepted {node_id}."),
+        )
+        pm_acceptance_packet = _open_packets(ledger, "pm_flowguard_acceptance")[0]
+        _complete_open_packet(ledger, pm_acceptance_packet, _pm_flowguard_acceptance_body(ledger))
+        review_packet = _open_packets(ledger, "review")[0]
+        _complete_open_packet(ledger, review_packet, _review_pass_body(f"PM disposition gate Reviewer accepted {node_id}."))
     return node_id
 
 
@@ -191,16 +198,9 @@ def _mark_node_ready_for_final_closure(ledger: dict, node_id: str) -> None:
     ledger["route_nodes"][node_id]["status"] = "accepted"
     ledger["route_nodes"][node_id]["accepted_result_id"] = "node-result"
     ledger["route_nodes"][node_id]["pm_disposition_id"] = "pm-disposition"
-    ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = "prework-flowguard-1"
-    ledger["route_nodes"][node_id]["prework_flowguard_repair_generation"] = 0
     ledger["route_nodes"][node_id]["flowguard_order_ids"] = ["flowguard-1"]
     ledger["route_nodes"][node_id]["review_ids"] = ["review-1"]
     ledger["route_nodes"][node_id]["validation_evidence_ids"] = ["runtime-validation"]
-    ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
-        "order_id": "prework-flowguard-1",
-        "status": "complete",
-        "decision": "pass",
-    }
     ledger["flowguard_work_orders"]["flowguard-1"] = {
         "order_id": "flowguard-1",
         "subject_id": packet_id,
@@ -225,7 +225,7 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         self.assertEqual(ledger["execution_frontier"]["active_node_id"], "node-001")
         action = runtime.router_next_action(ledger).to_json()
         self.assertEqual(action["action_type"], "dispatch_current_role")
-        self.assertEqual(action["subject_id"], _open_packets(ledger, "flowguard_check", scope="node_prework_flowguard")[0])
+        self.assertEqual(action["subject_id"], _open_packets(ledger, "task", scope="node")[0])
 
     def test_numbered_text_plan_is_rejected_without_route_fallback(self) -> None:
         ledger, _pm_packet = _recursive_ledger()
@@ -373,13 +373,6 @@ class FlowPilotRecursiveRouteExecutionRuntimeTests(unittest.TestCase):
         ledger["route_nodes"]["node-001"]["packet_ids"].append(packet_id)
         ledger["route_nodes"]["node-001"]["status"] = "accepted"
         ledger["route_nodes"]["node-001"]["accepted_result_id"] = "result-current"
-        ledger["route_nodes"]["node-001"]["prework_flowguard_order_id"] = "prework-flowguard-1"
-        ledger["route_nodes"]["node-001"]["prework_flowguard_repair_generation"] = 0
-        ledger["flowguard_work_orders"]["prework-flowguard-1"] = {
-            "order_id": "prework-flowguard-1",
-            "status": "complete",
-            "decision": "pass",
-        }
         ledger["execution_frontier"]["active_node_id"] = ""
         ledger["execution_frontier"]["status"] = "ready_for_final_closure"
         ledger["packets"][packet_id]["status"] = "result_blocked"

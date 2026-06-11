@@ -119,14 +119,20 @@ operator judges model/process/state risks; Runtime/Router owns fields, hashes,
 paths, packet/result/current-run ids, role-agent binding, output-contract shape,
 and ledger absorption.
 
-The current executable-node trunk invariant is: PM node context package ->
-pre-work FlowGuard -> Worker -> post-result FlowGuard -> independent Reviewer.
-This is not optional and not historical residue. Runtime blocks worker packet
-release until the current node generation has an accepted pre-work FlowGuard
-gate, and any pre-work block returns to PM repair before a fresh pre-work
-FlowGuard pass can release worker execution again. The focused owning model is
-`simulations/flowpilot_prework_flowguard_gate_model.py`; the total
-Model-Test Alignment family is named `current-node trunk invariant`.
+The current executable-node trunk invariant is: PM node entry self-check ->
+ordinary node plan Reviewer -> Worker -> post-result FlowGuard -> independent
+Reviewer. Ordinary node execution no longer has a mandatory pre-worker
+FlowGuard gate. If PM discovers at node entry that the current route/node shape
+is too broad, too narrow, wrongly ordered, or otherwise structurally wrong, PM
+must submit a structural `redesign_route` plan instead of issuing a worker-ready
+node plan. Runtime then stages the route effect, requires FlowGuard to simulate
+the current route plan and its work/validation/failure/repair paths, requires
+PM to absorb that FlowGuard result through `pm_flowguard_acceptance`, and only
+then sends the PM absorption package to Reviewer. The focused owning model is
+`simulations/flowpilot_prework_flowguard_gate_model.py`; despite the historical
+filename, its current semantics are structural route-change FlowGuard and PM
+absorption. The total Model-Test Alignment family is named `current-node trunk
+invariant`.
 
 As of the new-only FlowPilot contract, the active maintenance baseline is
 recorded in `docs/flowpilot_maintenance_convergence_20260527.md` and the

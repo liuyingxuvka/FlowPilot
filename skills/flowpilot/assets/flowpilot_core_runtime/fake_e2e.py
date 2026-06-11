@@ -124,7 +124,7 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
                     "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
                     "acceptance_criteria": [
                         "worker result satisfies the node packet",
-                        "pre-work and post-result FlowGuard evidence are current",
+                        "node-plan Reviewer, post-result FlowGuard, and final Reviewer evidence are current",
                         "reviewer independently challenges the node outcome",
                     ],
                     "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
@@ -189,6 +189,16 @@ def _body_for_packet(packet: dict[str, Any]) -> str:
         return json.dumps(payload, sort_keys=True)
     if family_id.startswith("flowguard_check.") or family_id == "review.any_current_subject":
         return json.dumps(runtime._packet_result_minimal_valid_shape(packet), sort_keys=True)
+    if family_id == "pm_flowguard_acceptance.pm_flowguard_acceptance":
+        payload = runtime._packet_result_minimal_valid_shape(packet)
+        try:
+            packet_body = json.loads(packet.get("body") or "{}")
+        except json.JSONDecodeError:
+            packet_body = {}
+        if isinstance(packet_body, dict) and packet_body.get("flowguard_result_id"):
+            payload["accepted_flowguard_result_id"] = str(packet_body["flowguard_result_id"])
+        payload["flowguard_absorption"] = "fake PM absorbed the current FlowGuard report before Reviewer review"
+        return json.dumps(payload, sort_keys=True)
     if kind == "pm_disposition":
         payload = runtime._packet_result_minimal_valid_shape(packet)
         try:
@@ -336,15 +346,15 @@ def run_fake_e2e(
             "task.high_standard_contract",
             "task.skill_standard",
             "task.node_acceptance_plan",
-            "flowguard_check.node_prework_flowguard",
             "flowguard_check.post_result",
             "review.any_current_subject",
             "review.terminal_backward_replay",
+            "pm_flowguard_acceptance.pm_flowguard_acceptance",
             "pm_disposition.node_pm_disposition",
         } and family_id not in injected_fault_families
         should_consistency_fault = (
             inject_consistency_faults
-            and family_id in {"flowguard_check.node_prework_flowguard", "flowguard_check.post_result"}
+            and family_id == "flowguard_check.post_result"
             and family_id not in injected_consistency_fault_families
         )
         if should_consistency_fault:

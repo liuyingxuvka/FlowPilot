@@ -246,9 +246,12 @@ must tell the FlowGuard operator to open the cited skill instructions and return
 `Role Skill Use Evidence`; PM prose or memory is not enough.
 
 Before worker dispatch, write `test_obligation_matrix.pre_worker` in the node
-acceptance plan. After FlowGuard operator and worker results return, update
-`test_obligation_matrix.post_worker`. Every missing, stale, skipped, failed,
-not-run, or progress-only test obligation must receive one PM disposition:
+acceptance plan. Ordinary node entry does not create a separate pre-worker
+FlowGuard gate; the pre-worker matrix is PM's own obligation map for the
+Worker packet, Reviewer packet, post-result FlowGuard packet, and PM
+post-worker disposition. After any FlowGuard operator and worker results
+return, update `test_obligation_matrix.post_worker`. Every missing, stale,
+skipped, failed, not-run, or progress-only test obligation must receive one PM disposition:
 `covered`, `worker_test_packet_required`, `testmesh_required`,
 `model_test_alignment_required`, `waived_with_authority`,
 `deferred_to_named_node`, or `blocked`.
@@ -261,14 +264,24 @@ governance. Use Model-Test Alignment when the model obligations, public code
 contracts, and ordinary tests do not line up. Do not let `missing_test_kinds`
 remain only in FlowGuard operator prose, residual risk, or a final note.
 
-Every node acceptance plan must also return a `node_context_package`. This is
-the minimum starting context that runtime attaches to the pre-work FlowGuard
-packet, worker packet, post-result FlowGuard packet, and Reviewer packet. It
-must name the node purpose, acceptance criteria, relevant references, evidence
-targets, inspection targets, known risks, FlowGuard/model targets, and Reviewer
-starting points. Do not use the package to limit FlowGuard or Reviewer scope:
-they may inspect additional authorized files, UI/screenshots, logs, commands,
-model artifacts, and evidence paths when their independent check requires it.
+Every ordinary node acceptance plan that proceeds to work must return a
+`node_context_package`. This is the minimum starting context that runtime
+attaches to the Reviewer packet, Worker packet, post-result FlowGuard packet,
+and any later PM disposition for that node. It must name the node purpose,
+acceptance criteria, relevant references, evidence targets, inspection targets,
+known risks, FlowGuard/model targets, and Reviewer starting points. Do not use
+the package to limit FlowGuard or Reviewer scope: they may inspect additional
+authorized files, UI/screenshots, logs, commands, model artifacts, and evidence
+paths when their independent check requires it.
+
+If PM sees at node entry that the apparent leaf is too broad, wrongly ordered,
+or needs deeper child nodes, PM must not issue an ordinary worker-ready
+`decision: "pass"` plan. Submit `decision: "redesign_route"` with a single
+current `route_plan` instead. Runtime will stage the route effect, issue the
+required FlowGuard route simulation, require PM to absorb the FlowGuard result
+through `pm_flowguard_acceptance`, and only then ask Reviewer to inspect the PM
+absorption and route effect. There is no optional or uncertain FlowGuard branch
+for structural route changes.
 
 ## Artifact-Backed Handoff Protocol
 

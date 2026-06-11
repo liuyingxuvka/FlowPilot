@@ -226,21 +226,25 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
             "task.node_acceptance_plan",
             "task.node",
             "task.parent_backward_replay",
-            "flowguard_check.node_prework_flowguard",
             "flowguard_check.post_result",
             "review.any_current_subject",
             "review.terminal_backward_replay",
             "pm_repair_decision.pm_repair_decision",
+            "pm_flowguard_acceptance.pm_flowguard_acceptance",
             "pm_disposition.node_pm_disposition",
         ):
             self.assertIn(family_id, contracts)
+        self.assertNotIn("flowguard_check.node_prework_flowguard", contracts)
 
         self.assertEqual(contracts["task.high_standard_contract"]["required_fields"], ("requirements",))
         self.assertIn("decision", contracts["task.high_standard_contract"]["forbidden_fields"])
         self.assertIn("contract_rows", contracts["task.high_standard_contract"]["forbidden_fields"])
         self.assertIn("obligations", contracts["task.skill_standard"]["required_fields"])
         self.assertIn("selected_skills", contracts["task.skill_standard"]["forbidden_fields"])
-        self.assertIn("node_context_package", contracts["task.node_acceptance_plan"]["required_fields"])
+        self.assertEqual(contracts["task.node_acceptance_plan"]["required_fields"], ("decision",))
+        node_branch_shapes = model.packet_result_contracts.branch_valid_shapes_for_family("task.node_acceptance_plan")
+        self.assertIn("node_context_package", node_branch_shapes["decision=pass"])
+        self.assertIn("route_plan", node_branch_shapes["decision=redesign_route"])
         self.assertIn("pm_visible_summary", contracts["flowguard_check.post_result"]["required_fields"])
         self.assertIn("evidence_consistency", contracts["flowguard_check.post_result"]["required_fields"])
         self.assertIn(
@@ -258,6 +262,11 @@ class FlowPilotFieldContractModelTests(unittest.TestCase):
         self.assertIn("decision=redesign_route", branch_shapes)
         self.assertIn("route_plan", branch_shapes["decision=redesign_route"])
         self.assertIn("summary", contracts["pm_disposition.node_pm_disposition"]["forbidden_fields"])
+        self.assertIn("flowguard_absorption", contracts["pm_flowguard_acceptance.pm_flowguard_acceptance"]["required_fields"])
+        self.assertIn(
+            "route_plan.nodes[].title when decision=redesign_route",
+            contracts["pm_flowguard_acceptance.pm_flowguard_acceptance"]["required_child_fields"],
+        )
 
     def test_field_lifecycle_chains_cover_flowguard_evidence_consistency(self) -> None:
         chains = {entry["chain_id"]: entry for entry in model.FIELD_LIFECYCLE_CHAINS}

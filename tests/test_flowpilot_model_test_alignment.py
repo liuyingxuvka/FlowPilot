@@ -68,6 +68,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 "packet/card/ack",
                 "packet result family",
                 "route mutation",
+                "field lifecycle currentness",
                 "current-node trunk invariant",
                 "terminal/closure/resume",
                 "role/output contracts",
@@ -577,7 +578,7 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
                 self.assertTrue(item.path.startswith("tests/router_runtime/route_mutation_"))
                 self.assertIn("tests.router_runtime.route_mutation", item.command)
 
-    def test_current_node_trunk_invariant_names_two_flowguard_gates(self) -> None:
+    def test_current_node_trunk_invariant_names_ordinary_and_structural_gates(self) -> None:
         entries = alignment_runner.build_alignment_plan_entries()
         trunk_entry = next(
             entry for entry in entries if entry["family"] == "current-node trunk invariant"
@@ -585,28 +586,42 @@ class FlowPilotModelTestAlignmentTests(unittest.TestCase):
         obligations = {item.obligation_id: item for item in trunk_entry["plan"].obligations}
         evidence = {item.evidence_id: item for item in trunk_entry["plan"].test_evidence}
 
-        obligation_id = "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer"
-        self.assertIn(obligation_id, obligations)
-        description = obligations[obligation_id].description
+        ordinary_obligation_id = "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer"
+        structural_obligation_id = "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer"
+        self.assertIn(ordinary_obligation_id, obligations)
+        self.assertIn(structural_obligation_id, obligations)
+        ordinary_description = obligations[ordinary_obligation_id].description
+        structural_description = obligations[structural_obligation_id].description
         for phrase in (
-            "PM node context package -> pre-work FlowGuard -> Worker",
+            "ordinary node plan Reviewer -> Worker",
             "post-result FlowGuard -> independent Reviewer",
-            "fresh current-generation pre-work pass",
+            "does not require a pre-worker FlowGuard packet",
         ):
             with self.subTest(phrase=phrase):
-                self.assertIn(phrase, description)
+                self.assertIn(phrase, ordinary_description)
+        for phrase in (
+            "Structural route changes require FlowGuard simulation, PM absorption, and Reviewer",
+            "route mutation commit",
+            "rewrite and rerun FlowGuard",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, structural_description)
 
         self.assertEqual(
-            evidence["current_node_trunk.happy.context_follows_all_packets"].test_name,
-            "test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+            evidence["current_node_trunk.happy.context_follows_worker_and_reviewer"].test_name,
+            "test_node_context_package_follows_worker_postflowguard_and_reviewer_packets",
         )
         self.assertEqual(
-            evidence["current_node_trunk.failure.worker_blocked_before_prework"].test_name,
-            "test_node_task_requires_prework_flowguard_gate",
+            evidence["current_node_trunk.negative.ordinary_node_without_prework"].test_name,
+            "test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard",
         )
         self.assertEqual(
-            evidence["current_node_trunk.negative.prework_block_requires_fresh_pass"].test_name,
-            "test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+            evidence["current_node_trunk.negative.structural_flowguard_block"].test_name,
+            "test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation",
+        )
+        self.assertEqual(
+            evidence["current_node_trunk.happy.pm_absorption_required"].test_name,
+            "test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer",
         )
 
     def test_known_friction_alignment_binds_matrix_and_contract_edges(self) -> None:

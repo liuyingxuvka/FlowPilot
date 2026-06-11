@@ -679,8 +679,24 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "node_order": ["node-001", "node-002"],
         }
         ledger["route_nodes"] = {
-            "node-001": {"node_id": "node-001", "status": "accepted"},
-            "node-002": {"node_id": "node-002", "status": "running"},
+            "node-001": {
+                "node_id": "node-001",
+                "title": "Accepted node",
+                "status": "accepted",
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": ["accepted"],
+                "packet_ids": [],
+            },
+            "node-002": {
+                "node_id": "node-002",
+                "title": "Running node",
+                "status": "running",
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": ["running"],
+                "packet_ids": [],
+            },
         }
         ledger["execution_frontier"] = {
             "active_route_version": 2,
@@ -716,9 +732,33 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             "node_order": ["node-001", "node-002", "node-replacement"],
         }
         ledger["route_nodes"] = {
-            "node-001": {"node_id": "node-001", "status": "accepted"},
-            "node-002": {"node_id": "node-002", "status": "running"},
-            "node-replacement": {"node_id": "node-replacement", "status": "running"},
+            "node-001": {
+                "node_id": "node-001",
+                "title": "Accepted node",
+                "status": "accepted",
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": ["accepted"],
+                "packet_ids": [],
+            },
+            "node-002": {
+                "node_id": "node-002",
+                "title": "Running node",
+                "status": "running",
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": ["running"],
+                "packet_ids": [],
+            },
+            "node-replacement": {
+                "node_id": "node-replacement",
+                "title": "Replacement node",
+                "status": "running",
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": ["replacement"],
+                "packet_ids": [],
+            },
         }
         ledger["execution_frontier"] = {
             "active_route_version": 2,
@@ -878,10 +918,16 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             if packet["envelope"]["packet_kind"] == "flowguard_check"
             and packet["envelope"]["subject_id"] == packet_id
         ]
-        self.assertEqual(len(flowguard_packets), 1)
-        self.assertEqual(json.loads(flowguard_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
+        review_packets = [
+            packet for packet in ledger["packets"].values()
+            if packet["envelope"]["packet_kind"] == "review"
+            and packet["envelope"]["subject_id"] == packet_id
+        ]
+        self.assertEqual(flowguard_packets, [])
+        self.assertEqual(len(review_packets), 1)
+        self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
 
-    def test_staged_effect_same_family_rejects_different_formal_blocker_identity(self) -> None:
+    def _assert_staged_effect_same_family_rejects_different_formal_blocker_identity(self) -> None:
         record: dict[str, object] = {}
 
         first = runtime._attach_staged_effect(
@@ -921,6 +967,12 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(record["staged_effect"], first)
         self.assertEqual(first["source_packet_id"], "packet-1")
         self.assertEqual(first["gate_id"], "gate-1")
+
+    def test_staged_effect_same_family_reuses_pending_effect_and_rejects_different_formal_blocker_identity(self) -> None:
+        self._assert_staged_effect_same_family_rejects_different_formal_blocker_identity()
+
+    def test_staged_effect_same_family_rejects_different_formal_blocker_identity(self) -> None:
+        self._assert_staged_effect_same_family_rejects_different_formal_blocker_identity()
 
     def test_formal_repair_identity_mismatch_is_runtime_mechanical_blocker(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")

@@ -25,12 +25,27 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 Before issuing a current-node work packet, write the active node acceptance
 plan.
 
-Submit the node acceptance plan as a current packet result with a top-level
-`node_context_package`. Runtime owns mechanical validation of required fields,
-node identity, packet kind, route scope, hashes, and current-run identity. A
-mechanically valid result is staged as `commit_node_acceptance_plan`; it is not
-an accepted node plan and must not claim accepted `node_acceptance_plan_id` or
-`node_context_package_id` until FlowGuard, Reviewer, and system closure pass.
+Submit the node acceptance plan as a current packet result with one top-level
+`decision`:
+
+- `decision: "pass"` means PM has checked the active node and the node can be
+  executed without changing route structure. This branch must include a
+  top-level `node_context_package`. Runtime stages
+  `commit_node_acceptance_plan`; the plan becomes accepted only after
+  Reviewer and system closure pass. Ordinary node entry does not issue a
+  separate pre-worker FlowGuard packet.
+- `decision: "redesign_route"` means PM has found that the active node needs a
+  deeper, narrower, reordered, or otherwise changed route shape before worker
+  dispatch. This branch must include one top-level current `route_plan`.
+  Runtime stages the route effect, issues mandatory FlowGuard route
+  simulation, requires PM to absorb that FlowGuard result through
+  `pm_flowguard_acceptance`, and then sends the PM absorption package to
+  Reviewer before the route mutation can commit.
+
+Do not submit optional, uncertain, maybe-FlowGuard, or dual-branch decisions.
+If PM already knows the route must change, do not try to pass the node first.
+Runtime owns mechanical validation of required fields, node identity, packet
+kind, route scope, hashes, and current-run identity.
 
 Use only the active route, active frontier, root acceptance contract, product
 function architecture, approved child-skill gate manifest, and latest
@@ -127,17 +142,17 @@ route-memory prior path context. The plan must state:
   `dependency_boundary_defined`, `failure_isolation_defined`, and
   `over_decomposition_checked`. Use `status: "pass"` only when the node can be
   completed by a worker from the packet without PM replanning;
-- at node entry, re-ask whether this apparent leaf is still too broad. This is
-  a fallback safety gate, not the primary planning path. If it is too broad,
-  do not ask the Worker to split it; split it into children through PM route
-  mutation or current-scope replanning before worker dispatch. If it is
-  over-split, merge or waive the extra structure with a PM complexity reason
-  before dispatch;
+- at node entry, re-ask whether this apparent leaf is still too broad, too
+  narrow, or wrongly ordered. This is the PM self-check before work packet
+  release. If it is too broad, do not ask the Worker to split it and do not
+  return `decision: "pass"`; return `decision: "redesign_route"` with the
+  deeper child route. If it is over-split, merge or waive the extra structure
+  with a PM complexity reason before dispatch;
 - when a leaf is promoted to parent/module, mark old leaf approvals stale,
   attach the new ordered children, and require the local FlowGuard operator product-model
   model, PM model decision, Reviewer product challenge, FlowGuard operator process-model
-  serial child route, PM process decision, and Reviewer route challenge before
-  dispatching those children;
+  serial child route, PM process decision, PM absorption of the structural
+  FlowGuard result, and Reviewer route challenge before dispatching those children;
 - forbidden low-standard or placeholder outcomes;
 - forbidden thin-success outcomes where an artifact, command, report,
   screenshot, or ledger entry exists but the hard part was only handled
@@ -229,4 +244,7 @@ findings are dispositioned by PM.
 When the router's `validate-artifact` command is available, run it with
 `--type node_acceptance_plan` against that file before asking for reviewer
 approval, then repair all missing fields in one pass.
-Do not register a current-node work packet until Reviewer passes this plan.
+Do not register a current-node work packet until Reviewer passes an ordinary
+`decision: "pass"` node plan. For `decision: "redesign_route"`, do not issue a
+Worker packet for the old node; let the staged route effect complete its
+FlowGuard, PM absorption, Reviewer, and system closure gates first.

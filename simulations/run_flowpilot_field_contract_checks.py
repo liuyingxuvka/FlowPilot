@@ -15,6 +15,10 @@ import flowpilot_field_contract_model as model
 RESULTS_PATH = Path(__file__).resolve().parent / "flowpilot_field_contract_results.json"
 REPO_ROOT = Path(__file__).resolve().parents[1]
 
+
+def _repo_path(path: Path) -> str:
+    return path.relative_to(REPO_ROOT).as_posix()
+
 REQUIRED_LABELS = (
     "select_success",
     "catalog_current_field_contracts",
@@ -393,16 +397,16 @@ def _source_alignment_report() -> dict[str, object]:
             and not missing_negative_tests
             and not missing_fake_contract_terms
         ),
-        "runtime_path": runtime_path.as_posix(),
-        "contract_module_path": contract_module_path.as_posix(),
+        "runtime_path": _repo_path(runtime_path),
+        "contract_module_path": _repo_path(contract_module_path),
         "test_paths": [
-            core_test_path.as_posix(),
-            high_standard_test_path.as_posix(),
-            fake_project_test_path.as_posix(),
-            new_entrypoint_test_path.as_posix(),
-            lifecycle_guard_test_path.as_posix(),
+            _repo_path(core_test_path),
+            _repo_path(high_standard_test_path),
+            _repo_path(fake_project_test_path),
+            _repo_path(new_entrypoint_test_path),
+            _repo_path(lifecycle_guard_test_path),
         ],
-        "fake_paths": [fake_e2e_path.as_posix(), fake_cli_path.as_posix()],
+        "fake_paths": [_repo_path(fake_e2e_path), _repo_path(fake_cli_path)],
         "packet_result_contract_count": model.REQUIRED_PACKET_RESULT_CONTRACT_COUNT,
         "missing_validators": missing_validators,
         "forbidden_alias_hits": forbidden_alias_hits,

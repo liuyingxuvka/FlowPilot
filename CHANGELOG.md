@@ -2,6 +2,31 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.9 - 2026-06-11
+
+### Changed
+
+- Replaced the ordinary per-node pre-work FlowGuard gate with a lighter current
+  node trunk: PM node-entry self-check, ordinary node-plan Reviewer review,
+  Worker execution, post-result FlowGuard, and independent Reviewer review.
+- Added the structural PM route-change gate: PM `redesign_route` decisions now
+  stage the route effect, require FlowGuard simulation of the current
+  route/work/validation/failure/repair path, require PM
+  `pm_flowguard_acceptance`, and only then proceed to Reviewer and system
+  validation before route mutation commits.
+- Tightened FlowGuard Operator, PM, and Reviewer cards so FlowGuard models the
+  current packet subject only, cannot mutate routes or release workers, and
+  Reviewer must block unabsorbed structural FlowGuard reports.
+- Refreshed fake-AI rehearsal, FieldContract, FieldMesh, Model-Test Alignment,
+  topology, install sync, and Meta/Capability evidence for the new
+  no-fallback route gate.
+
+### Fixed
+
+- Preserved the model-test negative-test anchor for staged-effect formal
+  blocker identity so field-contract source alignment stays fresh after test
+  refactoring.
+
 ## 0.10.8 - 2026-06-09
 
 ### Changed

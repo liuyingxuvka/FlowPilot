@@ -1,4 +1,4 @@
-"""Run FlowPilot pre-work FlowGuard node-gate checks."""
+"""Run FlowPilot current-node route-change gate checks."""
 
 from __future__ import annotations
 
@@ -18,59 +18,69 @@ RESULTS_PATH = Path(__file__).resolve().with_name(
 )
 
 REQUIRED_LABELS = (
-    "node_prework_flow_started",
-    "pm_accepts_node_design",
+    "current_node_flow_started",
+    "pm_self_checks_node_entry",
+    "pm_passes_ordinary_node_plan",
     "pm_records_node_context_package",
-    "runtime_issues_prework_flowguard_packet",
-    "flowguard_operator_selects_route_mix",
-    "flowguard_operator_records_pm_visible_artifacts",
-    "flowguard_prework_passes_current_generation",
-    "flowguard_prework_blocks_node_design",
-    "pm_repairs_node_design_after_prework_block",
-    "runtime_issues_worker_packet_after_prework",
+    "runtime_issues_node_plan_reviewer",
+    "reviewer_passes_node_plan",
+    "runtime_issues_worker_packet_after_reviewer",
     "worker_submits_node_result",
     "runtime_issues_post_result_flowguard",
     "post_result_flowguard_passes",
     "runtime_issues_independent_reviewer_packet",
     "reviewer_passes_independently",
     "node_completed_after_reviewer",
-    "node_prework_flow_complete",
+    "current_node_flow_complete",
+    "pm_stages_route_redesign_plan",
+    "runtime_issues_route_redesign_flowguard",
+    "flowguard_simulates_current_route_plan",
+    "flowguard_route_redesign_passes",
+    "flowguard_route_redesign_blocks",
+    "pm_repairs_route_plan_after_flowguard_block",
+    "runtime_issues_pm_flowguard_acceptance_packet",
+    "pm_absorbs_flowguard_report",
+    "pm_rewrites_route_from_flowguard_advice",
+    "runtime_issues_route_redesign_reviewer_packet",
+    "reviewer_passes_pm_absorption_package",
+    "route_redesign_committed_after_review",
+    "route_redesign_flow_complete",
 )
 
 HAZARD_EXPECTED_FAILURES = {
-    "pm_optional_prework": "PM made mandatory pre-work FlowGuard optional",
-    "context_before_node_design": "PM context package recorded before node design",
-    "stale_context_after_repair": "PM context package is stale for repair generation",
-    "prework_context_missing": "pre-work FlowGuard packet missing PM node context package",
-    "prework_before_node_design": "pre-work FlowGuard issued before PM node design",
-    "route_mix_missing": "PM-visible artifacts recorded before FlowGuard route selection",
-    "pm_visible_artifacts_missing": "pre-work FlowGuard passed before PM-visible artifacts",
-    "stale_prework_after_repair": "worker packet issued before current-generation pre-work FlowGuard pass",
-    "worker_before_prework": "worker packet issued before current-generation pre-work FlowGuard pass",
-    "worker_context_missing": "worker packet issued without current PM node context package",
-    "prework_block_without_pm_repair": "worker released after pre-work block without PM repair",
+    "pm_optional_flowguard": "PM made structural route FlowGuard optional",
+    "flowguard_scope_missing": "FlowGuard did not bind the current route plan as simulation subject",
+    "flowguard_validation_path_missing": "FlowGuard did not simulate work, validation, failure, and repair paths",
     "flowguard_operator_route_mutation": "FlowGuard operator mutated route instead of reporting to PM",
-    "post_result_context_missing": "post-result FlowGuard packet missing PM node context package",
+    "pm_accepts_blocked_flowguard": "PM accepted a blocked FlowGuard route result",
+    "stale_flowguard_after_route_rewrite": "PM absorbed stale or missing FlowGuard result",
+    "reviewer_before_pm_absorption": "Reviewer inspected route effect before PM absorbed FlowGuard result",
+    "route_mutation_without_pm_absorption": "route mutation committed without PM FlowGuard absorption",
+    "route_reviewer_before_pm_absorption": "Reviewer packet issued before current PM FlowGuard absorption",
+    "route_commit_before_reviewer": "route mutation committed before Reviewer pass",
+    "worker_before_node_plan_reviewer": "worker packet issued before ordinary node plan Reviewer pass",
+    "worker_context_missing": "worker packet missing PM node context package",
+    "worker_replans_broad_leaf": "Worker replanned a broad leaf instead of PM route deepening",
     "post_result_flowguard_skipped": "Reviewer packet issued before post-result FlowGuard pass",
-    "reviewer_before_post_result_flowguard": "Reviewer packet issued before post-result FlowGuard pass",
-    "reviewer_context_missing": "Reviewer packet missing PM node context package",
     "reviewer_not_independent": "Reviewer pass was not independent",
-    "reviewer_pm_scoped_only": "Reviewer was scoped only by PM rather than independent node contract review",
 }
 
 
 def _state_id(state: model.State) -> str:
     return (
-        f"status={state.status}|repair={state.repair_generation}|"
-        f"context={state.pm_context_package_accepted},{state.context_package_generation}|"
-        f"prework={state.prework_packet_issued},{state.prework_routes_selected},"
-        f"{state.prework_artifacts_pm_visible},{state.prework_passed},"
-        f"{state.prework_pass_generation},{state.prework_blocked}|"
-        f"pm={state.pm_node_design_accepted},{state.pm_repair_decision_recorded}|"
-        f"worker={state.worker_packet_issued},{state.worker_context_attached},{state.worker_result_submitted}|"
-        f"post_fg={state.post_result_flowguard_issued},{state.post_result_context_attached},{state.post_result_flowguard_passed}|"
-        f"review={state.reviewer_packet_issued},{state.reviewer_context_attached},{state.reviewer_independent},{state.reviewer_passed}|"
-        f"node={state.node_completed}"
+        f"status={state.status}|gen={state.route_plan_generation},"
+        f"{state.flowguard_generation},{state.pm_absorption_generation}|"
+        f"decision={state.node_plan_decision}|"
+        f"ordinary={state.node_context_package_accepted},"
+        f"{state.node_plan_reviewer_passed},{state.worker_packet_issued},"
+        f"{state.post_result_flowguard_passed},{state.final_reviewer_passed},"
+        f"{state.node_completed}|"
+        f"route={state.route_plan_staged},"
+        f"{state.route_redesign_flowguard_packet_issued},"
+        f"{state.flowguard_current_subject_bound},"
+        f"{state.flowguard_simulated_work_validation_failure_paths},"
+        f"{state.flowguard_passed},{state.pm_absorbed_flowguard},"
+        f"{state.route_reviewer_passed},{state.route_mutation_committed}"
     )
 
 
@@ -110,13 +120,20 @@ def _build_graph() -> dict[str, object]:
 def _safe_graph_report(graph: dict[str, object]) -> dict[str, object]:
     missing_labels = sorted(set(REQUIRED_LABELS) - set(graph["labels"]))
     target_failures = model.invariant_failures(model.target_success_state())
+    ordinary_target_failures = model.invariant_failures(model.ordinary_node_success_state())
     return {
-        "ok": not graph["invariant_failures"] and not missing_labels and not target_failures,
+        "ok": (
+            not graph["invariant_failures"]
+            and not missing_labels
+            and not target_failures
+            and not ordinary_target_failures
+        ),
         "state_count": len(graph["states"]),
         "edge_count": graph["edge_count"],
         "missing_labels": missing_labels,
         "invariant_failures": graph["invariant_failures"],
-        "target_plan_failures": target_failures,
+        "target_route_redesign_failures": target_failures,
+        "target_ordinary_node_failures": ordinary_target_failures,
     }
 
 
@@ -190,17 +207,21 @@ def _model_test_alignment_report() -> dict[str, object]:
     repo_root = Path(__file__).resolve().parents[1]
     runtime_text = (repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "runtime.py").read_text(encoding="utf-8")
     test_text = (repo_root / "tests" / "test_flowpilot_high_standard_control_flow.py").read_text(encoding="utf-8")
+    fake_text = (repo_root / "skills" / "flowpilot" / "assets" / "flowpilot_core_runtime" / "fake_e2e.py").read_text(encoding="utf-8")
+    prompt_text = (repo_root / "skills" / "flowpilot" / "assets" / "runtime_kit" / "cards" / "roles" / "flowguard_operator.md").read_text(encoding="utf-8").lower()
     obligations = {
-        "prework_scope": "node_prework_flowguard" in runtime_text,
-        "prework_packet_function": "ensure_node_prework_flowguard_packet" in runtime_text,
-        "worker_gate_function": "_node_prework_flowguard_accepted" in runtime_text,
-        "node_context_package": "node_context_package" in runtime_text,
-        "context_current_function": "_node_context_package_current" in runtime_text,
-        "route_selection_policy": "route_selection_policy" in runtime_text,
-        "pm_visible_artifacts": "pm_visibility_policy" in runtime_text,
-        "prework_runtime_tests": "test_node_task_requires_prework_flowguard_gate" in test_text,
-        "context_attachment_tests": "test_node_context_package_follows_flowguard_worker_and_reviewer_packets" in test_text,
-        "prework_repair_tests": "test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework" in test_text,
+        "pm_flowguard_acceptance_packet": "pm_flowguard_acceptance" in runtime_text,
+        "structural_gate_status": "awaiting_pm_flowguard_acceptance" in runtime_text,
+        "ordinary_node_no_prework": "test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard" in test_text,
+        "flowguard_block_test": "test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation" in test_text,
+        "pm_absorption_test": "test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer" in test_text,
+        "pm_rewrite_test": "test_pm_flowguard_acceptance_rewrite_restarts_flowguard_cycle" in test_text,
+        "optional_branch_rejection_test": "test_pm_flowguard_acceptance_rejects_optional_decisions" in test_text,
+        "fake_ai_pm_acceptance": "pm_flowguard_acceptance.pm_flowguard_acceptance" in fake_text,
+        "flowguard_subject_prompt": "current subject simulation boundary" in prompt_text,
+        "route_simulation_prompt": "work dispatch" in prompt_text and "validation/check path" in prompt_text,
+        "unsupported_old_prework_rejection": "node_prework_flowguard is no longer a supported current FlowPilot path" in runtime_text,
+        "old_worker_gate_removed": "_node_prework_flowguard_accepted" not in runtime_text,
     }
     missing = [name for name, ok in obligations.items() if not ok]
     return {
@@ -209,6 +230,8 @@ def _model_test_alignment_report() -> dict[str, object]:
         "missing": missing,
         "evidence": [
             "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+            "skills/flowpilot/assets/runtime_kit/cards/roles/flowguard_operator.md",
             "tests/test_flowpilot_high_standard_control_flow.py",
         ],
     }
@@ -222,10 +245,13 @@ def run_checks() -> dict[str, object]:
     hazards = _check_hazards()
     alignment = _model_test_alignment_report()
     target_state = model.target_success_state()
+    ordinary_state = model.ordinary_node_success_state()
     target_plan = {
-        "ok": not model.invariant_failures(target_state),
-        "state": target_state.__dict__,
-        "failures": model.invariant_failures(target_state),
+        "ok": not model.invariant_failures(target_state) and not model.invariant_failures(ordinary_state),
+        "route_redesign_state": target_state.__dict__,
+        "ordinary_node_state": ordinary_state.__dict__,
+        "route_redesign_failures": model.invariant_failures(target_state),
+        "ordinary_node_failures": model.invariant_failures(ordinary_state),
     }
     return {
         "ok": bool(safe_graph["ok"])
@@ -239,7 +265,7 @@ def run_checks() -> dict[str, object]:
         "flowguard_explorer": explorer,
         "hazard_checks": hazards,
         "model_test_alignment": alignment,
-        "target_prework_flowguard_plan": target_plan,
+        "target_current_node_route_gate_plan": target_plan,
     }
 
 

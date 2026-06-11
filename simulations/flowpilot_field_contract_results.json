@@ -141,6 +141,105 @@
       "validator": "_validate_current_node_packet_envelope"
     },
     {
+      "field": "packet.status",
+      "layer": "middle",
+      "lifecycle": "terminal_monotonic",
+      "logical_field": "packet_status_currentness",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "noncurrent_terminal_status_preserved_after_late_result",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "single_current_packet_routing_authority",
+      "validator": "submit_result"
+    },
+    {
+      "field": "packet.result_ids",
+      "layer": "middle",
+      "lifecycle": "append_only_audit",
+      "logical_field": "packet_result_history",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "append_only_result_history_without_current_authority",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "late_result_audit_without_packet_reactivation",
+      "validator": "submit_result"
+    },
+    {
+      "field": "packet.accepted_result_id",
+      "layer": "middle",
+      "lifecycle": "single_authority_pointer",
+      "logical_field": "accepted_result_pointer",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "single_runtime_acceptance_commit_point",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "accepted_packet_result_authority",
+      "validator": "_accept_packet_result"
+    },
+    {
+      "field": "packet.latest_quarantined_result_id",
+      "layer": "middle",
+      "lifecycle": "single_authority_pointer",
+      "logical_field": "latest_quarantined_result_pointer",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "quarantine_audit_pointer_only",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "quarantined_result_visibility_without_current_authority",
+      "validator": "submit_result"
+    },
+    {
+      "field": "route_node.status",
+      "layer": "middle",
+      "lifecycle": "terminal_monotonic",
+      "logical_field": "route_node_currentness_status",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "accepted_waived_superseded_nodes_exclude_packets_from_current_work",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "route_node_scoped_packet_currentness",
+      "validator": "_route_node_is_noncurrent"
+    },
+    {
+      "field": "execution_frontier.pending_route_mutation",
+      "layer": "middle",
+      "lifecycle": "pending_until_commit",
+      "logical_field": "pending_route_mutation",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "cleared_or_terminal_after_replacement_node_commit",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "route_mutation_frontier_no_stale_pending_work",
+      "validator": "_advance_frontier_after_node_acceptance"
+    },
+    {
+      "field": "active_packets",
+      "layer": "middle",
+      "lifecycle": "derived_projection",
+      "logical_field": "active_packet_projection",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "derived_from_packet_is_noncurrent_for_routing",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "router_and_compact_views_share_router_currentness",
+      "validator": "_current_packets_for_routing"
+    },
+    {
+      "field": "closure_accepted_packets",
+      "layer": "middle",
+      "lifecycle": "derived_projection",
+      "logical_field": "closure_accepted_packet_evidence_projection",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "derived_from_active_route_accepted_packet_result_authority",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "final_closure_uses_accepted_evidence_without_reactivating_packets",
+      "validator": "_accepted_packets_for_closure_evidence"
+    },
+    {
+      "field": "accepted_result_packets",
+      "layer": "middle",
+      "lifecycle": "derived_projection",
+      "logical_field": "active_route_accepted_result_packet_projection",
+      "owner": "flowpilot_core_runtime",
+      "required_value": "active_route_packets_with_accepted_result_id_even_when_not_router_current",
+      "status": "mechanical_runtime_owned",
+      "unlocks": "accepted_packet_lease_health_and_closure_evidence",
+      "validator": "_accepted_result_packets_for_active_route"
+    },
+    {
       "field": "startup_mechanical_audit.mechanical_checks.startup_answers_use_current_fields_only",
       "layer": "leaf",
       "logical_field": "startup_mechanical_audit_current_fields_only",
@@ -628,7 +727,7 @@
       "required_value": "same_current_repair_blocker_id_or_explicit_not_applicable",
       "status": "flowguard_process_owned",
       "unlocks": "flowguard_replay_binds_repair_identity",
-      "validator": "generate_flowguard_evidence"
+      "validator": "_ensure_flowguard_packet_for_task_result"
     },
     {
       "field": "flowguard_evidence.subject_context.blocker_id",
@@ -638,7 +737,7 @@
       "required_value": "same_current_repair_blocker_id_or_explicit_not_applicable",
       "status": "flowguard_process_owned",
       "unlocks": "flowguard_subject_context_binds_repair_identity",
-      "validator": "generate_flowguard_evidence"
+      "validator": "_ensure_flowguard_packet_for_task_result"
     },
     {
       "field": "flowguard_result.blocker_id",
@@ -678,7 +777,7 @@
       "required_value": "current_open_or_dispositioned_after_route_replacement",
       "status": "mechanical_runtime_owned",
       "unlocks": "final_preflight_ignores_audit_only_superseded_blockers",
-      "validator": "_retire_prior_same_chain_blockers"
+      "validator": "_retire_older_same_family_blockers"
     },
     {
       "field": "active_blocker.retired_by_blocker_id",
@@ -688,7 +787,7 @@
       "required_value": "new_current_blocker_id_when_superseded",
       "status": "mechanical_runtime_owned",
       "unlocks": "superseded_repair_chain_disposition",
-      "validator": "_retire_prior_same_chain_blockers"
+      "validator": "_retire_older_same_family_blockers"
     },
     {
       "field": "preplanning.high_standard_contract.requirements[]",
@@ -1021,14 +1120,14 @@
       "validator": "_record_flowguard_from_packet_result"
     },
     {
-      "field": "review_packet.matching_flowguard_result_id",
+      "field": "flowguard_evidence_manifest.entries[].flowguard_result_id",
       "layer": "middle",
-      "logical_field": "review_packet_matching_flowguard_result_id",
+      "logical_field": "review_packet_flowguard_manifest_result_id",
       "owner": "flowpilot_core_runtime",
       "required_value": "accepted_consistent_flowguard_pass_result_id",
       "status": "mechanical_runtime_owned",
       "unlocks": "reviewer_quality_gate",
-      "validator": "_has_matching_flowguard_report"
+      "validator": "_flowguard_evidence_reads_for_review"
     },
     {
       "field": "packet_result.flowguard_check.missing_test_kinds",
@@ -1107,7 +1206,7 @@
         "packet_result.flowguard_check.evidence_consistency.hard_evidence_decision",
         "packet_result.flowguard_check.passed",
         "flowguard_work_order.decision",
-        "review_packet.matching_flowguard_result_id"
+        "flowguard_evidence_manifest.entries[].flowguard_result_id"
       ],
       "human_quality_gate": "_record_review_from_packet_result",
       "mechanical_gate": "_flowguard_evidence_consistency_violation",
@@ -1115,6 +1214,55 @@
       "no_reviewer_mechanical_field_check": true,
       "source": "child_flowguard_or_model_test_report.hard_status",
       "terminal_disposition": "packet_result.status"
+    },
+    {
+      "chain_id": "packet_currentness_lifecycle_chain",
+      "field_sequence": [
+        "packet.status",
+        "packet.result_ids",
+        "packet.accepted_result_id",
+        "packet.latest_quarantined_result_id",
+        "route_node.status",
+        "execution_frontier.pending_route_mutation",
+        "active_packets",
+        "accepted_result_packets",
+        "closure_accepted_packets"
+      ],
+      "human_quality_gate": "_record_review_from_packet_result",
+      "mechanical_gate": "_packet_is_noncurrent_for_routing",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "packet.status",
+      "terminal_disposition": "packet.status"
+    },
+    {
+      "chain_id": "derived_active_packet_projection_chain",
+      "field_sequence": [
+        "_current_packets_for_routing",
+        "render_compact_console.active_packets"
+      ],
+      "human_quality_gate": "_record_review_from_packet_result",
+      "mechanical_gate": "_packet_is_noncurrent_for_routing",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "_packet_is_noncurrent_for_routing",
+      "terminal_disposition": "active_packets"
+    },
+    {
+      "chain_id": "derived_closure_accepted_packet_projection_chain",
+      "field_sequence": [
+        "_accepted_result_packets_for_active_route",
+        "_accepted_packets_for_closure_evidence",
+        "accepted_packet_lease_health.accepted_result_packets",
+        "attempt_final_closure.accepted_packets",
+        "final_closure.backward_chain"
+      ],
+      "human_quality_gate": "_record_review_from_packet_result",
+      "mechanical_gate": "_accepted_packets_for_closure_evidence",
+      "no_prose_authority": true,
+      "no_reviewer_mechanical_field_check": true,
+      "source": "_accepted_result_packets_for_active_route",
+      "terminal_disposition": "closure_accepted_packets"
     }
   ],
   "field_statuses": {
@@ -1877,36 +2025,48 @@
         "decision",
         "pm_visible_summary",
         "route_node_id",
+        "reason",
         "proof_obligations",
         "repair_policy",
         "low_quality_success_risks",
-        "node_context_package"
+        "node_context_package",
+        "route_plan"
       ],
       "family_id": "task.node_acceptance_plan",
-      "forbidden_fields": [],
+      "forbidden_fields": [
+        "optional_flowguard",
+        "needs_flowguard",
+        "maybe_flowguard",
+        "flowguard_optional"
+      ],
       "owner": "flowpilot_core_runtime",
       "packet_kind": "task",
       "required_child_fields": [
-        "node_context_package.purpose",
-        "node_context_package.acceptance_criteria",
-        "node_context_package.relevant_references",
-        "node_context_package.evidence_targets",
-        "node_context_package.inspection_targets",
-        "node_context_package.known_risks",
-        "node_context_package.flowguard_targets",
-        "node_context_package.reviewer_starting_points",
-        "node_context_package.high_standard_requirement_ids",
-        "node_context_package.low_quality_success_risks",
-        "node_context_package.semantic_downgrade_risks",
-        "node_context_package.work_packet_projection",
-        "node_context_package.final_user_intent_checks",
-        "node_context_package.structure_hygiene_expectation",
-        "node_context_package.direct_evidence_closure_rules",
-        "node_context_package.test_obligation_matrix.pre_worker[]"
+        "node_context_package when decision=pass",
+        "node_context_package.purpose when decision=pass",
+        "node_context_package.acceptance_criteria when decision=pass",
+        "node_context_package.relevant_references when decision=pass",
+        "node_context_package.evidence_targets when decision=pass",
+        "node_context_package.inspection_targets when decision=pass",
+        "node_context_package.known_risks when decision=pass",
+        "node_context_package.flowguard_targets when decision=pass",
+        "node_context_package.reviewer_starting_points when decision=pass",
+        "node_context_package.high_standard_requirement_ids when decision=pass",
+        "node_context_package.low_quality_success_risks when decision=pass",
+        "node_context_package.semantic_downgrade_risks when decision=pass",
+        "node_context_package.work_packet_projection when decision=pass",
+        "node_context_package.final_user_intent_checks when decision=pass",
+        "node_context_package.structure_hygiene_expectation when decision=pass",
+        "node_context_package.direct_evidence_closure_rules when decision=pass",
+        "node_context_package.test_obligation_matrix.pre_worker[] when decision=pass",
+        "route_plan when decision=redesign_route",
+        "route_plan.schema_version when decision=redesign_route",
+        "route_plan.nodes[] when decision=redesign_route",
+        "route_plan.nodes[].node_id when decision=redesign_route",
+        "route_plan.nodes[].title when decision=redesign_route"
       ],
       "required_fields": [
-        "decision",
-        "node_context_package"
+        "decision"
       ],
       "route_scope": "node_acceptance_plan",
       "unlocks": "staged_node_acceptance_plan_effect",
@@ -1966,86 +2126,6 @@
       "route_scope": "parent_backward_replay",
       "unlocks": "parent_backward_replay_flowguard_review",
       "validator": "_strict_packet_outcome_contract_violation"
-    },
-    {
-      "explicit_array_fields": [
-        "pm_visible_summary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "residual_blindspots",
-        "background_artifact_completion",
-        "pm_suggestion_items",
-        "evidence_consistency.blocking_child_reports"
-      ],
-      "fake_ai_success_fields": [
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "modeled_boundary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "conformance_boundary",
-        "confidence_boundary",
-        "residual_blindspots",
-        "background_artifact_completion",
-        "pm_suggestion_items",
-        "evidence_consistency",
-        "contract_self_check"
-      ],
-      "family_id": "flowguard_check.node_prework_flowguard",
-      "forbidden_fields": [
-        "decision",
-        "api_fallback_manual_block_eval",
-        "fallback_manual_block_eval"
-      ],
-      "non_empty_array_fields": [
-        "pm_visible_summary",
-        "commands_run",
-        "hard_invariants",
-        "model_obligations",
-        "ordinary_test_evidence"
-      ],
-      "owner": "flowpilot_core_runtime",
-      "packet_kind": "flowguard_check",
-      "required_child_fields": [
-        "evidence_consistency.self_check_passed",
-        "evidence_consistency.child_reports_all_passed",
-        "evidence_consistency.blocking_child_reports",
-        "evidence_consistency.hard_evidence_decision"
-      ],
-      "required_fields": [
-        "pm_visible_summary",
-        "reviewed_by_role",
-        "passed",
-        "modeled_boundary",
-        "commands_run",
-        "counterexamples_or_absence",
-        "hard_invariants",
-        "skipped_checks",
-        "model_obligations",
-        "ordinary_test_evidence",
-        "missing_test_kinds",
-        "conformance_boundary",
-        "confidence_boundary",
-        "residual_blindspots",
-        "background_artifact_completion",
-        "pm_suggestion_items",
-        "evidence_consistency",
-        "contract_self_check"
-      ],
-      "route_scope": "node_prework_flowguard",
-      "unlocks": "worker_packet_release",
-      "validator": "_current_result_submission_contract_violation"
     },
     {
       "explicit_array_fields": [
@@ -2357,6 +2437,42 @@
       "route_scope": "node_pm_disposition",
       "unlocks": "node_frontier_disposition_or_staged_route_gate",
       "validator": "_decision_from_pm_body"
+    },
+    {
+      "fake_ai_success_fields": [
+        "decision",
+        "reason",
+        "flowguard_absorption",
+        "accepted_flowguard_result_id",
+        "route_plan"
+      ],
+      "family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+      "forbidden_fields": [
+        "optional_flowguard",
+        "needs_flowguard",
+        "maybe_flowguard",
+        "flowguard_optional",
+        "summary",
+        "pm_absorption"
+      ],
+      "owner": "flowpilot_core_runtime",
+      "packet_kind": "pm_flowguard_acceptance",
+      "required_child_fields": [
+        "route_plan when decision=redesign_route",
+        "route_plan.schema_version when decision=redesign_route",
+        "route_plan.nodes[] when decision=redesign_route",
+        "route_plan.nodes[].node_id when decision=redesign_route",
+        "route_plan.nodes[].title when decision=redesign_route"
+      ],
+      "required_fields": [
+        "decision",
+        "reason",
+        "flowguard_absorption",
+        "accepted_flowguard_result_id"
+      ],
+      "route_scope": "pm_flowguard_acceptance",
+      "unlocks": "reviewer_release_after_pm_flowguard_absorption",
+      "validator": "_parse_pm_flowguard_acceptance_body"
     }
   ],
   "progress": {
@@ -2393,11 +2509,11 @@
     "unsupported_startup_field_accepted": "block_unsupported_historical_field_accepted"
   },
   "source_alignment": {
-    "contract_module_path": "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
+    "contract_module_path": "skills/flowpilot/assets/flowpilot_core_runtime/packet_result_contracts.py",
     "current_handoff_source_ok": true,
     "fake_paths": [
-      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
-      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/simulations/flowpilot_fake_project_rehearsal_cli.py"
+      "skills/flowpilot/assets/flowpilot_core_runtime/fake_e2e.py",
+      "simulations/flowpilot_fake_project_rehearsal_cli.py"
     ],
     "forbidden_alias_hits": {
       "pm_disposition.summary_reason_alias": false,
@@ -2412,11 +2528,14 @@
     "packet_result_contract_count": 13,
     "private_runtime_contract_tables": [],
     "role_report_contract_alignment_ok": true,
-    "runtime_path": "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+    "runtime_path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
     "shared_contract_source_ok": true,
     "test_paths": [
-      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/tests/test_flowpilot_core_runtime.py",
-      "C:/Users/liu_y/Documents/FlowGuardProjectAutopilot_20260430/tests/test_flowpilot_high_standard_control_flow.py"
+      "tests/test_flowpilot_core_runtime.py",
+      "tests/test_flowpilot_high_standard_control_flow.py",
+      "tests/test_flowpilot_fake_project_rehearsal.py",
+      "tests/test_flowpilot_new_entrypoint.py",
+      "tests/test_flowpilot_lifecycle_guard.py"
     ]
   },
   "state_count": 42,

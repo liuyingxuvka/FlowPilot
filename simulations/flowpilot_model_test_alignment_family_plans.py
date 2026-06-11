@@ -742,42 +742,49 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
                 obligation_type="field_lifecycle",
                 description="Packet terminal currentness states are absorbing for current authority when late results arrive.",
                 required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_implementation=True,
             ),
             _obligation(
                 "field_lifecycle_currentness.result_history_append_only",
                 obligation_type="field_lifecycle",
                 description="Packet result history appends late results as audit evidence without making them current authority.",
                 required_test_kinds=(HAPPY, REPLAY),
+                allow_shared_implementation=True,
             ),
             _obligation(
                 "field_lifecycle_currentness.accepted_result_pointer_single_commit",
                 obligation_type="field_lifecycle",
                 description="Accepted result pointers are written by the runtime acceptance commit point and are not reassigned by duplicate output.",
                 required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
             ),
             _obligation(
                 "field_lifecycle_currentness.pending_route_mutation_disposition",
                 obligation_type="field_lifecycle",
                 description="Pending route mutation state clears or terminally dispositions after replacement frontier commit.",
                 required_test_kinds=(EDGE, NEGATIVE),
+                allow_shared_implementation=True,
             ),
             _obligation(
                 "field_lifecycle_currentness.active_packets_derive_from_currentness",
                 obligation_type="field_lifecycle",
                 description="Derived active-packet views share the Router currentness predicate for route version, node status, and packet terminal status.",
                 required_test_kinds=(NEGATIVE, REPLAY),
+                allow_shared_implementation=True,
             ),
             _obligation(
                 "field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
                 obligation_type="field_lifecycle",
                 description="Final closure derives accepted packet evidence from current active-route accepted results, not from router-active packets.",
                 required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
             ),
             _obligation(
                 "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
                 obligation_type="field_lifecycle",
                 description="Accepted packet health checks derive active-route accepted-result targets separately from router-active packets.",
                 required_test_kinds=(HAPPY, NEGATIVE),
+                allow_shared_implementation=True,
             ),
         ),
         code_contracts=(
@@ -982,42 +989,61 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
         model_id="current_node_trunk_invariant",
         obligations=(
             _obligation(
-                "current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",
+                "current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",
                 obligation_type="invariant",
                 description=(
-                    "Every executable node follows the named trunk invariant: "
-                    "PM node context package -> pre-work FlowGuard -> Worker -> "
-                    "post-result FlowGuard -> independent Reviewer. Pre-work "
-                    "FlowGuard blocks return to PM repair and require a fresh "
-                    "current-generation pre-work pass before worker release."
+                    "Every ordinary executable node follows the current trunk "
+                    "invariant: PM node entry self-check -> ordinary node plan "
+                    "Reviewer -> Worker -> post-result FlowGuard -> independent "
+                    "Reviewer. Ordinary node entry does not require a pre-worker "
+                    "FlowGuard packet."
                 ),
-                required_test_kinds=(HAPPY, FAILURE, NEGATIVE),
+                required_test_kinds=(HAPPY, NEGATIVE),
+            ),
+            _obligation(
+                "current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",
+                obligation_type="invariant",
+                description=(
+                    "Structural route changes require FlowGuard simulation, PM "
+                    "absorption, and Reviewer before route mutation commit. PM "
+                    "must rewrite and rerun FlowGuard when the FlowGuard report "
+                    "blocks or PM changes the route plan after the report."
+                ),
+                required_test_kinds=(HAPPY, NEGATIVE),
             ),
         ),
         test_evidence=(
             _evidence(
-                "current_node_trunk.happy.context_follows_all_packets",
-                test_name="test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+                "current_node_trunk.happy.context_follows_worker_and_reviewer",
+                test_name="test_node_context_package_follows_worker_postflowguard_and_reviewer_packets",
                 path="tests/test_flowpilot_high_standard_control_flow.py",
-                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_flowguard_worker_and_reviewer_packets",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_context_package_follows_worker_postflowguard_and_reviewer_packets",
                 test_kind=HAPPY,
-                covers=("current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",),
+                covers=("current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",),
             ),
             _evidence(
-                "current_node_trunk.failure.worker_blocked_before_prework",
-                test_name="test_node_task_requires_prework_flowguard_gate",
+                "current_node_trunk.negative.ordinary_node_without_prework",
+                test_name="test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard",
                 path="tests/test_flowpilot_high_standard_control_flow.py",
-                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_task_requires_prework_flowguard_gate",
-                test_kind=FAILURE,
-                covers=("current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",),
-            ),
-            _evidence(
-                "current_node_trunk.negative.prework_block_requires_fresh_pass",
-                test_name="test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
-                path="tests/test_flowpilot_high_standard_control_flow.py",
-                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_prework_flowguard_block_returns_to_pm_and_requires_fresh_prework",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_ordinary_node_acceptance_plan_releases_worker_without_prework_flowguard",
                 test_kind=NEGATIVE,
-                covers=("current_node_trunk.pm_context_prework_worker_postflowguard_reviewer",),
+                covers=("current_node_trunk.ordinary_reviewer_worker_postflowguard_reviewer",),
+            ),
+            _evidence(
+                "current_node_trunk.negative.structural_flowguard_block",
+                test_name="test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_flowguard_block_prevents_route_mutation",
+                test_kind=NEGATIVE,
+                covers=("current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",),
+            ),
+            _evidence(
+                "current_node_trunk.happy.pm_absorption_required",
+                test_name="test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer",
+                path="tests/test_flowpilot_high_standard_control_flow.py",
+                command="python -m unittest tests.test_flowpilot_high_standard_control_flow.FlowPilotHighStandardControlFlowTests.test_node_acceptance_redesign_route_requires_pm_absorption_before_reviewer",
+                test_kind=HAPPY,
+                covers=("current_node_trunk.structural_route_flowguard_pm_absorption_reviewer",),
             ),
         ),
     )
@@ -1750,6 +1776,7 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
     packet_card_ack = _with_runtime_path(packet_card_ack, "packet/card/ack")
     packet_result_family = _with_runtime_path(packet_result_family, "packet result family")
     route_mutation = _with_runtime_path(route_mutation, "route mutation")
+    currentness_field_lifecycle = _with_runtime_path(currentness_field_lifecycle, "field lifecycle currentness")
     current_node_trunk = _with_runtime_path(current_node_trunk, "current-node trunk invariant")
     terminal_closure_resume = _with_runtime_path(terminal_closure_resume, "terminal/closure/resume")
     role_output = _with_runtime_path(role_output, "role/output contracts")
@@ -1811,11 +1838,12 @@ def build_alignment_plan_entries() -> list[dict[str, Any]]:
             current_node_trunk,
             model_checks=("python simulations/run_flowpilot_prework_flowguard_gate_checks.py",),
             coverage_boundary=(
-                "Current-node trunk alignment names the PM node context package -> "
-                "pre-work FlowGuard -> Worker -> post-result FlowGuard -> "
-                "independent Reviewer invariant. It binds the focused pre-work "
-                "FlowGuard model to high-standard runtime tests, but it does not "
-                "replace semantic review of the worker output."
+                "Current-node trunk alignment names ordinary node plan Reviewer "
+                "-> Worker -> post-result FlowGuard -> independent Reviewer, "
+                "plus structural route FlowGuard -> PM absorption -> Reviewer "
+                "before route mutation commit. It binds the focused route-gate "
+                "model to high-standard runtime tests, but it does not replace "
+                "semantic review of the worker output or PM route decisions."
             ),
         ),
         _plan_entry(

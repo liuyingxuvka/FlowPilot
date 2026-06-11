@@ -10,7 +10,7 @@ It is orientation only; it is not validation evidence.
 - Code surfaces: 942
 - Test commands: 350
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2417
+- Known-bad/risk labels surfaced: 2414
 
 ## Area Map
 
@@ -22,7 +22,7 @@ It is orientation only; it is not validation evidence.
 | `material` | 1 | 0 | 22 | 25 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 73 |
 | `model-test-alignment` | 3 | 0 | 12 | 12 | 61 |
-| `other` | 81 | 6 | 239 | 40 | 1298 |
+| `other` | 81 | 6 | 239 | 40 | 1295 |
 | `packet` | 9 | 2 | 170 | 124 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 77 |
 | `review` | 3 | 0 | 3 | 0 | 67 |
@@ -82,7 +82,7 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `packet result family` (packet): 13 obligations, 17 test evidence rows
 - `route mutation` (route): 2 obligations, 4 test evidence rows
 - `field lifecycle currentness` (other): 7 obligations, 12 test evidence rows
-- `current-node trunk invariant` (other): 1 obligations, 3 test evidence rows
+- `current-node trunk invariant` (other): 2 obligations, 4 test evidence rows
 - `terminal/closure/resume` (closure): 3 obligations, 5 test evidence rows
 - `role/output contracts` (other): 3 obligations, 5 test evidence rows
 - `router loop/daemon` (route): 14 obligations, 31 test evidence rows

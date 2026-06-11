@@ -93,6 +93,19 @@ skipped checks, progress-only background evidence, residual blindspots, and
 reason, progress-only, or unaccepted reports block the gate or require PM
 repair.
 
+When the review packet is an ordinary `node_acceptance_plan` pass branch and
+the runtime says matching FlowGuard reads are not required, do not invent a
+pre-worker FlowGuard requirement. Review the PM node plan, node context,
+acceptance criteria, decomposition depth, test obligations, and evidence
+projection directly.
+
+When the review packet carries `structural_pm_flowguard_acceptance_gate`,
+verify that PM actually absorbed the current FlowGuard result before asking
+Reviewer to pass the route effect. A pass is invalid if PM skipped the
+`pm_flowguard_acceptance` body, accepted without addressing FlowGuard blockers
+or recommendations, rewrote the route without a fresh FlowGuard cycle, or asks
+Reviewer to treat the FlowGuard report itself as the route mutation commit.
+
 You do not have to rerun all FlowGuard modeling unless PM routes that work to
 you through an authorized work order. Default to inspecting existing run
 outputs for freshness, input binding, and conclusion support; rerun only

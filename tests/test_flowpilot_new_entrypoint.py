@@ -386,15 +386,22 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
                 for packet in review_packets
                 if packet["envelope"].get("route_scope") != "terminal_backward_replay"
             ]
-            self.assertTrue(
-                all(
-                    any(
+            for packet in ordinary_review_packets:
+                with self.subTest(review_scope=packet["envelope"].get("route_scope")):
+                    body = json.loads(packet["body"])
+                    requires_flowguard_read = body.get("flowguard_evidence_manifest", {}).get(
+                        "matching_flowguard_result_reads_required",
+                        True,
+                    )
+                    has_flowguard_read = any(
                         read.get("purpose") == "matching_flowguard_result_for_review"
                         for read in packet["envelope"].get("authorized_result_reads", [])
                     )
-                    for packet in ordinary_review_packets
-                )
-            )
+                    if requires_flowguard_read:
+                        self.assertTrue(has_flowguard_read)
+                    else:
+                        self.assertEqual(packet["envelope"].get("route_scope"), "node_acceptance_plan")
+                        self.assertFalse(has_flowguard_read)
             terminal_reviews = [
                 packet
                 for packet in review_packets
@@ -517,10 +524,7 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             blocks = [
                 block
                 for block in result["mechanical_contract_blocks"]
-                if block["contract_family_id"] in {
-                    "flowguard_check.node_prework_flowguard",
-                    "flowguard_check.post_result",
-                }
+                if block["contract_family_id"] == "flowguard_check.post_result"
                 and "evidence_consistency" in block["quarantine_reason"]
             ]
             self.assertTrue(blocks, result["mechanical_contract_blocks"])
@@ -573,7 +577,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             self.assertTrue(policy["required_for_formal_run"])
             self.assertIn("simulations/meta_thin_parent_results.json", policy["tracked_baseline_paths_forbidden_unless_explicit_baseline_update"])
             self.assertNotIn("recommended_runner_commands", flowguard_body)
-            self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
+            self.assertIn("Simulate the current route", flowguard_body["instruction"])
+            self.assertIn("validation", " ".join(flowguard_body["modeled_subject_policy"]["required_simulation_targets"]))
 
     def test_resolve_stopped_blocker_requires_explicit_user_request_before_reissue(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -715,7 +720,8 @@ class FlowPilotNewEntrypointTests(unittest.TestCase):
             flowguard_body = json.loads(ledger["packets"][flowguard_packet]["body"])
             self.assertIn(f"/evidence/flowguard/{flowguard_packet}", flowguard_body["evidence_output_policy"]["run_local_evidence_root"])
             self.assertNotIn("recommended_runner_commands", flowguard_body)
-            self.assertIn("select or create suitable FlowGuard evidence", flowguard_body["instruction"])
+            self.assertIn("Simulate the current route", flowguard_body["instruction"])
+            self.assertIn("do not mutate routes", flowguard_body["modeled_subject_policy"]["forbidden_authority"])
             flowguard_dispatch = flowpilot_new.dispatch_current_role(
                 root,
                 packet_id=flowguard_packet,

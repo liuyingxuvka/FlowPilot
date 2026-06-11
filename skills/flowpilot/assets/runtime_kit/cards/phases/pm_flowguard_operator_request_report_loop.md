@@ -58,6 +58,12 @@ For each modeling need, write a request that states:
 - process-model, product-model, or joint FlowGuard operator ownership;
 - modeling kind: process, product, object/reference-system, migration
   equivalence, experiment-derived behavior, or combined;
+- the exact current subject to simulate: the current route draft, staged
+  `route_plan`, node context package, repair plan, validation plan, blocker,
+  or closure package. For route or node process work, ask the FlowGuard
+  operator to simulate the route traversal, work dispatch path,
+  validation/check path, failure/blocker path, repair return path, stale
+  evidence handling, and closure path for that subject;
 - for model-miss work, the bug class definition, why the old model may have
   missed it, same-class search boundary, candidate repair comparison boundary,
   and post-repair model checks the PM needs before reviewer recheck;
@@ -147,9 +153,12 @@ dependent node, evidence-quality package, final ledger, or closure gate can
 pass. FlowGuard operator prose does not close a test gap.
 
 PM must convert the report into a concrete route decision: continue, repair,
-add evidence, split a node, mutate the route, or block. A report that only says
-the model ran, without telling PM how it changes route or node design, is not
-sufficient.
+add evidence, split a node, mutate the route, or block. For structural route
+changes, even a passing FlowGuard report is not enough by itself: PM must
+submit a `pm_flowguard_acceptance` result that absorbs the report, states
+whether to accept or rewrite the route plan, and only then may Reviewer inspect
+the PM absorption package. A report that only says the model ran, without
+telling PM how it changes route or node design, is not sufficient.
 
 For model-miss reports that support `pm.model_miss_triage`, include these
 additional fields exactly:

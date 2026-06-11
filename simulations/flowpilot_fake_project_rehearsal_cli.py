@@ -426,7 +426,7 @@ def assert_public_projection_is_sealed(projection: dict[str, Any]) -> None:
         ensure(packet.get("sealed_body_hidden") is True, f"packet body is not marked hidden: {packet}")
 
 
-def _route_plan_body(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> str:
+def _route_plan_payload(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> dict[str, Any]:
     node_templates = [
         {
             "node_id": "node-001",
@@ -460,11 +460,18 @@ def _route_plan_body(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> str:
         },
     ]
     ensure(1 <= node_count <= len(node_templates), f"unsupported fake route node count: {node_count}")
+    return {
+        "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
+        "nodes": node_templates[:node_count],
+    }
+
+
+def _route_plan_body(*, node_count: int = MIN_ACCEPTED_ROUTE_NODES) -> str:
+    route_plan = _route_plan_payload(node_count=node_count)
     return json.dumps(
         {
             "decision": "pass",
-            "schema_version": ROUTE_PLAN_SCHEMA_VERSION,
-            "nodes": node_templates[:node_count],
+            **route_plan,
         },
         sort_keys=True,
     )
@@ -485,7 +492,7 @@ def _node_acceptance_plan_body(packet: dict[str, Any]) -> str:
                 "purpose": "Complete the current route node with bounded worker execution, FlowGuard checks, review, and validation.",
                 "acceptance_criteria": [
                     "worker result satisfies the node packet",
-                    "pre-work and post-result FlowGuard evidence are current",
+                    "node-plan Reviewer, post-result FlowGuard, and final Reviewer evidence are current",
                     "reviewer independently challenges the node outcome",
                 ],
                 "relevant_references": ["route node contract", "high standard contract", "runtime ledger"],
@@ -628,21 +635,35 @@ def current_contract_body_for_packet(
         return _node_acceptance_plan_body(packet)
     if packet_kind in {"flowguard_check", "review"}:
         return _packet_result_contract_body(packet)
-    if packet_kind == "pm_disposition":
-        return json.dumps(
-            {
-                "decision": pm_disposition_decision,
-                "reason": f"fake PM disposition {pm_disposition_decision}",
-                "covered_requirement_ids": ["hsr-001"] if pm_disposition_decision == "accept" else [],
-                "reviewer_absorption": "PM absorbed current Reviewer challenge fields.",
-                "flowguard_absorption": "PM absorbed current FlowGuard boundary and missing-test fields.",
-                "residual_risk_disposition": "No unresolved residual risk remains for this fake node.",
-                "semantic_downgrade_disposition": "No semantic downgrade remains for this fake node.",
-                "validation_evidence_ids": ["fake-current-validation"],
-                "waived_requirement_ids": [],
-            },
-            sort_keys=True,
+    if packet_kind == "pm_flowguard_acceptance":
+        if str(ASSETS) not in sys.path:
+            sys.path.insert(0, str(ASSETS))
+        from flowpilot_core_runtime import packet_result_contracts
+
+        payload = packet_result_contracts.minimal_valid_shape_for_family(
+            "pm_flowguard_acceptance.pm_flowguard_acceptance"
         )
+        flowguard_result_id = str(packet.get("target_result_id") or "")
+        if flowguard_result_id:
+            payload["accepted_flowguard_result_id"] = flowguard_result_id
+        payload["reason"] = "fake PM absorbed the current FlowGuard report and keeps the staged structural route plan"
+        payload["flowguard_absorption"] = "fake PM absorbed current FlowGuard findings before Reviewer review"
+        return json.dumps(payload, sort_keys=True)
+    if packet_kind == "pm_disposition":
+        payload = {
+            "decision": pm_disposition_decision,
+            "reason": f"fake PM disposition {pm_disposition_decision}",
+            "covered_requirement_ids": ["hsr-001"] if pm_disposition_decision == "accept" else [],
+            "reviewer_absorption": "PM absorbed current Reviewer challenge fields.",
+            "flowguard_absorption": "PM absorbed current FlowGuard boundary and missing-test fields.",
+            "residual_risk_disposition": "No unresolved residual risk remains for this fake node.",
+            "semantic_downgrade_disposition": "No semantic downgrade remains for this fake node.",
+            "validation_evidence_ids": ["fake-current-validation"],
+            "waived_requirement_ids": [],
+        }
+        if pm_disposition_decision == "redesign_route":
+            payload["route_plan"] = _route_plan_payload(node_count=route_node_count)
+        return json.dumps(payload, sort_keys=True)
     return _generic_current_result_body(packet)
 
 

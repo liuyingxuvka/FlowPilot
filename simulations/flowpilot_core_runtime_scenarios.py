@@ -235,7 +235,6 @@ def _accept_high_standard_gates_for_scenario(ledger: dict[str, Any]) -> None:
 def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> str:
     result_id = f"{node_id}-result"
     review_id = f"{node_id}-review"
-    prework_order_id = f"{node_id}-prework-flowguard"
     flowguard_order_id = f"{node_id}-flowguard"
     validation_id = f"{node_id}-validation"
     disposition_id = f"{node_id}-pm-disposition"
@@ -255,16 +254,9 @@ def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> 
     ledger["route_nodes"][node_id]["status"] = "accepted"
     ledger["route_nodes"][node_id]["accepted_result_id"] = result_id
     ledger["route_nodes"][node_id]["pm_disposition_id"] = disposition_id
-    ledger["route_nodes"][node_id]["prework_flowguard_order_id"] = prework_order_id
-    ledger["route_nodes"][node_id]["prework_flowguard_repair_generation"] = 0
     ledger["route_nodes"][node_id]["flowguard_order_ids"] = [flowguard_order_id]
     ledger["route_nodes"][node_id]["review_ids"] = [review_id]
     ledger["route_nodes"][node_id]["validation_evidence_ids"] = [validation_id]
-    ledger["flowguard_work_orders"][prework_order_id] = {
-        "order_id": prework_order_id,
-        "status": "complete",
-        "decision": "pass",
-    }
     ledger["flowguard_work_orders"][flowguard_order_id] = {
         "order_id": flowguard_order_id,
         "subject_id": packet_id,

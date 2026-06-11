@@ -43,6 +43,11 @@ Model only the process shape and route viability against the product behavior
 model:
 
 - route draft was written by PM after the current prior-path context;
+- for a PM structural route change, the current `route_plan` is the simulation
+  subject. Simulate that route plan's node traversal, work dispatch path,
+  validation/check path, failure/blocker path, repair return path, stale
+  evidence handling, and closure path. Do not model an unrelated route or treat
+  the operator report as the route mutation commit;
 - route nodes map to the FlowGuard operator's product behavior model and
   can reach the modeled completion state;
 - the canonical process model is serial: every effective root, parent/module,

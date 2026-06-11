@@ -12,6 +12,7 @@ from typing import Any, Mapping
 
 ROUTE_PLAN_SCHEMA_VERSION = "flowpilot.route_plan.v1"
 NODE_PREWORK_FLOWGUARD_SCOPE = "node_prework_flowguard"
+PM_FLOWGUARD_ACCEPTANCE_SCOPE = "pm_flowguard_acceptance"
 
 REVIEW_REPORT_REQUIRED_FIELDS = (
     "pm_visible_summary",
@@ -144,6 +145,12 @@ PM_DISPOSITION_EXPLICIT_ARRAY_FIELDS = (
     "validation_evidence_ids",
     "waived_requirement_ids",
 )
+PM_FLOWGUARD_ACCEPTANCE_REQUIRED_FIELDS = (
+    "decision",
+    "reason",
+    "flowguard_absorption",
+    "accepted_flowguard_result_id",
+)
 
 
 PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
@@ -230,34 +237,42 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "route_scope": "node_acceptance_plan",
         "owner": "flowpilot_core_runtime",
         "validator": "_node_context_package_from_pm_result",
-        "required_fields": ("decision", "node_context_package"),
+        "required_fields": ("decision",),
         "required_child_fields": (
-            "node_context_package.purpose",
-            "node_context_package.acceptance_criteria",
-            "node_context_package.relevant_references",
-            "node_context_package.evidence_targets",
-            "node_context_package.inspection_targets",
-            "node_context_package.known_risks",
-            "node_context_package.flowguard_targets",
-            "node_context_package.reviewer_starting_points",
-            "node_context_package.high_standard_requirement_ids",
-            "node_context_package.low_quality_success_risks",
-            "node_context_package.semantic_downgrade_risks",
-            "node_context_package.work_packet_projection",
-            "node_context_package.final_user_intent_checks",
-            "node_context_package.structure_hygiene_expectation",
-            "node_context_package.direct_evidence_closure_rules",
-            "node_context_package.test_obligation_matrix.pre_worker[]",
+            "node_context_package when decision=pass",
+            "node_context_package.purpose when decision=pass",
+            "node_context_package.acceptance_criteria when decision=pass",
+            "node_context_package.relevant_references when decision=pass",
+            "node_context_package.evidence_targets when decision=pass",
+            "node_context_package.inspection_targets when decision=pass",
+            "node_context_package.known_risks when decision=pass",
+            "node_context_package.flowguard_targets when decision=pass",
+            "node_context_package.reviewer_starting_points when decision=pass",
+            "node_context_package.high_standard_requirement_ids when decision=pass",
+            "node_context_package.low_quality_success_risks when decision=pass",
+            "node_context_package.semantic_downgrade_risks when decision=pass",
+            "node_context_package.work_packet_projection when decision=pass",
+            "node_context_package.final_user_intent_checks when decision=pass",
+            "node_context_package.structure_hygiene_expectation when decision=pass",
+            "node_context_package.direct_evidence_closure_rules when decision=pass",
+            "node_context_package.test_obligation_matrix.pre_worker[] when decision=pass",
+            "route_plan when decision=redesign_route",
+            "route_plan.schema_version when decision=redesign_route",
+            "route_plan.nodes[] when decision=redesign_route",
+            "route_plan.nodes[].node_id when decision=redesign_route",
+            "route_plan.nodes[].title when decision=redesign_route",
         ),
-        "forbidden_fields": (),
+        "forbidden_fields": ("optional_flowguard", "needs_flowguard", "maybe_flowguard", "flowguard_optional"),
         "fake_ai_success_fields": (
             "decision",
             "pm_visible_summary",
             "route_node_id",
+            "reason",
             "proof_obligations",
             "repair_policy",
             "low_quality_success_risks",
             "node_context_package",
+            "route_plan",
         ),
         "unlocks": "staged_node_acceptance_plan_effect",
     },
@@ -293,20 +308,6 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "forbidden_fields": ("outcome", "status", "passed", "verdict", "result", "pass_or_block", "validation_status"),
         "fake_ai_success_fields": ("route_node_id", "decision", "pm_visible_summary", "composition_checked"),
         "unlocks": "parent_backward_replay_flowguard_review",
-    },
-    {
-        "family_id": "flowguard_check.node_prework_flowguard",
-        "packet_kind": "flowguard_check",
-        "route_scope": NODE_PREWORK_FLOWGUARD_SCOPE,
-        "owner": "flowpilot_core_runtime",
-        "validator": "_current_result_submission_contract_violation",
-        "required_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
-        "required_child_fields": FLOWGUARD_REPORT_REQUIRED_CHILD_FIELDS,
-        "explicit_array_fields": FLOWGUARD_REPORT_EXPLICIT_ARRAY_FIELDS,
-        "non_empty_array_fields": FLOWGUARD_REPORT_NON_EMPTY_ARRAY_FIELDS,
-        "forbidden_fields": ("decision", "api_fallback_manual_block_eval", "fallback_manual_block_eval"),
-        "fake_ai_success_fields": FLOWGUARD_REPORT_REQUIRED_FIELDS,
-        "unlocks": "worker_packet_release",
     },
     {
         "family_id": "flowguard_check.post_result",
@@ -382,6 +383,31 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
         "fake_ai_success_fields": PM_DISPOSITION_REQUIRED_FIELDS,
         "unlocks": "node_frontier_disposition_or_staged_route_gate",
     },
+    {
+        "family_id": "pm_flowguard_acceptance.pm_flowguard_acceptance",
+        "packet_kind": "pm_flowguard_acceptance",
+        "route_scope": PM_FLOWGUARD_ACCEPTANCE_SCOPE,
+        "owner": "flowpilot_core_runtime",
+        "validator": "_parse_pm_flowguard_acceptance_body",
+        "required_fields": PM_FLOWGUARD_ACCEPTANCE_REQUIRED_FIELDS,
+        "required_child_fields": (
+            "route_plan when decision=redesign_route",
+            "route_plan.schema_version when decision=redesign_route",
+            "route_plan.nodes[] when decision=redesign_route",
+            "route_plan.nodes[].node_id when decision=redesign_route",
+            "route_plan.nodes[].title when decision=redesign_route",
+        ),
+        "forbidden_fields": (
+            "optional_flowguard",
+            "needs_flowguard",
+            "maybe_flowguard",
+            "flowguard_optional",
+            "summary",
+            "pm_absorption",
+        ),
+        "fake_ai_success_fields": (*PM_FLOWGUARD_ACCEPTANCE_REQUIRED_FIELDS, "route_plan"),
+        "unlocks": "reviewer_release_after_pm_flowguard_absorption",
+    },
 )
 
 
@@ -402,8 +428,6 @@ def packet_result_family_id(envelope: Mapping[str, Any]) -> str:
         return f"task.{route_scope}"
     if packet_kind == "task":
         return "task.node"
-    if packet_kind == "flowguard_check" and route_scope == NODE_PREWORK_FLOWGUARD_SCOPE:
-        return "flowguard_check.node_prework_flowguard"
     if packet_kind == "flowguard_check":
         return "flowguard_check.post_result"
     if packet_kind == "review" and route_scope == "terminal_backward_replay":
@@ -414,6 +438,8 @@ def packet_result_family_id(envelope: Mapping[str, Any]) -> str:
         return "pm_repair_decision.pm_repair_decision"
     if packet_kind == "pm_disposition":
         return "pm_disposition.node_pm_disposition"
+    if packet_kind == "pm_flowguard_acceptance":
+        return "pm_flowguard_acceptance.pm_flowguard_acceptance"
     return f"{packet_kind}.{route_scope or 'unknown'}"
 
 
@@ -492,6 +518,22 @@ def strict_route_plan_minimal_shape() -> dict[str, Any]:
 
 
 def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
+    if family_id == "task.node_acceptance_plan":
+        pass_shape = minimal_valid_shape_for_family("task.node_acceptance_plan")
+        return {
+            "decision=pass": pass_shape,
+            "decision=redesign_route": {
+                "decision": "redesign_route",
+                "reason": "PM found the current node or route structure too coarse, too fine, or wrong.",
+                "route_plan": strict_route_plan_minimal_shape(),
+            },
+            "decision=block": {
+                "decision": "block",
+                "pm_visible_summary": ["PM cannot write a safe node plan from current inputs."],
+                "blocker_class": "missing_required_information",
+                "recommended_resolution": "Provide the missing route or node context.",
+            },
+        }
     if family_id == "pm_repair_decision.pm_repair_decision":
         return {
             "decision=repair_current_scope": {
@@ -515,6 +557,34 @@ def branch_valid_shapes_for_family(family_id: str) -> dict[str, Any]:
             "decision=stop_for_user": {
                 "decision": "stop_for_user",
                 "reason": "Concrete stop reason for user.",
+            },
+        }
+    if family_id == "pm_flowguard_acceptance.pm_flowguard_acceptance":
+        return {
+            "decision=accept": {
+                "decision": "accept",
+                "reason": "PM absorbed the FlowGuard report and keeps the staged structural decision.",
+                "flowguard_absorption": "Concrete PM absorption of current FlowGuard findings.",
+                "accepted_flowguard_result_id": "result-flowguard-current",
+            },
+            "decision=redesign_route": {
+                "decision": "redesign_route",
+                "reason": "PM absorbed FlowGuard findings and rewrote the route plan.",
+                "flowguard_absorption": "Concrete PM absorption of current FlowGuard findings.",
+                "accepted_flowguard_result_id": "result-flowguard-current",
+                "route_plan": strict_route_plan_minimal_shape(),
+            },
+            "decision=block": {
+                "decision": "block",
+                "reason": "PM cannot proceed with the structural decision after absorbing FlowGuard.",
+                "flowguard_absorption": "Concrete PM absorption of current FlowGuard findings.",
+                "accepted_flowguard_result_id": "result-flowguard-current",
+            },
+            "decision=stop_for_user": {
+                "decision": "stop_for_user",
+                "reason": "PM requires user input after absorbing FlowGuard.",
+                "flowguard_absorption": "Concrete PM absorption of current FlowGuard findings.",
+                "accepted_flowguard_result_id": "result-flowguard-current",
             },
         }
     return {}
@@ -607,6 +677,13 @@ def minimal_valid_shape_for_family(family_id: str) -> dict[str, Any]:
             "semantic_downgrade_disposition": "No semantic downgrade remains for this node.",
             "validation_evidence_ids": ["validation-current-node"],
             "waived_requirement_ids": [],
+        }
+    if family_id == "pm_flowguard_acceptance.pm_flowguard_acceptance":
+        return {
+            "decision": "accept",
+            "reason": "PM absorbed the current FlowGuard report and keeps the staged structural plan.",
+            "flowguard_absorption": "PM accepted FlowGuard's current modeled boundary, residual risks, and missing-test disposition.",
+            "accepted_flowguard_result_id": "result-flowguard-current",
         }
     if family_id.startswith("flowguard_check."):
         return {
