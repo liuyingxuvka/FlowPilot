@@ -29,7 +29,19 @@
   },
   "decision_to_make": "<what PM must decide after the report>",
   "uncertainty": "<what is not known yet>",
-  "modeling_scope": "<process|product|object|reference_system|migration_equivalence|experiment_derived_behavior|combined>",
+  "modeling_scope": "<process|product|target_realization|object|reference_system|migration_equivalence|experiment_derived_behavior|combined>",
+  "target_realization_context": {
+    "enabled": false,
+    "pm_implementation_intent_path": ".flowpilot/runs/<run-id>/implementation_intent/pm_implementation_intent.json",
+    "product_behavior_model_path": ".flowpilot/runs/<run-id>/flowguard/product_behavior_model.json",
+    "product_behavior_model_pm_decision_path": ".flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json",
+    "required_output_path": ".flowpilot/runs/<run-id>/flowguard/target_realization_model.json",
+    "preserve_pm_intent": true,
+    "model_realization_obligations": true,
+    "model_thin_success_traps": true,
+    "model_evidence_gates": true,
+    "forbidden_downgrade": true
+  },
   "model_family_scope": {
     "family_ids": [],
     "family_types": [
@@ -75,6 +87,7 @@
       "failure paths",
       "risk tiers for PM",
       "model-derived review agenda",
+      "target-realization obligations when modeling_scope=target_realization",
       "toolchain or model improvement suggestions",
       "human walkthrough recommendations",
       "PM decision options",

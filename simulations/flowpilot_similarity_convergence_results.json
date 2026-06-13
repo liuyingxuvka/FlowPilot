@@ -94,6 +94,7 @@
           }
         ],
         "decision": "model_similarity_blocked",
+        "evidence_gate_ids": [],
         "findings": [
           {
             "code": "missing_maintenance_test_path",
@@ -105,6 +106,7 @@
             "severity": "blocker"
           }
         ],
+        "known_bad_case_ids": [],
         "maintenance_groups": [
           {
             "adapter_ids": [
@@ -247,6 +249,7 @@
             "risk_if_merged": "merging all variants may erase policy-specific behavior"
           }
         ],
+        "risk_template_ids": [],
         "summary": "BLOCKED: plan=known_bad_missing_similarity_test_path decision=model_similarity_blocked relations=1 groups=1 findings=1",
         "test_obligations": [
           {
@@ -359,6 +362,7 @@
           }
         ],
         "decision": "model_similarity_blocked",
+        "evidence_gate_ids": [],
         "findings": [
           {
             "code": "stale_model_signature_evidence",
@@ -373,6 +377,7 @@
             "severity": "blocker"
           }
         ],
+        "known_bad_case_ids": [],
         "maintenance_groups": [
           {
             "adapter_ids": [
@@ -516,6 +521,7 @@
             "risk_if_merged": "merging all variants may erase policy-specific behavior"
           }
         ],
+        "risk_template_ids": [],
         "summary": "BLOCKED: plan=known_bad_stale_similarity_evidence decision=model_similarity_blocked relations=1 groups=1 findings=1",
         "test_obligations": [
           {
@@ -630,6 +636,7 @@
           }
         ],
         "decision": "model_similarity_blocked",
+        "evidence_gate_ids": [],
         "findings": [
           {
             "code": "missing_current_similarity_evidence",
@@ -641,6 +648,7 @@
             "severity": "blocker"
           }
         ],
+        "known_bad_case_ids": [],
         "maintenance_groups": [
           {
             "adapter_ids": [
@@ -772,6 +780,7 @@
             "risk_if_merged": "merging all variants may erase policy-specific behavior"
           }
         ],
+        "risk_template_ids": [],
         "summary": "BLOCKED: plan=known_bad_missing_current_similarity_evidence decision=model_similarity_blocked relations=1 groups=1 findings=1",
         "test_obligations": [
           {
@@ -900,6 +909,7 @@
     ],
     "evidence_current": true,
     "evidence_duplicate_relation_ids": [],
+    "evidence_gate_ids": [],
     "false_friend_rationales": [
       "route_mutation_sibling_branch:route_display_refresh:false_friend: Names or families look related, but material ownership differs."
     ],
@@ -913,6 +923,7 @@
       "router_reconciliation_role_output_event",
       "router_reconciliation_runtime_resume"
     ],
+    "known_bad_case_ids": [],
     "maintenance_group_ids": [
       "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
       "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
@@ -936,6 +947,7 @@
       "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant",
       "route_mutation_sibling_branch:route_display_refresh:false_friend"
     ],
+    "risk_template_ids": [],
     "same_family_relation_ids": [
       "packet_result_material_scan:packet_result_research:same_family_variant",
       "packet_result_research:packet_result_current_node:same_family_variant",
@@ -1434,7 +1446,9 @@
       }
     ],
     "decision": "model_similarity_ready",
+    "evidence_gate_ids": [],
     "findings": [],
+    "known_bad_case_ids": [],
     "maintenance_groups": [
       {
         "adapter_ids": [
@@ -2261,6 +2275,7 @@
         "risk_if_merged": "merging false friends can collapse distinct responsibilities"
       }
     ],
+    "risk_template_ids": [],
     "summary": "OK: plan=flowpilot_similarity_convergence decision=model_similarity_ready relations=9 groups=4 findings=0",
     "test_obligations": [
       {

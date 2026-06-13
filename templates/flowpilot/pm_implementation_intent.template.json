@@ -1,0 +1,28 @@
+{
+  "schema_version": "flowpilot.pm_implementation_intent.v1",
+  "run_id": "<run-id>",
+  "status": "written",
+  "written_by_role": "project_manager",
+  "source_paths": [],
+  "implementation_intent_summary": "<plain-language PM realization intent>",
+  "implementation_pathways": [
+    {
+      "pathway_id": "<pathway-id>",
+      "summary": "<how PM believes the accepted product can be realized>",
+      "hard_parts": [],
+      "unknowns_for_flowguard": []
+    }
+  ],
+  "target_realization_model_request": {
+    "requested_model_id": "<model-id>",
+    "expected_path": ".flowpilot/runs/<run-id>/flowguard/target_realization_model.json",
+    "must_preserve_pm_intent": true
+  },
+  "realization_obligations": [],
+  "thin_success_traps": [],
+  "non_downgrade_rules": [],
+  "evidence_gates": [],
+  "residual_blindspots": [],
+  "next_action": "flowguard_operator_target_realization_model",
+  "written_at": "<iso-8601-timestamp>"
+}

@@ -261,6 +261,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "route_plan.nodes[] when decision=redesign_route",
             "route_plan.nodes[].node_id when decision=redesign_route",
             "route_plan.nodes[].title when decision=redesign_route",
+            "route_plan.nodes[].node_kind when decision=redesign_route",
+            "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route",
         ),
         "forbidden_fields": ("optional_flowguard", "needs_flowguard", "maybe_flowguard", "flowguard_optional"),
         "fake_ai_success_fields": (
@@ -365,6 +367,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "route_plan.nodes[] when decision=redesign_route",
             "route_plan.nodes[].node_id when decision=redesign_route",
             "route_plan.nodes[].title when decision=redesign_route",
+            "route_plan.nodes[].node_kind when decision=redesign_route",
+            "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route",
         ),
         "forbidden_fields": ("authority", "summary", "repair_decision", "pm_repair_decision"),
         "fake_ai_success_fields": ("decision", "reason", "authority_ref", "route_plan"),
@@ -396,6 +400,8 @@ PACKET_RESULT_CONTRACTS: tuple[dict[str, Any], ...] = (
             "route_plan.nodes[] when decision=redesign_route",
             "route_plan.nodes[].node_id when decision=redesign_route",
             "route_plan.nodes[].title when decision=redesign_route",
+            "route_plan.nodes[].node_kind when decision=redesign_route",
+            "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route",
         ),
         "forbidden_fields": (
             "optional_flowguard",
@@ -510,6 +516,18 @@ def strict_route_plan_minimal_shape() -> dict[str, Any]:
             {
                 "node_id": "repair-current-scope",
                 "title": "Repair current scope",
+                "node_kind": "module",
+                "parent_node_id": "",
+                "child_node_ids": ["repair-current-scope-leaf"],
+                "responsibility": "pm",
+                "acceptance_criteria": ["Current repair scope is decomposed into executable child work."],
+            },
+            {
+                "node_id": "repair-current-scope-leaf",
+                "title": "Execute repaired current scope",
+                "node_kind": "leaf",
+                "parent_node_id": "repair-current-scope",
+                "child_node_ids": [],
                 "responsibility": "worker",
                 "acceptance_criteria": ["Current repair acceptance criterion."],
             }

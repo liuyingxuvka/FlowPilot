@@ -59,6 +59,19 @@ def _write_route_draft(router: ModuleType, project_root: Path, run_root: Path, r
     if not child_manifest_path.exists() or read_json(child_manifest_path).get('status') != 'approved':
         raise RouterError('route draft requires approved child-skill gate manifest')
     product_model_path = router._require_product_behavior_model_report(project_root, run_root)
+    implementation_intent_path = router._require_pm_implementation_intent(project_root, run_root)
+    target_model_path = router._require_target_realization_model_report(project_root, run_root)
+    target_decision_path = run_root / 'flowguard' / 'target_realization_model_pm_decision.json'
+    implementation_review_path = run_root / 'reviews' / 'implementation_intent_challenge.json'
+    missing_bridge_paths = [
+        project_relative(project_root, item)
+        for item in (target_decision_path, implementation_review_path)
+        if not item.exists()
+    ]
+    if missing_bridge_paths:
+        raise RouterError('route draft requires accepted implementation-intent bridge paths: ' + ', '.join(missing_bridge_paths))
+    if not run_state.get('flags', {}).get('implementation_intent_reviewer_passed'):
+        raise RouterError('route draft requires reviewer-passed implementation intent challenge')
     route_id = str(payload.get('route_id') or 'route-001')
     route_root = run_root / 'routes' / route_id
     draft = payload.get('route') if isinstance(payload.get('route'), dict) else {}
@@ -73,6 +86,12 @@ def _write_route_draft(router: ModuleType, project_root: Path, run_root: Path, r
     route_payload['source_root_contract'] = project_relative(project_root, contract_path)
     route_payload['source_product_behavior_model'] = project_relative(project_root, product_model_path)
     route_payload['source_product_behavior_model_hash'] = hashlib.sha256(product_model_path.read_bytes()).hexdigest()
+    route_payload['source_pm_implementation_intent'] = project_relative(project_root, implementation_intent_path)
+    route_payload['source_pm_implementation_intent_hash'] = hashlib.sha256(implementation_intent_path.read_bytes()).hexdigest()
+    route_payload['source_target_realization_model'] = project_relative(project_root, target_model_path)
+    route_payload['source_target_realization_model_hash'] = hashlib.sha256(target_model_path.read_bytes()).hexdigest()
+    route_payload['source_target_realization_model_pm_decision'] = project_relative(project_root, target_decision_path)
+    route_payload['source_implementation_intent_review'] = project_relative(project_root, implementation_review_path)
     route_payload['prior_path_context_review'] = prior_review
     root_requirement_ids = router._root_requirement_ids(contract)
     route_payload['requirement_traceability_policy'] = {'schema_version': 'flowpilot.route_requirement_traceability.v1', 'source_root_contract': project_relative(project_root, contract_path), 'source_product_architecture': project_relative(project_root, run_root / 'product_function_architecture.json'), 'full_protocol_required_when_flowpilot_invoked': True, 'light_or_simple_profiles_forbidden': True, 'every_node_requires_requirement_or_risk_rationale': True, 'external_spec_material_advisory_until_pm_imported': True}
@@ -110,6 +129,38 @@ def _require_product_behavior_model_report(router: ModuleType, project_root: Pat
     report = read_json(path)
     if report.get('passed') is not True:
         raise RouterError('route draft requires passed FlowGuard operator product-scope product behavior model report')
+    return path
+
+
+def _pm_implementation_intent_path(router: ModuleType, run_root: Path) -> Path:
+    _bind_router(router)
+    return run_root / 'implementation_intent' / 'pm_implementation_intent.json'
+
+
+def _require_pm_implementation_intent(router: ModuleType, project_root: Path, run_root: Path) -> Path:
+    _bind_router(router)
+    path = router._pm_implementation_intent_path(run_root)
+    if not path.exists():
+        raise RouterError('route draft requires PM implementation intent bridge')
+    intent = read_json(path)
+    if intent.get('written_by_role') != 'project_manager':
+        raise RouterError('route draft requires PM-owned implementation intent bridge')
+    return path
+
+
+def _target_realization_model_report_path(router: ModuleType, run_root: Path) -> Path:
+    _bind_router(router)
+    return run_root / 'flowguard' / 'target_realization_model.json'
+
+
+def _require_target_realization_model_report(router: ModuleType, project_root: Path, run_root: Path) -> Path:
+    _bind_router(router)
+    path = router._target_realization_model_report_path(run_root)
+    if not path.exists():
+        raise RouterError('route draft requires FlowGuard target realization model report')
+    report = read_json(path)
+    if report.get('passed') is not True or report.get('target_realization_verdict') != 'pass':
+        raise RouterError('route draft requires passed FlowGuard target realization model report')
     return path
 
 
@@ -190,6 +241,10 @@ __all__ = (
     '_reset_route_hard_gate_approvals_for_recheck',
     '_product_behavior_model_report_path',
     '_require_product_behavior_model_report',
+    '_pm_implementation_intent_path',
+    '_require_pm_implementation_intent',
+    '_target_realization_model_report_path',
+    '_require_target_realization_model_report',
     '_process_route_model_report_path',
     '_require_process_route_model_report',
     '_require_route_process_pass',

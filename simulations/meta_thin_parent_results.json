@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-11T06:58:33.230165+00:00",
+  "created_at": "2026-06-13T12:17:08.092281+00:00",
   "graph": {
     "edge_count": 18,
     "invariant_failure_count": 0,
@@ -8,18 +8,18 @@
     "state_count": 10
   },
   "layered_full_regression": {
-    "current": false,
+    "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-09T14:20:28.985383+00:00",
+      "created_at": "2026-06-13T12:16:50.193801+00:00",
       "edge_count": 20,
       "kind": "layered_full_parent",
       "proof_file": "simulations/meta_layered_full_results.proof.json",
-      "reason": "input fingerprint changed",
+      "reason": "valid proof",
       "release_confidence": "current_with_layered_full_parent",
       "result_file": "simulations/meta_layered_full_results.json",
       "state_count": 12,
-      "valid": false
+      "valid": true
     }
   },
   "loop": {
@@ -35,7 +35,7 @@
     "ok": true,
     "success_state_count": 1
   },
-  "release_confidence": "requires_full_regression",
+  "release_confidence": "current_with_layered_full_parent",
   "result_type": "thin_parent",
   "routine_confidence": "current",
   "schema_version": "flowpilot.thin_parent_result.v1",
@@ -165,17 +165,17 @@
       {
         "evidence": [
           {
-            "edge_count": 98,
+            "edge_count": 116,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "369c8f91c35b7cd0cb865a51343334aa9cb7a543fec57f571c130d14acc01bc1",
+            "result_fingerprint": "1d5cdc92f80339077eb1da4da2406ce7f6538ac34bdf970003d1224a412e50f2",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 99
+            "state_count": 117
           },
           {
             "edge_count": 40,
@@ -424,7 +424,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_role_output_runtime_results.json",
-            "result_fingerprint": "b1fde6d142f77ae5d427f49b0576ff67d33f9d32cc58da35c1e25c23d7d7405b",
+            "result_fingerprint": "39dc198ebc84033621eafec6de20c98922c01c7b09af4d374c7719dbe1547512",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null

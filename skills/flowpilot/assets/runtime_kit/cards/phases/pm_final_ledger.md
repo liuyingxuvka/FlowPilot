@@ -58,6 +58,10 @@ Resolve:
   families, merge/skip reasons, and unresolved model-family count. Completion
   is blocked if any planned product or process family is missing, unresolved,
   stale, or closed only by child-skill manifest prose;
+  include the accepted target-realization model and PM decision. Every active
+  realization obligation, thin-success trap, non-downgrade rule, and evidence
+  gate must have terminal disposition: closed by proof, superseded with reason,
+  waived by authority, or returned for repair;
   include every active `flowguard_work_order_id`, `flowguard_report_id`,
   `flowguard_route_used`, `flowguard_report_freshness`, skipped-check reason,
   progress-only status, and `flowguard_pm_acceptance`; unresolved, stale,
@@ -77,6 +81,11 @@ Resolve:
   existence-only evidence, report prose, or a clean ledger row;
 - child-skill and review gates;
 - product/process FlowGuard gates;
+- final evidence id validity: review, FlowGuard, and validation ids only count
+  when the runtime resolves the referenced current-route record as accepted,
+  passing, fresh, and blocker-free. A blocked review id, progress-only or stale
+  FlowGuard order, failed validation record, old-route id, or historical
+  artifact remains unresolved evidence rather than proof;
 - model-test alignment for every active FlowGuard-backed gate:
   `model_obligations`, `ordinary_test_evidence`, `missing_test_kinds`,
   `conformance_boundary`, `residual_blindspots`, PM

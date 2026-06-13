@@ -246,6 +246,18 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
         _approve_child_skill_manifest_for_route(project_root, run_root, run_state, payload)
     elif event == 'capability_evidence_synced':
         _sync_capability_evidence(project_root, run_root, run_state, payload)
+    elif event == 'pm_writes_implementation_intent':
+        _write_pm_implementation_intent(project_root, run_root, run_state, payload)
+    elif event == 'flowguard_operator_submits_target_realization_model':
+        _write_target_realization_model_report(project_root, run_root, run_state, payload)
+    elif event == 'flowguard_operator_blocks_target_realization_model':
+        _write_target_realization_model_issue_report(project_root, run_root, run_state, payload)
+    elif event == 'pm_accepts_target_realization_model':
+        _write_pm_target_realization_model_decision(project_root, run_root, run_state, payload, accepted=True)
+    elif event == 'pm_requests_target_realization_model_rebuild':
+        _write_pm_target_realization_model_decision(project_root, run_root, run_state, payload, accepted=False)
+    elif event == 'reviewer_passes_implementation_intent_challenge':
+        _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'implementation_intent_challenge.json', schema_version='flowpilot.implementation_intent_review.v1', checked_paths=[router._require_pm_implementation_intent(project_root, run_root), router._require_target_realization_model_report(project_root, run_root), run_root / 'flowguard' / 'target_realization_model_pm_decision.json', router._require_product_behavior_model_report(project_root, run_root)])
     elif event == 'pm_writes_route_draft':
         if run_state['flags'].get(flag) and (not run_state['flags'].get('route_activated_by_pm')):
             router._reset_route_review_after_route_draft_repair(run_state)
@@ -261,7 +273,7 @@ def _record_external_event_unchecked(router: ModuleType, project_root: Path, eve
     elif event == 'flowguard_operator_blocks_process_route_model':
         _write_route_process_issue_report(project_root, run_root, run_state, payload, expected_verdict='blocked')
     elif event == 'reviewer_passes_route_check':
-        _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'route_challenge.json', schema_version='flowpilot.route_review.v1', checked_paths=[router._current_route_draft_path(run_root), router._require_product_behavior_model_report(project_root, run_root), router._require_process_route_model_report(project_root, run_root), run_root / 'flowguard' / 'process_route_model_pm_decision.json'])
+        _write_role_gate_report(project_root, run_root, run_state, payload, expected_role='human_like_reviewer', path=run_root / 'reviews' / 'route_challenge.json', schema_version='flowpilot.route_review.v1', checked_paths=[router._current_route_draft_path(run_root), router._require_product_behavior_model_report(project_root, run_root), router._require_target_realization_model_report(project_root, run_root), router._require_process_route_model_report(project_root, run_root), run_root / 'flowguard' / 'process_route_model_pm_decision.json'])
     elif event == 'pm_registers_current_node_packet':
         router._validate_current_node_packet_event(project_root, run_root, run_state, payload)
     elif event == 'worker_current_node_result_returned':

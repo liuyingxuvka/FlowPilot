@@ -1,5 +1,5 @@
 {
-  "created_at": "2026-06-11T06:58:33.213686+00:00",
+  "created_at": "2026-06-13T12:17:07.968740+00:00",
   "graph": {
     "edge_count": 14,
     "invariant_failure_count": 0,
@@ -11,7 +11,7 @@
     "current": true,
     "required_for_release": true,
     "status": {
-      "created_at": "2026-06-07T10:28:34.486815+00:00",
+      "created_at": "2026-06-13T12:16:50.432073+00:00",
       "edge_count": 16,
       "kind": "layered_full_parent",
       "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -122,17 +122,17 @@
       {
         "evidence": [
           {
-            "edge_count": 98,
+            "edge_count": 116,
             "failures": [],
             "missing": false,
             "model_id": "flowpilot_planning_quality",
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_planning_quality_results.json",
-            "result_fingerprint": "369c8f91c35b7cd0cb865a51343334aa9cb7a543fec57f571c130d14acc01bc1",
+            "result_fingerprint": "1d5cdc92f80339077eb1da4da2406ce7f6538ac34bdf970003d1224a412e50f2",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 99
+            "state_count": 117
           },
           {
             "edge_count": 40,
@@ -172,10 +172,10 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/card_instruction_coverage_results.json",
-            "result_fingerprint": "ee38d68bf0d6579b150eedd455b032e2877843fa2484c858ff5bf36bccf6981d",
+            "result_fingerprint": "bffd307550d51085f82ebcab71580eeb5c88152fed116bb2efee63e6701fc1ad",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
-            "state_count": 63
+            "state_count": 67
           },
           {
             "edge_count": 62,
@@ -283,7 +283,7 @@
             "ok": true,
             "proof_status": "not_present",
             "result_file": "simulations/flowpilot_role_output_runtime_results.json",
-            "result_fingerprint": "b1fde6d142f77ae5d427f49b0576ff67d33f9d32cc58da35c1e25c23d7d7405b",
+            "result_fingerprint": "39dc198ebc84033621eafec6de20c98922c01c7b09af4d374c7719dbe1547512",
             "skipped_required_checks": [],
             "skipped_required_checks_visible": true,
             "state_count": null

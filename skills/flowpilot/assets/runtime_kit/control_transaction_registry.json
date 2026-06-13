@@ -169,6 +169,42 @@
       ]
     },
     {
+      "transaction_type": "implementation_intent_bridge",
+      "producer_roles": [
+        "project_manager",
+        "flowguard_operator",
+        "human_like_reviewer"
+      ],
+      "output_contract_ids": [
+        "flowpilot.output_contract.pm_implementation_intent.v1",
+        "flowpilot.output_contract.flowguard_operator_model_report.v1",
+        "flowpilot.output_contract.pm_target_realization_model_decision.v1",
+        "flowpilot.output_contract.reviewer_review_report.v1"
+      ],
+      "router_events": [
+        "pm_writes_implementation_intent",
+        "flowguard_operator_submits_target_realization_model",
+        "flowguard_operator_blocks_target_realization_model",
+        "pm_accepts_target_realization_model",
+        "pm_requests_target_realization_model_rebuild",
+        "reviewer_passes_implementation_intent_challenge",
+        "reviewer_blocks_implementation_intent_challenge"
+      ],
+      "event_usages": [
+        "recorded_event",
+        "wait",
+        "repair_outcome"
+      ],
+      "packet_authority_required": false,
+      "repair_transaction_required": false,
+      "outcome_policy": "single_event",
+      "commit_targets": [
+        "run_state",
+        "status_summary",
+        "wait_closure"
+      ]
+    },
+    {
       "transaction_type": "route_mutation",
       "producer_roles": [
         "project_manager"

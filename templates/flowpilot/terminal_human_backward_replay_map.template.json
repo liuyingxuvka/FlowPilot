@@ -8,6 +8,13 @@
   "built_from_ledger_path": ".flowpilot/runs/<run-id>/final_route_wide_gate_ledger.json",
   "built_at": "<iso-8601-timestamp-or-null>",
   "purpose": "A PM-built ordered map for terminal human backward replay. The reviewer starts from the delivered product, then checks root acceptance, parent nodes, and leaf nodes against current product behavior and node acceptance plans.",
+  "target_realization_replay": {
+    "target_realization_model_path": ".flowpilot/runs/<run-id>/flowguard/target_realization_model.json",
+    "realization_obligations_reviewed": false,
+    "thin_success_traps_reviewed": false,
+    "non_downgrade_rules_reviewed": false,
+    "evidence_gates_reviewed": false
+  },
   "replay_order": [
     "delivered_product",
     "root_acceptance",

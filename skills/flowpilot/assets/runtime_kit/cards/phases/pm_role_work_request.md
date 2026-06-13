@@ -19,6 +19,10 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - For a blocked PM-owned decision, choose the smallest valid path among repair, sender reissue, route mutation, evidence quarantine, or user stop; do not skip required recheck.
 - Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial role-work requests that affect product, process, route, review, repair, validation, evidence freshness, resume, or closure judgement, include FlowGuard Work Order and FlowGuard Report ids or a scoped `flowguard_not_required_reason`.
+- When the request touches route, implementation, validation, review, or
+  closure, include the relevant `realization_obligation_ids`, thin-success
+  traps, non-downgrade rules, and evidence gates inherited from the accepted
+  target-realization model.
 
 
 This is the generic channel for PM to ask another FlowPilot role to do bounded

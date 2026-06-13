@@ -35,6 +35,8 @@ HAZARD_EXPECTED_FAILURES = {
     model.DISPLAY_HIDES_ACTIVE_PATH: "user display hides active deep path or hidden leaf progress",
     model.FINAL_LEDGER_OMITS_DEEP_LEAF: "final route-wide ledger omits deep leaf nodes",
     model.MISSING_DECOMPOSITION_MEMORY: "PMK route memory lacks decomposition rationale",
+    model.FLAT_ALL_LEAF_REDESIGN: "route redesign flattened complex work into all-leaf peer nodes",
+    model.NODE_ENTRY_PEER_APPENDED_SPLIT: "node-entry redesign did not promote active scope to parent/module",
 }
 
 

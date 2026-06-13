@@ -51,7 +51,16 @@ HAZARD_EXPECTED_FAILURES = {
         "FlowGuard evidence contains blocker identity but staged_effect.blocker_id is empty"
     ),
     model.SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN: (
-        "superseded repair blocker remained open after route replacement"
+        "prior-route repair blocker was not dispositioned after route replacement"
+    ),
+    model.ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT: (
+        "final preflight treated a noncurrent repair blocker as current authority"
+    ),
+    model.STALE_PRIOR_ROUTE_REPAIR_BLOCKER_LEFT_OPEN: (
+        "prior-route repair blocker was not dispositioned after route replacement"
+    ),
+    model.REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR: (
+        "same-node repair loop threshold exceeded but ordinary PM repair continued"
     ),
 }
 
@@ -87,9 +96,16 @@ def _state_id(state: model.State) -> str:
         f"superseded={state.route_replacement_supersedes_prior_repair},"
         f"superseded_disposition={state.superseded_blocker_disposition_recorded},"
         f"superseded_open={state.superseded_blocker_still_repair_open}|"
+        f"final_preflight={state.final_preflight_uses_current_effective_blockers},"
+        f"{state.final_preflight_reports_noncurrent_repair_blocker}|"
         f"followup={state.followup_blocker_returned},{state.followup_blocker_recorded}|"
         f"loop={state.same_blocker_repeat_count},{state.same_work_packet_hash_repeated},"
-        f"{state.loop_escape_recorded},{state.terminal_stop_or_route_mutation}|reason={state.terminal_reason}"
+        f"{state.loop_escape_recorded},{state.terminal_stop_or_route_mutation}|"
+        f"repair_loop={state.same_family_repair_attempt_count}>{state.repair_loop_threshold},"
+        f"evidence={state.repair_loop_threshold_evidence_visible},"
+        f"breakglass={state.break_glass_duty_projected},"
+        f"ordinary_pm={state.ordinary_pm_repair_continued_over_threshold},"
+        f"pm_superseded={state.same_family_pm_packets_superseded}|reason={state.terminal_reason}"
     )
 
 
@@ -247,7 +263,10 @@ def run_checks() -> dict[str, Any]:
                 "formal blocker identity in PM package, staged_effect, FlowGuard evidence, and replay inputs",
                 "reviewer recheck binding",
                 "superseded repair blocker disposition after route replacement",
+                "stale prior-route repair blocker disposition after route mutation",
+                "final preflight current-effective blocker filtering",
                 "same-blocker no-progress loop escape",
+                "same-family repair attempts above five route to Controller break-glass instead of ordinary PM repair",
             ],
             "does_not_cover": [
                 "concrete runtime packet builder conformance",

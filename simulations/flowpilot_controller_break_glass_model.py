@@ -19,13 +19,16 @@ VALID_SCENARIOS = (
     "event_authority_contradiction",
     "pm_packet_repair_lane_broken",
     "non_replayable_package_artifact_blocks_packet_replay",
+    "repair_loop_threshold_control_fault",
+    "repair_loop_threshold_false_alarm",
 )
 NEGATIVE_SCENARIOS = (
     "ordinary_project_bug",
     "normal_pm_repair_available",
+    "cross_node_similar_failures",
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
-PATCH_SCENARIOS = {"control_flow_stuck_no_legal_next_action"}
+PATCH_SCENARIOS = {"control_flow_stuck_no_legal_next_action", "repair_loop_threshold_control_fault"}
 MAX_SEQUENCE_LENGTH = 9
 
 
@@ -47,6 +50,8 @@ class State:
     ordinary_project_defect: bool = False
     normal_repair_available: bool = False
     normal_lanes_checked: bool = False
+    repair_loop_threshold_exceeded: bool = False
+    repair_loop_threshold_false_alarm: bool = False
     package_artifact_not_replayable: bool = False
     playbook_read: bool = False
     incident_recorded: bool = False
@@ -118,6 +123,8 @@ def _scenario_state(name: str) -> State:
             ordinary_project_defect=False,
             normal_repair_available=False,
             normal_lanes_checked=True,
+            repair_loop_threshold_exceeded=name.startswith("repair_loop_threshold"),
+            repair_loop_threshold_false_alarm=name == "repair_loop_threshold_false_alarm",
             package_artifact_not_replayable=name == "non_replayable_package_artifact_blocks_packet_replay",
             patch_used=name in PATCH_SCENARIOS,
         )
@@ -126,7 +133,7 @@ def _scenario_state(name: str) -> State:
         status="assessed",
         flowpilot_control_failure=False,
         ordinary_project_defect=name == "ordinary_project_bug",
-        normal_repair_available=name == "normal_pm_repair_available",
+        normal_repair_available=name in {"normal_pm_repair_available", "cross_node_similar_failures"},
         normal_lanes_checked=True,
     )
 
@@ -226,6 +233,8 @@ def policy_failures(state: State) -> list[str]:
             failures.append("ordinary project defect used break-glass")
         if state.normal_repair_available:
             failures.append("normal PM repair lane was available but break-glass was used")
+        if state.repair_loop_threshold_exceeded and not state.normal_lanes_checked:
+            failures.append("repair loop threshold break-glass lacked normal lane assessment")
         if not state.incident_recorded:
             failures.append("break-glass used without an incident record")
         if not state.recovery_transaction_recorded:

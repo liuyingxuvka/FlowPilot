@@ -11,7 +11,10 @@
       "formal blocker identity in PM package, staged_effect, FlowGuard evidence, and replay inputs",
       "reviewer recheck binding",
       "superseded repair blocker disposition after route replacement",
-      "same-blocker no-progress loop escape"
+      "stale prior-route repair blocker disposition after route mutation",
+      "final preflight current-effective blocker filtering",
+      "same-blocker no-progress loop escape",
+      "same-family repair attempts above five route to Controller break-glass instead of ordinary PM repair"
     ],
     "does_not_cover": [
       "concrete runtime packet builder conformance",
@@ -25,12 +28,19 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=144",
+    "summary": "sequences=3 initial_states=1 traces=174",
     "violation_count": 0
   },
   "hazard_detection": {
     "failures": [],
     "hazards": {
+      "accepted_noncurrent_repair_packet_blocks_final_preflight": {
+        "detected": true,
+        "expected_failure": "final preflight treated a noncurrent repair blocker as current authority",
+        "failures": [
+          "final preflight treated a noncurrent repair blocker as current authority"
+        ]
+      },
       "blocker_routed_without_pm_decision": {
         "detected": true,
         "expected_failure": "repair packet was issued without a PM repair decision",
@@ -108,6 +118,14 @@
           "PM repair decision was made before the required report body was delivered"
         ]
       },
+      "repair_loop_over_threshold_allowed_pm_repair": {
+        "detected": true,
+        "expected_failure": "same-node repair loop threshold exceeded but ordinary PM repair continued",
+        "failures": [
+          "same blocker repeated with same work packet and no route mutation or terminal blocker",
+          "same-node repair loop threshold exceeded but ordinary PM repair continued"
+        ]
+      },
       "repair_stage_not_updated_after_flowguard_pass": {
         "detected": true,
         "expected_failure": "blocker repair stage was not updated",
@@ -159,11 +177,18 @@
           "PM repair package copied stale context without disposition or quarantine"
         ]
       },
+      "stale_prior_route_repair_blocker_left_open": {
+        "detected": true,
+        "expected_failure": "prior-route repair blocker was not dispositioned after route replacement",
+        "failures": [
+          "prior-route repair blocker was not dispositioned after route replacement"
+        ]
+      },
       "superseded_repair_blocker_left_open": {
         "detected": true,
-        "expected_failure": "superseded repair blocker remained open after route replacement",
+        "expected_failure": "prior-route repair blocker was not dispositioned after route replacement",
         "failures": [
-          "superseded repair blocker remained open after route replacement"
+          "prior-route repair blocker was not dispositioned after route replacement"
         ]
       },
       "worker_packet_has_no_semantic_delta": {
@@ -191,21 +216,24 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 24
+    "terminal_state_count": 29
   },
   "result_type": "flowpilot_blocker_repair_information_flow_checks",
   "safe_graph": {
     "accepted_scenarios": [
+      "valid_cross_node_similar_failures_normal_repair",
       "valid_followup_blocker_recording",
       "valid_loop_escape_route_mutation",
       "valid_reviewer_blocker_repair_packet",
+      "valid_threshold_break_glass_loop_escape",
       "valid_worker_blocker_reissue"
     ],
-    "edge_count": 48,
+    "edge_count": 58,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
+      "accepted_noncurrent_repair_packet_blocks_final_preflight",
       "blocker_routed_without_pm_decision",
       "current_blocker_payload_missing_details",
       "flowguard_evidence_has_blocker_but_staged_effect_empty",
@@ -216,6 +244,7 @@
       "pm_closes_blocker_without_recheck",
       "pm_repair_package_omits_new_blocker_content",
       "pm_required_report_not_delivered",
+      "repair_loop_over_threshold_allowed_pm_repair",
       "repair_stage_not_updated_after_flowguard_pass",
       "reviewer_advice_not_integrated",
       "reviewer_recheck_not_bound_to_blocker",
@@ -223,10 +252,11 @@
       "same_blocker_repeat_loop_allowed",
       "stale_blocker_used_for_pm_repair",
       "stale_context_copied_without_disposition",
+      "stale_prior_route_repair_blocker_left_open",
       "superseded_repair_blocker_left_open",
       "worker_packet_has_no_semantic_delta",
       "worker_packet_omits_repair_direction"
     ],
-    "state_count": 49
+    "state_count": 59
   }
 }

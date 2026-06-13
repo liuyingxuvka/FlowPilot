@@ -33,6 +33,12 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
+When blocking the same current route node for the same defect as the prior
+review, reuse the prior `blocker_class` instead of inventing a new name. This
+preserves same-node repeat evidence for the runtime threshold; it does not let
+Reviewer decide break-glass, and similar defects on different route nodes
+remain ordinary repair evidence.
+
 Review the PM-built node-completion package after PM has received and
 dispositioned the worker result batch. You are not the default recipient for raw
 worker result bodies. Treat worker result envelopes and packet-runtime audits as

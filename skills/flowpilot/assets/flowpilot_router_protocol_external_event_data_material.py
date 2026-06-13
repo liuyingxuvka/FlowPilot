@@ -183,7 +183,51 @@ MATERIAL_EXTERNAL_EVENT_DATA: dict[str, dict[str, Any]] = {'pm_issues_material_a
                                 'router_internal_postcondition': True,
                                 'internal_materializer': 'capability_evidence_sync',
                                 'summary': 'Capability evidence was synced after PM child-skill '
-                                           'approval.'}}
+                                           'approval.'},
+ 'pm_writes_implementation_intent': {'flag': 'pm_implementation_intent_written',
+                                     'requires_flag': 'pm_implementation_intent_card_delivered',
+                                     'summary': 'PM wrote the implementation-intent bridge that '
+                                                'states how the accepted product should be '
+                                                'realized before route skeleton drafting.'},
+ 'flowguard_operator_submits_target_realization_model': {'flag': 'target_realization_model_submitted',
+                                                         'requires_flag': 'flowguard_operator_target_realization_model_card_delivered',
+                                                         'gate_id': 'target_realization_model',
+                                                         'terminal_gate_outcome': True,
+                                                         'summary': 'FlowGuard operator submitted '
+                                                                    'the canonical target '
+                                                                    'realization model from PM '
+                                                                    'implementation intent.'},
+ 'flowguard_operator_blocks_target_realization_model': {'flag': 'target_realization_model_blocked',
+                                                        'requires_flag': 'flowguard_operator_target_realization_model_card_delivered',
+                                                        'gate_id': 'target_realization_model',
+                                                        'terminal_gate_outcome': True,
+                                                        'summary': 'FlowGuard operator blocked the '
+                                                                   'target realization model and '
+                                                                   'requires PM intent or model '
+                                                                   'repair.'},
+ 'pm_accepts_target_realization_model': {'flag': 'pm_target_realization_model_accepted',
+                                         'requires_flag': 'pm_target_realization_model_decision_card_delivered',
+                                         'summary': 'PM accepted the FlowGuard target realization '
+                                                    'model as the bridge from product target to '
+                                                    'route skeleton.'},
+ 'pm_requests_target_realization_model_rebuild': {'flag': 'pm_target_realization_model_rebuild_requested',
+                                                  'requires_flag': 'pm_target_realization_model_decision_card_delivered',
+                                                  'summary': 'PM rejected the current target '
+                                                             'realization model and requested '
+                                                             'implementation-intent or FlowGuard '
+                                                             'model rebuild.'},
+ 'reviewer_passes_implementation_intent_challenge': {'flag': 'implementation_intent_reviewer_passed',
+                                                     'requires_flag': 'reviewer_implementation_intent_card_delivered',
+                                                     'summary': 'Reviewer passed the PM '
+                                                                'implementation-intent and '
+                                                                'FlowGuard target-realization '
+                                                                'alignment challenge.'},
+ 'reviewer_blocks_implementation_intent_challenge': {'flag': 'implementation_intent_reviewer_blocked',
+                                                     'requires_flag': 'reviewer_implementation_intent_card_delivered',
+                                                     'summary': 'Reviewer blocked the PM '
+                                                                'implementation-intent and '
+                                                                'FlowGuard target-realization '
+                                                                'alignment challenge.'}}
 
 EXTERNAL_EVENTS = MATERIAL_EXTERNAL_EVENT_DATA
 

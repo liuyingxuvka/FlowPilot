@@ -52,6 +52,15 @@ class FlowPilotPlanningQualityTests(unittest.TestCase):
         self.assertTrue(hazards[model.PROCESS_SUPPORT_SKILL_IGNORED]["detected"])
         self.assertTrue(hazards[model.ROLE_SKILL_BINDING_MISSING]["detected"])
         self.assertTrue(hazards[model.ROLE_SKILL_USE_SELF_ATTESTED]["detected"])
+        self.assertTrue(hazards[model.PM_IMPLEMENTATION_INTENT_MISSING]["detected"])
+        self.assertTrue(hazards[model.TARGET_REALIZATION_MODEL_MISSING]["detected"])
+        self.assertTrue(hazards[model.TARGET_REALIZATION_MODEL_IGNORES_PM_INTENT]["detected"])
+        self.assertTrue(hazards[model.PM_TARGET_REALIZATION_ACCEPTS_DOWNGRADE]["detected"])
+        self.assertTrue(hazards[model.REVIEWER_IMPLEMENTATION_INTENT_ALIGNMENT_MISSING]["detected"])
+        self.assertTrue(hazards[model.ROUTE_MISSING_REALIZATION_OBLIGATIONS]["detected"])
+        self.assertTrue(hazards[model.NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS]["detected"])
+        self.assertTrue(hazards[model.WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS]["detected"])
+        self.assertTrue(hazards[model.FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED]["detected"])
 
     def test_runtime_cards_and_templates_expose_planning_quality_contracts(self) -> None:
         route_card = (

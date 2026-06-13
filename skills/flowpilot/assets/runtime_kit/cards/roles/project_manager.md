@@ -277,7 +277,9 @@ paths when their independent check requires it.
 If PM sees at node entry that the apparent leaf is too broad, wrongly ordered,
 or needs deeper child nodes, PM must not issue an ordinary worker-ready
 `decision: "pass"` plan. Submit `decision: "redesign_route"` with a single
-current `route_plan` instead. Runtime will stage the route effect, issue the
+current `route_plan` instead. The active scope must become a replacement
+parent/module scope with ordered `child_node_ids`; do not add the proposed
+children as flat peer leaves after the active node. Runtime will stage the route effect, issue the
 required FlowGuard route simulation, require PM to absorb the FlowGuard result
 through `pm_flowguard_acceptance`, and only then ask Reviewer to inspect the PM
 absorption and route effect. There is no optional or uncertain FlowGuard branch
@@ -497,7 +499,8 @@ If Reviewer blocks route decomposition, absorb the concrete split suggestion
 but submit PM's own repaired canonical route through the existing current-scope
 repair path. Do not satisfy a route-depth block by adding broad explanation
 fields, creating a second display-only plan, or asking a Worker to decompose a
-broad leaf after dispatch.
+broad leaf after dispatch. A complex flat all-leaf route plan is still a route
+depth failure, even when every leaf has a title.
 
 Every PM decision body must include:
 

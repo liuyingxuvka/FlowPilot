@@ -301,6 +301,7 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
             packet
             for packet in ledger["packets"].values()
             if packet.get("repair_blocker_id") == blocker["blocker_id"]
+            and packet["envelope"].get("packet_kind", "task") == "task"
         )
         repair_body = json.loads(repair_packet["body"])
         self.assertEqual(repair_body["source_packet_id"], packet_id)
@@ -386,6 +387,205 @@ class FlowPilotCompleteSystemRuntimeTests(unittest.TestCase):
         self.assertEqual(pm_body["repeat_context"]["repeat_count"], 2)
         self.assertTrue(pm_body["repeat_context"]["advisory_only"])
         self.assertIn(list(ledger["active_blockers"].values())[0]["blocker_id"], pm_body["repeat_context"]["previous_blocker_ids"])
+
+    def test_fifth_repeated_blocker_still_allows_pm_repair_decision(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = packets.issue_packet(
+            ledger,
+            "worker",
+            "Do work",
+            "SEALED_TASK",
+            route_node_id="node-001-v1-do-work",
+        )
+
+        for index in range(1, 6):
+            lease = host.lease_responsibility(
+                ledger,
+                "worker",
+                agent_id=f"worker-agent-{index}",
+                host_kind="fake",
+                packet_id=packet_id,
+            )
+            runtime.assign_packet(ledger, packet_id, lease)
+            runtime.ack_lease(ledger, lease, packet_id)
+            host.submit_host_result(
+                ledger,
+                lease,
+                packet_id,
+                role_result_body(
+                    decision="block",
+                    summary="Same deliverable gap blocks this worker packet.",
+                    blocker_class="same_gap",
+                    recommended_resolution="Fix the same missing output.",
+                ),
+            )
+
+        latest_blocker = list(ledger["active_blockers"].values())[-1]
+        pm_packet_id = latest_blocker["pm_repair_packet_id"]
+        pm_body = json.loads(ledger["packets"][pm_packet_id]["body"])
+
+        self.assertTrue(pm_packet_id)
+        self.assertEqual(pm_body["repeat_context"]["repeat_count"], 5)
+        self.assertFalse(pm_body["repeat_context"]["threshold_exceeded"])
+        self.assertEqual(pm_body["repeat_context"]["threshold"], 5)
+
+    def test_sixth_repeated_blocker_projects_break_glass_instead_of_pm_repair(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        packet_id = packets.issue_packet(
+            ledger,
+            "worker",
+            "Do work",
+            "SEALED_TASK",
+            route_node_id="node-001-v1-do-work",
+        )
+
+        for index in range(1, 7):
+            lease = host.lease_responsibility(
+                ledger,
+                "worker",
+                agent_id=f"worker-agent-{index}",
+                host_kind="fake",
+                packet_id=packet_id,
+            )
+            runtime.assign_packet(ledger, packet_id, lease)
+            runtime.ack_lease(ledger, lease, packet_id)
+            host.submit_host_result(
+                ledger,
+                lease,
+                packet_id,
+                role_result_body(
+                    decision="block",
+                    summary="Same deliverable gap blocks this worker packet.",
+                    blocker_class="same_gap",
+                    recommended_resolution="Fix the same missing output.",
+                ),
+            )
+
+        latest_blocker = list(ledger["active_blockers"].values())[-1]
+        action = runtime.router_next_action(ledger)
+        guard = runtime.preview_lifecycle_guard(ledger, trigger="status")
+        duty = runtime.preview_foreground_duty(ledger, guard=guard)
+        review = duty["blocker"]["repair_loop_break_glass_review"]
+
+        self.assertEqual(latest_blocker["pm_repair_packet_id"], "")
+        self.assertEqual(action.action_type, "control_plane_blocker")
+        self.assertEqual(action.subject_id, latest_blocker["blocker_id"])
+        self.assertEqual(guard["decision"], "control_plane_stuck")
+        self.assertEqual(duty["action"], "control_plane_blocker")
+        self.assertEqual(review["attempt_count"], 6)
+        self.assertTrue(review["threshold_exceeded"])
+        self.assertEqual(review["threshold"], 5)
+        self.assertTrue(
+            any(event["event_type"] == "repair_loop_break_glass_required" for event in ledger["events"])
+        )
+
+    def test_cross_node_similar_blockers_do_not_trigger_repair_loop_break_glass(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        route_nodes = [f"node-{index:03d}-do-work" for index in range(1, 7)]
+        for index, route_node_id in enumerate(route_nodes, start=1):
+            blocker_id = f"blocker-{index:04d}"
+            ledger["active_blockers"][blocker_id] = {
+                "blocker_id": blocker_id,
+                "status": "active" if index == len(route_nodes) else "retired_after_new_current_blocker",
+                "route_node_id": route_node_id,
+                "blocker_class": "same_gap",
+                "gate_kind": "task",
+                "required_recheck_role": "worker",
+                "packet_id": f"packet-{index:04d}",
+                "subject_packet_id": f"packet-{index:04d}",
+                "repair_target_packet_id": f"packet-{index:04d}",
+                "pm_repair_packet_id": f"pm-packet-{index:04d}",
+                "pm_repair_decision_id": "",
+            }
+
+        review = runtime._repair_loop_break_glass_review(  # noqa: SLF001 - regression covers runtime family contract.
+            ledger,
+            ledger["active_blockers"]["blocker-0006"],
+        )
+
+        self.assertEqual(review["attempt_count"], 1)
+        self.assertFalse(review["threshold_exceeded"])
+        self.assertEqual(review["consecutive_scope"], "same_current_route_node_problem_identity")
+
+    def test_same_node_loop_count_resets_after_different_problem_identity(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        sequence = [
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("different_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "retired_after_new_current_blocker"),
+            ("same_gap", "active"),
+        ]
+        for index, (blocker_class, status) in enumerate(sequence, start=1):
+            blocker_id = f"blocker-{index:04d}"
+            ledger["active_blockers"][blocker_id] = {
+                "blocker_id": blocker_id,
+                "status": status,
+                "route_node_id": "node-001-do-work",
+                "blocker_class": blocker_class,
+                "gate_kind": "task",
+                "required_recheck_role": "worker",
+                "packet_id": f"packet-{index:04d}",
+                "subject_packet_id": f"packet-{index:04d}",
+                "repair_target_packet_id": f"packet-{index:04d}",
+                "pm_repair_packet_id": f"pm-packet-{index:04d}",
+                "pm_repair_decision_id": "",
+            }
+
+        review = runtime._repair_loop_break_glass_review(  # noqa: SLF001 - regression covers runtime family contract.
+            ledger,
+            ledger["active_blockers"]["blocker-0009"],
+        )
+
+        self.assertEqual(review["attempt_count"], 5)
+        self.assertFalse(review["threshold_exceeded"])
+
+    def test_repair_loop_family_count_normalizes_route_repair_versions(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        route_nodes = [
+            "node-032-v11-authorize-current-sourceguard-materials",
+            "node-032-v11-authorize-current-sourceguard-materials-repair-v12",
+            "node-032-v13-authorize-current-sourceguard-materials",
+            "node-032-v13-authorize-current-sourceguard-materials-repair-v14",
+            "node-032-v13-authorize-current-sourceguard-materials-repair-v14-repair-v15",
+            "node-032-v16-authorize-current-sourceguard-materials-repair-v17",
+        ]
+        for index, route_node_id in enumerate(route_nodes, start=1):
+            blocker_id = f"blocker-{index:04d}"
+            ledger["active_blockers"][blocker_id] = {
+                "blocker_id": blocker_id,
+                "status": "active" if index == len(route_nodes) else "retired_after_new_current_blocker",
+                "route_node_id": route_node_id,
+                "blocker_class": "flowguard_failure",
+                "gate_kind": "flowguard_check",
+                "required_recheck_role": "flowguard_operator",
+                "packet_id": f"packet-{index:04d}",
+                "subject_packet_id": f"packet-{index:04d}",
+                "repair_target_packet_id": f"packet-{index:04d}",
+                "pm_repair_packet_id": f"pm-packet-{index:04d}",
+                "pm_repair_decision_id": "",
+            }
+
+        review = runtime._repair_loop_break_glass_review(  # noqa: SLF001 - regression covers runtime family contract.
+            ledger,
+            ledger["active_blockers"]["blocker-0006"],
+        )
+
+        self.assertEqual(review["attempt_count"], 6)
+        self.assertTrue(review["threshold_exceeded"])
+        self.assertEqual(review["consecutive_scope"], "same_current_route_node_problem_identity")
+        self.assertEqual(
+            review["family"]["normalized_route_node_id"],
+            "node-032-v#-authorize-current-sourceguard-materials",
+        )
 
     def test_complete_packet_flow_rejects_cockpit_direct_state_write_and_old_authority(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")

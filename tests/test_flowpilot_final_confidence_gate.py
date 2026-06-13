@@ -7,6 +7,8 @@ import sys
 import tempfile
 import unittest
 from pathlib import Path
+from types import SimpleNamespace
+from unittest import mock
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -200,6 +202,79 @@ class FlowPilotFinalConfidenceGateTests(unittest.TestCase):
         self.assertFalse(report["ok"])
         blocker = next(item for item in report["blockers"] if item["evidence"] == "event_idempotency")
         self.assertIn("missing_evidence", blocker["codes"])
+
+    def test_failed_subcheck_blocks_even_when_result_json_is_stale_green(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-final-confidence-stale-") as tmp_name:
+            root = Path(tmp_name)
+            result_paths = {}
+            for name, payload in PASSING_PAYLOADS.items():
+                path = root / f"{name}.json"
+                path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+                result_paths[name] = path
+
+            report = gate.evaluate_final_confidence(
+                result_paths,
+                subcheck_runs=[
+                    {
+                        "name": "known_friction",
+                        "exit_code": 1,
+                        "stdout_path": str(root / "known_friction.out.txt"),
+                        "stderr_path": str(root / "known_friction.err.txt"),
+                    }
+                ],
+            )
+
+        self.assertFalse(report["ok"])
+        blocker = next(item for item in report["blockers"] if item["evidence"] == "known_friction")
+        self.assertIn("subcheck_failed", blocker["codes"])
+        self.assertEqual(blocker["details"]["subcheck_exit_code"], 1)
+
+    def test_run_required_subchecks_refreshes_json_and_passes_control_plane_roots(self) -> None:
+        with tempfile.TemporaryDirectory(prefix="flowpilot-final-confidence-runs-") as tmp_name:
+            root = Path(tmp_name)
+            commands: list[list[str]] = []
+
+            def fake_run(command, cwd, stdout, stderr, check):  # type: ignore[no-untyped-def]
+                commands.append(list(command))
+                json_path = Path(command[command.index("--json-out") + 1])
+                self.assertFalse(json_path.exists(), f"stale JSON was not cleared: {json_path}")
+                script = Path(command[1]).name
+                payload_name = {
+                    "run_flowpilot_control_plane_friction_checks.py": "control_plane",
+                    "run_flowpilot_event_idempotency_checks.py": "event_idempotency",
+                    "run_flowpilot_model_test_alignment_checks.py": "model_test_alignment",
+                    "flowpilot_known_friction_regression_matrix.py": "known_friction",
+                }[script]
+                json_path.write_text(json.dumps(PASSING_PAYLOADS[payload_name]), encoding="utf-8")
+                return SimpleNamespace(returncode=0)
+
+            stale_path = root / "flowpilot_known_friction_regression_matrix_results.json"
+            stale_path.write_text('{"stale": true}', encoding="utf-8")
+            with mock.patch.object(gate.subprocess, "run", side_effect=fake_run):
+                runs = gate.run_required_subchecks(
+                    root,
+                    live_root=Path("project-root"),
+                    source_root=Path("source-root"),
+                )
+
+        self.assertTrue(all(run["exit_code"] == 0 for run in runs))
+        self.assertTrue(all(run["command"][0] == "<python>" for run in runs))
+        control_command = next(
+            command for command in commands if command[1].endswith("run_flowpilot_control_plane_friction_checks.py")
+        )
+        control_run = next(run for run in runs if run["name"] == "control_plane")
+        self.assertIn("--live-root", control_command)
+        self.assertIn("project-root", control_command)
+        self.assertIn("--source-root", control_command)
+        self.assertIn("source-root", control_command)
+        self.assertIn("<external-live-root>", control_run["command"])
+        self.assertIn("<flowpilot-source-root>", control_run["command"])
+        self.assertNotIn("project-root", control_run["command"])
+        self.assertNotIn("source-root", control_run["command"])
+        for command in commands:
+            if command is not control_command:
+                self.assertNotIn("--live-root", command)
+                self.assertNotIn("--source-root", command)
 
 
 if __name__ == "__main__":

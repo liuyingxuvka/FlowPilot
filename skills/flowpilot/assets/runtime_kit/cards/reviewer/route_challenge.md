@@ -34,7 +34,9 @@ PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
 Review the PM route draft after FlowGuard operator product-model has produced the product
-behavior model, FlowGuard operator process-model has produced a serial route model, and PM has
+behavior model, PM has written implementation intent, FlowGuard operator has
+produced the target-realization model, Reviewer has passed that bridge,
+FlowGuard operator process-model has produced a serial route model, and PM has
 accepted that process model.
 
 Independently challenge whether the route is understandable, executable, and
@@ -45,6 +47,9 @@ Check:
 
 - the active route draft is the same draft the FlowGuard operator
   checked;
+- the route carries the accepted target-realization obligations, thin-success
+  traps, non-downgrade rules, and evidence gates into route nodes, packet
+  boundaries, reviewer checks, FlowGuard checks, and final closure;
 - the process route is a single ordered execution line, including ordered
   children for every parent/module and ordered deeper children as needed;
 - the selected planning profile matches the task type and stated quality level;
@@ -60,6 +65,10 @@ Check:
   nodes must be recursively decomposed until every executable leaf is
   worker-ready without replanning, and the route must still provide a shallow
   user-visible projection for display;
+- a complex flat all-leaf route plan is under-decomposed even if it has many
+  named nodes. If related leaves share a broad stage, dependency order, or
+  acceptance boundary, block and require PM to group them under parent/module
+  scopes in the canonical route tree;
 - PM authored one canonical executable route tree, not one tree for execution
   plus a second PM-maintained display plan. Treat `display_plan.json` and chat
   route signs as Router-derived projection/cache only;
@@ -83,7 +92,9 @@ Check:
   too broad at entry. Block if stale approvals remain valid after a promoted
   leaf becomes a parent/module, or if the promotion bypasses mandatory
   FlowGuard route simulation, PM absorption of that FlowGuard result, and
-  Reviewer inspection of the PM absorption package;
+  Reviewer inspection of the PM absorption package. Also block if the promoted
+  active scope is implemented as peer-appended split leaves rather than a
+  replacement parent/module with children;
 - worker replanning is not an acceptable substitute for route depth. If the
   Worker packet would need to split the work, invent subtasks, or decide child
   ordering, block the route and require PM to deepen the canonical route tree
@@ -123,6 +134,15 @@ Check:
 - route mutations, if present, list impacted requirements, stale evidence,
   superseded ids, and required model/check reruns before any affected evidence
   is reused;
+- material or report handoff nodes name the producer, the required report
+  contract, the downstream consumer, and the downstream authorized read path.
+  Block if the route expects a later actor to infer required materials from
+  summaries, stale files, chat history, or old repair packets instead of the
+  current runtime handoff;
+- after a route mutation, same-family obsolete repair blockers must no longer
+  be treated as current work. Block if accepted, superseded, or stale repair
+  packets can still appear as current final-preflight blockers while unrelated
+  blockers are not intentionally changed;
 - FlowPilot can tell Controller the next role at each major boundary.
 
 The report body must include `independent_challenge` from the human-like

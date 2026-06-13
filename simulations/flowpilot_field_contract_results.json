@@ -2063,7 +2063,9 @@
         "route_plan.schema_version when decision=redesign_route",
         "route_plan.nodes[] when decision=redesign_route",
         "route_plan.nodes[].node_id when decision=redesign_route",
-        "route_plan.nodes[].title when decision=redesign_route"
+        "route_plan.nodes[].title when decision=redesign_route",
+        "route_plan.nodes[].node_kind when decision=redesign_route",
+        "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route"
       ],
       "required_fields": [
         "decision"
@@ -2388,7 +2390,9 @@
         "route_plan.schema_version when decision=redesign_route",
         "route_plan.nodes[] when decision=redesign_route",
         "route_plan.nodes[].node_id when decision=redesign_route",
-        "route_plan.nodes[].title when decision=redesign_route"
+        "route_plan.nodes[].title when decision=redesign_route",
+        "route_plan.nodes[].node_kind when decision=redesign_route",
+        "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route"
       ],
       "required_fields": [
         "decision",
@@ -2462,7 +2466,9 @@
         "route_plan.schema_version when decision=redesign_route",
         "route_plan.nodes[] when decision=redesign_route",
         "route_plan.nodes[].node_id when decision=redesign_route",
-        "route_plan.nodes[].title when decision=redesign_route"
+        "route_plan.nodes[].title when decision=redesign_route",
+        "route_plan.nodes[].node_kind when decision=redesign_route",
+        "route_plan.nodes[].parent_node_id/child_node_ids when decision=redesign_route"
       ],
       "required_fields": [
         "decision",

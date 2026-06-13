@@ -111,6 +111,18 @@ instead of guessing.
 - reviewer_probe_to_expect: <task-specific-reviewer-challenge-action-or-none>
 - classification: <hard_current_requirement|current_node_improvement|future_route_candidate|nonblocking_note|rejected_with_reason|none>
 
+## Target Realization Obligations
+
+Copy this section from `node_acceptance_plan.target_realization_projection`.
+If this packet performs implementation, validation, review, or closure work and
+the node plan does not provide it, return `blocked` for PM plan repair instead
+of guessing.
+
+- realization_obligation_ids: <ids-or-none>
+- thin_success_traps_to_avoid: <ids-or-none>
+- non_downgrade_rules: <ids-or-none>
+- evidence_gates_to_satisfy: <ids-or-none>
+
 ## Structure Hygiene Delta Requirement
 
 Copy this section from

@@ -46,6 +46,8 @@ DISPLAY_LEAKS_DEEP_TREE = "display_leaks_deep_tree"
 DISPLAY_HIDES_ACTIVE_PATH = "display_hides_active_path"
 FINAL_LEDGER_OMITS_DEEP_LEAF = "final_ledger_omits_deep_leaf"
 MISSING_DECOMPOSITION_MEMORY = "missing_decomposition_memory"
+FLAT_ALL_LEAF_REDESIGN = "flat_all_leaf_redesign"
+NODE_ENTRY_PEER_APPENDED_SPLIT = "node_entry_peer_appended_split"
 
 VALID_SCENARIOS = (INTENDED_RECURSIVE_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -62,6 +64,8 @@ NEGATIVE_SCENARIOS = (
     DISPLAY_HIDES_ACTIVE_PATH,
     FINAL_LEDGER_OMITS_DEEP_LEAF,
     MISSING_DECOMPOSITION_MEMORY,
+    FLAT_ALL_LEAF_REDESIGN,
+    NODE_ENTRY_PEER_APPENDED_SPLIT,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -118,6 +122,9 @@ class State:
     parent_marked_complete: bool = False
 
     route_mutation_split_node: bool = False
+    route_redesign_source: str = "none"  # none | route | node_entry
+    route_redesign_flat_all_leaf: bool = False
+    node_entry_redesign_promotes_active_scope: bool = False
     stale_frontier_reset_to_mutated_subtree: bool = False
 
     display_depth: int = 0
@@ -216,6 +223,9 @@ def _valid_recursive_state() -> State:
         parent_failure_causes_mutation_or_rework=True,
         parent_marked_complete=True,
         route_mutation_split_node=True,
+        route_redesign_source="node_entry",
+        route_redesign_flat_all_leaf=False,
+        node_entry_redesign_promotes_active_scope=True,
         stale_frontier_reset_to_mutated_subtree=True,
         display_depth=2,
         user_display_uses_shallow_projection=True,
@@ -331,6 +341,25 @@ def _scenario_state(scenario: str) -> State:
             pmk_decomposition_memory_written=False,
             pmk_split_stop_merge_rationale_written=False,
         )
+    if scenario == FLAT_ALL_LEAF_REDESIGN:
+        return replace(
+            state,
+            scenario=scenario,
+            canonical_tree_depth=1,
+            route_has_parent_nodes=False,
+            route_has_module_nodes=False,
+            non_leaf_nodes_have_children=False,
+            route_redesign_source="route",
+            route_redesign_flat_all_leaf=True,
+        )
+    if scenario == NODE_ENTRY_PEER_APPENDED_SPLIT:
+        return replace(
+            state,
+            scenario=scenario,
+            route_redesign_source="node_entry",
+            node_entry_redesign_promotes_active_scope=False,
+            route_redesign_flat_all_leaf=True,
+        )
     return replace(state, scenario=scenario)
 
 
@@ -385,6 +414,10 @@ def protocol_failures(state: State) -> list[str]:
 
     if state.route_mutation_split_node and not state.stale_frontier_reset_to_mutated_subtree:
         failures.append("route mutation split node without resetting stale frontier")
+    if state.route_redesign_flat_all_leaf:
+        failures.append("route redesign flattened complex work into all-leaf peer nodes")
+    if state.route_redesign_source == "node_entry" and not state.node_entry_redesign_promotes_active_scope:
+        failures.append("node-entry redesign did not promote active scope to parent/module")
 
     if state.user_display_leaks_deep_tree or state.display_depth > 2 or not state.user_display_uses_shallow_projection:
         failures.append("user display leaked the deep internal route tree")

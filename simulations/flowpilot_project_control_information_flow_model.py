@@ -36,11 +36,14 @@ VALID_REPAIR_PACKET_PROGRESS = "valid_repair_packet_progress"
 VALID_INTERRUPT_RESUME_WITH_BLOCKER_CONTEXT = "valid_interrupt_resume_with_blocker_context"
 VALID_REOPEN_IMPORTS_HISTORY_AND_CURRENT_RUN = "valid_reopen_imports_history_and_current_run"
 VALID_BREAK_GLASS_CONTROL_REPAIR = "valid_break_glass_control_repair"
+VALID_REPAIR_LOOP_THRESHOLD_BREAK_GLASS = "valid_repair_loop_threshold_break_glass"
+VALID_CROSS_NODE_SIMILAR_FAILURES_NORMAL_REPAIR = "valid_cross_node_similar_failures_normal_repair"
 VALID_ROUTE_MUTATION_WITH_REPLAY_SCOPE = "valid_route_mutation_with_replay_scope"
 VALID_ROLE_ASSIGNMENT_REISSUES_CURRENT_PACKET = "valid_role_assignment_reissues_current_packet"
 VALID_TERMINAL_STOP_PRESERVES_UNRESOLVED_WORK = "valid_terminal_stop_preserves_unresolved_work"
 VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF = "valid_packet_contract_and_review_evidence_handoff"
 VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT = "valid_actor_handoff_material_and_report_contract"
+VALID_RUN_LEDGER_PERSISTENCE_STABILITY = "valid_run_ledger_persistence_stability"
 
 RESUME_FROM_CHAT_HISTORY_LOSES_BLOCKER = "resume_from_chat_history_loses_blocker"
 RESUME_LOADS_OLD_RUN_AS_CURRENT = "resume_loads_old_run_as_current"
@@ -66,17 +69,26 @@ WORK_PACKET_MISSING_REPORT_REQUIREMENTS = "work_packet_missing_report_requiremen
 DOWNSTREAM_REPORT_NOT_AUTHORIZED = "downstream_report_not_authorized"
 MISSING_INFO_RESPONSE_NOT_DEFINED = "missing_info_response_not_defined"
 BRANCH_CONTRACT_SHAPE_NOT_VISIBLE = "branch_contract_shape_not_visible"
+FINAL_PREFLIGHT_PROMOTES_NONCURRENT_REPAIR_BLOCKER = "final_preflight_promotes_noncurrent_repair_blocker"
+ROUTE_MUTATION_LEAVES_STALE_PRIOR_ROUTE_REPAIR_BLOCKER = (
+    "route_mutation_leaves_stale_prior_route_repair_blocker"
+)
+REPAIR_LOOP_OVER_THRESHOLD_ISSUES_PM_PACKET = "repair_loop_over_threshold_issues_pm_packet"
+RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT = "run_ledger_partial_read_accepted_as_default"
 
 VALID_SCENARIOS = (
     VALID_REPAIR_PACKET_PROGRESS,
     VALID_INTERRUPT_RESUME_WITH_BLOCKER_CONTEXT,
     VALID_REOPEN_IMPORTS_HISTORY_AND_CURRENT_RUN,
     VALID_BREAK_GLASS_CONTROL_REPAIR,
+    VALID_REPAIR_LOOP_THRESHOLD_BREAK_GLASS,
+    VALID_CROSS_NODE_SIMILAR_FAILURES_NORMAL_REPAIR,
     VALID_ROUTE_MUTATION_WITH_REPLAY_SCOPE,
     VALID_ROLE_ASSIGNMENT_REISSUES_CURRENT_PACKET,
     VALID_TERMINAL_STOP_PRESERVES_UNRESOLVED_WORK,
     VALID_PACKET_CONTRACT_AND_REVIEW_EVIDENCE_HANDOFF,
     VALID_ACTOR_HANDOFF_MATERIAL_AND_REPORT_CONTRACT,
+    VALID_RUN_LEDGER_PERSISTENCE_STABILITY,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -104,6 +116,10 @@ NEGATIVE_SCENARIOS = (
     DOWNSTREAM_REPORT_NOT_AUTHORIZED,
     MISSING_INFO_RESPONSE_NOT_DEFINED,
     BRANCH_CONTRACT_SHAPE_NOT_VISIBLE,
+    FINAL_PREFLIGHT_PROMOTES_NONCURRENT_REPAIR_BLOCKER,
+    ROUTE_MUTATION_LEAVES_STALE_PRIOR_ROUTE_REPAIR_BLOCKER,
+    REPAIR_LOOP_OVER_THRESHOLD_ISSUES_PM_PACKET,
+    RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -179,9 +195,23 @@ class State:
     blocker_repair_chain_open: bool = False
     blocker_status_reflects_current_stage: bool = False
     status_projection_shows_repair_chain: bool = False
+    final_preflight_uses_current_effective_blockers: bool = True
+    final_preflight_reports_noncurrent_repair_blocker: bool = False
+    stale_prior_route_repair_blockers_superseded: bool = True
 
     repeated_same_work: bool = False
     loop_escape_or_blocker_recorded: bool = False
+    repair_loop_attempt_count: int = 0
+    repair_loop_threshold: int = 5
+    repair_loop_same_node_consecutive: bool = False
+    repair_loop_threshold_evidence_visible: bool = False
+    break_glass_duty_projected: bool = False
+    ordinary_pm_repair_packet_issued_over_threshold: bool = False
+    same_family_pm_packets_superseded: bool = True
+    run_ledger_write_atomic: bool = True
+    run_ledger_transient_read_retry: bool = True
+    run_ledger_persistent_invalid_fails: bool = True
+    run_ledger_default_synthesized: bool = False
 
     followup_blocker_returned: bool = False
     followup_blocker_recorded: bool = False
@@ -304,6 +334,32 @@ def _scenario_state(scenario: str) -> State:
             reviewer_or_pm_recheck_after_break_glass=True,
             new_information_delta_present=True,
         )
+    if scenario == VALID_REPAIR_LOOP_THRESHOLD_BREAK_GLASS:
+        return replace(
+            _scenario_state(VALID_BREAK_GLASS_CONTROL_REPAIR),
+            scenario=scenario,
+            repair_loop_attempt_count=6,
+            repair_loop_threshold=5,
+            repair_loop_same_node_consecutive=True,
+            repair_loop_threshold_evidence_visible=True,
+            break_glass_duty_projected=True,
+            ordinary_pm_repair_packet_issued_over_threshold=False,
+            same_family_pm_packets_superseded=True,
+        )
+    if scenario == VALID_CROSS_NODE_SIMILAR_FAILURES_NORMAL_REPAIR:
+        return replace(
+            _base_work_packet(),
+            scenario=scenario,
+            surface="repair_packet",
+            repair_loop_attempt_count=6,
+            repair_loop_threshold=5,
+            repair_loop_same_node_consecutive=False,
+            repair_loop_threshold_evidence_visible=True,
+            break_glass_duty_projected=False,
+            ordinary_pm_repair_packet_issued_over_threshold=True,
+            same_family_pm_packets_superseded=False,
+            loop_escape_or_blocker_recorded=True,
+        )
     if scenario == VALID_ROUTE_MUTATION_WITH_REPLAY_SCOPE:
         return replace(
             _base_current(),
@@ -358,6 +414,17 @@ def _scenario_state(scenario: str) -> State:
             _base_work_packet(),
             scenario=scenario,
             surface="actor_handoff",
+        )
+    if scenario == VALID_RUN_LEDGER_PERSISTENCE_STABILITY:
+        return replace(
+            _base_current(),
+            scenario=scenario,
+            surface="run_ledger_persistence",
+            run_ledger_write_atomic=True,
+            run_ledger_transient_read_retry=True,
+            run_ledger_persistent_invalid_fails=True,
+            run_ledger_default_synthesized=False,
+            new_information_delta_present=True,
         )
 
     if scenario == RESUME_FROM_CHAT_HISTORY_LOSES_BLOCKER:
@@ -549,6 +616,44 @@ def _scenario_state(scenario: str) -> State:
             scenario=scenario,
             work_packet_carries_branch_valid_shapes=False,
         )
+    if scenario == FINAL_PREFLIGHT_PROMOTES_NONCURRENT_REPAIR_BLOCKER:
+        return replace(
+            _base_current(),
+            scenario=scenario,
+            surface="closure",
+            closure_claimed=True,
+            final_preflight_uses_current_effective_blockers=False,
+            final_preflight_reports_noncurrent_repair_blocker=True,
+        )
+    if scenario == ROUTE_MUTATION_LEAVES_STALE_PRIOR_ROUTE_REPAIR_BLOCKER:
+        return replace(
+            _scenario_state(VALID_ROUTE_MUTATION_WITH_REPLAY_SCOPE),
+            scenario=scenario,
+            stale_prior_route_repair_blockers_superseded=False,
+        )
+    if scenario == REPAIR_LOOP_OVER_THRESHOLD_ISSUES_PM_PACKET:
+        return replace(
+            _base_work_packet(),
+            scenario=scenario,
+            surface="repair_packet",
+            repair_loop_attempt_count=6,
+            repair_loop_threshold=5,
+            repair_loop_same_node_consecutive=True,
+            repair_loop_threshold_evidence_visible=True,
+            break_glass_duty_projected=False,
+            ordinary_pm_repair_packet_issued_over_threshold=True,
+            same_family_pm_packets_superseded=False,
+        )
+    if scenario == RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT:
+        return replace(
+            _base_current(),
+            scenario=scenario,
+            surface="run_ledger_persistence",
+            run_ledger_write_atomic=False,
+            run_ledger_transient_read_retry=False,
+            run_ledger_persistent_invalid_fails=False,
+            run_ledger_default_synthesized=True,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -633,10 +738,36 @@ def information_sufficiency_failures(state: State) -> list[str]:
     ):
         failures.append("blocker repair chain stage is hidden or stale in status projection")
 
+    if (
+        not state.final_preflight_uses_current_effective_blockers
+        or state.final_preflight_reports_noncurrent_repair_blocker
+    ):
+        failures.append("final preflight promoted a noncurrent repair blocker to current authority")
+
     if state.repeated_same_work and not (
         state.new_information_delta_present or state.loop_escape_or_blocker_recorded
     ):
         failures.append("same work repeated without new information, blocker, terminal stop, or route mutation")
+
+    if state.repair_loop_attempt_count > state.repair_loop_threshold and state.repair_loop_same_node_consecutive:
+        if not state.repair_loop_threshold_evidence_visible:
+            failures.append("repair loop threshold exceeded without visible threshold evidence")
+        if (
+            state.ordinary_pm_repair_packet_issued_over_threshold
+            or not state.break_glass_duty_projected
+            or not state.same_family_pm_packets_superseded
+        ):
+            failures.append(
+                "same-node consecutive repair loop threshold exceeded but ordinary PM repair continued instead of Controller break-glass"
+            )
+
+    if state.surface == "run_ledger_persistence" and not (
+        state.run_ledger_write_atomic
+        and state.run_ledger_transient_read_retry
+        and state.run_ledger_persistent_invalid_fails
+        and not state.run_ledger_default_synthesized
+    ):
+        failures.append("run ledger persistence accepted partial JSON or synthesized fallback state")
 
     if state.followup_blocker_returned and not (
         state.followup_blocker_recorded and state.followup_blocker_in_next_runway
@@ -667,6 +798,8 @@ def information_sufficiency_failures(state: State) -> list[str]:
             and state.replay_scope_declared
         ):
             failures.append("route mutation lacks blocker context, new route version, stale-evidence invalidation, acceptance plan, or replay scope")
+        if not state.stale_prior_route_repair_blockers_superseded:
+            failures.append("route mutation left stale prior-route repair blockers as current work")
 
     if state.role_assignment_used:
         if not (
@@ -694,7 +827,7 @@ class ProjectControlInformationFlowStep:
     Input x State -> Set(Output x State)
     reads: current run, frontier, packet ledger, active blocker, PM runway,
     work packet, role assignment, break-glass incident, route mutation, follow-up
-    blocker, actor input material manifest, required report contract,
+    blocker, final preflight blocker currentness, actor input material manifest, required report contract,
     FlowGuard evidence handoff, reviewer packet reads, and closure state
     writes: accepted information flow, explicit rejection, terminal stop,
     route mutation, or current follow-up blocker
@@ -715,6 +848,7 @@ class ProjectControlInformationFlowStep:
         "role_assignment",
         "break_glass_incident",
         "route_mutation",
+        "final_return_preflight",
         "closure_state",
     )
     writes = (

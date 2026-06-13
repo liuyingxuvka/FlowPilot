@@ -1,37 +1,23 @@
 {
-  "blockers": [
-    {
-      "codes": [
-        "live_run_audit_skipped"
-      ],
-      "details": {
-        "live_finding_codes": [],
-        "live_run_audit_ok": true,
-        "live_run_audit_skipped": true,
-        "live_run_id": "",
-        "top_level_ok": true
-      },
-      "evidence": "control_plane",
-      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_control_plane_friction_results.json"
-    }
-  ],
-  "decision": "blocked",
+  "blockers": [],
+  "decision": "release_convergence_with_deferred_structure_splits",
   "evidence_rows": [
     {
-      "blockers": [
-        "live_run_audit_skipped"
-      ],
+      "blockers": [],
       "details": {
         "live_finding_codes": [],
         "live_run_audit_ok": true,
-        "live_run_audit_skipped": true,
-        "live_run_id": "",
+        "live_run_audit_skipped": false,
+        "live_run_id": "run-20260609-192118",
+        "subcheck_exit_code": 0,
+        "subcheck_stderr_path": "tmp\\final_confidence_gate\\control_plane.err.txt",
+        "subcheck_stdout_path": "tmp\\final_confidence_gate\\control_plane.out.txt",
         "top_level_ok": true
       },
       "name": "control_plane",
-      "ok": false,
-      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_control_plane_friction_results.json",
-      "status": "blocked"
+      "ok": true,
+      "path": "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
+      "status": "full_confidence"
     },
     {
       "blockers": [],
@@ -40,11 +26,14 @@
         "hazard_detection_ok": true,
         "progress_ok": true,
         "safe_graph_ok": true,
+        "subcheck_exit_code": 0,
+        "subcheck_stderr_path": "tmp\\final_confidence_gate\\event_idempotency.err.txt",
+        "subcheck_stdout_path": "tmp\\final_confidence_gate\\event_idempotency.out.txt",
         "top_level_ok": true
       },
       "name": "event_idempotency",
       "ok": true,
-      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_event_idempotency_results.json",
+      "path": "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json",
       "status": "full_confidence"
     },
     {
@@ -60,12 +49,15 @@
         },
         "gap_surface_count": 1,
         "release_convergence_ok": true,
+        "subcheck_exit_code": 0,
+        "subcheck_stderr_path": "tmp\\final_confidence_gate\\model_test_alignment.err.txt",
+        "subcheck_stdout_path": "tmp\\final_confidence_gate\\model_test_alignment.out.txt",
         "top_level_ok": true,
         "unresolved_non_deferred_gap_count": 0
       },
       "name": "model_test_alignment",
       "ok": true,
-      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_model_test_alignment_results.json",
+      "path": "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
       "status": "release_convergence_with_deferred_structure_splits"
     },
     {
@@ -76,22 +68,82 @@
         "gate_decision": "defect_family_gate_full_confidence",
         "risk_ledger_confidence": "full",
         "risk_ledger_decision": "risk_evidence_full_confidence",
+        "subcheck_exit_code": 0,
+        "subcheck_stderr_path": "tmp\\final_confidence_gate\\known_friction.err.txt",
+        "subcheck_stdout_path": "tmp\\final_confidence_gate\\known_friction.out.txt",
         "top_level_ok": true
       },
       "name": "known_friction",
       "ok": true,
-      "path": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_known_friction_regression_matrix_results.json",
+      "path": "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json",
       "status": "full_confidence"
     }
   ],
-  "ok": false,
+  "ok": true,
   "result_paths": {
-    "control_plane": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_control_plane_friction_results.json",
-    "event_idempotency": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_event_idempotency_results.json",
-    "known_friction": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_known_friction_regression_matrix_results.json",
-    "model_test_alignment": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\simulations\\flowpilot_model_test_alignment_results.json"
+    "control_plane": "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
+    "event_idempotency": "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json",
+    "known_friction": "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json",
+    "model_test_alignment": "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json"
   },
   "result_type": "flowpilot_final_confidence_gate",
-  "subcheck_runs": [],
-  "summary": "BLOCKED: 1 required evidence source(s) are not full confidence"
+  "subcheck_runs": [
+    {
+      "command": [
+        "<python>",
+        "simulations/run_flowpilot_control_plane_friction_checks.py",
+        "--json-out",
+        "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
+        "--live-root",
+        "<external-live-root>",
+        "--source-root",
+        "<flowpilot-source-root>"
+      ],
+      "exit_code": 0,
+      "json_path": "tmp\\final_confidence_gate\\flowpilot_control_plane_friction_results.json",
+      "name": "control_plane",
+      "stderr_path": "tmp\\final_confidence_gate\\control_plane.err.txt",
+      "stdout_path": "tmp\\final_confidence_gate\\control_plane.out.txt"
+    },
+    {
+      "command": [
+        "<python>",
+        "simulations/run_flowpilot_event_idempotency_checks.py",
+        "--json-out",
+        "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json"
+      ],
+      "exit_code": 0,
+      "json_path": "tmp\\final_confidence_gate\\flowpilot_event_idempotency_results.json",
+      "name": "event_idempotency",
+      "stderr_path": "tmp\\final_confidence_gate\\event_idempotency.err.txt",
+      "stdout_path": "tmp\\final_confidence_gate\\event_idempotency.out.txt"
+    },
+    {
+      "command": [
+        "<python>",
+        "simulations/run_flowpilot_model_test_alignment_checks.py",
+        "--json-out",
+        "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json"
+      ],
+      "exit_code": 0,
+      "json_path": "tmp\\final_confidence_gate\\flowpilot_model_test_alignment_results.json",
+      "name": "model_test_alignment",
+      "stderr_path": "tmp\\final_confidence_gate\\model_test_alignment.err.txt",
+      "stdout_path": "tmp\\final_confidence_gate\\model_test_alignment.out.txt"
+    },
+    {
+      "command": [
+        "<python>",
+        "simulations/flowpilot_known_friction_regression_matrix.py",
+        "--json-out",
+        "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json"
+      ],
+      "exit_code": 0,
+      "json_path": "tmp\\final_confidence_gate\\flowpilot_known_friction_regression_matrix_results.json",
+      "name": "known_friction",
+      "stderr_path": "tmp\\final_confidence_gate\\known_friction.err.txt",
+      "stdout_path": "tmp\\final_confidence_gate\\known_friction.out.txt"
+    }
+  ],
+  "summary": "RELEASE_CONVERGED: required evidence passes with explicitly deferred structure split debt"
 }

@@ -282,7 +282,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-06-09T14:20:28.985383+00:00",
+            "created_at": "2026-06-13T12:16:50.193801+00:00",
             "edge_count": 20,
             "kind": "layered_full_parent",
             "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -296,7 +296,7 @@
         "model_id": "meta",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-09T14:20:28.985383+00:00",
+          "created_at": "2026-06-13T12:16:50.193801+00:00",
           "edge_count": 20,
           "kind": "layered_full_parent",
           "proof_file": "simulations/meta_layered_full_results.proof.json",
@@ -317,7 +317,7 @@
         "state_count": 10,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-09T14:20:32.070366+00:00",
+            "created_at": "2026-06-13T12:17:08.110282+00:00",
             "proof_file": "simulations/meta_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/meta_thin_parent_results.json",
@@ -343,7 +343,7 @@
         "layered_full_regression": {
           "current": true,
           "proof": {
-            "created_at": "2026-06-07T10:28:34.486815+00:00",
+            "created_at": "2026-06-13T12:16:50.432073+00:00",
             "edge_count": 16,
             "kind": "layered_full_parent",
             "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -357,7 +357,7 @@
         "model_id": "capability",
         "ok": true,
         "proof": {
-          "created_at": "2026-06-07T10:28:34.486815+00:00",
+          "created_at": "2026-06-13T12:16:50.432073+00:00",
           "edge_count": 16,
           "kind": "layered_full_parent",
           "proof_file": "simulations/capability_layered_full_results.proof.json",
@@ -378,7 +378,7 @@
         "state_count": 8,
         "thin_parent": {
           "proof": {
-            "created_at": "2026-06-09T14:20:22.293126+00:00",
+            "created_at": "2026-06-13T12:17:07.985746+00:00",
             "proof_file": "simulations/capability_thin_parent_results.proof.json",
             "reason": "valid proof",
             "result_file": "simulations/capability_thin_parent_results.json",
@@ -1239,7 +1239,7 @@
         "registered_in_partition": true,
         "result_file": "simulations/card_instruction_coverage_results.json",
         "role": "child_evidence",
-        "state_count": 63,
+        "state_count": 67,
         "tier": "small"
       },
       {
@@ -1423,13 +1423,13 @@
         "tier": "small"
       },
       {
-        "edge_count": 98,
+        "edge_count": 116,
         "model_id": "flowpilot_planning_quality",
         "ok": true,
         "registered_in_partition": true,
         "result_file": "simulations/flowpilot_planning_quality_results.json",
         "role": "child_evidence",
-        "state_count": 99,
+        "state_count": 117,
         "tier": "small"
       },
       {

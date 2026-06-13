@@ -12,6 +12,8 @@
     "flowguard_capability_snapshot": ".flowpilot/runs/<run-id>/flowguard/capability_snapshot.json",
     "product_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json",
     "product_model_pm_decision": ".flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json",
+    "target_realization_model": ".flowpilot/runs/<run-id>/flowguard/target_realization_model.json",
+    "target_realization_model_pm_decision": ".flowpilot/runs/<run-id>/flowguard/target_realization_model_pm_decision.json",
     "process_modeling_plan": ".flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json",
     "product_function_architecture": ".flowpilot/runs/<run-id>/product_function_architecture.json",
     "root_acceptance_contract": ".flowpilot/runs/<run-id>/root_acceptance_contract.json",
@@ -35,6 +37,15 @@
     "self_interrogation_dispositions_collected": false,
     "flowguard_model_family_coverage_collected": false,
     "terminal_closure_reconciliation_collected": false
+  },
+  "target_realization_closure": {
+    "target_realization_model_current_for_run": false,
+    "pm_target_realization_decision_accepted": false,
+    "realization_obligations": [],
+    "thin_success_traps": [],
+    "non_downgrade_rules": [],
+    "evidence_gates": [],
+    "unresolved_realization_obligation_count": 0
   },
   "flowguard_modeling_coverage_closure": {
     "startup_capability_snapshot_current_for_run": false,

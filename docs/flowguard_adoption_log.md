@@ -20259,6 +20259,303 @@ to identify unsupported historical-layer branches that should be deleted.
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
 
 
+## harden-flowpilot-final-quality-gates - Harden FlowPilot final quality gates without adding fallback routes
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User requested FlowPilot-only optimization so existing gates automatically reject stale, failed, blocked, or old-route evidence before exit.
+- Status: completed
+- Skill decision: used_flowguard_existing_model_preflight+development_process_flow+model_test_alignment+test_mesh
+- Started: 2026-06-13T10:49:10+00:00
+- Ended: 2026-06-13T11:19:17+00:00
+- Duration seconds: 1807.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_model_test_alignment_results.json
+- simulations/flowpilot_core_runtime_results.json
+- simulations/flowpilot_runtime_closure_results.json
+- simulations/flowpilot_recursive_closure_reconciliation_results.json
+- simulations/flowpilot_route_hard_gate_results.json
+- simulations/flowpilot_final_confidence_gate_results.json
+- docs/flowguard_project_topology.json
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- `python -m flowguard project-upgrade --root .`
+- `openspec validate harden-flowpilot-final-quality-gates --strict`
+- `python -m unittest -v tests.test_flowpilot_final_confidence_gate`
+- `python -m unittest -v tests.test_flowpilot_control_plane_contracts`
+- `python -m unittest -v tests.test_flowpilot_core_runtime`
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json`
+- `python simulations/run_flowpilot_final_confidence_gate_checks.py --run-checks --live-root <external-live-root> --source-root <flowpilot-source-root> --results-dir tmp/final_confidence_gate --json-out simulations/flowpilot_final_confidence_gate_results.json`
+- `python scripts/flowguard_project_topology.py build`
+- `python scripts/flowguard_project_topology.py check`
+- `python simulations/run_meta_checks.py`
+- `python simulations/run_capability_checks.py`
+- `python scripts/install_flowpilot.py --sync-repo-owned --json`
+- `python scripts/audit_local_install_sync.py --json`
+- `python scripts/install_flowpilot.py --check --json`
+- `python scripts/check_install.py --json`
+
+### Findings
+- Final route-wide ledger and requirement matrix now count only current active-route review, FlowGuard, and validation evidence that the runtime can resolve as accepted or passing.
+- Terminal backward replay now requires exact runtime-issued segment ids, blocking missing, duplicate, or unexpected terminal segment reviews.
+- Final confidence gate now blocks failed subcheck producers even when stale green JSON exists, and its control-plane subcheck can receive separate live-run and FlowPilot source roots.
+- Known friction risk ledger rows were updated to the current FlowGuard RiskEvidenceRow/RiskEvidenceGate contract.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Initial final confidence evidence was stale because prior control-plane results skipped live-run audit.
+- Live audit originally conflated target project root and FlowPilot source root, creating false missing-source findings against ProjectRadar.
+- Meta/capability checks refreshed thin-parent result files and required a topology rebuild before install checks passed.
+
+### Skipped Steps
+- none recorded
+
+### Risk Evidence Summary
+- Focused runtime tests, final confidence tests, control-plane contract tests, model-test alignment, closure checks, route hard gate, card coverage, topology build/check, meta checks, capability checks, and install sync/check all passed.
+
+### Next Actions
+- No fallback or compatibility route was added; future final confidence claims should pass explicit live-root/source-root when auditing an external FlowPilot run.
+
+
+## show-active-route-progress-only - Make FlowPilot progress_fraction display the current active route only
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: User-visible FlowPilot progress counted superseded repair history instead of the active route.
+- Status: completed
+- Skill decision: used_flowguard_development_process_flow
+- Started: 2026-06-13T04:17:00+00:00
+- Ended: 2026-06-13T04:22:51+00:00
+- Duration seconds: 351.000
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_core_runtime_results.json
+- simulations/flowpilot_route_display_results.json
+- simulations/flowpilot_route_mutation_activation_results.json
+
+### Commands
+- `python -c "import flowguard; print(flowguard.SCHEMA_VERSION)"`
+- `python -m flowguard project-upgrade --root .`
+- `openspec validate show-active-route-progress-only --strict`
+- `python -m py_compile skills/flowpilot/assets/flowpilot_core_runtime/runtime.py tests/test_flowpilot_core_runtime.py`
+- `python -m pytest tests/test_flowpilot_core_runtime.py -k "progress_fraction or public_console_exposes_progress_fraction"`
+- `python -m pytest tests/test_flowpilot_new_entrypoint.py`
+- `python -m flowguard project-audit --root .`
+- `python simulations/run_flowpilot_core_runtime_checks.py`
+- `python simulations/run_flowpilot_route_display_checks.py`
+- `python simulations/run_flowpilot_route_mutation_activation_checks.py`
+- `python -m pytest tests/test_flowpilot_core_runtime.py`
+- `python -m pytest tests/test_flowpilot_router_runtime_route_mutation.py tests/test_flowpilot_recursive_route_execution_runtime.py`
+
+### Findings
+- `progress_fraction` now prefers active route `node_order` when materialized.
+- `repair_generation` metadata no longer contributes to the visible progress denominator or numerator.
+- Packet projection remains the early-route fallback before materialized active route order exists.
+- Focused runtime tests and route mutation/runtime FlowGuard checks passed.
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- Parallel topology build/check can race; sequential rerun passed.
+
+### Skipped Steps
+- Full meta/capability release gates skipped as out of scope for this non-release display-accounting change.
+
+### Risk Evidence Summary
+- Heavy full meta/capability release gates were not run because this was a narrow display-accounting fix; focused runtime, route display, route mutation, OpenSpec, topology, and project audit checks were run.
+
+### Next Actions
+- Sync local installed FlowPilot skill copy and commit scoped changes.
+
+
+## flowpilot-stale-repair-blocker-route-mutation-retirement-20260612
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live ProjectRadar FlowPilot audit showed old `repair_packet_open` blockers from prior route versions remained open in raw ledger after route mutation, even though current status/final-preflight treated them as noncurrent.
+- Status: completed, validated, installed local skill synced
+- Skill decision: predictive_kb_preflight + OpenSpec change `retire-stale-repair-blockers-on-route-mutation` + FlowGuard existing-model preflight + DevelopmentProcessFlow + model-test alignment
+- Recorded: 2026-06-12T06:32:30Z
+- FlowGuard schema: 1.0
+- FlowGuard package version: 0.43.2
+
+### Model Files
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/flowpilot_project_control_information_flow_model.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `docs/flowguard_project_topology.json`
+
+### Runtime And Test Files
+- `skills/flowpilot/assets/flowpilot_core_runtime/runtime.py`
+- `tests/test_flowpilot_core_runtime.py`
+- `openspec/changes/retire-stale-repair-blockers-on-route-mutation/`
+
+### Commands
+- `openspec validate "retire-stale-repair-blockers-on-route-mutation" --strict` - passed.
+- `python -m flowguard project-audit --root . --json` - passed, package 0.43.2, schema 1.0.
+- `python -m unittest tests.test_flowpilot_core_runtime` - passed, 89 tests.
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py` - passed.
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py` - passed.
+- `python simulations/run_flowpilot_route_mutation_activation_checks.py --json-out simulations/flowpilot_route_mutation_activation_results.json` - passed.
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - passed, alignment ok.
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py` - passed.
+- `python scripts/flowguard_project_topology.py build` - passed.
+- `python scripts/flowguard_project_topology.py check` - passed.
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - passed, installed `flowpilot` digest refreshed.
+- `python scripts/audit_local_install_sync.py --json` - passed, `repo_owned_skill_fresh:flowpilot=true`.
+- `python scripts/install_flowpilot.py --check --json` - passed.
+- `python scripts/check_install.py --json` - passed, 894 checks, 0 failures.
+
+### Findings
+- Route mutation cleanup now reuses `_supersede_repair_open_blockers_for_route_mutation` to convert older numeric-route-version `repair_packet_open` blockers to `superseded_by_route_mutation`.
+- The rule deliberately does not touch current-version repair-open blockers, missing/nonnumeric route-version blockers, or already dispositioned blockers.
+- Existing supersession metadata and `semantic_blocker_superseded_by_route_mutation` event are reused; no new runtime fields, packet kind, prompt workflow, or status-read mutation was added.
+- FlowGuard model language and model-test alignment now cover stale prior-route repair blockers instead of only same-family obsolete blockers.
+
+### Counterexamples
+- `stale_prior_route_repair_blocker_left_open`
+- `route_mutation_leaves_stale_prior_route_repair_blocker`
+- current-version repair-open blocker wrongly retired
+- nonnumeric route-version repair-open blocker wrongly retired
+- already-dispositioned repair blocker rewritten
+
+### Friction Points
+- `run_flowpilot_model_test_alignment_checks.py` prints by default and only refreshes `simulations/flowpilot_model_test_alignment_results.json` when `--json-out` is supplied.
+- Topology build and check must be ordered, not run in parallel, because the check compares source freshness against the generated topology snapshot.
+
+### Skipped Steps
+- No migration of ProjectRadar run data, remote push, tag, GitHub release, new runtime field, compatibility shim, old-router path, or prompt/card rewrite was performed.
+
+### Risk Evidence Summary
+- Evidence supports the local runtime lifecycle fix, focused tests, FlowGuard child and parent information-flow models, model-test alignment, information-flow alignment, topology freshness, and installed local skill freshness.
+- It does not claim that historical `.flowpilot` run ledgers already written before this software fix were rewritten.
+
+### Next Actions
+- Observe the next live route mutation to confirm old route-version repair-open blockers are recorded as route-mutation history in the raw ledger as well as excluded from current projections.
+
+
+## flowpilot-repair-loop-breakglass-threshold-20260611 - Repeated repair loop break-glass threshold
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: live FlowPilot work showed repeated same-family repair packets could keep cycling instead of entering the existing Controller break-glass lane.
+- Status: completed_validated_installed_synced
+- Skill decision: OpenSpec apply change + FlowGuard development process / existing model preflight / model-test alignment
+- Started: 2026-06-11T17:51:24Z
+- Ended: 2026-06-11T18:26:26Z
+- Commands OK: True
+
+### Model Files
+- simulations/flowpilot_project_control_information_flow_model.py
+- simulations/flowpilot_blocker_repair_information_flow_model.py
+- simulations/flowpilot_controller_break_glass_model.py
+- simulations/flowpilot_model_test_alignment_family_plans.py
+- docs/flowguard_project_topology.json
+- docs/flowguard_project_topology.md
+
+### Commands
+- openspec validate "harden-repair-loop-breakglass-threshold" --type change --strict
+- python -m flowguard project-audit --root .
+- python -m pytest tests/test_flowpilot_complete_system_runtime.py tests/test_flowpilot_card_instruction_coverage.py tests/test_flowpilot_controller_break_glass.py tests/test_flowpilot_information_flow_alignment.py tests/test_flowpilot_model_test_alignment.py -q
+- python simulations/run_flowpilot_project_control_information_flow_checks.py
+- python simulations/run_flowpilot_blocker_repair_information_flow_checks.py
+- python simulations/run_flowpilot_controller_break_glass_checks.py
+- python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json
+- python simulations/run_flowpilot_project_topology_orientation_checks.py
+- python scripts/flowguard_project_topology.py build
+- python scripts/flowguard_project_topology.py check
+- python scripts/install_flowpilot.py --sync-repo-owned --json
+- python scripts/install_flowpilot.py --check --json
+- python scripts/audit_local_install_sync.py --json
+
+### Findings
+- Runtime now counts repeated blockers by normalized repair family using existing ledger fields and treats attempt count above five as a control-plane break-glass condition.
+- Ordinary PM repair packet creation remains available through the fifth same-family attempt, then is suppressed on the sixth and later attempts.
+- When the threshold is exceeded, same-family PM repair packets are superseded and the foreground duty projects a Controller control-plane blocker with visible threshold evidence.
+- PM, Controller, break-glass, and FlowGuard Operator cards now describe the same simple rule: more than five same-family repair attempts stops ordinary repair looping and sends the case to break-glass diagnosis.
+- FlowGuard models now include valid under-threshold and over-threshold cases plus negative hazards where over-threshold loops keep issuing PM repair packets.
+- Model-test alignment binds the new obligation to runtime helpers, foreground-duty projection, and focused tests.
+
+### Counterexamples
+- repair_loop_over_threshold_issues_pm_packet
+- repair_loop_over_threshold_allowed_pm_repair
+- repeated repair-node ids with generated suffixes counted as separate families
+- card guidance missing the break-glass threshold rule
+
+### Friction Points
+- Topology build/check must run after all result-generating model scripts; otherwise the topology freshness check can correctly report a stale model-test-alignment result timestamp.
+- The repair intentionally avoided adding broad schema fields; the threshold evidence is derived from existing blocker, packet, and route-node fields.
+
+### Skipped Steps
+- No new route-node schema field, legacy compatibility path, fallback parser, old-router path, remote push, GitHub release, deploy, or public publication was performed.
+
+### Risk Evidence Summary
+- Evidence supports local runtime behavior, prompt/card guidance, FlowGuard model hazards, model-test alignment, OpenSpec validity, topology freshness, local installed skill freshness, and local repository commit readiness. It does not claim remote GitHub publication.
+
+### Next Actions
+- Use a live FlowPilot run to observe that a sixth same-family repair attempt routes to Controller break-glass and that a false alarm can return to normal flow.
+
+
+## flowpilot-handoff-blocker-lifecycle-20260611 - Handoff Blocker Lifecycle Repair
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: Live ProjectRadar run showed old `repair_packet_open` blockers with accepted repair packets still appearing in final preflight after newer handoff route work had moved forward.
+- Status: completed_validated_installed_synced_local_commit_pending
+- Skill decision: OpenSpec change plus FlowGuard DevelopmentProcessFlow and Model-Test Alignment
+- Recorded: 2026-06-11T17:09:07Z
+- Commands OK: True
+
+### Model Files
+- `openspec/changes/harden-handoff-blocker-lifecycle`
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/flowpilot_project_control_information_flow_model.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `docs/flowguard_project_topology.json`
+
+### Commands
+- `openspec validate harden-handoff-blocker-lifecycle --type change --strict` - ok
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py --json-out simulations/flowpilot_blocker_repair_information_flow_results.json` - ok
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py --json-out simulations/flowpilot_project_control_information_flow_results.json` - ok
+- `python simulations/run_flowpilot_model_test_alignment_checks.py --json-out simulations/flowpilot_model_test_alignment_results.json` - ok
+- `python -m unittest tests.test_flowpilot_core_runtime` - ok, 85 tests
+- `python -m unittest tests.test_flowpilot_card_instruction_coverage` - ok, 22 tests
+- `python simulations/run_card_instruction_coverage_checks.py --json-out simulations/card_instruction_coverage_results.json` - ok
+- `python simulations/run_meta_checks.py` - ok, background log `tmp/flowguard_background/run_meta_checks.*`, exit 0
+- `python scripts/flowguard_project_topology.py build` and `check` - ok
+- `python scripts/install_flowpilot.py --sync-repo-owned --json` - ok
+- `python scripts/audit_local_install_sync.py --json`, `python scripts/install_flowpilot.py --check --json`, and `python scripts/check_install.py --json` - ok
+
+### Findings
+- Final return preflight now uses the existing current-effective blocker predicate before scanning active blocker packet targets.
+- Route mutation now supersedes directly affected repair-open blockers and obsolete same-family repair-open blockers whose repair packets are accepted, stale, or otherwise noncurrent.
+- PM, FlowGuard Operator, and Reviewer cards now check producer result, downstream authorized read, review/check handoff, and stale same-family repair blocker cleanup.
+- The repair avoided adding route-node fields, packet kinds, compatibility shims, or a second handoff subsystem.
+
+### Counterexamples
+- `accepted_noncurrent_repair_packet_blocks_final_preflight`
+- `obsolete_same_family_repair_blocker_left_open`
+- `final_preflight_promotes_noncurrent_repair_blocker`
+- `route_mutation_leaves_obsolete_same_family_repair_blocker`
+
+### Friction Points
+- The broad aggregate route-mutation command produced no stdout/stderr progress and was stopped; it is not counted as pass evidence.
+- The relevant route-mutation subtests pass separately but are slow: sibling replacement, transaction, and final-ledger precondition checks each took about 90-111 seconds.
+- Model-test alignment initially rejected duplicate code-contract ownership for the new route-mutation obligation; the obligation now allows shared implementation with runtime-path evidence.
+
+### Skipped Steps
+- No new persistent runtime field, schema field mesh, compatibility shim, legacy parser, release, tag, deploy, remote push, or GitHub publication was performed.
+
+### Risk Evidence Summary
+- Evidence supports local runtime behavior, FlowGuard model hazards, model-test alignment, card coverage, route-mutation targeted regressions, topology freshness, meta parent checks, and installed local FlowPilot skill synchronization.
+- Evidence does not claim remote publication.
+
+### Next Actions
+- Review final git status and commit local changes if no peer-agent conflict is found.
+
+
 ## flowpilot-node-plan-review-stage-boundary-20260611 - Node Plan Reviewer Stage Boundary
 
 - Project: FlowGuardProjectAutopilot_20260430
@@ -22180,6 +22477,68 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 
 ### Next Actions
 - Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowpilot-same-node-repair-loop-stability-20260611 - Same-node repair-loop stability hardening
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: user review narrowed the break-glass rule to one current route node repeating the same blocker problem more than five consecutive times; cross-node similar failures should remain ordinary repair.
+- Status: completed, validated, installed, synced; local commit pending at log time.
+- Skill decision: OpenSpec change plus FlowGuard existing-model preflight, development-process flow, model-test alignment, and install sync.
+- Recorded: 2026-06-11T19:59:08Z
+
+### Model Files
+- `simulations/flowpilot_project_control_information_flow_model.py`
+- `simulations/flowpilot_blocker_repair_information_flow_model.py`
+- `simulations/flowpilot_controller_break_glass_model.py`
+- `simulations/flowpilot_model_test_alignment_family_plans.py`
+- `docs/flowguard_project_topology.json`
+- `docs/flowguard_project_topology.md`
+
+### Commands
+- `openspec validate "harden-same-node-repair-loop-stability"`: OK
+- `python -m flowguard project-audit --root .`: OK, package 0.43.2, schema 1.0
+- `python simulations/run_flowpilot_project_control_information_flow_checks.py`: OK
+- `python simulations/run_flowpilot_blocker_repair_information_flow_checks.py`: OK
+- `python simulations/run_flowpilot_controller_break_glass_checks.py`: OK
+- `python simulations/run_flowpilot_model_test_alignment_checks.py`: OK, finding counts empty
+- `python simulations/run_flowpilot_information_flow_alignment_checks.py`: OK
+- `python -m pytest tests/test_flowpilot_complete_system_runtime.py -q`: OK, 24 passed and 12 subtests passed
+- `python -m pytest tests/test_flowpilot_core_runtime.py -q`: OK, 88 passed and 35 subtests passed
+- `python -m pytest tests/test_flowpilot_card_instruction_coverage.py -q`: OK, 23 passed and 128 subtests passed
+- `python scripts/flowguard_project_topology.py build`: OK
+- `python scripts/flowguard_project_topology.py check`: OK
+- `python scripts/install_flowpilot.py --sync-repo-owned --json`: OK
+- `python scripts/audit_local_install_sync.py --json`: OK, no findings or stale files
+- `python scripts/install_flowpilot.py --check --json`: OK
+- `python scripts/check_install.py --json`: OK, 894 checks and no failures
+
+### Findings
+- Repair-loop break-glass now requires the same current route node to repeat the same blocker problem more than five consecutive times.
+- Cross-node similar blocker classes stay in ordinary PM repair and do not trigger this threshold by themselves.
+- A different blocker problem in the same route node resets the consecutive count.
+- Noncurrent repair blockers remain historical but do not pollute compact status or final-preflight active blockers.
+- Current run ledger writes are atomic, transient incomplete reads are retried, and persistent invalid JSON fails clearly without fallback synthesis.
+
+### Counterexamples
+- `repair_loop_over_threshold_issues_pm_packet`
+- `repair_loop_over_threshold_allowed_pm_repair`
+- `cross_node_similar_failures`
+- `run_ledger_partial_read_accepted_as_default`
+- `final_preflight_promotes_noncurrent_repair_blocker`
+
+### Friction Points
+- Model-test alignment rejected the broad repair-loop obligation until cross-node non-trigger and consecutive-reset proof were split into smaller obligations.
+- Topology build/check must run after result generators, because generated result files change freshness metadata.
+
+### Skipped Steps
+- No new route-node schema field, compatibility shim, fallback parser, old-router path, release, tag, deploy, remote push, or GitHub publication was performed.
+
+### Risk Evidence Summary
+- Evidence supports the narrowed local runtime behavior, cards, FlowGuard hazard models, model-test alignment, information-flow alignment, OpenSpec validity, topology freshness, installed local skill freshness, and local git commit readiness. It does not claim remote publication.
+
+### Next Actions
+- Commit the completed local changes after final diff review and peer-change check.
 
 
 ## flowpilot-single-route-depth-gates-20260609 - FlowPilot single-route depth gates
@@ -25873,6 +26232,240 @@ Task id: `generate-new-flowpilot-formal-entrypoint-20260529`
 ### Findings
 - FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
 - FlowGuard package version recorded: 0.43.1
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-11T17:51:24+00:00
+- Ended: 2026-06-11T17:51:24+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.43.2
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-12T17:43:53+00:00
+- Ended: 2026-06-12T17:43:53+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.43.3
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-12T18:51:23+00:00
+- Ended: 2026-06-12T18:51:23+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.44.0
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-13T04:17:29+00:00
+- Ended: 2026-06-13T04:17:29+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.46.0
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-13T10:49:10+00:00
+- Ended: 2026-06-13T10:49:10+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.47.1
+- FlowGuard schema version recorded: 1.0
+- Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
+
+### Counterexamples
+- none recorded
+
+### Friction Points
+- none recorded
+
+### Skipped Steps
+- Project adoption record does not replace executable model checks, tests, replay, or closure evidence.
+
+### Risk Evidence Summary
+- none recorded
+
+### Next Actions
+- Rerun affected FlowGuard models/tests before broad completion claims when behavior, tests, or version records change.
+
+
+## flowguard-project-upgrade - FlowGuard project upgrade record update
+
+- Project: FlowGuardProjectAutopilot_20260430
+- Trigger reason: target project uses FlowGuard and needs durable AGENTS/version records
+- Status: completed
+- Skill decision: used_flowguard
+- Started: 2026-06-13T12:14:20+00:00
+- Ended: 2026-06-13T12:14:20+00:00
+- Duration seconds: 0.000
+- Commands OK: True
+
+### Model Files
+- none recorded
+
+### Commands
+- none recorded
+
+### Findings
+- FlowGuard repository recorded: https://github.com/liuyingxuvka/FlowGuard
+- FlowGuard package version recorded: 0.47.2
 - FlowGuard schema version recorded: 1.0
 - Artifact upgrade scan: apply: scanned=4 upgraded=1 blocked=0 changed=1
 

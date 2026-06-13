@@ -324,6 +324,40 @@
     },
     {
       "audience": "project_manager",
+      "id": "pm.implementation_intent",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_implementation_intent.md",
+      "phase": "implementation_intent",
+      "source": "system"
+    },
+    {
+      "audience": "flowguard_operator",
+      "id": "flowguard_operator.target_realization_model",
+      "issued_by": "router",
+      "kind": "flowguard_operator_gate",
+      "path": "cards/flowguard_operator/target_realization_model.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
+      "id": "pm.target_realization_model_decision",
+      "issued_by": "router",
+      "kind": "phase",
+      "path": "cards/phases/pm_target_realization_model_decision.md",
+      "phase": "implementation_intent",
+      "source": "system"
+    },
+    {
+      "audience": "human_like_reviewer",
+      "id": "reviewer.implementation_intent_challenge",
+      "issued_by": "router",
+      "kind": "reviewer_gate",
+      "path": "cards/reviewer/implementation_intent_challenge.md",
+      "source": "system"
+    },
+    {
+      "audience": "project_manager",
       "id": "pm.route_skeleton",
       "issued_by": "router",
       "kind": "phase",

@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=294",
+    "summary": "sequences=3 initial_states=1 traces=348",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -23,6 +23,14 @@
         "expected_failure": "research or material-scan packet grants target artifact repair instead of report self-correction",
         "failures": [
           "research or material-scan packet grants target artifact repair instead of report self-correction"
+        ]
+      },
+      "final_ledger_realization_obligations_unresolved": {
+        "detected": true,
+        "expected_failure": "final ledger or closure leaves target-realization obligations unresolved",
+        "failures": [
+          "final ledger or closure leaves target-realization obligations unresolved",
+          "PM closure lacks final-user outcome replay"
         ]
       },
       "final_ledger_structure_debt_unresolved": {
@@ -89,6 +97,13 @@
           "node acceptance plan lacks skill-standard projection"
         ]
       },
+      "node_plan_missing_realization_obligations": {
+        "detected": true,
+        "expected_failure": "node acceptance plan does not consume target-realization obligations",
+        "failures": [
+          "node acceptance plan does not consume target-realization obligations"
+        ]
+      },
       "node_plan_missing_structure_hygiene_expectation": {
         "detected": true,
         "expected_failure": "node acceptance plan lacks structure hygiene expectation",
@@ -141,6 +156,13 @@
           "PM plan lacks higher-standard improvement-space self-check"
         ]
       },
+      "pm_implementation_intent_missing": {
+        "detected": true,
+        "expected_failure": "PM implementation intent bridge is missing or too thin before route skeleton",
+        "failures": [
+          "PM implementation intent bridge is missing or too thin before route skeleton"
+        ]
+      },
       "pm_improvement_opportunity_unclassified": {
         "detected": true,
         "expected_failure": "PM left higher-standard improvement opportunity unclassified",
@@ -188,6 +210,14 @@
         "expected_failure": "PM route lacks structural convergence review for cleanup targets and owned current-runtime recovery",
         "failures": [
           "PM route lacks structural convergence review for cleanup targets and owned current-runtime recovery"
+        ]
+      },
+      "pm_target_realization_accepts_downgrade": {
+        "detected": true,
+        "expected_failure": "PM accepted a target-realization model that downgrades implementation intent",
+        "failures": [
+          "target-realization model does not preserve PM implementation intent",
+          "PM accepted a target-realization model that downgrades implementation intent"
         ]
       },
       "pm_user_intent_self_check_missing": {
@@ -240,6 +270,13 @@
           "repair node lacks a defined return to the mainline product route"
         ]
       },
+      "reviewer_implementation_intent_alignment_missing": {
+        "detected": true,
+        "expected_failure": "Reviewer did not check implementation-intent and target-realization alignment",
+        "failures": [
+          "Reviewer did not check implementation-intent and target-realization alignment"
+        ]
+      },
       "reviewer_passes_hard_blindspot": {
         "detected": true,
         "expected_failure": "reviewer passed a residual blindspot that touches a hard requirement or required child-skill gate",
@@ -267,6 +304,13 @@
         "failures": [
           "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
           "selected role skill use was self-attested without evidence"
+        ]
+      },
+      "route_missing_realization_obligations": {
+        "detected": true,
+        "expected_failure": "route skeleton does not consume target-realization obligations",
+        "failures": [
+          "route skeleton does not consume target-realization obligations"
         ]
       },
       "simple_task_formal_flowpilot_profile": {
@@ -311,6 +355,23 @@
           "selected child skill lacks a compiled Skill Standard Contract"
         ]
       },
+      "target_realization_model_ignores_pm_intent": {
+        "detected": true,
+        "expected_failure": "target-realization model does not preserve PM implementation intent",
+        "failures": [
+          "target-realization model does not preserve PM implementation intent",
+          "PM accepted a target-realization model that downgrades implementation intent"
+        ]
+      },
+      "target_realization_model_missing": {
+        "detected": true,
+        "expected_failure": "FlowGuard target-realization model is missing before route skeleton",
+        "failures": [
+          "FlowGuard target-realization model is missing before route skeleton",
+          "target-realization model does not preserve PM implementation intent",
+          "PM has not accepted the target-realization model before route skeleton"
+        ]
+      },
       "ui_without_planning_profile": {
         "detected": true,
         "expected_failure": "complex task route lacks a selected planning profile",
@@ -330,6 +391,13 @@
         "expected_failure": "work packet or result matrix lacks skill-standard projection",
         "failures": [
           "work packet or result matrix lacks skill-standard projection"
+        ]
+      },
+      "work_packet_missing_realization_obligations": {
+        "detected": true,
+        "expected_failure": "work packet does not carry target-realization obligations",
+        "failures": [
+          "work packet does not carry target-realization obligations"
         ]
       },
       "work_packet_missing_structure_hygiene_delta": {
@@ -375,11 +443,11 @@
     "accepted_scenarios": [
       "valid_ui_route"
     ],
-    "edge_count": 98,
+    "edge_count": 116,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 48,
-    "state_count": 99
+    "rejected_state_count": 57,
+    "state_count": 117
   }
 }

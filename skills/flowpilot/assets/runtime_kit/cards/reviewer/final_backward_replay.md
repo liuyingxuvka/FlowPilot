@@ -34,6 +34,10 @@ owner of final repair strategy.
 
 Use the PM final route-wide gate ledger and terminal replay map as the only
 completion runway.
+Return exactly one `segment_reviews[]` entry for each runtime-issued terminal
+replay segment id. Missing, duplicate, or unexpected segment ids are not
+supplemental coverage; they block terminal replay and return to PM for the
+existing repair or replay path.
 
 Check backward from the delivered product or final output:
 

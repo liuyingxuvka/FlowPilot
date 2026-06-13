@@ -27,6 +27,10 @@ Before modeling, read:
 - `.flowpilot/runs/<run-id>/flowguard/capability_snapshot.json`;
 - `.flowpilot/runs/<run-id>/flowguard/product_modeling_plan.json`;
 - `.flowpilot/runs/<run-id>/flowguard/product_behavior_model_pm_decision.json`;
+- `.flowpilot/runs/<run-id>/implementation_intent/pm_implementation_intent.json`;
+- `.flowpilot/runs/<run-id>/flowguard/target_realization_model.json`;
+- `.flowpilot/runs/<run-id>/flowguard/target_realization_model_pm_decision.json`;
+- `.flowpilot/runs/<run-id>/reviews/implementation_intent_challenge.json`;
 - `.flowpilot/runs/<run-id>/child_skill_gate_manifest.json`;
 - `.flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json`;
 - the PM route draft.
@@ -50,6 +54,10 @@ model:
   the operator report as the route mutation commit;
 - route nodes map to the FlowGuard operator's product behavior model and
   can reach the modeled completion state;
+- route nodes map to the FlowGuard operator's target-realization model. The
+  process model must show where realization obligations, thin-success traps,
+  non-downgrade rules, and evidence gates are carried by route nodes,
+  reviewer/FlowGuard checks, worker packets, and final closure;
 - the canonical process model is serial: every effective root, parent/module,
   child, leaf, and repair segment has a definite ordered predecessor/successor
   path, and all required nodes are reachable before completion;
@@ -65,6 +73,9 @@ model:
 - PM authored one canonical executable route tree. `display_plan.json` or any
   chat route sign is only a Router-derived projection/cache and must not be
   treated as a second route plan;
+- for a PM structural route change, explicitly reject a complex flat all-leaf
+  route plan when related leaves should form parent/module scopes. The process
+  model must be able to name which parent/module owns each child sequence;
 - Router-visible traversal can distinguish parent/module nodes from
   dispatchable leaves, dispatch only leaf/repair nodes with no `child_node_ids`
   and with enough existing acceptance criteria, outputs, and checks to be
@@ -79,11 +90,22 @@ model:
 - each leaf is small enough for one bounded worker packet. If a leaf hides
   multiple ordered work packages, require promotion to parent/module and deeper
   child decomposition before dispatch;
+- for node-entry redesign, check that the active scope is promoted into a
+  replacement parent/module with ordered child nodes. Treat "node-entry
+  redesign did not promote active scope" and peer-appended split leaves as a
+  route-mutation process failure, because child-to-parent closure cannot be
+  proven from a flat sibling list;
 - simulate at least one route traversal from first executable node through
   final closure: parent/module entry, child node sequence, child skill
   projection, parent backward replay, PM parent disposition, and terminal
   closure gate. Block if the route can only pass by dispatching a parent/module
   or by letting a Worker replan a broad leaf;
+- for material or report handoff routes, simulate the producer packet, accepted
+  result/report, downstream packet's authorized read, FlowGuard/reviewer
+  recheck, and final preflight. Block if the handoff relies on summaries,
+  stale paths, or chat memory instead of current runtime authorized reads, or
+  if accepted/stale repair packets can remain current blockers after a route
+  mutation;
 - explicitly check worker-decision leakage. If the route only works because a
   Worker must invent subtasks, choose child order, define dependency
   boundaries, or decide acceptance boundaries, return repair-required process
@@ -100,6 +122,15 @@ model:
 - node ordering has no missing reviewer, FlowGuard operator, or worker authority gate;
 - repair or route-mutation branches define where they rejoin the mainline and
   which product/process checks must rerun;
+- repair branches distinguish mechanical progress from semantic repair
+  progress. Creating another packet, lease, or repair generation is not enough
+  if the same current route node keeps returning with the same blocker class,
+  gate kind, and required recheck role. Preserve that blocker class for a
+  repeated same-node defect so runtime can count the loop. If the process route
+  would allow more than five consecutive same-node attempts before Controller
+  break-glass diagnosis, block the route/process model and recommend PM repair
+  of the control path. Similar blocker classes across different route nodes do
+  not trigger this threshold by themselves.
 - route mutation defines the stale subtree/frontier reset policy so a repaired
   child cannot accidentally advance the old parent/module path;
 - route structure avoids obvious no-op detours or complexity that does not add
@@ -118,7 +149,10 @@ Router hard gate fields:
 
 - To pass, include `process_viability_verdict: "pass"`,
   `product_behavior_model_checked: true`, `route_can_reach_product_model:
-  true`, `repair_return_policy_checked: true`,
+  true`, `target_realization_model_checked: true`,
+  `route_maps_to_target_realization_model: true`,
+  `realization_obligations_projected: true`,
+  `repair_return_policy_checked: true`,
   `serial_execution_model_checked: true`,
   `all_effective_nodes_reachable_in_order: true`, and
   `recursive_child_routes_serialized: true`, then return event

@@ -4,8 +4,11 @@
       "parent information sufficiency across major FlowPilot control surfaces",
       "stale historical evidence rejection",
       "same-work/no-new-information loop rejection",
+      "same-family repair loop threshold to Controller break-glass duty",
       "break-glass reintegration requirements",
       "route mutation information and replay requirements",
+      "stale prior-route repair blocker supersession after route mutation",
+      "final preflight noncurrent repair blocker rejection",
       "actor input material manifest requirements",
       "required report contract and downstream consumer authorization",
       "missing-information response definition",
@@ -25,6 +28,7 @@
     "interrupt_resume": "current run/frontier/ledger/blocker/PM runway required",
     "ordinary_repair_packet": "covered_by_parent_and_child_blocker_repair_information_flow_model",
     "reopen_continuation": "history import must remain historical; current run and current role assignment required",
+    "repair_loop_threshold": "same-family attempt count above five requires visible evidence and Controller break-glass duty",
     "role_assignment": "requested role, current packet context, and current-task binding required",
     "route_mutation": "blocker context, new route version, stale evidence invalidation, acceptance plan, replay scope required"
   },
@@ -34,7 +38,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=198",
+    "summary": "sequences=3 initial_states=1 traces=240",
     "violation_count": 0
   },
   "hazard_detection": {
@@ -91,6 +95,13 @@
           "closure was claimed with unresolved information gap"
         ]
       },
+      "final_preflight_promotes_noncurrent_repair_blocker": {
+        "detected": true,
+        "expected_failure": "final preflight promoted a noncurrent repair blocker to current authority",
+        "failures": [
+          "final preflight promoted a noncurrent repair blocker to current authority"
+        ]
+      },
       "flowguard_evidence_not_bound_to_reviewer": {
         "detected": true,
         "expected_failure": "FlowGuard evidence handoff lacks current subject result",
@@ -144,6 +155,13 @@
           "old agent id was treated as current role-binding evidence"
         ]
       },
+      "repair_loop_over_threshold_issues_pm_packet": {
+        "detected": true,
+        "expected_failure": "same-node consecutive repair loop threshold exceeded but ordinary PM repair continued",
+        "failures": [
+          "same-node consecutive repair loop threshold exceeded but ordinary PM repair continued instead of Controller break-glass"
+        ]
+      },
       "resume_from_chat_history_loses_blocker": {
         "detected": true,
         "expected_failure": "current run, frontier, and packet ledger were not loaded",
@@ -173,11 +191,25 @@
           "route mutation lacks blocker context, new route version, stale-evidence invalidation, acceptance plan, or replay scope"
         ]
       },
+      "route_mutation_leaves_stale_prior_route_repair_blocker": {
+        "detected": true,
+        "expected_failure": "route mutation left stale prior-route repair blockers as current work",
+        "failures": [
+          "route mutation left stale prior-route repair blockers as current work"
+        ]
+      },
       "route_mutation_omits_blocker_or_acceptance_plan": {
         "detected": true,
         "expected_failure": "route mutation lacks blocker context",
         "failures": [
           "route mutation lacks blocker context, new route version, stale-evidence invalidation, acceptance plan, or replay scope"
+        ]
+      },
+      "run_ledger_partial_read_accepted_as_default": {
+        "detected": true,
+        "expected_failure": "run ledger persistence accepted partial JSON or synthesized fallback state",
+        "failures": [
+          "run ledger persistence accepted partial JSON or synthesized fallback state"
         ]
       },
       "same_work_repeated_with_no_new_info": {
@@ -228,22 +260,25 @@
     "ok": true,
     "samples": [],
     "stuck_state_count": 0,
-    "terminal_state_count": 33
+    "terminal_state_count": 40
   },
   "result_type": "flowpilot_project_control_information_flow_checks",
   "safe_graph": {
     "accepted_scenarios": [
       "valid_actor_handoff_material_and_report_contract",
       "valid_break_glass_control_repair",
+      "valid_cross_node_similar_failures_normal_repair",
       "valid_interrupt_resume_with_blocker_context",
       "valid_packet_contract_and_review_evidence_handoff",
       "valid_reopen_imports_history_and_current_run",
+      "valid_repair_loop_threshold_break_glass",
       "valid_repair_packet_progress",
       "valid_role_assignment_reissues_current_packet",
       "valid_route_mutation_with_replay_scope",
+      "valid_run_ledger_persistence_stability",
       "valid_terminal_stop_preserves_unresolved_work"
     ],
-    "edge_count": 66,
+    "edge_count": 80,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
@@ -255,6 +290,7 @@
       "break_glass_without_normal_repair_failure",
       "downstream_report_not_authorized",
       "final_closure_with_unresolved_information_gap",
+      "final_preflight_promotes_noncurrent_repair_blocker",
       "flowguard_evidence_not_bound_to_reviewer",
       "followup_blocker_not_propagated_to_next_runway",
       "historical_evidence_promoted_to_current",
@@ -262,17 +298,20 @@
       "packet_result_contract_not_visible_to_role",
       "pm_runway_omits_active_blocker",
       "reopen_reuses_old_agent_ids_as_current",
+      "repair_loop_over_threshold_issues_pm_packet",
       "resume_from_chat_history_loses_blocker",
       "resume_loads_old_run_as_current",
       "role_assignment_without_current_packet_context",
       "route_mutation_does_not_invalidate_stale_evidence",
+      "route_mutation_leaves_stale_prior_route_repair_blocker",
       "route_mutation_omits_blocker_or_acceptance_plan",
+      "run_ledger_partial_read_accepted_as_default",
       "same_work_repeated_with_no_new_info",
       "synthetic_trace_bypasses_visible_contract",
       "work_packet_lacks_minimum_information",
       "work_packet_missing_input_materials",
       "work_packet_missing_report_requirements"
     ],
-    "state_count": 67
+    "state_count": 81
   }
 }

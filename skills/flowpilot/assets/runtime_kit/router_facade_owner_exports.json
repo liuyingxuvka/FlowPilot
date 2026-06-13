@@ -1795,12 +1795,20 @@
             "target": "_write_pm_model_decision"
           },
           {
+            "public": "_write_pm_implementation_intent",
+            "target": "_write_pm_implementation_intent"
+          },
+          {
             "public": "_write_pm_process_route_model_decision",
             "target": "_write_pm_process_route_model_decision"
           },
           {
             "public": "_write_pm_product_behavior_model_decision",
             "target": "_write_pm_product_behavior_model_decision"
+          },
+          {
+            "public": "_write_pm_target_realization_model_decision",
+            "target": "_write_pm_target_realization_model_decision"
           },
           {
             "public": "_write_pm_research_absorption",
@@ -1825,6 +1833,14 @@
           {
             "public": "_write_product_function_architecture",
             "target": "_write_product_function_architecture"
+          },
+          {
+            "public": "_write_target_realization_model_issue_report",
+            "target": "_write_target_realization_model_issue_report"
+          },
+          {
+            "public": "_write_target_realization_model_report",
+            "target": "_write_target_realization_model_report"
           },
           {
             "public": "_write_role_block_report",
@@ -1991,6 +2007,14 @@
           {
             "public": "_current_route_draft_path",
             "target": "_current_route_draft_path"
+          },
+          {
+            "public": "_pm_implementation_intent_path",
+            "target": "_pm_implementation_intent_path"
+          },
+          {
+            "public": "_target_realization_model_report_path",
+            "target": "_target_realization_model_report_path"
           },
           {
             "public": "_current_status_active_batch_summary",
@@ -2181,6 +2205,10 @@
             "target": "_require_pm_prior_path_context"
           },
           {
+            "public": "_require_pm_implementation_intent",
+            "target": "_require_pm_implementation_intent"
+          },
+          {
             "public": "_require_process_route_model_report",
             "target": "_require_process_route_model_report"
           },
@@ -2191,6 +2219,10 @@
           {
             "public": "_require_route_process_pass",
             "target": "_require_route_process_pass"
+          },
+          {
+            "public": "_require_target_realization_model_report",
+            "target": "_require_target_realization_model_report"
           },
           {
             "public": "_reset_route_hard_gate_approvals_for_recheck",

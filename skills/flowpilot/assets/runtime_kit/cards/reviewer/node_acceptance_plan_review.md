@@ -32,6 +32,12 @@ If this review blocks, requests more evidence, or requires reroute, include
 PM-actionable recommendation for resolving the blocked review. PM remains the
 owner of final repair strategy.
 
+When blocking the same current route node for the same plan-stage defect as
+the prior review, reuse the prior `blocker_class` instead of inventing a new
+name. This preserves same-node repeat evidence for the runtime threshold; it
+does not let Reviewer decide break-glass, and similar defects on different
+route nodes remain ordinary repair evidence.
+
 Classify the recommended resolution narrowly. Missing fields, missing
 projection rows, incomplete acceptance wording, unclear evidence refs, or an
 incomplete work-packet/result-matrix plan normally recommend PM revision of the
@@ -98,6 +104,11 @@ Check:
   route deepening or route mutation; do not pass a plan that relies on the
   Worker to split the node, invent child tasks, choose ordering, or define
   acceptance boundaries;
+- if PM used `decision: "redesign_route"` because the active node was too
+  broad, check that the redesign promotes the active scope into a replacement
+  parent/module with ordered `child_node_ids`. Block a peer-appended split
+  where the proposed child work appears as flat sibling leaves instead of
+  children under the replacement scope;
 - every inherited gate obligation has a required role and evidence path;
 - every inherited child-skill standard relevant to the node is listed in
   `skill_standard_projection` with source skill, source path, category,
@@ -117,6 +128,11 @@ Check:
   `work_packet_projection` and requires a result matrix row for each inherited
   standard id plus `Child Skill Use Evidence` for each active child-skill
   binding and Role Skill Use Evidence for each applicable role-skill binding;
+- material or report handoff inside this node has a current-runtime producer,
+  required report contract, downstream consumer, authorized read path, and
+  missing-information response. Block if the plan leaves those responsibilities
+  to worker invention or lets a stale/accepted repair packet act as current
+  evidence;
 - skipped checks are marked blocked, waived with authority, or not applicable;
 - worker reports alone cannot approve the node.
 - PM's `high_standard_recheck` and minimum sufficient complexity rationale are

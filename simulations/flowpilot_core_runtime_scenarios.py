@@ -248,8 +248,26 @@ def _mark_node_ready_for_final_closure(ledger: dict[str, Any], node_id: str) -> 
     )
     ledger["packets"][packet_id]["status"] = "accepted"
     ledger["packets"][packet_id]["accepted_result_id"] = result_id
-    ledger["results"][result_id] = {"result_id": result_id, "review_id": review_id}
-    ledger["reviews"][review_id] = {"review_id": review_id, "decision": "accept"}
+    ledger["results"][result_id] = {
+        "result_id": result_id,
+        "packet_id": packet_id,
+        "review_id": review_id,
+        "status": "accepted",
+        "envelope": {
+            "route_version": ledger.get("active_route_version"),
+            "evidence_generation": ledger.get("source_generation"),
+        },
+    }
+    ledger["reviews"][review_id] = {
+        "review_id": review_id,
+        "result_id": result_id,
+        "subject_packet_id": packet_id,
+        "decision": "accept",
+        "checks_evidence": True,
+        "direct_evidence_ids": [result_id],
+        "independent_from_producer": True,
+        "blockers": [],
+    }
     ledger["route_nodes"][node_id]["packet_ids"].append(packet_id)
     ledger["route_nodes"][node_id]["status"] = "accepted"
     ledger["route_nodes"][node_id]["accepted_result_id"] = result_id

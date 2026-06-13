@@ -63,6 +63,23 @@
       "<path that can fail or stall>"
     ]
   },
+  "target_realization_review": {
+    "applicable": false,
+    "target_realization_verdict": "<pass|blocked|not_applicable>",
+    "pm_implementation_intent_checked": false,
+    "product_behavior_model_checked": false,
+    "pm_intent_preserved": false,
+    "realization_obligations_modeled": false,
+    "thin_success_traps_modeled": false,
+    "evidence_gates_modeled": false,
+    "forbidden_downgrades": [
+      "<downgrade this model prevents>"
+    ],
+    "route_obligation_projection": [
+      "<obligation PM route skeleton must consume>"
+    ],
+    "recommended_resolution": "<needed PM repair, FlowGuard rebuild, or null>"
+  },
   "model_family_coverage": [
     {
       "family_id": "<pm-planned-family-id>",

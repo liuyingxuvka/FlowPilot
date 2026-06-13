@@ -1,0 +1,18 @@
+{
+  "schema_version": "flowpilot.target_realization_model_pm_decision.v1",
+  "run_id": "<run-id>",
+  "decided_by_role": "project_manager",
+  "decision": "<accept_target_realization_model|request_target_realization_model_rebuild>",
+  "source_paths": [
+    ".flowpilot/runs/<run-id>/implementation_intent/pm_implementation_intent.json",
+    ".flowpilot/runs/<run-id>/flowguard/target_realization_model.json"
+  ],
+  "target_realization_fit_review": "<PM review of whether the model preserves implementation intent>",
+  "realization_obligation_acceptance": "<accepted obligations or missing obligations>",
+  "thin_success_trap_review": "<how shallow success traps are modeled>",
+  "evidence_gate_review": "<how evidence gates are carried forward>",
+  "non_downgrade_review": "<how the model preserves product standard>",
+  "residual_blindspots": [],
+  "next_action": "<reviewer_implementation_intent_challenge|implementation_intent_or_model_rebuild>",
+  "decided_at": "<iso-8601-timestamp>"
+}

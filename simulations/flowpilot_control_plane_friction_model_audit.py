@@ -699,44 +699,44 @@ def _event_name_from_role_output(output: object) -> str:
         return event["event_name"]
     return ""
 
-def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
+def _material_generation_source_checks(source_root: Path) -> dict[str, object]:
     next_actions_text, next_actions_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
         / "flowpilot_router_work_packets_next_actions.py"
     )
     persistence_text, persistence_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
         / "flowpilot_router_runtime_state_persistence.py"
     )
     role_output_text, role_output_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
         / "flowpilot_router_role_output_bridge_events.py"
     )
     role_output_replay_text, role_output_replay_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
         / "flowpilot_router_role_output_bridge_events_replay.py"
     )
     expected_waits_text, expected_waits_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
         / "flowpilot_router_expected_waits_reconciliation.py"
     )
     expected_waits_pm_package_text, expected_waits_pm_package_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
@@ -745,14 +745,14 @@ def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
     expected_waits_family_text = "\n".join((expected_waits_text, expected_waits_pm_package_text))
     expected_waits_family_error = expected_waits_error or expected_waits_pm_package_error
     event_dispatcher_text, event_dispatcher_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
         / "flowpilot_router_event_dispatcher.py"
     )
     action_provider_text, action_provider_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
@@ -776,7 +776,7 @@ def _material_generation_source_checks(project_root: Path) -> dict[str, object]:
         in role_output_text
     )
     scoped_identity_text, scoped_identity_error = _read_text(
-        project_root
+        source_root
         / "skills"
         / "flowpilot"
         / "assets"
@@ -853,6 +853,7 @@ def _audit_material_generation_progress_projection(
     project_root: Path,
     run_root: Path,
     router_state: object,
+    source_root: Path,
 ) -> dict[str, object]:
     flags = _router_flags(router_state)
     material_index, material_index_error = _read_json(
@@ -998,7 +999,7 @@ def _audit_material_generation_progress_projection(
             }
         )
 
-    source_checks = _material_generation_source_checks(project_root)
+    source_checks = _material_generation_source_checks(source_root)
     has_active_repair_generation = bool(
         active_repair_transaction_id or batch_repair_ids or current_generation_id
     )
@@ -1072,6 +1073,7 @@ def _audit_material_repair_generation_protocol(
     project_root: Path,
     run_root: Path,
     router_state: object,
+    source_root: Path,
 ) -> dict[str, object]:
     action_samples: list[dict[str, object]] = []
     for action_path in sorted((run_root / "runtime" / "controller_actions").glob("*.json")):
@@ -1110,6 +1112,7 @@ def _audit_material_repair_generation_protocol(
         project_root,
         run_root,
         router_state,
+        source_root,
     )
     return {
         "operation_replay_fresh_controller_action_id": not (
@@ -1667,8 +1670,8 @@ def _external_event_contracts_from_source(source_path: Path) -> tuple[dict[str, 
     return {}, "external event definition not found"
 
 
-def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict[str, str]], str | None]:
-    asset_root = project_root / "skills" / "flowpilot" / "assets"
+def _router_external_event_contracts(source_root: Path) -> tuple[dict[str, dict[str, str]], str | None]:
+    asset_root = source_root / "skills" / "flowpilot" / "assets"
     phase_contracts: dict[str, dict[str, str]] = {}
     phase_errors: list[str] = []
     for source_path in (
@@ -1699,7 +1702,7 @@ def _router_external_event_contracts(project_root: Path) -> tuple[dict[str, dict
         return {}, "; ".join(phase_errors)
     return {}, router_error if "router_error" in locals() else "EXTERNAL_EVENTS definition not found"
 
-def _audit_expected_role_decision_event_prereqs(router_state: object, project_root: Path) -> dict[str, object]:
+def _audit_expected_role_decision_event_prereqs(router_state: object, source_root: Path) -> dict[str, object]:
     if not isinstance(router_state, dict):
         return {
             "expected_role_decision_requires_unsatisfied_flag": False,
@@ -1719,7 +1722,7 @@ def _audit_expected_role_decision_event_prereqs(router_state: object, project_ro
         if isinstance(item, str)
     ]
     flags = router_state.get("flags") if isinstance(router_state.get("flags"), dict) else {}
-    contracts, contract_error = _router_external_event_contracts(project_root)
+    contracts, contract_error = _router_external_event_contracts(source_root)
     invalid: list[dict[str, object]] = []
     if contract_error:
         invalid.append({"issue": "external_event_contract_unreadable", "error": contract_error})
@@ -2562,7 +2565,11 @@ def _audit_material_gate_evidence_contract(run_root: Path) -> dict[str, object]:
         "authority_samples": authority_samples,
     }
 
-def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
+def audit_live_run(
+    project_root: str | Path = ".",
+    *,
+    source_root: str | Path | None = None,
+) -> dict[str, object]:
     """Project the current .flowpilot run into this model's invariants.
 
     This is intentionally read-only. It catches file-level control-plane
@@ -2570,6 +2577,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
     """
 
     root = Path(project_root).resolve()
+    source = Path(source_root).resolve() if source_root is not None else root
     resolution = control_surface.resolve_current_run(root)
     current_path = root / ".flowpilot" / "current.json"
     current, current_error = _read_json(current_path)
@@ -3108,7 +3116,7 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             invariant="repair_success_clears_stale_repair_lane",
             evidence=stale_repair_lane,
         )
-    stale_expected_wait = _audit_expected_role_decision_event_prereqs(router_state, root)
+    stale_expected_wait = _audit_expected_role_decision_event_prereqs(router_state, source)
     if stale_expected_wait.get("expected_role_decision_requires_unsatisfied_flag"):
         _add_finding(
             findings,
@@ -3229,7 +3237,12 @@ def audit_live_run(project_root: str | Path = ".") -> dict[str, object]:
             },
         )
 
-    material_repair_protocol = _audit_material_repair_generation_protocol(root, run_root, router_state)
+    material_repair_protocol = _audit_material_repair_generation_protocol(
+        root,
+        run_root,
+        router_state,
+        source,
+    )
     if not material_repair_protocol.get("operation_replay_fresh_controller_action_id"):
         _add_finding(
             findings,

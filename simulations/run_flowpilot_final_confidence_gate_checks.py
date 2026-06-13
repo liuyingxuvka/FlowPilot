@@ -30,16 +30,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         action="store_true",
         help="Run required evidence producers before aggregating their JSON outputs.",
     )
+    parser.add_argument(
+        "--live-root",
+        type=Path,
+        default=None,
+        help="Project root containing .flowpilot/current.json for the control-plane live audit subcheck.",
+    )
+    parser.add_argument(
+        "--source-root",
+        type=Path,
+        default=None,
+        help="FlowPilot source root for control-plane source-contract checks.",
+    )
     args = parser.parse_args(argv)
 
     if args.run_checks:
-        subcheck_runs = run_required_subchecks(args.results_dir)
+        subcheck_runs = run_required_subchecks(
+            args.results_dir,
+            live_root=args.live_root,
+            source_root=args.source_root,
+        )
         result_paths = result_paths_for_dir(args.results_dir)
     else:
         subcheck_runs = []
         result_paths = DEFAULT_RESULT_PATHS
 
-    report = evaluate_final_confidence(result_paths)
+    report = evaluate_final_confidence(result_paths, subcheck_runs=subcheck_runs)
     report["result_type"] = "flowpilot_final_confidence_gate"
     report["subcheck_runs"] = subcheck_runs
     report["result_paths"] = {name: str(path) for name, path in result_paths.items()}

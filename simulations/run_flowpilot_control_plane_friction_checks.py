@@ -394,7 +394,12 @@ def _scenario_metrics(graph: dict[str, object]) -> dict[str, object]:
     }
 
 
-def run_checks(*, json_out_requested: bool = False, live_root: Path | None = Path(".")) -> dict[str, object]:
+def run_checks(
+    *,
+    json_out_requested: bool = False,
+    live_root: Path | None = Path("."),
+    source_root: Path | None = None,
+) -> dict[str, object]:
     graph = _build_graph()
     labels = set(graph["labels"])
     missing_labels = sorted(set(REQUIRED_LABELS) - labels)
@@ -410,7 +415,7 @@ def run_checks(*, json_out_requested: bool = False, live_root: Path | None = Pat
     hazards = _check_hazards()
     metrics = _scenario_metrics(graph)
     live_run_audit = (
-        model.audit_live_run(live_root)
+        model.audit_live_run(live_root, source_root=source_root)
         if live_root is not None
         else {
             "ok": True,
@@ -457,11 +462,18 @@ def main() -> int:
         help="Project root containing .flowpilot/current.json for read-only live-run audit.",
     )
     parser.add_argument("--skip-live-audit", action="store_true", help="Run only the abstract FlowGuard model.")
+    parser.add_argument(
+        "--source-root",
+        type=Path,
+        default=None,
+        help="FlowPilot source root for read-only source-contract checks during live audit.",
+    )
     args = parser.parse_args()
 
     result = run_checks(
         json_out_requested=bool(args.json_out),
         live_root=None if args.skip_live_audit else args.live_root,
+        source_root=args.source_root,
     )
     payload = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.json_out:

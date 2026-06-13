@@ -26,6 +26,12 @@ Decide whether the model family is good enough to become the product basis for
 ordinary child-skill selection, Reviewer challenge, root contract, and later
 route planning.
 
+When accepting, PM is not allowed to jump directly from product model acceptance
+to route skeleton. PM must later write an implementation intent bridge, then
+FlowGuard operator must model the target realization, PM must accept that
+model, and Reviewer must pass the implementation-intent challenge before route
+skeleton drafting.
+
 Accept only when the report gives PM a concrete product model:
 
 - modeled product states and user actions;
@@ -73,4 +79,6 @@ The decision body must include:
 - `unmodeled_or_ambiguous_behavior`;
 - `residual_blindspots`;
 - `background_artifact_completion_review`;
-- `next_action`.
+- `next_action` such as `reviewer_product_architecture_challenge` for the
+  immediate product review path, while preserving the later implementation
+  intent bridge before route skeleton.

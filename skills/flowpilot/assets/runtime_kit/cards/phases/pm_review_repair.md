@@ -52,6 +52,14 @@ If the blocker is caused by non-replayable package scripts, package handoff
 defects, event-authority contradictions, or evidence-entry defects, and the
 normal PM repair lane cannot form a legal next action, prefer existing
 Controller break-glass repair before user stop / `stop_for_user`.
+If runtime metadata says the same current route node has repeated the same
+blocker problem more than five consecutive times, do not issue another ordinary
+PM repair decision packet, route mutation, or same-scope repair packet merely
+to try again. Treat that threshold as a control-plane diagnosis point:
+Controller break-glass must decide whether the threshold is a false alarm that
+can return to normal repair, a repairable FlowPilot control-plane fault, or a
+stop condition. Similar blocker classes spread across different route nodes do
+not trigger this threshold by themselves.
 
 Before choosing repair or mutation, read the latest route-memory prior path
 context and the reviewer block source path. Do not create a repair node from
@@ -113,6 +121,10 @@ Allowed PM decisions:
 - mutate route and invalidate stale evidence;
 - use Controller break-glass for FlowPilot control-plane blocker repair when the
   normal repair lane cannot form a legal next action;
+- use Controller break-glass when runtime shows the same current route node has
+  repeated the same blocker problem more than five consecutive times, rather
+  than opening a sixth ordinary PM repair decision for the same node/problem
+  loop;
 - stop for user when a human decision is required;
 - quarantine contaminated evidence.
 
@@ -160,6 +172,11 @@ Choose the executable plan kind deliberately:
 - Use `await_existing_event` only when a real current producer already exists
   for the awaited event. Do not use it to mean "start over".
 - Use `route_mutation` only for structural route/node/acceptance changes.
+  When the structural repair addresses repeated missing-information,
+  material-handoff, or authorized-report blockers, make the new route cover the
+  full producer-result -> authorized downstream read -> review/check lifecycle.
+  Do not leave older same-family `repair_packet_open` blockers from accepted,
+  superseded, or stale packets as current blockers after the route mutation.
 - Use `terminal_stop` for user stop, protocol dead-end, or human escalation.
 
 Use `await_existing_event` only for an event with an existing current producer;

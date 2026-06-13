@@ -64,6 +64,9 @@ def _write_route_process_pass_report(
         raise RouterError("route process check requires process_viability_verdict=pass")
     required_true = (
         "product_behavior_model_checked",
+        "target_realization_model_checked",
+        "route_maps_to_target_realization_model",
+        "realization_obligations_projected",
         "route_can_reach_product_model",
         "repair_return_policy_checked",
         "serial_execution_model_checked",
@@ -76,6 +79,7 @@ def _write_route_process_pass_report(
     checked_paths = [
         _current_route_draft_path(run_root),
         _require_product_behavior_model_report(project_root, run_root),
+        _require_target_realization_model_report(project_root, run_root),
         run_root / "root_acceptance_contract.json",
         run_root / "child_skill_gate_manifest.json",
     ]
@@ -92,6 +96,9 @@ def _write_route_process_pass_report(
             "passed": True,
             "process_viability_verdict": "pass",
             "product_behavior_model_checked": True,
+            "target_realization_model_checked": True,
+            "route_maps_to_target_realization_model": True,
+            "realization_obligations_projected": True,
             "route_can_reach_product_model": True,
             "repair_return_policy_checked": True,
             "serial_execution_model_checked": True,
@@ -122,6 +129,7 @@ def _write_route_process_issue_report(
     checked_paths = [
         _current_route_draft_path(run_root),
         _require_product_behavior_model_report(project_root, run_root),
+        _require_target_realization_model_report(project_root, run_root),
         run_root / "root_acceptance_contract.json",
         run_root / "child_skill_gate_manifest.json",
     ]
@@ -138,6 +146,9 @@ def _write_route_process_issue_report(
             "passed": False,
             "process_viability_verdict": expected_verdict,
             "product_behavior_model_checked": bool(payload.get("product_behavior_model_checked")),
+            "target_realization_model_checked": bool(payload.get("target_realization_model_checked")),
+            "route_maps_to_target_realization_model": bool(payload.get("route_maps_to_target_realization_model")),
+            "realization_obligations_projected": bool(payload.get("realization_obligations_projected")),
             "route_can_reach_product_model": bool(payload.get("route_can_reach_product_model")),
             "repair_return_policy_checked": bool(payload.get("repair_return_policy_checked")),
             "source_paths": [project_relative(project_root, item) for item in checked_paths],

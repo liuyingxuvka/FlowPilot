@@ -54,6 +54,23 @@ GATE_CONTRACTS: dict[str, dict[str, Any]] = {
         "completion_rule": "pass_repair_or_block_event_required",
         "canonical_artifact": "flowguard/process_route_model.json",
     },
+    "target_realization_model": {
+        "schema_version": GATE_CONTRACT_SCHEMA,
+        "gate_id": "target_realization_model",
+        "card_id": "flowguard_operator.target_realization_model",
+        "required_flag": "target_realization_model_submitted",
+        "wait_requires_flag": "flowguard_operator_target_realization_model_card_delivered",
+        "target_role": "flowguard_operator",
+        "output_contract_id": "flowpilot.output_contract.flowguard_operator_model_report.v1",
+        "pass_events": (
+            "flowguard_operator_submits_target_realization_model",
+        ),
+        "block_events": (
+            "flowguard_operator_blocks_target_realization_model",
+        ),
+        "completion_rule": "pass_or_block_event_required",
+        "canonical_artifact": "flowguard/target_realization_model.json",
+    },
 }
 
 GATE_CONTRACTS_BY_CARD = {
@@ -152,6 +169,18 @@ PROCESS_ROUTE_MODEL_BLOCK_EVENTS = frozenset(
     }
 )
 
+TARGET_REALIZATION_MODEL_PASS_EVENTS = frozenset(
+    {
+        "flowguard_operator_submits_target_realization_model",
+    }
+)
+
+TARGET_REALIZATION_MODEL_BLOCK_EVENTS = frozenset(
+    {
+        "flowguard_operator_blocks_target_realization_model",
+    }
+)
+
 __all__ = (
     'GATE_CONTRACT_SCHEMA',
     'GATE_CONTRACTS',
@@ -169,4 +198,6 @@ __all__ = (
     'PROCESS_ROUTE_MODEL_PASS_EVENTS',
     'PROCESS_ROUTE_MODEL_REPAIR_EVENTS',
     'PROCESS_ROUTE_MODEL_BLOCK_EVENTS',
+    'TARGET_REALIZATION_MODEL_PASS_EVENTS',
+    'TARGET_REALIZATION_MODEL_BLOCK_EVENTS',
 )

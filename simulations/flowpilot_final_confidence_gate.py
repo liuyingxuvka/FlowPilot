@@ -240,12 +240,28 @@ EVALUATORS = {
 }
 
 
-def evaluate_final_confidence(result_paths: Mapping[str, Path]) -> dict[str, Any]:
+def evaluate_final_confidence(
+    result_paths: Mapping[str, Path],
+    *,
+    subcheck_runs: Sequence[Mapping[str, Any]] = (),
+) -> dict[str, Any]:
+    run_by_name = {str(run.get("name")): run for run in subcheck_runs if isinstance(run, Mapping)}
     evidence_rows: list[dict[str, Any]] = []
     for name in ("control_plane", "event_idempotency", "model_test_alignment", "known_friction"):
         path = result_paths[name]
         payload, load_error = load_json(path)
-        evidence_rows.append(EVALUATORS[name](path, payload, load_error))
+        row = EVALUATORS[name](path, payload, load_error)
+        run = run_by_name.get(name)
+        if run is not None:
+            exit_code = int(run.get("exit_code") or 0)
+            row["details"]["subcheck_exit_code"] = exit_code
+            row["details"]["subcheck_stdout_path"] = run.get("stdout_path")
+            row["details"]["subcheck_stderr_path"] = run.get("stderr_path")
+            if exit_code != 0:
+                row["blockers"].append("subcheck_failed")
+                row["ok"] = False
+                row["status"] = DECISION_BLOCKED
+        evidence_rows.append(row)
 
     blockers = [
         {
@@ -288,14 +304,46 @@ def result_paths_for_dir(results_dir: Path) -> dict[str, Path]:
     }
 
 
-def run_required_subchecks(results_dir: Path) -> list[dict[str, Any]]:
+def _display_command(
+    command: Sequence[str],
+    *,
+    live_root: Path | None = None,
+    source_root: Path | None = None,
+) -> list[str]:
+    display: list[str] = []
+    live_root_text = str(live_root) if live_root is not None else None
+    source_root_text = str(source_root) if source_root is not None else None
+    for index, arg in enumerate(command):
+        if index == 0:
+            display.append("<python>")
+        elif live_root_text is not None and arg == live_root_text:
+            display.append("<external-live-root>")
+        elif source_root_text is not None and arg == source_root_text:
+            display.append("<flowpilot-source-root>")
+        else:
+            display.append(arg)
+    return display
+
+
+def run_required_subchecks(
+    results_dir: Path,
+    *,
+    live_root: Path | None = None,
+    source_root: Path | None = None,
+) -> list[dict[str, Any]]:
     results_dir.mkdir(parents=True, exist_ok=True)
     run_rows: list[dict[str, Any]] = []
     for name, (script, filename) in SUBCHECK_COMMANDS.items():
         json_path = results_dir / filename
         out_path = results_dir / f"{name}.out.txt"
         err_path = results_dir / f"{name}.err.txt"
+        json_path.unlink(missing_ok=True)
         command = [sys.executable, script, "--json-out", str(json_path)]
+        if name == "control_plane":
+            if live_root is not None:
+                command.extend(["--live-root", str(live_root)])
+            if source_root is not None:
+                command.extend(["--source-root", str(source_root)])
         with out_path.open("w", encoding="utf-8", errors="replace") as out_file, err_path.open(
             "w", encoding="utf-8", errors="replace"
         ) as err_file:
@@ -303,7 +351,11 @@ def run_required_subchecks(results_dir: Path) -> list[dict[str, Any]]:
         run_rows.append(
             {
                 "name": name,
-                "command": command,
+                "command": _display_command(
+                    command,
+                    live_root=live_root,
+                    source_root=source_root,
+                ),
                 "exit_code": completed.returncode,
                 "json_path": str(json_path),
                 "stdout_path": str(out_path),

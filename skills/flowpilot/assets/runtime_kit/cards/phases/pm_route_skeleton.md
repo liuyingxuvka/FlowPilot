@@ -30,6 +30,19 @@ Before drafting, read the latest
 contains no completed or superseded nodes yet. Do not draft from chat history,
 old route files, or Controller summaries.
 
+Also read the accepted implementation-intent bridge:
+
+- `.flowpilot/runs/<run-id>/implementation_intent/pm_implementation_intent.json`;
+- `.flowpilot/runs/<run-id>/flowguard/target_realization_model.json`;
+- `.flowpilot/runs/<run-id>/flowguard/target_realization_model_pm_decision.json`;
+- `.flowpilot/runs/<run-id>/reviews/implementation_intent_challenge.json`.
+
+Route skeleton drafting is blocked unless PM implementation intent exists,
+FlowGuard operator passed the target-realization model, PM accepted that model,
+and Reviewer passed the implementation-intent challenge. PM must carry
+`realization_obligations`, `thin_success_traps`, `non_downgrade_rules`, and
+`evidence_gates` into the route instead of treating them as background prose.
+
 Before asking FlowGuard operator to model the route, write
 `.flowpilot/runs/<run-id>/flowguard/process_modeling_plan.json`. The plan must
 reference the startup FlowGuard capability snapshot, the PM-accepted product
@@ -94,8 +107,17 @@ Route requirements:
 - use the FlowGuard operator's product behavior model as route input:
   map the route to its essential user actions, product states,
   failure/recovery paths, forbidden downgrades, and completion evidence;
+- use the FlowGuard operator's target-realization model as route input:
+  every hard realization obligation must be owned by route structure, merged
+  into an existing route node with reason, or explicitly blocked/waived by PM
+  with a current planning boundary. Shallow-success traps and non-downgrade
+  rules must become route evidence obligations, node acceptance checks, packet
+  instructions, reviewer checks, or final closure checks;
 - use only a PM-accepted product behavior model. If PM has not accepted the
   FlowGuard operator product model, return to product-model decision before drafting;
+- use only a PM-accepted target-realization model. If PM has not accepted the
+  FlowGuard operator target-realization model, return to implementation-intent
+  modeling before drafting;
 - use only a PM-authored Process Modeling Plan for FlowGuard operator process-model. If the
   plan is missing, does not reference the accepted product model family, or
   treats the child-skill manifest as model coverage, block route activation and
@@ -190,6 +212,14 @@ Route requirements:
   nodes must have children; executable leaves must not have children. Leaf
   readiness is judged by PM, FlowGuard Operator, and Reviewer at planning time
   and then rechecked at node entry through the node acceptance package;
+- a complex flat all-leaf route plan is not an acceptable redesign shape. If a
+  route redesign produces many related peer leaves, group them under meaningful
+  parent/module scopes in the same canonical executable route tree before
+  submitting the route plan;
+- when node-entry planning finds that the active leaf is too broad, represent
+  that active scope as a replacement parent/module node with ordered
+  `child_node_ids`. Do not append the proposed child work as peer nodes after
+  the old active node;
 - in the route plan result or PM planning notes, explicitly attack both
   under-decomposition (worker leaf too broad or vague) and over-decomposition
   (extra nodes that add no evidence, failure isolation, role boundary,
@@ -225,6 +255,15 @@ coverage is accepted, and Reviewer checks pass.
 Return `prior_path_context_review` with the route-memory source paths and how
 prior completed, superseded, stale, blocked, or experimental work affects this
 route draft.
+
+Also return `realization_obligation_projection` with:
+
+- target-realization model path and PM decision path;
+- every current realization obligation id;
+- the route node or route-level gate that owns it;
+- the thin-success trap it prevents, when applicable;
+- the evidence gate that will prove it was not silently downgraded;
+- any residual blindspot PM is deliberately carrying into later review.
 
 Also return `planning_profile_review` with:
 

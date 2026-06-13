@@ -73,6 +73,12 @@ def _sync_model_gate_flags(run_state: dict[str, Any], event: str) -> None:
     elif event in PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS:
         flags["product_behavior_model_submitted"] = False
         flags["product_behavior_model_blocked"] = True
+    elif event in TARGET_REALIZATION_MODEL_PASS_EVENTS:
+        flags["target_realization_model_submitted"] = True
+        flags["target_realization_model_blocked"] = False
+    elif event in TARGET_REALIZATION_MODEL_BLOCK_EVENTS:
+        flags["target_realization_model_submitted"] = False
+        flags["target_realization_model_blocked"] = True
     elif event in PROCESS_ROUTE_MODEL_PASS_EVENTS:
         flags["process_route_model_submitted"] = True
         flags["process_route_model_repair_required"] = False

@@ -290,8 +290,7 @@ def materialize_run_artifacts(shell: RunShell, ledger: dict[str, Any]) -> None:
         _write_text(shell.run_root / "packets" / "bodies" / f"{packet_id}.md", str(packet.get("body", "")))
     for route_version, route in ledger.get("routes", {}).items():
         _write_json(shell.run_root / "routes" / f"route-v{route_version}.json", route)
-    for node_id, node in ledger.get("route_nodes", {}).items():
-        _write_json(shell.run_root / "route_nodes" / f"{node_id}.json", node)
+    _write_route_node_projections(shell, ledger.get("route_nodes", {}))
     if isinstance(ledger.get("high_standard_contract"), dict):
         _write_json(shell.run_root / "preplanning" / "high_standard_contract.json", ledger["high_standard_contract"])
     if isinstance(ledger.get("preplanning_discovery"), dict):
@@ -426,6 +425,46 @@ def _write_events_jsonl(ledger: dict[str, Any], events_path: Path) -> None:
     if new_lines:
         with events_path.open("a", encoding="utf-8") as handle:
             handle.write("\n".join(new_lines) + "\n")
+
+
+def _write_route_node_projections(shell: RunShell, route_nodes: Any) -> None:
+    if not isinstance(route_nodes, dict):
+        return
+    entries: list[dict[str, Any]] = []
+    for node_id, node in route_nodes.items():
+        node_id_text = str(node_id)
+        filename = _safe_projection_filename(node_id_text)
+        path = shell.run_root / "route_nodes" / filename
+        _write_json(path, node)
+        entries.append(
+            {
+                "node_id": node_id_text,
+                "filename": filename,
+                "path": str(path),
+                "sha256": hashlib.sha256(node_id_text.encode("utf-8")).hexdigest(),
+                "shortened": filename != f"{_filename_safe_stem(node_id_text)}.json",
+            }
+        )
+    _write_json(
+        shell.run_root / "route_nodes" / "index.json",
+        {
+            "schema_version": "black_box_flowpilot.route_node_projection_index.v1",
+            "nodes": entries,
+        },
+    )
+
+
+def _safe_projection_filename(raw_id: str, *, suffix: str = ".json", max_component_chars: int = 120) -> str:
+    stem = _filename_safe_stem(raw_id)
+    if len(stem) + len(suffix) <= max_component_chars:
+        return f"{stem}{suffix}"
+    digest = hashlib.sha256(raw_id.encode("utf-8")).hexdigest()[:16]
+    prefix_limit = max(1, max_component_chars - len(suffix) - len(digest) - 1)
+    return f"{stem[:prefix_limit]}-{digest}{suffix}"
+
+
+def _filename_safe_stem(raw_id: str) -> str:
+    return "".join(ch if ch.isalnum() or ch in "._-" else "_" for ch in raw_id)
 
 
 def _write_json(path: Path, payload: Any) -> None:

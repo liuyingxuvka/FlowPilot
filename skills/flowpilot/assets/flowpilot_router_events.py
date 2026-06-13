@@ -155,9 +155,15 @@ def finalize_external_event_record(
     router._sync_model_gate_flags(run_state, event)
     if event == "pm_accepts_product_behavior_model":
         run_state["flags"]["pm_product_behavior_model_rebuild_requested"] = False
+    elif event == "pm_accepts_target_realization_model":
+        run_state["flags"]["pm_target_realization_model_rebuild_requested"] = False
     elif event == "pm_accepts_process_route_model":
         run_state["flags"]["pm_process_route_model_rebuild_requested"] = False
-    elif event in {"pm_requests_product_behavior_model_rebuild", "pm_requests_process_route_model_rebuild"}:
+    elif event in {
+        "pm_requests_product_behavior_model_rebuild",
+        "pm_requests_target_realization_model_rebuild",
+        "pm_requests_process_route_model_rebuild",
+    }:
         run_state["flags"][flag] = False
     if event in {
         "pm_completes_current_node_from_reviewed_result",

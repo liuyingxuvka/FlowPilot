@@ -444,6 +444,26 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("rerun only targeted scripts or checks", reviewer_text)
         self.assertIn("whether the cited flowguard evidence can support this gate", reviewer_text)
 
+    def test_route_redesign_cards_block_flat_leaf_and_peer_appended_splits(self) -> None:
+        def normalized(card_id: str) -> str:
+            return " ".join(_card_path_by_id(card_id).read_text(encoding="utf-8").lower().split())
+
+        pm_route = normalized("pm.route_skeleton")
+        pm_node = normalized("pm.node_acceptance_plan")
+        pm_core = normalized("pm.core")
+        reviewer_route = normalized("reviewer.route_challenge")
+        reviewer_node = normalized("reviewer.node_acceptance_plan_review")
+        flowguard_route = normalized("flowguard_operator.route_process_check")
+
+        self.assertIn("complex flat all-leaf route plan", pm_route)
+        self.assertIn("replacement parent/module node", pm_route)
+        self.assertIn("flat peer leaves", pm_node)
+        self.assertIn("replacement parent/module scope", pm_core)
+        self.assertIn("complex flat all-leaf route plan", reviewer_route)
+        self.assertIn("peer-appended split", reviewer_node)
+        self.assertIn("complex flat all-leaf route plan", flowguard_route)
+        self.assertIn("node-entry redesign did not promote active scope", flowguard_route)
+
     def test_reviewer_formal_package_reuses_existing_acceptance_sources(self) -> None:
         def normalized(path: Path) -> str:
             return " ".join(path.read_text(encoding="utf-8").lower().split())
@@ -669,6 +689,29 @@ class FlowPilotCardInstructionCoverageTests(unittest.TestCase):
         self.assertIn("package-produced script, checker, or evidence generator is not replayable", break_glass)
         self.assertIn("specific flowpilot packet id", break_glass)
         self.assertIn("normal pm repair cannot form a legal next action", break_glass)
+
+    def test_repair_loop_threshold_routes_to_break_glass_guidance(self) -> None:
+        def normalized(path: Path) -> str:
+            return " ".join(path.read_text(encoding="utf-8").lower().split())
+
+        pm_repair = normalized(_card_path_by_id("pm.review_repair"))
+        controller = normalized(_card_path_by_id("controller.core"))
+        break_glass = normalized(_card_path_by_id("controller.break_glass_repair"))
+        flowguard_process = normalized(_card_path_by_id("flowguard_operator.route_process_check"))
+        worker_review = normalized(_card_path_by_id("reviewer.worker_result_review"))
+        node_plan_review = normalized(_card_path_by_id("reviewer.node_acceptance_plan_review"))
+
+        self.assertIn("same current route node has repeated the same blocker problem more than five consecutive times", pm_repair)
+        self.assertIn("do not issue another ordinary pm repair decision packet", pm_repair)
+        self.assertIn("repair_loop_break_glass_review", controller)
+        self.assertIn("same current route node has repeated the same blocker problem more than five consecutive times", controller)
+        self.assertIn("similar blocker classes spread across different route nodes are ordinary repair evidence", controller)
+        self.assertIn("same current route node has repeated the same blocker problem more than five consecutive times", break_glass)
+        self.assertIn("false alarm", break_glass)
+        self.assertIn("mechanical progress from semantic repair progress", flowguard_process)
+        self.assertIn("more than five consecutive same-node attempts", flowguard_process)
+        self.assertIn("reuse the prior `blocker_class`", worker_review)
+        self.assertIn("reuse the prior `blocker_class`", node_plan_review)
 
     def test_flowguard_project_topology_guidance_is_role_scoped(self) -> None:
         def normalized(path: Path) -> str:

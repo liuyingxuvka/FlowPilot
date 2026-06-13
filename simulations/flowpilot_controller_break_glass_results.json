@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=9 initial_states=1 traces=270",
+    "summary": "sequences=9 initial_states=1 traces=405",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -154,16 +154,19 @@
       "control_flow_stuck_no_legal_next_action",
       "event_authority_contradiction",
       "non_replayable_package_artifact_blocks_packet_replay",
-      "pm_packet_repair_lane_broken"
+      "pm_packet_repair_lane_broken",
+      "repair_loop_threshold_control_fault",
+      "repair_loop_threshold_false_alarm"
     ],
-    "edge_count": 26,
+    "edge_count": 40,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
     "rejected_scenarios": [
+      "cross_node_similar_failures",
       "normal_pm_repair_available",
       "ordinary_project_bug"
     ],
-    "state_count": 27
+    "state_count": 41
   }
 }

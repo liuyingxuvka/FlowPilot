@@ -12,7 +12,10 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
+import re
+import time
 from typing import Any, Mapping
 
 try:  # pragma: no cover - direct module test harness path.
@@ -155,6 +158,8 @@ EVENT_FAMILY_BY_TYPE = {
     "packet_outcome_recorded": "packet",
     "semantic_blocker_recorded": "repair",
     "semantic_blocker_cleared": "repair",
+    "repair_loop_break_glass_required": "repair",
+    "repair_loop_pm_repair_packets_superseded": "repair",
     "pm_repair_decision_recorded": "repair",
     "pm_decision_gate_staged": "repair",
     "pm_decision_gate_applied": "repair",
@@ -188,6 +193,7 @@ _DEFAULT_FLOWGUARD_ROUTES = {
 _GUARD_HISTORY_LIMIT = 50
 _GUARD_STUCK_TRIGGERS = {"patrol", "resume"}
 _FOREGROUND_DUTY_HISTORY_LIMIT = 50
+_REPAIR_LOOP_BREAK_GLASS_THRESHOLD = 5
 _DEFAULT_WAIT_PATROL_SECONDS = 60
 _WAIT_ACK_REMINDER_SECONDS = 180
 _WAIT_ACK_BLOCKER_SECONDS = 600
@@ -472,13 +478,38 @@ def freeze_contract(ledger: dict[str, Any]) -> None:
     _event(ledger, "contract_frozen", contract_hash=ledger["contract_hash"])
 
 
+_LEDGER_READ_RETRY_ATTEMPTS = 5
+_LEDGER_READ_RETRY_DELAY_SECONDS = 0.05
+
+
 def save_ledger(ledger: Mapping[str, Any], path: Path) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(ledger, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    body = json.dumps(ledger, indent=2, sort_keys=True) + "\n"
+    tmp_path = path.with_name(f".{path.name}.tmp-{os.getpid()}-{datetime.now(timezone.utc).timestamp():.6f}")
+    try:
+        tmp_path.write_text(body, encoding="utf-8")
+        tmp_path.replace(path)
+    finally:
+        if tmp_path.exists():
+            tmp_path.unlink()
 
 
 def load_ledger(path: Path) -> dict[str, Any]:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+    last_decode_error: json.JSONDecodeError | None = None
+    for attempt in range(_LEDGER_READ_RETRY_ATTEMPTS):
+        try:
+            raw = path.read_text(encoding="utf-8")
+            if not raw.strip():
+                raise json.JSONDecodeError("empty runtime ledger", raw, 0)
+            payload = json.loads(raw)
+            break
+        except json.JSONDecodeError as exc:
+            last_decode_error = exc
+            if attempt + 1 >= _LEDGER_READ_RETRY_ATTEMPTS:
+                raise BlackBoxRuntimeError(f"invalid runtime ledger JSON at {path}: {exc}") from exc
+            time.sleep(_LEDGER_READ_RETRY_DELAY_SECONDS)
+    else:  # pragma: no cover - loop exits through break or exception.
+        raise BlackBoxRuntimeError(f"invalid runtime ledger JSON at {path}: {last_decode_error}") from last_decode_error
     if payload.get("schema_version") != SCHEMA_VERSION:
         raise BlackBoxRuntimeError("unsupported ledger schema")
     return payload
@@ -679,6 +710,7 @@ def create_route(ledger: dict[str, Any], summary: str, steps: list[str]) -> str:
             mutation_id=str(mutation["mutation_id"]),
             disposition_id="",
             replacement_node_id="",
+            new_route_version=new_version,
         )
 
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
@@ -1496,7 +1528,9 @@ def ensure_node_acceptance_plan_packet(ledger: dict[str, Any], node_id: str) -> 
                     "First decide whether the current route/node structure is still right. If yes, return "
                     "decision=pass with a top-level node_context_package for Reviewer and Worker. If the node is "
                     "too coarse, too fine, or structurally wrong, return decision=redesign_route with a strict "
-                    "route_plan. Do not request optional FlowGuard; runtime sends structural redesigns through "
+                    "route_plan. For node-entry redesign, the route_plan must start with a replacement "
+                    "parent/module scope for the active node and put its decomposed child work in child_node_ids; "
+                    "do not append those child work items as flat peer leaves. Do not request optional FlowGuard; runtime sends structural redesigns through "
                     "mandatory FlowGuard, PM absorption, Reviewer, and system validation."
                 ),
                 "required_node_context_package_fields": [
@@ -1558,6 +1592,169 @@ def _terminal_backward_replay_accepted(ledger: Mapping[str, Any]) -> bool:
     )
 
 
+def _active_route_node_records(
+    ledger: Mapping[str, Any],
+    *,
+    include_superseded: bool = False,
+) -> list[Mapping[str, Any]]:
+    active_route = ledger.get("active_route_version")
+    nodes: list[Mapping[str, Any]] = []
+    for node in ledger.get("route_nodes", {}).values():
+        if not isinstance(node, Mapping):
+            continue
+        if active_route is not None and str(node.get("route_version", "")) != str(active_route):
+            continue
+        if not include_superseded and node.get("status") == "superseded":
+            continue
+        nodes.append(node)
+    return nodes
+
+
+def _packet_current_for_route_node(
+    ledger: Mapping[str, Any],
+    packet: Mapping[str, Any],
+    *,
+    node_id: str = "",
+) -> bool:
+    envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+    active_route = ledger.get("active_route_version")
+    if active_route is not None and envelope.get("route_version") != active_route:
+        return False
+    if node_id and str(envelope.get("route_node_id") or "") != node_id:
+        return False
+    return True
+
+
+def _review_evidence_current_and_accepted(
+    ledger: Mapping[str, Any],
+    review_id: str,
+    *,
+    node_id: str = "",
+) -> bool:
+    review = ledger.get("reviews", {}).get(review_id)
+    if not isinstance(review, Mapping):
+        return False
+    if review.get("decision") != "accept":
+        return False
+    if review.get("blockers"):
+        return False
+    if review.get("checks_evidence") is not True:
+        return False
+    if review.get("independent_from_producer") is not True:
+        return False
+    if not review.get("direct_evidence_ids"):
+        return False
+    result_id = str(review.get("result_id") or "")
+    result = ledger.get("results", {}).get(result_id)
+    if not isinstance(result, Mapping):
+        return False
+    if result.get("status") != "accepted":
+        return False
+    subject_packet_id = str(review.get("subject_packet_id") or result.get("packet_id") or "")
+    packet = ledger.get("packets", {}).get(subject_packet_id)
+    if not isinstance(packet, Mapping):
+        return False
+    return _packet_current_for_route_node(ledger, packet, node_id=node_id)
+
+
+def _flowguard_order_current_and_passing(
+    ledger: Mapping[str, Any],
+    order_id: str,
+    *,
+    node_id: str = "",
+) -> bool:
+    order = ledger.get("flowguard_work_orders", {}).get(order_id)
+    if not isinstance(order, Mapping):
+        return False
+    if order.get("status") != "complete" or order.get("decision") != "pass":
+        return False
+    if order.get("progress_only") or order.get("skipped_checks") or order.get("proof_stale"):
+        return False
+    if not order.get("proof_artifact"):
+        return False
+    if order.get("source_generation") != ledger.get("source_generation"):
+        return False
+    subject_packet_id = str(order.get("subject_id") or "")
+    if subject_packet_id:
+        packet = ledger.get("packets", {}).get(subject_packet_id)
+        if not isinstance(packet, Mapping):
+            return False
+        if not _packet_current_for_route_node(ledger, packet, node_id=node_id):
+            return False
+    return True
+
+
+def _validation_evidence_current_and_passing(
+    ledger: Mapping[str, Any],
+    evidence_id: str,
+    *,
+    node_id: str = "",
+) -> bool:
+    evidence = ledger.get("validation_evidence", {}).get(evidence_id)
+    if not isinstance(evidence, Mapping):
+        return False
+    if evidence.get("status") != "passed":
+        return False
+    if evidence.get("source_generation") != ledger.get("source_generation"):
+        return False
+    if evidence.get("blockers"):
+        return False
+    subject_packet_id = str(evidence.get("subject_packet_id") or "")
+    if subject_packet_id:
+        packet = ledger.get("packets", {}).get(subject_packet_id)
+        if not isinstance(packet, Mapping):
+            return False
+        if not _packet_current_for_route_node(ledger, packet, node_id=node_id):
+            return False
+    return True
+
+
+def _valid_review_evidence_ids(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> list[str]:
+    node_id = str(node.get("node_id") or "")
+    return [
+        str(review_id)
+        for review_id in node.get("review_ids") or []
+        if _review_evidence_current_and_accepted(ledger, str(review_id), node_id=node_id)
+    ]
+
+
+def _valid_flowguard_order_ids(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> list[str]:
+    node_id = str(node.get("node_id") or "")
+    return [
+        str(order_id)
+        for order_id in node.get("flowguard_order_ids") or []
+        if _flowguard_order_current_and_passing(ledger, str(order_id), node_id=node_id)
+    ]
+
+
+def _valid_validation_evidence_ids(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> list[str]:
+    node_id = str(node.get("node_id") or "")
+    return [
+        str(evidence_id)
+        for evidence_id in node.get("validation_evidence_ids") or []
+        if _validation_evidence_current_and_passing(ledger, str(evidence_id), node_id=node_id)
+    ]
+
+
+def _final_evidence_status(raw_ids: list[str], valid_ids: list[str]) -> str:
+    if valid_ids:
+        return "covered"
+    if raw_ids:
+        return "invalid"
+    return "missing"
+
+
+def _node_final_quality_evidence_valid(ledger: Mapping[str, Any], node: Mapping[str, Any]) -> bool:
+    node_id = str(node.get("node_id", ""))
+    if _node_worker_dispatch_blocker(ledger, node_id, node):
+        return True
+    return (
+        bool(_valid_flowguard_order_ids(ledger, node))
+        and bool(_valid_review_evidence_ids(ledger, node))
+        and bool(_valid_validation_evidence_ids(ledger, node))
+    )
+
+
 def _terminal_backward_replay_segment_targets(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
     targets: list[dict[str, Any]] = [
         {
@@ -1571,9 +1768,7 @@ def _terminal_backward_replay_segment_targets(ledger: Mapping[str, Any]) -> list
             "summary": "Compare the delivered product against the frozen root acceptance contract.",
         },
     ]
-    for node in ledger.get("route_nodes", {}).values():
-        if not isinstance(node, Mapping) or node.get("status") == "superseded":
-            continue
+    for node in _active_route_node_records(ledger):
         node_id = str(node.get("node_id") or "")
         if not node_id:
             continue
@@ -2112,7 +2307,7 @@ def _node_closes_high_standard_requirement(
 
 
 def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]:
-    nodes = list(ledger.get("route_nodes", {}).values())
+    nodes = _active_route_node_records(ledger, include_superseded=True)
     effective_nodes = [node for node in nodes if node.get("status") != "superseded"]
     unresolved: list[str] = []
     stale: list[str] = []
@@ -2137,6 +2332,13 @@ def build_final_route_wide_gate_ledger(ledger: dict[str, Any]) -> dict[str, Any]
                     "route_deliverable:"
                     f"{node_id}:{check_result.get('check_id', '')}:{check_result.get('status', 'failed')}"
                 )
+        if not dispatch_blocker:
+            if node.get("flowguard_order_ids") and not _valid_flowguard_order_ids(ledger, node):
+                unresolved.append(f"invalid_flowguard_evidence:{node_id}")
+            if node.get("review_ids") and not _valid_review_evidence_ids(ledger, node):
+                unresolved.append(f"invalid_review_evidence:{node_id}")
+            if node.get("validation_evidence_ids") and not _valid_validation_evidence_ids(ledger, node):
+                unresolved.append(f"invalid_validation_evidence:{node_id}")
     for packet in ledger.get("packets", {}).values():
         if not isinstance(packet, Mapping) or not _packet_requires_current_acceptance(ledger, packet):
             continue
@@ -2220,8 +2422,9 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             requirement_id = str(requirement.get("requirement_id") or "unknown")
             covered_nodes = [
                 str(node.get("node_id", ""))
-                for node in ledger.get("route_nodes", {}).values()
+                for node in _active_route_node_records(ledger)
                 if _node_closes_high_standard_requirement(ledger, node, requirement)
+                and _node_final_quality_evidence_valid(ledger, node)
             ]
             add_row(
                 requirement_id,
@@ -2238,9 +2441,10 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             obligation_id = str(obligation.get("obligation_id") or "unknown")
             covered_nodes = [
                 str(node.get("node_id", ""))
-                for node in ledger.get("route_nodes", {}).values()
+                for node in _active_route_node_records(ledger)
                 if obligation_id in list(node.get("skill_standard_obligation_ids") or [])
                 and node.get("status") in {"accepted", "waived"}
+                and _node_final_quality_evidence_valid(ledger, node)
             ]
             add_row(
                 obligation_id,
@@ -2250,9 +2454,7 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
                 str(obligation.get("skill") or obligation_id),
             )
 
-    for node in ledger.get("route_nodes", {}).values():
-        if node.get("status") == "superseded":
-            continue
+    for node in _active_route_node_records(ledger):
         node_id = str(node.get("node_id", ""))
         dispatch_blocker = _node_worker_dispatch_blocker(ledger, node_id, node)
         worker_dispatch_node = not dispatch_blocker
@@ -2305,25 +2507,31 @@ def build_final_requirement_evidence_matrix(ledger: dict[str, Any]) -> dict[str,
             f"Node {node_id} has PM disposition",
         )
         if worker_dispatch_node:
+            raw_flowguard_ids = [str(item) for item in node.get("flowguard_order_ids") or []]
+            valid_flowguard_ids = _valid_flowguard_order_ids(ledger, node)
             add_row(
                 f"{node_id}:flowguard",
                 "flowguard",
-                "covered" if node.get("flowguard_order_ids") else "missing",
-                [str(item) for item in node.get("flowguard_order_ids") or []],
+                _final_evidence_status(raw_flowguard_ids, valid_flowguard_ids),
+                valid_flowguard_ids,
                 f"Node {node_id} has FlowGuard evidence",
             )
+            raw_review_ids = [str(item) for item in node.get("review_ids") or []]
+            valid_review_ids = _valid_review_evidence_ids(ledger, node)
             add_row(
                 f"{node_id}:review",
                 "review",
-                "covered" if node.get("review_ids") else "missing",
-                [str(item) for item in node.get("review_ids") or []],
+                _final_evidence_status(raw_review_ids, valid_review_ids),
+                valid_review_ids,
                 f"Node {node_id} has independent review evidence",
             )
+            raw_validation_ids = [str(item) for item in node.get("validation_evidence_ids") or []]
+            valid_validation_ids = _valid_validation_evidence_ids(ledger, node)
             add_row(
                 f"{node_id}:validation",
                 "validation",
-                "covered" if node.get("validation_evidence_ids") else "missing",
-                [str(item) for item in node.get("validation_evidence_ids") or []],
+                _final_evidence_status(raw_validation_ids, valid_validation_ids),
+                valid_validation_ids,
                 f"Node {node_id} has validation evidence",
             )
         if node.get("required_outputs") and not node.get("deliverable_checks"):
@@ -2446,6 +2654,28 @@ def _normalize_strict_route_plan_nodes(route_plan: Mapping[str, Any]) -> list[di
                     f"strict route plan schema violation: child node {child_id} parent_node_id must match {node_id}"
                 )
     return normalized
+
+
+def _validate_node_acceptance_redesign_route_nodes(
+    node_specs: list[dict[str, Any]],
+    *,
+    target_node_id: str,
+) -> None:
+    del target_node_id
+    if not node_specs:
+        raise BlackBoxRuntimeError("strict route plan schema violation: node acceptance redesign_route nodes must be non-empty")
+    first_node = node_specs[0]
+    first_kind = str(first_node.get("node_kind") or "leaf")
+    first_children = [str(item) for item in first_node.get("child_node_ids") or []]
+    if first_kind not in NON_WORKER_DISPATCH_NODE_KINDS or not first_children:
+        raise BlackBoxRuntimeError(
+            "strict route plan schema violation: node acceptance redesign_route must start with a replacement "
+            "parent/module scope using node_kind and child_node_ids; flat all-leaf peer route_plan nodes are not allowed"
+        )
+    if not any(str(node.get("node_kind") or "leaf") in {"leaf", "repair"} for node in node_specs):
+        raise BlackBoxRuntimeError(
+            "strict route plan schema violation: node acceptance redesign_route parent/module scope requires dispatchable leaf children"
+        )
 
 
 def _strict_optional_string(raw_node: Mapping[str, Any], field: str, default: str) -> str:
@@ -2716,6 +2946,7 @@ _BLOCKING_OUTCOME_DECISIONS = {
 _ACTIVE_SEMANTIC_BLOCKER_STATUSES = {"active", "repairing", "repair_packet_open", "awaiting_recheck"}
 _CLEARABLE_SEMANTIC_BLOCKER_STATUSES = _ACTIVE_SEMANTIC_BLOCKER_STATUSES | {"repair_packet_open"}
 _CURRENT_PACKET_BLOCKING_STATUSES = {"result_blocked", "review_blocked", "system_validation_blocked", "flowguard_blocked"}
+_REPAIR_LOOP_COUNTED_BLOCKER_STATUSES = _CLEARABLE_SEMANTIC_BLOCKER_STATUSES | {"awaiting_pm_decision_gate"}
 _REPAIR_REPLACED_PACKET_STATUSES = _CURRENT_PACKET_BLOCKING_STATUSES | {"result_submitted"}
 _NONCURRENT_PACKET_STATUSES = {"accepted", "quarantined_after_route_mutation", "superseded_after_repair"}
 _NONCURRENT_ROUTE_NODE_STATUSES = {"accepted", "waived", "superseded"}
@@ -2996,26 +3227,41 @@ def _progress_packets(ledger: Mapping[str, Any]) -> list[Mapping[str, Any]]:
     return packets
 
 
+def _active_route_node_order_for_progress(ledger: Mapping[str, Any]) -> list[str]:
+    active_route = ledger.get("active_route_version")
+    if active_route is None:
+        return []
+    routes = ledger.get("routes", {})
+    if not isinstance(routes, Mapping):
+        return []
+    route = routes.get(str(active_route))
+    if not isinstance(route, Mapping):
+        return []
+    node_order = route.get("node_order")
+    if not isinstance(node_order, (list, tuple)):
+        return []
+    return [node_id for item in node_order if (node_id := str(item or "").strip())]
+
+
 def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
     """Return Controller-safe current expanded node progress."""
 
-    route_nodes = [
-        node
-        for node in ledger.get("route_nodes", {}).values()
-        if isinstance(node, Mapping)
-    ]
-    if route_nodes:
-        expanded_nodes = 0
+    route_nodes = ledger.get("route_nodes", {})
+    if not isinstance(route_nodes, Mapping):
+        route_nodes = {}
+    active_route_node_ids = _active_route_node_order_for_progress(ledger)
+    if active_route_node_ids:
+        expanded_nodes = len(active_route_node_ids)
         ended_nodes = 0
         repair_generations = 0
-        for node in route_nodes:
-            repairs = _coerce_nonnegative_int(node.get("repair_generation", 0))
-            repair_generations += repairs
-            expanded_nodes += 1 + repairs
-            ended_nodes += repairs
+        for node_id in active_route_node_ids:
+            node = route_nodes.get(node_id)
+            if not isinstance(node, Mapping):
+                continue
+            repair_generations += _coerce_nonnegative_int(node.get("repair_generation", 0))
             if str(node.get("status") or "") in _PROGRESS_ROUTE_NODE_ENDED_STATUSES:
                 ended_nodes += 1
-        source = "route_nodes"
+        source = "active_route_node_order"
         packet_projection_used = False
     else:
         packets = _progress_packets(ledger)
@@ -3037,7 +3283,7 @@ def current_progress_fraction(ledger: Mapping[str, Any]) -> dict[str, Any]:
         "expanded_nodes": expanded_nodes,
         "source": source,
         "equal_weight_nodes": True,
-        "includes_repair_generations": True,
+        "includes_repair_generations": False,
         "repair_generations": repair_generations,
         "packet_projection_used": packet_projection_used,
         "controller_relay_only": True,
@@ -3298,36 +3544,123 @@ def _supersede_repair_open_blockers_for_route_mutation(
     mutation_id: str,
     disposition_id: str,
     replacement_node_id: str,
+    new_route_version: Any,
 ) -> None:
     affected = {str(packet_id) for packet_id in affected_packets if packet_id}
-    if not affected:
-        return
+    family_keys = {
+        key
+        for blocker in ledger.setdefault("active_blockers", {}).values()
+        if isinstance(blocker, Mapping)
+        and blocker.get("status") == "repair_packet_open"
+        and str(blocker.get("repair_packet_id") or "") in affected
+        for key in (_repair_open_blocker_family_key(blocker),)
+        if any(key)
+    }
+    mutation_route_version = _route_version_int(new_route_version)
     for blocker in ledger.setdefault("active_blockers", {}).values():
         if not isinstance(blocker, dict):
             continue
         if blocker.get("status") != "repair_packet_open":
             continue
         repair_packet_id = str(blocker.get("repair_packet_id") or "")
-        if repair_packet_id not in affected:
+        directly_affected = repair_packet_id in affected
+        stale_prior_route = _repair_open_blocker_from_prior_route_version(
+            blocker,
+            mutation_route_version,
+        )
+        same_family_obsolete = (
+            not directly_affected
+            and not stale_prior_route
+            and bool(family_keys)
+            and _repair_open_blocker_family_key(blocker) in family_keys
+            and _repair_open_blocker_obsolete_after_route_mutation(ledger, blocker)
+        )
+        if not (directly_affected or stale_prior_route or same_family_obsolete):
             continue
-        blocker["status"] = "superseded_by_route_mutation"
-        blocker["superseded_by_route_mutation_id"] = mutation_id
-        blocker["superseded_by_route_mutation_disposition_id"] = disposition_id
-        blocker["superseded_repair_packet_id"] = repair_packet_id
-        blocker["superseded_replacement_node_id"] = replacement_node_id
-        blocker["superseded_at"] = now_iso()
-        packet = ledger.get("packets", {}).get(repair_packet_id)
-        if isinstance(packet, dict) and packet.get("active_blocker_id") == blocker.get("blocker_id"):
-            packet["active_blocker_id"] = ""
-        _event(
+        _mark_repair_open_blocker_superseded_by_route_mutation(
             ledger,
-            "semantic_blocker_superseded_by_route_mutation",
-            blocker_id=str(blocker.get("blocker_id") or ""),
+            blocker,
             repair_packet_id=repair_packet_id,
             mutation_id=mutation_id,
             disposition_id=disposition_id,
             replacement_node_id=replacement_node_id,
         )
+
+
+def _route_version_int(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _repair_open_blocker_from_prior_route_version(
+    blocker: Mapping[str, Any],
+    mutation_new_route_version: int | None,
+) -> bool:
+    if mutation_new_route_version is None:
+        return False
+    blocker_route_version = _route_version_int(blocker.get("route_version"))
+    return blocker_route_version is not None and blocker_route_version < mutation_new_route_version
+
+
+def _repair_open_blocker_family_key(blocker: Mapping[str, Any]) -> tuple[str, str, str, str]:
+    return (
+        str(blocker.get("blocker_class") or ""),
+        str(blocker.get("route_scope") or ""),
+        str(blocker.get("owner_role") or ""),
+        str(blocker.get("required_recheck_role") or ""),
+    )
+
+
+def _repair_open_blocker_obsolete_after_route_mutation(
+    ledger: Mapping[str, Any],
+    blocker: Mapping[str, Any],
+) -> bool:
+    repair_packet_id = str(blocker.get("repair_packet_id") or "")
+    violation = _packet_current_target_violation(
+        ledger,
+        repair_packet_id,
+        require_responsibility=False,
+    )
+    if violation.startswith(
+        (
+            "noncurrent_packet_status:",
+            "stale_route_version:",
+            "noncurrent_route_node:",
+        )
+    ):
+        return True
+    return _route_node_is_noncurrent(ledger, str(blocker.get("route_node_id") or ""))
+
+
+def _mark_repair_open_blocker_superseded_by_route_mutation(
+    ledger: dict[str, Any],
+    blocker: dict[str, Any],
+    *,
+    repair_packet_id: str,
+    mutation_id: str,
+    disposition_id: str,
+    replacement_node_id: str,
+) -> None:
+    blocker["status"] = "superseded_by_route_mutation"
+    blocker["superseded_by_route_mutation_id"] = mutation_id
+    blocker["superseded_by_route_mutation_disposition_id"] = disposition_id
+    blocker["superseded_repair_packet_id"] = repair_packet_id
+    blocker["superseded_replacement_node_id"] = replacement_node_id
+    blocker["superseded_at"] = now_iso()
+    packet = ledger.get("packets", {}).get(repair_packet_id)
+    if isinstance(packet, dict) and packet.get("active_blocker_id") == blocker.get("blocker_id"):
+        packet["active_blocker_id"] = ""
+    _event(
+        ledger,
+        "semantic_blocker_superseded_by_route_mutation",
+        blocker_id=str(blocker.get("blocker_id") or ""),
+        repair_packet_id=repair_packet_id,
+        mutation_id=mutation_id,
+        disposition_id=disposition_id,
+        replacement_node_id=replacement_node_id,
+    )
 
 
 def _record_semantic_blocker(
@@ -3444,6 +3777,20 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
         raise BlackBoxRuntimeError(
             f"cannot issue PM repair decision packet for blocker {blocker_id} in status {blocker.get('status')}"
         )
+    repair_loop_review = _repair_loop_break_glass_review(ledger, blocker)
+    if repair_loop_review.get("threshold_exceeded"):
+        _supersede_same_family_pm_repair_packets_for_break_glass(ledger, repair_loop_review)
+        blocker["pm_repair_packet_id"] = ""
+        if not _repair_loop_break_glass_event_recorded(ledger, blocker_id):
+            _event(
+                ledger,
+                "repair_loop_break_glass_required",
+                blocker_id=blocker_id,
+                family_key=str(repair_loop_review.get("family_key") or ""),
+                attempt_count=int(repair_loop_review.get("attempt_count", 0) or 0),
+                threshold=int(repair_loop_review.get("threshold", _REPAIR_LOOP_BREAK_GLASS_THRESHOLD) or 0),
+            )
+        return ""
     existing = _find_packet(
         ledger,
         packet_kind="pm_repair_decision",
@@ -3551,7 +3898,8 @@ def _ensure_pm_repair_decision_packet_for_blocker(ledger: dict[str, Any], blocke
                     "Before deciding, use every required authorized input material delivered by open-packet as the "
                     "source of the concrete failure. "
                     "Use repair_parent_scope only when the explicit parent scope should be replaced. Use redesign_route "
-                    "only with a strict route_plan object. Use waive_with_authority only with authority_ref. "
+                    "only with a strict route_plan object; complex redesigns must preserve parent/module grouping "
+                    "instead of returning flat all-leaf peer nodes. Use waive_with_authority only with authority_ref. "
                     "Do not wrap the decision inside repair_decision, pm_repair_decision, prose, or any legacy shape. "
                     "PM chooses the repair route using the blocker recommendation and target contract. PM does not "
                     "impersonate the blocked reviewer, system validation check, FlowGuard pass, or worker deliverable."
@@ -3891,6 +4239,8 @@ def _ensure_pm_flowguard_acceptance_packet_for_gate(
             "Read the current staged structural decision and the current FlowGuard report. "
             "Return one strict JSON result. Use decision=accept only after absorbing the FlowGuard findings; "
             "use decision=redesign_route with a strict route_plan when the report changes the route; "
+            "do not replace a hierarchical route with a complex flat all-leaf route_plan, and keep node-entry "
+            "splits under a replacement parent/module scope; "
             "use decision=block or stop_for_user when the structural change cannot proceed. "
             "There is no optional or uncertain FlowGuard branch."
         ),
@@ -4304,6 +4654,7 @@ def _materialize_route_redesign(
         mutation_id=str(mutation["mutation_id"]),
         disposition_id=disposition_id,
         replacement_node_id=first_node_id,
+        new_route_version=new_version,
     )
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
     _event(ledger, "execution_frontier_updated", status=ledger["execution_frontier"]["status"], active_node_id=first_node_id)
@@ -4465,6 +4816,7 @@ def _redesign_route_from_pm_decision(
         mutation_id=str(ledger["execution_frontier"]["pending_route_mutation"]["mutation_id"]),
         disposition_id=decision_id,
         replacement_node_id=first_node_id,
+        new_route_version=new_version,
     )
     _event(ledger, "route_created", route_version=new_version, old_route_version=old_version)
     _event(ledger, "execution_frontier_updated", status=ledger["execution_frontier"]["status"], active_node_id=first_node_id)
@@ -4767,6 +5119,7 @@ def _replace_route_node_for_repair(
         mutation_id=str(mutation["mutation_id"]),
         disposition_id=disposition_id,
         replacement_node_id=replacement_id,
+        new_route_version=new_version,
     )
     ledger["execution_frontier"] = {
         "active_route_version": new_version,
@@ -5096,31 +5449,177 @@ def _public_packet_memory_row(ledger: Mapping[str, Any], packet_id: str, packet:
     }
 
 
-def _blocker_repeat_context(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
-    target = str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or blocker.get("packet_id") or "")
-    blocker_class = str(blocker.get("blocker_class") or "")
-    same_family: list[dict[str, str]] = []
+_REPAIR_NODE_SUFFIX_RE = re.compile(r"(?:-repair-v\d+)+$")
+_ROUTE_NODE_VERSION_RE = re.compile(r"-v\d+(?=-|$)")
+
+
+def _normalize_repair_loop_route_node_id(route_node_id: str) -> str:
+    node_id = str(route_node_id or "").strip()
+    previous = None
+    while node_id and previous != node_id:
+        previous = node_id
+        node_id = _REPAIR_NODE_SUFFIX_RE.sub("", node_id)
+    return _ROUTE_NODE_VERSION_RE.sub("-v#", node_id)
+
+
+def _blocker_repair_loop_target_id(blocker: Mapping[str, Any]) -> str:
+    return str(blocker.get("repair_target_packet_id") or blocker.get("subject_packet_id") or blocker.get("packet_id") or "")
+
+
+def _blocker_repair_loop_route_node_id(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> str:
+    explicit = str(blocker.get("route_node_id") or "")
+    if explicit:
+        return explicit
+    for field in ("repair_target_packet_id", "subject_packet_id", "packet_id", "pm_repair_packet_id", "repair_packet_id"):
+        packet_id = str(blocker.get(field) or "")
+        packet = ledger.get("packets", {}).get(packet_id)
+        envelope = packet.get("envelope", {}) if isinstance(packet, Mapping) and isinstance(packet.get("envelope"), Mapping) else {}
+        route_node_id = str(envelope.get("route_node_id") or "")
+        if route_node_id:
+            return route_node_id
+    return ""
+
+
+def _repair_loop_family_parts(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, str]:
+    normalized_node_id = _normalize_repair_loop_route_node_id(_blocker_repair_loop_route_node_id(ledger, blocker))
+    fallback_target_id = _blocker_repair_loop_target_id(blocker)
+    return {
+        "family_subject": normalized_node_id or fallback_target_id,
+        "normalized_route_node_id": normalized_node_id,
+        "fallback_target_id": "" if normalized_node_id else fallback_target_id,
+        "blocker_class": str(blocker.get("blocker_class") or "unknown"),
+        "gate_kind": str(blocker.get("gate_kind") or "unknown"),
+        "required_recheck_role": str(blocker.get("required_recheck_role") or "unknown"),
+    }
+
+
+def _repair_loop_family_key(parts: Mapping[str, str]) -> str:
+    return "|".join(
+        f"{field}={str(parts.get(field) or '')}"
+        for field in ("family_subject", "blocker_class", "gate_kind", "required_recheck_role")
+    )
+
+
+def _blocker_counts_for_repair_loop(ledger: Mapping[str, Any], candidate: Mapping[str, Any]) -> bool:
+    if candidate.get("cleared_by_outcome_id"):
+        return False
+    if _route_node_is_noncurrent(ledger, str(candidate.get("route_node_id") or "")):
+        return False
+    status = str(candidate.get("status") or "")
+    return status in _REPAIR_LOOP_COUNTED_BLOCKER_STATUSES or status.startswith("retired_after_")
+
+
+def _repair_loop_same_family_rows(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> tuple[dict[str, str], list[dict[str, str]]]:
+    family = _repair_loop_family_parts(ledger, blocker)
+    family_key = _repair_loop_family_key(family)
+    rows: list[dict[str, str]] = []
+    target_blocker_id = str(blocker.get("blocker_id") or "")
     for candidate in ledger.get("active_blockers", {}).values():
         if not isinstance(candidate, Mapping):
             continue
-        candidate_target = str(
-            candidate.get("repair_target_packet_id") or candidate.get("subject_packet_id") or candidate.get("packet_id") or ""
-        )
-        if candidate_target != target or str(candidate.get("blocker_class") or "") != blocker_class:
-            continue
-        same_family.append(
-            {
-                "blocker_id": str(candidate.get("blocker_id") or ""),
-                "status": str(candidate.get("status") or ""),
-                "pm_repair_decision_id": str(candidate.get("pm_repair_decision_id") or ""),
-                "pm_repair_packet_id": str(candidate.get("pm_repair_packet_id") or ""),
-            }
-        )
+        candidate_family = _repair_loop_family_parts(ledger, candidate)
+        candidate_key = _repair_loop_family_key(candidate_family)
+        candidate_counts = _blocker_counts_for_repair_loop(ledger, candidate)
+        if candidate_key == family_key:
+            if candidate_counts:
+                rows.append(
+                    {
+                        "blocker_id": str(candidate.get("blocker_id") or ""),
+                        "status": str(candidate.get("status") or ""),
+                        "route_node_id": str(candidate.get("route_node_id") or ""),
+                        "normalized_route_node_id": str(candidate_family.get("normalized_route_node_id") or ""),
+                        "pm_repair_decision_id": str(candidate.get("pm_repair_decision_id") or ""),
+                        "pm_repair_packet_id": str(candidate.get("pm_repair_packet_id") or ""),
+                        "repair_packet_id": str(candidate.get("repair_packet_id") or ""),
+                    }
+                )
+            else:
+                rows = []
+        elif candidate_counts:
+            rows = []
+        if target_blocker_id and str(candidate.get("blocker_id") or "") == target_blocker_id:
+            break
+    return family, rows
+
+
+def _repair_loop_break_glass_review(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
+    family, rows = _repair_loop_same_family_rows(ledger, blocker)
+    attempt_count = len(rows)
+    threshold_exceeded = attempt_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD
     return {
-        "family_key": f"{target}:{blocker_class}",
-        "repeat_count": len(same_family),
+        "schema_version": "black_box_flowpilot.repair_loop_break_glass_review.v1",
+        "family_key": _repair_loop_family_key(family),
+        "family": family,
+        "attempt_count": attempt_count,
+        "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "threshold_exceeded": threshold_exceeded,
+        "blocker_ids": [row["blocker_id"] for row in rows if row["blocker_id"]],
+        "same_family_blockers": rows,
+        "required_action": "controller_break_glass_diagnosis" if threshold_exceeded else "ordinary_pm_repair_allowed",
+        "consecutive_scope": "same_current_route_node_problem_identity",
+        "reason": (
+            "same current route node repeated the same blocker problem more than five consecutive times"
+            if threshold_exceeded
+            else "same current route node problem remains within ordinary PM repair threshold"
+        ),
+        "sealed_bodies_visible": False,
+    }
+
+
+def _repair_loop_break_glass_event_recorded(ledger: Mapping[str, Any], blocker_id: str) -> bool:
+    for event in ledger.get("events", []):
+        if not isinstance(event, Mapping) or event.get("event_type") != "repair_loop_break_glass_required":
+            continue
+        payload = event.get("payload") if isinstance(event.get("payload"), Mapping) else {}
+        if str(payload.get("blocker_id") or "") == blocker_id:
+            return True
+    return False
+
+
+def _supersede_same_family_pm_repair_packets_for_break_glass(
+    ledger: dict[str, Any],
+    review: Mapping[str, Any],
+) -> list[str]:
+    superseded: list[str] = []
+    for row in review.get("same_family_blockers") or []:
+        if not isinstance(row, Mapping):
+            continue
+        packet_id = str(row.get("pm_repair_packet_id") or "")
+        packet = ledger.get("packets", {}).get(packet_id)
+        if not isinstance(packet, dict):
+            continue
+        envelope = packet.get("envelope", {}) if isinstance(packet.get("envelope"), Mapping) else {}
+        if envelope.get("packet_kind") != "pm_repair_decision":
+            continue
+        if packet.get("status") in _NONCURRENT_PACKET_STATUSES:
+            continue
+        packet["status"] = "superseded_after_repair"
+        packet["superseded_reason"] = "repair_loop_break_glass_required"
+        packet["superseded_at"] = now_iso()
+        packet["active_blocker_id"] = ""
+        superseded.append(packet_id)
+    if superseded:
+        _event(
+            ledger,
+            "repair_loop_pm_repair_packets_superseded",
+            packet_ids=superseded,
+            family_key=str(review.get("family_key") or ""),
+            attempt_count=int(review.get("attempt_count", 0) or 0),
+        )
+    return superseded
+
+
+def _blocker_repeat_context(ledger: Mapping[str, Any], blocker: Mapping[str, Any]) -> dict[str, Any]:
+    family, same_family = _repair_loop_same_family_rows(ledger, blocker)
+    repeat_count = len(same_family)
+    return {
+        "family_key": _repair_loop_family_key(family),
+        "family": family,
+        "repeat_count": repeat_count,
         "previous_blocker_ids": [row["blocker_id"] for row in same_family if row["blocker_id"] != blocker.get("blocker_id")],
         "same_family_blockers": same_family,
+        "threshold": _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
+        "threshold_exceeded": repeat_count > _REPAIR_LOOP_BREAK_GLASS_THRESHOLD,
         "advisory_only": True,
     }
 
@@ -6970,6 +7469,24 @@ def _terminal_backward_replay_result_violation(packet: Mapping[str, Any], result
             "terminal backward replay requires non-empty segment_reviews",
             missing_required_fields=("segment_reviews",),
         )
+    packet_payload = _strict_json_object_from_body(str(packet.get("body", "")))
+    segment_targets = packet_payload.get("segment_targets") if isinstance(packet_payload, Mapping) else None
+    if not isinstance(segment_targets, list) or not segment_targets:
+        return _contract_block(
+            packet,
+            "terminal backward replay packet is missing runtime-issued segment_targets",
+            missing_required_fields=("segment_targets",),
+        )
+    target_ids: list[str] = []
+    for index, target in enumerate(segment_targets, start=1):
+        if not isinstance(target, Mapping) or not str(target.get("segment_id") or "").strip():
+            return _contract_block(
+                packet,
+                f"terminal backward replay segment_targets[{index}] is missing segment_id",
+                missing_required_fields=(f"segment_targets[{index}].segment_id",),
+            )
+        target_ids.append(str(target.get("segment_id")))
+    seen_segment_ids: list[str] = []
     for index, segment in enumerate(segment_reviews, start=1):
         if not isinstance(segment, Mapping):
             return _contract_block(packet, f"terminal backward replay segment_reviews[{index}] must be an object")
@@ -6992,6 +7509,23 @@ def _terminal_backward_replay_result_violation(packet: Mapping[str, Any], result
                 "terminal backward replay segment is missing required current pass evidence: " + ", ".join(missing),
                 missing_required_fields=tuple(dict.fromkeys(missing)),
             )
+        seen_segment_ids.append(str(segment.get("segment_id")))
+    duplicate_ids = sorted({segment_id for segment_id in seen_segment_ids if seen_segment_ids.count(segment_id) > 1})
+    missing_ids = sorted(set(target_ids) - set(seen_segment_ids))
+    unexpected_ids = sorted(set(seen_segment_ids) - set(target_ids))
+    if duplicate_ids or missing_ids or unexpected_ids:
+        details: list[str] = []
+        if missing_ids:
+            details.append("missing segment id(s): " + ", ".join(missing_ids))
+        if unexpected_ids:
+            details.append("unexpected segment id(s): " + ", ".join(unexpected_ids))
+        if duplicate_ids:
+            details.append("duplicate segment id(s): " + ", ".join(duplicate_ids))
+        return _contract_block(
+            packet,
+            "terminal backward replay segment ids must match runtime-issued targets exactly; " + "; ".join(details),
+            missing_required_fields=("segment_reviews.segment_id",),
+        )
     if not str(payload.get("repair_restart_policy") or "").strip():
         return _contract_block(
             packet,
@@ -7156,6 +7690,12 @@ def _route_plan_failure_field_path(error: str) -> str:
     lowered = error.lower()
     if "schema_version" in lowered:
         return "route_plan.schema_version"
+    if "node_kind" in lowered:
+        return "route_plan.nodes[].node_kind"
+    if "parent_node_id" in lowered:
+        return "route_plan.nodes[].parent_node_id"
+    if "child_node_ids" in lowered:
+        return "route_plan.nodes[].child_node_ids"
     if "nodes" in lowered:
         if "node_id" in lowered:
             return "route_plan.nodes[].node_id"
@@ -7361,7 +7901,11 @@ def _node_acceptance_plan_result_violation(
             )
         try:
             route_plan = _parse_strict_route_plan(json.dumps(raw_route_plan, sort_keys=True))
-            _normalize_strict_route_plan_nodes(route_plan)
+            node_specs = _normalize_strict_route_plan_nodes(route_plan)
+            _validate_node_acceptance_redesign_route_nodes(
+                node_specs,
+                target_node_id=str(packet.get("envelope", {}).get("route_node_id") or ""),
+            )
         except BlackBoxRuntimeError as exc:
             return _contract_block(
                 packet,
@@ -9709,6 +10253,19 @@ def _stale_result_blockers_for_packet(ledger: Mapping[str, Any], packet_id: str)
     return sorted(blockers)
 
 
+def _repair_loop_break_glass_review_for_action(
+    ledger: Mapping[str, Any],
+    action: RuntimeAction,
+) -> dict[str, Any]:
+    if action.action_type != "control_plane_blocker":
+        return {}
+    blocker = ledger.get("active_blockers", {}).get(action.subject_id)
+    if not isinstance(blocker, Mapping):
+        return {}
+    review = _repair_loop_break_glass_review(ledger, blocker)
+    return review if review.get("threshold_exceeded") else {}
+
+
 def _parse_utc_timestamp(raw: object) -> datetime | None:
     if not isinstance(raw, str) or not raw.strip():
         return None
@@ -10164,6 +10721,8 @@ def _guard_decision(
         closure = ledger.get("closure") if isinstance(ledger.get("closure"), Mapping) else {}
         if closure.get("decision") == "blocked":
             return "control_plane_stuck", "final closure is blocked and requires explicit repair before another closure attempt"
+    if action.action_type == "control_plane_blocker":
+        return "control_plane_stuck", action.reason
     if action.action_type == "wait_for_ack":
         return "wait_for_ack", str(wait_recovery_map.get("reason") or "assigned lease has not acknowledged")
     if action.action_type == "wait_for_result":
@@ -10210,7 +10769,8 @@ def preview_lifecycle_guard(ledger: Mapping[str, Any], *, trigger: str = "status
     )
     controller_stop_allowed = decision == "terminal_return"
     wait_subject = _guard_wait_subject(ledger, action) if action.subject_id else {}
-    return {
+    repair_loop_review = _repair_loop_break_glass_review_for_action(ledger, action)
+    result = {
         "schema_version": "black_box_flowpilot.lifecycle_guard.v1",
         "trigger": trigger,
         "created_at": now_iso(),
@@ -10230,6 +10790,9 @@ def preview_lifecycle_guard(ledger: Mapping[str, Any], *, trigger: str = "status
         "wait_recovery": wait_recovery,
         "sealed_bodies_visible": False,
     }
+    if repair_loop_review:
+        result["repair_loop_break_glass_review"] = repair_loop_review
+    return result
 
 
 def final_return_preflight(
@@ -10302,6 +10865,8 @@ def _current_target_preflight_blockers(
             continue
         blocker_id = str(blocker.get("blocker_id") or "")
         status = str(blocker.get("status") or "")
+        if status != "awaiting_pm_decision_gate" and not _blocker_current_effective(ledger, blocker):
+            continue
         if status == "repair_packet_open":
             target_fields = ("repair_packet_id",)
         elif status == "awaiting_pm_decision_gate":
@@ -10504,6 +11069,9 @@ def preview_foreground_duty(
             "action_key": str(guard_map.get("action_key", "")),
             "repeated_count": int(guard_map.get("repeated_count", 0) or 0),
         }
+        repair_loop_review = guard_map.get("repair_loop_break_glass_review")
+        if isinstance(repair_loop_review, Mapping):
+            duty["blocker"]["repair_loop_break_glass_review"] = _copy_jsonable(repair_loop_review)
     return duty
 
 
@@ -10645,13 +11213,18 @@ def _closure_blockers(
         if packet["envelope"].get("packet_kind", "task") != "task":
             continue
         result = ledger["results"][packet["accepted_result_id"]]
-        review = ledger["reviews"].get(result.get("review_id", ""))
-        if not review or review.get("decision") != "accept":
+        node_id = str(packet["envelope"].get("route_node_id") or "")
+        review_id = str(result.get("review_id") or "")
+        if not _review_evidence_current_and_accepted(ledger, review_id, node_id=node_id):
             blockers.append(f"missing_independent_review:{packet['packet_id']}")
         packet_required_target = packet["envelope"].get("required_flowguard_target") or required_flowguard_target
         flowguard_required = _flowguard_required_for_subject_result(packet, result)
-        if flowguard_required and packet_required_target and not _has_matching_flowguard_report(ledger, packet["packet_id"], packet_required_target):
-            blockers.append(f"missing_flowguard:{packet['packet_id']}")
+        if flowguard_required and packet_required_target:
+            flowguard_order_ids = _matching_flowguard_order_ids(ledger, packet["packet_id"], packet_required_target)
+            if not flowguard_order_ids:
+                flowguard_order_ids = _current_gate_flowguard_order_ids_for_subject(ledger, packet["packet_id"])
+            if not flowguard_order_ids:
+                blockers.append(f"missing_flowguard:{packet['packet_id']}")
 
     evidence = ledger.get("validation_evidence", {}).get(validation_evidence_id)
     if not evidence:
@@ -10713,6 +11286,21 @@ def _backward_chain(ledger: Mapping[str, Any]) -> list[dict[str, Any]]:
     return chain
 
 
+def _repair_loop_break_glass_action(ledger: Mapping[str, Any]) -> RuntimeAction | None:
+    for blocker in _active_semantic_blockers(ledger):
+        review = _repair_loop_break_glass_review(ledger, blocker)
+        if not review.get("threshold_exceeded"):
+            continue
+        blocker_id = str(blocker.get("blocker_id") or "")
+        return RuntimeAction(
+            "control_plane_blocker",
+            "same current route node repeated the same blocker problem more than five consecutive times; Controller break-glass diagnosis is required",
+            blocker_id,
+            "controller",
+        )
+    return None
+
+
 def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     terminal_status = terminal_lifecycle_status(ledger)
     if terminal_status:
@@ -10749,6 +11337,9 @@ def router_next_action(ledger: Mapping[str, Any]) -> RuntimeAction:
     terminal_replay_action = _terminal_backward_replay_next_action(ledger)
     if terminal_replay_action is not None:
         return terminal_replay_action
+    repair_loop_action = _repair_loop_break_glass_action(ledger)
+    if repair_loop_action is not None:
+        return repair_loop_action
     if recursive_route_required(ledger) and ledger.get("route_nodes"):
         frontier = ledger.get("execution_frontier") or {}
         if (

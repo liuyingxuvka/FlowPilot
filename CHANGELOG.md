@@ -2,6 +2,33 @@
 
 All notable changes to FlowPilot will be documented in this file.
 
+## 0.10.11 - 2026-06-13
+
+### Fixed
+
+- Hardened the final route-wide gate ledger and final requirement evidence
+  matrix so stale, failed, blocked, or old-route review, FlowGuard, and
+  validation evidence no longer counts as final proof.
+- Tightened terminal backward replay so Reviewer results must match the exact
+  runtime-issued active-route segment ids, blocking missing, duplicate, or
+  unexpected segment reviews.
+- Fixed final confidence aggregation so failed evidence producers cannot be
+  hidden by stale green JSON, and control-plane live audits can separate the
+  target project root from the FlowPilot source root.
+- Updated the known-friction risk ledger to the current FlowGuard
+  `RiskEvidenceRow`/`RiskEvidenceGate` contract.
+- Kept visible progress and repair control-plane state on the current active
+  route by excluding superseded repair history from completion display,
+  preserving route hierarchy on redesign, retiring stale repair blockers, and
+  strengthening same-node repair-loop and handoff-blocker lifecycle guards.
+
+### Validation
+
+- Refreshed FlowGuard model-test alignment, closure, route hard-gate, card
+  coverage, final confidence, topology, local install sync, Meta/Capability,
+  fake-project rehearsal, real-router rehearsal, shadow-launcher chaos, E2E
+  synthetic chaos, and synthetic trace evidence for the release.
+
 ## 0.10.10 - 2026-06-11
 
 ### Fixed

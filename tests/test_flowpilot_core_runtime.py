@@ -6,6 +6,7 @@ import json
 import sys
 import tempfile
 import unittest
+from unittest import mock
 from pathlib import Path
 
 
@@ -154,6 +155,77 @@ def open_required_result_reads(ledger: dict[str, object], packet_id: str, lease_
 
 
 class FlowPilotCoreRuntimeTests(unittest.TestCase):
+    def _ledger_with_final_quality_node(self) -> tuple[dict[str, object], str, str]:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Do work"])
+        ledger["recursive_route_execution_required"] = True
+        node_id = "node-001"
+        route_version = ledger["active_route_version"]
+        ledger["routes"][str(route_version)]["node_order"] = [node_id]
+        ledger["route_nodes"][node_id] = {
+            "node_id": node_id,
+            "route_version": route_version,
+            "status": "active",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "acceptance_criteria": ["accepted"],
+            "packet_ids": [],
+        }
+        ledger["execution_frontier"] = {
+            "active_route_version": route_version,
+            "active_node_id": node_id,
+            "completed_nodes": [],
+            "status": "node_execution",
+            "pending_route_mutation": None,
+            "updated_at": runtime.now_iso(),
+        }
+        runtime_runner._mark_node_ready_for_final_closure(ledger, node_id)
+        return ledger, node_id, str(ledger["latest_validation_evidence_id"])
+
+    def _terminal_replay_body_for_packet(
+        self,
+        packet: dict[str, object],
+        *,
+        omit_last: bool = False,
+        unexpected: bool = False,
+    ) -> str:
+        packet_body = json.loads(str(packet["body"]))
+        targets = list(packet_body["segment_targets"])
+        if omit_last:
+            targets = targets[:-1]
+        reviews = [
+            {
+                "segment_id": target["segment_id"],
+                "segment_kind": target["segment_kind"],
+                "reviewed_by_role": "human_like_reviewer",
+                "passed": True,
+                "pm_segment_decision": "continue",
+                "direct_evidence_paths_checked": ["current-evidence.json"],
+            }
+            for target in targets
+        ]
+        if unexpected:
+            reviews.append(
+                {
+                    "segment_id": "unexpected-segment",
+                    "segment_kind": "route_node",
+                    "reviewed_by_role": "human_like_reviewer",
+                    "passed": True,
+                    "pm_segment_decision": "continue",
+                    "direct_evidence_paths_checked": ["current-evidence.json"],
+                }
+            )
+        payload = json.loads(
+            review_result_body(
+                "Terminal replay checked every runtime-issued segment.",
+                segment_reviews=reviews,
+                repair_restart_policy="Restart terminal replay after any repair.",
+            )
+        )
+        payload["passed"] = True
+        return json.dumps(payload)
+
     def _stopped_review_blocker_after_flowguard_failure(
         self,
     ) -> tuple[dict[str, object], str, str, str, str, str]:
@@ -438,26 +510,84 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual({row["result_id"] for row in delivered}, {subject_result_id, flowguard_result_id})
         self.assertEqual(ledger["results"][accepted_review_result]["status"], "accepted")
 
-    def test_current_progress_fraction_counts_route_nodes_and_repairs_equally(self) -> None:
+    def test_current_progress_fraction_uses_active_route_node_order_not_history(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["active_route_version"] = 2
+        ledger["routes"] = {
+            "1": {"route_version": 1, "status": "superseded", "node_order": ["old-1", "old-2"]},
+            "2": {
+                "route_version": 2,
+                "status": "active",
+                "node_order": ["node-1", "node-2", "node-3", "node-4"],
+            },
+        }
         ledger["route_nodes"] = {
-            "node-1": {"node_id": "node-1", "status": "running", "repair_generation": 0},
-            "node-2": {"node_id": "node-2", "status": "accepted", "repair_generation": 0},
-            "node-3": {"node_id": "node-3", "status": "repair_required", "repair_generation": 1},
-            "node-4": {"node_id": "node-4", "status": "superseded", "repair_generation": 0},
+            "old-1": {"node_id": "old-1", "route_version": 1, "status": "accepted"},
+            "old-2": {"node_id": "old-2", "route_version": 1, "status": "pending"},
+            "node-1": {"node_id": "node-1", "route_version": 1, "status": "accepted"},
+            "node-2": {"node_id": "node-2", "route_version": 2, "status": "running"},
+            "node-3": {
+                "node_id": "node-3",
+                "route_version": 2,
+                "status": "awaiting_children",
+                "child_node_ids": ["node-4"],
+            },
+            "node-4": {"node_id": "node-4", "route_version": 2, "status": "accepted"},
         }
 
         progress = runtime.current_progress_fraction(ledger)
 
-        self.assertEqual(progress["display"], "3/5")
-        self.assertEqual(progress["ended_nodes"], 3)
-        self.assertEqual(progress["expanded_nodes"], 5)
+        self.assertEqual(progress["display"], "2/4")
+        self.assertEqual(progress["ended_nodes"], 2)
+        self.assertEqual(progress["expanded_nodes"], 4)
+        self.assertEqual(progress["source"], "active_route_node_order")
+        self.assertFalse(progress["includes_repair_generations"])
+        self.assertFalse(progress["packet_projection_used"])
+
+    def test_current_progress_fraction_repair_replacement_preserves_route_slot_count(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["active_route_version"] = 2
+        ledger["routes"] = {
+            "1": {"route_version": 1, "status": "superseded", "node_order": ["node-1", "node-2", "node-3"]},
+            "2": {
+                "route_version": 2,
+                "status": "active",
+                "node_order": ["node-1", "node-2-repair-v2", "node-3"],
+            },
+        }
+        ledger["route_nodes"] = {
+            "node-1": {"node_id": "node-1", "route_version": 1, "status": "accepted"},
+            "node-2": {
+                "node_id": "node-2",
+                "route_version": 1,
+                "status": "superseded",
+                "repair_generation": 3,
+                "superseded_by": "node-2-repair-v2",
+            },
+            "node-2-repair-v2": {
+                "node_id": "node-2-repair-v2",
+                "route_version": 2,
+                "status": "running",
+                "repair_generation": 1,
+            },
+            "node-3": {"node_id": "node-3", "route_version": 1, "status": "pending"},
+        }
+
+        progress = runtime.current_progress_fraction(ledger)
+
+        self.assertEqual(progress["display"], "1/3")
+        self.assertEqual(progress["ended_nodes"], 1)
+        self.assertEqual(progress["expanded_nodes"], 3)
         self.assertEqual(progress["repair_generations"], 1)
-        self.assertEqual(progress["source"], "route_nodes")
+        self.assertEqual(progress["source"], "active_route_node_order")
         self.assertFalse(progress["packet_projection_used"])
 
     def test_public_console_exposes_progress_fraction_without_completion_authority(self) -> None:
         ledger = runtime.new_ledger("Goal", "Contract")
+        ledger["active_route_version"] = 1
+        ledger["routes"] = {
+            "1": {"route_version": 1, "status": "active", "node_order": ["node-1", "node-2"]},
+        }
         ledger["route_nodes"] = {
             "node-1": {"node_id": "node-1", "status": "accepted", "repair_generation": 0},
             "node-2": {"node_id": "node-2", "status": "running", "repair_generation": 0},
@@ -646,6 +776,103 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
 
         self.assertEqual(accepted_packets, [])
         self.assertIn("missing_accepted_packet_result", closure["blockers"])
+
+    def test_final_matrix_rejects_blocked_review_evidence_id(self) -> None:
+        ledger, node_id, validation_id = self._ledger_with_final_quality_node()
+        review_id = ledger["route_nodes"][node_id]["review_ids"][0]
+        ledger["reviews"][review_id]["decision"] = "block"
+        ledger["reviews"][review_id]["blockers"] = ["current_gate_blocker"]
+
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+        closure = runtime.attempt_final_closure(ledger, validation_id)
+        review_row = next(row for row in matrix["rows"] if row["row_id"] == f"{node_id}:review")
+
+        self.assertEqual(review_row["status"], "invalid")
+        self.assertIn(f"review:{node_id}:review:invalid", matrix["unresolved"])
+        self.assertIn(f"review:{node_id}:review:invalid", closure["blockers"])
+
+    def test_final_matrix_rejects_stale_flowguard_evidence_id(self) -> None:
+        ledger, node_id, validation_id = self._ledger_with_final_quality_node()
+        order_id = ledger["route_nodes"][node_id]["flowguard_order_ids"][0]
+        ledger["flowguard_work_orders"][order_id]["proof_stale"] = True
+
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+        closure = runtime.attempt_final_closure(ledger, validation_id)
+        flowguard_row = next(row for row in matrix["rows"] if row["row_id"] == f"{node_id}:flowguard")
+
+        self.assertEqual(flowguard_row["status"], "invalid")
+        self.assertIn(f"flowguard:{node_id}:flowguard:invalid", matrix["unresolved"])
+        self.assertIn(f"flowguard:{node_id}:flowguard:invalid", closure["blockers"])
+
+    def test_final_matrix_rejects_failed_validation_evidence_id(self) -> None:
+        ledger, node_id, validation_id = self._ledger_with_final_quality_node()
+        ledger["validation_evidence"][validation_id]["status"] = "failed"
+        ledger["validation_evidence"][validation_id]["blockers"] = ["test_failed"]
+
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+        closure = runtime.attempt_final_closure(ledger, validation_id)
+        validation_row = next(row for row in matrix["rows"] if row["row_id"] == f"{node_id}:validation")
+
+        self.assertEqual(validation_row["status"], "invalid")
+        self.assertIn(f"validation:{node_id}:validation:invalid", matrix["unresolved"])
+        self.assertIn(f"validation:{node_id}:validation:invalid", closure["blockers"])
+        self.assertIn("validation_not_passing", closure["blockers"])
+
+    def test_final_matrix_ignores_old_route_evidence(self) -> None:
+        ledger, node_id, _validation_id = self._ledger_with_final_quality_node()
+        old_node = copy.deepcopy(ledger["route_nodes"][node_id])
+        old_node["node_id"] = "old-node-001"
+        old_node["route_version"] = 1
+        ledger["route_nodes"]["old-node-001"] = old_node
+        ledger["active_route_version"] = 2
+        ledger["routes"] = {
+            "1": {"route_version": 1, "status": "superseded", "node_order": ["old-node-001"]},
+            "2": {"route_version": 2, "status": "active", "node_order": ["node-002"]},
+        }
+        ledger["route_nodes"] = {
+            "old-node-001": old_node,
+            "node-002": {
+                "node_id": "node-002",
+                "route_version": 2,
+                "status": "accepted",
+                "responsibility": "worker",
+                "modeled_target": "development_process",
+                "acceptance_criteria": ["accepted"],
+                "packet_ids": [],
+                "pm_disposition_id": "pm-disposition-current",
+            },
+        }
+
+        matrix = runtime.build_final_requirement_evidence_matrix(ledger)
+        row_ids = {row["row_id"] for row in matrix["rows"]}
+        review_row = next(row for row in matrix["rows"] if row["row_id"] == "node-002:review")
+
+        self.assertNotIn("old-node-001:review", row_ids)
+        self.assertEqual(review_row["status"], "missing")
+
+    def test_terminal_replay_rejects_missing_or_unexpected_segments(self) -> None:
+        ledger, _node_id, validation_id = self._ledger_with_final_quality_node()
+        packet_id = runtime.ensure_terminal_backward_replay_packet(ledger, validation_id)
+        packet = ledger["packets"][packet_id]
+
+        missing_check = runtime._terminal_backward_replay_result_violation(
+            packet,
+            {"body": self._terminal_replay_body_for_packet(packet, omit_last=True)},
+        )
+        unexpected_check = runtime._terminal_backward_replay_result_violation(
+            packet,
+            {"body": self._terminal_replay_body_for_packet(packet, unexpected=True)},
+        )
+        passing_check = runtime._terminal_backward_replay_result_violation(
+            packet,
+            {"body": self._terminal_replay_body_for_packet(packet)},
+        )
+
+        self.assertFalse(missing_check.ok)
+        self.assertIn("missing segment id", missing_check.blocked_reason)
+        self.assertFalse(unexpected_check.ok)
+        self.assertIn("unexpected segment id", unexpected_check.blocked_reason)
+        self.assertTrue(passing_check.ok)
 
     def test_quarantined_packet_projection_replay_uses_currentness_predicate(self) -> None:
         ledger, packet_id, worker = runtime_runner._base_ledger()
@@ -926,6 +1153,159 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
         self.assertEqual(flowguard_packets, [])
         self.assertEqual(len(review_packets), 1)
         self.assertEqual(json.loads(review_packets[0]["body"])["staged_effect"]["effect_kind"], "commit_node_acceptance_plan")
+
+    def test_node_acceptance_redesign_route_rejects_flat_peer_leaf_split(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "title": "Node One",
+            "status": "pending",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+        }
+        packet_id = runtime.ensure_node_acceptance_plan_packet(ledger, "node-1")
+        lease_id = runtime.lease_agent(ledger, "pm", agent_id="pm-node-flat-redesign", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "pm_visible_summary": ["Current node is too broad, but this split is flat."],
+                    "reason": "Current node needs decomposition.",
+                    "route_plan": {
+                        "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                        "nodes": [
+                            {
+                                "node_id": "node-1-a",
+                                "title": "Flat child A",
+                                "node_kind": "leaf",
+                                "acceptance_criteria": ["A is done."],
+                            },
+                            {
+                                "node_id": "node-1-b",
+                                "title": "Flat child B",
+                                "node_kind": "leaf",
+                                "acceptance_criteria": ["B is done."],
+                            },
+                        ],
+                    },
+                }
+            ),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["status"], "mechanical_contract_blocked")
+        self.assertEqual(result["mechanical_contract_failure"]["failed_branch"], "decision=redesign_route")
+        self.assertEqual(result["mechanical_contract_failure"]["failed_field_path"], "route_plan.nodes[].node_kind")
+        self.assertFalse(ledger["pm_decision_gates"])
+
+    def test_node_acceptance_redesign_route_accepts_replacement_parent_scope(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "title": "Node One",
+            "status": "pending",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+        }
+        packet_id = runtime.ensure_node_acceptance_plan_packet(ledger, "node-1")
+        lease_id = runtime.lease_agent(ledger, "pm", agent_id="pm-node-parent-redesign", packet_id=packet_id)
+        runtime.assign_packet(ledger, packet_id, lease_id)
+        runtime.ack_lease(ledger, lease_id, packet_id)
+
+        result_id = runtime.submit_result(
+            ledger,
+            lease_id,
+            packet_id,
+            json.dumps(
+                {
+                    "decision": "redesign_route",
+                    "pm_visible_summary": ["Current node is promoted into a replacement parent scope."],
+                    "reason": "Current node needs a child subtree.",
+                    "route_plan": {
+                        "schema_version": runtime.ROUTE_PLAN_SCHEMA_VERSION,
+                        "nodes": [
+                            {
+                                "node_id": "node-1-replacement",
+                                "title": "Replacement parent for Node One",
+                                "node_kind": "module",
+                                "parent_node_id": "",
+                                "child_node_ids": ["node-1-a", "node-1-b"],
+                                "acceptance_criteria": ["Children compose into Node One acceptance."],
+                            },
+                            {
+                                "node_id": "node-1-a",
+                                "title": "Child A",
+                                "node_kind": "leaf",
+                                "parent_node_id": "node-1-replacement",
+                                "child_node_ids": [],
+                                "acceptance_criteria": ["A is done."],
+                            },
+                            {
+                                "node_id": "node-1-b",
+                                "title": "Child B",
+                                "node_kind": "leaf",
+                                "parent_node_id": "node-1-replacement",
+                                "child_node_ids": [],
+                                "acceptance_criteria": ["B is done."],
+                            },
+                        ],
+                    },
+                }
+            ),
+        )
+
+        result = ledger["results"][result_id]
+        self.assertEqual(result["staged_effect"]["effect_kind"], "commit_route_redesign")
+        gate = next(iter(ledger["pm_decision_gates"].values()))
+        self.assertEqual(gate["status"], "awaiting_flowguard")
+        self.assertEqual(gate["staged_effect"]["target_node_id"], "node-1")
+
+    def test_strict_route_plan_topology_rejects_bad_parent_child_shapes(self) -> None:
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "module node parent requires child_node_ids"):
+            runtime._normalize_strict_route_plan_nodes(
+                {
+                    "nodes": [
+                        {"node_id": "parent", "title": "Parent", "node_kind": "module"},
+                    ]
+                }
+            )
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "leaf node leaf must not have child_node_ids"):
+            runtime._normalize_strict_route_plan_nodes(
+                {
+                    "nodes": [
+                        {"node_id": "leaf", "title": "Leaf", "node_kind": "leaf", "child_node_ids": ["child"]},
+                        {"node_id": "child", "title": "Child", "node_kind": "leaf"},
+                    ]
+                }
+            )
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "reference unknown node"):
+            runtime._normalize_strict_route_plan_nodes(
+                {
+                    "nodes": [
+                        {"node_id": "parent", "title": "Parent", "node_kind": "module", "child_node_ids": ["missing"]},
+                    ]
+                }
+            )
+        with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "parent_node_id must match parent"):
+            runtime._normalize_strict_route_plan_nodes(
+                {
+                    "nodes": [
+                        {"node_id": "parent", "title": "Parent", "node_kind": "module", "child_node_ids": ["child"]},
+                        {"node_id": "other", "title": "Other", "node_kind": "module", "child_node_ids": ["child"]},
+                        {"node_id": "child", "title": "Child", "node_kind": "leaf", "parent_node_id": "other"},
+                    ]
+                }
+            )
 
     def test_node_acceptance_plan_review_packet_marks_plan_stage_boundary(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
@@ -1444,6 +1824,106 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
             preflight["blockers"],
         )
 
+    def test_final_preflight_ignores_accepted_noncurrent_repair_packet_open_blocker(self) -> None:
+        ledger, packet_id, worker = runtime_runner._base_ledger()
+        runtime.ack_lease(ledger, worker, packet_id)
+        result_id = runtime.submit_result(
+            ledger,
+            worker,
+            packet_id,
+            role_result_body("Worker submitted a result for accepted repair history."),
+        )
+        blocker_id = "blocker-accepted-repair-history"
+        ledger["active_blockers"][blocker_id] = {
+            "blocker_id": blocker_id,
+            "status": "active",
+            "outcome_id": "outcome-accepted-repair-history",
+            "packet_id": packet_id,
+            "packet_kind": "task",
+            "subject_packet_id": packet_id,
+            "repair_target_packet_id": packet_id,
+            "target_result_id": result_id,
+            "result_id": result_id,
+            "owner_role": "worker",
+            "required_recheck_role": "worker",
+            "gate_kind": "task",
+            "blocker_class": "local_artifact",
+            "recommended_resolution": "repair",
+            "route_version": ledger["active_route_version"],
+            "route_node_id": "",
+            "route_scope": "",
+            "repair_generation": 0,
+            "stale_evidence_ids": [result_id],
+            "created_at": runtime.now_iso(),
+            "pm_repair_packet_id": "",
+            "pm_repair_decision_id": "",
+            "cleared_by_outcome_id": "",
+        }
+        decision_id = "pm_repair_decision-accepted-repair-history"
+        ledger["pm_repair_decisions"][decision_id] = {
+            "decision_id": decision_id,
+            "blocker_id": blocker_id,
+            "packet_id": "packet-decision",
+            "result_id": "result-decision",
+            "decision": "repair_current_scope",
+            "reason": "Open a fresh repair packet that later becomes accepted history.",
+            "created_at": runtime.now_iso(),
+        }
+
+        runtime._apply_pm_repair_decision(ledger, blocker_id, decision_id)
+        repair_packet_id = ledger["active_blockers"][blocker_id]["repair_packet_id"]
+        ledger["packets"][repair_packet_id]["status"] = "accepted"
+        preflight = runtime.final_return_preflight(ledger)
+        compact = runtime.render_compact_console(ledger)
+
+        self.assertFalse(runtime._blocker_current_effective(ledger, ledger["active_blockers"][blocker_id]))
+        self.assertNotIn(blocker_id, {row["blocker_id"] for row in compact["active_blockers"]})
+        self.assertFalse(
+            [
+                blocker
+                for blocker in preflight["blockers"]
+                if blocker.startswith(f"active_blocker_current_target:{blocker_id}:")
+            ],
+            preflight["blockers"],
+        )
+
+    def test_save_ledger_writes_valid_json_without_leftover_temp_file(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "run" / "ledger.json"
+            ledger = runtime.new_ledger("Goal", "Acceptance")
+
+            runtime.save_ledger(ledger, path)
+
+            self.assertEqual(json.loads(path.read_text(encoding="utf-8"))["schema_version"], runtime.SCHEMA_VERSION)
+            self.assertFalse(list(path.parent.glob(".ledger.json.tmp-*")))
+
+    def test_load_ledger_retries_transient_incomplete_json(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ledger.json"
+            ledger = runtime.new_ledger("Goal", "Acceptance")
+            valid = json.dumps(ledger)
+            reads = iter(["", "{", valid])
+            original_read_text = Path.read_text
+
+            def flaky_read_text(self: Path, *args: object, **kwargs: object) -> str:
+                if self == path:
+                    return next(reads)
+                return original_read_text(self, *args, **kwargs)
+
+            with mock.patch.object(Path, "read_text", flaky_read_text), mock.patch.object(runtime.time, "sleep", lambda _: None):
+                loaded = runtime.load_ledger(path)
+
+            self.assertEqual(loaded["schema_version"], runtime.SCHEMA_VERSION)
+
+    def test_load_ledger_persistent_invalid_json_fails_clearly(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "ledger.json"
+            path.write_text("{", encoding="utf-8")
+
+            with mock.patch.object(runtime.time, "sleep", lambda _: None):
+                with self.assertRaisesRegex(runtime.BlackBoxRuntimeError, "invalid runtime ledger JSON"):
+                    runtime.load_ledger(path)
+
     def test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet(self) -> None:
         ledger = runtime.new_ledger("Goal", "Acceptance")
         authorize_background_collaboration(ledger)
@@ -1522,6 +2002,168 @@ class FlowPilotCoreRuntimeTests(unittest.TestCase):
                 if item.startswith(f"active_blocker_current_target:{blocker_id}:")
             ],
             preflight["blockers"],
+        )
+
+    def test_route_mutation_supersedes_prior_route_repair_open_blockers(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        authorize_background_collaboration(ledger)
+        runtime.create_route(ledger, "Route", ["Node one"])
+        route_version = ledger["active_route_version"]
+        ledger["route_nodes"]["node-1"] = {
+            "node_id": "node-1",
+            "route_version": route_version,
+            "title": "Node One",
+            "status": "running",
+            "responsibility": "worker",
+            "modeled_target": "development_process",
+            "repair_generation": 0,
+            "acceptance_criteria": ["criterion"],
+            "child_node_ids": [],
+        }
+        packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Repair node work",
+            "NODE_PACKET",
+            route_node_id="node-1",
+            route_scope="node",
+            repair_blocker_id="blocker-current-repair",
+        )
+        old_same_family_packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Old accepted repair work",
+            "OLD_SAME_FAMILY_PACKET",
+            route_node_id="node-1",
+            route_scope="node",
+            repair_blocker_id="blocker-old-same-family",
+        )
+        old_unrelated_packet_id = runtime.issue_task_packet(
+            ledger,
+            "worker",
+            "Old unrelated repair work",
+            "OLD_UNRELATED_PACKET",
+            route_node_id="node-1",
+            route_scope="node",
+            repair_blocker_id="blocker-old-unrelated",
+        )
+        ledger["packets"][old_same_family_packet_id]["status"] = "accepted"
+        ledger["packets"][old_unrelated_packet_id]["status"] = "accepted"
+
+        def repair_open_blocker(blocker_id: str, repair_packet_id: str, blocker_class: str) -> dict[str, object]:
+            ledger["packets"][repair_packet_id]["active_blocker_id"] = blocker_id
+            return {
+                "blocker_id": blocker_id,
+                "status": "repair_packet_open",
+                "outcome_id": f"outcome-{blocker_id}",
+                "packet_id": repair_packet_id,
+                "packet_kind": "task",
+                "subject_packet_id": repair_packet_id,
+                "repair_target_packet_id": repair_packet_id,
+                "repair_packet_id": repair_packet_id,
+                "target_result_id": "",
+                "result_id": "",
+                "owner_role": "worker",
+                "required_recheck_role": "worker",
+                "gate_kind": "task",
+                "blocker_class": blocker_class,
+                "recommended_resolution": "repair",
+                "route_version": route_version,
+                "route_node_id": "node-1",
+                "route_scope": "node",
+                "repair_generation": 0,
+                "stale_evidence_ids": [],
+                "created_at": runtime.now_iso(),
+                "pm_repair_packet_id": "",
+                "pm_repair_decision_id": "pm_repair_decision-new",
+                "cleared_by_outcome_id": "",
+            }
+
+        ledger["active_blockers"]["blocker-current-repair"] = repair_open_blocker(
+            "blocker-current-repair",
+            packet_id,
+            "missing_required_information",
+        )
+        ledger["active_blockers"]["blocker-old-same-family"] = repair_open_blocker(
+            "blocker-old-same-family",
+            old_same_family_packet_id,
+            "missing_required_information",
+        )
+        ledger["active_blockers"]["blocker-old-unrelated"] = repair_open_blocker(
+            "blocker-old-unrelated",
+            old_unrelated_packet_id,
+            "different_family",
+        )
+
+        runtime._replace_route_node_for_repair(
+            ledger,
+            "node-1",
+            disposition_id="pm_repair_decision-new",
+            reason="Replace stale repair route.",
+        )
+
+        mutation = ledger["route_mutations"][-1]
+        same_family_blocker = ledger["active_blockers"]["blocker-old-same-family"]
+        unrelated_blocker = ledger["active_blockers"]["blocker-old-unrelated"]
+        self.assertEqual(same_family_blocker["status"], "superseded_by_route_mutation")
+        self.assertEqual(same_family_blocker["superseded_repair_packet_id"], old_same_family_packet_id)
+        self.assertEqual(same_family_blocker["superseded_by_route_mutation_id"], mutation["mutation_id"])
+        self.assertEqual(ledger["packets"][old_same_family_packet_id]["active_blocker_id"], "")
+        self.assertEqual(unrelated_blocker["status"], "superseded_by_route_mutation")
+        self.assertEqual(unrelated_blocker["superseded_repair_packet_id"], old_unrelated_packet_id)
+        self.assertEqual(unrelated_blocker["superseded_by_route_mutation_id"], mutation["mutation_id"])
+        self.assertEqual(ledger["packets"][old_unrelated_packet_id]["active_blocker_id"], "")
+
+    def test_route_mutation_preserves_current_unproven_and_dispositioned_repair_open_blockers(self) -> None:
+        ledger = runtime.new_ledger("Goal", "Acceptance")
+        ledger["active_blockers"] = {
+            "blocker-stale": {
+                "blocker_id": "blocker-stale",
+                "status": "repair_packet_open",
+                "repair_packet_id": "packet-stale",
+                "route_version": 3,
+            },
+            "blocker-current": {
+                "blocker_id": "blocker-current",
+                "status": "repair_packet_open",
+                "repair_packet_id": "packet-current",
+                "route_version": 4,
+            },
+            "blocker-unproven": {
+                "blocker_id": "blocker-unproven",
+                "status": "repair_packet_open",
+                "repair_packet_id": "packet-unproven",
+                "route_version": "route-v3",
+            },
+            "blocker-already-history": {
+                "blocker_id": "blocker-already-history",
+                "status": "superseded_by_route_mutation",
+                "repair_packet_id": "packet-history",
+                "route_version": 3,
+                "superseded_by_route_mutation_id": "mutation-old",
+            },
+        }
+
+        runtime._supersede_repair_open_blockers_for_route_mutation(
+            ledger,
+            affected_packets=[],
+            mutation_id="mutation-new",
+            disposition_id="pm-decision-new",
+            replacement_node_id="node-new",
+            new_route_version=4,
+        )
+
+        self.assertEqual(ledger["active_blockers"]["blocker-stale"]["status"], "superseded_by_route_mutation")
+        self.assertEqual(
+            ledger["active_blockers"]["blocker-stale"]["superseded_by_route_mutation_id"],
+            "mutation-new",
+        )
+        self.assertEqual(ledger["active_blockers"]["blocker-current"]["status"], "repair_packet_open")
+        self.assertEqual(ledger["active_blockers"]["blocker-unproven"]["status"], "repair_packet_open")
+        self.assertEqual(ledger["active_blockers"]["blocker-already-history"]["status"], "superseded_by_route_mutation")
+        self.assertEqual(
+            ledger["active_blockers"]["blocker-already-history"]["superseded_by_route_mutation_id"],
+            "mutation-old",
         )
 
     def test_foreground_recovery_missing_packet_responsibility_hard_blocks(self) -> None:

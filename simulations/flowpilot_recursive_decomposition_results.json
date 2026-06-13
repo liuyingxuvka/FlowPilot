@@ -5,7 +5,7 @@
     "ok": true,
     "reachability_failure_count": 0,
     "reachability_failures": [],
-    "summary": "sequences=3 initial_states=1 traces=84",
+    "summary": "sequences=3 initial_states=1 traces=96",
     "violation_count": 0
   },
   "hazard_checks": {
@@ -47,6 +47,15 @@
           "recursive route tree lacks parent-to-leaf structure"
         ]
       },
+      "flat_all_leaf_redesign": {
+        "detected": true,
+        "expected_failure": "route redesign flattened complex work into all-leaf peer nodes",
+        "failures": [
+          "complex route was accepted with fixed two-layer depth",
+          "recursive route tree lacks parent-to-leaf structure",
+          "route redesign flattened complex work into all-leaf peer nodes"
+        ]
+      },
       "missing_decomposition_memory": {
         "detected": true,
         "expected_failure": "PMK route memory lacks decomposition rationale",
@@ -59,6 +68,14 @@
         "expected_failure": "route mutation split node without resetting stale frontier",
         "failures": [
           "route mutation split node without resetting stale frontier"
+        ]
+      },
+      "node_entry_peer_appended_split": {
+        "detected": true,
+        "expected_failure": "node-entry redesign did not promote active scope to parent/module",
+        "failures": [
+          "route redesign flattened complex work into all-leaf peer nodes",
+          "node-entry redesign did not promote active scope to parent/module"
         ]
       },
       "over_split_leaf_steps": {
@@ -130,6 +147,7 @@
       "leaf_readiness_gate_defined": true,
       "leaf_single_outcome": true,
       "leaf_worker_executable_without_replanning": true,
+      "node_entry_redesign_promotes_active_scope": true,
       "non_leaf_nodes_have_children": true,
       "over_split_independent_acceptance_value": true,
       "over_split_operational_steps": false,
@@ -149,6 +167,8 @@
       "route_has_module_nodes": true,
       "route_has_parent_nodes": true,
       "route_mutation_split_node": true,
+      "route_redesign_flat_all_leaf": false,
+      "route_redesign_source": "node_entry",
       "router_dispatches_only_leaf_nodes": true,
       "router_knows_active_path": true,
       "scenario": "intended_recursive_route",
@@ -172,11 +192,11 @@
     "accepted_scenarios": [
       "intended_recursive_route"
     ],
-    "edge_count": 28,
+    "edge_count": 32,
     "invariant_failures": [],
     "missing_labels": [],
     "ok": true,
-    "rejected_state_count": 13,
-    "state_count": 29
+    "rejected_state_count": 15,
+    "state_count": 33
   }
 }

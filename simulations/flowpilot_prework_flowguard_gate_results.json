@@ -1051,19 +1051,13 @@
       "tests/test_flowpilot_high_standard_control_flow.py",
       "tests/test_flowpilot_core_runtime.py"
     ],
-    "missing": [
-      "node_plan_reviewer_stage_runtime_test",
-      "worker_result_reviewer_stage_runtime_test",
-      "fake_ai_node_plan_stage_language",
-      "reviewer_core_plan_stage_boundary",
-      "reviewer_node_plan_no_worker_artifacts"
-    ],
+    "missing": [],
     "obligations": {
-      "fake_ai_node_plan_stage_language": false,
+      "fake_ai_node_plan_stage_language": true,
       "fake_ai_pm_acceptance": true,
       "flowguard_block_test": true,
       "flowguard_subject_prompt": true,
-      "node_plan_reviewer_stage_runtime_test": false,
+      "node_plan_reviewer_stage_runtime_test": true,
       "node_plan_stage_model": true,
       "old_worker_gate_removed": true,
       "optional_branch_rejection_test": true,
@@ -1072,16 +1066,16 @@
       "pm_flowguard_acceptance_packet": true,
       "pm_rewrite_test": true,
       "result_stage_model": true,
-      "reviewer_core_plan_stage_boundary": false,
-      "reviewer_node_plan_no_worker_artifacts": false,
+      "reviewer_core_plan_stage_boundary": true,
+      "reviewer_node_plan_no_worker_artifacts": true,
       "route_simulation_prompt": true,
       "structural_gate_status": true,
       "unsupported_old_prework_rejection": true,
-      "worker_result_reviewer_stage_runtime_test": false
+      "worker_result_reviewer_stage_runtime_test": true
     },
-    "ok": false
+    "ok": true
   },
-  "ok": false,
+  "ok": true,
   "progress": {
     "initial_can_reach_success": true,
     "ok": true,

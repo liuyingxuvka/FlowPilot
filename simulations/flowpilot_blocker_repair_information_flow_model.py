@@ -31,6 +31,8 @@ VALID_REVIEWER_BLOCKER_REPAIR_PACKET = "valid_reviewer_blocker_repair_packet"
 VALID_WORKER_BLOCKER_REISSUE = "valid_worker_blocker_reissue"
 VALID_FOLLOWUP_BLOCKER_RECORDING = "valid_followup_blocker_recording"
 VALID_LOOP_ESCAPE_ROUTE_MUTATION = "valid_loop_escape_route_mutation"
+VALID_THRESHOLD_BREAK_GLASS_LOOP_ESCAPE = "valid_threshold_break_glass_loop_escape"
+VALID_CROSS_NODE_SIMILAR_FAILURES_NORMAL_REPAIR = "valid_cross_node_similar_failures_normal_repair"
 
 CURRENT_BLOCKER_PAYLOAD_MISSING_DETAILS = "current_blocker_payload_missing_details"
 STALE_BLOCKER_USED_FOR_PM_REPAIR = "stale_blocker_used_for_pm_repair"
@@ -54,12 +56,19 @@ FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY = (
     "flowguard_evidence_has_blocker_but_staged_effect_empty"
 )
 SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN = "superseded_repair_blocker_left_open"
+ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT = (
+    "accepted_noncurrent_repair_packet_blocks_final_preflight"
+)
+STALE_PRIOR_ROUTE_REPAIR_BLOCKER_LEFT_OPEN = "stale_prior_route_repair_blocker_left_open"
+REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR = "repair_loop_over_threshold_allowed_pm_repair"
 
 VALID_SCENARIOS = (
     VALID_REVIEWER_BLOCKER_REPAIR_PACKET,
     VALID_WORKER_BLOCKER_REISSUE,
     VALID_FOLLOWUP_BLOCKER_RECORDING,
     VALID_LOOP_ESCAPE_ROUTE_MUTATION,
+    VALID_THRESHOLD_BREAK_GLASS_LOOP_ESCAPE,
+    VALID_CROSS_NODE_SIMILAR_FAILURES_NORMAL_REPAIR,
 )
 
 NEGATIVE_SCENARIOS = (
@@ -83,6 +92,9 @@ NEGATIVE_SCENARIOS = (
     FORMAL_BLOCKER_ID_ONLY_IN_PROSE_REACHES_REVIEWER,
     FLOWGUARD_EVIDENCE_HAS_BLOCKER_BUT_STAGED_EFFECT_EMPTY,
     SUPERSEDED_REPAIR_BLOCKER_LEFT_OPEN,
+    ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT,
+    STALE_PRIOR_ROUTE_REPAIR_BLOCKER_LEFT_OPEN,
+    REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR,
 )
 
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
@@ -160,6 +172,8 @@ class State:
     route_replacement_supersedes_prior_repair: bool = False
     superseded_blocker_disposition_recorded: bool = True
     superseded_blocker_still_repair_open: bool = False
+    final_preflight_uses_current_effective_blockers: bool = True
+    final_preflight_reports_noncurrent_repair_blocker: bool = False
 
     followup_blocker_returned: bool = False
     followup_blocker_recorded: bool = False
@@ -168,6 +182,13 @@ class State:
     same_work_packet_hash_repeated: bool = False
     loop_escape_recorded: bool = False
     terminal_stop_or_route_mutation: bool = False
+    same_family_repair_attempt_count: int = 0
+    repair_loop_threshold: int = 5
+    repair_loop_same_node_consecutive: bool = False
+    repair_loop_threshold_evidence_visible: bool = False
+    break_glass_duty_projected: bool = False
+    ordinary_pm_repair_continued_over_threshold: bool = False
+    same_family_pm_packets_superseded: bool = True
 
     terminal_reason: str = "none"
 
@@ -288,6 +309,47 @@ def _scenario_state(scenario: str) -> State:
             runtime_mechanical_identity_gate_passed=True,
             staged_effect_blocker_id_bound=True,
             flowguard_evidence_formal_blocker_id_bound=True,
+        )
+    if scenario == VALID_THRESHOLD_BREAK_GLASS_LOOP_ESCAPE:
+        return State(
+            status="running",
+            scenario=scenario,
+            blocker_detected=True,
+            blocker_source_role="reviewer",
+            blocker_payload_current=True,
+            blocker_id_present=True,
+            source_result_ref_present=True,
+            specific_failure_present=True,
+            required_repair_present=True,
+            pm_requires_authorized_report_body=True,
+            pm_authorized_report_delivered=True,
+            pm_single_owner=True,
+            same_blocker_repeat_count=6,
+            same_work_packet_hash_repeated=True,
+            loop_escape_recorded=True,
+            same_family_repair_attempt_count=6,
+            repair_loop_threshold=5,
+            repair_loop_same_node_consecutive=True,
+            repair_loop_threshold_evidence_visible=True,
+            break_glass_duty_projected=True,
+            ordinary_pm_repair_continued_over_threshold=False,
+            same_family_pm_packets_superseded=True,
+            runtime_mechanical_identity_gate_passed=True,
+        )
+
+    if scenario == VALID_CROSS_NODE_SIMILAR_FAILURES_NORMAL_REPAIR:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            blocker_closed=False,
+            same_family_repair_attempt_count=6,
+            repair_loop_threshold=5,
+            repair_loop_same_node_consecutive=False,
+            repair_loop_threshold_evidence_visible=True,
+            break_glass_duty_projected=False,
+            ordinary_pm_repair_continued_over_threshold=True,
+            same_family_pm_packets_superseded=False,
+            loop_escape_recorded=True,
         )
 
     if scenario == CURRENT_BLOCKER_PAYLOAD_MISSING_DETAILS:
@@ -423,6 +485,37 @@ def _scenario_state(scenario: str) -> State:
             superseded_blocker_disposition_recorded=False,
             superseded_blocker_still_repair_open=True,
         )
+    if scenario == ACCEPTED_NONCURRENT_REPAIR_PACKET_BLOCKS_FINAL_PREFLIGHT:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            final_preflight_uses_current_effective_blockers=False,
+            final_preflight_reports_noncurrent_repair_blocker=True,
+        )
+    if scenario == STALE_PRIOR_ROUTE_REPAIR_BLOCKER_LEFT_OPEN:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            route_replacement_supersedes_prior_repair=True,
+            superseded_blocker_disposition_recorded=False,
+            superseded_blocker_still_repair_open=True,
+        )
+    if scenario == REPAIR_LOOP_OVER_THRESHOLD_ALLOWED_PM_REPAIR:
+        return replace(
+            _safe_reviewer_base(),
+            scenario=scenario,
+            same_blocker_repeat_count=6,
+            same_work_packet_hash_repeated=True,
+            loop_escape_recorded=False,
+            terminal_stop_or_route_mutation=False,
+            same_family_repair_attempt_count=6,
+            repair_loop_threshold=5,
+            repair_loop_same_node_consecutive=True,
+            repair_loop_threshold_evidence_visible=True,
+            break_glass_duty_projected=False,
+            ordinary_pm_repair_continued_over_threshold=True,
+            same_family_pm_packets_superseded=False,
+        )
     raise ValueError(f"unknown scenario: {scenario}")
 
 
@@ -534,10 +627,18 @@ def information_flow_failures(state: State) -> list[str]:
 
     if (
         state.route_replacement_supersedes_prior_repair
-        and state.superseded_blocker_still_repair_open
-        and not state.superseded_blocker_disposition_recorded
+        and (
+            state.superseded_blocker_still_repair_open
+            or not state.superseded_blocker_disposition_recorded
+        )
     ):
-        failures.append("superseded repair blocker remained open after route replacement")
+        failures.append("prior-route repair blocker was not dispositioned after route replacement")
+
+    if (
+        not state.final_preflight_uses_current_effective_blockers
+        or state.final_preflight_reports_noncurrent_repair_blocker
+    ):
+        failures.append("final preflight treated a noncurrent repair blocker as current authority")
 
     if state.followup_blocker_returned and not state.followup_blocker_recorded:
         failures.append("follow-up blocker returned by recheck was not recorded as current work")
@@ -545,9 +646,22 @@ def information_flow_failures(state: State) -> list[str]:
     if (
         state.same_blocker_repeat_count >= 2
         and state.same_work_packet_hash_repeated
-        and not (state.loop_escape_recorded and state.terminal_stop_or_route_mutation)
+        and not (
+            (state.loop_escape_recorded and state.terminal_stop_or_route_mutation)
+            or state.break_glass_duty_projected
+        )
     ):
         failures.append("same blocker repeated with same work packet and no route mutation or terminal blocker")
+
+    if state.same_family_repair_attempt_count > state.repair_loop_threshold and state.repair_loop_same_node_consecutive:
+        if not state.repair_loop_threshold_evidence_visible:
+            failures.append("same-node repair loop threshold exceeded without visible evidence")
+        if (
+            state.ordinary_pm_repair_continued_over_threshold
+            or not state.break_glass_duty_projected
+            or not state.same_family_pm_packets_superseded
+        ):
+            failures.append("same-node repair loop threshold exceeded but ordinary PM repair continued")
 
     return failures
 
@@ -579,6 +693,7 @@ class BlockerRepairInformationFlowStep:
         "staged_effect_blocker_id",
         "flowguard_evidence_blocker_id",
         "superseded_repair_blocker_status",
+        "final_preflight_current_effective_blockers",
     )
     writes = (
         "repair_flow_decision",
@@ -656,7 +771,10 @@ def repeated_blockers_escape_or_block(state: State, trace: object) -> InvariantR
         state.status == "accepted"
         and state.same_blocker_repeat_count >= 2
         and state.same_work_packet_hash_repeated
-        and not (state.loop_escape_recorded and state.terminal_stop_or_route_mutation)
+        and not (
+            (state.loop_escape_recorded and state.terminal_stop_or_route_mutation)
+            or state.break_glass_duty_projected
+        )
     ):
         return InvariantResult.fail("accepted same-blocker no-progress loop")
     return InvariantResult.pass_()
@@ -680,10 +798,12 @@ def superseded_repair_blockers_are_dispositioned(state: State, trace: object) ->
     if (
         state.status == "accepted"
         and state.route_replacement_supersedes_prior_repair
-        and state.superseded_blocker_still_repair_open
-        and not state.superseded_blocker_disposition_recorded
+        and (
+            state.superseded_blocker_still_repair_open
+            or not state.superseded_blocker_disposition_recorded
+        )
     ):
-        return InvariantResult.fail("accepted route replacement left superseded repair blocker open")
+        return InvariantResult.fail("accepted route replacement left prior-route repair blocker undispositioned")
     return InvariantResult.pass_()
 
 

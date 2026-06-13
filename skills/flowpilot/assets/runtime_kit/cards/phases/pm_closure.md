@@ -28,6 +28,11 @@ FlowGuard Reports that PM accepted, or explicitly dispositioned by PM with a
 scoped waiver, deferral, quarantine, or user stop. Missing, stale, skipped,
 progress-only, blocked, or unaccepted FlowGuard reports block terminal
 closure.
+Closure also requires all active target-realization obligations from
+`flowguard/target_realization_model.json` to be dispositioned in the final
+ledger. PM cannot close by saying the route ran if a thin-success trap,
+non-downgrade rule, or evidence gate from the target-realization model remains
+unproved, stale, waived without authority, or unresolved.
 Read the latest route-memory prior path context before closure. Closure must
 not rely on a stale view of completed nodes, superseded nodes, stale evidence,
 route mutations, terminal replay, or lifecycle state.
@@ -69,6 +74,10 @@ scope, validation evidence, and sunset or next-disposition criteria. Old
 artifacts, old route fields, and historical evidence may appear only as
 negative rejection evidence or historical context; they cannot close current
 completion.
+PM must also accept the runtime's final-quality evidence classification.
+Invalid final matrix rows, blocked review ids, stale/progress-only FlowGuard
+ids, failed validation ids, and terminal replay target mismatches are closure
+blockers until repaired through the existing current-runtime path.
 
 Closure order:
 

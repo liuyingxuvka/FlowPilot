@@ -263,6 +263,14 @@ def _apply_done_controller_receipt_effects(router: ModuleType, project_root: Pat
         sync_payload = router._apply_sync_display_plan_state(project_root, run_root, run_state, action, payload)
         return {'applied': True, 'source': 'router_owned_display_status_reclaim', 'projection_hash': sync_payload.get('projection_hash'), 'display_plan_path': sync_payload.get('display_plan_path')}
     postcondition = _pending_action_postcondition(action)
+    if postcondition and payload.get('path_only_handoff') is True and not _pending_action_postcondition_satisfied(run_state, postcondition):
+        return {
+            'applied': False,
+            'reason': 'path_only_handoff_is_not_completion',
+            'postcondition': postcondition,
+            'path_only_handoff': True,
+            'action_type': action_type,
+        }
     if postcondition and (not _pending_action_postcondition_satisfied(run_state, postcondition) or action_type == 'deliver_mail'):
         applied = router._apply_stateful_receipt_postcondition(project_root, run_root, run_state, action, payload)
         if not applied.get('applied') or not _pending_action_postcondition_satisfied(run_state, postcondition):

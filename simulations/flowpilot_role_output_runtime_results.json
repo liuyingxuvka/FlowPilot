@@ -21,7 +21,7 @@
       "asset_unified_runtime_path_exists": true,
       "binding_report": {
         "facts": {
-          "bound_contract_count": 14,
+          "bound_contract_count": 16,
           "declared_output_types": [
             "controller_boundary_confirmation",
             "current_node_result_review_pass",
@@ -30,10 +30,12 @@
             "gate_decision",
             "material_sufficiency_report",
             "pm_control_blocker_repair_decision",
+            "pm_implementation_intent",
             "pm_model_miss_triage_decision",
             "pm_package_result_disposition",
             "pm_parent_segment_decision",
             "pm_resume_decision",
+            "pm_target_realization_model_decision",
             "pm_terminal_closure_decision",
             "reviewer_review_report",
             "terminal_backward_replay_report"
@@ -60,10 +62,12 @@
         "gate_decision",
         "material_sufficiency_report",
         "pm_control_blocker_repair_decision",
+        "pm_implementation_intent",
         "pm_model_miss_triage_decision",
         "pm_package_result_disposition",
         "pm_parent_segment_decision",
         "pm_resume_decision",
+        "pm_target_realization_model_decision",
         "pm_terminal_closure_decision",
         "reviewer_review_report",
         "terminal_backward_replay_report"

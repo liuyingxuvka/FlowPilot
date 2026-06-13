@@ -39,7 +39,10 @@ def write_route_activation(
     payload: dict[str, Any],
 ) -> None:
     router._require_product_behavior_model_report(project_root, run_root)
+    router._require_target_realization_model_report(project_root, run_root)
     router._require_route_process_pass(project_root, run_root)
+    if not run_state["flags"].get("implementation_intent_reviewer_passed"):
+        raise router.RouterError("route activation requires reviewer-passed implementation intent challenge")
     if not run_state["flags"].get("reviewer_route_check_passed"):
         raise router.RouterError("route activation requires reviewer-passed route challenge")
     route_payload, draft_path = route_payload_from_reviewed_draft(router, project_root, run_root, payload)

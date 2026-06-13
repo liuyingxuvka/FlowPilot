@@ -54,7 +54,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-08T09:56:34.037840+00:00",
+        "created_at": "2026-06-13T11:16:03.535373+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0004"
@@ -86,7 +86,7 @@
           "packet_not_accepted:packet-0001",
           "packet_not_accepted:packet-0002"
         ],
-        "created_at": "2026-06-08T09:56:34.041868+00:00",
+        "created_at": "2026-06-13T11:16:03.538370+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "runtime-validation"
@@ -139,7 +139,7 @@
           "final_route_wide_gate_ledger_unresolved",
           "route_deliverable:node-001:product-json:failed"
         ],
-        "created_at": "2026-06-08T09:56:34.090226+00:00",
+        "created_at": "2026-06-13T11:16:03.546370+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "node-001-validation"
@@ -170,7 +170,7 @@
         "blockers": [
           "missing_terminal_backward_replay"
         ],
-        "created_at": "2026-06-08T09:56:34.096774+00:00",
+        "created_at": "2026-06-13T11:16:03.549371+00:00",
         "decision": "blocked",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "node-003-validation"
@@ -182,7 +182,7 @@
           "blockers": [
             "missing_terminal_backward_replay"
           ],
-          "created_at": "2026-06-08T09:56:34.096774+00:00",
+          "created_at": "2026-06-13T11:16:03.549371+00:00",
           "decision": "blocked",
           "required_flowguard_target": "development_process",
           "validation_evidence_id": "node-003-validation"
@@ -353,7 +353,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-08T09:56:34.113441+00:00",
+        "created_at": "2026-06-13T11:16:03.556369+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -379,7 +379,7 @@
           },
           {
             "accepted_result_id": "result-0002",
-            "body_hash": "45cbb4dea8a0f644dcd5ccf057c7b63d86190a55aeae3ec3fb71a36707855017",
+            "body_hash": "7ef4f43c1f0a09f4f628d460be9f959eefc667c995b54e5e871bf78dd56185a9",
             "node_context_package_id": "",
             "objective": "Run FlowGuard evidence for packet-0001",
             "packet_id": "packet-0002",
@@ -395,7 +395,7 @@
           },
           {
             "accepted_result_id": "result-0003",
-            "body_hash": "8c42631c0551bbf51198260e84727814cab547da9862b785b4a98d2f1f4e0c76",
+            "body_hash": "ed36f562fa2aae32f4f8d149634df6b51235641b0604130bb3617cf681193324",
             "node_context_package_id": "",
             "objective": "Review result and FlowGuard evidence for packet-0001",
             "packet_id": "packet-0003",
@@ -494,7 +494,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-08T09:56:34.130068+00:00",
+        "created_at": "2026-06-13T11:16:03.562370+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -553,7 +553,7 @@
             "next_action:repair_accepted_packet",
             "next_action_current_target:packet-0001:noncurrent_packet_status:accepted"
           ],
-          "checked_at": "2026-06-08T09:56:34.130068+00:00",
+          "checked_at": "2026-06-13T11:16:03.562370+00:00",
           "closure_decision": "complete",
           "controller_stop_allowed": false,
           "guard_decision": "repair_assignment_race",
@@ -626,7 +626,7 @@
           }
         ],
         "blockers": [],
-        "created_at": "2026-06-08T09:56:34.140170+00:00",
+        "created_at": "2026-06-13T11:16:03.569369+00:00",
         "decision": "complete",
         "required_flowguard_target": "development_process",
         "validation_evidence_id": "validation-result-0003"
@@ -665,7 +665,7 @@
         "duty": {
           "action": "recover_or_reissue",
           "controller_stop_allowed": false,
-          "created_at": "2026-06-08T09:56:34.143187+00:00",
+          "created_at": "2026-06-13T11:16:03.570369+00:00",
           "final_return_preflight": {
             "accepted_packet_lease_health": {
               "finding_count": 0,
@@ -681,7 +681,7 @@
               "lifecycle_guard_disallows_stop",
               "next_action:wait_for_result"
             ],
-            "checked_at": "2026-06-08T09:56:34.143187+00:00",
+            "checked_at": "2026-06-13T11:16:03.570369+00:00",
             "closure_decision": "not_attempted",
             "controller_stop_allowed": false,
             "guard_decision": "reissue_or_replace_lease",
@@ -725,7 +725,7 @@
             "subject_id": "packet-0001",
             "wait_recovery": {
               "decision_override": "reissue_or_replace_lease",
-              "last_liveness_checked_at": "2026-06-08T09:56:34.142174+00:00",
+              "last_liveness_checked_at": "2026-06-13T11:16:03.570369+00:00",
               "last_liveness_elapsed_seconds": 0,
               "last_liveness_status": "not_found",
               "last_progress_elapsed_seconds": null,

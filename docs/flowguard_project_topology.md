@@ -10,23 +10,23 @@ It is orientation only; it is not validation evidence.
 - Code surfaces: 942
 - Test commands: 350
 - Evidence summaries: 5
-- Known-bad/risk labels surfaced: 2418
+- Known-bad/risk labels surfaced: 2437
 
 ## Area Map
 
 | Area | Models | Alignment families | Code surfaces | Test commands | Known-bad labels |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | `closure` | 6 | 1 | 16 | 7 | 73 |
-| `controller` | 7 | 0 | 87 | 22 | 103 |
+| `controller` | 7 | 0 | 87 | 22 | 104 |
 | `install-validation` | 1 | 0 | 17 | 16 | 15 |
 | `material` | 1 | 0 | 22 | 25 | 11 |
 | `model-mesh` | 3 | 0 | 7 | 2 | 73 |
 | `model-test-alignment` | 3 | 0 | 12 | 12 | 61 |
-| `other` | 81 | 6 | 239 | 40 | 1299 |
+| `other` | 81 | 6 | 239 | 40 | 1315 |
 | `packet` | 9 | 2 | 170 | 124 | 169 |
 | `prompt-card` | 3 | 0 | 4 | 0 | 77 |
 | `review` | 3 | 0 | 3 | 0 | 67 |
-| `route` | 16 | 2 | 285 | 55 | 304 |
+| `route` | 16 | 2 | 285 | 55 | 306 |
 | `startup` | 6 | 1 | 73 | 43 | 129 |
 | `structure` | 3 | 0 | 7 | 4 | 37 |
 
@@ -80,13 +80,13 @@ Completion and readiness claims still need the owning FlowGuard checks, tests, r
 - `startup` (startup): 2 obligations, 4 test evidence rows
 - `packet/card/ack` (packet): 4 obligations, 7 test evidence rows
 - `packet result family` (packet): 13 obligations, 17 test evidence rows
-- `route mutation` (route): 2 obligations, 4 test evidence rows
-- `field lifecycle currentness` (other): 7 obligations, 12 test evidence rows
+- `route mutation` (route): 3 obligations, 6 test evidence rows
+- `field lifecycle currentness` (other): 8 obligations, 13 test evidence rows
 - `current-node trunk invariant` (other): 2 obligations, 4 test evidence rows
-- `terminal/closure/resume` (closure): 3 obligations, 5 test evidence rows
+- `terminal/closure/resume` (closure): 4 obligations, 11 test evidence rows
 - `role/output contracts` (other): 3 obligations, 5 test evidence rows
 - `router loop/daemon` (route): 14 obligations, 31 test evidence rows
-- `repair transactions` (other): 7 obligations, 8 test evidence rows
+- `repair transactions` (other): 10 obligations, 14 test evidence rows
 - `test tiering/slow-test contracts` (other): 3 obligations, 5 test evidence rows
 - `meta/capability parents` (other): 3 obligations, 5 test evidence rows
 

@@ -16,24 +16,91 @@
   ],
   "finding_counts": {},
   "findings": [],
-  "full_coverage_ok": true,
+  "full_coverage_ok": false,
   "full_diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
   "full_diagnostic_ok": true,
   "full_model_test_code_diagnostic": {
-    "actionable_findings": [],
-    "actionable_summary": [],
-    "covered_surface_count": 942,
-    "deferred_structure_split_count": 0,
+    "actionable_findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_route_artifacts_architecture_product|defer_structure_split|needs_structure_split",
+        "kind": "public_facade",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_router_route_artifacts_architecture_product has 519 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_route_artifacts_architecture_product",
+        "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_route_artifacts_architecture_product",
+        "surface_owner": "flowpilot_router_route_artifacts_architecture_product"
+      }
+    ],
+    "actionable_summary": [
+      {
+        "dedupe_key": "flowpilot_router_route_artifacts_architecture_product|defer_structure_split|needs_structure_split",
+        "finding_count": 1,
+        "gap_codes": [
+          "needs_structure_split"
+        ],
+        "message": "flowpilot_router_route_artifacts_architecture_product has 519 lines, above the 320 line diagnostic threshold",
+        "paths": [
+          "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py"
+        ],
+        "primary_code": "needs_structure_split",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_ids": [
+          "asset:flowpilot_router_route_artifacts_architecture_product"
+        ],
+        "surface_owner": "flowpilot_router_route_artifacts_architecture_product"
+      }
+    ],
+    "covered_surface_count": 941,
+    "deferred_structure_split_count": 1,
     "diagnostic_boundary": "Full model-test-code diagnostics inventory repository maintenance surfaces and classify coverage gaps. They are coverage-accounting evidence: a covered row means the surface has model/test/code binding evidence, not that every internal behavior has been semantically proved.",
     "explicitly_skipped_structure_split_count": 0,
     "explicitly_skipped_structure_split_surfaces": [],
-    "findings": [],
-    "full_coverage_ok": true,
-    "gap_counts": {},
-    "gap_counts_by_release_relevance": {},
-    "gap_counts_by_repair_type": {},
-    "gap_counts_by_severity": {},
-    "gap_surface_count": 0,
+    "findings": [
+      {
+        "code": "needs_structure_split",
+        "dedupe_key": "flowpilot_router_route_artifacts_architecture_product|defer_structure_split|needs_structure_split",
+        "kind": "public_facade",
+        "maturation_actions": [
+          "split_child_model"
+        ],
+        "maturation_signal_type": "duplicate_primary_edge_path",
+        "message": "flowpilot_router_route_artifacts_architecture_product has 519 lines, above the 320 line diagnostic threshold",
+        "name": "flowpilot_router_route_artifacts_architecture_product",
+        "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py",
+        "priority_score": 29,
+        "release_relevance": "runtime_contract",
+        "repair_type": "defer_structure_split",
+        "severity": "medium",
+        "surface_id": "asset:flowpilot_router_route_artifacts_architecture_product",
+        "surface_owner": "flowpilot_router_route_artifacts_architecture_product"
+      }
+    ],
+    "full_coverage_ok": false,
+    "gap_counts": {
+      "needs_structure_split": 1
+    },
+    "gap_counts_by_release_relevance": {
+      "runtime_contract": 1
+    },
+    "gap_counts_by_repair_type": {
+      "defer_structure_split": 1
+    },
+    "gap_counts_by_severity": {
+      "medium": 1
+    },
+    "gap_surface_count": 1,
     "known_bad_ok": true,
     "known_bad_sanity_checks": [
       {
@@ -334,7 +401,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 277,
+        "line_count": 296,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_blocker_repair_information_flow_checks",
@@ -576,7 +643,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 475,
+        "line_count": 487,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_control_plane_friction_checks",
@@ -686,7 +753,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 208,
+        "line_count": 210,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_controller_break_glass_checks",
@@ -1302,7 +1369,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 55,
+        "line_count": 71,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_final_confidence_gate_checks",
@@ -1852,7 +1919,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 236,
+        "line_count": 245,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_planning_quality_checks",
@@ -1940,7 +2007,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 285,
+        "line_count": 305,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_prework_flowguard_gate_checks",
@@ -1984,7 +2051,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 284,
+        "line_count": 308,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_project_control_information_flow_checks",
@@ -2138,7 +2205,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "model_check_runner",
-        "line_count": 224,
+        "line_count": 226,
         "max_severity": "none",
         "model_binding": "model_check_runner_contract",
         "name": "run_flowpilot_recursive_decomposition_checks",
@@ -5847,7 +5914,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 312,
+        "line_count": 324,
         "local_import_count": 1,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6007,7 +6074,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 227,
+        "line_count": 233,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -6880,7 +6947,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 107,
+        "line_count": 113,
         "local_import_count": 16,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7064,7 +7131,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 165,
+        "line_count": 209,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7201,7 +7268,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 190,
+        "line_count": 234,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7506,7 +7573,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 260,
+        "line_count": 325,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7554,7 +7621,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 239,
+        "line_count": 267,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7842,7 +7909,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 367,
+        "line_count": 370,
         "local_import_count": 0,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -7890,7 +7957,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "owner_module",
-        "line_count": 179,
+        "line_count": 190,
         "local_import_count": 8,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -11606,7 +11673,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 300,
+        "line_count": 308,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12308,7 +12375,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 221,
+        "line_count": 223,
         "local_import_count": 11,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12397,7 +12464,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 172,
+        "line_count": 203,
         "local_import_count": 10,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12538,7 +12605,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 57,
+        "line_count": 61,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12565,28 +12632,44 @@
         "top_level_function_count": 2
       },
       {
-        "covered": true,
+        "covered": false,
+        "deferred_split_reason": "contract_tests_current | peer_agents_active | requires_dedicated_structuremesh_claim_before_runtime_split",
         "evidence_status": "passed",
-        "gap_codes": [],
+        "gap_codes": [
+          "needs_structure_split"
+        ],
         "has_code": true,
         "has_external_contract": true,
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 278,
+        "line_count": 519,
         "local_import_count": 8,
-        "max_severity": "none",
+        "max_severity": "medium",
         "model_binding": "router_runtime_architecture",
         "name": "flowpilot_router_route_artifacts_architecture_product",
         "parse_error": "",
         "path": "skills/flowpilot/assets/flowpilot_router_route_artifacts_architecture_product.py",
+        "peer_safety_status": "do_not_edit_without_claim",
+        "recent_owner_context": [
+          "bd83ae52",
+          "435292eb",
+          "c874e8b3"
+        ],
+        "recommended_next_action": "claim_and_split_with_contract_parity_tests",
         "release_relevance": "runtime_contract",
-        "repair_types": [],
+        "repair_types": [
+          "defer_structure_split"
+        ],
+        "safe_split_class": "public_facade",
+        "split_reason": "line_threshold_exceeded | external_contract_pinned",
+        "split_status": "deferred_split",
         "split_threshold": 320,
+        "structure_split_status": "deferred",
         "surface_id": "asset:flowpilot_router_route_artifacts_architecture_product",
         "surface_owner": "flowpilot_router_route_artifacts_architecture_product",
         "top_level_class_count": 0,
-        "top_level_function_count": 8
+        "top_level_function_count": 12
       },
       {
         "completed_split_paths": [
@@ -12730,7 +12813,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 62,
+        "line_count": 66,
         "local_import_count": 3,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12765,7 +12848,7 @@
         "has_model": true,
         "has_test": true,
         "kind": "public_facade",
-        "line_count": 200,
+        "line_count": 255,
         "local_import_count": 7,
         "max_severity": "none",
         "model_binding": "router_runtime_architecture",
@@ -12778,7 +12861,7 @@
         "surface_id": "asset:flowpilot_router_route_frontier_context_drafts",
         "surface_owner": "flowpilot_router_route_frontier_context_drafts",
         "top_level_class_count": 0,
-        "top_level_function_count": 11
+        "top_level_function_count": 15
       },
       {
         "covered": true,
@@ -22492,17 +22575,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_capability_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "complete",
+              "meta_status": "passed",
               "name": "run_capability_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "capability_full",
@@ -22632,17 +22713,15 @@
                 "meta": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.meta.json",
                 "out": "C:\\Users\\liu_y\\Documents\\FlowGuardProjectAutopilot_20260430\\tmp\\flowguard_background\\run_meta_checks.out.txt"
               },
-              "execution_status": "incomplete",
+              "execution_status": "passed",
               "exit_code": 0,
-              "meta_status": "complete",
+              "meta_status": "passed",
               "name": "run_meta_checks",
-              "ok": false,
+              "ok": true,
               "progress_seen": true,
               "proof_scope": "full",
-              "reasons": [
-                "unexpected_meta_status:complete"
-              ],
-              "status": "incomplete"
+              "reasons": [],
+              "status": "passed"
             },
             {
               "artifact_name": "meta_full",
@@ -35563,6 +35642,40 @@
         "boundary_observations": [],
         "code_contracts": [
           {
+            "code_contract_id": "route_mutation.runtime.repair_open_blocker_supersession",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "affected_packets",
+              "mutation_id",
+              "new_route_version"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "route_mutation.stale_prior_route_repair_blocker_supersession"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "semantic_blocker_superseded_by_route_mutation"
+            ],
+            "state_reads": [
+              "active_blockers",
+              "packets",
+              "route_nodes",
+              "active_route_version"
+            ],
+            "state_writes": [
+              "active_blockers",
+              "packets"
+            ],
+            "surface_type": "function",
+            "symbol": "_supersede_repair_open_blockers_for_route_mutation"
+          },
+          {
             "code_contract_id": "runtime_path.route_mutation.route_mutation_topology_and_recheck",
             "error_paths": [],
             "external_inputs": [],
@@ -35586,6 +35699,23 @@
             "external_outputs": [],
             "implements_obligations": [
               "route_mutation.sibling_replacement_stales_old_evidence"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "route_mutation.stale_prior_route_repair_blocker_supersession"
             ],
             "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
             "required": true,
@@ -35644,6 +35774,32 @@
             "required_closure_evidence_roles": [],
             "required_runtime_node_ids": [
               "route_mutation:route_mutation.sibling_replacement_stales_old_evidence"
+            ],
+            "required_test_kinds": [
+              "negative_path",
+              "edge_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": true,
+            "description": "Route mutation supersedes older-route repair-open blockers while preserving current-version and unproven-version repair blockers.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "route_mutation:route_mutation.stale_prior_route_repair_blocker_supersession"
             ],
             "required_test_kinds": [
               "negative_path",
@@ -35746,6 +35902,49 @@
             "requires_gateway_binding": false,
             "sequence_index": 1,
             "state_case": "route_mutation.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "route_mutation.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.route_mutation",
+            "child_model_id": "route_mutation",
+            "code_contract_id": "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession",
+            "exact": true,
+            "input_case": "route_mutation.external_contract_input",
+            "leaf_model_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "metadata": {
+              "compared_flowguard_model": "route_mutation",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/route mutation/route_mutation",
+              "compared_flowguard_obligation": "route_mutation.stale_prior_route_repair_blocker_supersession",
+              "family": "route mutation",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_route_mutation_supersedes_prior_route_repair_open_blockers",
+              "source_test_evidence_id": "route_mutation.negative.stale_prior_route_repair_blocker",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "route_mutation",
+            "model_obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "model_path": "FlowPilot model-test alignment/route mutation/route_mutation",
+            "node_id": "route_mutation:route_mutation.stale_prior_route_repair_blocker_supersession",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.route_mutation.02.route_mutation_stale_prior_route_repair_blocker_supersession"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 2,
+            "state_case": "route_mutation.current_model_state"
           }
         ],
         "runtime_node_observations": [],
@@ -35758,7 +35957,8 @@
               "model_path": "FlowPilot model-test alignment/route mutation/route_mutation",
               "progress_lines": [
                 "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.topology_and_recheck run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.topology_and_recheck obligation=route_mutation.topology_and_recheck code_contract=runtime_path.route_mutation.route_mutation_topology_and_recheck boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.happy.contract_fixture progress=compares FlowPilot code/test evidence route_mutation.happy.contract_fixture with FlowGuard model route_mutation obligation route_mutation.topology_and_recheck",
-                "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.sibling_replacement_stales_old_evidence run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.sibling_replacement_stales_old_evidence obligation=route_mutation.sibling_replacement_stales_old_evidence code_contract=runtime_path.route_mutation.route_mutation_sibling_replacement_stales_old_evidence boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.edge.sibling_replacement_display progress=compares FlowPilot code/test evidence route_mutation.edge.sibling_replacement_display with FlowGuard model route_mutation obligation route_mutation.sibling_replacement_stales_old_evidence"
+                "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.sibling_replacement_stales_old_evidence run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.sibling_replacement_stales_old_evidence obligation=route_mutation.sibling_replacement_stales_old_evidence code_contract=runtime_path.route_mutation.route_mutation_sibling_replacement_stales_old_evidence boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.edge.sibling_replacement_display progress=compares FlowPilot code/test evidence route_mutation.edge.sibling_replacement_display with FlowGuard model route_mutation obligation route_mutation.sibling_replacement_stales_old_evidence",
+                "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.stale_prior_route_repair_blocker_supersession run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.stale_prior_route_repair_blocker_supersession obligation=route_mutation.stale_prior_route_repair_blocker_supersession code_contract=runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.negative.stale_prior_route_repair_blocker progress=compares FlowPilot code/test evidence route_mutation.negative.stale_prior_route_repair_blocker with FlowGuard model route_mutation obligation route_mutation.stale_prior_route_repair_blocker_supersession"
               ]
             },
             "observations": [
@@ -35844,6 +36044,48 @@
                 "result_status": "passed",
                 "run_id": "route_mutation:runtime-path-current",
                 "sequence_index": 1,
+                "state_case": "route_mutation.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.route_mutation",
+                "child_model_id": "route_mutation",
+                "code_contract_id": "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession",
+                "evidence_current": true,
+                "evidence_id": "route_mutation.negative.stale_prior_route_repair_blocker",
+                "gateway_id": "",
+                "input_case": "route_mutation.external_contract_input",
+                "leaf_model_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+                "metadata": {
+                  "compared_flowguard_model": "route_mutation",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/route mutation/route_mutation",
+                  "compared_flowguard_obligation": "route_mutation.stale_prior_route_repair_blocker_supersession",
+                  "family": "route mutation",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_route_mutation_supersedes_prior_route_repair_open_blockers",
+                  "source_test_evidence_id": "route_mutation.negative.stale_prior_route_repair_blocker",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "route_mutation",
+                "model_obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+                "model_path": "FlowPilot model-test alignment/route mutation/route_mutation",
+                "node_id": "route_mutation:route_mutation.stale_prior_route_repair_blocker_supersession",
+                "observation_id": "runtime_path.route_mutation.02.route_mutation_stale_prior_route_repair_blocker_supersession",
+                "observed_error_path": "",
+                "observed_next_state": "route_mutation.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence route_mutation.negative.stale_prior_route_repair_blocker with FlowGuard model route_mutation obligation route_mutation.stale_prior_route_repair_blocker_supersession",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "route_mutation:runtime-path-current",
+                "sequence_index": 2,
                 "state_case": "route_mutation.current_model_state"
               }
             ],
@@ -35949,6 +36191,56 @@
             "stale_reasons": [],
             "test_kind": "negative_path",
             "test_name": "test_route_mutation_sibling_branch_replacement_blocks_old_sibling_proof"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_route_mutation_supersedes_prior_route_repair_open_blockers",
+            "covered_code_contracts": [
+              "route_mutation.runtime.repair_open_blocker_supersession",
+              "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession"
+            ],
+            "covered_obligations": [
+              "route_mutation.stale_prior_route_repair_blocker_supersession"
+            ],
+            "evidence_current": true,
+            "evidence_id": "route_mutation.negative.stale_prior_route_repair_blocker",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_route_mutation_supersedes_prior_route_repair_open_blockers"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_route_mutation_preserves_current_unproven_and_dispositioned_repair_open_blockers",
+            "covered_code_contracts": [
+              "route_mutation.runtime.repair_open_blocker_supersession",
+              "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession"
+            ],
+            "covered_obligations": [
+              "route_mutation.stale_prior_route_repair_blocker_supersession"
+            ],
+            "evidence_current": true,
+            "evidence_id": "route_mutation.edge.current_or_unproven_repair_blocker_preserved",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_route_mutation_preserves_current_unproven_and_dispositioned_repair_open_blockers"
           }
         ]
       },
@@ -35981,6 +36273,34 @@
             "model_obligation_id": "route_mutation.sibling_replacement_stales_old_evidence",
             "status": "locked",
             "test_evidence_id": "route_mutation.negative.old_sibling_proof"
+          },
+          {
+            "code_contract_id": "route_mutation.runtime.repair_open_blocker_supersession",
+            "gaps": [],
+            "model_obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "status": "locked",
+            "test_evidence_id": "route_mutation.negative.stale_prior_route_repair_blocker"
+          },
+          {
+            "code_contract_id": "route_mutation.runtime.repair_open_blocker_supersession",
+            "gaps": [],
+            "model_obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "status": "locked",
+            "test_evidence_id": "route_mutation.edge.current_or_unproven_repair_blocker_preserved"
+          },
+          {
+            "code_contract_id": "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession",
+            "gaps": [],
+            "model_obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "status": "locked",
+            "test_evidence_id": "route_mutation.negative.stale_prior_route_repair_blocker"
+          },
+          {
+            "code_contract_id": "runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession",
+            "gaps": [],
+            "model_obligation_id": "route_mutation.stale_prior_route_repair_blocker_supersession",
+            "status": "locked",
+            "test_evidence_id": "route_mutation.edge.current_or_unproven_repair_blocker_preserved"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -35990,14 +36310,15 @@
         "summary": "OK: model=route_mutation decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 2,
+        "progress_line_count": 3,
         "progress_lines": [
           "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.topology_and_recheck run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.topology_and_recheck obligation=route_mutation.topology_and_recheck code_contract=runtime_path.route_mutation.route_mutation_topology_and_recheck boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.happy.contract_fixture progress=compares FlowPilot code/test evidence route_mutation.happy.contract_fixture with FlowGuard model route_mutation obligation route_mutation.topology_and_recheck",
-          "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.sibling_replacement_stales_old_evidence run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.sibling_replacement_stales_old_evidence obligation=route_mutation.sibling_replacement_stales_old_evidence code_contract=runtime_path.route_mutation.route_mutation_sibling_replacement_stales_old_evidence boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.edge.sibling_replacement_display progress=compares FlowPilot code/test evidence route_mutation.edge.sibling_replacement_display with FlowGuard model route_mutation obligation route_mutation.sibling_replacement_stales_old_evidence"
+          "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.sibling_replacement_stales_old_evidence run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.sibling_replacement_stales_old_evidence obligation=route_mutation.sibling_replacement_stales_old_evidence code_contract=runtime_path.route_mutation.route_mutation_sibling_replacement_stales_old_evidence boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.edge.sibling_replacement_display progress=compares FlowPilot code/test evidence route_mutation.edge.sibling_replacement_display with FlowGuard model route_mutation obligation route_mutation.sibling_replacement_stales_old_evidence",
+          "flowguard.runtime_path model=route_mutation node=route_mutation:route_mutation.stale_prior_route_repair_blocker_supersession run=route_mutation:runtime-path-current status=passed model_path=FlowPilot model-test alignment/route mutation/route_mutation child_model=route_mutation leaf_model=route_mutation.stale_prior_route_repair_blocker_supersession obligation=route_mutation.stale_prior_route_repair_blocker_supersession code_contract=runtime_path.route_mutation.route_mutation_stale_prior_route_repair_blocker_supersession boundary=flowpilot.runtime_path.route_mutation input_case=route_mutation.external_contract_input state_case=route_mutation.current_model_state evidence=route_mutation.negative.stale_prior_route_repair_blocker progress=compares FlowPilot code/test evidence route_mutation.negative.stale_prior_route_repair_blocker with FlowGuard model route_mutation obligation route_mutation.stale_prior_route_repair_blocker_supersession"
         ],
         "required": true,
-        "runtime_node_contract_count": 2,
-        "runtime_observation_count": 2,
+        "runtime_node_contract_count": 3,
+        "runtime_observation_count": 3,
         "runtime_path_run_count": 1
       }
     },
@@ -36230,6 +36551,35 @@
             "symbol": "_accepted_result_packets_for_active_route"
           },
           {
+            "code_contract_id": "field_lifecycle_currentness.runtime.current_target_preflight_blockers",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "next_action"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "final_return_preflight"
+            ],
+            "state_reads": [
+              "active_blockers",
+              "packets",
+              "route_nodes",
+              "active_route_version"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_current_target_preflight_blockers"
+          },
+          {
             "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic",
             "error_paths": [],
             "external_inputs": [],
@@ -36338,6 +36688,23 @@
             "external_outputs": [],
             "implements_obligations": [
               "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective"
             ],
             "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
             "required": true,
@@ -36758,6 +37125,31 @@
             "side_effects": [],
             "state_reads": [],
             "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": true,
+            "description": "Final return preflight derives active blocker targets from the current-effective blocker predicate, so accepted repair history cannot become current authority.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+            "obligation_type": "field_lifecycle",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "field_lifecycle_currentness:field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective"
+            ],
+            "required_test_kinds": [
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
           }
         ],
         "payload_contracts": [],
@@ -37065,6 +37457,49 @@
             "requires_gateway_binding": false,
             "sequence_index": 6,
             "state_case": "field_lifecycle_currentness.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "field_lifecycle_currentness.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+            "child_model_id": "field_lifecycle_currentness",
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective",
+            "exact": true,
+            "input_case": "field_lifecycle_currentness.external_contract_input",
+            "leaf_model_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+            "metadata": {
+              "compared_flowguard_model": "field_lifecycle_currentness",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+              "compared_flowguard_obligation": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+              "family": "field lifecycle currentness",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_ignores_accepted_noncurrent_repair_packet_open_blocker",
+              "source_test_evidence_id": "field_lifecycle_currentness.negative.final_preflight_accepted_repair_history",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "field_lifecycle_currentness",
+            "model_obligation_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+            "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+            "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.field_lifecycle_currentness.07.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 7,
+            "state_case": "field_lifecycle_currentness.current_model_state"
           }
         ],
         "runtime_node_observations": [],
@@ -37082,7 +37517,8 @@
                 "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.pending_route_mutation_disposition obligation=field_lifecycle_currentness.pending_route_mutation_disposition code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.edge.pending_route_mutation_commit progress=compares FlowPilot code/test evidence field_lifecycle_currentness.edge.pending_route_mutation_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.pending_route_mutation_disposition",
                 "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.active_packets_derive_from_currentness obligation=field_lifecycle_currentness.active_packets_derive_from_currentness code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.active_projection_currentness progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.active_projection_currentness with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.active_packets_derive_from_currentness",
                 "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence obligation=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
-                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route obligation=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route obligation=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+                "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective obligation=field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.final_preflight_accepted_repair_history progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.final_preflight_accepted_repair_history with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective"
               ]
             },
             "observations": [
@@ -37378,6 +37814,48 @@
                 "result_status": "passed",
                 "run_id": "field_lifecycle_currentness:runtime-path-current",
                 "sequence_index": 6,
+                "state_case": "field_lifecycle_currentness.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.field_lifecycle_currentness",
+                "child_model_id": "field_lifecycle_currentness",
+                "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective",
+                "evidence_current": true,
+                "evidence_id": "field_lifecycle_currentness.negative.final_preflight_accepted_repair_history",
+                "gateway_id": "",
+                "input_case": "field_lifecycle_currentness.external_contract_input",
+                "leaf_model_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+                "metadata": {
+                  "compared_flowguard_model": "field_lifecycle_currentness",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                  "compared_flowguard_obligation": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+                  "family": "field lifecycle currentness",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_ignores_accepted_noncurrent_repair_packet_open_blocker",
+                  "source_test_evidence_id": "field_lifecycle_currentness.negative.final_preflight_accepted_repair_history",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "field_lifecycle_currentness",
+                "model_obligation_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+                "model_path": "FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness",
+                "node_id": "field_lifecycle_currentness:field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+                "observation_id": "runtime_path.field_lifecycle_currentness.07.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective",
+                "observed_error_path": "",
+                "observed_next_state": "field_lifecycle_currentness.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence field_lifecycle_currentness.negative.final_preflight_accepted_repair_history with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "field_lifecycle_currentness:runtime-path-current",
+                "sequence_index": 7,
                 "state_case": "field_lifecycle_currentness.current_model_state"
               }
             ],
@@ -37693,6 +38171,31 @@
             "stale_reasons": [],
             "test_kind": "replay",
             "test_name": "test_quarantined_packet_projection_replay_uses_currentness_predicate"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_preflight_ignores_accepted_noncurrent_repair_packet_open_blocker",
+            "covered_code_contracts": [
+              "field_lifecycle_currentness.runtime.current_target_preflight_blockers",
+              "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective"
+            ],
+            "covered_obligations": [
+              "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective"
+            ],
+            "evidence_current": true,
+            "evidence_id": "field_lifecycle_currentness.negative.final_preflight_accepted_repair_history",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_preflight_ignores_accepted_noncurrent_repair_packet_open_blocker"
           }
         ]
       },
@@ -37893,6 +38396,20 @@
             "model_obligation_id": "field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
             "status": "locked",
             "test_evidence_id": "field_lifecycle_currentness.negative.accepted_result_health_stale_lease"
+          },
+          {
+            "code_contract_id": "field_lifecycle_currentness.runtime.current_target_preflight_blockers",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.final_preflight_accepted_repair_history"
+          },
+          {
+            "code_contract_id": "runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective",
+            "gaps": [],
+            "model_obligation_id": "field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective",
+            "status": "locked",
+            "test_evidence_id": "field_lifecycle_currentness.negative.final_preflight_accepted_repair_history"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -37902,7 +38419,7 @@
         "summary": "OK: model=field_lifecycle_currentness decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 7,
+        "progress_line_count": 8,
         "progress_lines": [
           "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.packet_terminal_monotonic run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.packet_terminal_monotonic obligation=field_lifecycle_currentness.packet_terminal_monotonic code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_packet_terminal_monotonic boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.late_terminal_statuses progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.late_terminal_statuses with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.packet_terminal_monotonic",
           "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.result_history_append_only run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.result_history_append_only obligation=field_lifecycle_currentness.result_history_append_only code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_result_history_append_only boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.current_result_history_append progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.current_result_history_append with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.result_history_append_only",
@@ -37910,11 +38427,12 @@
           "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.pending_route_mutation_disposition run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.pending_route_mutation_disposition obligation=field_lifecycle_currentness.pending_route_mutation_disposition code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_pending_route_mutation_disposition boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.edge.pending_route_mutation_commit progress=compares FlowPilot code/test evidence field_lifecycle_currentness.edge.pending_route_mutation_commit with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.pending_route_mutation_disposition",
           "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.active_packets_derive_from_currentness run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.active_packets_derive_from_currentness obligation=field_lifecycle_currentness.active_packets_derive_from_currentness code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_active_packets_derive_from_currentness boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.active_projection_currentness progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.active_projection_currentness with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.active_packets_derive_from_currentness",
           "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence obligation=field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_closure_accepted_packets_derive_from_accepted_evidence boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.closure_accepted_packets_derive_from_accepted_evidence",
-          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route obligation=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route"
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.accepted_result_packets_derive_from_active_route run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route obligation=field_lifecycle_currentness.accepted_result_packets_derive_from_active_route code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_accepted_result_packets_derive_from_active_route boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.happy.closure_accepted_projection progress=compares FlowPilot code/test evidence field_lifecycle_currentness.happy.closure_accepted_projection with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.accepted_result_packets_derive_from_active_route",
+          "flowguard.runtime_path model=field_lifecycle_currentness node=field_lifecycle_currentness:field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective run=field_lifecycle_currentness:runtime-path-current status=passed model_path=FlowPilot model-test alignment/field lifecycle currentness/field_lifecycle_currentness child_model=field_lifecycle_currentness leaf_model=field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective obligation=field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective code_contract=runtime_path.field_lifecycle_currentness.field_lifecycle_currentness_final_preflight_active_blockers_use_current_effective boundary=flowpilot.runtime_path.field_lifecycle_currentness input_case=field_lifecycle_currentness.external_contract_input state_case=field_lifecycle_currentness.current_model_state evidence=field_lifecycle_currentness.negative.final_preflight_accepted_repair_history progress=compares FlowPilot code/test evidence field_lifecycle_currentness.negative.final_preflight_accepted_repair_history with FlowGuard model field_lifecycle_currentness obligation field_lifecycle_currentness.final_preflight_active_blockers_use_current_effective"
         ],
         "required": true,
-        "runtime_node_contract_count": 7,
-        "runtime_observation_count": 7,
+        "runtime_node_contract_count": 8,
+        "runtime_observation_count": 8,
         "runtime_path_run_count": 1
       }
     },
@@ -38394,6 +38912,209 @@
         "boundary_observations": [],
         "code_contracts": [
           {
+            "code_contract_id": "terminal.runtime.review_evidence_current_and_accepted",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "review_id",
+              "node_id"
+            ],
+            "external_outputs": [
+              "bool"
+            ],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "reviews",
+              "results",
+              "packets",
+              "active_route_version"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_review_evidence_current_and_accepted"
+          },
+          {
+            "code_contract_id": "terminal.runtime.flowguard_order_current_and_passing",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "order_id",
+              "node_id"
+            ],
+            "external_outputs": [
+              "bool"
+            ],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "flowguard_work_orders",
+              "packets",
+              "source_generation",
+              "active_route_version"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_flowguard_order_current_and_passing"
+          },
+          {
+            "code_contract_id": "terminal.runtime.validation_evidence_current_and_passing",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "evidence_id",
+              "node_id"
+            ],
+            "external_outputs": [
+              "bool"
+            ],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "validation_evidence",
+              "packets",
+              "source_generation",
+              "active_route_version"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_validation_evidence_current_and_passing"
+          },
+          {
+            "code_contract_id": "terminal.runtime.final_requirement_evidence_matrix",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger"
+            ],
+            "external_outputs": [
+              "f",
+              "i",
+              "n",
+              "a",
+              "l",
+              "_",
+              "r",
+              "e",
+              "q",
+              "u",
+              "i",
+              "r",
+              "e",
+              "m",
+              "e",
+              "n",
+              "t",
+              "_",
+              "e",
+              "v",
+              "i",
+              "d",
+              "e",
+              "n",
+              "c",
+              "e",
+              "_",
+              "m",
+              "a",
+              "t",
+              "r",
+              "i",
+              "x"
+            ],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "route_nodes",
+              "reviews",
+              "flowguard_work_orders",
+              "validation_evidence"
+            ],
+            "state_writes": [
+              "final_requirement_evidence_matrix"
+            ],
+            "surface_type": "function",
+            "symbol": "build_final_requirement_evidence_matrix"
+          },
+          {
+            "code_contract_id": "terminal.runtime.terminal_backward_replay_result_contract",
+            "error_paths": [],
+            "external_inputs": [
+              "packet",
+              "result"
+            ],
+            "external_outputs": [
+              "contract_check"
+            ],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "packet.body.segment_targets",
+              "result.body.segment_reviews"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_terminal_backward_replay_result_violation"
+          },
+          {
+            "code_contract_id": "terminal.runtime.closure_blockers",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "validation_evidence_id",
+              "required_flowguard_target"
+            ],
+            "external_outputs": [
+              "b",
+              "l",
+              "o",
+              "c",
+              "k",
+              "e",
+              "r",
+              "s"
+            ],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "final_route_wide_gate_ledger",
+              "final_requirement_evidence_matrix",
+              "terminal_backward_replays"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_closure_blockers"
+          },
+          {
             "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_ledger_and_backward_replay",
             "error_paths": [],
             "external_inputs": [],
@@ -38417,6 +39138,23 @@
             "external_outputs": [],
             "implements_obligations": [
               "closure.dirty_ledgers_block_completion"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "terminal.final_quality_current_evidence_gates"
             ],
             "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
             "required": true,
@@ -38495,6 +39233,32 @@
             ],
             "required_test_kinds": [
               "failure_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": true,
+            "allow_shared_implementation": true,
+            "description": "Final ledger, requirement matrix, terminal replay, and closure count only current accepted review, passing FlowGuard, passing validation, active-route evidence, and exact runtime-issued replay segments.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "terminal.final_quality_current_evidence_gates",
+            "obligation_type": "invariant",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "terminal_closure_resume:terminal.final_quality_current_evidence_gates"
+            ],
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path"
             ],
             "requires_same_class_test_evidence": false,
             "risk_level": "high",
@@ -38636,6 +39400,49 @@
             ],
             "boundary_id": "flowpilot.runtime_path.terminal_closure_resume",
             "child_model_id": "terminal_closure_resume",
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "exact": true,
+            "input_case": "terminal_closure_resume.external_contract_input",
+            "leaf_model_id": "terminal.final_quality_current_evidence_gates",
+            "metadata": {
+              "compared_flowguard_model": "terminal_closure_resume",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume",
+              "compared_flowguard_obligation": "terminal.final_quality_current_evidence_gates",
+              "family": "terminal/closure/resume",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+              "source_test_evidence_id": "terminal.happy.final_quality_current_evidence",
+              "source_test_path": "tests/test_flowpilot_core_runtime.py"
+            },
+            "model_id": "terminal_closure_resume",
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "model_path": "FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume",
+            "node_id": "terminal_closure_resume:terminal.final_quality_current_evidence_gates",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.terminal_closure_resume.02.terminal_final_quality_current_evidence_gates"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 2,
+            "state_case": "terminal_closure_resume.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "terminal_closure_resume.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.terminal_closure_resume",
+            "child_model_id": "terminal_closure_resume",
             "code_contract_id": "runtime_path.terminal_closure_resume.resume_current_run_reentry",
             "exact": true,
             "input_case": "terminal_closure_resume.external_contract_input",
@@ -38657,10 +39464,10 @@
             "ordered": true,
             "required": true,
             "required_observation_ids": [
-              "runtime_path.terminal_closure_resume.02.resume_current_run_reentry"
+              "runtime_path.terminal_closure_resume.03.resume_current_run_reentry"
             ],
             "requires_gateway_binding": false,
-            "sequence_index": 2,
+            "sequence_index": 3,
             "state_case": "terminal_closure_resume.current_model_state"
           }
         ],
@@ -38675,6 +39482,7 @@
               "progress_lines": [
                 "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:terminal.final_ledger_and_backward_replay run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=terminal.final_ledger_and_backward_replay obligation=terminal.final_ledger_and_backward_replay code_contract=runtime_path.terminal_closure_resume.terminal_final_ledger_and_backward_replay boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=terminal.happy.replay_segments progress=compares FlowPilot code/test evidence terminal.happy.replay_segments with FlowGuard model terminal_closure_resume obligation terminal.final_ledger_and_backward_replay",
                 "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:closure.dirty_ledgers_block_completion run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=closure.dirty_ledgers_block_completion obligation=closure.dirty_ledgers_block_completion code_contract=runtime_path.terminal_closure_resume.closure_dirty_ledgers_block_completion boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=closure.failure.dirty_defect_ledger progress=compares FlowPilot code/test evidence closure.failure.dirty_defect_ledger with FlowGuard model terminal_closure_resume obligation closure.dirty_ledgers_block_completion",
+                "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:terminal.final_quality_current_evidence_gates run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=terminal.final_quality_current_evidence_gates obligation=terminal.final_quality_current_evidence_gates code_contract=runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=terminal.happy.final_quality_current_evidence progress=compares FlowPilot code/test evidence terminal.happy.final_quality_current_evidence with FlowGuard model terminal_closure_resume obligation terminal.final_quality_current_evidence_gates",
                 "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:resume.current_run_reentry run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=resume.current_run_reentry obligation=resume.current_run_reentry code_contract=runtime_path.terminal_closure_resume.resume_current_run_reentry boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=resume.happy.loads_state progress=compares FlowPilot code/test evidence resume.happy.loads_state with FlowGuard model terminal_closure_resume obligation resume.current_run_reentry"
               ]
             },
@@ -38768,6 +39576,48 @@
                 "assertion_scope": "external_contract",
                 "boundary_id": "flowpilot.runtime_path.terminal_closure_resume",
                 "child_model_id": "terminal_closure_resume",
+                "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+                "evidence_current": true,
+                "evidence_id": "terminal.happy.final_quality_current_evidence",
+                "gateway_id": "",
+                "input_case": "terminal_closure_resume.external_contract_input",
+                "leaf_model_id": "terminal.final_quality_current_evidence_gates",
+                "metadata": {
+                  "compared_flowguard_model": "terminal_closure_resume",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume",
+                  "compared_flowguard_obligation": "terminal.final_quality_current_evidence_gates",
+                  "family": "terminal/closure/resume",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+                  "source_test_evidence_id": "terminal.happy.final_quality_current_evidence",
+                  "source_test_path": "tests/test_flowpilot_core_runtime.py"
+                },
+                "model_id": "terminal_closure_resume",
+                "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+                "model_path": "FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume",
+                "node_id": "terminal_closure_resume:terminal.final_quality_current_evidence_gates",
+                "observation_id": "runtime_path.terminal_closure_resume.02.terminal_final_quality_current_evidence_gates",
+                "observed_error_path": "",
+                "observed_next_state": "terminal_closure_resume.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence terminal.happy.final_quality_current_evidence with FlowGuard model terminal_closure_resume obligation terminal.final_quality_current_evidence_gates",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "terminal_closure_resume:runtime-path-current",
+                "sequence_index": 2,
+                "state_case": "terminal_closure_resume.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.terminal_closure_resume",
+                "child_model_id": "terminal_closure_resume",
                 "code_contract_id": "runtime_path.terminal_closure_resume.resume_current_run_reentry",
                 "evidence_current": true,
                 "evidence_id": "resume.happy.loads_state",
@@ -38788,7 +39638,7 @@
                 "model_obligation_id": "resume.current_run_reentry",
                 "model_path": "FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume",
                 "node_id": "terminal_closure_resume:resume.current_run_reentry",
-                "observation_id": "runtime_path.terminal_closure_resume.02.resume_current_run_reentry",
+                "observation_id": "runtime_path.terminal_closure_resume.03.resume_current_run_reentry",
                 "observed_error_path": "",
                 "observed_next_state": "terminal_closure_resume.runtime_path_evidence_bound",
                 "observed_output": "model_obligation_runtime_path_bound",
@@ -38802,7 +39652,7 @@
                 "proof_artifact": null,
                 "result_status": "passed",
                 "run_id": "terminal_closure_resume:runtime-path-current",
-                "sequence_index": 2,
+                "sequence_index": 3,
                 "state_case": "terminal_closure_resume.current_model_state"
               }
             ],
@@ -38888,6 +39738,166 @@
           {
             "assertion_scope": "external_contract",
             "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_closure_accepted_evidence_projection_keeps_accepted_node_packets",
+            "covered_code_contracts": [
+              "terminal.runtime.review_evidence_current_and_accepted",
+              "terminal.runtime.flowguard_order_current_and_passing",
+              "terminal.runtime.validation_evidence_current_and_passing",
+              "terminal.runtime.final_requirement_evidence_matrix",
+              "terminal.runtime.closure_blockers",
+              "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates"
+            ],
+            "covered_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.happy.final_quality_current_evidence",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_closure_accepted_evidence_projection_keeps_accepted_node_packets"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_matrix_rejects_blocked_review_evidence_id",
+            "covered_code_contracts": [
+              "terminal.runtime.review_evidence_current_and_accepted",
+              "terminal.runtime.final_requirement_evidence_matrix",
+              "terminal.runtime.closure_blockers",
+              "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates"
+            ],
+            "covered_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.negative.final_quality_blocked_review",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_matrix_rejects_blocked_review_evidence_id"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_matrix_rejects_stale_flowguard_evidence_id",
+            "covered_code_contracts": [
+              "terminal.runtime.flowguard_order_current_and_passing",
+              "terminal.runtime.final_requirement_evidence_matrix",
+              "terminal.runtime.closure_blockers",
+              "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates"
+            ],
+            "covered_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.negative.final_quality_stale_flowguard",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_matrix_rejects_stale_flowguard_evidence_id"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_matrix_rejects_failed_validation_evidence_id",
+            "covered_code_contracts": [
+              "terminal.runtime.validation_evidence_current_and_passing",
+              "terminal.runtime.final_requirement_evidence_matrix",
+              "terminal.runtime.closure_blockers",
+              "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates"
+            ],
+            "covered_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.negative.final_quality_failed_validation",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_matrix_rejects_failed_validation_evidence_id"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_final_matrix_ignores_old_route_evidence",
+            "covered_code_contracts": [
+              "terminal.runtime.final_requirement_evidence_matrix",
+              "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates"
+            ],
+            "covered_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.negative.final_quality_old_route",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_final_matrix_ignores_old_route_evidence"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m unittest tests.test_flowpilot_core_runtime.FlowPilotCoreRuntimeTests.test_terminal_replay_rejects_missing_or_unexpected_segments",
+            "covered_code_contracts": [
+              "terminal.runtime.terminal_backward_replay_result_contract",
+              "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates"
+            ],
+            "covered_obligations": [
+              "terminal.final_quality_current_evidence_gates"
+            ],
+            "evidence_current": true,
+            "evidence_id": "terminal.negative.terminal_replay_segment_parity",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_core_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_terminal_replay_rejects_missing_or_unexpected_segments"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
             "command": "python -m unittest tests.test_flowpilot_router_runtime_resume",
             "covered_code_contracts": [
               "runtime_path.terminal_closure_resume.resume_current_run_reentry"
@@ -38959,6 +39969,160 @@
             "test_evidence_id": "closure.failure.dirty_defect_ledger"
           },
           {
+            "code_contract_id": "terminal.runtime.review_evidence_current_and_accepted",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.happy.final_quality_current_evidence"
+          },
+          {
+            "code_contract_id": "terminal.runtime.review_evidence_current_and_accepted",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_blocked_review"
+          },
+          {
+            "code_contract_id": "terminal.runtime.flowguard_order_current_and_passing",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.happy.final_quality_current_evidence"
+          },
+          {
+            "code_contract_id": "terminal.runtime.flowguard_order_current_and_passing",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_stale_flowguard"
+          },
+          {
+            "code_contract_id": "terminal.runtime.validation_evidence_current_and_passing",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.happy.final_quality_current_evidence"
+          },
+          {
+            "code_contract_id": "terminal.runtime.validation_evidence_current_and_passing",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_failed_validation"
+          },
+          {
+            "code_contract_id": "terminal.runtime.final_requirement_evidence_matrix",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.happy.final_quality_current_evidence"
+          },
+          {
+            "code_contract_id": "terminal.runtime.final_requirement_evidence_matrix",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_blocked_review"
+          },
+          {
+            "code_contract_id": "terminal.runtime.final_requirement_evidence_matrix",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_stale_flowguard"
+          },
+          {
+            "code_contract_id": "terminal.runtime.final_requirement_evidence_matrix",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_failed_validation"
+          },
+          {
+            "code_contract_id": "terminal.runtime.final_requirement_evidence_matrix",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_old_route"
+          },
+          {
+            "code_contract_id": "terminal.runtime.terminal_backward_replay_result_contract",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.terminal_replay_segment_parity"
+          },
+          {
+            "code_contract_id": "terminal.runtime.closure_blockers",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.happy.final_quality_current_evidence"
+          },
+          {
+            "code_contract_id": "terminal.runtime.closure_blockers",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_blocked_review"
+          },
+          {
+            "code_contract_id": "terminal.runtime.closure_blockers",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_stale_flowguard"
+          },
+          {
+            "code_contract_id": "terminal.runtime.closure_blockers",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_failed_validation"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.happy.final_quality_current_evidence"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_blocked_review"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_stale_flowguard"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_failed_validation"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.final_quality_old_route"
+          },
+          {
+            "code_contract_id": "runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates",
+            "gaps": [],
+            "model_obligation_id": "terminal.final_quality_current_evidence_gates",
+            "status": "locked",
+            "test_evidence_id": "terminal.negative.terminal_replay_segment_parity"
+          },
+          {
             "code_contract_id": "runtime_path.terminal_closure_resume.resume_current_run_reentry",
             "gaps": [],
             "model_obligation_id": "resume.current_run_reentry",
@@ -38980,15 +40144,16 @@
         "summary": "OK: model=terminal_closure_resume decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 3,
+        "progress_line_count": 4,
         "progress_lines": [
           "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:terminal.final_ledger_and_backward_replay run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=terminal.final_ledger_and_backward_replay obligation=terminal.final_ledger_and_backward_replay code_contract=runtime_path.terminal_closure_resume.terminal_final_ledger_and_backward_replay boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=terminal.happy.replay_segments progress=compares FlowPilot code/test evidence terminal.happy.replay_segments with FlowGuard model terminal_closure_resume obligation terminal.final_ledger_and_backward_replay",
           "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:closure.dirty_ledgers_block_completion run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=closure.dirty_ledgers_block_completion obligation=closure.dirty_ledgers_block_completion code_contract=runtime_path.terminal_closure_resume.closure_dirty_ledgers_block_completion boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=closure.failure.dirty_defect_ledger progress=compares FlowPilot code/test evidence closure.failure.dirty_defect_ledger with FlowGuard model terminal_closure_resume obligation closure.dirty_ledgers_block_completion",
+          "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:terminal.final_quality_current_evidence_gates run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=terminal.final_quality_current_evidence_gates obligation=terminal.final_quality_current_evidence_gates code_contract=runtime_path.terminal_closure_resume.terminal_final_quality_current_evidence_gates boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=terminal.happy.final_quality_current_evidence progress=compares FlowPilot code/test evidence terminal.happy.final_quality_current_evidence with FlowGuard model terminal_closure_resume obligation terminal.final_quality_current_evidence_gates",
           "flowguard.runtime_path model=terminal_closure_resume node=terminal_closure_resume:resume.current_run_reentry run=terminal_closure_resume:runtime-path-current status=passed model_path=FlowPilot model-test alignment/terminal/closure/resume/terminal_closure_resume child_model=terminal_closure_resume leaf_model=resume.current_run_reentry obligation=resume.current_run_reentry code_contract=runtime_path.terminal_closure_resume.resume_current_run_reentry boundary=flowpilot.runtime_path.terminal_closure_resume input_case=terminal_closure_resume.external_contract_input state_case=terminal_closure_resume.current_model_state evidence=resume.happy.loads_state progress=compares FlowPilot code/test evidence resume.happy.loads_state with FlowGuard model terminal_closure_resume obligation resume.current_run_reentry"
         ],
         "required": true,
-        "runtime_node_contract_count": 3,
-        "runtime_observation_count": 3,
+        "runtime_node_contract_count": 4,
+        "runtime_observation_count": 4,
         "runtime_path_run_count": 1
       }
     },
@@ -42498,6 +43663,113 @@
         "boundary_observations": [],
         "code_contracts": [
           {
+            "code_contract_id": "repair_transactions.runtime.repair_loop_review",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "blocker"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold",
+              "repair_transactions.repair_loop_cross_node_non_trigger",
+              "repair_transactions.repair_loop_consecutive_identity_reset"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "active_blockers",
+              "packets"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_repair_loop_break_glass_review"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.pm_packet_threshold_gate",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "blocker_id"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [
+              "repair_loop_break_glass_required",
+              "repair_loop_pm_repair_packets_superseded"
+            ],
+            "state_reads": [
+              "active_blockers",
+              "packets"
+            ],
+            "state_writes": [
+              "active_blockers",
+              "packets"
+            ],
+            "surface_type": "function",
+            "symbol": "_ensure_pm_repair_decision_packet_for_blocker"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.break_glass_next_action",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "active_blockers",
+              "packets"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "_repair_loop_break_glass_action"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.break_glass_foreground_duty",
+            "error_paths": [],
+            "external_inputs": [
+              "ledger",
+              "guard"
+            ],
+            "external_outputs": [
+              "return"
+            ],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_core_runtime/runtime.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [
+              "lifecycle_guard",
+              "foreground_duty"
+            ],
+            "state_writes": [],
+            "surface_type": "function",
+            "symbol": "preview_foreground_duty"
+          },
+          {
             "code_contract_id": "runtime_path.repair_transactions.repair_transactions_executable_plan_required",
             "error_paths": [],
             "external_inputs": [],
@@ -42606,6 +43878,57 @@
             "external_outputs": [],
             "implements_obligations": [
               "repair_transactions.route_mutation_supersedes_open_repair_blocker"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_cross_node_non_trigger"
+            ],
+            "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
+            "required": true,
+            "role": "owner",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": [],
+            "surface_type": "diagnostic_runtime_path_binding",
+            "symbol": "attach_runtime_path_evidence_to_plan"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset",
+            "error_paths": [],
+            "external_inputs": [],
+            "external_outputs": [],
+            "implements_obligations": [
+              "repair_transactions.repair_loop_consecutive_identity_reset"
             ],
             "path": "skills/flowpilot/assets/flowpilot_runtime_path_evidence.py",
             "required": true,
@@ -42790,6 +44113,83 @@
             "required_closure_evidence_roles": [],
             "required_runtime_node_ids": [
               "repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker"
+            ],
+            "required_test_kinds": [
+              "edge_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": true,
+            "allow_shared_implementation": true,
+            "description": "A same-node same-problem consecutive repair loop may use ordinary PM repair through five attempts, but same-node attempts above five project Controller break-glass duty and supersede same-node PM repair packets instead of issuing another ordinary PM repair decision.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "repair_transactions:repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "required_test_kinds": [
+              "happy_path",
+              "negative_path",
+              "edge_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": true,
+            "description": "Similar blocker problems across different route nodes stay in ordinary PM repair and do not trigger the same-node break-glass threshold by themselves.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "repair_transactions:repair_transactions.repair_loop_cross_node_non_trigger"
+            ],
+            "required_test_kinds": [
+              "negative_path"
+            ],
+            "requires_same_class_test_evidence": false,
+            "risk_level": "high",
+            "side_effects": [],
+            "state_reads": [],
+            "state_writes": []
+          },
+          {
+            "allow_shared_evidence": false,
+            "allow_shared_implementation": true,
+            "description": "A different blocker problem identity in the same route node resets the consecutive same-node repair-loop count.",
+            "error_paths": [],
+            "exact_external_contract": false,
+            "external_inputs": [],
+            "external_outputs": [],
+            "model_miss_origin": false,
+            "obligation_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+            "obligation_type": "hazard",
+            "required": true,
+            "required_closure_evidence_roles": [],
+            "required_runtime_node_ids": [
+              "repair_transactions:repair_transactions.repair_loop_consecutive_identity_reset"
             ],
             "required_test_kinds": [
               "edge_path"
@@ -43106,6 +44506,135 @@
             "requires_gateway_binding": false,
             "sequence_index": 6,
             "state_case": "repair_transactions.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "repair_transactions.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.repair_transactions",
+            "child_model_id": "repair_transactions",
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+            "exact": true,
+            "input_case": "repair_transactions.external_contract_input",
+            "leaf_model_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "metadata": {
+              "compared_flowguard_model": "repair_transactions",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+              "compared_flowguard_obligation": "repair_transactions.repair_loop_break_glass_threshold",
+              "family": "repair transactions",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_fifth_repeated_blocker_still_allows_pm_repair_decision -q",
+              "source_test_evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm",
+              "source_test_path": "tests/test_flowpilot_complete_system_runtime.py"
+            },
+            "model_id": "repair_transactions",
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+            "node_id": "repair_transactions:repair_transactions.repair_loop_break_glass_threshold",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.repair_transactions.07.repair_transactions_repair_loop_break_glass_threshold"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 7,
+            "state_case": "repair_transactions.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "repair_transactions.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.repair_transactions",
+            "child_model_id": "repair_transactions",
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger",
+            "exact": true,
+            "input_case": "repair_transactions.external_contract_input",
+            "leaf_model_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+            "metadata": {
+              "compared_flowguard_model": "repair_transactions",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+              "compared_flowguard_obligation": "repair_transactions.repair_loop_cross_node_non_trigger",
+              "family": "repair transactions",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_cross_node_similar_blockers_do_not_trigger_repair_loop_break_glass -q",
+              "source_test_evidence_id": "repair_transactions.negative.repair_loop_cross_node_no_break_glass",
+              "source_test_path": "tests/test_flowpilot_complete_system_runtime.py"
+            },
+            "model_id": "repair_transactions",
+            "model_obligation_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+            "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+            "node_id": "repair_transactions:repair_transactions.repair_loop_cross_node_non_trigger",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.repair_transactions.08.repair_transactions_repair_loop_cross_node_non_trigger"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 8,
+            "state_case": "repair_transactions.current_model_state"
+          },
+          {
+            "allowed_error_paths": [],
+            "allowed_next_states": [
+              "repair_transactions.runtime_path_evidence_bound"
+            ],
+            "allowed_outputs": [
+              "model_obligation_runtime_path_bound"
+            ],
+            "allowed_side_effects": [
+              "progress_line_emitted"
+            ],
+            "allowed_state_writes": [
+              "flowguard_runtime_path_evidence"
+            ],
+            "boundary_id": "flowpilot.runtime_path.repair_transactions",
+            "child_model_id": "repair_transactions",
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset",
+            "exact": true,
+            "input_case": "repair_transactions.external_contract_input",
+            "leaf_model_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+            "metadata": {
+              "compared_flowguard_model": "repair_transactions",
+              "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+              "compared_flowguard_obligation": "repair_transactions.repair_loop_consecutive_identity_reset",
+              "family": "repair transactions",
+              "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+              "source_test_command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_same_node_loop_count_resets_after_different_problem_identity -q",
+              "source_test_evidence_id": "repair_transactions.edge.repair_loop_consecutive_reset",
+              "source_test_path": "tests/test_flowpilot_complete_system_runtime.py"
+            },
+            "model_id": "repair_transactions",
+            "model_obligation_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+            "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+            "node_id": "repair_transactions:repair_transactions.repair_loop_consecutive_identity_reset",
+            "ordered": true,
+            "required": true,
+            "required_observation_ids": [
+              "runtime_path.repair_transactions.09.repair_transactions_repair_loop_consecutive_identity_reset"
+            ],
+            "requires_gateway_binding": false,
+            "sequence_index": 9,
+            "state_case": "repair_transactions.current_model_state"
           }
         ],
         "runtime_node_observations": [],
@@ -43123,7 +44652,10 @@
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.empty_transaction_returns_to_pm_repair run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.empty_transaction_returns_to_pm_repair obligation=repair_transactions.empty_transaction_returns_to_pm_repair code_contract=runtime_path.repair_transactions.repair_transactions_empty_transaction_returns_to_pm_repair boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.empty_followup_wait_requires_pm_decision progress=compares FlowPilot code/test evidence repair_transactions.negative.empty_followup_wait_requires_pm_decision with FlowGuard model repair_transactions obligation repair_transactions.empty_transaction_returns_to_pm_repair",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.pm_decision_flag_atomicity run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.pm_decision_flag_atomicity obligation=repair_transactions.pm_decision_flag_atomicity code_contract=runtime_path.repair_transactions.repair_transactions_pm_decision_flag_atomicity boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.pm_decision_side_effect_atomicity progress=compares FlowPilot code/test evidence repair_transactions.edge.pm_decision_side_effect_atomicity with FlowGuard model repair_transactions obligation repair_transactions.pm_decision_flag_atomicity",
                 "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery",
-                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.route_mutation_supersedes_open_repair_blocker obligation=repair_transactions.route_mutation_supersedes_open_repair_blocker code_contract=runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.route_mutation_supersedes_repair_open_blocker progress=compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker"
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.route_mutation_supersedes_open_repair_blocker obligation=repair_transactions.route_mutation_supersedes_open_repair_blocker code_contract=runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.route_mutation_supersedes_repair_open_blocker progress=compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker",
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.repair_loop_break_glass_threshold run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.repair_loop_break_glass_threshold obligation=repair_transactions.repair_loop_break_glass_threshold code_contract=runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.happy.repair_loop_fifth_allows_pm progress=compares FlowPilot code/test evidence repair_transactions.happy.repair_loop_fifth_allows_pm with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_break_glass_threshold",
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.repair_loop_cross_node_non_trigger run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.repair_loop_cross_node_non_trigger obligation=repair_transactions.repair_loop_cross_node_non_trigger code_contract=runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.repair_loop_cross_node_no_break_glass progress=compares FlowPilot code/test evidence repair_transactions.negative.repair_loop_cross_node_no_break_glass with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_cross_node_non_trigger",
+                "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.repair_loop_consecutive_identity_reset run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.repair_loop_consecutive_identity_reset obligation=repair_transactions.repair_loop_consecutive_identity_reset code_contract=runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.repair_loop_consecutive_reset progress=compares FlowPilot code/test evidence repair_transactions.edge.repair_loop_consecutive_reset with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_consecutive_identity_reset"
               ]
             },
             "observations": [
@@ -43420,6 +44952,132 @@
                 "run_id": "repair_transactions:runtime-path-current",
                 "sequence_index": 6,
                 "state_case": "repair_transactions.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.repair_transactions",
+                "child_model_id": "repair_transactions",
+                "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+                "evidence_current": true,
+                "evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm",
+                "gateway_id": "",
+                "input_case": "repair_transactions.external_contract_input",
+                "leaf_model_id": "repair_transactions.repair_loop_break_glass_threshold",
+                "metadata": {
+                  "compared_flowguard_model": "repair_transactions",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                  "compared_flowguard_obligation": "repair_transactions.repair_loop_break_glass_threshold",
+                  "family": "repair transactions",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_fifth_repeated_blocker_still_allows_pm_repair_decision -q",
+                  "source_test_evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm",
+                  "source_test_path": "tests/test_flowpilot_complete_system_runtime.py"
+                },
+                "model_id": "repair_transactions",
+                "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+                "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                "node_id": "repair_transactions:repair_transactions.repair_loop_break_glass_threshold",
+                "observation_id": "runtime_path.repair_transactions.07.repair_transactions_repair_loop_break_glass_threshold",
+                "observed_error_path": "",
+                "observed_next_state": "repair_transactions.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence repair_transactions.happy.repair_loop_fifth_allows_pm with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_break_glass_threshold",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "repair_transactions:runtime-path-current",
+                "sequence_index": 7,
+                "state_case": "repair_transactions.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.repair_transactions",
+                "child_model_id": "repair_transactions",
+                "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger",
+                "evidence_current": true,
+                "evidence_id": "repair_transactions.negative.repair_loop_cross_node_no_break_glass",
+                "gateway_id": "",
+                "input_case": "repair_transactions.external_contract_input",
+                "leaf_model_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+                "metadata": {
+                  "compared_flowguard_model": "repair_transactions",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                  "compared_flowguard_obligation": "repair_transactions.repair_loop_cross_node_non_trigger",
+                  "family": "repair transactions",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_cross_node_similar_blockers_do_not_trigger_repair_loop_break_glass -q",
+                  "source_test_evidence_id": "repair_transactions.negative.repair_loop_cross_node_no_break_glass",
+                  "source_test_path": "tests/test_flowpilot_complete_system_runtime.py"
+                },
+                "model_id": "repair_transactions",
+                "model_obligation_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+                "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                "node_id": "repair_transactions:repair_transactions.repair_loop_cross_node_non_trigger",
+                "observation_id": "runtime_path.repair_transactions.08.repair_transactions_repair_loop_cross_node_non_trigger",
+                "observed_error_path": "",
+                "observed_next_state": "repair_transactions.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence repair_transactions.negative.repair_loop_cross_node_no_break_glass with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_cross_node_non_trigger",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "repair_transactions:runtime-path-current",
+                "sequence_index": 8,
+                "state_case": "repair_transactions.current_model_state"
+              },
+              {
+                "accepted": true,
+                "assertion_scope": "external_contract",
+                "boundary_id": "flowpilot.runtime_path.repair_transactions",
+                "child_model_id": "repair_transactions",
+                "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset",
+                "evidence_current": true,
+                "evidence_id": "repair_transactions.edge.repair_loop_consecutive_reset",
+                "gateway_id": "",
+                "input_case": "repair_transactions.external_contract_input",
+                "leaf_model_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+                "metadata": {
+                  "compared_flowguard_model": "repair_transactions",
+                  "compared_flowguard_model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                  "compared_flowguard_obligation": "repair_transactions.repair_loop_consecutive_identity_reset",
+                  "family": "repair transactions",
+                  "progress_contract": "flowguard.runtime_path lines name model, node, run, status, model_path, obligation, input_case, state_case, evidence, and progress",
+                  "source_test_command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_same_node_loop_count_resets_after_different_problem_identity -q",
+                  "source_test_evidence_id": "repair_transactions.edge.repair_loop_consecutive_reset",
+                  "source_test_path": "tests/test_flowpilot_complete_system_runtime.py"
+                },
+                "model_id": "repair_transactions",
+                "model_obligation_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+                "model_path": "FlowPilot model-test alignment/repair transactions/repair_transactions",
+                "node_id": "repair_transactions:repair_transactions.repair_loop_consecutive_identity_reset",
+                "observation_id": "runtime_path.repair_transactions.09.repair_transactions_repair_loop_consecutive_identity_reset",
+                "observed_error_path": "",
+                "observed_next_state": "repair_transactions.runtime_path_evidence_bound",
+                "observed_output": "model_obligation_runtime_path_bound",
+                "observed_side_effects": [
+                  "progress_line_emitted"
+                ],
+                "observed_state_writes": [
+                  "flowguard_runtime_path_evidence"
+                ],
+                "progress_message": "compares FlowPilot code/test evidence repair_transactions.edge.repair_loop_consecutive_reset with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_consecutive_identity_reset",
+                "proof_artifact": null,
+                "result_status": "passed",
+                "run_id": "repair_transactions:runtime-path-current",
+                "sequence_index": 9,
+                "state_case": "repair_transactions.current_model_state"
               }
             ],
             "result_status": "passed",
@@ -43622,6 +45280,159 @@
             "stale_reasons": [],
             "test_kind": "edge_path",
             "test_name": "test_route_mutation_supersedes_repair_open_blocker_for_quarantined_packet"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_fifth_repeated_blocker_still_allows_pm_repair_decision -q",
+            "covered_code_contracts": [
+              "repair_transactions.runtime.repair_loop_review",
+              "repair_transactions.runtime.pm_packet_threshold_gate",
+              "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold"
+            ],
+            "covered_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_complete_system_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "happy_path",
+            "test_name": "test_fifth_repeated_blocker_still_allows_pm_repair_decision"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_sixth_repeated_blocker_projects_break_glass_instead_of_pm_repair -q",
+            "covered_code_contracts": [
+              "repair_transactions.runtime.repair_loop_review",
+              "repair_transactions.runtime.pm_packet_threshold_gate",
+              "repair_transactions.runtime.break_glass_next_action",
+              "repair_transactions.runtime.break_glass_foreground_duty",
+              "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold"
+            ],
+            "covered_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.negative.repair_loop_sixth_break_glass",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_complete_system_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_sixth_repeated_blocker_projects_break_glass_instead_of_pm_repair"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_repair_loop_family_count_normalizes_route_repair_versions -q",
+            "covered_code_contracts": [
+              "repair_transactions.runtime.repair_loop_review",
+              "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold"
+            ],
+            "covered_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.edge.repair_loop_normalized_route_family",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_complete_system_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_repair_loop_family_count_normalizes_route_repair_versions"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_cross_node_similar_blockers_do_not_trigger_repair_loop_break_glass -q",
+            "covered_code_contracts": [
+              "repair_transactions.runtime.repair_loop_review",
+              "runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger"
+            ],
+            "covered_obligations": [
+              "repair_transactions.repair_loop_cross_node_non_trigger"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.negative.repair_loop_cross_node_no_break_glass",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_complete_system_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_cross_node_similar_blockers_do_not_trigger_repair_loop_break_glass"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_complete_system_runtime.py -k test_same_node_loop_count_resets_after_different_problem_identity -q",
+            "covered_code_contracts": [
+              "repair_transactions.runtime.repair_loop_review",
+              "runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset"
+            ],
+            "covered_obligations": [
+              "repair_transactions.repair_loop_consecutive_identity_reset"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.edge.repair_loop_consecutive_reset",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_complete_system_runtime.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "edge_path",
+            "test_name": "test_same_node_loop_count_resets_after_different_problem_identity"
+          },
+          {
+            "assertion_scope": "external_contract",
+            "closure_evidence_role": "",
+            "command": "python -m pytest tests/test_flowpilot_card_instruction_coverage.py -k test_repair_loop_threshold_routes_to_break_glass_guidance -q",
+            "covered_code_contracts": [
+              "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold"
+            ],
+            "covered_obligations": [
+              "repair_transactions.repair_loop_break_glass_threshold"
+            ],
+            "evidence_current": true,
+            "evidence_id": "repair_transactions.negative.repair_loop_card_guidance",
+            "evidence_role": "primary",
+            "evidence_target_id": "",
+            "overclaims_model_confidence": false,
+            "path": "tests/test_flowpilot_card_instruction_coverage.py",
+            "proof_artifact": null,
+            "result_reused": false,
+            "result_status": "passed",
+            "reuse_ticket": null,
+            "stale_reasons": [],
+            "test_kind": "negative_path",
+            "test_name": "test_repair_loop_threshold_routes_to_break_glass_guidance"
           }
         ]
       },
@@ -43689,6 +45500,111 @@
             "model_obligation_id": "repair_transactions.route_mutation_supersedes_open_repair_blocker",
             "status": "locked",
             "test_evidence_id": "repair_transactions.edge.route_mutation_supersedes_repair_open_blocker"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.repair_loop_review",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.repair_loop_review",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_sixth_break_glass"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.repair_loop_review",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.edge.repair_loop_normalized_route_family"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.pm_packet_threshold_gate",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.pm_packet_threshold_gate",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_sixth_break_glass"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.break_glass_next_action",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_sixth_break_glass"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.break_glass_foreground_duty",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_sixth_break_glass"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.happy.repair_loop_fifth_allows_pm"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_sixth_break_glass"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.edge.repair_loop_normalized_route_family"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_break_glass_threshold",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_card_guidance"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.repair_loop_review",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_cross_node_no_break_glass"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_cross_node_non_trigger",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.negative.repair_loop_cross_node_no_break_glass"
+          },
+          {
+            "code_contract_id": "repair_transactions.runtime.repair_loop_review",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.edge.repair_loop_consecutive_reset"
+          },
+          {
+            "code_contract_id": "runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset",
+            "gaps": [],
+            "model_obligation_id": "repair_transactions.repair_loop_consecutive_identity_reset",
+            "status": "locked",
+            "test_evidence_id": "repair_transactions.edge.repair_loop_consecutive_reset"
           }
         ],
         "decision": "model_test_alignment_green",
@@ -43698,7 +45614,7 @@
         "summary": "OK: model=repair_transactions decision=model_test_alignment_green findings=0"
       },
       "runtime_path_summary": {
-        "progress_line_count": 7,
+        "progress_line_count": 10,
         "progress_lines": [
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.executable_plan_required run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.executable_plan_required obligation=repair_transactions.executable_plan_required code_contract=runtime_path.repair_transactions.repair_transactions_executable_plan_required boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.happy.material_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.happy.material_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.executable_plan_required",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.material_rework_requires_fresh_producer run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.material_rework_requires_fresh_producer obligation=repair_transactions.material_rework_requires_fresh_producer code_contract=runtime_path.repair_transactions.repair_transactions_material_rework_requires_fresh_producer boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.material_role_reissue_no_producer progress=compares FlowPilot code/test evidence repair_transactions.negative.material_role_reissue_no_producer with FlowGuard model repair_transactions obligation repair_transactions.material_rework_requires_fresh_producer",
@@ -43706,11 +45622,14 @@
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.empty_transaction_returns_to_pm_repair run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.empty_transaction_returns_to_pm_repair obligation=repair_transactions.empty_transaction_returns_to_pm_repair code_contract=runtime_path.repair_transactions.repair_transactions_empty_transaction_returns_to_pm_repair boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.empty_followup_wait_requires_pm_decision progress=compares FlowPilot code/test evidence repair_transactions.negative.empty_followup_wait_requires_pm_decision with FlowGuard model repair_transactions obligation repair_transactions.empty_transaction_returns_to_pm_repair",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.pm_decision_flag_atomicity run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.pm_decision_flag_atomicity obligation=repair_transactions.pm_decision_flag_atomicity code_contract=runtime_path.repair_transactions.repair_transactions_pm_decision_flag_atomicity boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.pm_decision_side_effect_atomicity progress=compares FlowPilot code/test evidence repair_transactions.edge.pm_decision_side_effect_atomicity with FlowGuard model repair_transactions obligation repair_transactions.pm_decision_flag_atomicity",
           "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.multiround_fake_ai_no_producer_recovery run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.multiround_fake_ai_no_producer_recovery obligation=repair_transactions.multiround_fake_ai_no_producer_recovery code_contract=runtime_path.repair_transactions.repair_transactions_multiround_fake_ai_no_producer_recovery boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.e2e.no_producer_then_packet_reissue progress=compares FlowPilot code/test evidence repair_transactions.e2e.no_producer_then_packet_reissue with FlowGuard model repair_transactions obligation repair_transactions.multiround_fake_ai_no_producer_recovery",
-          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.route_mutation_supersedes_open_repair_blocker obligation=repair_transactions.route_mutation_supersedes_open_repair_blocker code_contract=runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.route_mutation_supersedes_repair_open_blocker progress=compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker"
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.route_mutation_supersedes_open_repair_blocker run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.route_mutation_supersedes_open_repair_blocker obligation=repair_transactions.route_mutation_supersedes_open_repair_blocker code_contract=runtime_path.repair_transactions.repair_transactions_route_mutation_supersedes_open_repair_blocker boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.route_mutation_supersedes_repair_open_blocker progress=compares FlowPilot code/test evidence repair_transactions.edge.route_mutation_supersedes_repair_open_blocker with FlowGuard model repair_transactions obligation repair_transactions.route_mutation_supersedes_open_repair_blocker",
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.repair_loop_break_glass_threshold run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.repair_loop_break_glass_threshold obligation=repair_transactions.repair_loop_break_glass_threshold code_contract=runtime_path.repair_transactions.repair_transactions_repair_loop_break_glass_threshold boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.happy.repair_loop_fifth_allows_pm progress=compares FlowPilot code/test evidence repair_transactions.happy.repair_loop_fifth_allows_pm with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_break_glass_threshold",
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.repair_loop_cross_node_non_trigger run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.repair_loop_cross_node_non_trigger obligation=repair_transactions.repair_loop_cross_node_non_trigger code_contract=runtime_path.repair_transactions.repair_transactions_repair_loop_cross_node_non_trigger boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.negative.repair_loop_cross_node_no_break_glass progress=compares FlowPilot code/test evidence repair_transactions.negative.repair_loop_cross_node_no_break_glass with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_cross_node_non_trigger",
+          "flowguard.runtime_path model=repair_transactions node=repair_transactions:repair_transactions.repair_loop_consecutive_identity_reset run=repair_transactions:runtime-path-current status=passed model_path=FlowPilot model-test alignment/repair transactions/repair_transactions child_model=repair_transactions leaf_model=repair_transactions.repair_loop_consecutive_identity_reset obligation=repair_transactions.repair_loop_consecutive_identity_reset code_contract=runtime_path.repair_transactions.repair_transactions_repair_loop_consecutive_identity_reset boundary=flowpilot.runtime_path.repair_transactions input_case=repair_transactions.external_contract_input state_case=repair_transactions.current_model_state evidence=repair_transactions.edge.repair_loop_consecutive_reset progress=compares FlowPilot code/test evidence repair_transactions.edge.repair_loop_consecutive_reset with FlowGuard model repair_transactions obligation repair_transactions.repair_loop_consecutive_identity_reset"
         ],
         "required": true,
-        "runtime_node_contract_count": 7,
-        "runtime_observation_count": 7,
+        "runtime_node_contract_count": 10,
+        "runtime_observation_count": 10,
         "runtime_path_run_count": 1
       }
     },
@@ -45050,6 +46969,7 @@
             }
           ],
           "decision": "model_similarity_blocked",
+          "evidence_gate_ids": [],
           "findings": [
             {
               "code": "missing_maintenance_test_path",
@@ -45061,6 +46981,7 @@
               "severity": "blocker"
             }
           ],
+          "known_bad_case_ids": [],
           "maintenance_groups": [
             {
               "adapter_ids": [
@@ -45203,6 +47124,7 @@
               "risk_if_merged": "merging all variants may erase policy-specific behavior"
             }
           ],
+          "risk_template_ids": [],
           "summary": "BLOCKED: plan=known_bad_missing_similarity_test_path decision=model_similarity_blocked relations=1 groups=1 findings=1",
           "test_obligations": [
             {
@@ -45315,6 +47237,7 @@
             }
           ],
           "decision": "model_similarity_blocked",
+          "evidence_gate_ids": [],
           "findings": [
             {
               "code": "stale_model_signature_evidence",
@@ -45329,6 +47252,7 @@
               "severity": "blocker"
             }
           ],
+          "known_bad_case_ids": [],
           "maintenance_groups": [
             {
               "adapter_ids": [
@@ -45472,6 +47396,7 @@
               "risk_if_merged": "merging all variants may erase policy-specific behavior"
             }
           ],
+          "risk_template_ids": [],
           "summary": "BLOCKED: plan=known_bad_stale_similarity_evidence decision=model_similarity_blocked relations=1 groups=1 findings=1",
           "test_obligations": [
             {
@@ -45586,6 +47511,7 @@
             }
           ],
           "decision": "model_similarity_blocked",
+          "evidence_gate_ids": [],
           "findings": [
             {
               "code": "missing_current_similarity_evidence",
@@ -45597,6 +47523,7 @@
               "severity": "blocker"
             }
           ],
+          "known_bad_case_ids": [],
           "maintenance_groups": [
             {
               "adapter_ids": [
@@ -45728,6 +47655,7 @@
               "risk_if_merged": "merging all variants may erase policy-specific behavior"
             }
           ],
+          "risk_template_ids": [],
           "summary": "BLOCKED: plan=known_bad_missing_current_similarity_evidence decision=model_similarity_blocked relations=1 groups=1 findings=1",
           "test_obligations": [
             {
@@ -45856,6 +47784,7 @@
       ],
       "evidence_current": true,
       "evidence_duplicate_relation_ids": [],
+      "evidence_gate_ids": [],
       "false_friend_rationales": [
         "route_mutation_sibling_branch:route_display_refresh:false_friend: Names or families look related, but material ownership differs."
       ],
@@ -45869,6 +47798,7 @@
         "router_reconciliation_role_output_event",
         "router_reconciliation_runtime_resume"
       ],
+      "known_bad_case_ids": [],
       "maintenance_group_ids": [
         "maintenance:ack_bundle_card_return+ack_single_card_return+ack_system_card_return",
         "maintenance:packet_result_current_node+packet_result_material_scan+packet_result_pm_role_work+packet_result_research",
@@ -45892,6 +47822,7 @@
         "router_reconciliation_scheduled_receipt:router_reconciliation_runtime_resume:same_family_variant",
         "route_mutation_sibling_branch:route_display_refresh:false_friend"
       ],
+      "risk_template_ids": [],
       "same_family_relation_ids": [
         "packet_result_material_scan:packet_result_research:same_family_variant",
         "packet_result_research:packet_result_current_node:same_family_variant",
@@ -46390,7 +48321,9 @@
         }
       ],
       "decision": "model_similarity_ready",
+      "evidence_gate_ids": [],
       "findings": [],
+      "known_bad_case_ids": [],
       "maintenance_groups": [
         {
           "adapter_ids": [
@@ -47217,6 +49150,7 @@
           "risk_if_merged": "merging false friends can collapse distinct responsibilities"
         }
       ],
+      "risk_template_ids": [],
       "summary": "OK: plan=flowpilot_similarity_convergence decision=model_similarity_ready relations=9 groups=4 findings=0",
       "test_obligations": [
         {
@@ -69289,6 +71223,8 @@
             "PROCESS_ROUTE_MODEL_REPAIR_EVENTS",
             "PRODUCT_BEHAVIOR_MODEL_BLOCK_EVENTS",
             "PRODUCT_BEHAVIOR_MODEL_PASS_EVENTS",
+            "TARGET_REALIZATION_MODEL_BLOCK_EVENTS",
+            "TARGET_REALIZATION_MODEL_PASS_EVENTS",
             "dict",
             "event",
             "flags",
@@ -69302,7 +71238,9 @@
             "process_route_model_repair_required",
             "process_route_model_submitted",
             "product_behavior_model_blocked",
-            "product_behavior_model_submitted"
+            "product_behavior_model_submitted",
+            "target_realization_model_blocked",
+            "target_realization_model_submitted"
           ],
           "symbol": "_sync_model_gate_flags"
         },
@@ -72705,11 +74643,13 @@
             "_write_parent_backward_replay",
             "_write_parent_backward_targets",
             "_write_parent_segment_decision",
+            "_write_pm_implementation_intent",
             "_write_pm_process_route_model_decision",
             "_write_pm_product_behavior_model_decision",
             "_write_pm_resume_decision",
             "_write_pm_review_block_repair",
             "_write_pm_revised_node_acceptance_plan",
+            "_write_pm_target_realization_model_decision",
             "_write_product_behavior_model_report",
             "_write_product_function_architecture",
             "_write_role_block_report",
@@ -72717,6 +74657,8 @@
             "_write_root_acceptance_contract",
             "_write_route_process_issue_report",
             "_write_route_process_pass_report",
+            "_write_target_realization_model_issue_report",
+            "_write_target_realization_model_report",
             "append",
             "append_history",
             "flowpilot_router_events.apply_migrated_event_side_effect",
@@ -72744,8 +74686,10 @@
             "router._record_role_no_output_reissue",
             "router._refresh_route_memory",
             "router._require_legal_route_action",
+            "router._require_pm_implementation_intent",
             "router._require_process_route_model_report",
             "router._require_product_behavior_model_report",
+            "router._require_target_realization_model_report",
             "router._research_packet_index_path",
             "router._reset_route_review_after_route_draft_repair",
             "router._role_recovery_target_roles",
@@ -72863,8 +74807,10 @@
             "_refresh_route_memory",
             "_repair_direct_package_disposition_authority_split",
             "_require_legal_route_action",
+            "_require_pm_implementation_intent",
             "_require_process_route_model_report",
             "_require_product_behavior_model_report",
+            "_require_target_realization_model_report",
             "_research_packet_index_path",
             "_reset_route_review_after_route_draft_repair",
             "_role_recovery_target_roles",
@@ -72900,6 +74846,7 @@
             "_write_parent_backward_replay",
             "_write_parent_backward_targets",
             "_write_parent_segment_decision",
+            "_write_pm_implementation_intent",
             "_write_pm_package_result_disposition",
             "_write_pm_process_route_model_decision",
             "_write_pm_product_behavior_model_decision",
@@ -72909,6 +74856,7 @@
             "_write_pm_revised_node_acceptance_plan",
             "_write_pm_role_work_request",
             "_write_pm_role_work_result_decision",
+            "_write_pm_target_realization_model_decision",
             "_write_product_behavior_model_report",
             "_write_product_function_architecture",
             "_write_research_capability_decision",
@@ -72920,6 +74868,8 @@
             "_write_route_draft",
             "_write_route_process_issue_report",
             "_write_route_process_pass_report",
+            "_write_target_realization_model_issue_report",
+            "_write_target_realization_model_report",
             "_write_terminal_backward_replay",
             "_write_terminal_closure_suite",
             "_write_worker_research_report",

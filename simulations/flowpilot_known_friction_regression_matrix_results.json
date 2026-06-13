@@ -120,7 +120,14 @@
               "evidence_id": "",
               "message": "required defect-family gate evidence is stale or has not been rerun",
               "metadata": {
-                "defect_family_id": "defect_family:worker_self_check_failure"
+                "gate": {
+                  "confidence": "blocked",
+                  "current": false,
+                  "evidence_id": "defect_family:worker_self_check_failure",
+                  "kind": "defect_family",
+                  "required": true,
+                  "scoped_reasons": []
+                }
               },
               "risk_id": "known_friction.worker_self_check_failure",
               "severity": "blocker"
@@ -130,7 +137,14 @@
               "evidence_id": "",
               "message": "required defect-family gate is blocked",
               "metadata": {
-                "defect_family_id": "defect_family:worker_self_check_failure"
+                "gate": {
+                  "confidence": "blocked",
+                  "current": false,
+                  "evidence_id": "defect_family:worker_self_check_failure",
+                  "kind": "defect_family",
+                  "required": true,
+                  "scoped_reasons": []
+                }
               },
               "risk_id": "known_friction.worker_self_check_failure",
               "severity": "blocker"
@@ -337,7 +351,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -403,7 +417,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -470,7 +484,14 @@
               "evidence_id": "",
               "message": "required defect-family gate evidence is stale or has not been rerun",
               "metadata": {
-                "defect_family_id": "defect_family:worker_self_check_failure"
+                "gate": {
+                  "confidence": "blocked",
+                  "current": false,
+                  "evidence_id": "defect_family:worker_self_check_failure",
+                  "kind": "defect_family",
+                  "required": true,
+                  "scoped_reasons": []
+                }
               },
               "risk_id": "known_friction.worker_self_check_failure",
               "severity": "blocker"
@@ -480,7 +501,14 @@
               "evidence_id": "",
               "message": "required defect-family gate is blocked",
               "metadata": {
-                "defect_family_id": "defect_family:worker_self_check_failure"
+                "gate": {
+                  "confidence": "blocked",
+                  "current": false,
+                  "evidence_id": "defect_family:worker_self_check_failure",
+                  "kind": "defect_family",
+                  "required": true,
+                  "scoped_reasons": []
+                }
               },
               "risk_id": "known_friction.worker_self_check_failure",
               "severity": "blocker"
@@ -507,7 +535,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -560,7 +588,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -811,7 +839,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",
@@ -878,7 +906,14 @@
               "evidence_id": "",
               "message": "required defect-family gate evidence is stale or has not been rerun",
               "metadata": {
-                "defect_family_id": "defect_family:worker_self_check_failure"
+                "gate": {
+                  "confidence": "blocked",
+                  "current": false,
+                  "evidence_id": "defect_family:worker_self_check_failure",
+                  "kind": "defect_family",
+                  "required": true,
+                  "scoped_reasons": []
+                }
               },
               "risk_id": "known_friction.worker_self_check_failure",
               "severity": "blocker"
@@ -888,7 +923,14 @@
               "evidence_id": "",
               "message": "required defect-family gate is blocked",
               "metadata": {
-                "defect_family_id": "defect_family:worker_self_check_failure"
+                "gate": {
+                  "confidence": "blocked",
+                  "current": false,
+                  "evidence_id": "defect_family:worker_self_check_failure",
+                  "kind": "defect_family",
+                  "required": true,
+                  "scoped_reasons": []
+                }
               },
               "risk_id": "known_friction.worker_self_check_failure",
               "severity": "blocker"
@@ -917,7 +959,7 @@
                   "producer_route": "known_friction_regression_matrix",
                   "proof_artifact": {
                     "artifact_fingerprints": {
-                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:80b49dadc4916bc2c353bb0e06ad60bf888d1ebff35813d83b57cf175996e6dd"
+                      "simulations/flowpilot_control_plane_friction_results.json": "sha256:59a09929678b4c465dd7ddcb1389321c8d9cdf4b80b98a1a16d5dbc25f95503a"
                     },
                     "artifact_id": "artifact:defect_family:worker_self_check_failure",
                     "assertion_scope": "external_contract",

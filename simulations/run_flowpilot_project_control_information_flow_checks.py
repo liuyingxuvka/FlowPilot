@@ -51,6 +51,18 @@ HAZARD_EXPECTED_FAILURES = {
     model.DOWNSTREAM_REPORT_NOT_AUTHORIZED: "downstream packet is not authorized",
     model.MISSING_INFO_RESPONSE_NOT_DEFINED: "does not define the current-runtime response",
     model.BRANCH_CONTRACT_SHAPE_NOT_VISIBLE: "branch-specific current result shapes",
+    model.FINAL_PREFLIGHT_PROMOTES_NONCURRENT_REPAIR_BLOCKER: (
+        "final preflight promoted a noncurrent repair blocker to current authority"
+    ),
+    model.ROUTE_MUTATION_LEAVES_STALE_PRIOR_ROUTE_REPAIR_BLOCKER: (
+        "route mutation left stale prior-route repair blockers as current work"
+    ),
+    model.REPAIR_LOOP_OVER_THRESHOLD_ISSUES_PM_PACKET: (
+        "same-node consecutive repair loop threshold exceeded but ordinary PM repair continued"
+    ),
+    model.RUN_LEDGER_PARTIAL_READ_ACCEPTED_AS_DEFAULT: (
+        "run ledger persistence accepted partial JSON or synthesized fallback state"
+    ),
 }
 
 
@@ -88,7 +100,15 @@ def _state_id(state: model.State) -> str:
         f"{state.reviewer_packet_authorized_to_read_flowguard_evidence},"
         f"{state.reviewer_packet_names_flowguard_evidence_id}|"
         f"blocker_stage={state.blocker_repair_chain_open},{state.blocker_status_reflects_current_stage},"
-        f"{state.status_projection_shows_repair_chain}|"
+        f"{state.status_projection_shows_repair_chain},"
+        f"final_preflight={state.final_preflight_uses_current_effective_blockers},"
+        f"{state.final_preflight_reports_noncurrent_repair_blocker},"
+        f"stale_prior_route_superseded={state.stale_prior_route_repair_blockers_superseded}|"
+        f"repair_loop={state.repair_loop_attempt_count}>{state.repair_loop_threshold},"
+        f"evidence={state.repair_loop_threshold_evidence_visible},"
+        f"breakglass_duty={state.break_glass_duty_projected},"
+        f"ordinary_pm_over_threshold={state.ordinary_pm_repair_packet_issued_over_threshold},"
+        f"pm_superseded={state.same_family_pm_packets_superseded}|"
         f"breakglass={state.break_glass_used},{state.normal_repair_path_failed},"
         f"{state.break_glass_bounded_reads_writes},{state.break_glass_control_plane_only},"
         f"{state.break_glass_target_project_repair},{state.break_glass_reenters_normal_flow}|"
@@ -236,6 +256,7 @@ def run_checks() -> dict[str, Any]:
         "hazard_detection": hazards,
         "coverage_matrix": {
             "ordinary_repair_packet": "covered_by_parent_and_child_blocker_repair_information_flow_model",
+            "repair_loop_threshold": "same-family attempt count above five requires visible evidence and Controller break-glass duty",
             "interrupt_resume": "current run/frontier/ledger/blocker/PM runway required",
             "reopen_continuation": "history import must remain historical; current run and current role assignment required",
             "break_glass": "normal repair failure, bounded control-plane repair, PM/reviewer reintegration required",
@@ -248,8 +269,11 @@ def run_checks() -> dict[str, Any]:
                 "parent information sufficiency across major FlowPilot control surfaces",
                 "stale historical evidence rejection",
                 "same-work/no-new-information loop rejection",
+                "same-family repair loop threshold to Controller break-glass duty",
                 "break-glass reintegration requirements",
                 "route mutation information and replay requirements",
+                "stale prior-route repair blocker supersession after route mutation",
+                "final preflight noncurrent repair blocker rejection",
                 "actor input material manifest requirements",
                 "required report contract and downstream consumer authorization",
                 "missing-information response definition",

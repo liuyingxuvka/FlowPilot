@@ -556,6 +556,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         with self.assertRaises(router.RouterError):
             router.record_external_event(root, "pm_writes_route_draft", {"nodes": [{"node_id": "node-001"}]})
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
 
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
@@ -644,6 +645,7 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
         router.record_external_event(
@@ -1004,11 +1006,12 @@ class MaterialModelingRuntimeTests(FlowPilotRouterRuntimeTestBase):
         for record in material_index["packets"]:
             envelope = packet_runtime.load_envelope(root, record["packet_envelope_path"])
             completed_by_role = str(envelope["to_role"])
+            completed_by_agent_id = self.ensure_current_role_agent_for_role(root, completed_by_role)
             packet_runtime.write_result(
                 root,
                 packet_envelope=envelope,
                 completed_by_role=completed_by_role,
-                completed_by_agent_id=self.active_agent_id_for_role(root, completed_by_role),
+                completed_by_agent_id=completed_by_agent_id,
                 result_body_text="material scan result with corrected agent id",
                 next_recipient="project_manager",
             )

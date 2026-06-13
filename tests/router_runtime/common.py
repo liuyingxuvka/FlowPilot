@@ -1585,6 +1585,7 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
     def complete_product_architecture_and_contract(self, root: Path) -> None:
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
 
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
@@ -1597,6 +1598,38 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             },
         )
         self.complete_route_checks(root)
+    def complete_implementation_intent_bridge(self, root: Path) -> None:
+        self.deliver_expected_card(root, "pm.implementation_intent")
+        router.record_external_event(root, "pm_writes_implementation_intent", self.pm_implementation_intent_body())
+
+        self.deliver_expected_card(root, "flowguard_operator.target_realization_model")
+        router.record_external_event(
+            root,
+            "flowguard_operator_submits_target_realization_model",
+            self.role_report_envelope(
+                root,
+                "flowguard/target_realization_model",
+                self.target_realization_model_pass_body(),
+            ),
+        )
+
+        self.deliver_expected_card(root, "pm.target_realization_model_decision")
+        router.record_external_event(
+            root,
+            "pm_accepts_target_realization_model",
+            self.target_realization_model_decision_body(),
+        )
+
+        self.deliver_expected_card(root, "reviewer.implementation_intent_challenge")
+        router.record_external_event(
+            root,
+            "reviewer_passes_implementation_intent_challenge",
+            self.role_report_envelope(
+                root,
+                "reviews/implementation_intent_challenge",
+                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+            ),
+        )
     def complete_child_skill_gates(self, root: Path) -> None:
         selected_skills = [
             {
@@ -1693,6 +1726,9 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "passed": True,
             "process_viability_verdict": "pass",
             "product_behavior_model_checked": True,
+            "target_realization_model_checked": True,
+            "route_maps_to_target_realization_model": True,
+            "realization_obligations_projected": True,
             "route_can_reach_product_model": True,
             "repair_return_policy_checked": True,
             "serial_execution_model_checked": True,
@@ -1719,6 +1755,84 @@ class FlowPilotRouterRuntimeTestBase(unittest.TestCase):
             "product_goal_coverage": "The model covers the requested product goal.",
             "unmodeled_or_ambiguous_behavior": [],
             "next_action": "reviewer_product_architecture_challenge",
+        }
+    def pm_implementation_intent_body(self) -> dict:
+        return {
+            "written_by_role": "project_manager",
+            "implementation_intent_summary": "Realize the accepted product through one practical route without downgrading the user target.",
+            "implementation_pathways": [
+                {
+                    "pathway_id": "impl-001",
+                    "summary": "Build a route that turns product behavior into executable work and evidence.",
+                }
+            ],
+            "target_realization_model_request": {
+                "requested_model_id": "target-realization-001",
+                "expected_path": "flowguard/target_realization_model.json",
+            },
+            "realization_obligations": [
+                {
+                    "obligation_id": "realize-001",
+                    "summary": "Route must preserve the accepted product behavior and proof floor.",
+                }
+            ],
+            "thin_success_traps": [
+                {
+                    "trap_id": "thin-001",
+                    "summary": "A route can look complete while leaving the product unusable.",
+                }
+            ],
+            "non_downgrade_rules": [
+                {
+                    "rule_id": "no-downgrade-001",
+                    "summary": "Do not replace required product behavior with a weaker planning artifact.",
+                }
+            ],
+            "evidence_gates": [
+                {
+                    "gate_id": "evidence-001",
+                    "summary": "Final closure must prove the product behavior and realization obligation.",
+                }
+            ],
+            "residual_blindspots": [],
+            "next_action": "flowguard_operator_target_realization_model",
+        }
+    def target_realization_model_pass_body(self) -> dict:
+        return {
+            "reviewed_by_role": "flowguard_operator",
+            "passed": True,
+            "target_realization_verdict": "pass",
+            "pm_implementation_intent_checked": True,
+            "product_behavior_model_checked": True,
+            "pm_intent_preserved": True,
+            "realization_obligations_modeled": True,
+            "thin_success_traps_modeled": True,
+            "evidence_gates_modeled": True,
+            "realization_obligation_ids": ["realize-001"],
+            "model_obligations": [{"obligation_id": "realize-001"}],
+            "thin_success_traps": [{"trap_id": "thin-001"}],
+            "non_downgrade_rules": [{"rule_id": "no-downgrade-001"}],
+            "evidence_gates": [{"gate_id": "evidence-001"}],
+            "target_state_model": {"states": ["planned", "realized"]},
+            "transition_model": {"transitions": ["planned_to_realized"]},
+            "conformance_boundary": {"scope": "target realization bridge"},
+            "residual_blindspots": [],
+        }
+    def target_realization_model_decision_body(self) -> dict:
+        return {
+            "decided_by_role": "project_manager",
+            "decision": "accept_target_realization_model",
+            "source_paths": [
+                "implementation_intent/pm_implementation_intent.json",
+                "flowguard/target_realization_model.json",
+            ],
+            "target_realization_fit_review": "PM accepted the model as preserving implementation intent.",
+            "realization_obligation_acceptance": "The realization obligation can guide route drafting.",
+            "thin_success_trap_review": "Thin success traps are modeled for later gates.",
+            "evidence_gate_review": "Evidence gates are explicit enough for route projection.",
+            "non_downgrade_review": "No downgrade rule is hidden.",
+            "residual_blindspots": [],
+            "next_action": "reviewer_implementation_intent_challenge",
         }
     def process_route_model_decision_body(self) -> dict:
         return {

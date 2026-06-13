@@ -20,6 +20,11 @@ runtime_context: Treat the runtime delivery envelope as the live source for the 
 - Put reviewer, worker, and FlowGuard operator advice that needs PM disposition into the PM suggestion/blocker ledger instead of leaving it only in prose.
 - For non-trivial node, acceptance, proof, validation, test-obligation, repair-return, or evidence-freshness judgement, cite a FlowGuard Work Order and FlowGuard Report with `flowguard_work_order_id`, `flowguard_report_id`, `flowguard_report_freshness`, and PM acceptance, or record a scoped `flowguard_not_required_reason`.
 - In mature FlowGuard projects, read `docs/flowguard_project_topology.md` as background architecture before node acceptance planning. It guides relevant model/test/code/evidence inspection, but it is not a FlowGuard Report and is not gate evidence. If this phase changes topology sources, rebuild and check the topology before claiming done.
+- Carry forward target-realization obligations from the accepted
+  `flowguard/target_realization_model.json`. The active node plan must state
+  which `realization_obligation_ids`, thin-success traps, non-downgrade rules,
+  and evidence gates this node owns, defers with reason, or proves unnecessary
+  for the current node boundary.
 
 
 Before issuing a current-node work packet, write the active node acceptance
@@ -37,6 +42,10 @@ Submit the node acceptance plan as a current packet result with one top-level
 - `decision: "redesign_route"` means PM has found that the active node needs a
   deeper, narrower, reordered, or otherwise changed route shape before worker
   dispatch. This branch must include one top-level current `route_plan`.
+  For node-entry redesign, the route plan must begin with a replacement
+  parent/module scope for the active node and place the new child work under
+  that scope with `child_node_ids`; do not append the child work as flat peer
+  leaves after the current node.
   Runtime stages the route effect, issues mandatory FlowGuard route
   simulation, requires PM to absorb that FlowGuard result through
   `pm_flowguard_acceptance`, and then sends the PM absorption package to
@@ -146,8 +155,9 @@ route-memory prior path context. The plan must state:
   narrow, or wrongly ordered. This is the PM self-check before work packet
   release. If it is too broad, do not ask the Worker to split it and do not
   return `decision: "pass"`; return `decision: "redesign_route"` with the
-  deeper child route. If it is over-split, merge or waive the extra structure
-  with a PM complexity reason before dispatch;
+  deeper child route under a replacement parent/module scope for the active
+  node. If it is over-split, merge or waive the extra structure with a PM
+  complexity reason before dispatch;
 - when a leaf is promoted to parent/module, mark old leaf approvals stale,
   attach the new ordered children, and require the local FlowGuard operator product-model
   model, PM model decision, Reviewer product challenge, FlowGuard operator process-model
@@ -247,4 +257,6 @@ approval, then repair all missing fields in one pass.
 Do not register a current-node work packet until Reviewer passes an ordinary
 `decision: "pass"` node plan. For `decision: "redesign_route"`, do not issue a
 Worker packet for the old node; let the staged route effect complete its
-FlowGuard, PM absorption, Reviewer, and system closure gates first.
+FlowGuard, PM absorption, Reviewer, and system closure gates first. If the
+redesign is just a peer-appended split of the active node, repair the route
+plan before submission.

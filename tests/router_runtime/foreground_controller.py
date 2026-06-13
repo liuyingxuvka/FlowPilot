@@ -27,6 +27,7 @@ class ForegroundControllerRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
 
         action = self.deliver_expected_card(root, "pm.prior_path_context")
         self.assertTrue(action["pm_prior_path_context_required_for_decision"])

@@ -58,6 +58,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
         router.record_external_event(
@@ -122,6 +123,45 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.assertFalse((run_root / "flowguard" / "product_architecture_modelability.json").exists())
         (run_root / "flowguard" / "product_behavior_model.json").unlink()
 
+        with self.assertRaisesRegex(router.RouterError, "product behavior model report"):
+            self.complete_implementation_intent_bridge(root)
+        router.write_json(
+            run_root / "flowguard" / "product_behavior_model.json",
+            {
+                "schema_version": "flowpilot.product_behavior_model.v1",
+                "run_id": run_root.name,
+                "reviewed_by_role": "flowguard_operator",
+                "passed": True,
+            },
+        )
+        router.record_external_event(root, "pm_writes_implementation_intent", self.pm_implementation_intent_body())
+        self.deliver_expected_card(root, "flowguard_operator.target_realization_model")
+        router.record_external_event(
+            root,
+            "flowguard_operator_submits_target_realization_model",
+            self.role_report_envelope(
+                root,
+                "flowguard/target_realization_model",
+                self.target_realization_model_pass_body(),
+            ),
+        )
+        self.deliver_expected_card(root, "pm.target_realization_model_decision")
+        router.record_external_event(
+            root,
+            "pm_accepts_target_realization_model",
+            self.target_realization_model_decision_body(),
+        )
+        self.deliver_expected_card(root, "reviewer.implementation_intent_challenge")
+        router.record_external_event(
+            root,
+            "reviewer_passes_implementation_intent_challenge",
+            self.role_report_envelope(
+                root,
+                "reviews/implementation_intent_challenge",
+                {"reviewed_by_role": "human_like_reviewer", "passed": True},
+            ),
+        )
+        (run_root / "flowguard" / "product_behavior_model.json").unlink()
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
         with self.assertRaisesRegex(router.RouterError, "product behavior model report"):
@@ -140,6 +180,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
         router.record_external_event(
@@ -169,6 +210,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
         router.record_external_event(
@@ -205,6 +247,7 @@ class QualityGatesRuntimeTests(FlowPilotRouterRuntimeTestBase):
         self.complete_material_flow(root)
         self.complete_root_contract_before_child_skill_gates(root)
         self.complete_child_skill_gates(root)
+        self.complete_implementation_intent_bridge(root)
         self.deliver_expected_card(root, "pm.prior_path_context")
         self.deliver_expected_card(root, "pm.route_skeleton")
         router.record_external_event(

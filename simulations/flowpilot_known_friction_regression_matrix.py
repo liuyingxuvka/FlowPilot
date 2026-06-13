@@ -29,6 +29,7 @@ from flowguard import (
     DefectFamilyGate,
     DefectFamilyGatePlan,
     ProofArtifactRef,
+    RiskEvidenceGate,
     RiskEvidenceLedgerPlan,
     RiskEvidenceProof,
     RiskEvidenceRow,
@@ -1021,17 +1022,20 @@ def build_defect_family_risk_ledger_plan(
         ledger_rows.append(
             RiskEvidenceRow(
                 risk_id=str(row.get("friction_id") or ""),
-                description=str(row.get("historical_bad_case") or ""),
                 model_obligation_id=str(row.get("model_obligation") or ""),
                 code_contract_id=str(row.get("code_contract_id") or ""),
                 proof_evidence_ids=(proof_id,),
                 require_external_proof=True,
-                defect_family_id=defect_family_id,
-                defect_family_gate_required=True,
-                defect_family_gate_current=gate_current,
-                defect_family_gate_confidence=gate_confidence,
-                defect_family_scoped_reasons=scoped_reasons,
-                next_actions=tuple(str(item) for item in row.get("forbidden_shortcuts") or ()),
+                gates=(
+                    RiskEvidenceGate(
+                        kind="defect_family",
+                        evidence_id=defect_family_id,
+                        required=True,
+                        current=gate_current,
+                        confidence=gate_confidence,
+                        scoped_reasons=scoped_reasons,
+                    ),
+                ),
             )
         )
     return RiskEvidenceLedgerPlan(

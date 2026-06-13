@@ -107,6 +107,13 @@ Allowed actions:
   project bugs, worker defects, review failures, or normal PM repair, and it
   never grants sealed-body access, gate approval, route mutation, target-product
   work, acceptance changes, publication, deployment, or secret handling;
+- if foreground duty includes `repair_loop_break_glass_review` showing that the
+  same current route node has repeated the same blocker problem more than five
+  consecutive times, treat the `control_plane_blocker` as a break-glass
+  diagnosis duty. Do not wait for another same-node PM repair packet and do not
+  open sealed bodies; read the break-glass playbook and report only
+  Controller-visible threshold metadata. Similar blocker classes spread across
+  different route nodes are ordinary repair evidence, not this threshold;
 - when `current_wait.wait_class` is `ack`, use the Router-authored reminder
   text after the three-minute reminder point. If the ACK remains absent after
   the ten-minute blocker point, record a Router-visible blocker for PM-routed

@@ -70,6 +70,15 @@ HAZARD_EXPECTED_FAILURES = {
     model.PROCESS_SUPPORT_SKILL_IGNORED: "PM child-skill selection did not evaluate process-support skill candidates",
     model.ROLE_SKILL_BINDING_MISSING: "selected process-support skill lacks role-skill binding, evidence requirement, or reviewer check",
     model.ROLE_SKILL_USE_SELF_ATTESTED: "selected role skill use was self-attested without evidence",
+    model.PM_IMPLEMENTATION_INTENT_MISSING: "PM implementation intent bridge is missing or too thin before route skeleton",
+    model.TARGET_REALIZATION_MODEL_MISSING: "FlowGuard target-realization model is missing before route skeleton",
+    model.TARGET_REALIZATION_MODEL_IGNORES_PM_INTENT: "target-realization model does not preserve PM implementation intent",
+    model.PM_TARGET_REALIZATION_ACCEPTS_DOWNGRADE: "PM accepted a target-realization model that downgrades implementation intent",
+    model.REVIEWER_IMPLEMENTATION_INTENT_ALIGNMENT_MISSING: "Reviewer did not check implementation-intent and target-realization alignment",
+    model.ROUTE_MISSING_REALIZATION_OBLIGATIONS: "route skeleton does not consume target-realization obligations",
+    model.NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS: "node acceptance plan does not consume target-realization obligations",
+    model.WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS: "work packet does not carry target-realization obligations",
+    model.FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED: "final ledger or closure leaves target-realization obligations unresolved",
 }
 
 

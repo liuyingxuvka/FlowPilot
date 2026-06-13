@@ -97,6 +97,15 @@ WORK_PACKET_MISSING_STRUCTURE_HYGIENE_DELTA = "work_packet_missing_structure_hyg
 WORKER_RESULT_LEAVES_UNOWNED_FALLBACK = "worker_result_leaves_unowned_fallback"
 REPAIR_LEAVES_COMPAT_BRANCH = "repair_leaves_compat_branch"
 FINAL_LEDGER_STRUCTURE_DEBT_UNRESOLVED = "final_ledger_structure_debt_unresolved"
+PM_IMPLEMENTATION_INTENT_MISSING = "pm_implementation_intent_missing"
+TARGET_REALIZATION_MODEL_MISSING = "target_realization_model_missing"
+TARGET_REALIZATION_MODEL_IGNORES_PM_INTENT = "target_realization_model_ignores_pm_intent"
+PM_TARGET_REALIZATION_ACCEPTS_DOWNGRADE = "pm_target_realization_accepts_downgrade"
+REVIEWER_IMPLEMENTATION_INTENT_ALIGNMENT_MISSING = "reviewer_implementation_intent_alignment_missing"
+ROUTE_MISSING_REALIZATION_OBLIGATIONS = "route_missing_realization_obligations"
+NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS = "node_plan_missing_realization_obligations"
+WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS = "work_packet_missing_realization_obligations"
+FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED = "final_ledger_realization_obligations_unresolved"
 
 VALID_SCENARIOS = (VALID_UI_ROUTE,)
 NEGATIVE_SCENARIOS = (
@@ -148,6 +157,15 @@ NEGATIVE_SCENARIOS = (
     WORKER_RESULT_LEAVES_UNOWNED_FALLBACK,
     REPAIR_LEAVES_COMPAT_BRANCH,
     FINAL_LEDGER_STRUCTURE_DEBT_UNRESOLVED,
+    PM_IMPLEMENTATION_INTENT_MISSING,
+    TARGET_REALIZATION_MODEL_MISSING,
+    TARGET_REALIZATION_MODEL_IGNORES_PM_INTENT,
+    PM_TARGET_REALIZATION_ACCEPTS_DOWNGRADE,
+    REVIEWER_IMPLEMENTATION_INTENT_ALIGNMENT_MISSING,
+    ROUTE_MISSING_REALIZATION_OBLIGATIONS,
+    NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS,
+    WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS,
+    FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED,
 )
 SCENARIOS = VALID_SCENARIOS + NEGATIVE_SCENARIOS
 
@@ -189,6 +207,17 @@ class State:
     major_node_overmerged: bool = False
     product_behavior_model_written: bool = False
     product_model_risk_boundary_checked: bool = False
+    pm_implementation_intent_written: bool = False
+    pm_implementation_intent_plain_language_guidance: bool = False
+    pm_implementation_intent_names_hard_parts: bool = False
+    target_realization_model_written: bool = False
+    target_realization_model_preserves_pm_intent: bool = False
+    pm_target_realization_model_accepted: bool = False
+    reviewer_implementation_intent_alignment_checked: bool = False
+    route_consumes_realization_obligations: bool = False
+    node_plan_consumes_realization_obligations: bool = False
+    work_packet_carries_realization_obligations: bool = False
+    final_realization_obligations_disposition_done: bool = False
     pm_route_maps_to_product_model: bool = False
     flowguard_operator_route_scope_validated_route_viability: bool = False
     repair_return_to_mainline_defined: bool = False
@@ -323,6 +352,17 @@ def _valid_ui_state() -> State:
         route_nodes_have_stage_artifacts=True,
         product_behavior_model_written=True,
         product_model_risk_boundary_checked=True,
+        pm_implementation_intent_written=True,
+        pm_implementation_intent_plain_language_guidance=True,
+        pm_implementation_intent_names_hard_parts=True,
+        target_realization_model_written=True,
+        target_realization_model_preserves_pm_intent=True,
+        pm_target_realization_model_accepted=True,
+        reviewer_implementation_intent_alignment_checked=True,
+        route_consumes_realization_obligations=True,
+        node_plan_consumes_realization_obligations=True,
+        work_packet_carries_realization_obligations=True,
+        final_realization_obligations_disposition_done=True,
         pm_route_maps_to_product_model=True,
         flowguard_operator_route_scope_validated_route_viability=True,
         repair_return_to_mainline_defined=True,
@@ -453,6 +493,42 @@ def _scenario_state(scenario: str) -> State:
             state,
             product_behavior_model_written=False,
             product_model_risk_boundary_checked=False,
+        )
+    if scenario == PM_IMPLEMENTATION_INTENT_MISSING:
+        return replace(
+            state,
+            pm_implementation_intent_written=False,
+            pm_implementation_intent_plain_language_guidance=False,
+            pm_implementation_intent_names_hard_parts=False,
+        )
+    if scenario == TARGET_REALIZATION_MODEL_MISSING:
+        return replace(
+            state,
+            target_realization_model_written=False,
+            target_realization_model_preserves_pm_intent=False,
+            pm_target_realization_model_accepted=False,
+        )
+    if scenario == TARGET_REALIZATION_MODEL_IGNORES_PM_INTENT:
+        return replace(state, target_realization_model_preserves_pm_intent=False)
+    if scenario == PM_TARGET_REALIZATION_ACCEPTS_DOWNGRADE:
+        return replace(
+            state,
+            target_realization_model_preserves_pm_intent=False,
+            pm_target_realization_model_accepted=True,
+        )
+    if scenario == REVIEWER_IMPLEMENTATION_INTENT_ALIGNMENT_MISSING:
+        return replace(state, reviewer_implementation_intent_alignment_checked=False)
+    if scenario == ROUTE_MISSING_REALIZATION_OBLIGATIONS:
+        return replace(state, route_consumes_realization_obligations=False)
+    if scenario == NODE_PLAN_MISSING_REALIZATION_OBLIGATIONS:
+        return replace(state, node_plan_consumes_realization_obligations=False)
+    if scenario == WORK_PACKET_MISSING_REALIZATION_OBLIGATIONS:
+        return replace(state, work_packet_carries_realization_obligations=False)
+    if scenario == FINAL_LEDGER_REALIZATION_OBLIGATIONS_UNRESOLVED:
+        return replace(
+            state,
+            closure_or_final_ledger_decision=True,
+            final_realization_obligations_disposition_done=False,
         )
     if scenario == PM_ROUTE_NOT_MAPPED_TO_PRODUCT_MODEL:
         return replace(state, pm_route_maps_to_product_model=False)
@@ -607,6 +683,34 @@ def planning_failures(state: State) -> list[str]:
         state.product_behavior_model_written and state.product_model_risk_boundary_checked
     ):
         failures.append("route planning lacks a product behavior model from the FlowGuard operator product-scope")
+    if complex_task and not (
+        state.pm_implementation_intent_written
+        and state.pm_implementation_intent_plain_language_guidance
+        and state.pm_implementation_intent_names_hard_parts
+    ):
+        failures.append("PM implementation intent bridge is missing or too thin before route skeleton")
+    if complex_task and not state.target_realization_model_written:
+        failures.append("FlowGuard target-realization model is missing before route skeleton")
+    if complex_task and not state.target_realization_model_preserves_pm_intent:
+        failures.append("target-realization model does not preserve PM implementation intent")
+    if (
+        complex_task
+        and state.pm_target_realization_model_accepted
+        and not state.target_realization_model_preserves_pm_intent
+    ):
+        failures.append("PM accepted a target-realization model that downgrades implementation intent")
+    if complex_task and not state.pm_target_realization_model_accepted:
+        failures.append("PM has not accepted the target-realization model before route skeleton")
+    if complex_task and not state.reviewer_implementation_intent_alignment_checked:
+        failures.append("Reviewer did not check implementation-intent and target-realization alignment")
+    if complex_task and not state.route_consumes_realization_obligations:
+        failures.append("route skeleton does not consume target-realization obligations")
+    if complex_task and not state.node_plan_consumes_realization_obligations:
+        failures.append("node acceptance plan does not consume target-realization obligations")
+    if complex_task and not state.work_packet_carries_realization_obligations:
+        failures.append("work packet does not carry target-realization obligations")
+    if complex_task and not state.final_realization_obligations_disposition_done:
+        failures.append("final ledger or closure leaves target-realization obligations unresolved")
     if complex_task and not state.pm_route_maps_to_product_model:
         failures.append("PM route is not mapped to the product behavior model")
     if complex_task and not state.flowguard_operator_route_scope_validated_route_viability:
